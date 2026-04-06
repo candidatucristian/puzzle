@@ -108,7 +108,10 @@ btnSubmit.addEventListener("click", () => {
   if (window.currentLevel === 1 && code === "337") {
     isCorrect = true;
     targetLevel = 2;
-  } else if (window.currentLevel === 2 && code === "FIBO") {
+  } else if (
+    window.currentLevel === 2 &&
+    (code === "FIBO" || code === "FIBONACCI")
+  ) {
     isCorrect = true;
     targetLevel = 3;
   } else if (window.currentLevel === 3 && code === "SYNC") {

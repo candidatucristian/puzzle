@@ -73,7 +73,7 @@ body {
 
 /* Force the Phaser canvas to be strictly black and white */
 #game-container canvas {
-  filter: grayscale(60%);
+  filter: grayscale(40%);
   flex-shrink: 0;
 }
 

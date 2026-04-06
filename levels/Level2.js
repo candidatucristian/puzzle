@@ -10,6 +10,8 @@ class Level2 extends Phaser.Scene {
 
   preload() {
     this.load.image("bg", "assets/images/background.png");
+    this.load.image("leaf", "assets/images/leaf.png");
+    this.load.audio("wateringplant", "assets/sounds/wateringplant.mp3");
   }
 
   create() {
@@ -25,7 +27,7 @@ class Level2 extends Phaser.Scene {
       .setDepth(-10);
 
     this.statusText = this.add
-      .text(width / 2, 50, "Water the plant to uncover its pattern.", {
+      .text(width / 2, 50, "Thirsty flower", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "22px",
         color: "#aaaaaa",
@@ -54,6 +56,7 @@ class Level2 extends Phaser.Scene {
     this.isAnimating = false;
     this.currentStep = 0;
     this.fibSeq = [1, 1, 2, 3, 5];
+    this.canPour = true; // Flag pentru a preveni udarea repetată din greșeală
 
     // ── Container centrat puțin mai jos ───────────────────────────────────
     this.mainContainer = this.add.container(width / 2, height / 2 + 80);
@@ -85,14 +88,14 @@ class Level2 extends Phaser.Scene {
     const nT = { x: 10, y: -210 }; // vârf trunchi
     const nBR = { x: 130, y: -120 }; // crengă dreapta jos
     const nBL = { x: -120, y: -285 }; // crengă stânga sus
-    const nBR2 = { x: 110, y: -295 }; // crengă dreapta sus
+    const nBR2 = { x: 75, y: -360 }; // crengă dreapta sus (mai lungă, mult mai în sus)
 
     this.segments = [
       { from: n0, to: nMid, cp: { x: -5, y: n0.y } }, // seg0
       { from: nMid, to: nT, cp: { x: 15, y: nMid.y } }, // seg1
       { from: nMid, to: nBR, cp: { x: 90, y: nMid.y } }, // seg2
       { from: nT, to: nBL, cp: { x: -80, y: nT.y } }, // seg3
-      { from: nT, to: nBR2, cp: { x: 80, y: nT.y } }, // seg4
+      { from: nT, to: nBR2, cp: { x: 50, y: -270 } }, // seg4
     ];
 
     // Grosimea fiecărui segment (trunchiul e mai gros)
@@ -101,9 +104,20 @@ class Level2 extends Phaser.Scene {
     // Graphics per segment
     this.segGfx = this.segments.map(() => this.add.graphics());
 
-    // ── Ghiveci ───────────────────────────────────────────────────────────
+    // ── Plant Container (Draggable) - Mutat mult mai în stânga ─────────────
+    this.plantContainer = this.add.container(-220, 0);
+    // Setăm o zonă de hit generoasă care să acopere ghiveciul și ramurile
+    this.plantContainer.setInteractive(
+      new Phaser.Geom.Rectangle(-100, -380, 200, 550),
+      Phaser.Geom.Rectangle.Contains,
+    );
+    this.plantContainer.input.cursor = "grab";
+    this.input.setDraggable(this.plantContainer);
+
     this.potGfx = this.add.graphics();
     this.drawPot(this.potGfx);
+
+    this.plantContainer.add([this.potGfx, ...this.segGfx]);
 
     // ══════════════════════════════════════════════════════════════════════
     // FRUNZE — definite manual, niciuna nu se suprapune
@@ -131,35 +145,58 @@ class Level2 extends Phaser.Scene {
         { segIdx: 3, t: 0.9, ox: 0, oy: 0, angle: -70, scale: 0.85 },
       ],
 
-      // ── Udare 5 → 5 frunze pe seg4 + seg1 ───────────────────────────
+      // ── Udare 5 → 5 frunze pe seg4 (toate pe aceeași creangă) ──────
       [
-        { segIdx: 4, t: 0.25, ox: 0, oy: 0, angle: 20, scale: 0.8 },
-        { segIdx: 4, t: 0.55, ox: 0, oy: 0, angle: 45, scale: 0.8 },
-        { segIdx: 4, t: 0.85, ox: 0, oy: 0, angle: 70, scale: 0.8 },
-        { segIdx: 1, t: 0.75, ox: 0, oy: 0, angle: -40, scale: 0.85 },
-        { segIdx: 1, t: 0.95, ox: 0, oy: 0, angle: 25, scale: 0.85 },
+        { segIdx: 4, t: 0.18, ox: 0, oy: 0, angle: 20, scale: 0.75 },
+        { segIdx: 4, t: 0.38, ox: 0, oy: 0, angle: -15, scale: 0.75 },
+        { segIdx: 4, t: 0.58, ox: 0, oy: 0, angle: 35, scale: 0.75 },
+        { segIdx: 4, t: 0.78, ox: 0, oy: 0, angle: -5, scale: 0.75 },
+        { segIdx: 4, t: 0.96, ox: 0, oy: 0, angle: 45, scale: 0.75 },
       ],
     ];
 
     // ── Galeată ──────────────────────────────────────────────────────────
-    this.bucketContainer = this.add.container(195, 10);
-    this.bucketContainer
-      .setSize(100, 100)
-      .setInteractive({ cursor: "pointer" });
+    // Mutăm găleata mult mai în dreapta, departe de ghiveci
+    this.bucketContainer = this.add.container(260, 30);
+    this.bucketContainer.setSize(100, 100).setInteractive({ cursor: "grab" });
     this.bucketGfx = this.add.graphics();
     this.waterFillGfx = this.add.graphics();
     this.drawBucket(this.bucketGfx, this.waterFillGfx, 1.0);
     this.bucketContainer.add([this.waterFillGfx, this.bucketGfx]);
+    this.input.setDraggable(this.bucketContainer);
 
     // Asamblăm containerul
-    this.mainContainer.add([this.potGfx, ...this.segGfx, this.bucketContainer]);
+    this.mainContainer.add([this.plantContainer, this.bucketContainer]);
 
-    // ── Click găleată ─────────────────────────────────────────────────────
-    this.bucketContainer.on("pointerdown", () => {
-      if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
-      this.isAnimating = true;
+    // ── Drag Handlers ─────────────────────────────────────────────────────
+    this.input.on("dragstart", (pointer, gameObject) => {
+      if (this.isSolved || this.isAnimating) return;
+      this.mainContainer.bringToTop(gameObject); // Aduce obiectul selectat deasupra
       if (window.playUIClick) window.playUIClick();
-      this.pourAndGrow();
+    });
+
+    this.input.on("drag", (pointer, gameObject, dragX, dragY) => {
+      if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
+      gameObject.x = dragX;
+      gameObject.y = dragY;
+
+      // Verificăm distanța pentru a porni udarea (Snap area)
+      let dist = Phaser.Math.Distance.Between(
+        this.bucketContainer.x,
+        this.bucketContainer.y,
+        this.plantContainer.x + 130,
+        this.plantContainer.y - 20, // Punctul perfect unde trebuie să ajungă găleata
+      );
+
+      // Jucătorul trebuie să îndepărteze găleata la cel puțin 100px ca să o poată folosi din nou
+      if (dist > 100) {
+        this.canPour = true;
+      }
+
+      if (dist < 60 && this.canPour) {
+        this.canPour = false;
+        this.triggerPour();
+      }
     });
 
     // ── Resize ────────────────────────────────────────────────────────────
@@ -197,62 +234,119 @@ class Level2 extends Phaser.Scene {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  triggerPour() {
+    if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
+    this.isAnimating = true;
+
+    // Oprim drag-ul în timpul udării ca să nu se blocheze interacțiunea
+    this.input.setDraggable(this.bucketContainer, false);
+    this.input.setDraggable(this.plantContainer, false);
+
+    if (this.cache.audio.exists("wateringplant")) {
+      this.sound.play("wateringplant", {
+        volume: 1,
+      });
+    }
+
+    this.pourAndGrow();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Ghiveci gol, contur alb
   // ─────────────────────────────────────────────────────────────────────────
   drawPot(g) {
     g.clear();
-    g.lineStyle(5, 0xffffff, 1);
-    // Corp
+
+    // ── Ghiveci Simplificat (Design 2D Minimalist) ──
+    g.lineStyle(4, 0xffffff, 1); // Linie puțin mai groasă pentru claritate
+
+    // Buza de sus (Rim plat)
+    g.strokeRect(-60, 50, 120, 12);
+
+    // Corpul principal (Trapez curat)
     g.beginPath();
-    g.moveTo(-58, 62);
-    g.lineTo(58, 62);
-    g.lineTo(40, 155);
-    g.lineTo(-40, 155);
+    g.moveTo(-52, 62); // Pornește imediat de sub buză
+    g.lineTo(52, 62);
+    g.lineTo(35, 150);
+    g.lineTo(-35, 150);
     g.closePath();
     g.strokePath();
-    // Bordura de sus
+
+    // Pământul (O singură linie orizontală unde intră tulpina)
+    g.lineStyle(2, 0xffffff, 0.6);
     g.beginPath();
-    g.moveTo(-65, 55);
-    g.lineTo(65, 55);
+    g.moveTo(-58, 56);
+    g.lineTo(58, 56);
     g.strokePath();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Galeată stil schiță
+  // Găleată Clasică cu Apă (Classic Water Bucket)
   // ─────────────────────────────────────────────────────────────────────────
   drawBucket(gOutline, gWater, waterRatio) {
     gOutline.clear();
     gWater.clear();
-    const r = 34;
-    const waterH = r * 2 * waterRatio;
-    const waterTop = r - waterH;
-    const pts = [];
-    for (let a = 0; a <= 360; a += 8) {
-      const rad = Phaser.Math.DegToRad(a);
-      const px = Math.cos(rad) * r;
-      const py = Math.sin(rad) * r;
-      if (py >= waterTop) pts.push({ x: px, y: py });
-    }
-    if (pts.length > 1) {
-      gWater.fillStyle(0x4488dd, 0.88);
-      gWater.fillPoints(pts, true);
-    }
-    gOutline.lineStyle(4, 0xffffff, 1);
-    gOutline.strokeCircle(0, 0, r);
-    // Cioc
+
+    const drawQuadCurve = (g, x0, y0, cx, cy, x1, y1) => {
+      g.moveTo(x0, y0);
+      for (let i = 1; i <= 16; i++) {
+        let t = i / 16;
+        let xt = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx + t * t * x1;
+        let yt = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * cy + t * t * y1;
+        g.lineTo(xt, yt);
+      }
+    };
+
+    gOutline.lineStyle(2, 0xffffff, 1); // Linii mult mai fine (2px)
+
+    // ── Mânerul (Handle) ──
     gOutline.beginPath();
-    gOutline.moveTo(-r + 5, -6);
-    gOutline.lineTo(-r - 20, -20);
-    gOutline.lineTo(-r - 28, -8);
+    drawQuadCurve(gOutline, -35, -35, 0, -90, 35, -35);
     gOutline.strokePath();
-    // Mâner
-    gOutline.lineStyle(3, 0xffffff, 1);
+
+    // ── Corpul Găleții (Body) ──
     gOutline.beginPath();
-    gOutline.moveTo(r - 4, -8);
-    gOutline.lineTo(r + 20, -20);
-    gOutline.lineTo(r + 24, -6);
-    gOutline.lineTo(r + 16, 6);
+    gOutline.moveTo(-35, -35); // Marginea stânga-sus
+    gOutline.lineTo(-25, 40); // Baza stânga-jos
+    gOutline.lineTo(25, 40); // Baza dreapta-jos
+    gOutline.lineTo(35, -35); // Marginea dreapta-sus
     gOutline.strokePath();
+
+    // ── Fundul Găleții (Curbură inferioară) ──
+    gOutline.beginPath();
+    drawQuadCurve(gOutline, -25, 40, 0, 50, 25, 40);
+    gOutline.strokePath();
+
+    // ── Gura Găleții (Deschiderea de sus) ──
+    gOutline.beginPath();
+    drawQuadCurve(gOutline, -35, -35, 0, -20, 35, -35); // Buza din față
+    gOutline.strokePath();
+
+    gOutline.lineStyle(1.5, 0xffffff, 0.5); // Buza din spate mai fină
+    gOutline.beginPath();
+    drawQuadCurve(gOutline, -35, -35, 0, -50, 35, -35);
+    gOutline.strokePath();
+
+    // ── Apa din interior ──
+    if (waterRatio > 0.02) {
+      let wH = 75 * waterRatio; // Înălțimea totală a apei (de la 40 până la -35)
+      let wY = 40 - wH;
+      let t = (40 - wY) / 75; // Procentul înălțimii
+      let wX = 25 + t * 10; // Lățimea apei în funcție de con
+
+      gWater.fillStyle(0x00e5ff, 0.6);
+      gWater.beginPath();
+      gWater.moveTo(-wX, wY);
+      gWater.lineTo(wX, wY);
+      gWater.lineTo(25, 40);
+      gWater.lineTo(-25, 40);
+      gWater.closePath();
+      gWater.fillPath();
+
+      // Efect de suprafață a apei
+      gWater.fillStyle(0x00e5ff, 0.9);
+      gWater.fillEllipse(0, wY, wX * 2, wX * 0.35);
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -272,98 +366,6 @@ class Level2 extends Phaser.Scene {
       x: this.qBez(t, seg.from.x, cp.x, seg.to.x),
       y: this.qBez(t, seg.from.y, cp.y, seg.to.y),
     };
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // FRUNZĂ MARE — culoare teal/jade cu contur alb
-  // len = 90px, lată și elegantă
-  // angleDeg: 0 = vârf sus; 40 = vârf dreapta-sus
-  // ─────────────────────────────────────────────────────────────────────────
-  drawLeafAt(gfx, ox, oy, angleDeg, scale = 1) {
-    const len = 90 * scale;
-    const wide = 32 * scale;
-    const STEPS = 24;
-
-    const rad = Phaser.Math.DegToRad(angleDeg);
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-    const R = (lx, ly) => ({
-      x: ox + lx * cos - ly * sin,
-      y: oy + lx * sin + ly * cos,
-    });
-
-    const base = R(0, 0);
-    const tip = R(0, -len);
-    // Punct control asimetric: bombăm mai mult pe stânga (pare mai naturală)
-    const cpL = R(-wide, -len * 0.42);
-    const cpR = R(wide * 0.75, -len * 0.42);
-
-    // Poligon
-    const pts = [];
-    for (let s = 0; s <= STEPS; s++) {
-      const t = s / STEPS;
-      pts.push({
-        x: this.qBez(t, base.x, cpL.x, tip.x),
-        y: this.qBez(t, base.y, cpL.y, tip.y),
-      });
-    }
-    for (let s = 1; s <= STEPS; s++) {
-      const t = s / STEPS;
-      pts.push({
-        x: this.qBez(t, tip.x, cpR.x, base.x),
-        y: this.qBez(t, tip.y, cpR.y, base.y),
-      });
-    }
-
-    // Fill: gradient simulat cu două straturi
-    // Strat interior mai deschis (highlight)
-    gfx.fillStyle(0x1aaf7a, 1); // jade / teal vibrant
-    gfx.fillPoints(pts, true);
-
-    // Contur alb gros — stilul hand-drawn
-    gfx.lineStyle(4, 0xffffff, 1);
-    gfx.beginPath();
-    gfx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) gfx.lineTo(pts[i].x, pts[i].y);
-    gfx.closePath();
-    gfx.strokePath();
-
-    // Nervul central alb
-    const nv1 = R(0, -len * 0.7);
-    gfx.lineStyle(2.5, 0xffffff, 0.7);
-    gfx.beginPath();
-    gfx.moveTo(base.x, base.y);
-    gfx.lineTo(nv1.x, nv1.y);
-    gfx.strokePath();
-
-    // 2 nervuri laterale mici
-    const nSideL1 = R(-wide * 0.35, -len * 0.3);
-    const nSideL2 = R(-wide * 0.45, -len * 0.55);
-    const nSideR1 = R(wide * 0.25, -len * 0.3);
-    const nSideR2 = R(wide * 0.3, -len * 0.55);
-    const nBase30 = R(0, -len * 0.28);
-    const nBase52 = R(0, -len * 0.5);
-
-    gfx.lineStyle(1.5, 0xffffff, 0.45);
-    gfx.beginPath();
-    gfx.moveTo(nBase30.x, nBase30.y);
-    gfx.lineTo(nSideL1.x, nSideL1.y);
-    gfx.strokePath();
-
-    gfx.beginPath();
-    gfx.moveTo(nBase52.x, nBase52.y);
-    gfx.lineTo(nSideL2.x, nSideL2.y);
-    gfx.strokePath();
-
-    gfx.beginPath();
-    gfx.moveTo(nBase30.x, nBase30.y);
-    gfx.lineTo(nSideR1.x, nSideR1.y);
-    gfx.strokePath();
-
-    gfx.beginPath();
-    gfx.moveTo(nBase52.x, nBase52.y);
-    gfx.lineTo(nSideR2.x, nSideR2.y);
-    gfx.strokePath();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -392,44 +394,104 @@ class Level2 extends Phaser.Scene {
     const step = this.currentStep;
     const leavesToSpawn = this.fibSeq[step];
 
-    // Apa scade
-    const waterRatio = 1 - (step + 1) / 5;
-    this.drawBucket(
-      this.bucketGfx,
-      this.waterFillGfx,
-      Math.max(0.02, waterRatio),
-    );
-
-    // Picătură animată
-    const dropGfx = this.add.graphics();
-    dropGfx.fillStyle(0x88ccff, 1);
-    dropGfx.fillCircle(0, 0, 8);
-    dropGfx.setPosition(
-      this.bucketContainer.x - 45,
-      this.bucketContainer.y + 14,
-    );
-    this.mainContainer.add(dropGfx);
-
-    this.tweens.add({
-      targets: this.bucketContainer,
-      angle: -52,
-      x: this.bucketContainer.x - 50,
-      y: this.bucketContainer.y - 10,
-      duration: 220,
-      yoyo: true,
-      hold: 100,
+    // Animăm nivelul apei scăzând fluid din carafă
+    this.tweens.addCounter({
+      from: 1 - step / 5,
+      to: 1 - (step + 1) / 5,
+      duration: 1200,
+      ease: "Sine.easeInOut",
+      onUpdate: (tween) => {
+        this.drawBucket(this.bucketGfx, this.waterFillGfx, tween.getValue());
+      },
     });
 
+    // Găleata se ridică, se apleacă și toarnă apa!
     this.tweens.add({
-      targets: dropGfx,
-      y: dropGfx.y + 140,
-      alpha: 0,
-      duration: 460,
-      ease: "Power1",
+      targets: this.bucketContainer,
+      angle: -80, // Înclinată puternic pentru a curge de pe buză
+      x: this.plantContainer.x + 130, // Snap precis raportat la plantă
+      y: this.plantContainer.y - 20,
+      duration: 400,
+      ease: "Sine.easeInOut",
       onComplete: () => {
-        dropGfx.destroy();
-        this.growCurrentSegment(step, leavesToSpawn);
+        // Așteptăm 1 secundă cât curge apa, apoi o trimitem înapoi în siguranță
+        this.time.delayedCall(1000, () => {
+          this.tweens.add({
+            targets: this.bucketContainer,
+            angle: 0,
+            x: this.plantContainer.x + 380, // Se retrage mult mai departe în dreapta
+            y: this.plantContainer.y + 30,
+            duration: 400,
+            ease: "Sine.easeInOut",
+            onComplete: () => {
+              this.canPour = true; // Resetăm permisiunea de udare
+            },
+          });
+        });
       },
+    });
+
+    // Cascadă (Stream Continuu): Zeci de particule care curg una după alta rapid
+    this.time.delayedCall(400, () => {
+      let dropsPoured = 0;
+      this.time.addEvent({
+        delay: 15, // Viteza super mare a șuvoiului
+        repeat: 55, // Creează 56 de particule total (durata 825ms)
+        callback: () => {
+          // Calculăm rotația vârfului sticlei din spațiul local în cel global
+          let rad = Phaser.Math.DegToRad(this.bucketContainer.angle);
+          let cos = Math.cos(rad);
+          let sin = Math.sin(rad);
+
+          // Punctul buzei găleții de unde curge apa (stânga sus: -35, -35)
+          let lipX = this.bucketContainer.x + (-35 * cos - -35 * sin);
+          let lipY = this.bucketContainer.y + (-35 * sin + -35 * cos);
+
+          const dropGfx = this.add.graphics();
+          dropGfx.fillStyle(0x00e5ff, 0.9); // Neon cyan water
+          dropGfx.fillEllipse(
+            0,
+            0,
+            Phaser.Math.Between(3, 5),
+            Phaser.Math.Between(6, 12),
+          );
+
+          // Dispersie restrânsă (șuvoi de găleată)
+          dropGfx.setPosition(
+            lipX + Phaser.Math.Between(-5, 5),
+            lipY + Phaser.Math.Between(-5, 5),
+          );
+          dropGfx.rotation = Phaser.Math.DegToRad(
+            -15 + Phaser.Math.Between(-5, 5),
+          );
+          this.mainContainer.add(dropGfx);
+
+          const targetX = this.plantContainer.x + Phaser.Math.Between(-15, 15); // Un șuvoi mai direcționat raportat la plantă
+          const targetY = this.plantContainer.y + 65;
+
+          this.tweens.add({
+            targets: dropGfx,
+            x: targetX,
+            duration: 350 + Phaser.Math.Between(0, 100),
+            ease: "Linear",
+          });
+
+          this.tweens.add({
+            targets: dropGfx,
+            y: targetY,
+            duration: 350 + Phaser.Math.Between(0, 100),
+            ease: "Quad.easeIn",
+            alpha: { from: 1, to: 0 },
+            onComplete: () => {
+              dropGfx.destroy();
+              dropsPoured++;
+              if (dropsPoured === 56) {
+                this.growCurrentSegment(step, leavesToSpawn);
+              }
+            },
+          });
+        },
+      });
     });
   }
 
@@ -470,17 +532,50 @@ class Level2 extends Phaser.Scene {
       const seg = this.segments[d.segIdx];
       const pos = this.getSegPoint(seg, d.t);
 
-      const leafGfx = this.add.graphics();
-      leafGfx.setPosition(pos.x + d.ox, pos.y + d.oy);
-      this.drawLeafAt(leafGfx, 0, 0, d.angle, d.scale || 1);
-      leafGfx.setScale(0);
+      // Încărcăm imaginea leaf.png în loc de grafica desenată
+      const leafImg = this.add.image(pos.x + d.ox, pos.y + d.oy, "leaf");
 
-      this.mainContainer.add(leafGfx);
+      const BASE_SCALE = 0.17; // Frunze cu 15% mai mici față de versiunea anterioară
+      const ANGLE_OFFSET = -45; // Compensăm orientarea stânga-jos -> dreapta-sus
 
+      // Tulpina este în stânga-jos. Setăm originea (pivotul) exact acolo!
+      leafImg.setOrigin(0.05, 0.95);
+
+      leafImg.setAngle(d.angle + ANGLE_OFFSET);
+      leafImg.baseAngle = d.angle + ANGLE_OFFSET; // Salvăm unghiul inițial pentru animație
+      leafImg.setScale(0); // Pornește invizibilă
+
+      // ── Setăm Frunza Interactivă ──
+      leafImg.setInteractive({ cursor: "pointer" });
+
+      // Animație de swing (clătinare) la Click
+      leafImg.on("pointerdown", () => {
+        if (leafImg.isSwinging) return;
+        leafImg.isSwinging = true;
+
+        this.tweens.add({
+          targets: leafImg,
+          angle: leafImg.baseAngle + Phaser.Math.Between(12, 22),
+          duration: 150,
+          yoyo: true,
+          repeat: 1, // Se duce, se întoarce de 2 ori (clătinare)
+          ease: "Sine.easeInOut",
+          onComplete: () => {
+            leafImg.angle = leafImg.baseAngle; // Reset exact la loc
+            leafImg.isSwinging = false;
+          },
+        });
+      });
+
+      // SECRETUL pentru un aspect natural: Adăugăm frunza la indexul 0 (în SPATELE ramurilor).
+      // Astfel, capătul tăiat al codiței este acoperit de grosimea ramurii, părând că a crescut direct din ea!
+      this.plantContainer.addAt(leafImg, 0);
+
+      const finalScale = (d.scale || 1) * BASE_SCALE;
       this.tweens.add({
-        targets: leafGfx,
-        scaleX: 1,
-        scaleY: 1,
+        targets: leafImg,
+        scaleX: finalScale,
+        scaleY: finalScale,
         duration: 500,
         delay: i * 220,
         ease: "Back.easeOut",
@@ -488,7 +583,12 @@ class Level2 extends Phaser.Scene {
     }
 
     const totalDelay = (defs.length - 1) * 220 + 510;
-    this.time.delayedCall(totalDelay, onDone);
+    this.time.delayedCall(totalDelay, () => {
+      // Reactivăm posibilitatea de a trage de obiecte la finalul animației
+      this.input.setDraggable(this.bucketContainer, true);
+      this.input.setDraggable(this.plantContainer, true);
+      onDone();
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -496,30 +596,10 @@ class Level2 extends Phaser.Scene {
     this.isSolved = true;
     if (window.playSuccess) window.playSuccess(this);
 
-    this.statusText.setText("Fibonacci sequence complete. Code revealed.");
+    this.statusText.setText(
+      "Count the leaves of each branch. Name the sequence.",
+    );
     this.statusText.setColor("#1aaf7a");
-
-    const finalWord = this.add
-      .text(60, -175, "FIBO", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "60px",
-        color: "#ffffff",
-        fontStyle: "bold",
-        shadow: { blur: 22, color: "#1aaf7a", fill: true },
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setScale(0.6);
-
-    this.mainContainer.add(finalWord);
-
-    this.tweens.add({
-      targets: finalWord,
-      alpha: 1,
-      scale: 1.1,
-      duration: 1000,
-      ease: "Back.easeOut",
-    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
