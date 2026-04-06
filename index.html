@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Puzzle Prototype - Room 1</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Left Sidebar -->
+    <div id="sidebar">
+      <h1>Spooky Puzzle</h1>
+      <button class="menu-btn" id="btn-new">New Game</button>
+      <button class="menu-btn" id="btn-options">Options</button>
+    </div>
+
+    <!-- Game Area -->
+    <div id="game-wrapper">
+      <!-- Start Screen Overlay -->
+      <div id="start-screen">
+        <button id="btn-start-game" class="menu-btn"></button>
+      </div>
+
+      <div id="game-container"></div>
+
+      <!-- Updated Control Panel Input Area -->
+      <div id="input-area">
+        <div class="input-container">
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="level-code"
+              placeholder="CODE"
+              autocomplete="off"
+            />
+            <button id="btn-submit">EXECUTE</button>
+          </div>
+        </div>
+        <button id="btn-info" class="menu-btn info-button">INFO</button>
+      </div>
+    </div>
+
+    <!-- Right Sidebar Wrapper (toggle button + sliding panel) -->
+    <div id="right-sidebar-wrapper">
+      <!-- Toggle button always visible -->
+      <button id="btn-toggle-levels" title="Toggle Levels">◀</button>
+
+      <!-- Sliding levels panel -->
+      <div id="right-sidebar">
+        <h1>Levels</h1>
+        <div id="levels-grid"></div>
+      </div>
+    </div>
+
+    <!-- Options Modal -->
+    <div id="options-modal" class="hidden">
+      <div class="modal-content">
+        <h2>OPTIONS</h2>
+        <div class="slider-group">
+          <label>MUSIC VOLUME</label>
+          <input
+            type="range"
+            id="music-slider"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+        <div class="slider-group">
+          <label>SOUND EFFECTS</label>
+          <input
+            type="range"
+            id="sfx-slider"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.8"
+          />
+        </div>
+        <div class="modal-actions">
+          <button id="btn-mute" class="menu-btn">🔊 MUTE</button>
+          <button id="btn-close-options" class="menu-btn">CLOSE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="hidden">
+      <div class="modal-content">
+        <h2>LEVEL INFO</h2>
+        <p
+          id="info-text"
+          style="
+            text-align: center;
+            color: #cccccc;
+            line-height: 1.6;
+            font-size: 18px;
+          "
+        ></p>
+        <div class="modal-actions">
+          <button id="btn-close-info" class="menu-btn" style="width: 100%">
+            CLOSE
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game scripts -->
+    <script src="levels/Level1.js"></script>
+    <script src="levels/Level2.js"></script>
+    <script src="levels/Level3.js"></script>
+    <script src="levels/Level4.js"></script>
+    <script src="levels/Level5.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/ui.js"></script>
+  </body>
+</html>

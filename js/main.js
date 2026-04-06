@@ -1,0 +1,164 @@
+// ── Web Audio API fallback sounds ──
+// These generate sounds programmatically so no .mp3 files are needed.
+// If real audio files exist in assets/, Phaser will use those instead.
+
+const AudioFX = (() => {
+  let ctx = null;
+
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return ctx;
+  }
+
+  function playClick() {
+    if (window.GameAudio && window.GameAudio.muted) return;
+    const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
+    try {
+      const ac = getCtx();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(600, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, ac.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.3 * vol, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.08);
+    } catch (e) {
+      console.warn("AudioFX.playClick failed:", e);
+    }
+  }
+
+  function playSuccess() {
+    if (window.GameAudio && window.GameAudio.muted) return;
+    const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
+    try {
+      const ac = getCtx();
+      // Play a short ascending arpeggio: C5 E5 G5 C6
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = "sine";
+        const t = ac.currentTime + i * 0.12;
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.25 * vol, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
+    } catch (e) {
+      console.warn("AudioFX.playSuccess failed:", e);
+    }
+  }
+
+  function playError() {
+    if (window.GameAudio && window.GameAudio.muted) return;
+    const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
+    try {
+      const ac = getCtx();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type = "sawtooth"; // Ton mai abraziv pentru eroare
+      osc.frequency.setValueAtTime(150, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(50, ac.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.3 * vol, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.3);
+    } catch (e) {
+      console.warn("AudioFX.playError failed:", e);
+    }
+  }
+
+  return { playClick, playSuccess, playError };
+})();
+
+// ── Global Audio Helpers ──
+window.initGlobalAudio = (scene) => {
+  if (!window.GameAudio.bgmInstance) {
+    try {
+      if (scene.cache.audio.exists("bgm")) {
+        window.GameAudio.bgmInstance = scene.sound.add("bgm", {
+          loop: true,
+          volume: window.GameAudio.musicVol,
+        });
+        window.GameAudio.bgmInstance.play();
+      }
+    } catch (e) {}
+  }
+  scene.sound.setMute(window.GameAudio.muted);
+};
+
+window.playUIClick = () => {
+  if (window.GameAudio && window.GameAudio.muted) return;
+  try {
+    if (window.mainScene && window.mainScene.cache.audio.exists("ui_click")) {
+      window.mainScene.sound.play("ui_click", {
+        volume: window.GameAudio.sfxVol,
+      });
+    } else {
+      AudioFX.playClick();
+    }
+  } catch (e) {}
+};
+
+window.playErrorSound = () => {
+  if (window.GameAudio && window.GameAudio.muted) return;
+  try {
+    if (window.mainScene && window.mainScene.cache.audio.exists("error")) {
+      window.mainScene.sound.play("error", { volume: window.GameAudio.sfxVol });
+    } else {
+      AudioFX.playError();
+    }
+  } catch (e) {}
+};
+
+window.playClick = (scene) => {
+  if (window.GameAudio && window.GameAudio.muted) return;
+  const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
+  try {
+    if (scene.cache.audio.exists("click")) {
+      scene.sound.play("click", { volume: vol });
+      return;
+    }
+  } catch (e) {}
+  AudioFX.playClick();
+};
+
+window.playSuccess = (scene) => {
+  if (window.GameAudio && window.GameAudio.muted) return;
+  const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
+  try {
+    if (scene.cache.audio.exists("nextlevel")) {
+      scene.sound.play("nextlevel", { volume: vol });
+      return;
+    }
+  } catch (e) {}
+  AudioFX.playSuccess();
+};
+
+// ── Phaser Config ──
+const config = {
+  type: Phaser.AUTO,
+  backgroundColor: "#ffffff", // Setăm fundalul de bază la alb
+  parent: "game-container", // Mandatory la nivel de root pentru elementele DOM în Phaser
+  dom: {
+    createContainer: true, // ← asta e tot ce trebuie adăugat
+  },
+  scale: {
+    mode: Phaser.Scale.NONE,
+    parent: "game-container",
+    width: "100%",
+    height: "100%",
+  },
+  scene: [Level1, Level2, Level3, Level4, Level5],
+};
+
+const game = new Phaser.Game(config);
