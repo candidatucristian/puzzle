@@ -114,7 +114,7 @@ btnSubmit.addEventListener("click", () => {
   ) {
     isCorrect = true;
     targetLevel = 3;
-  } else if (window.currentLevel === 3 && code === "SYNC") {
+  } else if (window.currentLevel === 3 && (code === "5" || code === "FIVE")) {
     isCorrect = true;
     targetLevel = 4;
   } else if (window.currentLevel === 4 && code === "POLAR") {
@@ -215,7 +215,7 @@ const infoText = document.getElementById("info-text");
 const levelHints = {
   1: "SOUND REQUIRED.\nInteract with the environment to find hidden clues.",
   2: "NATURE'S SEQUENCE.\nWater the plant and observe the mathematical pattern of its leaves.",
-  3: "ASYMMETRICAL MIRROR.\nUse the arrow keys or swipe on the screen. Try to build a '32' block simultaneously on both halves.",
+  3: "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
   4: "POLARITY.\nOpposites attract to create neutral cores. Cores can absorb one extra element. Build 3 neutral cores to win.",
   5: "CASCADING CHAINS.\nTiles automatically continue merging if they slide into identical values. Trigger chain reactions to build a 64 tile.",
 };

@@ -39,7 +39,7 @@ class Level1 extends Phaser.Scene {
       .text(width / 2, 100, "Open the safe to find the missing word", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "24px",
-        color: "#000000",
+        color: "#ffffff",
       })
       .setOrigin(0.5);
 
@@ -47,7 +47,7 @@ class Level1 extends Phaser.Scene {
       .text(width - 30, 30, "Level 1", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
-        color: "#000000",
+        color: "#ffffff",
       })
       .setOrigin(1, 0)
       .setAlpha(0);
@@ -67,7 +67,7 @@ class Level1 extends Phaser.Scene {
       .text(width / 2, height - 180, "337", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "64px",
-        color: "#000000",
+        color: "#ffffff",
       })
       .setOrigin(0.5)
       .setVisible(false);

@@ -25,11 +25,15 @@ class Level3 extends Phaser.Scene {
       .setDisplaySize(width, height)
       .setDepth(-10);
 
+    // ── Room Background (Sketched) ──
+    this.roomGfx = this.add.graphics().setDepth(-5);
+    this.drawRoom(this.roomGfx, width, height);
+
     this.statusText = this.add
-      .text(width / 2, 50, "Mirror the grid. Build 32 on both sides.", {
+      .text(width / 2, 50, "Stack the plates to reveal the hidden figure.", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
-        color: "#aaaaaa",
+        color: "#000000",
         letterSpacing: 1,
       })
       .setOrigin(0.5);
@@ -38,7 +42,7 @@ class Level3 extends Phaser.Scene {
       .text(width - 30, 30, "Level 3", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
-        color: "#ffffff",
+        color: "#000000",
       })
       .setOrigin(1, 0)
       .setAlpha(0);
@@ -50,419 +54,284 @@ class Level3 extends Phaser.Scene {
       ease: "Power2",
     });
 
-    this.boardSize = 4;
-    this.tileSize = 70;
-    this.gap = 10;
-    this.board = [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ];
-
-    this.boardContainer = this.add.container(width / 2, height / 2 + 20);
-    this.tileGroup = this.add.group();
-
-    this.drawBackground();
-
-    // Starea asimetrică inițială forțează jucătorul să fie atent la fuziunile independente
-    this.board[2][0] = 4;
-    this.board[2][3] = 2;
-    this.board[3][1] = 2;
-    this.board[3][2] = 4;
-
+    // ── Puzzle State ──
     this.isSolved = false;
-    this.drawBoard();
+    this.pieces = [];
 
-    // ── Suport Input Keyboard ──
-    this.input.keyboard.on("keydown-UP", () => this.handleMove("UP"));
-    this.input.keyboard.on("keydown-DOWN", () => this.handleMove("DOWN"));
-    this.input.keyboard.on("keydown-LEFT", () => this.handleMove("LEFT"));
-    this.input.keyboard.on("keydown-RIGHT", () => this.handleMove("RIGHT"));
-    this.input.keyboard.on("keydown-W", () => this.handleMove("UP"));
-    this.input.keyboard.on("keydown-S", () => this.handleMove("DOWN"));
-    this.input.keyboard.on("keydown-A", () => this.handleMove("LEFT"));
-    this.input.keyboard.on("keydown-D", () => this.handleMove("RIGHT"));
+    const cx = width / 2;
+    const cy = height / 2 + 40;
+    this.targetPos = { x: cx, y: cy };
 
-    // ── Suport Input Swipe (Touch/Mouse) ──
-    this.input.on("pointerup", (pointer) => {
-      if (this.isSolved) return;
-      let dx = pointer.upX - pointer.downX;
-      let dy = pointer.upY - pointer.downY;
-      if (Math.abs(dx) > 40 || Math.abs(dy) > 40) {
-        if (Math.abs(dx) > Math.abs(dy)) {
-          this.handleMove(dx > 0 ? "RIGHT" : "LEFT");
-        } else {
-          this.handleMove(dy > 0 ? "DOWN" : "UP");
-        }
+    this.dropZoneGfx = this.add.graphics();
+    this.drawDropZone();
+
+    // Răspândim cele 5 piese în jurul centrului
+    const angles = [0, 72, 144, 216, 288];
+    for (let i = 0; i < 5; i++) {
+      let rad = Phaser.Math.DegToRad(angles[i] + Phaser.Math.Between(-15, 15));
+      let dist = Phaser.Math.Between(160, 220);
+      let px = cx + Math.cos(rad) * dist;
+      let py = cy + Math.sin(rad) * dist;
+
+      // Le ținem în limitele ecranului
+      px = Phaser.Math.Clamp(px, 80, width - 80);
+      py = Phaser.Math.Clamp(py, 120, height - 80);
+
+      this.createPiece(i, px, py);
+    }
+
+    // ── Drag Logic ──
+    this.input.on("dragstart", (pointer, gameObject) => {
+      if (this.isSolved || gameObject.isSnapped) return;
+      this.children.bringToTop(gameObject);
+      if (window.playClick) window.playClick(this);
+    });
+
+    this.input.on("drag", (pointer, gameObject, dragX, dragY) => {
+      if (this.isSolved || gameObject.isSnapped) return;
+      gameObject.x = dragX;
+      gameObject.y = dragY;
+    });
+
+    this.input.on("dragend", (pointer, gameObject) => {
+      if (this.isSolved || gameObject.isSnapped) return;
+      const dist = Phaser.Math.Distance.Between(
+        gameObject.x,
+        gameObject.y,
+        this.targetPos.x,
+        this.targetPos.y,
+      );
+
+      if (dist < 50) {
+        gameObject.isSnapped = true;
+        this.input.setDraggable(gameObject, false);
+        this.tweens.add({
+          targets: gameObject,
+          x: this.targetPos.x,
+          y: this.targetPos.y,
+          duration: 150,
+          ease: "Power2",
+          onComplete: () => {
+            if (window.playClick) window.playClick(this);
+            this.checkWin();
+          },
+        });
       }
     });
 
     // ── RESIZE ──
     this.events.on("canvas_resized", (size) => {
+      const w = size.width;
+      const h = size.height;
       this.statusText.setPosition(size.width / 2, 50);
       this.levelText.setPosition(size.width - 30, 30);
-      this.boardContainer.setPosition(size.width / 2, size.height / 2 + 20);
-    });
+      this.drawRoom(this.roomGfx, w, h);
 
-    // ── FADE IN ──
-    if (!this.skipFadeIn) {
-      const fadeOverlay = this.add
-        .rectangle(0, 0, width, height, 0x000000)
-        .setOrigin(0, 0)
-        .setDepth(100);
-      const nextLvlText = this.add
-        .text(width / 2, height / 2, "Level 3...", {
-          fontFamily: '"Special Elite", monospace',
-          fontSize: "48px",
-          color: "#ffffff",
-        })
-        .setOrigin(0.5)
-        .setDepth(101);
-      this.tweens.add({
-        targets: [fadeOverlay, nextLvlText],
-        alpha: 0,
-        duration: 1000,
-        delay: 500,
-        onComplete: () => {
-          fadeOverlay.destroy();
-          nextLvlText.destroy();
-        },
+      this.targetPos = { x: w / 2, y: h / 2 + 40 };
+      this.drawDropZone();
+
+      this.pieces.forEach((p) => {
+        if (p.isSnapped) {
+          p.setPosition(this.targetPos.x, this.targetPos.y);
+        } else {
+          p.x = Phaser.Math.Clamp(p.x, 80, w - 80);
+          p.y = Phaser.Math.Clamp(p.y, 120, h - 80);
+        }
       });
-    }
+    });
   }
 
-  drawBackground() {
-    const bg = this.add.graphics();
-    const totalSize =
-      this.boardSize * this.tileSize + (this.boardSize - 1) * this.gap;
-    const offset = -totalSize / 2;
-
-    // Conturul panoului principal
-    bg.fillStyle(0x1a1a24, 1);
-    bg.fillRoundedRect(
-      offset - 15,
-      offset - 15,
-      totalSize + 30,
-      totalSize + 30,
-      10,
-    );
-
-    // Desenăm celulele goale
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 4; c++) {
-        let x = offset + c * (this.tileSize + this.gap) + this.tileSize / 2;
-        let y = offset + r * (this.tileSize + this.gap) + this.tileSize / 2;
-        bg.fillStyle(0x2a2a36, 1);
-        bg.fillRoundedRect(
-          x - this.tileSize / 2,
-          y - this.tileSize / 2,
-          this.tileSize,
-          this.tileSize,
-          8,
-        );
-      }
-    }
-
-    // Linia despărțitoare neon (Oglinda)
-    bg.lineStyle(4, 0x00ffff, 0.6);
-    bg.beginPath();
-    bg.moveTo(0, offset - 15);
-    bg.lineTo(0, offset + totalSize + 15);
-    bg.strokePath();
-
-    // Efect de glow (blur optic peste linie)
-    bg.lineStyle(10, 0x00ffff, 0.2);
-    bg.strokePath();
-
-    this.boardContainer.add(bg);
-  }
-
-  drawBoard() {
-    if (this.tileGroup) {
-      this.tileGroup.clear(true, true);
-    } else {
-      this.tileGroup = this.add.group();
-    }
-
-    const totalSize =
-      this.boardSize * this.tileSize + (this.boardSize - 1) * this.gap;
-    const offset = -totalSize / 2;
-
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 4; c++) {
-        let val = this.board[r][c];
-        if (val > 0) {
-          let x = offset + c * (this.tileSize + this.gap) + this.tileSize / 2;
-          let y = offset + r * (this.tileSize + this.gap) + this.tileSize / 2;
-
-          let color = this.getTileColor(val);
-          let tileBg = this.add
-            .rectangle(x, y, this.tileSize, this.tileSize, color.bg)
-            .setStrokeStyle(3, color.border);
-          let tileText = this.add
-            .text(x, y, val.toString(), {
-              fontFamily: '"Special Elite", monospace',
-              fontSize: val >= 100 ? "24px" : "32px",
-              color: color.text,
-              fontStyle: "bold",
-            })
-            .setOrigin(0.5);
-
-          this.tileGroup.add(tileBg);
-          this.tileGroup.add(tileText);
-          this.boardContainer.add(tileBg);
-          this.boardContainer.add(tileText);
-
-          // Animație rapidă de tip 'pop'
-          this.tweens.add({
-            targets: [tileBg, tileText],
-            scale: { from: 0.8, to: 1 },
-            duration: 120,
-            ease: "Back.easeOut",
-          });
-        }
-      }
-    }
-  }
-
-  getTileColor(val) {
-    const colors = {
-      2: { bg: 0x1e1e2c, border: 0x33334c, text: "#aaaaaa" },
-      4: { bg: 0x2d2d44, border: 0x4a4a6e, text: "#cccccc" },
-      8: { bg: 0x4c2a2a, border: 0x7c4444, text: "#ffaa88" },
-      16: { bg: 0x6e2a2a, border: 0xad4444, text: "#ff8866" },
-      32: { bg: 0x822438, border: 0xcc3355, text: "#ff6677" },
-      64: { bg: 0x9b1b36, border: 0xff2255, text: "#ff4455" },
-    };
-    return colors[val] || { bg: 0x111111, border: 0x00ffff, text: "#00ffff" };
-  }
-
-  handleMove(dir) {
-    if (this.isSolved) return;
-
-    let lines = [];
-    // Extragerea liniilor mapează direct oglindirea din puzzle (stânga vs dreapta)
-    if (dir === "UP") {
-      lines.push([
-        [0, 0],
-        [1, 0],
-        [2, 0],
-        [3, 0],
-      ]);
-      lines.push([
-        [0, 1],
-        [1, 1],
-        [2, 1],
-        [3, 1],
-      ]);
-      lines.push([
-        [0, 2],
-        [1, 2],
-        [2, 2],
-        [3, 2],
-      ]);
-      lines.push([
-        [0, 3],
-        [1, 3],
-        [2, 3],
-        [3, 3],
-      ]);
-    } else if (dir === "DOWN") {
-      lines.push([
-        [3, 0],
-        [2, 0],
-        [1, 0],
-        [0, 0],
-      ]);
-      lines.push([
-        [3, 1],
-        [2, 1],
-        [1, 1],
-        [0, 1],
-      ]);
-      lines.push([
-        [3, 2],
-        [2, 2],
-        [1, 2],
-        [0, 2],
-      ]);
-      lines.push([
-        [3, 3],
-        [2, 3],
-        [1, 3],
-        [0, 3],
-      ]);
-    } else if (dir === "LEFT") {
-      lines.push([
-        [0, 0],
-        [0, 1],
-      ]);
-      lines.push([
-        [1, 0],
-        [1, 1],
-      ]);
-      lines.push([
-        [2, 0],
-        [2, 1],
-      ]);
-      lines.push([
-        [3, 0],
-        [3, 1],
-      ]);
-      // Jumatatea dreaptă se mută RIGHT (spre marginea exterioară, oglindit)
-      lines.push([
-        [0, 3],
-        [0, 2],
-      ]);
-      lines.push([
-        [1, 3],
-        [1, 2],
-      ]);
-      lines.push([
-        [2, 3],
-        [2, 2],
-      ]);
-      lines.push([
-        [3, 3],
-        [3, 2],
-      ]);
-    } else if (dir === "RIGHT") {
-      // Jumatatea stângă se mută RIGHT (spre centru)
-      lines.push([
-        [0, 1],
-        [0, 0],
-      ]);
-      lines.push([
-        [1, 1],
-        [1, 0],
-      ]);
-      lines.push([
-        [2, 1],
-        [2, 0],
-      ]);
-      lines.push([
-        [3, 1],
-        [3, 0],
-      ]);
-      // Jumatatea dreaptă se mută LEFT (spre centru, oglindit)
-      lines.push([
-        [0, 2],
-        [0, 3],
-      ]);
-      lines.push([
-        [1, 2],
-        [1, 3],
-      ]);
-      lines.push([
-        [2, 2],
-        [2, 3],
-      ]);
-      lines.push([
-        [3, 2],
-        [3, 3],
-      ]);
-    }
-
-    let moved = false;
-
-    for (let lineCoords of lines) {
-      let values = lineCoords.map((c) => this.board[c[0]][c[1]]);
-      let newValues = this.slideLine(values);
-      for (let i = 0; i < lineCoords.length; i++) {
-        let r = lineCoords[i][0];
-        let c = lineCoords[i][1];
-        if (this.board[r][c] !== newValues[i]) {
-          this.board[r][c] = newValues[i];
-          moved = true;
-        }
-      }
-    }
-
-    if (moved) {
-      if (window.playClick) window.playClick(this);
-      this.spawnSymmetricPair();
-      this.drawBoard();
-      this.checkWin();
-    }
-  }
-
-  slideLine(line) {
-    let nonZero = line.filter((v) => v !== 0);
-    let merged = [];
-    for (let i = 0; i < nonZero.length; i++) {
-      if (i + 1 < nonZero.length && nonZero[i] === nonZero[i + 1]) {
-        merged.push(nonZero[i] * 2);
-        i++;
-      } else {
-        merged.push(nonZero[i]);
-      }
-    }
-    while (merged.length < line.length) merged.push(0);
-    return merged;
-  }
-
-  spawnSymmetricPair() {
-    let validPairs = [];
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 2; c++) {
-        // Verificăm doar jumătatea stângă pentru validitate simetrică
-        if (this.board[r][c] === 0 && this.board[r][3 - c] === 0) {
-          validPairs.push({ r, c });
-        }
-      }
-    }
-
-    if (validPairs.length > 0) {
-      let pair = Phaser.Math.RND.pick(validPairs);
-      let val1 = Math.random() < 0.8 ? 2 : 4;
-      let val2 = Math.random() < 0.8 ? 2 : 4; // Lăsăm tile-urile noi să fie ușor asimetrice valoric
-      this.board[pair.r][pair.c] = val1;
-      this.board[pair.r][3 - pair.c] = val2;
-    }
-  }
-
+  // ───────────────────────────────────────────────────────────────────────
   checkWin() {
-    let maxLeft = 0;
-    let maxRight = 0;
-
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 2; c++)
-        if (this.board[r][c] > maxLeft) maxLeft = this.board[r][c];
-      for (let c = 2; c < 4; c++)
-        if (this.board[r][c] > maxRight) maxRight = this.board[r][c];
-    }
-
-    if (maxLeft >= 32 && maxRight >= 32 && !this.isSolved) {
+    const allSnapped = this.pieces.every((p) => p.isSnapped);
+    if (allSnapped && !this.isSolved) {
       this.isSolved = true;
       if (window.playSuccess) window.playSuccess(this);
 
-      this.statusText.setText("Symmetry Achieved. Code revealed.");
-      this.statusText.setColor("#00ffff");
+      this.statusText.setText("The fragments align. Code revealed.");
+      this.statusText.setColor("#1aaf7a");
 
-      const finalWord = this.add
-        .text(0, 180, "SYNC", {
-          fontFamily: '"Special Elite", monospace',
-          fontSize: "48px",
-          color: "#ffffff",
-          fontStyle: "bold",
-          shadow: { blur: 15, color: "#00ffff", fill: true },
-        })
-        .setOrigin(0.5)
-        .setAlpha(0);
-
-      this.boardContainer.add(finalWord);
-
-      this.tweens.add({
-        targets: finalWord,
-        alpha: 1,
-        scale: 1.2,
-        duration: 800,
-        ease: "Power2",
+      this.pieces.forEach((p, i) => {
+        this.tweens.add({
+          targets: p,
+          scale: 1.05,
+          duration: 300,
+          yoyo: true,
+          delay: i * 100,
+          ease: "Sine.easeInOut",
+        });
       });
     }
   }
 
+  // ───────────────────────────────────────────────────────────────────────
+  createPiece(index, x, y) {
+    const container = this.add.container(x, y);
+    container.setSize(140, 140);
+    container.setInteractive({ cursor: "grab" });
+    this.input.setDraggable(container);
+
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0xffffff, 0.01);
+    gfx.fillRect(-70, -70, 140, 140);
+
+    this.drawPiece(gfx, index);
+    container.add(gfx);
+
+    container.isSnapped = false;
+    this.pieces.push(container);
+  }
+
+  drawPiece(gfx, index) {
+    const sketchLine = (x0, y0, x1, y1, alphaMod = 1, thickness = 1.2) => {
+      const passes = thickness > 2 ? 3 : 2;
+      for (let p = 0; p < passes; p++) {
+        gfx.lineStyle(thickness, 0xffffff, (0.8 - p * 0.2) * alphaMod);
+        gfx.beginPath();
+        gfx.moveTo(x0, y0);
+        let steps = thickness > 2 ? 8 : 5;
+        for (let i = 1; i <= steps; i++) {
+          let t = i / steps;
+          let jx = i < steps ? Phaser.Math.Between(-1, 1) : 0;
+          let jy = i < steps ? Phaser.Math.Between(-1, 1) : 0;
+          gfx.lineTo(x0 + (x1 - x0) * t + jx, y0 + (y1 - y0) * t + jy);
+        }
+        gfx.strokePath();
+      }
+    };
+
+    // Conturul pătratului
+    sketchLine(-70, -70, 70, -70, 0.5, 1.5);
+    sketchLine(70, -70, 70, 70, 0.5, 1.5);
+    sketchLine(70, 70, -70, 70, 0.5, 1.5);
+    sketchLine(-70, 70, -70, -70, 0.5, 1.5);
+
+    // Liniile abstracte subțiri ("zgomot") ca distragere
+    for (let i = 0; i < 4; i++) {
+      sketchLine(
+        Phaser.Math.Between(-60, 60),
+        Phaser.Math.Between(-60, 60),
+        Phaser.Math.Between(-60, 60),
+        Phaser.Math.Between(-60, 60),
+        0.2,
+        1.2,
+      );
+    }
+
+    // Elementele groase ce compun numărul 5 (când sunt suprapuse)
+    const s = 25;
+    const t = 4.5;
+    const a = 1.0;
+    if (index === 0)
+      sketchLine(-s, -s * 1.5, s, -s * 1.5, a, t); // Top
+    else if (index === 1)
+      sketchLine(-s, -s * 1.5, -s, 0, a, t); // Stânga-Sus
+    else if (index === 2)
+      sketchLine(-s, 0, s, 0, a, t); // Mijloc
+    else if (index === 3)
+      sketchLine(s, 0, s, s * 1.5, a, t); // Dreapta-Jos
+    else if (index === 4) sketchLine(s, s * 1.5, -s, s * 1.5, a, t); // Baza
+  }
+
+  drawDropZone() {
+    this.dropZoneGfx.clear();
+    const sketchLine = (x0, y0, x1, y1) => {
+      this.dropZoneGfx.lineStyle(2, 0xffffff, 0.2);
+      this.dropZoneGfx.beginPath();
+      this.dropZoneGfx.moveTo(x0, y0);
+      let steps = 4;
+      for (let i = 1; i <= steps; i++) {
+        let t = i / steps;
+        let jx = i < steps ? Phaser.Math.Between(-2, 2) : 0;
+        let jy = i < steps ? Phaser.Math.Between(-2, 2) : 0;
+        this.dropZoneGfx.lineTo(
+          x0 + (x1 - x0) * t + jx,
+          y0 + (y1 - y0) * t + jy,
+        );
+      }
+      this.dropZoneGfx.strokePath();
+    };
+
+    const cx = this.targetPos.x;
+    const cy = this.targetPos.y;
+    sketchLine(cx - 75, cy - 75, cx + 75, cy - 75);
+    sketchLine(cx + 75, cy - 75, cx + 75, cy + 75);
+    sketchLine(cx + 75, cy + 75, cx - 75, cy + 75);
+    sketchLine(cx - 75, cy + 75, cx - 75, cy - 75);
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  drawRoom(g, w, h) {
+    g.clear();
+
+    const sketchLine = (x0, y0, x1, y1, alphaMod = 1) => {
+      const drawPass = (ox, oy, noise) => {
+        g.lineStyle(1.2, 0xffffff, 0.25 * alphaMod);
+        g.beginPath();
+        g.moveTo(x0 + ox, y0 + oy);
+        const steps = 8;
+        for (let i = 1; i <= steps; i++) {
+          let t = i / steps;
+          let jx = i < steps ? Phaser.Math.Between(-noise, noise) : 0;
+          let jy = i < steps ? Phaser.Math.Between(-noise, noise) : 0;
+          g.lineTo(x0 + (x1 - x0) * t + ox + jx, y0 + (y1 - y0) * t + oy + jy);
+        }
+        g.strokePath();
+      };
+      drawPass(0, 0, 0);
+      drawPass(-1, 1, 1);
+      drawPass(1, -1, 1);
+    };
+
+    const vx = w / 2;
+    const vy = h * 0.4;
+
+    const bwW = w * 0.7;
+    const bwH = h * 0.55;
+    const bwL = vx - bwW / 2;
+    const bwR = vx + bwW / 2;
+    const bwT = vy - bwH * 0.35;
+    const bwB = vy + bwH * 0.65;
+
+    const ext = (px, py) => {
+      let dx = px - vx;
+      let dy = py - vy;
+      return { x: vx + dx * 15, y: vy + dy * 15 };
+    };
+
+    sketchLine(bwL, bwT, bwR, bwT, 0.8);
+    sketchLine(bwL, bwB, bwR, bwB, 0.8);
+    sketchLine(bwL, bwT, bwL, bwB, 0.8);
+    sketchLine(bwR, bwT, bwR, bwB, 0.8);
+
+    let tl = ext(bwL, bwT);
+    let tr = ext(bwR, bwT);
+    let bl = ext(bwL, bwB);
+    let br = ext(bwR, bwB);
+
+    sketchLine(bwL, bwT, tl.x, tl.y, 0.5);
+    sketchLine(bwR, bwT, tr.x, tr.y, 0.5);
+    sketchLine(bwL, bwB, bl.x, bl.y, 0.5);
+    sketchLine(bwR, bwB, br.x, br.y, 0.5);
+
+    let boardH = h * 0.04;
+    sketchLine(bwL, bwB - boardH, bwR, bwB - boardH, 1.5);
+
+    let baseBl = ext(bwL, bwB - boardH);
+    let baseBr = ext(bwR, bwB - boardH);
+    sketchLine(bwL, bwB - boardH, baseBl.x, baseBl.y, 1.2);
+    sketchLine(bwR, bwB - boardH, baseBr.x, baseBr.y, 1.2);
+
+    const numBoards = 8;
+    for (let i = 1; i < numBoards; i++) {
+      let t = i / numBoards;
+      let px = bwL + bwW * t;
+      let pExt = ext(px, bwB);
+      sketchLine(px, bwB, pExt.x, pExt.y, 0.25);
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
   transitionToLevel(levelNumber, skipFade = false) {
     if (skipFade) {
       this.scene.start("Level" + levelNumber, { skipFade: true });
