@@ -10,16 +10,15 @@ class Level1 extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("bg", "assets/images/background.png");
-    this.load.image("book", "assets/images/book.png");
-    this.load.image("key", "assets/images/key.png");
-    this.load.image("safe", "assets/images/safe.png");
+    this.load.image("book", "assets/images/level1/book.png");
+    this.load.image("key", "assets/images/level1/key.png");
+    this.load.image("safe", "assets/images/level1/safe.png");
 
-    this.load.audio("click", "assets/sounds/click.mp3");
-    this.load.audio("nextlevel", "assets/sounds/nextlevel.wav");
-    this.load.audio("bgm", "assets/sounds/background.mp3");
-    this.load.audio("ui_click", "assets/sounds/mouseclick.wav");
-    this.load.audio("error", "assets/sounds/error.mp3");
+    this.load.audio("click", "assets/sounds/global/click.mp3");
+    this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
+    this.load.audio("bgm", "assets/sounds/global/background.mp3");
+    this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
+    this.load.audio("error", "assets/sounds/global/error.mp3");
   }
 
   create() {
@@ -29,11 +28,49 @@ class Level1 extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // Imaginea de fundal
-    this.add
-      .image(width / 2, height / 2, "bg")
-      .setDisplaySize(width, height)
-      .setDepth(-10);
+    // ── Fundal procedural (Stil creion/Grafit întunecat) ──
+    this.bgGfx = this.add.graphics().setDepth(-10);
+    this.drawBg = (w, h) => {
+      this.bgGfx.clear();
+      // Un gradient mult mai întunecat, spre negru/cărbune
+      this.bgGfx.fillGradientStyle(0x18181a, 0x18181a, 0x050508, 0x050508, 1);
+      this.bgGfx.fillRect(0, 0, w, h);
+
+      // Linii albe foarte fine (zgârieturi de hârtie/creion)
+      this.bgGfx.lineStyle(1, 0xffffff, 0.02);
+      for (let i = 0; i < 250; i++) {
+        let x = Phaser.Math.Between(-50, w + 50);
+        let y = Phaser.Math.Between(-50, h + 50);
+        let len = Phaser.Math.Between(20, 100);
+        let ang = Math.random() > 0.5 ? 0.4 : -0.4;
+        this.bgGfx.strokeLineShape(
+          new Phaser.Geom.Line(
+            x,
+            y,
+            x + Math.cos(ang) * len,
+            y + Math.sin(ang) * len,
+          ),
+        );
+      }
+
+      // Linii negre mai groase (hașură de grafit)
+      this.bgGfx.lineStyle(2, 0x000000, 0.15);
+      for (let i = 0; i < 150; i++) {
+        let x = Phaser.Math.Between(-50, w + 50);
+        let y = Phaser.Math.Between(-50, h + 50);
+        let len = Phaser.Math.Between(50, 200);
+        let ang = Math.random() > 0.5 ? 0.5 : -0.5;
+        this.bgGfx.strokeLineShape(
+          new Phaser.Geom.Line(
+            x,
+            y,
+            x + Math.cos(ang) * len,
+            y + Math.sin(ang) * len,
+          ),
+        );
+      }
+    };
+    this.drawBg(width, height);
 
     this.statusText = this.add
       .text(width / 2, 100, "Open the safe to find the missing word", {
@@ -86,6 +123,7 @@ class Level1 extends Phaser.Scene {
     this.input.setDraggable(this.book);
 
     this.events.on("canvas_resized", (size) => {
+      this.drawBg(size.width, size.height);
       this.statusText.setPosition(size.width / 2, 100);
       this.safe.setPosition(size.width / 2, size.height - 180);
       this.hintText.setPosition(size.width / 2, size.height - 180);

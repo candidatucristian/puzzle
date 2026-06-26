@@ -25,7 +25,7 @@ function renderLevels() {
   const grid = document.getElementById("levels-grid");
   grid.innerHTML = "";
 
-  for (let i = 1; i <= 25; i++) {
+  for (let i = 1; i <= 4; i++) {
     const btn = document.createElement("div");
     btn.innerText = i;
 
@@ -116,13 +116,15 @@ btnSubmit.addEventListener("click", () => {
     targetLevel = 3;
   } else if (window.currentLevel === 3 && (code === "5" || code === "FIVE")) {
     isCorrect = true;
-    targetLevel = 4;
-  } else if (window.currentLevel === 4 && code === "POLAR") {
+    targetLevel = 4; // Corecție: Trecem la nivelul 4
+  } else if (window.currentLevel === 4 && code === "LUITAS") {
     isCorrect = true;
-    targetLevel = 5;
-  } else if (window.currentLevel === 5 && code === "CHAIN") {
-    isCorrect = true;
-    targetLevel = 6;
+    targetLevel = 4; // Rămânem la 4, este ultimul nivel
+    // Afișăm mesaj de victorie final
+    setTimeout(
+      () => alert("CONGRATULATIONS! You have completed the game!"),
+      500,
+    );
   }
 
   if (isCorrect) {
@@ -216,8 +218,7 @@ const levelHints = {
   1: "SOUND REQUIRED.\nInteract with the environment to find hidden clues.",
   2: "NATURE'S SEQUENCE.\nWater the plant and observe the mathematical pattern of its leaves.",
   3: "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
-  4: "POLARITY.\nOpposites attract to create neutral cores. Cores can absorb one extra element. Build 3 neutral cores to win.",
-  5: "CASCADING CHAINS.\nTiles automatically continue merging if they slide into identical values. Trigger chain reactions to build a 64 tile.",
+  4: "AN OLD FRIEND CALLS.\nTranslate the number using a classic phone keypad to find the keyword.",
 };
 
 btnInfo.addEventListener("click", () => {

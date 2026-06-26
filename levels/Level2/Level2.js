@@ -9,9 +9,8 @@ class Level2 extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("bg", "assets/images/background.png");
-    this.load.image("leaf", "assets/images/leaf.png");
-    this.load.audio("wateringplant", "assets/sounds/wateringplant.mp3");
+    this.load.image("leaf", "assets/images/level2/leaf.png");
+    this.load.audio("wateringplant", "assets/sounds/level2/wateringplant.mp3");
   }
 
   create() {
@@ -21,10 +20,14 @@ class Level2 extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    this.add
-      .image(width / 2, height / 2, "bg")
-      .setDisplaySize(width, height)
-      .setDepth(-10);
+    // ── Gradient de fundal procedural ──
+    this.bgGfx = this.add.graphics().setDepth(-10);
+    this.drawBg = (w, h) => {
+      this.bgGfx.clear();
+      this.bgGfx.fillGradientStyle(0x222233, 0x222233, 0x0a0a10, 0x0a0a10, 1);
+      this.bgGfx.fillRect(0, 0, w, h);
+    };
+    this.drawBg(width, height);
 
     // ── Room Background (Sketched) ──
     this.roomGfx = this.add.graphics().setDepth(-5);
@@ -34,7 +37,7 @@ class Level2 extends Phaser.Scene {
       .text(width / 2, 50, "Thirsty flower", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "22px",
-        color: "#000000",
+        color: "#ffffff",
         letterSpacing: 1,
       })
       .setOrigin(0.5);
@@ -43,7 +46,7 @@ class Level2 extends Phaser.Scene {
       .text(width - 30, 30, "Level 2", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
-        color: "#000000",
+        color: "#ffffff",
       })
       .setOrigin(1, 0)
       .setAlpha(0);
@@ -196,6 +199,7 @@ class Level2 extends Phaser.Scene {
 
     // ── Resize ─────────────────────────────────────────────────────────────
     this.events.on("canvas_resized", (size) => {
+      this.drawBg(size.width, size.height);
       this.statusText.setPosition(size.width / 2, 50);
       this.levelText.setPosition(size.width - 30, 30);
       this.mainContainer.setPosition(size.width / 2, size.height / 2 + 110);

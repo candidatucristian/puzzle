@@ -147,7 +147,7 @@ window.playSuccess = (scene) => {
 // ── Phaser Config ──
 const config = {
   type: Phaser.AUTO,
-  backgroundColor: "#ffffff", // Setăm fundalul de bază la alb
+  backgroundColor: "#0a0a10", // Setăm fundalul nativ pe întunecat pentru a masca lag-ul de resize
   parent: "game-container", // Mandatory la nivel de root pentru elementele DOM în Phaser
   dom: {
     createContainer: true, // ← asta e tot ce trebuie adăugat
@@ -158,7 +158,7 @@ const config = {
     width: "100%",
     height: "100%",
   },
-  scene: [Level1, Level2, Level3, Level4, Level5],
+  scene: [Level1, Level2, Level3, Level4],
 };
 
 const game = new Phaser.Game(config);

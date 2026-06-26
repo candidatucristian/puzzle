@@ -8,10 +8,6 @@ class Level3 extends Phaser.Scene {
       data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
 
-  preload() {
-    this.load.image("bg", "assets/images/background.png");
-  }
-
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
@@ -19,11 +15,14 @@ class Level3 extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // Imaginea de fundal
-    this.add
-      .image(width / 2, height / 2, "bg")
-      .setDisplaySize(width, height)
-      .setDepth(-10);
+    // ── Gradient de fundal procedural ──
+    this.bgGfx = this.add.graphics().setDepth(-10);
+    this.drawBg = (w, h) => {
+      this.bgGfx.clear();
+      this.bgGfx.fillGradientStyle(0x222233, 0x222233, 0x0a0a10, 0x0a0a10, 1);
+      this.bgGfx.fillRect(0, 0, w, h);
+    };
+    this.drawBg(width, height);
 
     // ── Room Background (Sketched) ──
     this.roomGfx = this.add.graphics().setDepth(-5);
@@ -33,7 +32,7 @@ class Level3 extends Phaser.Scene {
       .text(width / 2, 50, "Stack the plates to reveal the hidden figure.", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
-        color: "#000000",
+        color: "#ffffff",
         letterSpacing: 1,
       })
       .setOrigin(0.5);
@@ -42,7 +41,7 @@ class Level3 extends Phaser.Scene {
       .text(width - 30, 30, "Level 3", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
-        color: "#000000",
+        color: "#ffffff",
       })
       .setOrigin(1, 0)
       .setAlpha(0);
@@ -123,6 +122,7 @@ class Level3 extends Phaser.Scene {
     this.events.on("canvas_resized", (size) => {
       const w = size.width;
       const h = size.height;
+      this.drawBg(w, h);
       this.statusText.setPosition(size.width / 2, 50);
       this.levelText.setPosition(size.width - 30, 30);
       this.drawRoom(this.roomGfx, w, h);
