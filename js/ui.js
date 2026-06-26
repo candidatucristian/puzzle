@@ -117,7 +117,7 @@ btnSubmit.addEventListener("click", () => {
   } else if (window.currentLevel === 3 && (code === "5" || code === "FIVE")) {
     isCorrect = true;
     targetLevel = 4; // Corecție: Trecem la nivelul 4
-  } else if (window.currentLevel === 4 && code === "LUITAS") {
+  } else if (window.currentLevel === 4 && code === "GEORGE") {
     isCorrect = true;
     targetLevel = 4; // Rămânem la 4, este ultimul nivel
     // Afișăm mesaj de victorie final
@@ -218,7 +218,7 @@ const levelHints = {
   1: "SOUND REQUIRED.\nInteract with the environment to find hidden clues.",
   2: "NATURE'S SEQUENCE.\nWater the plant and observe the mathematical pattern of its leaves.",
   3: "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
-  4: "AN OLD FRIEND CALLS.\nTranslate the number using a classic phone keypad to find the keyword.",
+  4: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
 };
 
 btnInfo.addEventListener("click", () => {
