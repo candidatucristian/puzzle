@@ -174,51 +174,14 @@ body {
   padding: 10px 25px;
 }
 
-/* ── Right Sidebar ──
-   FIX: toggle button lives OUTSIDE the sliding wrapper,
-   anchored to the right edge of the game area.
-   The sliding panel slides in/out independently.
-── */
-
-/* Wrapper that slides in and out using margin */
+/* ── Right Sidebar ── */
 #right-sidebar-wrapper {
   position: relative;
   display: flex;
   flex-shrink: 0;
   z-index: 10;
-  transition: margin-right 0.3s ease;
-  margin-right: 0;
 }
 
-#right-sidebar-wrapper.collapsed {
-  margin-right: -280px;
-}
-
-/* Toggle button — always visible, sticks to the left of the shell */
-#btn-toggle-levels {
-  position: absolute;
-  left: -36px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 60px;
-  background-color: #222222;
-  color: white;
-  border: none;
-  border-radius: 8px 0 0 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-family: "Special Elite", monospace;
-  box-shadow: -3px 0 6px rgba(0, 0, 0, 0.4);
-  flex-shrink: 0;
-  transition: background-color 0.2s;
-}
-
-#btn-toggle-levels:hover {
-  background-color: #444444;
-}
-
-/* Sliding panel */
 #right-sidebar {
   width: 280px;
   background-color: #222222;

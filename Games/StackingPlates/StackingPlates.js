@@ -1,6 +1,6 @@
-class Level3 extends Phaser.Scene {
+class StackingPlatesScene extends Phaser.Scene {
   constructor() {
-    super({ key: "Level3" });
+    super({ key: "StackingPlates" });
   }
 
   init(data) {
@@ -38,7 +38,7 @@ class Level3 extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.levelText = this.add
-      .text(width - 30, 30, "Level 3", {
+      .text(width - 30, 30, "Level 1", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#ffffff",
@@ -141,7 +141,6 @@ class Level3 extends Phaser.Scene {
     });
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   checkWin() {
     const allSnapped = this.pieces.every((p) => p.isSnapped);
     if (allSnapped && !this.isSolved) {
@@ -164,7 +163,6 @@ class Level3 extends Phaser.Scene {
     }
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   createPiece(index, x, y) {
     const container = this.add.container(x, y);
     container.setSize(140, 140);
@@ -260,7 +258,6 @@ class Level3 extends Phaser.Scene {
     sketchLine(cx - 75, cy + 75, cx - 75, cy - 75);
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   drawRoom(g, w, h) {
     g.clear();
 
@@ -331,10 +328,9 @@ class Level3 extends Phaser.Scene {
     }
   }
 
-  // ───────────────────────────────────────────────────────────────────────
-  transitionToLevel(levelNumber, skipFade = false) {
+  transitionToLevel(levelKey, skipFade = false) {
     if (skipFade) {
-      this.scene.start("Level" + levelNumber, { skipFade: true });
+      this.scene.start(levelKey, { skipFade: true });
       return;
     }
     if (window.playSuccess) window.playSuccess(this);
@@ -346,6 +342,10 @@ class Level3 extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(100)
       .setAlpha(0);
+
+    const levelIndex = window.GAME_LEVELS.findIndex((l) => l.key === levelKey);
+    const levelNumber = levelIndex !== -1 ? levelIndex + 1 : "?";
+
     const nextLvlText = this.add
       .text(width / 2, height / 2, "Level " + levelNumber + "...", {
         fontFamily: '"Special Elite", monospace',
@@ -361,8 +361,13 @@ class Level3 extends Phaser.Scene {
       alpha: 1,
       duration: 1000,
       onComplete: () => {
-        this.scene.start("Level" + levelNumber, { skipFade: false });
+        this.scene.start(levelKey, { skipFade: false });
       },
     });
+  }
+
+  shutdown() {
+    // This scene has no persistent timers or sounds, but it's good practice
+    // to have the shutdown method.
   }
 }

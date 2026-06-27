@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Puzzle Prototype - Room 1</title>
+    <title>Puzzle Prototype</title>
+
+    <link
+      rel="icon"
+      href="assets/images/favicon/favicon-32x32.png"
+      type="image/x-icon"
+    />
+
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,10 +18,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="Levels/level1/level1.css" />
-    <link rel="stylesheet" href="Levels/level2/level2.css" />
-    <link rel="stylesheet" href="Levels/level3/level3.css" />
-    <link rel="stylesheet" href="Levels/level4/level4.css" />
+    <link rel="stylesheet" href="Games/StackingPlates/StackingPlates.css" />
+    <link rel="stylesheet" href="Games/Phone/Phone.css" />
+    <link rel="stylesheet" href="Games/Fibonacci/Fibonacci.css" />
+    <link rel="stylesheet" href="Games/MorseCar/MorseCar.css" />
   </head>
   <body>
     <!-- Left Sidebar -->
@@ -52,9 +59,6 @@
 
     <!-- Right Sidebar Wrapper (toggle button + sliding panel) -->
     <div id="right-sidebar-wrapper">
-      <!-- Toggle button always visible -->
-      <button id="btn-toggle-levels" title="Toggle Levels">◀</button>
-
       <!-- Sliding levels panel -->
       <div id="right-sidebar">
         <h1>Levels</h1>
@@ -117,11 +121,11 @@
     </div>
 
     <!-- Game scripts -->
-    <script src="Levels/level1/level1.js"></script>
-    <script src="Levels/level2/level2.js"></script>
-    <script src="Levels/level3/level3.js"></script>
-    <script src="Levels/level4/level4.js"></script>
-    <script src="js/ui.js"></script>
+    <script src="Games/StackingPlates/StackingPlates.js"></script>
+    <script src="Games/Phone/Phone.js"></script>
+    <script src="Games/Fibonacci/Fibonacci.js"></script>
+    <script src="Games/MorseCar/MorseCar.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/ui.js"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
-class Level2 extends Phaser.Scene {
+class FibonacciScene extends Phaser.Scene {
   constructor() {
-    super({ key: "Level2" });
+    super({ key: "Fibonacci" });
   }
 
   init(data) {
@@ -9,8 +9,11 @@ class Level2 extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("leaf", "assets/images/level2/leaf.png");
-    this.load.audio("wateringplant", "assets/sounds/level2/wateringplant.mp3");
+    this.load.image("leaf", "assets/images/Fibonacci/leaf.png");
+    this.load.audio(
+      "wateringplant",
+      "assets/sounds/Fibonacci/wateringplant.mp3",
+    );
   }
 
   create() {
@@ -20,7 +23,6 @@ class Level2 extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // ── Gradient de fundal procedural ──
     this.bgGfx = this.add.graphics().setDepth(-10);
     this.drawBg = (w, h) => {
       this.bgGfx.clear();
@@ -34,7 +36,7 @@ class Level2 extends Phaser.Scene {
     this.drawRoom(this.roomGfx, width, height);
 
     this.statusText = this.add
-      .text(width / 2, 50, "Thirsty flower", {
+      .text(width / 2, 50, "I forgot my name ...", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "22px",
         color: "#ffffff",
@@ -43,7 +45,7 @@ class Level2 extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.levelText = this.add
-      .text(width - 30, 30, "Level 2", {
+      .text(width - 30, 30, "Level 3", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#ffffff",
@@ -147,50 +149,37 @@ class Level2 extends Phaser.Scene {
     this.mainContainer.add([this.plantContainer, this.bucketContainer]);
 
     // ── Drag Handlers ──────────────────────────────────────────────────────
-    // IMPORTANT: drag-ul returnează coordonate în spațiul MONDIAL (world space),
-    // dar obiectele sunt copii ai mainContainer → trebuie să convertim în local space.
     this.input.on("dragstart", (pointer, gameObject) => {
       if (this.isSolved || this.isAnimating) return;
       this.mainContainer.bringToTop(gameObject);
-
-      // Calculăm offset-ul pentru o tragere fluidă, fără ca centrul obiectului să sară pe mouse
       let localMouseX =
         (pointer.x - this.mainContainer.x) / this.mainContainer.scaleX;
       let localMouseY =
         (pointer.y - this.mainContainer.y) / this.mainContainer.scaleY;
       gameObject.dragOffsetX = gameObject.x - localMouseX;
       gameObject.dragOffsetY = gameObject.y - localMouseY;
-
       if (window.playClick) window.playClick(this);
     });
 
     this.input.on("drag", (pointer, gameObject, dragX, dragY) => {
       if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
-
-      // Convertim poziția globală a mouse-ului în spațiul local scalat al containerului
       let localMouseX =
         (pointer.x - this.mainContainer.x) / this.mainContainer.scaleX;
       let localMouseY =
         (pointer.y - this.mainContainer.y) / this.mainContainer.scaleY;
-
       gameObject.x = localMouseX + gameObject.dragOffsetX;
       gameObject.y = localMouseY + gameObject.dragOffsetY;
-
-      // Distanța între galeată și gura ghiveciului (ambele în local space față de mainContainer)
       const pourTargetX = this.plantContainer.x + 45;
       const pourTargetY = this.plantContainer.y - 15;
-
       const dist = Phaser.Math.Distance.Between(
         this.bucketContainer.x,
         this.bucketContainer.y,
         pourTargetX,
         pourTargetY,
       );
-
       if (dist > 100) {
         this.canPour = true;
       }
-
       if (dist < 60 && this.canPour) {
         this.canPour = false;
         this.triggerPour();
@@ -205,18 +194,16 @@ class Level2 extends Phaser.Scene {
       this.mainContainer.setPosition(size.width / 2, size.height / 2 + 110);
       let newScale = Math.min(1, size.height / 600) * 0.85;
       this.mainContainer.setScale(newScale);
-
       this.drawRoom(this.roomGfx, size.width, size.height);
     });
 
-    // ── Fade-in ────────────────────────────────────────────────────────────
     if (!this.skipFadeIn) {
       const fadeOverlay = this.add
         .rectangle(0, 0, width, height, 0x000000)
         .setOrigin(0, 0)
         .setDepth(100);
       const nextLvlText = this.add
-        .text(width / 2, height / 2, "Level 2...", {
+        .text(width / 2, height / 2, "Level 3...", {
           fontFamily: '"Special Elite", monospace',
           fontSize: "48px",
           color: "#ffffff",
@@ -236,25 +223,18 @@ class Level2 extends Phaser.Scene {
     }
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   triggerPour() {
     if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
     this.isAnimating = true;
-
     this.input.setDraggable(this.bucketContainer, false);
-
     if (this.cache.audio.exists("wateringplant")) {
       this.sound.play("wateringplant", { volume: 1 });
     }
-
     this.pourAndGrow();
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   drawRoom(g, w, h) {
     g.clear();
-
-    // Funcție de schițare specifică liniilor drepte lungi cu un pic de "tremur"
     const sketchLine = (x0, y0, x1, y1, alphaMod = 1) => {
       const drawPass = (ox, oy, noise) => {
         g.lineStyle(1.2, 0xffffff, 0.25 * alphaMod);
@@ -269,55 +249,41 @@ class Level2 extends Phaser.Scene {
         }
         g.strokePath();
       };
-      drawPass(0, 0, 0); // Trece principală
-      drawPass(-1, 1, 1); // Umbră ușoară
-      drawPass(1, -1, 1); // Repetare schiță
+      drawPass(0, 0, 0);
+      drawPass(-1, 1, 1);
+      drawPass(1, -1, 1);
     };
-
     const vx = w / 2;
-    const vy = h * 0.4; // Linia orizontului (punctul de fugă)
-
-    const bwW = w * 0.7; // Lățimea peretelui din spate
-    const bwH = h * 0.55; // Înălțimea peretelui din spate
+    const vy = h * 0.4;
+    const bwW = w * 0.7;
+    const bwH = h * 0.55;
     const bwL = vx - bwW / 2;
     const bwR = vx + bwW / 2;
     const bwT = vy - bwH * 0.35;
     const bwB = vy + bwH * 0.65;
-
-    // Extrapolare puncte pentru crearea perspectivei 3D
     const ext = (px, py) => {
       let dx = px - vx;
       let dy = py - vy;
-      return { x: vx + dx * 15, y: vy + dy * 15 }; // Linii lungite către colțurile ecranului
+      return { x: vx + dx * 15, y: vy + dy * 15 };
     };
-
-    // ── Peretele din spate ──
     sketchLine(bwL, bwT, bwR, bwT, 0.8);
     sketchLine(bwL, bwB, bwR, bwB, 0.8);
     sketchLine(bwL, bwT, bwL, bwB, 0.8);
     sketchLine(bwR, bwT, bwR, bwB, 0.8);
-
-    // ── Colțurile camerei ──
     let tl = ext(bwL, bwT);
     let tr = ext(bwR, bwT);
     let bl = ext(bwL, bwB);
     let br = ext(bwR, bwB);
-
     sketchLine(bwL, bwT, tl.x, tl.y, 0.5);
     sketchLine(bwR, bwT, tr.x, tr.y, 0.5);
     sketchLine(bwL, bwB, bl.x, bl.y, 0.5);
     sketchLine(bwR, bwB, br.x, br.y, 0.5);
-
-    // ── Plinta (Baseboard) ──
     let boardH = h * 0.04;
-    sketchLine(bwL, bwB - boardH, bwR, bwB - boardH, 1.5); // Linii mult mai opace
-
+    sketchLine(bwL, bwB - boardH, bwR, bwB - boardH, 1.5);
     let baseBl = ext(bwL, bwB - boardH);
     let baseBr = ext(bwR, bwB - boardH);
-    sketchLine(bwL, bwB - boardH, baseBl.x, baseBl.y, 1.2); // Linii de colț mult mai opace
+    sketchLine(bwL, bwB - boardH, baseBl.x, baseBl.y, 1.2);
     sketchLine(bwR, bwB - boardH, baseBr.x, baseBr.y, 1.2);
-
-    // ── Linii pe podea (Scânduri) ──
     const numBoards = 8;
     for (let i = 1; i < numBoards; i++) {
       let t = i / numBoards;
@@ -325,29 +291,21 @@ class Level2 extends Phaser.Scene {
       let pExt = ext(px, bwB);
       sketchLine(px, bwB, pExt.x, pExt.y, 0.25);
     }
-
-    // ── O fereastră/tablou abstract pe peretele din spate ──
     let winL = vx - bwW * 0.2;
     let winR = vx + bwW * 0.2;
     let winT = bwT + bwH * 0.15;
     let winB = bwT + bwH * 0.5;
-
     sketchLine(winL, winT, winR, winT, 0.35);
     sketchLine(winL, winB, winR, winB, 0.35);
     sketchLine(winL, winT, winL, winB, 0.35);
     sketchLine(winR, winT, winR, winB, 0.35);
-
-    // Crucea ferestrei
     sketchLine(vx, winT, vx, winB, 0.15);
     sketchLine(winL, (winT + winB) / 2, winR, (winT + winB) / 2, 0.15);
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   drawPot(g) {
     g.clear();
-    // Stil mai subțire, schițat cu alb
     g.lineStyle(1.2, 0xffffff, 0.7);
-
     const sketchCurve = (x0, y0, cx, cy, x1, y1) => {
       const d = (ox, oy, dcx, dcy, alphaMod) => {
         g.lineStyle(1.2, 0xffffff, 0.7 * alphaMod);
@@ -363,32 +321,21 @@ class Level2 extends Phaser.Scene {
         g.strokePath();
       };
       d(0, 0, 0, 0, 1);
-      d(-1, 1, 1, -1, 0.6); // Mai creionat, treceri subtile
+      d(-1, 1, 1, -1, 0.6);
       d(1, -1, -1, 1, 0.4);
     };
-
-    // Buza superioară eliptică (elegantă și rotundă)
-    sketchCurve(-55, 50, 0, 35, 55, 50); // spate buză
-    sketchCurve(-55, 50, 0, 65, 55, 50); // față buză
-
-    // Nivelul pământului (interior)
+    sketchCurve(-55, 50, 0, 35, 55, 50);
+    sketchCurve(-55, 50, 0, 65, 55, 50);
     sketchCurve(-45, 55, 0, 62, 45, 55);
-
-    // Corpul curbat organic spre interior
-    sketchCurve(-55, 50, -45, 110, -30, 150); // latură stânga
-    sketchCurve(55, 50, 45, 110, 30, 150); // latură dreapta
-
-    // Fundul curbat și modern
+    sketchCurve(-55, 50, -45, 110, -30, 150);
+    sketchCurve(55, 50, 45, 110, 30, 150);
     sketchCurve(-30, 150, 0, 160, 30, 150);
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   drawBucket(gOutline, gWater, waterRatio) {
     gOutline.clear();
     gWater.clear();
-
     gOutline.lineStyle(1.2, 0xffffff, 0.7);
-
     const sketchCurve = (x0, y0, cx, cy, x1, y1) => {
       const d = (ox, oy, dcx, dcy, alphaMod) => {
         gOutline.lineStyle(1.2, 0xffffff, 0.7 * alphaMod);
@@ -407,29 +354,17 @@ class Level2 extends Phaser.Scene {
       d(-1, 1, 1, -1, 0.6);
       d(1, -1, -1, 1, 0.4);
     };
-
-    // Mâner
     sketchCurve(-38, -35, 0, -100, 38, -35);
-
-    // Nituri
     gOutline.fillStyle(0xffffff, 0.8);
     gOutline.fillCircle(-38, -35, 3.5);
     gOutline.fillCircle(38, -35, 3.5);
-
-    // Gura găleții
     sketchCurve(-38, -35, 0, -20, 38, -35);
     sketchCurve(-38, -35, 0, -14, 38, -35);
     sketchCurve(-38, -35, 0, -50, 38, -35);
-
-    // Corpul găleții subțiat și curbat
     sketchCurve(-38, -35, -34, 10, -26, 45);
     sketchCurve(38, -35, 34, 10, 26, 45);
-
-    // Fund curbat
     sketchCurve(-26, 45, 0, 58, 26, 45);
     sketchCurve(-26, 45, 0, 32, 26, 45);
-
-    // Reflexii curbate foarte fin
     gOutline.lineStyle(1, 0xffffff, 0.3);
     sketchCurve(-28, -25, -24, 10, -18, 35);
     gOutline.lineStyle(1, 0xffffff, 0.15);
@@ -440,7 +375,6 @@ class Level2 extends Phaser.Scene {
       let wY = 45 - wH;
       let t = (45 - wY) / 80;
       let wX = 26 + t * 12;
-
       gWater.fillStyle(0x00e5ff, 0.55);
       gWater.beginPath();
       gWater.moveTo(-wX, wY);
@@ -452,7 +386,6 @@ class Level2 extends Phaser.Scene {
       }
       gWater.closePath();
       gWater.fillPath();
-
       gWater.fillStyle(0x00e5ff, 0.9);
       gWater.beginPath();
       for (let i = 0; i <= 10; i++) {
@@ -471,8 +404,7 @@ class Level2 extends Phaser.Scene {
       }
       gWater.closePath();
       gWater.fillPath();
-
-      gWater.lineStyle(1, 0xffffff, 0.4); // linii de mișcare pe apă subțiri
+      gWater.lineStyle(1, 0xffffff, 0.4);
       gWater.beginPath();
       gWater.moveTo(-wX + 4, wY + wX * 0.1);
       for (let i = 1; i <= 10; i++) {
@@ -486,7 +418,6 @@ class Level2 extends Phaser.Scene {
     }
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   qBez(t, p0, cp, p1) {
     const mt = 1 - t;
     return mt * mt * p0 + 2 * mt * t * cp + t * t * p1;
@@ -504,9 +435,7 @@ class Level2 extends Phaser.Scene {
     gfx.clear();
     const cp = seg.cp || { x: seg.to.x, y: seg.from.y };
     const STEPS = 60;
-
     gfx.fillStyle(0x6d4c41, 1);
-
     for (let s = 0; s <= STEPS; s++) {
       const t = (s / STEPS) * progress;
       const x = this.qBez(t, seg.from.x, cp.x, seg.to.x);
@@ -516,12 +445,8 @@ class Level2 extends Phaser.Scene {
     }
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   pourAndGrow() {
     const step = this.currentStep;
-    const leavesToSpawn = this.fibSeq[step];
-
-    // Scădem nivelul apei
     this.tweens.addCounter({
       from: 1 - step / 5,
       to: 1 - (step + 1) / 5,
@@ -531,12 +456,8 @@ class Level2 extends Phaser.Scene {
         this.drawBucket(this.bucketGfx, this.waterFillGfx, tween.getValue());
       },
     });
-
-    // TARGET în spațiu LOCAL față de mainContainer:
-    // Galeata se mută lângă gura ghiveciului (plantContainer.x + 30, plantContainer.y - 20)
     const pourLocalX = this.plantContainer.x + 45;
     const pourLocalY = this.plantContainer.y - 15;
-
     this.tweens.add({
       targets: this.bucketContainer,
       angle: -80,
@@ -560,24 +481,17 @@ class Level2 extends Phaser.Scene {
         });
       },
     });
-
-    // Particule de apă — poziționate în spațiu MONDIAL (sunt adăugate direct la mainContainer)
     this.time.delayedCall(400, () => {
       let dropsPoured = 0;
-
       this.time.addEvent({
         delay: 15,
         repeat: 55,
         callback: () => {
-          // Calculăm vârful buzei găleții în spațiu local față de mainContainer
           let rad = Phaser.Math.DegToRad(this.bucketContainer.angle);
           let cos = Math.cos(rad);
           let sin = Math.sin(rad);
-
-          // Rotim punctul (-38, -35) relativ la bucketContainer și adăugăm poziția locală a găleții
           let lipLocalX = this.bucketContainer.x + (-38 * cos - -35 * sin);
           let lipLocalY = this.bucketContainer.y + (-38 * sin + -35 * cos);
-
           const dropGfx = this.add.graphics();
           dropGfx.fillStyle(0x00e5ff, 0.9);
           dropGfx.fillEllipse(
@@ -594,18 +508,14 @@ class Level2 extends Phaser.Scene {
             -15 + Phaser.Math.Between(-5, 5),
           );
           this.mainContainer.add(dropGfx);
-
-          // Ținta picăturilor = gura ghiveciului (spațiu local)
           const targetX = this.plantContainer.x + Phaser.Math.Between(-15, 15);
-          const targetY = this.plantContainer.y + 55; // Punctul pământului recalibrat
-
+          const targetY = this.plantContainer.y + 55;
           this.tweens.add({
             targets: dropGfx,
             x: targetX,
             duration: 350 + Phaser.Math.Between(0, 100),
             ease: "Linear",
           });
-
           this.tweens.add({
             targets: dropGfx,
             y: targetY,
@@ -616,7 +526,7 @@ class Level2 extends Phaser.Scene {
               dropGfx.destroy();
               dropsPoured++;
               if (dropsPoured === 56) {
-                this.growCurrentSegment(step, leavesToSpawn);
+                this.growCurrentSegment(step);
               }
             },
           });
@@ -625,12 +535,10 @@ class Level2 extends Phaser.Scene {
     });
   }
 
-  // ───────────────────────────────────────────────────────────────────────
-  growCurrentSegment(step, leavesToSpawn) {
+  growCurrentSegment(step) {
     const seg = this.segments[step];
     const gfx = this.segGfx[step];
     const lw = this.segWidths[step];
-
     this.tweens.addCounter({
       from: 0,
       to: 1,
@@ -653,26 +561,20 @@ class Level2 extends Phaser.Scene {
     });
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   spawnLeaves(step, onDone) {
     const defs = this.leafDefs[step];
-
     for (let i = 0; i < defs.length; i++) {
       const d = defs[i];
       const seg = this.segments[d.segIdx];
       const pos = this.getSegPoint(seg, d.t);
-
       const leafImg = this.add.image(pos.x + d.ox, pos.y + d.oy, "leaf");
-
       const BASE_SCALE = 0.17;
       const ANGLE_OFFSET = -45;
-
       leafImg.setOrigin(0.05, 0.95);
       leafImg.setAngle(d.angle + ANGLE_OFFSET);
       leafImg.baseAngle = d.angle + ANGLE_OFFSET;
       leafImg.setScale(0);
       leafImg.setInteractive({ cursor: "pointer" });
-
       leafImg.on("pointerdown", () => {
         if (leafImg.isSwinging) return;
         leafImg.isSwinging = true;
@@ -689,9 +591,7 @@ class Level2 extends Phaser.Scene {
           },
         });
       });
-
       this.plantContainer.addAt(leafImg, 0);
-
       const finalScale = (d.scale || 1) * BASE_SCALE;
       this.tweens.add({
         targets: leafImg,
@@ -702,7 +602,6 @@ class Level2 extends Phaser.Scene {
         ease: "Back.easeOut",
       });
     }
-
     const totalDelay = (defs.length - 1) * 220 + 510;
     this.time.delayedCall(totalDelay, () => {
       this.input.setDraggable(this.bucketContainer, true);
@@ -710,38 +609,34 @@ class Level2 extends Phaser.Scene {
     });
   }
 
-  // ───────────────────────────────────────────────────────────────────────
   finishLevel() {
     this.isSolved = true;
     if (window.playSuccess) window.playSuccess(this);
-
     this.statusText.setText(
       "Nature's sequence is complete. Whose name does it bear?",
     );
     this.statusText.setColor("#1aaf7a");
   }
 
-  // ───────────────────────────────────────────────────────────────────────
-  transitionToLevel(levelNumber, skipFade = false) {
-    if (levelNumber === 2 && skipFade) {
+  transitionToLevel(levelKey, skipFade = false) {
+    if (levelKey === this.scene.key && skipFade) {
       this.scene.restart({ skipFade: true });
       return;
     }
     if (skipFade) {
-      this.scene.start("Level" + levelNumber, { skipFade: true });
+      this.scene.start(levelKey, { skipFade: true });
       return;
     }
     if (window.playSuccess) window.playSuccess(this);
-
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
-
     const fadeOverlay = this.add
       .rectangle(0, 0, width, height, 0x000000)
       .setOrigin(0, 0)
       .setDepth(100)
       .setAlpha(0);
-
+    const levelIndex = window.GAME_LEVELS.findIndex((l) => l.key === levelKey);
+    const levelNumber = levelIndex !== -1 ? levelIndex + 1 : "?";
     const nextLvlText = this.add
       .text(width / 2, height / 2, "Level " + levelNumber + "...", {
         fontFamily: '"Special Elite", monospace',
@@ -751,14 +646,18 @@ class Level2 extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(101)
       .setAlpha(0);
-
     this.tweens.add({
       targets: [fadeOverlay, nextLvlText],
       alpha: 1,
       duration: 1000,
       onComplete: () => {
-        this.scene.start("Level" + levelNumber, { skipFade: false });
+        this.scene.start(levelKey, { skipFade: false });
       },
     });
+  }
+
+  shutdown() {
+    this.tweens.killAll();
+    this.time.removeAllEvents();
   }
 }

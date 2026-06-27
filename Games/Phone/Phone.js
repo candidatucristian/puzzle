@@ -1,6 +1,6 @@
-class Level4 extends Phaser.Scene {
+class PhoneScene extends Phaser.Scene {
   constructor() {
-    super({ key: "Level4" });
+    super({ key: "Phone" });
   }
 
   init(data) {
@@ -9,11 +9,10 @@ class Level4 extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio("phone_vib", "assets/sounds/level4/vibration.mp3");
-    this.load.audio("keypad", "assets/sounds/level4/keypad.mp3");
-
-    this.load.audio("phone_success", "assets/sounds/level4/success.mp3");
-    this.load.audio("phone_error", "assets/sounds/level4/error.mp3");
+    this.load.audio("phone_vib", "assets/sounds/Phone/vibration.mp3");
+    this.load.audio("keypad", "assets/sounds/Phone/keypad.mp3");
+    this.load.audio("phone_success", "assets/sounds/Phone/success.mp3");
+    this.load.audio("phone_error", "assets/sounds/Phone/error.mp3");
   }
 
   create() {
@@ -40,7 +39,7 @@ class Level4 extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.levelText = this.add
-      .text(width - 30, 30, "Level 4", {
+      .text(width - 30, 30, "Level 2", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#ffffff",
@@ -156,8 +155,6 @@ class Level4 extends Phaser.Scene {
 
     this.startVibrationSoundLoop();
 
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
-
     this.events.on("canvas_resized", (size) => {
       this.drawBg(size.width, size.height);
       this.statusText.setPosition(size.width / 2, 50);
@@ -171,16 +168,14 @@ class Level4 extends Phaser.Scene {
         .rectangle(0, 0, width, height, 0x000000)
         .setOrigin(0, 0)
         .setDepth(100);
-
       const nextLvlText = this.add
-        .text(width / 2, height / 2, "Level 4...", {
+        .text(width / 2, height / 2, "Level 2...", {
           fontFamily: '"Special Elite", monospace',
           fontSize: "48px",
           color: "#ffffff",
         })
         .setOrigin(0.5)
         .setDepth(101);
-
       this.tweens.add({
         targets: [fadeOverlay, nextLvlText],
         alpha: 0,
@@ -458,7 +453,6 @@ class Level4 extends Phaser.Scene {
     const iconX = -8;
     const iconY = 0;
 
-    // Speaker base
     this.muteButtonIconGfx
       .fillStyle(iconColor, 0.9)
       .fillRect(iconX, iconY - 6, 8, 12);
@@ -469,7 +463,6 @@ class Level4 extends Phaser.Scene {
       { x: iconX, y: iconY + 6 },
     ]);
 
-    // Sound waves or mute cross
     if (!isMuted) {
       for (let i = 0; i < 3; i++) {
         this.muteButtonIconGfx.lineStyle(2, iconColor, 0.9);
@@ -503,28 +496,21 @@ class Level4 extends Phaser.Scene {
 
   toggleVibrationMute() {
     this.isVibrationMuted = !this.isVibrationMuted;
-
     this.playKeySound();
-
     if (this.isVibrationMuted && this.vibrationSound) {
       this.vibrationSound.stop();
     }
-
     this.drawExternalMuteButton();
   }
 
   drawSignalBars(activeBars = 1) {
     if (!this.signalGfx) return;
-
     const color = 0x31461d;
     const x = this.signalBaseX;
     const y = this.signalBaseY;
-
     this.signalGfx.clear();
-
     for (let i = 0; i < 5; i++) {
       const alpha = i < activeBars ? 1 : 0.2;
-
       this.signalGfx
         .fillStyle(color, alpha)
         .fillRect(x + i * 6, y + (12 - (i + 1) * 2), 4, (i + 1) * 2);
@@ -536,16 +522,13 @@ class Level4 extends Phaser.Scene {
       this.signalTimer.remove(false);
       this.signalTimer = null;
     }
-
     let bars = 1;
-
     this.signalTimer = this.time.addEvent({
       delay: 500,
       loop: true,
       callback: () => {
         this.drawSignalBars(bars);
         bars++;
-
         if (bars > 5) {
           bars = 1;
         }
@@ -558,7 +541,6 @@ class Level4 extends Phaser.Scene {
       this.callBlinkTween.stop();
       this.callBlinkTween = null;
     }
-
     this.callBlinkTween = this.tweens.add({
       targets: this.callerText,
       alpha: 0.28,
@@ -580,10 +562,9 @@ class Level4 extends Phaser.Scene {
       shadowColor = 0x1b2025,
       onDown = null,
     }) => {
-      const c = this.add.container(x, y); // Container for the button
-      const g = this.add.graphics(); // Graphics object for drawing
+      const c = this.add.container(x, y);
+      const g = this.add.graphics();
       c.add(g);
-
       g.fillStyle(0x07090b, 0.62).fillRoundedRect(
         -w / 2,
         -h / 2 + 4,
@@ -591,11 +572,8 @@ class Level4 extends Phaser.Scene {
         h,
         h / 2,
       );
-
       g.fillStyle(shadowColor).fillRoundedRect(-w / 2, -h / 2 + 2, w, h, h / 2);
-
       g.fillStyle(baseColor).fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
-
       g.fillStyle(0xffffff, 0.08).fillRoundedRect(
         -w / 2 + 6,
         -h / 2 + 3,
@@ -603,9 +581,7 @@ class Level4 extends Phaser.Scene {
         5,
         4,
       );
-
       g.lineStyle(1, 0x111519).strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
-
       const label = this.add
         .text(0, 0, text, {
           fontFamily: "Arial, sans-serif",
@@ -614,20 +590,15 @@ class Level4 extends Phaser.Scene {
           fontStyle: "bold",
         })
         .setOrigin(0.5);
-
       c.add(label);
-
       if (onDown) {
         const baseY = y;
-
         c.setInteractive(
           new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
           Phaser.Geom.Rectangle.Contains,
         );
-
         c.on("pointerdown", () => {
           if (this.isSolved) return;
-
           this.tweens.add({
             targets: c,
             y: baseY + 2,
@@ -635,28 +606,22 @@ class Level4 extends Phaser.Scene {
             yoyo: true,
             ease: "Power1",
           });
-
           this.playKeySound();
           onDown();
         });
       }
-
       return c;
     };
 
     const createNumberKey = ({ x, y, label, subLabel }) => {
       const w = 84;
       const h = 52;
-
       const c = this.add.container(x, y);
       const g = this.add.graphics();
       c.add(g);
-
       g.fillStyle(0x07090b, 0.6).fillRoundedRect(-w / 2, -h / 2 + 5, w, h, 13);
-
       g.fillStyle(0x1b2025).fillRoundedRect(-w / 2, -h / 2 + 3, w, h, 13);
       g.fillStyle(0x424b55).fillRoundedRect(-w / 2, -h / 2, w, h, 13);
-
       g.fillStyle(0xffffff, 0.11).fillRoundedRect(
         -w / 2 + 8,
         -h / 2 + 5,
@@ -664,9 +629,7 @@ class Level4 extends Phaser.Scene {
         8,
         5,
       );
-
       g.lineStyle(1, 0x111519).strokeRoundedRect(-w / 2, -h / 2, w, h, 13);
-
       const main = this.add
         .text(0, subLabel ? -10 : 0, label, {
           fontFamily: "Arial, sans-serif",
@@ -675,7 +638,6 @@ class Level4 extends Phaser.Scene {
           fontStyle: "bold",
         })
         .setOrigin(0.5);
-
       const sub = this.add
         .text(0, 14, subLabel, {
           fontFamily: "Arial, sans-serif",
@@ -684,19 +646,14 @@ class Level4 extends Phaser.Scene {
           fontStyle: "bold",
         })
         .setOrigin(0.5);
-
       c.add([main, sub]);
-
       const baseY = y;
-
       c.setInteractive(
         new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
         Phaser.Geom.Rectangle.Contains,
       );
-
       c.on("pointerdown", () => {
         if (this.isSolved) return;
-
         this.tweens.add({
           targets: c,
           y: baseY + 3,
@@ -704,11 +661,9 @@ class Level4 extends Phaser.Scene {
           yoyo: true,
           ease: "Power1",
         });
-
         this.playKeySound();
         this.handleKeyPress(label);
       });
-
       return c;
     };
 
@@ -719,34 +674,27 @@ class Level4 extends Phaser.Scene {
       h: 25,
       text: "SELECT",
     });
-
     this.rightSoftKey = createSoftButton({
       x: 92,
       y: -112,
       w: 84,
       h: 25,
       text: "BACK",
-      baseColor: 0x9f3a4e, // Dark red
-      shadowColor: 0x5e1f2a, // Darker red shadow
+      baseColor: 0x9f3a4e,
+      shadowColor: 0x5e1f2a,
       onDown: () => this.handleKeyPress("#"),
     });
-
     this.keypadContainer.add([leftSoftKey, this.rightSoftKey]);
-
     this.navContainer = this.add.container(0, -48);
     this.navG = this.add.graphics();
     this.navContainer.add(this.navG);
-
-    // Just the central button, but bigger
     this.navG.fillStyle(0x1d2329).fillEllipse(0, 0, 108, 54);
     this.navG.fillStyle(0x56616d).fillEllipse(0, -1, 88, 42);
     this.navG.fillStyle(0x242b32).fillEllipse(0, 0, 58, 32);
-
     this.navG.fillStyle(0x07090b).fillCircle(0, 1, 32);
     this.navG.fillStyle(0x8795a3).fillCircle(0, -1, 27);
     this.navG.fillStyle(0x3e4750).fillCircle(0, 0, 22);
     this.navG.fillStyle(0xffffff, 0.18).fillEllipse(-5, -8, 20, 9);
-
     this.menuText = this.add
       .text(0, 0, "MENU", {
         fontFamily: "Arial, sans-serif",
@@ -755,12 +703,9 @@ class Level4 extends Phaser.Scene {
         fontStyle: "bold",
       })
       .setOrigin(0.5);
-
     this.navContainer.add(this.menuText);
     this.keypadContainer.add(this.navContainer);
-
     const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"];
-
     const keyLabels = {
       1: ".,?!",
       2: "ABC",
@@ -775,23 +720,19 @@ class Level4 extends Phaser.Scene {
       "*": "spc",
       "#": "del",
     };
-
     const xSpacing = 100;
     const ySpacing = 60;
     const startY = 40;
-
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
       const row = Math.floor(i / 3);
       const col = i % 3;
-
       const keyObj = createNumberKey({
         x: (col - 1) * xSpacing,
         y: startY + row * ySpacing,
         label: key,
         subLabel: keyLabels[key],
       });
-
       this.keypadContainer.add(keyObj);
     }
   }
@@ -801,9 +742,7 @@ class Level4 extends Phaser.Scene {
       this.vibrationTimer.remove(false);
       this.vibrationTimer = null;
     }
-
     this.playVibrationSoundPulse();
-
     this.vibrationTimer = this.time.addEvent({
       delay: 2000,
       loop: true,
@@ -818,66 +757,45 @@ class Level4 extends Phaser.Scene {
       if (this.vibrationSound && this.vibrationSound.isPlaying) {
         this.vibrationSound.stop();
       }
-
       return;
     }
-
     if (!this.vibrationSound) return;
-
-    // Bug fix important:
-    // nu porni alt vibration.mp3 dacă unul rulează deja.
     if (this.vibrationSound.isPlaying) return;
-
     if (this.sound.locked) {
       if (!this.waitingForAudioUnlock) {
         this.waitingForAudioUnlock = true;
-
         this.sound.once(Phaser.Sound.Events.UNLOCKED, () => {
           this.waitingForAudioUnlock = false;
           this.playVibrationSoundPulse();
         });
       }
-
       return;
     }
-
-    this.vibrationSound.play({
-      volume: 0.25,
-    });
+    this.vibrationSound.play({ volume: 0.25 });
   }
 
   playKeySound() {
     if (!this.keySound) return;
-
     if (this.sound.locked) {
       this.sound.once(Phaser.Sound.Events.UNLOCKED, () => {
         if (!this.isSolved && this.keySound) {
-          this.keySound.play({
-            volume: 0.62,
-          });
+          this.keySound.play({ volume: 0.62 });
         }
       });
-
       return;
     }
-
-    this.keySound.play({
-      volume: 0.62,
-    });
+    this.keySound.play({ volume: 0.62 });
   }
 
   handleKeyPress(key) {
     clearTimeout(this.keyTimeout);
-
     if (key === "*" || key === "#") {
       this.confirmChar();
-
       if (key === "#") {
         this.userInput = this.userInput.slice(0, -1);
       } else if (key === "*") {
         this.userInput += " ";
       }
-
       this.lastKey = null;
       this.keyPressCount = 0;
     } else {
@@ -888,14 +806,11 @@ class Level4 extends Phaser.Scene {
       } else {
         this.keyPressCount++;
       }
-
       const chars = this.keymap[key];
       const charIndex = (this.keyPressCount - 1) % chars.length;
       this.lastChar = chars[charIndex];
-
       this.keyTimeout = setTimeout(() => this.confirmChar(), 800);
     }
-
     this.updateScreen();
   }
 
@@ -912,48 +827,35 @@ class Level4 extends Phaser.Scene {
   updateScreen() {
     const currentInput = (this.userInput + this.lastChar).slice(-12);
     this.screenInput.setText(currentInput);
-
     if (!this.isCallAnswered && currentInput.toUpperCase() === "GEORGE") {
       this.showAnswerButton();
-    }
-
-    if (this.userInput.toUpperCase() === "LUITAS") {
-      this.solve();
     }
   }
 
   showAnswerButton() {
     if (this.isCallAnswered) return;
     this.isCallAnswered = true;
-
-    // Stop T9 logic
     clearTimeout(this.keyTimeout);
     this.userInput = "";
     this.lastChar = "";
     this.lastKey = null;
     this.keyPressCount = 0;
-    this.screenInput.setText(""); // Clear screen input
-
-    // Change nav button appearance to green "ANSWER"
+    this.screenInput.setText("");
     this.menuText.setText("ANSWER").setFontSize("16px").setColor("#e2f0d6");
     this.navG.clear();
-
-    // Draw a smaller green button
     const btnW = 120,
       btnH = 50,
       btnR = 20;
     this.navG
       .fillStyle(0x1a2620)
-      .fillRoundedRect(-btnW / 2, -btnH / 2 + 5, btnW, btnH, btnR); // Shadow
+      .fillRoundedRect(-btnW / 2, -btnH / 2 + 5, btnW, btnH, btnR);
     this.navG
       .fillStyle(0x31461d)
-      .fillRoundedRect(-btnW / 2, -btnH / 2 + 2, btnW, btnH, btnR); // Base
+      .fillRoundedRect(-btnW / 2, -btnH / 2 + 2, btnW, btnH, btnR);
     this.navG
       .fillStyle(0x4d7c28)
-      .fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR); // Top
-    this.navG.fillStyle(0xffffff, 0.15).fillRoundedRect(-45, -20, 90, 10, 8); // Highlight
-
-    // Make it interactive
+      .fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR);
+    this.navG.fillStyle(0xffffff, 0.15).fillRoundedRect(-45, -20, 90, 10, 8);
     this.navContainer
       .setInteractive(
         new Phaser.Geom.Rectangle(-btnW / 2, -btnH / 2, btnW, btnH),
@@ -964,64 +866,47 @@ class Level4 extends Phaser.Scene {
 
   revealRealClue() {
     this.playKeySound();
-    this.solve(); // The level is solved when the call is answered.
+    this.solve();
   }
 
   solve() {
     if (this.isSolved) return;
-
     this.isSolved = true;
-
-    // Stop all animations and sounds
     this.confirmChar();
     clearTimeout(this.keyTimeout);
-
     if (this.vibrationTimer) {
       this.vibrationTimer.remove(false);
       this.vibrationTimer = null;
     }
-
     if (this.signalTimer) {
       this.signalTimer.remove(false);
       this.signalTimer = null;
     }
-
     if (this.callBlinkTween) {
       this.callBlinkTween.stop();
       this.callBlinkTween = null;
     }
-
     if (this.vibrationSound && this.vibrationSound.isPlaying) {
       this.vibrationSound.stop();
     }
-
-    // Update on-screen text
     this.callerText.setAlpha(1);
     this.callerNumber.setAlpha(1);
-
     this.callerText.setText("CALLER IDENTIFIED");
     this.callerNumber.setText("GEORGE");
     this.screenInput.setText("");
-
     this.drawSignalBars(5);
-
-    // Update main status text
     this.statusText.setText("You have revealed the name. Execute it.");
     this.statusText.setColor("#1aaf7a");
-
     if (this.cache.audio.exists("phone_success")) {
       this.sound.play("phone_success");
     } else if (window.playSuccess) {
       window.playSuccess(this);
     }
-
-    // Disable all phone interactions
     this.keypadContainer.list.forEach((keyObj) => {
       if (keyObj.disableInteractive) {
         keyObj.disableInteractive();
       }
     });
-
     if (this.muteButton) {
       this.muteButton.disableInteractive();
     }
@@ -1030,28 +915,21 @@ class Level4 extends Phaser.Scene {
     }
   }
 
-  transitionToLevel(levelNumber, skipFade = false) {
-    if (levelNumber === 4 && skipFade) {
-      this.scene.restart({ skipFade: true });
-      return;
-    }
-
+  transitionToLevel(levelKey, skipFade = false) {
     if (skipFade) {
-      this.scene.start("Level" + levelNumber, { skipFade: true });
+      this.scene.start(levelKey, { skipFade: true });
       return;
     }
-
     if (window.playSuccess) window.playSuccess(this);
-
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
-
     const fadeOverlay = this.add
       .rectangle(0, 0, width, height, 0x000000)
       .setOrigin(0, 0)
       .setDepth(100)
       .setAlpha(0);
-
+    const levelIndex = window.GAME_LEVELS.findIndex((l) => l.key === levelKey);
+    const levelNumber = levelIndex !== -1 ? levelIndex + 1 : "?";
     const nextLvlText = this.add
       .text(width / 2, height / 2, "Level " + levelNumber + "...", {
         fontFamily: '"Special Elite", monospace',
@@ -1061,45 +939,23 @@ class Level4 extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(101)
       .setAlpha(0);
-
     this.tweens.add({
       targets: [fadeOverlay, nextLvlText],
       alpha: 1,
       duration: 1000,
       onComplete: () => {
-        this.scene.start("Level" + levelNumber, { skipFade: false });
+        this.scene.start(levelKey, { skipFade: false });
       },
     });
   }
 
   shutdown() {
+    this.time.removeAllEvents();
+    this.tweens.killAll();
     clearTimeout(this.keyTimeout);
-
-    if (this.vibrationTimer) {
-      this.vibrationTimer.remove(false);
-      this.vibrationTimer = null;
-    }
-
-    if (this.signalTimer) {
-      this.signalTimer.remove(false);
-      this.signalTimer = null;
-    }
-
-    if (this.callBlinkTween) {
-      this.callBlinkTween.stop();
-      this.callBlinkTween = null;
-    }
 
     if (this.vibrationSound) {
       this.vibrationSound.stop();
-      this.vibrationSound.destroy();
-      this.vibrationSound = null;
-    }
-
-    if (this.keySound) {
-      this.keySound.stop();
-      this.keySound.destroy();
-      this.keySound = null;
     }
   }
 }

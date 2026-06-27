@@ -16,29 +16,49 @@ window.GameAudio = {
 };
 
 // ── Levels Logic ──
-// Citim din memoria browserului (localStorage) dacă jucătorul a mai jucat
 const savedLevel = localStorage.getItem("puzzleUnlockedLevel");
-window.unlockedLevel = savedLevel ? parseInt(savedLevel) : 1;
-window.currentLevel = window.unlockedLevel;
+window.currentLevelIndex = savedLevel ? parseInt(savedLevel) : 0;
+window.unlockedLevelIndex = window.currentLevelIndex;
+
+function goToLevel(index) {
+  if (index < 0 || index >= window.GAME_LEVELS.length) {
+    console.error("Invalid level index:", index);
+    return;
+  }
+
+  if (
+    window.currentLevelIndex >= 0 &&
+    window.currentLevelIndex < window.GAME_LEVELS.length
+  ) {
+    const oldSceneKey = window.GAME_LEVELS[window.currentLevelIndex].key;
+    if (game.scene.isActive(oldSceneKey)) {
+      game.scene.stop(oldSceneKey);
+    }
+  }
+
+  window.currentLevelIndex = index;
+  renderLevels();
+
+  const newSceneKey = window.GAME_LEVELS[index].key;
+  game.scene.start(newSceneKey, { skipFade: true });
+}
 
 function renderLevels() {
   const grid = document.getElementById("levels-grid");
   grid.innerHTML = "";
 
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 0; i < window.GAME_LEVELS.length; i++) {
     const btn = document.createElement("div");
-    btn.innerText = i;
+    btn.innerText = i + 1;
 
-    if (i <= window.unlockedLevel) {
-      if (i === window.currentLevel) {
+    if (i <= window.unlockedLevelIndex) {
+      if (i === window.currentLevelIndex) {
         btn.className = "level-btn current";
       } else {
         btn.className = "level-btn unlocked";
       }
       btn.onclick = () => {
-        window.currentLevel = i;
-        renderLevels();
-        if (window.mainScene) window.mainScene.transitionToLevel(i, true);
+        goToLevel(i);
       };
     } else {
       btn.className = "level-btn locked";
@@ -53,7 +73,6 @@ renderLevels();
 const startScreen = document.getElementById("start-screen");
 const btnStartGame = document.getElementById("btn-start-game");
 
-// Verificăm dacă jucătorul a mai apăsat vreodată butonul de start
 const hasPlayedBefore = localStorage.getItem("hasPlayedBefore");
 if (hasPlayedBefore) {
   btnStartGame.innerText = "CONTINUE";
@@ -61,11 +80,9 @@ if (hasPlayedBefore) {
   btnStartGame.innerText = "START GAME";
 }
 
-// Funcție pentru a ascunde ecranul de start și a debloca sunetul (necesar pentru toate butoanele)
 function initGameScreen() {
   startScreen.classList.add("hidden");
-  localStorage.setItem("hasPlayedBefore", "true"); // Salvăm amprenta vizitei
-  // Deblocăm forțat contextul audio în caz că a fost blocat de browser
+  localStorage.setItem("hasPlayedBefore", "true");
   if (
     window.mainScene &&
     window.mainScene.sound &&
@@ -79,20 +96,7 @@ function initGameScreen() {
 
 btnStartGame.addEventListener("click", () => {
   initGameScreen();
-  if (window.mainScene) {
-    window.mainScene.transitionToLevel(window.currentLevel, true);
-  }
-});
-
-// ── Toggle Sidebar (FIXED) ──
-const toggleBtn = document.getElementById("btn-toggle-levels");
-const rightWrapper = document.getElementById("right-sidebar-wrapper");
-let panelOpen = true; // starts open
-
-toggleBtn.addEventListener("click", () => {
-  panelOpen = !panelOpen;
-  rightWrapper.classList.toggle("collapsed", !panelOpen);
-  toggleBtn.textContent = panelOpen ? "◀" : "▶";
+  goToLevel(window.currentLevelIndex); // Use the robust helper
 });
 
 // ── Code Submit ──
@@ -101,49 +105,52 @@ const inputCode = document.getElementById("level-code");
 
 btnSubmit.addEventListener("click", () => {
   const code = inputCode.value.toUpperCase();
-  let isCorrect = false;
-  let targetLevel = window.currentLevel;
+  const currentLevelConfig = window.GAME_LEVELS[window.currentLevelIndex];
 
-  // Verificăm codul în funcție de nivelul curent
-  if (window.currentLevel === 1 && code === "337") {
-    isCorrect = true;
-    targetLevel = 2;
-  } else if (
-    window.currentLevel === 2 &&
-    (code === "FIBO" || code === "FIBONACCI")
-  ) {
-    isCorrect = true;
-    targetLevel = 3;
-  } else if (window.currentLevel === 3 && (code === "5" || code === "FIVE")) {
-    isCorrect = true;
-    targetLevel = 4; // Corecție: Trecem la nivelul 4
-  } else if (window.currentLevel === 4 && code === "GEORGE") {
-    isCorrect = true;
-    targetLevel = 4; // Rămânem la 4, este ultimul nivel
-    // Afișăm mesaj de victorie final
-    setTimeout(
-      () => alert("CONGRATULATIONS! You have completed the game!"),
-      500,
-    );
-  }
+  let isCorrect =
+    code === currentLevelConfig.code ||
+    (currentLevelConfig.altCode && code === currentLevelConfig.altCode);
 
   if (isCorrect) {
-    window.unlockedLevel = Math.max(window.unlockedLevel, targetLevel); // Prevenim scăderea progresului
-    window.currentLevel = targetLevel;
-    localStorage.setItem("puzzleUnlockedLevel", window.unlockedLevel);
-    renderLevels();
+    const isLastLevel =
+      window.currentLevelIndex === window.GAME_LEVELS.length - 1;
 
-    if (window.mainScene) {
-      window.mainScene.transitionToLevel(targetLevel);
+    if (isLastLevel) {
+      setTimeout(
+        () => alert("CONGRATULATIONS! You have completed the game!"),
+        500,
+      );
+    } else {
+      const nextLevelIndex = window.currentLevelIndex + 1;
+      window.unlockedLevelIndex = Math.max(
+        window.unlockedLevelIndex,
+        nextLevelIndex,
+      );
+      localStorage.setItem("puzzleUnlockedLevel", window.unlockedLevelIndex);
+
+      const currentSceneKey = currentLevelConfig.key;
+      const nextSceneKey = window.GAME_LEVELS[nextLevelIndex].key;
+      const currentScene = game.scene.getScene(currentSceneKey);
+
+      // Attempt to transition gracefully
+      if (
+        currentScene &&
+        currentScene.scene.isActive() &&
+        typeof currentScene.transitionToLevel === "function"
+      ) {
+        // Update state and UI before starting the transition
+        window.currentLevelIndex = nextLevelIndex; // Update state
+        renderLevels(); // Redraw UI
+        currentScene.transitionToLevel(nextSceneKey);
+      } else {
+        // Fallback for scenes without a transition method, use the robust helper
+        goToLevel(nextLevelIndex);
+      }
     }
-
     inputCode.value = "";
   } else if (inputCode.value.trim() !== "") {
-    // Când codul e greșit (și nu este gol)
     if (window.playErrorSound) window.playErrorSound();
-
     inputCode.classList.add("error-flash");
-    // După o secundă, scoatem clasa ca să se facă fade înapoi la negru
     setTimeout(() => {
       inputCode.classList.remove("error-flash");
     }, 1000);
@@ -153,13 +160,9 @@ btnSubmit.addEventListener("click", () => {
 // ── New Game Button ──
 document.getElementById("btn-new").addEventListener("click", () => {
   initGameScreen();
-  window.unlockedLevel = 1;
-  window.currentLevel = 1;
-  localStorage.setItem("puzzleUnlockedLevel", 1);
-  renderLevels();
-  if (window.mainScene) {
-    window.mainScene.transitionToLevel(1, true);
-  }
+  localStorage.setItem("puzzleUnlockedLevel", 0);
+  window.unlockedLevelIndex = 0;
+  goToLevel(0); // Use the robust helper
 });
 
 inputCode.addEventListener("keypress", (e) => {
@@ -174,7 +177,6 @@ const musicSlider = document.getElementById("music-slider");
 const sfxSlider = document.getElementById("sfx-slider");
 const btnMute = document.getElementById("btn-mute");
 
-// Sincronizăm interfața vizuală cu valorile salvate
 musicSlider.value = window.GameAudio.musicVol;
 sfxSlider.value = window.GameAudio.sfxVol;
 btnMute.innerText = window.GameAudio.muted ? "🔇 UNMUTE" : "🔊 MUTE";
@@ -215,15 +217,17 @@ const btnCloseInfo = document.getElementById("btn-close-info");
 const infoText = document.getElementById("info-text");
 
 const levelHints = {
-  1: "SOUND REQUIRED.\nInteract with the environment to find hidden clues.",
-  2: "NATURE'S SEQUENCE.\nWater the plant and observe the mathematical pattern of its leaves.",
-  3: "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
-  4: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
+  StackingPlates:
+    "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
+  Phone: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
+  Fibonacci:
+    "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
 };
 
 btnInfo.addEventListener("click", () => {
+  const currentLevelKey = window.GAME_LEVELS[window.currentLevelIndex].key;
   infoText.innerText =
-    levelHints[window.currentLevel] || "SYSTEM CORRUPTED.\nNO DATA AVAILABLE.";
+    levelHints[currentLevelKey] || "SYSTEM CORRUPTED.\nNO DATA AVAILABLE.";
   infoModal.classList.remove("hidden");
 });
 
@@ -231,15 +235,12 @@ btnCloseInfo.addEventListener("click", () => infoModal.classList.add("hidden"));
 
 // ── Global UI Click Sound ──
 document.body.addEventListener("mousedown", (e) => {
-  // Sunet UI pentru tot ce e în afara jocului (meniu, sidebar, input)
   if (e.target.tagName !== "CANVAS") {
     if (window.playUIClick) window.playUIClick();
   }
 });
 
 // ── Fix Phaser Resize Lag ──
-// Păstrăm canvas-ul centrat cu Flexbox în timpul glisării meniului,
-// și recalculăm rezoluția internă WebGL doar după ce s-a terminat animația (350ms).
 const gameContainer = document.getElementById("game-container");
 let resizeTimer;
 const resizeObserver = new ResizeObserver((entries) => {
@@ -249,13 +250,15 @@ const resizeObserver = new ResizeObserver((entries) => {
 
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if (window.mainScene && window.mainScene.scale) {
-        window.mainScene.scale.resize(w, h);
-        // Trimitem un semnal jocului să își re-centreze elementele
-        window.mainScene.events.emit("canvas_resized", {
-          width: w,
-          height: h,
-        });
+      if (game && game.scale) {
+        game.scale.resize(w, h);
+        game.canvas.style.width = w + "px";
+        game.canvas.style.height = h + "px";
+
+        // Emit resize event for all active scenes
+        for (const scene of game.scene.getScenes(true)) {
+          scene.events.emit("canvas_resized", { width: w, height: h });
+        }
       }
     }, 350);
   }
