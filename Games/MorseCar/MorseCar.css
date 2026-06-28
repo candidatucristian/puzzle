@@ -1,4 +1,244 @@
-/* CSS specific pentru Level 4 MorseCar */
-.morsecar-specific {
-  /* adaugă stilurile aici */
+/* ── Car model shared by all cars ── */
+.car-road {
+  width: 110px;
+  overflow: hidden;
+}
+
+.car {
+  width: 110px;
+  position: relative;
+}
+
+@-webkit-keyframes rotateWheel {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rotateWheel {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Colors via CSS variable so oncoming cars can be different colors */
+.car-base {
+  background: var(--car-color, #181818);
+  width: 105%;
+  height: 30px;
+  border-radius: 6px 12px 15px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.274);
+}
+
+.car-top {
+  height: 36px;
+  width: 66px;
+  background: var(--car-color, #000000);
+  margin-bottom: -18px;
+  border-radius: 100px / 60px;
+  margin-left: 15px;
+  position: relative;
+}
+
+.car-top::before {
+  width: 0;
+  height: 0;
+  border-top: 18px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-right: 43px solid var(--car-color, #000000);
+  position: absolute;
+  left: -10px;
+  content: "";
+}
+
+.car-top::after {
+  position: absolute;
+  right: -29px;
+  content: "";
+  top: 14px;
+  border-radius: 50% 50% 0 0;
+  width: 60px;
+  height: 8px;
+  background: var(--car-color, #000000);
+}
+
+.window {
+  position: absolute;
+  background: white;
+  width: 42px;
+  height: 11px;
+  top: 3px;
+  border-radius: 50% 50% 0 0;
+  left: 12px;
+}
+
+.window::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  background: var(--car-color, #000000);
+  height: 100%;
+  width: 5px;
+}
+
+.wheel {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #4a4a4a00;
+  position: absolute;
+  border: 0.2px solid rgb(87, 83, 83);
+  -webkit-animation: rotateWheel 0.7s infinite linear;
+  animation: rotateWheel 0.7s infinite linear;
+}
+
+.wheel::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  top: 4px;
+  left: 4px;
+  border-radius: 50%;
+  background: rgb(0, 0, 0);
+  position: absolute;
+}
+
+.wheel:after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4a4a4a;
+}
+
+.wheel-left {
+  left: 12px;
+  bottom: -10px;
+}
+.wheel-right {
+  right: 12px;
+  bottom: -10px;
+}
+
+.wheel-spike {
+  position: absolute;
+  top: 50%;
+  bottom: 4px;
+  width: calc(100% - 8px);
+  left: 4px;
+  height: 3px;
+  transform: translateY(-50%);
+  background: #4a4a4a;
+}
+
+.wheel-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: white;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+}
+
+.head-light {
+  position: absolute;
+  background: #e2dfcb;
+  right: 1px;
+  top: 19px;
+  border-radius: 50% 15px 15px 50%;
+  width: 10px;
+  height: 4px;
+  transition:
+    background 0.05s,
+    box-shadow 0.05s;
+}
+
+.road {
+  position: relative;
+  width: 100%;
+  margin-top: 8px;
+  animation: border-dance 0.5s infinite linear;
+  height: 3px;
+  background-image: linear-gradient(
+    to left,
+    #ccc 0%,
+    #ccc 20%,
+    #fff 20%,
+    #fff 40%,
+    #ccc 40%,
+    #ccc 60%,
+    #fff 60%,
+    #fff 80%,
+    #ccc 80%
+  );
+}
+@keyframes border-dance {
+  0% {
+    left: 40px;
+  }
+  100% {
+    left: 0px;
+  }
+}
+
+/* ── DOM wrapper: absolutely positioned over Phaser canvas ── */
+.mc-car-wrapper,
+.mc-oncoming-wrapper {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Wheels extend below .car — let them overflow */
+.mc-car-wrapper .car-road,
+.mc-oncoming-wrapper .car-road {
+  overflow: visible;
+}
+
+/* Player car: headlight is on the RIGHT = car already faces RIGHT → no flip.
+   Scale 1.5× so it matches the original Phaser car size (~165 px). */
+.mc-car-wrapper {
+  transform: scale(1.5);
+  transform-origin: top left;
+}
+
+/* Oncoming cars: flip to face LEFT, scale 1.4× */
+.mc-oncoming-wrapper {
+  transform: scale(1.4);
+  transform-origin: top left;
+}
+.mc-oncoming-wrapper .car-road {
+  transform: scaleX(-1);
+}
+
+/* Headlight glow while honking */
+.mc-honking .head-light {
+  background: #fffbe0;
+  box-shadow: 0 0 8px 5px rgba(255, 245, 120, 0.9);
+  width: 14px;
+  height: 6px;
+}
+
+/* Body bob while honking — no flip needed since player car isn't flipped */
+.mc-honking .car-road {
+  animation: mc-honk-bob 0.11s infinite alternate;
+}
+@keyframes mc-honk-bob {
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(-3px);
+  }
 }

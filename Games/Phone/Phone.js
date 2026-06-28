@@ -9,10 +9,13 @@ class PhoneScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio("phone_vib", "assets/sounds/Phone/vibration.mp3");
-    this.load.audio("keypad", "assets/sounds/Phone/keypad.mp3");
-    this.load.audio("phone_success", "assets/sounds/Phone/success.mp3");
-    this.load.audio("phone_error", "assets/sounds/Phone/error.mp3");
+    this.load.audio("phone_vib",  "assets/sounds/Phone/vibration.mp3");
+    this.load.audio("keypad",     "assets/sounds/Phone/keypad.mp3");
+    this.load.audio("click",      "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click",   "assets/sounds/global/mouseclick.wav");
+    this.load.audio("nextlevel",  "assets/sounds/global/nextlevel.wav");
+    this.load.audio("error",      "assets/sounds/global/error.mp3");
+    this.load.audio("bgm",        "assets/sounds/global/background.mp3");
   }
 
   create() {
@@ -55,7 +58,6 @@ class PhoneScene extends Phaser.Scene {
     });
 
     this.isSolved = false;
-    this.isVibrationMuted = false;
     this.isCallAnswered = false;
     this.waitingForAudioUnlock = false;
 
@@ -139,8 +141,6 @@ class PhoneScene extends Phaser.Scene {
     this.phoneContainer.add(this.keypadContainer);
     this.createKeypad();
 
-    this.createExternalMuteButton();
-
     this.setPhoneScale();
 
     this.vibrationSound = this.sound.add("phone_vib", {
@@ -160,7 +160,6 @@ class PhoneScene extends Phaser.Scene {
       this.statusText.setPosition(size.width / 2, 50);
       this.levelText.setPosition(size.width - 30, 30);
       this.setPhoneScale();
-      this.positionExternalMuteButton();
     });
 
     if (!this.skipFadeIn) {
@@ -203,8 +202,6 @@ class PhoneScene extends Phaser.Scene {
 
     this.phoneContainer.setScale(scale);
     this.phoneContainer.setPosition(w / 2, h / 2 + 14);
-
-    this.positionExternalMuteButton();
   }
 
   drawPhoneBody(g) {
@@ -377,130 +374,6 @@ class PhoneScene extends Phaser.Scene {
     g.lineStyle(1.5, statusColor).strokeRect(x + w - 36, statusY, 20, 9);
     g.fillStyle(statusColor).fillRect(x + w - 16, statusY + 3, 3, 4);
     g.fillStyle(statusColor).fillRect(x + w - 33, statusY + 3, 15, 4);
-  }
-
-  createExternalMuteButton() {
-    this.muteButton = this.add.container(0, 0).setDepth(50);
-    this.muteButtonGfx = this.add.graphics();
-    this.muteButtonIconGfx = this.add.graphics();
-
-    this.muteButton.add([this.muteButtonGfx, this.muteButtonIconGfx]);
-
-    this.muteButton.setInteractive(
-      new Phaser.Geom.Rectangle(-22, -22, 44, 44),
-      Phaser.Geom.Rectangle.Contains,
-    );
-
-    this.muteButton.on("pointerdown", () => {
-      if (this.isSolved) return;
-      this.toggleVibrationMute();
-    });
-
-    this.muteButton.on("pointerover", () => {
-      if (!this.isSolved && this.muteButton) {
-        this.muteButton.setScale(1.04);
-      }
-    });
-
-    this.muteButton.on("pointerout", () => {
-      if (this.muteButton) {
-        this.muteButton.setScale(1);
-      }
-    });
-
-    this.drawExternalMuteButton();
-    this.positionExternalMuteButton();
-  }
-
-  positionExternalMuteButton() {
-    if (!this.muteButton) return;
-
-    const w = this.cameras.main.width;
-    const h = this.cameras.main.height;
-
-    const phoneRightEdge =
-      this.phoneContainer.x + (340 / 2) * this.phoneContainer.scaleX;
-    const phoneCenterY = this.phoneContainer.y;
-
-    this.muteButton.setPosition(phoneRightEdge + 110, phoneCenterY);
-  }
-
-  drawExternalMuteButton() {
-    if (!this.muteButtonGfx) return;
-
-    const isMuted = this.isVibrationMuted;
-
-    this.muteButtonGfx.clear();
-
-    this.muteButtonGfx
-      .fillStyle(0x000000, 0.24)
-      .fillRoundedRect(-20, -20 + 5, 40, 40, 16);
-
-    this.muteButtonGfx
-      .fillStyle(isMuted ? 0x263238 : 0x31461d)
-      .fillRoundedRect(-20, -20 + 2, 40, 40, 16);
-
-    this.muteButtonGfx
-      .fillStyle(isMuted ? 0x455a64 : 0x4d7c28)
-      .fillRoundedRect(-20, -20, 40, 40, 16);
-
-    this.muteButtonGfx
-      .lineStyle(1, 0xffffff, 0.22)
-      .strokeRoundedRect(-22, -22, 44, 44, 16);
-
-    this.muteButtonIconGfx.clear();
-    const iconColor = 0xffffff;
-    const iconX = -8;
-    const iconY = 0;
-
-    this.muteButtonIconGfx
-      .fillStyle(iconColor, 0.9)
-      .fillRect(iconX, iconY - 6, 8, 12);
-    this.muteButtonIconGfx.fillStyle(iconColor, 0.9).fillPoints([
-      { x: iconX, y: iconY - 6 },
-      { x: iconX - 6, y: iconY - 10 },
-      { x: iconX - 6, y: iconY + 10 },
-      { x: iconX, y: iconY + 6 },
-    ]);
-
-    if (!isMuted) {
-      for (let i = 0; i < 3; i++) {
-        this.muteButtonIconGfx.lineStyle(2, iconColor, 0.9);
-        this.muteButtonIconGfx.beginPath();
-        this.muteButtonIconGfx.arc(
-          iconX + 8,
-          iconY,
-          (i + 1) * 5,
-          Phaser.Math.DegToRad(-60),
-          Phaser.Math.DegToRad(60),
-          false,
-        );
-        this.muteButtonIconGfx.strokePath();
-      }
-    } else {
-      this.muteButtonIconGfx.lineStyle(2.5, 0xf48fb1, 0.9);
-      this.muteButtonIconGfx.lineBetween(
-        iconX + 12,
-        iconY - 8,
-        iconX + 22,
-        iconY + 8,
-      );
-      this.muteButtonIconGfx.lineBetween(
-        iconX + 12,
-        iconY + 8,
-        iconX + 22,
-        iconY - 8,
-      );
-    }
-  }
-
-  toggleVibrationMute() {
-    this.isVibrationMuted = !this.isVibrationMuted;
-    this.playKeySound();
-    if (this.isVibrationMuted && this.vibrationSound) {
-      this.vibrationSound.stop();
-    }
-    this.drawExternalMuteButton();
   }
 
   drawSignalBars(activeBars = 1) {
@@ -753,7 +626,7 @@ class PhoneScene extends Phaser.Scene {
   }
 
   playVibrationSoundPulse() {
-    if (this.isSolved || this.isVibrationMuted) {
+    if (this.isSolved) {
       if (this.vibrationSound && this.vibrationSound.isPlaying) {
         this.vibrationSound.stop();
       }
@@ -897,19 +770,12 @@ class PhoneScene extends Phaser.Scene {
     this.drawSignalBars(5);
     this.statusText.setText("You have revealed the name. Execute it.");
     this.statusText.setColor("#1aaf7a");
-    if (this.cache.audio.exists("phone_success")) {
-      this.sound.play("phone_success");
-    } else if (window.playSuccess) {
-      window.playSuccess(this);
-    }
+    if (window.playSuccess) window.playSuccess(this);
     this.keypadContainer.list.forEach((keyObj) => {
       if (keyObj.disableInteractive) {
         keyObj.disableInteractive();
       }
     });
-    if (this.muteButton) {
-      this.muteButton.disableInteractive();
-    }
     if (this.navContainer) {
       this.navContainer.disableInteractive();
     }
@@ -920,7 +786,7 @@ class PhoneScene extends Phaser.Scene {
       this.scene.start(levelKey, { skipFade: true });
       return;
     }
-    if (window.playSuccess) window.playSuccess(this);
+    if (!this.isSolved && window.playSuccess) window.playSuccess(this);
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
     const fadeOverlay = this.add

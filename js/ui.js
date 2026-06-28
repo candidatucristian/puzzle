@@ -32,6 +32,7 @@ function goToLevel(index) {
   ) {
     const oldSceneKey = window.GAME_LEVELS[window.currentLevelIndex].key;
     if (game.scene.isActive(oldSceneKey)) {
+      game.sound.stopAll();
       game.scene.stop(oldSceneKey);
     }
   }
@@ -116,6 +117,7 @@ btnSubmit.addEventListener("click", () => {
       window.currentLevelIndex === window.GAME_LEVELS.length - 1;
 
     if (isLastLevel) {
+      if (window.playSuccess && window.mainScene) window.playSuccess(window.mainScene);
       setTimeout(
         () => alert("CONGRATULATIONS! You have completed the game!"),
         500,
@@ -176,10 +178,26 @@ const btnCloseOptions = document.getElementById("btn-close-options");
 const musicSlider = document.getElementById("music-slider");
 const sfxSlider = document.getElementById("sfx-slider");
 const btnMute = document.getElementById("btn-mute");
+const volSliderUI = document.getElementById("vol-slider-ui");
+const volIconUI   = document.getElementById("vol-icon-ui");
+
+function syncMuteButtons() {
+  const label = window.GameAudio.muted ? "🔇 UNMUTE" : "🔊 MUTE";
+  btnMute.innerText = label;
+  _syncVolIcon();
+}
+
+function _syncVolIcon() {
+  const muted = window.GameAudio.muted;
+  const vol   = window.GameAudio.sfxVol;
+  volIconUI.textContent = (muted || vol === 0) ? "🔇" : vol < 0.5 ? "🔉" : "🔊";
+  volSliderUI.value = muted ? 0 : vol;
+}
 
 musicSlider.value = window.GameAudio.musicVol;
 sfxSlider.value = window.GameAudio.sfxVol;
-btnMute.innerText = window.GameAudio.muted ? "🔇 UNMUTE" : "🔊 MUTE";
+syncMuteButtons();
+_syncVolIcon();
 
 btnOptions.addEventListener("click", () =>
   optionsModal.classList.remove("hidden"),
@@ -201,13 +219,37 @@ sfxSlider.addEventListener("input", (e) => {
   localStorage.setItem("sfxVol", window.GameAudio.sfxVol);
 });
 
-btnMute.addEventListener("click", () => {
+function toggleMute() {
   window.GameAudio.muted = !window.GameAudio.muted;
   localStorage.setItem("muted", window.GameAudio.muted);
-  btnMute.innerText = window.GameAudio.muted ? "🔇 UNMUTE" : "🔊 MUTE";
+  syncMuteButtons();
   if (window.mainScene && window.mainScene.sound) {
+    const vol = window.GameAudio.muted ? 0 : window.GameAudio.sfxVol;
+    window.mainScene.sound.volume = vol;
     window.mainScene.sound.setMute(window.GameAudio.muted);
   }
+}
+
+btnMute.addEventListener("click", toggleMute);
+
+// Volume widget — slider controls master volume; vol=0 auto-mutes
+volSliderUI.addEventListener("input", (e) => {
+  const vol = parseFloat(e.target.value);
+  window.GameAudio.sfxVol = vol;
+  window.GameAudio.muted  = vol === 0;
+  localStorage.setItem("sfxVol", vol);
+  localStorage.setItem("muted", window.GameAudio.muted);
+  sfxSlider.value = vol;
+  syncMuteButtons();
+  if (window.mainScene && window.mainScene.sound) {
+    window.mainScene.sound.volume = vol;          // schimbă volumul sunetelor deja pornite
+    window.mainScene.sound.setMute(vol === 0);
+  }
+});
+
+// Icon click toggles mute (slider position preserved)
+volIconUI.addEventListener("click", () => {
+  toggleMute();
 });
 
 // ── Info Modal Logic ──
@@ -222,6 +264,10 @@ const levelHints = {
   Phone: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
   Fibonacci:
     "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
+  MorseCar:
+    "SOMEONE IS TRYING TO COMMUNICATE.\nListen through the noise — the road has a message for you.",
+  DeadAir:
+    "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
 };
 
 btnInfo.addEventListener("click", () => {

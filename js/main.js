@@ -67,7 +67,9 @@ const AudioFX = (() => {
 
 // ── Global Audio Helpers ──
 window.initGlobalAudio = (scene) => {
-  if (!window.GameAudio.bgmInstance) {
+  const bgm = window.GameAudio.bgmInstance;
+  const bgmAlive = bgm && bgm.manager && bgm.isPlaying;
+  if (!bgmAlive) {
     try {
       if (scene.cache.audio.exists("bgm")) {
         window.GameAudio.bgmInstance = scene.sound.add("bgm", {
@@ -150,6 +152,12 @@ window.GAME_LEVELS = [
     scene: MorseCarScene,
     code: "SUMMER",
     altCode: null,
+  },
+  {
+    key: "DeadAir",
+    scene: DeadAirScene,
+    code: "VOID",
+    altCode: "NULL",
   },
 ];
 

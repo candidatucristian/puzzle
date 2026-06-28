@@ -8,6 +8,14 @@ class StackingPlatesScene extends Phaser.Scene {
       data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
 
+  preload() {
+    this.load.audio("click",     "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click",  "assets/sounds/global/mouseclick.wav");
+    this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
+    this.load.audio("error",     "assets/sounds/global/error.mp3");
+    this.load.audio("bgm",       "assets/sounds/global/background.mp3");
+  }
+
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
@@ -333,7 +341,7 @@ class StackingPlatesScene extends Phaser.Scene {
       this.scene.start(levelKey, { skipFade: true });
       return;
     }
-    if (window.playSuccess) window.playSuccess(this);
+    if (!this.isSolved && window.playSuccess) window.playSuccess(this);
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
@@ -367,7 +375,7 @@ class StackingPlatesScene extends Phaser.Scene {
   }
 
   shutdown() {
-    // This scene has no persistent timers or sounds, but it's good practice
-    // to have the shutdown method.
+    this.tweens.killAll();
+    this.time.removeAllEvents();
   }
 }

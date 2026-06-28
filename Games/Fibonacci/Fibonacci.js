@@ -10,10 +10,12 @@ class FibonacciScene extends Phaser.Scene {
 
   preload() {
     this.load.image("leaf", "assets/images/Fibonacci/leaf.png");
-    this.load.audio(
-      "wateringplant",
-      "assets/sounds/Fibonacci/wateringplant.mp3",
-    );
+    this.load.audio("wateringplant", "assets/sounds/Fibonacci/wateringplant.mp3");
+    this.load.audio("click",         "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click",      "assets/sounds/global/mouseclick.wav");
+    this.load.audio("nextlevel",     "assets/sounds/global/nextlevel.wav");
+    this.load.audio("error",         "assets/sounds/global/error.mp3");
+    this.load.audio("bgm",           "assets/sounds/global/background.mp3");
   }
 
   create() {
@@ -627,7 +629,7 @@ class FibonacciScene extends Phaser.Scene {
       this.scene.start(levelKey, { skipFade: true });
       return;
     }
-    if (window.playSuccess) window.playSuccess(this);
+    if (!this.isSolved && window.playSuccess) window.playSuccess(this);
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
     const fadeOverlay = this.add
