@@ -26,22 +26,27 @@ function goToLevel(index) {
     return;
   }
 
-  if (
-    window.currentLevelIndex >= 0 &&
-    window.currentLevelIndex < window.GAME_LEVELS.length
-  ) {
-    const oldSceneKey = window.GAME_LEVELS[window.currentLevelIndex].key;
-    if (game.scene.isActive(oldSceneKey)) {
-      game.sound.stopAll();
-      game.scene.stop(oldSceneKey);
+  // Fire any scene-specific Web Audio cleanup immediately (bypasses Phaser queue delay)
+  if (typeof window._deadAirStop === "function") {
+    window._deadAirStop();
+    window._deadAirStop = null;
+  }
+
+  // Remove all scene-specific DOM overlays immediately (SVGs, car elements, umbrella, etc.)
+  document.querySelectorAll(".scene-dom-overlay").forEach(el => el.remove());
+
+  // Stop ALL active scenes — ensures shutdown() runs regardless of currentLevelIndex state
+  for (const level of window.GAME_LEVELS) {
+    if (game.scene.isActive(level.key)) {
+      game.scene.stop(level.key);
     }
   }
+  game.sound.stopAll();
 
   window.currentLevelIndex = index;
   renderLevels();
 
-  const newSceneKey = window.GAME_LEVELS[index].key;
-  game.scene.start(newSceneKey, { skipFade: true });
+  game.scene.start(window.GAME_LEVELS[index].key, { skipFade: true });
 }
 
 function renderLevels() {
@@ -169,6 +174,11 @@ document.getElementById("btn-new").addEventListener("click", () => {
 
 inputCode.addEventListener("keypress", (e) => {
   if (e.key === "Enter") btnSubmit.click();
+});
+
+// ── Replay Button ──
+document.getElementById("btn-replay").addEventListener("click", () => {
+  goToLevel(window.currentLevelIndex);
 });
 
 // ── Options Modal Logic ──

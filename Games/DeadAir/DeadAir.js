@@ -13,7 +13,6 @@ class DeadAirScene extends Phaser.Scene {
     this.load.audio("ui_click",  "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
     this.load.audio("error",     "assets/sounds/global/error.mp3");
-    this.load.audio("bgm",       "assets/sounds/global/background.mp3");
   }
 
   // ── Broadcast content — each channel describes VOID without naming it ────────
@@ -118,6 +117,7 @@ class DeadAirScene extends Phaser.Scene {
     this._hoverBtn       = null;
     this._tv             = {};
     this._noiseSource    = null;
+    this._noiseBpf       = null;
     this._noiseGain      = null;
     this._broadcastObjs  = {}; // Phaser text objects per special channel
 
@@ -518,27 +518,36 @@ class DeadAirScene extends Phaser.Scene {
       const dat = buf.getChannelData(0);
       for (let i = 0; i < len; i++) dat[i] = (Math.random() * 2 - 1) * 0.18;
 
-      this._noiseSource = ac.createBufferSource();
-      this._noiseSource.buffer = buf;
-      this._noiseSource.loop   = true;
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      src.loop   = true;
 
       const bpf = ac.createBiquadFilter();
       bpf.type = "bandpass";
       bpf.frequency.value = 1800;
       bpf.Q.value = 0.4;
 
-      this._noiseGain = ac.createGain();
-      const vol = window.GameAudio && !window.GameAudio.muted
+      const gain = ac.createGain();
+      gain.gain.value = (window.GameAudio && !window.GameAudio.muted)
         ? (window.GameAudio.sfxVol || 0.8) * 0.3
         : 0;
-      this._noiseGain.gain.value = vol;
 
-      this._noiseSource.connect(bpf);
-      bpf.connect(this._noiseGain);
-      this._noiseGain.connect(ac.destination);
-      this._noiseSource.start();
+      src.connect(bpf);
+      bpf.connect(gain);
+      gain.connect(ac.destination);
+      src.start();
+
+      // Assign refs only after successful setup
+      this._noiseSource = src;
+      this._noiseBpf    = bpf;
+      this._noiseGain   = gain;
+
+      // Register global cleanup so goToLevel() can stop noise immediately
+      window._deadAirStop = () => this._stopNoise();
     } catch (e) {
-      this._noiseGain = null;
+      this._noiseSource = null;
+      this._noiseBpf    = null;
+      this._noiseGain   = null;
     }
   }
 
@@ -787,7 +796,13 @@ class DeadAirScene extends Phaser.Scene {
   }
 
   _stopNoise() {
-    try { if (this._noiseSource) this._noiseSource.stop(); } catch (e) {}
-    try { if (this._noiseGain) this._noiseGain.disconnect(); } catch (e) {}
+    // Silence first (synchronous), then disconnect, then stop source
+    try { if (this._noiseGain)   { this._noiseGain.gain.value = 0; this._noiseGain.disconnect(); } } catch (e) {}
+    try { if (this._noiseBpf)    { this._noiseBpf.disconnect(); } } catch (e) {}
+    try { if (this._noiseSource) { this._noiseSource.stop(); this._noiseSource.disconnect(); } } catch (e) {}
+    this._noiseGain   = null;
+    this._noiseBpf    = null;
+    this._noiseSource = null;
+    window._deadAirStop = null;
   }
 }

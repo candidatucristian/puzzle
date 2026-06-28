@@ -28,13 +28,14 @@ class MorseCarScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio("rain_loop",    "assets/sounds/MorseCar/rain_loop.mp3");
+    this.load.audio("rain_loop",     "assets/sounds/MorseCar/rain_loop.mp3");
     this.load.audio("getoutoftheway","assets/sounds/MorseCar/Getoutoftheway.mp3");
     this.load.audio("click",         "assets/sounds/global/click.mp3");
     this.load.audio("ui_click",      "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel",     "assets/sounds/global/nextlevel.wav");
     this.load.audio("error",         "assets/sounds/global/error.mp3");
-    this.load.audio("bgm",           "assets/sounds/global/background.mp3");
+    this.load.text("car_svg",        "assets/images/MorseCar/car.svg");
+    this.load.text("umbrella_svg",   "assets/images/MorseCar/umbrella.svg");
   }
 
   create() {
@@ -56,6 +57,7 @@ class MorseCarScene extends Phaser.Scene {
     this._personOffsetY = 0;
     this._carGone = false;
     this._carDomEl = null;
+    this._umbrellaEl = null;
     this._tlClickEnabled = false;
     this._tlZone = null;
     this._tlPulseActive = false;
@@ -191,7 +193,7 @@ class MorseCarScene extends Phaser.Scene {
         const newLaneY = h * 0.52 + h * 0.3 * 0.78;
         this._oncomingCars.forEach((car) => {
           car.y = newLaneY;
-          car.el.style.top = Math.round(newLaneY - 66) + "px";
+          car.el.style.top = Math.round(newLaneY - 73) + "px";
         });
       }
       this.levelText.setPosition(w - 30, 30);
@@ -629,103 +631,17 @@ class MorseCarScene extends Phaser.Scene {
     const py = roadTop + roadH * 0.33 + (this._personOffsetY || 0);
     g.clear();
 
-    // ── Umbrella ──────────────────────────────────────────────────────────────
-    // Slightly off-center so the raised arm is natural
+    // Umbrella shaft target x (used for arm drawing)
     const ux = px + 4;
-    const uy = py - 95;
-    const ur = 46;
-    const NRIBS = 9;
 
-    // Gradient via concentric semicircle layers (darkest at rim, lighter inward)
-    // Layer 1 — outer rim, near-black
-    g.fillStyle(0x080808, 1);
-    g.beginPath();
-    g.arc(ux, uy, ur, Math.PI, 0, false);
-    g.lineTo(ux - ur, uy);
-    g.closePath();
-    g.fillPath();
-
-    // Layer 2 — slightly lighter mid-tone
-    g.fillStyle(0x131313, 0.75);
-    g.beginPath();
-    g.arc(ux, uy, ur * 0.74, Math.PI, 0, false);
-    g.lineTo(ux - ur * 0.74, uy);
-    g.closePath();
-    g.fillPath();
-
-    // Layer 3 — inner, slightly brighter (ambient bounce from street lamps)
-    g.fillStyle(0x1e1e1e, 0.6);
-    g.beginPath();
-    g.arc(ux, uy, ur * 0.44, Math.PI, 0, false);
-    g.lineTo(ux - ur * 0.44, uy);
-    g.closePath();
-    g.fillPath();
-
-    // Wet specular highlight — top-left quadrant (street lamp reflection)
-    g.fillStyle(0x3a3a3a, 0.35);
-    g.fillEllipse(ux - ur * 0.22, uy - ur * 0.38, ur * 0.32, ur * 0.18);
-
-    // Ribs — thin dark lines from center to edge
-    g.lineStyle(1.1, 0x1c1c1c, 1);
-    for (let i = 0; i <= NRIBS; i++) {
-      const a = Math.PI + (i / NRIBS) * Math.PI;
-      g.lineBetween(ux, uy, ux + Math.cos(a) * ur, uy + Math.sin(a) * ur);
-    }
-
-    // Outer arc border
-    g.lineStyle(2.2, 0x050505, 1);
-    g.beginPath();
-    g.arc(ux, uy, ur, Math.PI, 0, false);
-    g.strokePath();
-
-    // Bottom flat edge of dome
-    g.lineStyle(1.5, 0x111111, 0.8);
-    g.lineBetween(ux - ur, uy, ux + ur, uy);
-
-    // Scalloped hem — small downward arcs between each rib
-    for (let i = 0; i < NRIBS; i++) {
-      const a1 = Math.PI + (i / NRIBS) * Math.PI;
-      const a2 = Math.PI + ((i + 1) / NRIBS) * Math.PI;
-      const mx = ux + Math.cos((a1 + a2) / 2) * ur;
-      const my = uy + Math.sin((a1 + a2) / 2) * ur;
-      g.fillStyle(0x0a0a0a, 1).fillCircle(mx, my + 3.5, 4.5);
-    }
-    // Rib-end dots (reinforce scallop points)
-    g.fillStyle(0x050505, 1);
-    for (let i = 0; i <= NRIBS; i++) {
-      const a = Math.PI + (i / NRIBS) * Math.PI;
-      g.fillCircle(ux + Math.cos(a) * ur, uy + Math.sin(a) * ur, 3);
-    }
-
-    // Crown tip
-    g.fillStyle(0x888888, 0.7).fillCircle(ux, uy - 2, 2.5);
-
-    // Shaft — dark grey, slightly reflective
-    g.lineStyle(3.5, 0x252525, 1);
-    g.lineBetween(ux, uy, ux, py - 32);
-    // Shaft highlight
-    g.lineStyle(1, 0x444444, 0.6);
-    g.lineBetween(ux + 1, uy + 5, ux + 1, py - 33);
-
-    // J-hook handle — curves right
-    g.lineStyle(3.5, 0x303030, 1);
-    g.beginPath();
-    g.arc(ux + 8, py - 32, 8, Math.PI, Math.PI * 0.5, true);
-    g.strokePath();
-
-    // Rainwater drips from hem
-    g.lineStyle(1, 0x7090b8, 0.38);
-    for (let i = 1; i < NRIBS; i++) {
-      const a = Math.PI + (i / NRIBS) * Math.PI;
-      const dx = ux + Math.cos(a) * ur;
-      const dy = uy + Math.sin(a) * ur + 3.5;
-      g.lineBetween(dx, dy, dx + 1, dy + 9);
-    }
+    // ── Umbrella SVG overlay ───────────────────────────────────────────────────
+    if (!this._umbrellaEl) this._createUmbrellaDOM();
+    this._updateUmbrellaPos(px, py);
 
     // ── Silhouette (from behind) ───────────────────────────────────────────────
     const coat = 0x0b0d12;
 
-    // Arm raised to hold shaft — draw before body so coat overlaps base
+    // Arm raised to hold umbrella shaft
     g.lineStyle(7, coat, 1);
     g.lineBetween(px + 10, py - 56, ux + 1, py - 34);
 
@@ -783,66 +699,65 @@ class MorseCarScene extends Phaser.Scene {
     g.fillEllipse(px + 5, py + 14, 10, 3);
   }
 
+  // ── Umbrella SVG DOM ──────────────────────────────────────────────────────
+  _createUmbrellaDOM() {
+    const svgText = this.cache.text.get("umbrella_svg");
+    if (!svgText) return;
+    const el = document.createElement("div");
+    el.className = "mc-umbrella-wrapper scene-dom-overlay";
+    el.innerHTML = svgText;
+    const svg = el.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("width",  "96");
+      svg.setAttribute("height", "108");
+      svg.style.display = "block";
+    }
+    document.getElementById("game-container").appendChild(el);
+    this._umbrellaEl = el;
+  }
+
+  _updateUmbrellaPos(px, py) {
+    if (!this._umbrellaEl) return;
+    // Center umbrella at ux=px+4, dome top ~py-141
+    this._umbrellaEl.style.left = Math.round(px - 44) + "px";
+    this._umbrellaEl.style.top  = Math.round(py - 138) + "px";
+  }
+
   // ── Oncoming traffic ──────────────────────────────────────────────────────
   _initOncomingCars(W, H) {
     const roadTop = H * 0.52;
-    const roadH = H * 0.3;
-    const laneY = roadTop + roadH * 0.78;
-    const GAP = 480;
+    const roadH   = H * 0.3;
+    const laneY   = roadTop + roadH * 0.78;
+    const GAP     = 480;
     const container = document.getElementById("game-container");
-    const carHTML = `<div class="car-road">
-      <div class="car">
-        <div class="car-top"><div class="window"></div></div>
-        <div class="car-base"></div>
-        <div class="wheel-left wheel">
-          <div class="wheel-spike"></div>
-          <div class="wheel-center"></div>
-        </div>
-        <div class="wheel-right wheel">
-          <div class="wheel-spike"></div>
-          <div class="wheel-center"></div>
-        </div>
-        <div class="head-light"></div>
-      </div>
-    </div>`;
-    const COLORS = [
-      "#180303",
-      "#151d18",
-      "#14375e",
-      "#3a1d42",
-      "#572903",
-      "#063e5f",
-    ];
-    // wheel centre ~47px from top; scale(1.4) on wrapper → visual offset = 47*1.4 ≈ 66
+
     this._oncomingCars = Array.from({ length: 3 }, (_, i) => {
-      const color = COLORS[i % COLORS.length];
       const el = document.createElement("div");
-      el.className = "mc-oncoming-wrapper";
-      el.innerHTML = carHTML;
-      el.style.setProperty("--car-color", color);
+      el.className = "mc-oncoming-svg-wrapper scene-dom-overlay";
+      el.innerHTML = this._getNoirCarSVG(false);
+      const svg = el.querySelector("svg");
+      if (svg) {
+        svg.setAttribute("viewBox",  "430 270 1060 660");
+        svg.setAttribute("width",    "140");
+        svg.setAttribute("height",    "87");
+        svg.style.overflow        = "visible";
+        svg.style.display         = "block";
+        svg.style.transform       = "scaleX(-1)";
+        svg.style.transformOrigin = "70px center";
+      }
       container.appendChild(el);
       const x = W + 80 + i * GAP;
       el.style.left = x + "px";
-      el.style.top = Math.round(laneY - 66) + "px";
-      return { x, y: laneY, speed: 3.2, w: 154, el, colorIdx: i };
+      el.style.top  = Math.round(laneY - 73) + "px";
+      return { x, y: laneY, speed: 3.2, w: 140, el };
     });
   }
 
   _updateOncomingCars() {
-    const W = this.cameras.main.width;
+    const W   = this.cameras.main.width;
     const GAP = 480;
-    const COLORS = [
-      "#180303",
-      "#151d18",
-      "#14375e",
-      "#3a1d42",
-      "#572903",
-      "#063e5f",
-    ];
 
-    this._oncomingCars.forEach((car) => {
-      car.x -= car.speed;
-    });
+    this._oncomingCars.forEach((car) => { car.x -= car.speed; });
 
     let rightmostX = Math.max(...this._oncomingCars.map((c) => c.x));
 
@@ -850,8 +765,6 @@ class MorseCarScene extends Phaser.Scene {
       if (car.x + car.w < -20) {
         rightmostX = Math.max(W + 80, rightmostX + GAP);
         car.x = rightmostX;
-        car.colorIdx = (car.colorIdx + 1) % COLORS.length;
-        car.el.style.setProperty("--car-color", COLORS[car.colorIdx]);
       }
       car.el.style.left = Math.round(car.x) + "px";
     });
@@ -1205,39 +1118,70 @@ class MorseCarScene extends Phaser.Scene {
     this._tlPulseGfx.strokeCircle(tlX, tlY + 13, 18);
   }
 
-  _createDOMCar() {
-    if (this._carDomEl) {
-      this._carDomEl.remove();
-      this._carDomEl = null;
+  // Build noir-colored car SVG text; optionally adds headlight id and beam cone
+  _getNoirCarSVG(withHeadlightId = false) {
+    let txt = this.cache.text.get("car_svg");
+    if (!txt) return "";
+    txt = txt
+      .replace(".st0{fill:#E24B4B;}", ".st0{fill:#181818;}")
+      .replace(".st1{fill:#E6E6E6;}", ".st1{fill:#505060;}")
+      .replace(".st2{fill:#C13A3A;}", ".st2{fill:#0a0a0a;}")
+      .replace(".st7{fill:#EA7168;}", ".st7{fill:#1c1c1c;}")
+      .replace(".st8{fill:#E2E4E8;}", ".st8{fill:#16213a;}")
+      .replace(".st9{fill:#8E4D4D;}", ".st9{fill:#191919;}")
+      .replace(".st10{fill:#FFFFFF;}", ".st10{fill:#1e2030;}")
+      .replace(".st12{fill:#F69B76;}", ".st12{fill:#141414;}")
+      .replace(".st13{fill:#F8C09D;}", ".st13{fill:#141414;}")
+      .replace(".st14{fill:#EF937E;}", ".st14{fill:#141414;}")
+      .replace(".st15{fill:#F6AE8D;}", ".st15{fill:#141414;}")
+      .replace(".st16{fill:#E26C60;}", ".st16{fill:#141414;}");
+    if (withHeadlightId) {
+      txt = txt.replace(
+        '<path class="st10" d="M1392.8,608.6',
+        '<path id="mc-headlight" class="st10" d="M1392.8,608.6'
+      );
+      // High-beam cone — hidden by default, shown via CSS when mc-honking
+      const beam =
+        `<defs><linearGradient id="beamGrad" x1="0%" y1="50%" x2="100%" y2="50%">` +
+        `<stop offset="0%" stop-color="#b8d4ff" stop-opacity="0.52"/>` +
+        `<stop offset="100%" stop-color="#90b8ff" stop-opacity="0"/>` +
+        `</linearGradient></defs>` +
+        `<polygon id="mc-beam" opacity="0" points="1421,614 1421,672 1850,738 1850,552" fill="url(#beamGrad)"/>`;
+      txt = txt.replace("</svg>", beam + "</svg>");
     }
+    return txt;
+  }
+
+  replay() {
+    if (this.isSolved) return;
+    this.time.removeAllEvents();
+    this._startWindowFlicker();
+    this._startMorseSequence();
+  }
+
+  _createDOMCar() {
+    if (this._carDomEl) { this._carDomEl.remove(); this._carDomEl = null; }
     const wrapper = document.createElement("div");
-    wrapper.className = "mc-car-wrapper";
-    wrapper.innerHTML = `<div class="car-road">
-      <div class="car">
-        <div class="car-top"><div class="window"></div></div>
-        <div class="car-base"></div>
-        <div class="wheel-left wheel">
-          <div class="wheel-spike"></div>
-          <div class="wheel-center"></div>
-        </div>
-        <div class="wheel-right wheel">
-          <div class="wheel-spike"></div>
-          <div class="wheel-center"></div>
-        </div>
-        <div class="head-light"></div>
-      </div>
-    </div>`;
-    const container = document.getElementById("game-container");
-    container.appendChild(wrapper);
+    wrapper.className = "mc-car-svg-wrapper scene-dom-overlay";
+    wrapper.innerHTML = this._getNoirCarSVG(true);
+    const svg = wrapper.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("viewBox", "430 270 1060 660");
+      svg.setAttribute("width",   "165");
+      svg.setAttribute("height",  "103");
+      svg.style.overflow = "visible";
+      svg.style.display  = "block";
+    }
+    document.getElementById("game-container").appendChild(wrapper);
     this._carDomEl = wrapper;
     this._updateDOMCarPos();
   }
 
   _updateDOMCarPos() {
     if (!this._carDomEl) return;
-    // wheel centre ~47px from top; scale(1.5) on wrapper → visual offset = 47*1.5 ≈ 71
+    // SVG wheel centre is ~86px from the top of the 103px element
     this._carDomEl.style.left = Math.round(this._carX) + "px";
-    this._carDomEl.style.top = Math.round(this._carY - 71) + "px";
+    this._carDomEl.style.top  = Math.round(this._carY - 86) + "px";
   }
 
   shutdown() {
@@ -1252,6 +1196,10 @@ class MorseCarScene extends Phaser.Scene {
     if (this._carDomEl) {
       this._carDomEl.remove();
       this._carDomEl = null;
+    }
+    if (this._umbrellaEl) {
+      this._umbrellaEl.remove();
+      this._umbrellaEl = null;
     }
     if (this._oncomingCars) {
       this._oncomingCars.forEach((car) => {

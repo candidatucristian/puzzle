@@ -235,10 +235,57 @@
   animation: mc-honk-bob 0.11s infinite alternate;
 }
 @keyframes mc-honk-bob {
-  from {
-    transform: translateY(0px);
-  }
-  to {
-    transform: translateY(-3px);
-  }
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-3px); }
+}
+
+/* ── SVG car wrappers ── */
+.mc-car-svg-wrapper {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  line-height: 0;
+}
+
+.mc-oncoming-svg-wrapper {
+  position: absolute;
+  pointer-events: none;
+  z-index: 4;
+  line-height: 0;
+}
+
+/* Headlight off at rest */
+.mc-car-svg-wrapper #mc-headlight {
+  fill: #1e2030 !important;
+}
+
+/* Full beam + glow when honking */
+.mc-car-svg-wrapper.mc-honking #mc-headlight {
+  fill: #f0f4ff !important;
+}
+
+.mc-car-svg-wrapper.mc-honking svg {
+  filter: drop-shadow(44px 0 55px rgba(180, 215, 255, 0.45));
+  animation: mc-svg-honk-bob 0.11s infinite alternate;
+}
+
+.mc-car-svg-wrapper.mc-honking #mc-beam {
+  opacity: 1 !important;
+}
+
+@keyframes mc-svg-honk-bob {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-3px); }
+}
+
+/* ── Umbrella SVG overlay ── */
+.mc-umbrella-wrapper {
+  position: absolute;
+  pointer-events: none;
+  z-index: 6;
+  line-height: 0;
+}
+
+.mc-umbrella-wrapper svg {
+  filter: drop-shadow(0 1px 4px rgba(180, 160, 110, 0.18));
 }

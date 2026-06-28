@@ -159,6 +159,12 @@ window.GAME_LEVELS = [
     code: "VOID",
     altCode: "NULL",
   },
+  {
+    key: "BinaryRouter",
+    scene: BinaryRouterScene,
+    code: "NIGHT",
+    altCode: null,
+  },
 ];
 
 const sceneList = window.GAME_LEVELS.map((level) => level.scene);

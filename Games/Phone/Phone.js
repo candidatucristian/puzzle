@@ -15,7 +15,6 @@ class PhoneScene extends Phaser.Scene {
     this.load.audio("ui_click",   "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel",  "assets/sounds/global/nextlevel.wav");
     this.load.audio("error",      "assets/sounds/global/error.mp3");
-    this.load.audio("bgm",        "assets/sounds/global/background.mp3");
   }
 
   create() {
