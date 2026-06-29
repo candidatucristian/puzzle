@@ -4,26 +4,30 @@ class BinaryRouterScene extends Phaser.Scene {
   }
 
   init(data) {
-    this.skipFadeIn = data && data.skipFade !== undefined ? data.skipFade : true;
+    this.skipFadeIn =
+      data && data.skipFade !== undefined ? data.skipFade : true;
   }
 
   preload() {
-    this.load.audio("click",     "assets/sounds/global/click.mp3");
-    this.load.audio("ui_click",  "assets/sounds/global/mouseclick.wav");
+    this.load.audio("click", "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
-    this.load.audio("error",     "assets/sounds/global/error.mp3");
+    this.load.audio("error", "assets/sounds/global/error.mp3");
     // Load SVG as text so we can inline it and manipulate individual LED elements
-    this.load.text("router_svg", "assets/images/BinaryRouter/wireless-router.svg");
+    this.load.text(
+      "router_svg",
+      "assets/images/BinaryRouter/wireless-router.svg",
+    );
   }
 
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
 
-    this.isSolved      = false;
-    this._timerEvents  = [];
+    this.isSolved = false;
+    this._timerEvents = [];
     this._svgContainer = null;
-    this._ledEls       = null;
+    this._ledEls = null;
 
     // Dark background only
     this._bgGfx = this.add.graphics().setDepth(0);
@@ -82,19 +86,35 @@ class BinaryRouterScene extends Phaser.Scene {
     wrap.innerHTML = svgText;
 
     const svg = wrap.querySelector("svg");
-    svg.setAttribute("width",  displayW);
+    svg.setAttribute("width", displayW);
     svg.setAttribute("height", displayH);
 
+    // Add LEIBNIZ label directly to SVG DOM (on the router body, y≈131-175 in viewBox)
+    const modelLabel = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "text",
+    );
+    modelLabel.setAttribute("x", "150");
+    modelLabel.setAttribute("y", "155");
+    modelLabel.setAttribute("text-anchor", "middle");
+    modelLabel.setAttribute("font-family", "monospace");
+    modelLabel.setAttribute("font-size", "9");
+    modelLabel.setAttribute("letter-spacing", "3");
+    modelLabel.setAttribute("fill", "#9abaa0");
+    modelLabel.textContent = "W. LEIBNIZ";
+    svg.appendChild(modelLabel);
+
     Object.assign(wrap.style, {
-      position:      "absolute",
-      left:          x + "px",
-      top:           y + "px",
-      width:         displayW + "px",
-      height:        displayH + "px",
+      position: "absolute",
+      left: x + "px",
+      top: y + "px",
+      width: displayW + "px",
+      height: displayH + "px",
       pointerEvents: "none",
     });
 
-    document.getElementById("game-container").appendChild(wrap);
+    const container = document.getElementById("game-container");
+    container.appendChild(wrap);
     this._svgContainer = wrap;
     this._svgLayout = { x, y, w: displayW, h: displayH };
 
@@ -102,12 +122,22 @@ class BinaryRouterScene extends Phaser.Scene {
     // 0-4  → letter counter (light up RED left-to-right as each letter completes)
     // 5-12 → binary signal  (light up GREEN right-to-left for each bit)
     const LED_IDS = [
-      "path5155", "path5239", "path5241", "path5243", "path5245",  // 0-4  letter counter
-      "path5247", "path5249", "path5251", "path5253",               // 5-8  binary bits 7→4
-      "path5255", "path5257", "path5259", "path5261",               // 9-12 binary bits 3→0
+      "path5155",
+      "path5239",
+      "path5241",
+      "path5243",
+      "path5245", // 0-4  letter counter
+      "path5247",
+      "path5249",
+      "path5251",
+      "path5253", // 5-8  binary bits 7→4
+      "path5255",
+      "path5257",
+      "path5259",
+      "path5261", // 9-12 binary bits 3→0
     ];
 
-    this._ledEls = LED_IDS.map(id => {
+    this._ledEls = LED_IDS.map((id) => {
       const el = wrap.querySelector("#" + id);
       if (el) this._applyLedStyle(el, "off");
       return el;
@@ -128,29 +158,32 @@ class BinaryRouterScene extends Phaser.Scene {
     if (!el) return;
     switch (state) {
       case "off":
-        el.style.fill    = "#888";
-        el.style.stroke  = "#888";
+        el.style.fill = "#888";
+        el.style.stroke = "#888";
         el.style.opacity = "0.75";
-        el.style.filter  = "none";
+        el.style.filter = "none";
         break;
       case "green":
-        el.style.fill    = "#00ff44";
-        el.style.stroke  = "#00ff44";
+        el.style.fill = "#00ff44";
+        el.style.stroke = "#00ff44";
         el.style.opacity = "1";
-        el.style.filter  = "drop-shadow(0 0 6px #00ff44) drop-shadow(0 0 3px #00cc33)";
+        el.style.filter =
+          "drop-shadow(0 0 6px #00ff44) drop-shadow(0 0 3px #00cc33)";
         break;
       case "orange":
         // bit = 0 → brief orange blink, clearly different from green (bit = 1)
-        el.style.fill    = "#ff8800";
-        el.style.stroke  = "#ff8800";
+        el.style.fill = "#ff8800";
+        el.style.stroke = "#ff8800";
         el.style.opacity = "1";
-        el.style.filter  = "drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 3px #cc4400)";
+        el.style.filter =
+          "drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 3px #cc4400)";
         break;
       case "red":
-        el.style.fill    = "#ff2200";
-        el.style.stroke  = "#ff2200";
+        el.style.fill = "#ff2200";
+        el.style.stroke = "#ff2200";
         el.style.opacity = "1";
-        el.style.filter  = "drop-shadow(0 0 6px #ff2200) drop-shadow(0 0 3px #cc1100)";
+        el.style.filter =
+          "drop-shadow(0 0 6px #ff2200) drop-shadow(0 0 3px #cc1100)";
         break;
     }
   }
@@ -167,7 +200,11 @@ class BinaryRouterScene extends Phaser.Scene {
   // ── Animation ───────────────────────────────────────────────────────────────
 
   _cancelAnimation() {
-    this._timerEvents.forEach(ev => { try { ev.remove(false); } catch (_) {} });
+    this._timerEvents.forEach((ev) => {
+      try {
+        ev.remove(false);
+      } catch (_) {}
+    });
     this._timerEvents = [];
   }
 
@@ -178,7 +215,7 @@ class BinaryRouterScene extends Phaser.Scene {
     // LEDs 7-12 are green decoration — always lit, never change
     for (let i = 7; i <= 12; i++) this._setLed(i, "green");
 
-    const WORD   = "NIGHT";
+    const WORD = "NIGHT";
     const BINARY = {
       N: "01001110",
       I: "01001001",
@@ -188,11 +225,11 @@ class BinaryRouterScene extends Phaser.Scene {
     };
 
     // Timing (ms)
-    const T_BIT      = 400;   // how long the active LED stays lit for one bit
-    const GAP_BIT    = 220;   // dark gap between consecutive bit flashes
-    const GAP_AFTER  = 500;   // pause after last bit before letter counter lights up
-    const LETTER_HOLD = 850;  // pause after letter counter LED lights up
-    const LOOP_PAUSE  = 3500; // pause at end of word before restart
+    const T_BIT = 400; // how long the active LED stays lit for one bit
+    const GAP_BIT = 220; // dark gap between consecutive bit flashes
+    const GAP_AFTER = 500; // pause after last bit before letter counter lights up
+    const LETTER_HOLD = 850; // pause after letter counter LED lights up
+    const LOOP_PAUSE = 3500; // pause at end of word before restart
 
     const events = [];
     let t = 500;
@@ -200,7 +237,7 @@ class BinaryRouterScene extends Phaser.Scene {
     const sched = (absT, fn) => events.push(this.time.delayedCall(absT, fn));
 
     for (let li = 0; li < WORD.length; li++) {
-      const bits  = BINARY[WORD[li]];
+      const bits = BINARY[WORD[li]];
       const capLi = li;
 
       // For each bit: LED index 5 (leftmost binary LED) blinks for bit=0
@@ -209,10 +246,10 @@ class BinaryRouterScene extends Phaser.Scene {
       for (let bi = 0; bi < 8; bi++) {
         if (bi > 0) t += GAP_BIT;
 
-        const bit    = parseInt(bits[bi]);
+        const bit = parseInt(bits[bi]);
         const ledIdx = bit === 0 ? 5 : 6;
 
-        sched(t,       () => this._setLed(ledIdx, "green"));
+        sched(t, () => this._setLed(ledIdx, "green"));
         t += T_BIT;
         sched(t, () => this._setLed(ledIdx, "off"));
       }
@@ -243,14 +280,25 @@ class BinaryRouterScene extends Phaser.Scene {
 
     const W = this.cameras.main.width;
     const H = this.cameras.main.height;
-    const overlay = this.add.rectangle(0, 0, W, H, 0x000000)
-      .setOrigin(0, 0).setDepth(200).setAlpha(0);
-    const idx   = window.GAME_LEVELS.findIndex(l => l.key === levelKey);
-    const label = this.add.text(W / 2, H / 2, "Level " + (idx + 1) + "...", {
-      fontFamily: "monospace", fontSize: "42px", color: "#00ff44",
-    }).setOrigin(0.5).setDepth(201).setAlpha(0);
+    const overlay = this.add
+      .rectangle(0, 0, W, H, 0x000000)
+      .setOrigin(0, 0)
+      .setDepth(200)
+      .setAlpha(0);
+    const idx = window.GAME_LEVELS.findIndex((l) => l.key === levelKey);
+    const label = this.add
+      .text(W / 2, H / 2, "Level " + (idx + 1) + "...", {
+        fontFamily: "monospace",
+        fontSize: "42px",
+        color: "#00ff44",
+      })
+      .setOrigin(0.5)
+      .setDepth(201)
+      .setAlpha(0);
     this.tweens.add({
-      targets: [overlay, label], alpha: 1, duration: 1000,
+      targets: [overlay, label],
+      alpha: 1,
+      duration: 1000,
       onComplete: () => this.scene.start(levelKey, { skipFade: false }),
     });
   }
