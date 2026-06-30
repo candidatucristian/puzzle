@@ -9,12 +9,12 @@ class PhoneScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio("phone_vib",  "assets/sounds/Phone/vibration.mp3");
-    this.load.audio("keypad",     "assets/sounds/Phone/keypad.mp3");
-    this.load.audio("click",      "assets/sounds/global/click.mp3");
-    this.load.audio("ui_click",   "assets/sounds/global/mouseclick.wav");
-    this.load.audio("nextlevel",  "assets/sounds/global/nextlevel.wav");
-    this.load.audio("error",      "assets/sounds/global/error.mp3");
+    this.load.audio("phone_vib", "assets/sounds/Phone/vibration.mp3");
+    this.load.audio("keypad", "assets/sounds/Phone/keypad.mp3");
+    this.load.audio("click", "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
+    this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
+    this.load.audio("error", "assets/sounds/global/error.mp3");
   }
 
   create() {
@@ -109,7 +109,7 @@ class PhoneScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.callerNumber = this.add
-      .text(0, 0, "433-666-777-433", {
+      .text(0, 0, "(433)-666-777-433", {
         fontFamily: "'Courier New', monospace",
         fontSize: "16px",
         color: "#17260c",

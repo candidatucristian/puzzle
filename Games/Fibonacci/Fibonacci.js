@@ -10,11 +10,14 @@ class FibonacciScene extends Phaser.Scene {
 
   preload() {
     this.load.image("leaf", "assets/images/Fibonacci/leaf.png");
-    this.load.audio("wateringplant", "assets/sounds/Fibonacci/wateringplant.mp3");
-    this.load.audio("click",         "assets/sounds/global/click.mp3");
-    this.load.audio("ui_click",      "assets/sounds/global/mouseclick.wav");
-    this.load.audio("nextlevel",     "assets/sounds/global/nextlevel.wav");
-    this.load.audio("error",         "assets/sounds/global/error.mp3");
+    this.load.audio(
+      "wateringplant",
+      "assets/sounds/Fibonacci/wateringplant.mp3",
+    );
+    this.load.audio("click", "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
+    this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
+    this.load.audio("error", "assets/sounds/global/error.mp3");
   }
 
   create() {
@@ -36,8 +39,13 @@ class FibonacciScene extends Phaser.Scene {
     this.roomGfx = this.add.graphics().setDepth(-5);
     this.drawRoom(this.roomGfx, width, height);
 
+    // ── Faded math decorations (Fibonacci formulas, geometry) ──
+    this.mathDecorGfx = this.add.graphics().setDepth(-3);
+    this._mathTexts = [];
+    this._drawMathDecor(width, height);
+
     this.statusText = this.add
-      .text(width / 2, 50, "I forgot my name ...", {
+      .text(width / 2, 50, "Who am I? ...", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "22px",
         color: "#ffffff",
@@ -196,6 +204,10 @@ class FibonacciScene extends Phaser.Scene {
       let newScale = Math.min(1, size.height / 600) * 0.85;
       this.mainContainer.setScale(newScale);
       this.drawRoom(this.roomGfx, size.width, size.height);
+      this.mathDecorGfx.clear();
+      this._mathTexts.forEach((t) => t.destroy());
+      this._mathTexts = [];
+      this._drawMathDecor(size.width, size.height);
     });
 
     if (!this.skipFadeIn) {
@@ -619,6 +631,115 @@ class FibonacciScene extends Phaser.Scene {
     this.statusText.setColor("#1aaf7a");
   }
 
+  _drawMathDecor(w, h) {
+    const g = this.mathDecorGfx;
+    const PHI = 1.6180339887;
+    const sc = Math.min(w / 700, h / 500);
+
+    const txt = (px, py, str, sz, deg, alpha) => {
+      const t = this.add
+        .text(Math.round(px * w), Math.round(py * h), str, {
+          fontFamily: "monospace",
+          fontSize: Math.max(7, Math.round(sz * sc)) + "px",
+          color: "#c8ddc8",
+        })
+        .setAlpha(alpha)
+        .setDepth(-3)
+        .setOrigin(0, 0);
+      if (deg) t.setAngle(deg);
+      this._mathTexts.push(t);
+    };
+
+    // Recurrence relation — top left
+    txt(0.03, 0.12, "F(n) = F(n-1) + F(n-2)", 10, -2, 0.13);
+    txt(0.03, 0.19, "F(0) = 0,  F(1) = 1", 8, -2, 0.09);
+
+    // Golden ratio — top right
+    txt(0.67, 0.08, "φ = (1 + √5) / 2", 10, 2, 0.13);
+    txt(0.69, 0.15, "  ≈ 1.6180339887...", 9, 2, 0.1);
+
+    // Binet's formula — left middle
+    txt(0.03, 0.49, "F(n) = (φⁿ − ψⁿ) / √5", 9, -1, 0.1);
+    txt(0.03, 0.55, "ψ = (1 − √5) / 2", 8, -1, 0.08);
+
+    // φ identities — right middle
+    txt(0.76, 0.51, "φ² = φ + 1", 10, 2, 0.12);
+    txt(0.76, 0.57, "1/φ  =  φ − 1", 9, 2, 0.1);
+    txt(0.74, 0.63, "φ = 1+1/(1+1/(1+...))", 8, 2, 0.08);
+
+    // Limit — bottom left
+    txt(0.05, 0.85, "lim F(n+1) / F(n)  =  φ", 9, -1, 0.1);
+    txt(0.09, 0.9, "n → ∞", 8, 0, 0.07);
+
+    // Scattered large Fibonacci numbers in corners
+    txt(0.02, 0.32, "233", 20, 10, 0.07);
+    txt(0.88, 0.22, "377", 18, -8, 0.07);
+    txt(0.86, 0.71, "610", 22, 5, 0.06);
+    txt(0.03, 0.73, "144", 16, -5, 0.07);
+
+    // Attribution
+    txt(0.24, 0.95, "FIBONACCI  ·  LIBER ABACI  ·  MCCII", 7, 0, 0.065);
+
+    // ── Golden (logarithmic) spiral ──────────────────────────────────────
+    const spCx = w * 0.83;
+    const spCy = h * 0.19;
+    const maxR = Math.min(w * 0.18, h * 0.26);
+
+    g.lineStyle(1.2, 0xaabbaa, 0.11);
+    g.beginPath();
+    let spStarted = false;
+    for (let i = 0; i <= 700; i++) {
+      const theta = (i / 700) * 14 * Math.PI;
+      const r = 1.1 * Math.pow(PHI, (2 * theta) / Math.PI);
+      if (r > maxR) break;
+      const x = spCx + r * Math.cos(theta);
+      const y = spCy + r * Math.sin(theta);
+      if (!spStarted) {
+        g.moveTo(x, y);
+        spStarted = true;
+      } else g.lineTo(x, y);
+    }
+    g.strokePath();
+
+    // Concentric Fibonacci-ratio circles around spiral center
+    [2, 3, 5, 8, 13, 21].forEach((n, i) => {
+      g.lineStyle(1, 0x889988, 0.04 + i * 0.005);
+      g.strokeCircle(spCx, spCy, n * (maxR / 22));
+    });
+
+    // ── Pentagon + pentagram (φ lives in the regular pentagon) ──────────
+    const pCx = w * 0.1;
+    const pCy = h * 0.63;
+    const pR = Math.min(w * 0.055, h * 0.08);
+
+    const verts = Array.from({ length: 5 }, (_, i) => {
+      const a = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+      return { x: pCx + pR * Math.cos(a), y: pCy + pR * Math.sin(a) };
+    });
+
+    g.lineStyle(1, 0xaabbaa, 0.09);
+    g.beginPath();
+    verts.forEach((v, i) =>
+      i === 0 ? g.moveTo(v.x, v.y) : g.lineTo(v.x, v.y),
+    );
+    g.closePath();
+    g.strokePath();
+
+    g.lineStyle(1, 0x8899aa, 0.07);
+    g.beginPath();
+    [0, 2, 4, 1, 3, 0].forEach((vi, i) => {
+      const v = verts[vi];
+      i === 0 ? g.moveTo(v.x, v.y) : g.lineTo(v.x, v.y);
+    });
+    g.strokePath();
+
+    // ── Faint ruled lines ─────────────────────────────────────────────────
+    g.lineStyle(1, 0x889988, 0.04);
+    [0.075, 0.83, 0.895].forEach((py) => {
+      g.lineBetween(w * 0.02, h * py, w * 0.98, h * py);
+    });
+  }
+
   transitionToLevel(levelKey, skipFade = false) {
     if (levelKey === this.scene.key && skipFade) {
       this.scene.restart({ skipFade: true });
@@ -660,5 +781,12 @@ class FibonacciScene extends Phaser.Scene {
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
+    if (this._mathTexts)
+      this._mathTexts.forEach((t) => {
+        try {
+          t.destroy();
+        } catch (_) {}
+      });
+    this._mathTexts = [];
   }
 }

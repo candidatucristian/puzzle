@@ -165,6 +165,12 @@ window.GAME_LEVELS = [
     code: "NIGHT",
     altCode: null,
   },
+  {
+    key: "Spectral",
+    scene: SpectralScene,
+    code: "DUST",
+    altCode: null,
+  },
 ];
 
 const sceneList = window.GAME_LEVELS.map((level) => level.scene);

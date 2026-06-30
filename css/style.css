@@ -366,6 +366,10 @@ input[type="range"] {
   margin-top: 15px;
 }
 
+#info-requires {
+  min-height: 0;
+}
+
 /* ── Start Screen ── */
 #start-screen {
   position: absolute;

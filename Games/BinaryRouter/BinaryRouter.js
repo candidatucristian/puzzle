@@ -41,7 +41,6 @@ class BinaryRouterScene extends Phaser.Scene {
       this._cancelAnimation();
       this._destroySVG();
       this._buildScene(width, height);
-      this._repositionReplayBtn();
       this._startAnimation();
     });
   }

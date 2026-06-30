@@ -269,21 +269,68 @@ const btnCloseInfo = document.getElementById("btn-close-info");
 const infoText = document.getElementById("info-text");
 
 const levelHints = {
-  StackingPlates:
-    "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
-  Phone: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
-  Fibonacci:
-    "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
-  MorseCar:
-    "SOMEONE IS TRYING TO COMMUNICATE.\nListen through the noise — the road has a message for you.",
-  DeadAir:
-    "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
+  StackingPlates: {
+    text: "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
+    sound: false, tool: false,
+  },
+  Phone: {
+    text: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
+    sound: false, tool: true,
+  },
+  Fibonacci: {
+    text: "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
+    sound: false, tool: true,
+  },
+  MorseCar: {
+    text: "SOMEONE IS TRYING TO COMMUNICATE.\nListen through the noise — the road has a message for you.",
+    sound: true, tool: true,
+  },
+  DeadAir: {
+    text: "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
+    sound: false, tool: false,
+  },
+  BinaryRouter: {
+    text: "SIGNAL INTERCEPTED.\nThe router broadcasts in a language older than words. Watch the lights — every flash means something.",
+    sound: false, tool: true,
+  },
+  Spectral: {
+    text: "SOMETHING IS WRITTEN ON THE BOARD.\nFour discs of glass. Four slots. There is an order to things — find it.",
+    sound: false, tool: false,
+  },
 };
 
 btnInfo.addEventListener("click", () => {
   const currentLevelKey = window.GAME_LEVELS[window.currentLevelIndex].key;
-  infoText.innerText =
-    levelHints[currentLevelKey] || "SYSTEM CORRUPTED.\nNO DATA AVAILABLE.";
+  const hint = levelHints[currentLevelKey] || {
+    text: "SYSTEM CORRUPTED.\nNO DATA AVAILABLE.",
+    sound: false, tool: false,
+  };
+
+  infoText.innerText = hint.text;
+
+  const reqDiv = document.getElementById("info-requires");
+  reqDiv.innerHTML = "";
+  if (hint.sound || hint.tool) {
+    const badges = document.createElement("div");
+    badges.style.cssText =
+      "display:flex;gap:12px;justify-content:center;margin-bottom:18px;";
+    if (hint.sound) {
+      const b = document.createElement("div");
+      b.style.cssText =
+        "display:flex;flex-direction:column;align-items:center;gap:4px;background:#111;border:1px solid #333;padding:8px 18px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#777;";
+      b.innerHTML = `<span style="font-size:22px;">🔊</span><span>SOUND</span>`;
+      badges.appendChild(b);
+    }
+    if (hint.tool) {
+      const b = document.createElement("div");
+      b.style.cssText =
+        "display:flex;flex-direction:column;align-items:center;gap:4px;background:#111;border:1px solid #333;padding:8px 18px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#777;";
+      b.innerHTML = `<span style="font-size:22px;">🔧</span><span>TOOL</span>`;
+      badges.appendChild(b);
+    }
+    reqDiv.appendChild(badges);
+  }
+
   infoModal.classList.remove("hidden");
 });
 
