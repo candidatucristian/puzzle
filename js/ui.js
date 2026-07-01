@@ -294,7 +294,7 @@ const levelHints = {
     sound: false, tool: true,
   },
   Spectral: {
-    text: "SOMETHING IS WRITTEN ON THE BOARD.\nFour discs of glass. Four slots. There is an order to things — find it.",
+    text: "A LOCKED MECHANISM.\nThree dials must be turned. Look closely at the room — it remembers the combination.",
     sound: false, tool: false,
   },
 };

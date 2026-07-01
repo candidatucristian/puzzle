@@ -165,12 +165,13 @@ window.GAME_LEVELS = [
     code: "NIGHT",
     altCode: null,
   },
-  {
-    key: "Spectral",
-    scene: SpectralScene,
-    code: "DUST",
-    altCode: null,
-  },
+  // ── Level 7 (WIP) — hidden for now; re-enable to ship ──
+  // {
+  //   key: "Spectral",
+  //   scene: SpectralScene,
+  //   code: "OMEN",
+  //   altCode: null,
+  // },
 ];
 
 const sceneList = window.GAME_LEVELS.map((level) => level.scene);
