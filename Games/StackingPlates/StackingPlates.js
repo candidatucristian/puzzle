@@ -9,10 +9,11 @@ class StackingPlatesScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio("click",     "assets/sounds/global/click.mp3");
-    this.load.audio("ui_click",  "assets/sounds/global/mouseclick.wav");
+    this.load.audio("bgm", "assets/sounds/global/background.mp3");
+    this.load.audio("click", "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
-    this.load.audio("error",     "assets/sounds/global/error.mp3");
+    this.load.audio("error", "assets/sounds/global/error.mp3");
   }
 
   create() {
@@ -152,7 +153,6 @@ class StackingPlatesScene extends Phaser.Scene {
     const allSnapped = this.pieces.every((p) => p.isSnapped);
     if (allSnapped && !this.isSolved) {
       this.isSolved = true;
-      if (window.playSuccess) window.playSuccess(this);
 
       this.statusText.setText("The fragments align. Code revealed.");
       this.statusText.setColor("#1aaf7a");
@@ -340,7 +340,7 @@ class StackingPlatesScene extends Phaser.Scene {
       this.scene.start(levelKey, { skipFade: true });
       return;
     }
-    if (!this.isSolved && window.playSuccess) window.playSuccess(this);
+    if (window.playSuccess) window.playSuccess(this);
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;

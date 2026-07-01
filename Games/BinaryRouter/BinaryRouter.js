@@ -9,10 +9,12 @@ class BinaryRouterScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.audio("bgm", "assets/sounds/global/background.mp3");
     this.load.audio("click", "assets/sounds/global/click.mp3");
     this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
     this.load.audio("error", "assets/sounds/global/error.mp3");
+    this.load.audio("hardware", "assets/sounds/Modem/hardwaresound.mp3");
     // Load SVG as text so we can inline it and manipulate individual LED elements
     this.load.text(
       "router_svg",
@@ -35,6 +37,7 @@ class BinaryRouterScene extends Phaser.Scene {
 
     this._buildScene(this.cameras.main.width, this.cameras.main.height);
     this._startAnimation();
+    this._startHardwareHum();
 
     this.events.on("canvas_resized", ({ width, height }) => {
       this._drawBg(width, height);
@@ -88,20 +91,11 @@ class BinaryRouterScene extends Phaser.Scene {
     svg.setAttribute("width", displayW);
     svg.setAttribute("height", displayH);
 
-    // Add LEIBNIZ label directly to SVG DOM (on the router body, y≈131-175 in viewBox)
-    const modelLabel = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "text",
-    );
-    modelLabel.setAttribute("x", "150");
-    modelLabel.setAttribute("y", "155");
-    modelLabel.setAttribute("text-anchor", "middle");
-    modelLabel.setAttribute("font-family", "monospace");
-    modelLabel.setAttribute("font-size", "9");
-    modelLabel.setAttribute("letter-spacing", "3");
-    modelLabel.setAttribute("fill", "#9abaa0");
-    modelLabel.textContent = "W. LEIBNIZ";
-    svg.appendChild(modelLabel);
+    // Add LEIBNIZ label engraved into the router body (y≈131-175 in viewBox).
+    // Debossed look = dark inner-shadow along the top edge of the groove +
+    // a light catch-highlight along the bottom edge + a floor fill that
+    // matches the dark charcoal body so the text reads only via its 3D bevel.
+    this._addEngravedLabel(svg, 150, 155, "W. LEIBNIZ");
 
     Object.assign(wrap.style, {
       position: "absolute",
@@ -141,6 +135,47 @@ class BinaryRouterScene extends Phaser.Scene {
       if (el) this._applyLedStyle(el, "off");
       return el;
     });
+  }
+
+  // Builds a debossed/engraved text label out of stacked SVG <text> layers so
+  // the model name looks molded into the router's plastic rather than printed on.
+  _addEngravedLabel(svg, x, y, str) {
+    const SVGNS = "http://www.w3.org/2000/svg";
+
+    // dy: vertical offset in viewBox units; light from top-left, so the top
+    // wall of the groove is in shadow and the bottom wall catches light.
+    const layers = [
+      // deep inner shadow along the top edge of the groove
+      { dx: 0,    dy: -0.7,  fill: "#000000", opacity: 0.9,  blur: 0.3 },
+      // secondary soft shadow for depth
+      { dx: -0.3, dy: -0.3,  fill: "#080807", opacity: 0.6,  blur: 0.5 },
+      // lit lower lip of the groove — brighter so the letters catch the eye
+      { dx: 0,    dy: 0.85,  fill: "#9a9d8e", opacity: 0.95, blur: 0.3 },
+      // faint outer bottom bloom of the highlight
+      { dx: 0,    dy: 1.2,   fill: "#5c5e52", opacity: 0.45, blur: 0.6 },
+      // groove floor — lifted off the body a touch so the text stays legible
+      { dx: 0,    dy: 0,     fill: "#34332a", opacity: 1,    blur: 0 },
+    ];
+
+    const make = ({ dx, dy, fill, opacity, blur }) => {
+      const t = document.createElementNS(SVGNS, "text");
+      t.setAttribute("x", x + dx);
+      t.setAttribute("y", y + dy);
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-family", "monospace");
+      t.setAttribute("font-size", "9");
+      t.setAttribute("font-weight", "bold");
+      t.setAttribute("letter-spacing", "3");
+      t.setAttribute("fill", fill);
+      t.setAttribute("opacity", opacity);
+      if (blur) t.style.filter = `blur(${blur}px)`;
+      t.style.pointerEvents = "none";
+      t.textContent = str;
+      return t;
+    };
+
+    // Append shadow/highlight layers first, groove floor last (on top).
+    layers.forEach((cfg) => svg.appendChild(make(cfg)));
   }
 
   _destroySVG() {
@@ -224,8 +259,8 @@ class BinaryRouterScene extends Phaser.Scene {
     };
 
     // Timing (ms)
-    const T_BIT = 400; // how long the active LED stays lit for one bit
-    const GAP_BIT = 220; // dark gap between consecutive bit flashes
+    const T_BIT = 600; // how long the active LED stays lit for one bit (50% slower)
+    const GAP_BIT = 330; // dark gap between consecutive bit flashes (50% slower)
     const GAP_AFTER = 500; // pause after last bit before letter counter lights up
     const LETTER_HOLD = 850; // pause after letter counter LED lights up
     const LOOP_PAUSE = 3500; // pause at end of word before restart
@@ -302,7 +337,24 @@ class BinaryRouterScene extends Phaser.Scene {
     });
   }
 
+  // Looping modem hardware hum — background ambience while on this level
+  _startHardwareHum() {
+    try {
+      if (this.cache.audio.exists("hardware")) {
+        this._hwSound = this.sound.add("hardware", {
+          loop: true,
+          volume: (window.GameAudio ? window.GameAudio.sfxVol : 0.8) * 0.35,
+        });
+        this._hwSound.play();
+      }
+    } catch (e) {}
+  }
+
   shutdown() {
+    if (this._hwSound) {
+      try { this._hwSound.stop(); this._hwSound.destroy(); } catch (e) {}
+      this._hwSound = null;
+    }
     this._cancelAnimation();
     this._destroySVG();
     this.tweens.killAll();

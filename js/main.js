@@ -1,69 +1,22 @@
-// ── Web Audio API fallback sounds ──
-const AudioFX = (() => {
-  let ctx = null;
-  function getCtx() {
-    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-    return ctx;
-  }
-  function playClick() {
-    if (window.GameAudio && window.GameAudio.muted) return;
-    const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
-    try {
-      const ac = getCtx();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(600, ac.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(300, ac.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.3 * vol, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.08);
-    } catch (e) {}
-  }
-  function playSuccess() {
-    if (window.GameAudio && window.GameAudio.muted) return;
-    const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
-    try {
-      const ac = getCtx();
-      const notes = [523.25, 659.25, 783.99, 1046.5];
-      notes.forEach((freq, i) => {
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
-        osc.type = "sine";
-        const t = ac.currentTime + i * 0.12;
-        osc.frequency.setValueAtTime(freq, t);
-        gain.gain.setValueAtTime(0.25 * vol, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        osc.start(t);
-        osc.stop(t + 0.3);
+// ── Background music stays subdued relative to the music-volume slider ──
+const BGM_GAIN = 0.4;
+function bgmVolume() {
+  return (window.GameAudio ? window.GameAudio.musicVol : 0.5) * BGM_GAIN;
+}
+
+// Play a global SFX by cache key on the current scene, respecting mute + sfx volume
+function playSfx(key, vol, scene) {
+  if (window.GameAudio && window.GameAudio.muted) return;
+  scene = scene || window.mainScene;
+  if (!scene) return;
+  try {
+    if (scene.cache.audio.exists(key)) {
+      scene.sound.play(key, {
+        volume: (window.GameAudio ? window.GameAudio.sfxVol : 1) * (vol || 1),
       });
-    } catch (e) {}
-  }
-  function playError() {
-    if (window.GameAudio && window.GameAudio.muted) return;
-    const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
-    try {
-      const ac = getCtx();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(150, ac.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, ac.currentTime + 0.3);
-      gain.gain.setValueAtTime(0.3 * vol, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.3);
-    } catch (e) {}
-  }
-  return { playClick, playSuccess, playError };
-})();
+    }
+  } catch (e) {}
+}
 
 // ── Global Audio Helpers ──
 window.initGlobalAudio = (scene) => {
@@ -74,58 +27,26 @@ window.initGlobalAudio = (scene) => {
       if (scene.cache.audio.exists("bgm")) {
         window.GameAudio.bgmInstance = scene.sound.add("bgm", {
           loop: true,
-          volume: window.GameAudio.musicVol,
+          volume: bgmVolume(),
         });
         window.GameAudio.bgmInstance.play();
       }
     } catch (e) {}
+  } else {
+    bgm.setVolume(bgmVolume());
   }
   scene.sound.setMute(window.GameAudio.muted);
 };
-window.playUIClick = () => {
-  if (window.GameAudio && window.GameAudio.muted) return;
-  try {
-    if (window.mainScene && window.mainScene.cache.audio.exists("ui_click")) {
-      window.mainScene.sound.play("ui_click", {
-        volume: window.GameAudio.sfxVol,
-      });
-    } else {
-      AudioFX.playClick();
-    }
-  } catch (e) {}
+
+// Keep the looping background music at its subdued level after a slider change
+window.refreshBgmVolume = () => {
+  if (window.GameAudio.bgmInstance) window.GameAudio.bgmInstance.setVolume(bgmVolume());
 };
-window.playErrorSound = () => {
-  if (window.GameAudio && window.GameAudio.muted) return;
-  try {
-    if (window.mainScene && window.mainScene.cache.audio.exists("error")) {
-      window.mainScene.sound.play("error", { volume: window.GameAudio.sfxVol });
-    } else {
-      AudioFX.playError();
-    }
-  } catch (e) {}
-};
-window.playClick = (scene) => {
-  if (window.GameAudio && window.GameAudio.muted) return;
-  const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
-  try {
-    if (scene.cache.audio.exists("click")) {
-      scene.sound.play("click", { volume: vol });
-      return;
-    }
-  } catch (e) {}
-  AudioFX.playClick();
-};
-window.playSuccess = (scene) => {
-  if (window.GameAudio && window.GameAudio.muted) return;
-  const vol = window.GameAudio ? window.GameAudio.sfxVol : 1;
-  try {
-    if (scene.cache.audio.exists("nextlevel")) {
-      scene.sound.play("nextlevel", { volume: vol });
-      return;
-    }
-  } catch (e) {}
-  AudioFX.playSuccess();
-};
+
+window.playUIClick    = ()      => playSfx("ui_click");         // UI chrome clicks
+window.playErrorSound = ()      => playSfx("error");            // wrong code entered
+window.playClick      = (scene) => playSfx("click", 1, scene);  // in-level object clicks
+window.playSuccess    = (scene) => playSfx("nextlevel", 1, scene); // EXECUTE → next level
 
 // ── Level Configuration ──
 window.GAME_LEVELS = [
@@ -148,9 +69,9 @@ window.GAME_LEVELS = [
     altCode: "FIBONACCI",
   },
   {
-    key: "MorseCar",
-    scene: MorseCarScene,
-    code: "SUMMER",
+    key: "Blinking",
+    scene: BlinkingScene,
+    code: "POWER",
     altCode: null,
   },
   {
@@ -165,13 +86,6 @@ window.GAME_LEVELS = [
     code: "NIGHT",
     altCode: null,
   },
-  // ── Level 7 (WIP) — hidden for now; re-enable to ship ──
-  // {
-  //   key: "Spectral",
-  //   scene: SpectralScene,
-  //   code: "OMEN",
-  //   altCode: null,
-  // },
 ];
 
 const sceneList = window.GAME_LEVELS.map((level) => level.scene);

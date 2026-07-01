@@ -14,6 +14,7 @@ class FibonacciScene extends Phaser.Scene {
       "wateringplant",
       "assets/sounds/Fibonacci/wateringplant.mp3",
     );
+    this.load.audio("bgm", "assets/sounds/global/background.mp3");
     this.load.audio("click", "assets/sounds/global/click.mp3");
     this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
@@ -624,7 +625,6 @@ class FibonacciScene extends Phaser.Scene {
 
   finishLevel() {
     this.isSolved = true;
-    if (window.playSuccess) window.playSuccess(this);
     this.statusText.setText(
       "Nature's sequence is complete. Whose name does it bear?",
     );
@@ -749,7 +749,7 @@ class FibonacciScene extends Phaser.Scene {
       this.scene.start(levelKey, { skipFade: true });
       return;
     }
-    if (!this.isSolved && window.playSuccess) window.playSuccess(this);
+    if (window.playSuccess) window.playSuccess(this);
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
     const fadeOverlay = this.add

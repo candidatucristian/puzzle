@@ -26,13 +26,7 @@ function goToLevel(index) {
     return;
   }
 
-  // Fire any scene-specific Web Audio cleanup immediately (bypasses Phaser queue delay)
-  if (typeof window._deadAirStop === "function") {
-    window._deadAirStop();
-    window._deadAirStop = null;
-  }
-
-  // Remove all scene-specific DOM overlays immediately (SVGs, car elements, umbrella, etc.)
+  // Remove all scene-specific DOM overlays immediately (SVGs, TV, switch, etc.)
   document.querySelectorAll(".scene-dom-overlay").forEach(el => el.remove());
 
   // Stop ALL active scenes — ensures shutdown() runs regardless of currentLevelIndex state
@@ -41,7 +35,10 @@ function goToLevel(index) {
       game.scene.stop(level.key);
     }
   }
-  game.sound.stopAll();
+  // Stop every sound EXCEPT the persistent background music
+  game.sound.sounds.forEach((s) => {
+    if (s !== window.GameAudio.bgmInstance) s.stop();
+  });
 
   window.currentLevelIndex = index;
   renderLevels();
@@ -219,9 +216,7 @@ btnCloseOptions.addEventListener("click", () =>
 musicSlider.addEventListener("input", (e) => {
   window.GameAudio.musicVol = parseFloat(e.target.value);
   localStorage.setItem("musicVol", window.GameAudio.musicVol);
-  if (window.GameAudio.bgmInstance) {
-    window.GameAudio.bgmInstance.setVolume(window.GameAudio.musicVol);
-  }
+  if (window.refreshBgmVolume) window.refreshBgmVolume();
 });
 
 sfxSlider.addEventListener("input", (e) => {
@@ -281,10 +276,6 @@ const levelHints = {
     text: "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
     sound: false, tool: true,
   },
-  MorseCar: {
-    text: "SOMEONE IS TRYING TO COMMUNICATE.\nListen through the noise — the road has a message for you.",
-    sound: true, tool: true,
-  },
   DeadAir: {
     text: "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
     sound: false, tool: false,
@@ -293,9 +284,9 @@ const levelHints = {
     text: "SIGNAL INTERCEPTED.\nThe router broadcasts in a language older than words. Watch the lights — every flash means something.",
     sound: false, tool: true,
   },
-  Spectral: {
-    text: "A LOCKED MECHANISM.\nThree dials must be turned. Look closely at the room — it remembers the combination.",
-    sound: false, tool: false,
+  Blinking: {
+    text: "A DARK ROOM. A SWITCH ON THE WALL.\nEach press wakes the bulb for a heartbeat — long, short — one sign at a time. Piece them together.",
+    sound: false, tool: true,
   },
 };
 
@@ -337,8 +328,10 @@ btnInfo.addEventListener("click", () => {
 btnCloseInfo.addEventListener("click", () => infoModal.classList.add("hidden"));
 
 // ── Global UI Click Sound ──
+// UI click sound — only for app chrome (buttons, sliders, level tiles), never the game area
 document.body.addEventListener("mousedown", (e) => {
-  if (e.target.tagName !== "CANVAS") {
+  if (e.target.closest("#game-container")) return;
+  if (e.target.closest("button, input, .level-btn, #vol-icon-ui")) {
     if (window.playUIClick) window.playUIClick();
   }
 });
