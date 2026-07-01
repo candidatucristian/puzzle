@@ -1,4 +1,4 @@
-// DeadAir — CRT TV level built on the shader-doodle TV (TV.html / TV.css / TV.js).
+// TV — CRT TV level built on a shader-doodle component (originally TV.html/css/js).
 // The screen is a glitchy CRT broadcast: a shader samples cycling channel images.
 // The left / right knobs on the TV change channel (prev / next). Each channel's
 // broadcast is shown as white-on-black subtitles over the screen. All four channels
@@ -12,10 +12,10 @@ const DEADAIR_SD_LIB = "https://unpkg.com/shader-doodle@alpha";
 // Channel images — sampled by the CRT shader as the broadcast picture.
 // Order matches the channels below so each text sits on its own image.
 const DEADAIR_IMAGES = [
-  "assets/images/DeadAir/astronomy.jpg", // 0 → COSMOS NET (supervoid)
-  "assets/images/DeadAir/court.jpg",     // 1 → LAWCOURT
-  "assets/images/DeadAir/coding.jpg",    // 2 → CODE REVIEW
-  "assets/images/DeadAir/science.jpg",   // 3 → SCIENCE FOUND.
+  "assets/images/TV/astronomy.jpg", // 0 → COSMOS NET (supervoid)
+  "assets/images/TV/court.jpg",     // 1 → LAWCOURT
+  "assets/images/TV/coding.jpg",    // 2 → CODE REVIEW
+  "assets/images/TV/science.jpg",   // 3 → SCIENCE FOUND.
 ];
 
 // The exact fragment shader from TV.html (Shadertoy-style CRT)
@@ -83,9 +83,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 }
 `;
 
-class DeadAirScene extends Phaser.Scene {
+class TVScene extends Phaser.Scene {
   constructor() {
-    super({ key: "DeadAir" });
+    super({ key: "TV" });
   }
 
   init(data) {

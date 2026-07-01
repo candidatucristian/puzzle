@@ -1,6 +1,6 @@
-class FibonacciScene extends Phaser.Scene {
+class PlantPotScene extends Phaser.Scene {
   constructor() {
-    super({ key: "Fibonacci" });
+    super({ key: "PlantPot" });
   }
 
   init(data) {
@@ -9,10 +9,10 @@ class FibonacciScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("leaf", "assets/images/Fibonacci/leaf.png");
+    this.load.image("leaf", "assets/images/PlantPot/leaf.png");
     this.load.audio(
       "wateringplant",
-      "assets/sounds/Fibonacci/wateringplant.mp3",
+      "assets/sounds/PlantPot/wateringplant.mp3",
     );
     this.load.audio("bgm", "assets/sounds/global/background.mp3");
     this.load.audio("click", "assets/sounds/global/click.mp3");

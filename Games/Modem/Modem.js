@@ -1,6 +1,6 @@
-class BinaryRouterScene extends Phaser.Scene {
+class ModemScene extends Phaser.Scene {
   constructor() {
-    super({ key: "BinaryRouter" });
+    super({ key: "Modem" });
   }
 
   init(data) {
@@ -18,7 +18,7 @@ class BinaryRouterScene extends Phaser.Scene {
     // Load SVG as text so we can inline it and manipulate individual LED elements
     this.load.text(
       "router_svg",
-      "assets/images/BinaryRouter/wireless-router.svg",
+      "assets/images/Modem/wireless-router.svg",
     );
   }
 

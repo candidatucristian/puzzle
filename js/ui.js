@@ -264,27 +264,27 @@ const btnCloseInfo = document.getElementById("btn-close-info");
 const infoText = document.getElementById("info-text");
 
 const levelHints = {
-  StackingPlates: {
+  StackingSquares: {
     text: "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
     sound: false, tool: false,
   },
-  Phone: {
+  MobilePhone: {
     text: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
     sound: false, tool: true,
   },
-  Fibonacci: {
+  PlantPot: {
     text: "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
     sound: false, tool: true,
   },
-  DeadAir: {
+  TV: {
     text: "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
     sound: false, tool: false,
   },
-  BinaryRouter: {
+  Modem: {
     text: "SIGNAL INTERCEPTED.\nThe router broadcasts in a language older than words. Watch the lights — every flash means something.",
     sound: false, tool: true,
   },
-  Blinking: {
+  Lightswitch: {
     text: "A DARK ROOM. A SWITCH ON THE WALL.\nEach press wakes the bulb for a heartbeat — long, short — one sign at a time. Piece them together.",
     sound: false, tool: true,
   },

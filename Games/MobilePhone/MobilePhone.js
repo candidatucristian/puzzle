@@ -1,6 +1,6 @@
-class PhoneScene extends Phaser.Scene {
+class MobilePhoneScene extends Phaser.Scene {
   constructor() {
-    super({ key: "Phone" });
+    super({ key: "MobilePhone" });
   }
 
   init(data) {
@@ -9,8 +9,8 @@ class PhoneScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio("phone_vib", "assets/sounds/Phone/vibration.mp3");
-    this.load.audio("keypad", "assets/sounds/Phone/keypad.mp3");
+    this.load.audio("phone_vib", "assets/sounds/MobilePhone/vibration.mp3");
+    this.load.audio("keypad", "assets/sounds/MobilePhone/keypad.mp3");
     this.load.audio("bgm", "assets/sounds/global/background.mp3");
     this.load.audio("click", "assets/sounds/global/click.mp3");
     this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");

@@ -1,6 +1,6 @@
-class StackingPlatesScene extends Phaser.Scene {
+class StackingSquaresScene extends Phaser.Scene {
   constructor() {
-    super({ key: "StackingPlates" });
+    super({ key: "StackingSquares" });
   }
 
   init(data) {

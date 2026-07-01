@@ -1,4 +1,4 @@
-// Level 7 — "BLINKING"
+// Level 4 — "LIGHTSWITCH"
 // Dark room. Open door — warm hallway light. Small switch left of the door.
 // Press the switch: the bulb (and the switch LED) blink the answer in Morse
 // code — short flash = dot, long flash = dash — then the wiring shorts out.
@@ -14,8 +14,8 @@ const BLK_MORSE = {
   5: ".....", 6: "-....", 7: "--...", 8: "---..", 9: "----.",
 };
 
-class BlinkingScene extends Phaser.Scene {
-  constructor() { super({ key: "Blinking" }); }
+class LightswitchScene extends Phaser.Scene {
+  constructor() { super({ key: "Lightswitch" }); }
 
   init(data) {
     this.skipFadeIn = data && data.skipFade !== undefined ? data.skipFade : true;
@@ -27,8 +27,8 @@ class BlinkingScene extends Phaser.Scene {
     this.load.audio("ui_click",    "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel",   "assets/sounds/global/nextlevel.wav");
     this.load.audio("error",       "assets/sounds/global/error.mp3");
-    this.load.audio("switchsound", "assets/sounds/Lightbulb/switchsound.mp3");
-    this.load.audio("sparkle",     "assets/sounds/Lightbulb/sparkle.mp3");
+    this.load.audio("switchsound", "assets/sounds/Lightswitch/switchsound.mp3");
+    this.load.audio("sparkle",     "assets/sounds/Lightswitch/sparkle.mp3");
   }
 
   create() {
@@ -36,7 +36,7 @@ class BlinkingScene extends Phaser.Scene {
     if (window.initGlobalAudio) window.initGlobalAudio(this);
 
     // Answer comes from the level config so the Morse always matches the code
-    const cfg = (window.GAME_LEVELS || []).find(l => l.key === "Blinking");
+    const cfg = (window.GAME_LEVELS || []).find(l => l.key === "Lightswitch");
     this.ANSWER = cfg && cfg.code ? cfg.code : "POWER";
 
     this.isSolved    = false;
