@@ -288,6 +288,18 @@ const levelHints = {
     text: "A DARK ROOM. A SWITCH ON THE WALL.\nEach press wakes the bulb for a heartbeat — long, short — one sign at a time. Piece them together.",
     sound: false, tool: true,
   },
+  Telescope: {
+    text: "A TELESCOPE AT THE WINDOW.\nDrift across the night. Ignore the scatter — only the neat little grids of six matter. Read the lit ones the way fingers do, left to right.",
+    sound: true, tool: true,
+  },
+  Prism: {
+    text: "BROKEN LIGHT.\nTwelve panes of glass, five empty frames, one word. Pair the panes that belong together and turn them until the light agrees. Mind the maker's marks — and know that two panes belong to no one.",
+    sound: false, tool: false,
+  },
+  Cryptex: {
+    text: "A SEALED CYLINDER.\nThe parchment speaks in a shifted tongue — the scratches in its corner say how far it drifted. Decipher it, learn who invented this lock, and spell his name on the rings.",
+    sound: false, tool: true,
+  },
 };
 
 btnInfo.addEventListener("click", () => {

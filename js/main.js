@@ -86,6 +86,24 @@ window.GAME_LEVELS = [
     code: "NIGHT",
     altCode: null,
   },
+  {
+    key: "Telescope",
+    scene: TelescopeScene,
+    code: "ORION",
+    altCode: null,
+  },
+  {
+    key: "Prism",
+    scene: PrismScene,
+    code: "PRISM",
+    altCode: null,
+  },
+  {
+    key: "Cryptex",
+    scene: CryptexScene,
+    code: "CAESAR",
+    altCode: null,
+  },
 ];
 
 const sceneList = window.GAME_LEVELS.map((level) => level.scene);
