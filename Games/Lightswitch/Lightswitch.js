@@ -358,7 +358,7 @@ class LightswitchScene extends Phaser.Scene {
   border-radius:50% 50% 45% 45%;
   background:radial-gradient(circle at 40% 34%,rgba(255,255,255,.07),rgba(60,60,60,.03));
   border:1px solid rgba(255,255,255,.04);
-  transition:background .06s ease,box-shadow .06s ease;}
+  transition:background .015s linear,box-shadow .015s linear;}
 #blk-bulb.on .bulb{
   background:radial-gradient(circle at 42% 36%,#fffef0 0%,#fff4c8 52%,#ffd880 100%);
   border-color:rgba(255,248,200,.9);
@@ -407,7 +407,7 @@ class LightswitchScene extends Phaser.Scene {
   background:#22bb44;
   border:1px solid rgba(0,0,0,.25);
   box-shadow:inset 0 1px 1px rgba(255,255,255,.45);
-  transition:background .05s ease, box-shadow .05s ease;}
+  transition:background .015s linear, box-shadow .015s linear;}
 #blk-led.on{background:#5a1414;}                        /* armed, between flashes */
 #blk-led.on.lit{background:#ff2a2a;                     /* flashing on */
   box-shadow:0 0 5px rgba(255,50,50,.9),0 0 9px rgba(255,40,40,.45);}
@@ -494,10 +494,10 @@ class LightswitchScene extends Phaser.Scene {
 
   // word/letter → [{ on:bool, dur:ms }, …] with short Morse spacing
   _buildMorse(word) {
-    const U        = 120;      // base time unit (ms) — deliberately short
-    const DOT      = U;
-    const DASH     = U * 3;
-    const GAP_EL   = U;        // between elements inside one letter
+    const U        = 120;      // base time unit (ms)
+    const DOT      = 40;       // dot = a bare camera-flash blink
+    const DASH     = U * 3;    // dash stays long — the contrast IS the code
+    const GAP_EL   = U * 1.4;  // roomier gap so the flash reads as its own beat
     const GAP_CHAR = U * 3;    // between letters
     const steps = [];
     const chars = String(word || "").toUpperCase().split("");

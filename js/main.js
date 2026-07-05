@@ -104,6 +104,12 @@ window.GAME_LEVELS = [
     code: "HEADACHE",
     altCode: null,
   },
+  {
+    key: "Mosaic",
+    scene: MosaicScene,
+    code: "EXIT",
+    altCode: null,
+  },
 ];
 
 const sceneList = window.GAME_LEVELS.map((level) => level.scene);

@@ -314,6 +314,11 @@ const levelHints = {
     sound: false,
     tool: true,
   },
+  Mosaic: {
+    text: "A RUINED MOSAIC.\nThe masons left their tallies on the frame — each number counts an unbroken run of tiles. Reason it back together. Guessing ruins walls.",
+    sound: false,
+    tool: false,
+  },
 };
 
 btnInfo.addEventListener("click", () => {

@@ -677,9 +677,6 @@ class PlantPotScene extends Phaser.Scene {
     txt(0.86, 0.71, "610", 22, 5, 0.06);
     txt(0.03, 0.73, "144", 16, -5, 0.07);
 
-    // Attribution
-    txt(0.24, 0.95, "FIBONACCI  ·  LIBER ABACI  ·  MCCII", 7, 0, 0.065);
-
     // ── Golden (logarithmic) spiral ──────────────────────────────────────
     const spCx = w * 0.83;
     const spCy = h * 0.19;
