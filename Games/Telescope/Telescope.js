@@ -69,7 +69,8 @@ const TUNE = {
   ZOOM_MIN: 1.0,
   ZOOM_MAX: 1.6,
   INERTIA_DAMP: 0.9, // pan braking after release
-  CONST_LINE_ALPHA: 0.42, // constellation line opacity (decoys AND cells) — zodiac-style
+  DECOY_LINE_ALPHA: 0.06, // decoy constellation lines — barely there, unimportant
+  CELL_LINE_ALPHA: 0.5, // Braille-cell lines — the only strong connections
   TWINKLE: 1.7, // global multiplier on star twinkle amplitude (higher = sparklier)
   MOON_POS: [0.84, 0.16], // moon center, as fractions of the sky world
   MOON_SIZE: 0.3, // moon diameter as a fraction of min(W,H)
@@ -235,7 +236,7 @@ class TelescopeScene extends Phaser.Scene {
 
     // subtle prompt, fades in after 1.6s and keeps pulsing
     const hint = this.add
-      .text(W / 2, H * 0.92, "Use your fingers", {
+      .text(W / 2, H * 0.92, "Look at your fingers", {
         fontFamily: '"Courier New", monospace',
         fontSize: Math.max(14, Math.round(Math.min(W, H) * 0.024)) + "px",
         color: "#cfd8ea",
@@ -500,7 +501,7 @@ class TelescopeScene extends Phaser.Scene {
     // roomier cells → they read as small constellations, not tight blobs
     const dx = scaleRef * 0.066;
     const dy = scaleRef * 0.058;
-    const rSignal = Math.max(2.6, scaleRef * 0.006);
+    const rSignal = Math.max(1.9, scaleRef * 0.0044);
     this._clearR = Math.max(dx, dy) * 2.8;
 
     // the moon lives here (world coords) — nothing important may hide under it
@@ -579,8 +580,7 @@ class TelescopeScene extends Phaser.Scene {
         oy = worldH * (0.14 + Math.random() * 0.72);
         tries++;
       } while (
-        (this._nearCell(ox, oy, this._clearR * 2.2) ||
-          nearMoon(ox, oy, 2.2)) &&
+        (this._nearCell(ox, oy, this._clearR * 2.2) || nearMoon(ox, oy, 2.2)) &&
         tries < 40
       );
       if (tries >= 40) continue;
@@ -603,7 +603,7 @@ class TelescopeScene extends Phaser.Scene {
         this._stars.push({
           x: p.x,
           y: p.y,
-          r: 1.7 + Math.random() * 1.2,
+          r: 1.2 + Math.random() * 0.9,
           base: 0.55 + Math.random() * 0.2,
           amp: 0.14 + Math.random() * 0.12,
           spd: 0.8 + Math.random() * 1.6,
@@ -732,7 +732,8 @@ class TelescopeScene extends Phaser.Scene {
       const dist = Math.sqrt(rnd()) * R * 0.9;
       const px = cx + Math.cos(ang) * dist;
       const py = cy + Math.sin(ang) * dist;
-      const cr = i < 4 ? R * (0.06 + rnd() * 0.04) : R * (0.015 + rnd() * 0.035);
+      const cr =
+        i < 4 ? R * (0.06 + rnd() * 0.04) : R * (0.015 + rnd() * 0.035);
       const fg = ctx.createRadialGradient(px, py, cr * 0.2, px, py, cr);
       fg.addColorStop(0, "rgba(96,92,84,0.20)");
       fg.addColorStop(0.8, "rgba(96,92,84,0.14)");
@@ -1017,26 +1018,37 @@ class TelescopeScene extends Phaser.Scene {
       const f = this._focus; // 1 = blurry, 0 = sharp
       const blurR = 1 + 2.4 * f;
       const blurA = 1 - 0.55 * f;
-      const lineA = TUNE.CONST_LINE_ALPHA * (1 - f);
+      const cellA = TUNE.CELL_LINE_ALPHA * (1 - f);
+      const decoyA = TUNE.DECOY_LINE_ALPHA * (1 - f);
       g.clear();
 
-      // constellation lines — decoys and Braille cells share one style, drawn
-      // like a real star-chart: a soft wide glow with a crisp bluish-white core
-      if (lineA > 0.01) {
-        const wire = (pts) => {
-          for (let i = 0; i < pts.length - 1; i++) {
-            const x1 = pts[i].x,
-              y1 = pts[i].y,
-              x2 = pts[i + 1].x,
-              y2 = pts[i + 1].y;
-            g.lineStyle(3, 0x5c79b8, lineA * 0.45);
+      // decoy lines: single hairline, barely visible — they should feel
+      // unimportant. Only the code cells get the strong star-chart wiring.
+      if (decoyA > 0.005) {
+        g.lineStyle(1, 0x8fa8cc, decoyA);
+        for (const d of this._decoys) {
+          for (let i = 0; i < d.pts.length - 1; i++)
+            g.lineBetween(
+              d.pts[i].x,
+              d.pts[i].y,
+              d.pts[i + 1].x,
+              d.pts[i + 1].y,
+            );
+        }
+      }
+      if (cellA > 0.01) {
+        for (const c of this._cells) {
+          for (let i = 0; i < c.pts.length - 1; i++) {
+            const x1 = c.pts[i].x,
+              y1 = c.pts[i].y,
+              x2 = c.pts[i + 1].x,
+              y2 = c.pts[i + 1].y;
+            g.lineStyle(3, 0x5c79b8, cellA * 0.45);
             g.lineBetween(x1, y1, x2, y2);
-            g.lineStyle(1, 0xd4e2ff, lineA);
+            g.lineStyle(1, 0xd4e2ff, cellA);
             g.lineBetween(x1, y1, x2, y2);
           }
-        };
-        for (const d of this._decoys) wire(d.pts);
-        for (const c of this._cells) wire(c.pts);
+        }
       }
 
       for (const s of this._stars) {

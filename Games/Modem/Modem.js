@@ -249,13 +249,12 @@ class ModemScene extends Phaser.Scene {
     // LEDs 7-12 are green decoration — always lit, never change
     for (let i = 7; i <= 12; i++) this._setLed(i, "green");
 
-    const WORD = "NIGHT";
+    const WORD = "HTTPS";
     const BINARY = {
-      N: "01001110",
-      I: "01001001",
-      G: "01000111",
       H: "01001000",
       T: "01010100",
+      P: "01010000",
+      S: "01010011",
     };
 
     // Timing (ms)
@@ -289,7 +288,7 @@ class ModemScene extends Phaser.Scene {
       }
 
       // Letter counter lights up RED from LEFT to RIGHT
-      // N(li=0)→idx0, I(li=1)→idx1, G(li=2)→idx2, H(li=3)→idx3, T(li=4)→idx4
+      // H(li=0)→idx0, T(li=1)→idx1, T(li=2)→idx2, P(li=3)→idx3, S(li=4)→idx4
       t += GAP_AFTER;
       const counterIdx = capLi;
       sched(t, () => this._setLed(counterIdx, "red"));

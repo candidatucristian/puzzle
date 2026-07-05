@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PRISM"  ·  code: PRISM  ·  very hard  ·  glass-pane stacking
 //
-// The spiritual sequel to Level 1, turned cruel:
+// The opening level — glass panes, sketch-room style, turned cruel:
 //   · 12 transparent glass panes, scattered and randomly ROTATED
 //   · 5 sketched frames on the wall (marked I..V)
 //   · each frame needs exactly TWO panes, correctly turned — their etched
@@ -174,7 +174,7 @@ class PrismScene extends Phaser.Scene {
       .setAlpha(0.8);
 
     this.levelText = this.add
-      .text(width - 30, 30, "Level 8", {
+      .text(width - 30, 30, "Level 1", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#ffffff",

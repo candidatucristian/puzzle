@@ -51,10 +51,10 @@ window.playSuccess    = (scene) => playSfx("nextlevel", 1, scene); // EXECUTE �
 // ── Level Configuration ──
 window.GAME_LEVELS = [
   {
-    key: "StackingSquares",
-    scene: StackingSquaresScene,
-    code: "5",
-    altCode: "FIVE",
+    key: "Prism",
+    scene: PrismScene,
+    code: "PRISM",
+    altCode: null,
   },
   {
     key: "MobilePhone",
@@ -83,7 +83,7 @@ window.GAME_LEVELS = [
   {
     key: "Modem",
     scene: ModemScene,
-    code: "NIGHT",
+    code: "HTTPS",
     altCode: null,
   },
   {
@@ -93,15 +93,15 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Prism",
-    scene: PrismScene,
-    code: "PRISM",
+    key: "Cryptex",
+    scene: CryptexScene,
+    code: "ROTOR",
     altCode: null,
   },
   {
-    key: "Cryptex",
-    scene: CryptexScene,
-    code: "CAESAR",
+    key: "Chessboard",
+    scene: ChessboardScene,
+    code: "HEADACHE",
     altCode: null,
   },
 ];

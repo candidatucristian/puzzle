@@ -17,7 +17,11 @@ window.GameAudio = {
 
 // ── Levels Logic ──
 const savedLevel = localStorage.getItem("puzzleUnlockedLevel");
-window.currentLevelIndex = savedLevel ? parseInt(savedLevel) : 0;
+// clamp: the level list may have shrunk since the progress was saved
+window.currentLevelIndex = Math.min(
+  savedLevel ? parseInt(savedLevel) : 0,
+  window.GAME_LEVELS.length - 1,
+);
 window.unlockedLevelIndex = window.currentLevelIndex;
 
 function goToLevel(index) {
@@ -27,7 +31,7 @@ function goToLevel(index) {
   }
 
   // Remove all scene-specific DOM overlays immediately (SVGs, TV, switch, etc.)
-  document.querySelectorAll(".scene-dom-overlay").forEach(el => el.remove());
+  document.querySelectorAll(".scene-dom-overlay").forEach((el) => el.remove());
 
   // Stop ALL active scenes — ensures shutdown() runs regardless of currentLevelIndex state
   for (const level of window.GAME_LEVELS) {
@@ -119,7 +123,8 @@ btnSubmit.addEventListener("click", () => {
       window.currentLevelIndex === window.GAME_LEVELS.length - 1;
 
     if (isLastLevel) {
-      if (window.playSuccess && window.mainScene) window.playSuccess(window.mainScene);
+      if (window.playSuccess && window.mainScene)
+        window.playSuccess(window.mainScene);
       setTimeout(
         () => alert("CONGRATULATIONS! You have completed the game!"),
         500,
@@ -186,7 +191,7 @@ const musicSlider = document.getElementById("music-slider");
 const sfxSlider = document.getElementById("sfx-slider");
 const btnMute = document.getElementById("btn-mute");
 const volSliderUI = document.getElementById("vol-slider-ui");
-const volIconUI   = document.getElementById("vol-icon-ui");
+const volIconUI = document.getElementById("vol-icon-ui");
 
 function syncMuteButtons() {
   const label = window.GameAudio.muted ? "🔇 UNMUTE" : "🔊 MUTE";
@@ -196,8 +201,8 @@ function syncMuteButtons() {
 
 function _syncVolIcon() {
   const muted = window.GameAudio.muted;
-  const vol   = window.GameAudio.sfxVol;
-  volIconUI.textContent = (muted || vol === 0) ? "🔇" : vol < 0.5 ? "🔉" : "🔊";
+  const vol = window.GameAudio.sfxVol;
+  volIconUI.textContent = muted || vol === 0 ? "🔇" : vol < 0.5 ? "🔉" : "🔊";
   volSliderUI.value = muted ? 0 : vol;
 }
 
@@ -241,13 +246,13 @@ btnMute.addEventListener("click", toggleMute);
 volSliderUI.addEventListener("input", (e) => {
   const vol = parseFloat(e.target.value);
   window.GameAudio.sfxVol = vol;
-  window.GameAudio.muted  = vol === 0;
+  window.GameAudio.muted = vol === 0;
   localStorage.setItem("sfxVol", vol);
   localStorage.setItem("muted", window.GameAudio.muted);
   sfxSlider.value = vol;
   syncMuteButtons();
   if (window.mainScene && window.mainScene.sound) {
-    window.mainScene.sound.volume = vol;          // schimbă volumul sunetelor deja pornite
+    window.mainScene.sound.volume = vol; // schimbă volumul sunetelor deja pornite
     window.mainScene.sound.setMute(vol === 0);
   }
 });
@@ -264,41 +269,50 @@ const btnCloseInfo = document.getElementById("btn-close-info");
 const infoText = document.getElementById("info-text");
 
 const levelHints = {
-  StackingSquares: {
-    text: "OVERLAPPING FRAGMENTS.\nDrag the glass plates into the center slot to combine their patterns and reveal the hidden digit.",
-    sound: false, tool: false,
-  },
   MobilePhone: {
     text: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
-    sound: false, tool: true,
+    sound: false,
+    tool: true,
   },
   PlantPot: {
     text: "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
-    sound: false, tool: true,
+    sound: false,
+    tool: true,
   },
   TV: {
     text: "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
-    sound: false, tool: false,
+    sound: false,
+    tool: false,
   },
   Modem: {
-    text: "SIGNAL INTERCEPTED.\nThe router broadcasts in a language older than words. Watch the lights — every flash means something.",
-    sound: false, tool: true,
+    text: "SIGNAL INTERCEPTED.\nThe old router never stopped transmitting.",
+    sound: false,
+    tool: true,
   },
   Lightswitch: {
-    text: "A DARK ROOM. A SWITCH ON THE WALL.\nEach press wakes the bulb for a heartbeat — long, short — one sign at a time. Piece them together.",
-    sound: false, tool: true,
+    text: "A DARK ROOM. A SWITCH ON THE WALL.\nSome bulbs flicker. This one insists.",
+    sound: false,
+    tool: true,
   },
   Telescope: {
-    text: "A TELESCOPE AT THE WINDOW.\nDrift across the night. Ignore the scatter — only the neat little grids of six matter. Read the lit ones the way fingers do, left to right.",
-    sound: true, tool: true,
+    text: "A TELESCOPE AT THE WINDOW.\nNot everything up there was arranged by nature.",
+    sound: true,
+    tool: true,
   },
   Prism: {
     text: "BROKEN LIGHT.\nTwelve panes of glass, five empty frames, one word. Pair the panes that belong together and turn them until the light agrees. Mind the maker's marks — and know that two panes belong to no one.",
-    sound: false, tool: false,
+    sound: false,
+    tool: false,
   },
   Cryptex: {
-    text: "A SEALED CYLINDER.\nThe parchment speaks in a shifted tongue — the scratches in its corner say how far it drifted. Decipher it, learn who invented this lock, and spell his name on the rings.",
-    sound: false, tool: true,
+    text: "AN OLD BRASS WHEEL.\nIt turns like a clock that lost its hours.",
+    sound: false,
+    tool: true,
+  },
+  Chessboard: {
+    text: "AN ABANDONED GAME.\nNobody won. This game is too heavy for the mind - it brings so much ...",
+    sound: false,
+    tool: true,
   },
 };
 
@@ -306,7 +320,8 @@ btnInfo.addEventListener("click", () => {
   const currentLevelKey = window.GAME_LEVELS[window.currentLevelIndex].key;
   const hint = levelHints[currentLevelKey] || {
     text: "SYSTEM CORRUPTED.\nNO DATA AVAILABLE.",
-    sound: false, tool: false,
+    sound: false,
+    tool: false,
   };
 
   infoText.innerText = hint.text;

@@ -1,26 +1,43 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Level — "CRYPTEX"  ·  code: CAESAR  ·  very hard  ·  decipher
+// Level — "CIPHER WHEEL"  ·  code: ROTOR  ·  very hard  ·  decipher
 //
-// A candle-lit study. On the desk: a brass cryptex with SIX letter rings and
-// a crumpled parchment. The parchment is enciphered with a Caesar shift of 3 —
-// three tally scratches in its corner are the only hint to the shift:
+// A quiet, candle-lit wall. Mounted on it: a brass cipher wheel — a fixed
+// outer alphabet and a rotating inner disk, turning with the slow click of a
+// clock. On the desk: a sealed envelope holding a letter enciphered with a
+// Caesar shift of 3. The wax seal is pressed with three plain bars — ||| —
+// the only hint to the shift (they warm up like embers on hover; no halos,
+// nothing pulses):
 //
-//   "WKH HPSHURU ZKR QDPHG WKLV FLSKHU RSHQV WKH ORFN"
-//    →  THE EMPEROR WHO NAMED THIS CIPHER OPENS THE LOCK
+//   "HYHUB FLSKHU PDFKLQH / JXDUGV LWV VSLQQLQJ KHDUW / WKH URWRU"
+//    →  EVERY CIPHER MACHINE GUARDS ITS SPINNING HEART — THE ROTOR
 //
-// The emperor who named the cipher: CAESAR. Spell it on the rings and the
-// cylinder opens, revealing the engraved code.
+// Align the wheel, decode the message, and the word reveals itself: ROTOR.
 //
-// Interactions: drag a ring up/down, scroll the wheel over it, or click its
-// upper/lower half. Click the parchment to read it.
+// Interactions: drag the inner disk to turn it (it snaps letter by letter,
+// like winding a clock), or scroll over the wheel. Click the parchment to
+// read it. The wheel is a tool — the answer is typed into the code box.
 //
-// Same scene contract as the other levels: GAME_LEVELS, initGlobalAudio,
-// transitionToLevel(), canvas_resized, shutdown().
+// The candle is the CSS-art candle from Games/Cryptex/Cryptex/ (DOM overlay,
+// same pattern as the Modem/TV levels), without the blinking halo.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CRYPTEX_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const CRYPTEX_ANSWER = "CAESAR";
-const CRYPTEX_CIPHER = ["WKH HPSHURU ZKR QDPHG", "WKLV FLSKHU", "RSHQV WKH ORFN"];
+const CRYPTEX_CIPHER = [
+  "HYHUB FLSKHU PDFKLQH",
+  "JXDUGV LWV VSLQQLQJ KHDUW",
+  "WKH URWRU",
+];
+
+// markup of the CSS candle (Games/Cryptex/Cryptex/Cryptex.html),
+// minus the pulsing .blinking-glow halo
+const CRYPTEX_CANDLE_HTML =
+  '<div class="holder">' +
+  '<div class="candle">' +
+  '<div class="thread"></div>' +
+  '<div class="glow"></div>' +
+  '<div class="flame"></div>' +
+  "</div>" +
+  "</div>";
 
 class CryptexScene extends Phaser.Scene {
   constructor() {
@@ -45,49 +62,43 @@ class CryptexScene extends Phaser.Scene {
     if (window.initGlobalAudio) window.initGlobalAudio(this);
 
     this.isSolved = false;
-    this._offsets = [];
-    do {
-      this._offsets = [];
-      for (let i = 0; i < 6; i++) this._offsets.push(Phaser.Math.Between(0, 25));
-    } while (this._word() === CRYPTEX_ANSWER);
-
-    this._activeRing = null;
+    this._wheelAngle = 0; // degrees; 0 = A over A
     this._overlayOpen = false;
+    this._draggingWheel = false;
 
     this._build(this.cameras.main.width, this.cameras.main.height);
 
-    // ── scene-level input: ring dragging, clicking, wheel ──
-    this.input.on("pointermove", (p) => {
-      if (this._activeRing === null || !p.isDown) return;
-      this._dragAcc += p.y - this._dragLastY;
-      this._dragLastY = p.y;
-      while (Math.abs(this._dragAcc) >= 24) {
-        const d = this._dragAcc > 0 ? 1 : -1;
-        this._dragAcc -= d * 24;
-        this._dragMoved = true;
-        this._rotate(this._activeRing, d);
-      }
+    // ── wheel input: drag to turn, ticking letter by letter ──
+    this.input.on("pointerdown", (p) => {
+      if (this._overlayOpen || !this._wheel) return;
+      const { cx, cy, R } = this._wheel;
+      if (Phaser.Math.Distance.Between(p.x, p.y, cx, cy) > R * 0.78) return;
+      this._draggingWheel = true;
+      this._lastPointerDeg = Phaser.Math.RadToDeg(
+        Math.atan2(p.y - cy, p.x - cx),
+      );
     });
 
-    this.input.on("pointerup", (p) => {
-      if (this._activeRing === null) return;
-      const i = this._activeRing;
-      this._activeRing = null;
-      if (!this._dragMoved) {
-        this._rotate(i, p.y < this._geom.cy ? -1 : 1);
-      }
+    this.input.on("pointermove", (p) => {
+      if (!this._draggingWheel || !p.isDown || !this._wheel) return;
+      const { cx, cy } = this._wheel;
+      const deg = Phaser.Math.RadToDeg(Math.atan2(p.y - cy, p.x - cx));
+      const delta = Phaser.Math.Angle.ShortestBetween(this._lastPointerDeg, deg);
+      this._lastPointerDeg = deg;
+      this._setWheelAngle(this._wheelAngle + delta);
+    });
+
+    this.input.on("pointerup", () => {
+      if (!this._draggingWheel) return;
+      this._draggingWheel = false;
+      this._snapWheel();
     });
 
     this.input.on("wheel", (p, objs, dx, dy) => {
-      if (this.isSolved || this._overlayOpen || !this._geom) return;
-      const g = this._geom;
-      if (Math.abs(p.y - g.cy) > g.bh * 0.75) return;
-      for (let i = 0; i < 6; i++) {
-        if (Math.abs(p.x - g.ringX[i]) < g.rw / 2 + 4) {
-          this._rotate(i, dy > 0 ? 1 : -1);
-          return;
-        }
-      }
+      if (this._overlayOpen || !this._wheel) return;
+      const { cx, cy, R } = this._wheel;
+      if (Phaser.Math.Distance.Between(p.x, p.y, cx, cy) > R * 1.1) return;
+      this._stepWheel(dy > 0 ? 1 : -1);
     });
 
     this.events.on("canvas_resized", ({ width, height }) => {
@@ -95,11 +106,14 @@ class CryptexScene extends Phaser.Scene {
       this._build(width, height);
     });
 
+    this.events.once("shutdown", () => this._removeCandleDom());
+
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
-  _word() {
-    return this._offsets.map((o) => CRYPTEX_ALPHA[o]).join("");
+  _rng(seed) {
+    let s = seed;
+    return () => (s = (s * 16807) % 2147483647) / 2147483647;
   }
 
   // ── scene construction ─────────────────────────────────────────────────────
@@ -107,317 +121,491 @@ class CryptexScene extends Phaser.Scene {
   _build(W, H) {
     this._W = W;
     this._H = H;
+    const deskY = H * 0.78;
+    this._deskY = deskY;
 
-    // wall + vignette
+    // wall — clean, warm, quiet
     const bg = this.add.graphics().setDepth(-10);
-    bg.fillGradientStyle(0x241b2e, 0x241b2e, 0x0b0810, 0x0b0810, 1);
-    bg.fillRect(0, 0, W, H);
+    bg.fillGradientStyle(0x201823, 0x281d28, 0x0c080e, 0x120c12, 1);
+    bg.fillRect(0, 0, W, deskY);
+    bg.fillGradientStyle(0x000000, 0x46290e, 0x000000, 0x341e08, 0, 0.14, 0, 0.1);
+    bg.fillRect(W * 0.5, 0, W * 0.5, deskY);
 
-    // desk
-    const deskY = H * 0.62;
+    // desk — a single warm band, no clutter
     const desk = this.add.graphics().setDepth(-8);
-    desk.fillGradientStyle(0x2e1d0d, 0x2e1d0d, 0x140b04, 0x140b04, 1);
+    desk.fillGradientStyle(0x44290f, 0x4e3013, 0x1c0f05, 0x241407, 1);
     desk.fillRect(0, deskY, W, H - deskY);
-    desk.fillStyle(0x3d2a12, 1).fillRect(0, deskY, W, 6);
-    desk.lineStyle(1, 0x1c1207, 0.8);
-    for (let i = 1; i < 5; i++) {
-      const y = deskY + 6 + ((H - deskY) / 5) * i;
-      desk.lineBetween(0, y, W, y);
-    }
-    // wood grain
-    desk.lineStyle(1, 0x000000, 0.15);
-    for (let i = 0; i < 14; i++) {
-      const gx = Math.random() * W;
-      const gy = deskY + 10 + Math.random() * (H - deskY - 16);
-      desk.lineBetween(gx, gy, gx + 30 + Math.random() * 60, gy + Phaser.Math.Between(-2, 2));
+    desk.fillStyle(0x6b4620, 0.9).fillRect(0, deskY, W, 3);
+    desk.fillStyle(0xffd08a, 0.05).fillRect(0, deskY + 3, W, 8);
+    const cx0 = W * 0.86;
+    for (let i = 4; i >= 1; i--) {
+      desk.fillStyle(0xffb45e, 0.03);
+      desk.fillEllipse(cx0, deskY + (H - deskY) * 0.3, W * 0.1 * i, (H - deskY) * 0.4 * (i / 2.5));
     }
 
-    // candle light — redrawn every frame in update()
-    this._flameGfx = this.add.graphics().setDepth(-6);
-    this._candle = { x: W * 0.82, y: deskY + 8 };
-    const candle = this.add.graphics().setDepth(-5);
-    candle.fillStyle(0xd8cba8, 1);
-    candle.fillRoundedRect(this._candle.x - 11, this._candle.y - 52, 22, 52, 4);
-    candle.fillStyle(0xcabf9c, 1);
-    candle.fillRoundedRect(this._candle.x - 6, this._candle.y - 46, 5, 18, 2);
-    candle.fillStyle(0x2b241a, 1);
-    candle.fillRect(this._candle.x - 1, this._candle.y - 58, 2, 7);
-    // brass holder
-    candle.fillStyle(0x4a3a1a, 1);
-    candle.fillRoundedRect(this._candle.x - 18, this._candle.y - 4, 36, 8, 3);
+    this._buildCandleDom(W, H, deskY);
+    this._buildTexts(W, H);
+    this._buildWheel(W, H);
+    this._buildParchment(W, H, deskY);
 
     // vignette
     const vg = this.add.graphics().setDepth(30);
-    const v = Math.min(W, H) * 0.24;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.8, 0.8, 0, 0);
+    const v = Math.min(W, H) * 0.26;
+    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.85, 0.85, 0, 0);
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.8, 0.8);
+    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.85, 0.85);
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.65, 0, 0.65, 0);
+    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.7, 0, 0.7, 0);
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.65, 0, 0.65);
+    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.55, 0, 0.55);
     vg.fillRect(W - v, 0, v, H);
+  }
 
-    // texts
+  _buildTexts(W, H) {
     this.statusText = this.add
-      .text(W / 2, 50, "Six rings guard an old word.", {
+      .text(W / 2, 46, "An old wheel. An older message.", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
-        color: "#ffffff",
+        color: "#e8dcc0",
         letterSpacing: 1,
       })
       .setOrigin(0.5)
       .setDepth(20);
     this.subText = this.add
-      .text(W / 2, 78, "drag or scroll the rings · read the parchment", {
+      .text(W / 2, 74, "turn the wheel · read the letter", {
         fontFamily: '"Special Elite", monospace',
-        fontSize: "14px",
-        color: "#9a8fb0",
+        fontSize: "13px",
+        color: "#a8905f",
       })
       .setOrigin(0.5)
-      .setAlpha(0.8)
+      .setAlpha(0.85)
       .setDepth(20);
     this.levelText = this.add
-      .text(W - 30, 30, "Level 9", {
+      .text(W - 30, 30, "Level 8", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
-        color: "#ffffff",
+        color: "#e8dcc0",
       })
       .setOrigin(1, 0)
       .setAlpha(0)
       .setDepth(20);
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
-
-    this._buildCryptex(W, H);
-    this._buildParchment(W, H, deskY);
-
-    if (this.isSolved) this._showOpened(true);
   }
 
-  _buildCryptex(W, H) {
-    const bw = Math.min(W * 0.72, 640);
-    const bh = Phaser.Math.Clamp(bw * 0.24, 96, 170);
-    const cx = W / 2;
-    const cy = H * 0.42;
-    const capW = bw * 0.085;
-    const innerW = bw - capW * 2;
-    const step = innerW / 6;
-    const rw = step * 0.86;
-    const ringX = [];
-    for (let i = 0; i < 6; i++) ringX.push(cx - innerW / 2 + step * (i + 0.5));
-    this._geom = { cx, cy, bw, bh, rw, ringX, capW };
+  // ── the CSS-art candle, as a DOM overlay (no blinking halo) ────────────────
 
-    const g = this.add.graphics().setDepth(5);
-    this._bodyGfx = g;
+  _buildCandleDom(W, H, deskY) {
+    this._removeCandleDom();
+    const container = document.getElementById("game-container");
+    if (!container) return;
 
-    // shadow on the desk
+    const s = Phaser.Math.Clamp((H * 0.4) / 400, 0.3, 0.8);
+    const cx = W * 0.86;
+    const bottomY = deskY + (H - deskY) * 0.3;
+
+    const el = document.createElement("div");
+    el.className = "scene-dom-overlay cryptex-candle";
+    el.innerHTML = CRYPTEX_CANDLE_HTML;
+    // the 100px-wide .candle sits at the LEFT edge of the 150px .holder,
+    // so its visual center is at 50px — align that with the dish at cx
+    el.style.left = cx - 50 * s + "px";
+    el.style.top = bottomY - 400 * s + "px";
+    el.style.transform = "scale(" + s + ")";
+    el.style.transformOrigin = "top left";
+    container.appendChild(el);
+    this._candleDom = el;
+
+    const g = this.add.graphics().setDepth(-7);
     g.fillStyle(0x000000, 0.5);
-    g.fillEllipse(cx, cy + bh * 0.72, bw * 1.02, bh * 0.34);
+    g.fillEllipse(cx, bottomY + 4, 130 * s, 26 * s);
+    g.fillStyle(0x3a2a10, 1);
+    g.fillEllipse(cx, bottomY + 2, 124 * s, 20 * s);
+    g.fillStyle(0x8a6a30, 0.9);
+    g.fillEllipse(cx, bottomY - 1, 118 * s, 17 * s);
+    g.fillStyle(0x54390f, 1);
+    g.fillEllipse(cx, bottomY - 3, 104 * s, 13 * s);
+  }
 
-    // barrel
-    const r = bh / 2;
-    g.fillGradientStyle(0x7a5f2c, 0x7a5f2c, 0x241808, 0x241808, 1);
-    g.fillRoundedRect(cx - bw / 2, cy - bh / 2, bw, bh, r * 0.55);
-    // top sheen + bottom bounce light
-    g.fillStyle(0xe8cf8e, 0.18);
-    g.fillRoundedRect(cx - bw / 2 + 6, cy - bh / 2 + 6, bw - 12, bh * 0.16, 8);
-    g.fillStyle(0xffdf9e, 0.05);
-    g.fillRoundedRect(cx - bw / 2 + 8, cy + bh * 0.28, bw - 16, bh * 0.1, 6);
-
-    // end caps
-    for (const side of [-1, 1]) {
-      const capX = cx + side * (bw / 2 - capW / 2);
-      g.fillGradientStyle(0x4a3714, 0x4a3714, 0x17100a, 0x17100a, 1);
-      g.fillRoundedRect(capX - capW / 2, cy - bh / 2 - 4, capW, bh + 8, 7);
-      g.lineStyle(1.5, 0x8a6f34, 0.5);
-      g.strokeRoundedRect(capX - capW / 2, cy - bh / 2 - 4, capW, bh + 8, 7);
-      g.fillStyle(0xb99a54, 0.8);
-      g.fillCircle(capX, cy - bh * 0.3, 2.2);
-      g.fillCircle(capX, cy, 2.2);
-      g.fillCircle(capX, cy + bh * 0.3, 2.2);
-      // pointer notch aimed at the letter line
-      g.fillStyle(0xffd98a, 0.9);
-      if (side < 0)
-        g.fillTriangle(capX + capW / 2 - 2, cy - 6, capX + capW / 2 - 2, cy + 6, capX + capW / 2 + 6, cy);
-      else
-        g.fillTriangle(capX - capW / 2 + 2, cy - 6, capX - capW / 2 + 2, cy + 6, capX - capW / 2 - 6, cy);
+  _removeCandleDom() {
+    if (this._candleDom && this._candleDom.parentNode) {
+      this._candleDom.parentNode.removeChild(this._candleDom);
     }
+    this._candleDom = null;
+  }
 
-    // rings
-    for (let i = 0; i < 6; i++) {
-      const x = ringX[i];
-      g.fillGradientStyle(0x97783a, 0x97783a, 0x352610, 0x352610, 1);
-      g.fillRoundedRect(x - rw / 2, cy - bh / 2 + 3, rw, bh - 6, 6);
-      g.lineStyle(1.4, 0x120d06, 0.9);
-      g.strokeRoundedRect(x - rw / 2, cy - bh / 2 + 3, rw, bh - 6, 6);
-      // knurling on the ring edges
-      g.lineStyle(1, 0x120d06, 0.35);
-      for (let ky = cy - bh / 2 + 8; ky < cy + bh / 2 - 8; ky += 6) {
-        g.lineBetween(x - rw / 2 + 2, ky, x - rw / 2 + 7, ky);
-        g.lineBetween(x + rw / 2 - 7, ky, x + rw / 2 - 2, ky);
-      }
+  // ── the cipher wheel ───────────────────────────────────────────────────────
+
+  _buildWheel(W, H) {
+    const R = Phaser.Math.Clamp(Math.min(W, H) * 0.3, 120, 220);
+    const cx = W * 0.44;
+    const cy = H * 0.46;
+    this._wheel = { cx, cy, R };
+    this._step = 360 / 26;
+
+    const lerpColor = (c1, c2, t) => {
+      const a = Phaser.Display.Color.ValueToColor(c1);
+      const b = Phaser.Display.Color.ValueToColor(c2);
+      const o = Phaser.Display.Color.Interpolate.ColorWithColor(a, b, 100, t * 100);
+      return Phaser.Display.Color.GetColor(o.r, o.g, o.b);
+    };
+
+    // wall shadow behind the wheel
+    const sh = this.add.graphics().setDepth(2);
+    sh.fillStyle(0x000000, 0.4);
+    sh.fillCircle(cx + 9, cy + 13, R * 1.05);
+
+    // ── fixed outer ring ──
+    const outer = this.add.graphics().setDepth(3);
+    outer.fillStyle(0x150d05, 1).fillCircle(cx, cy, R * 1.05);
+    outer.lineStyle(2, 0xc9a55a, 0.25).strokeCircle(cx, cy, R * 1.05);
+    // domed brass band, shaded ring by ring
+    const bandR0 = R * 0.78;
+    for (let rr = bandR0; rr <= R; rr += 2) {
+      const t = (rr - bandR0) / (R - bandR0);
+      const curve = Math.sin(t * Math.PI);
+      outer.lineStyle(2.6, lerpColor(0x3a2a10, 0x9a7838, curve), 1);
+      outer.strokeCircle(cx, cy, rr);
     }
+    // soft top-left sheen
+    outer.lineStyle(R * 0.1, 0xffe9b0, 0.07);
+    outer.beginPath();
+    outer.arc(cx, cy, R * 0.89, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(300));
+    outer.strokePath();
+    // clock-like tick marks
+    for (let i = 0; i < 26; i++) {
+      const a = Phaser.Math.DegToRad(i * this._step - 90);
+      outer.lineStyle(1.5, 0x1c1206, 0.8);
+      outer.lineBetween(
+        cx + Math.cos(a) * R * 0.785,
+        cy + Math.sin(a) * R * 0.785,
+        cx + Math.cos(a) * R * 0.815,
+        cy + Math.sin(a) * R * 0.815,
+      );
+    }
+    // groove that separates the rings
+    outer.fillStyle(0x0e0803, 1).fillCircle(cx, cy, R * 0.77);
 
-    // etched letter guide-line
-    g.lineStyle(1, 0xffd98a, 0.22);
-    g.lineBetween(cx - innerW / 2, cy, cx + innerW / 2, cy);
-
-    // letters, masked to the barrel
-    this._maskG = this.add.graphics().setVisible(false);
-    this._maskG.fillStyle(0xffffff, 1);
-    this._maskG.fillRoundedRect(cx - bw / 2 + capW, cy - bh / 2 + 4, bw - capW * 2, bh - 8, 6);
-    const mask = this._maskG.createGeometryMask();
-
-    this._ringTexts = [];
-    const mainSize = Math.round(rw * 0.52);
-    for (let i = 0; i < 6; i++) {
-      const x = ringX[i];
-      const mk = (dy, size, color, alpha) =>
-        this.add
-          .text(x, cy + dy, "A", {
-            fontFamily: '"Special Elite", monospace',
-            fontSize: size + "px",
-            color,
-          })
-          .setOrigin(0.5)
-          .setAlpha(alpha)
-          .setDepth(6)
-          .setMask(mask);
-      this._ringTexts.push({
-        up: mk(-bh * 0.34, Math.round(mainSize * 0.62), "#8a7038", 0.5),
-        main: mk(0, mainSize, "#f2e3b3", 1),
-        dn: mk(bh * 0.34, Math.round(mainSize * 0.62), "#8a7038", 0.5),
-      });
-
-      // interactive zone per ring
-      const zone = this.add
-        .zone(x, cy, rw + 6, bh + 10)
+    // outer letters — engraved, fixed
+    const outSize = Math.max(13, Math.round(R * 0.1));
+    for (let i = 0; i < 26; i++) {
+      const aDeg = i * this._step - 90;
+      const a = Phaser.Math.DegToRad(aDeg);
+      const lx = cx + Math.cos(a) * R * 0.885;
+      const ly = cy + Math.sin(a) * R * 0.885;
+      this.add
+        .text(lx + 1, ly + 1, CRYPTEX_ALPHA[i], {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: outSize + "px",
+          color: "#140c02",
+        })
         .setOrigin(0.5)
-        .setDepth(10)
-        .setInteractive({ cursor: "ns-resize" });
-      zone.on("pointerdown", (p) => {
-        if (this.isSolved || this._overlayOpen) return;
-        this._activeRing = i;
-        this._dragLastY = p.y;
-        this._dragAcc = 0;
-        this._dragMoved = false;
-      });
+        .setRotation(Phaser.Math.DegToRad(aDeg + 90))
+        .setAlpha(0.85)
+        .setDepth(4);
+      this.add
+        .text(lx, ly, CRYPTEX_ALPHA[i], {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: outSize + "px",
+          color: "#ead9a8",
+        })
+        .setOrigin(0.5)
+        .setRotation(Phaser.Math.DegToRad(aDeg + 90))
+        .setDepth(4);
     }
-    this._refreshLetters();
+
+    // fixed reference pointer at 12 o'clock
+    const ptr = this.add.graphics().setDepth(6);
+    ptr.fillStyle(0xffd98a, 0.95);
+    ptr.fillTriangle(cx - 7, cy - R * 1.05, cx + 7, cy - R * 1.05, cx, cy - R * 0.93);
+    ptr.lineStyle(1, 0x5a3c16, 0.9);
+    ptr.strokeTriangle(cx - 7, cy - R * 1.05, cx + 7, cy - R * 1.05, cx, cy - R * 0.93);
+
+    // ── rotating inner disk ──
+    this._disk = this.add.container(cx, cy).setDepth(5);
+    const d = this.add.graphics();
+    const diskR = R * 0.745;
+    for (let rr = diskR; rr > 0; rr -= 2) {
+      const t = rr / diskR;
+      const curve = Math.pow(Math.sin((1 - t) * Math.PI * 0.5 + 0.5), 1.4);
+      d.fillStyle(lerpColor(0x4a3312, 0x8f6f30, 1 - t * 0.72), 1);
+      d.fillCircle(0, 0, rr);
+    }
+    d.lineStyle(2, 0x1a1004, 1).strokeCircle(0, 0, diskR);
+    d.lineStyle(1, 0xd9b878, 0.3).strokeCircle(0, 0, diskR - 2);
+    // hub with a clock-hand needle pointing at the disk's own "A"
+    d.fillStyle(0x241708, 1).fillCircle(0, 0, R * 0.16);
+    d.lineStyle(1.5, 0xc9a55a, 0.5).strokeCircle(0, 0, R * 0.16);
+    d.fillStyle(0xc9a55a, 0.9);
+    d.fillTriangle(-5, -R * 0.13, 5, -R * 0.13, 0, -R * 0.5);
+    d.fillCircle(0, 0, 4);
+    this._disk.add(d);
+
+    // inner letters — rotate with the disk
+    const inSize = Math.max(12, Math.round(R * 0.088));
+    for (let i = 0; i < 26; i++) {
+      const aDeg = i * this._step - 90;
+      const a = Phaser.Math.DegToRad(aDeg);
+      const lx = Math.cos(a) * R * 0.63;
+      const ly = Math.sin(a) * R * 0.63;
+      const shadow = this.add
+        .text(lx + 1, ly + 1, CRYPTEX_ALPHA[i], {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: inSize + "px",
+          color: "#140c02",
+        })
+        .setOrigin(0.5)
+        .setRotation(Phaser.Math.DegToRad(aDeg + 90))
+        .setAlpha(0.8);
+      const face = this.add
+        .text(lx, ly, CRYPTEX_ALPHA[i], {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: inSize + "px",
+          color: "#f2e3b3",
+        })
+        .setOrigin(0.5)
+        .setRotation(Phaser.Math.DegToRad(aDeg + 90));
+      this._disk.add(shadow);
+      this._disk.add(face);
+    }
+
+    this._disk.setAngle(this._wheelAngle);
+    this._lastTick = Math.round(this._wheelAngle / this._step);
   }
 
-  _refreshLetters() {
-    for (let i = 0; i < 6; i++) {
-      const o = this._offsets[i];
-      const t = this._ringTexts[i];
-      t.up.setText(CRYPTEX_ALPHA[(o + 25) % 26]);
-      t.main.setText(CRYPTEX_ALPHA[o]);
-      t.dn.setText(CRYPTEX_ALPHA[(o + 1) % 26]);
+  _setWheelAngle(deg) {
+    this._wheelAngle = deg;
+    if (this._disk) this._disk.setAngle(deg);
+    // tick like a clock every time a letter passes the pointer
+    const tick = Math.round(deg / this._step);
+    if (tick !== this._lastTick) {
+      this._lastTick = tick;
+      if (window.playClick) window.playClick(this);
     }
   }
 
-  _rotate(i, d) {
-    if (this.isSolved || this._overlayOpen) return;
-    this._offsets[i] = (this._offsets[i] + d + 26) % 26;
-    this._refreshLetters();
-    if (window.playClick) window.playClick(this);
-    // small mechanical nudge
-    const t = this._ringTexts[i].main;
-    t.y = this._geom.cy - d * 9;
-    this.tweens.add({ targets: t, y: this._geom.cy, duration: 110, ease: "Cubic.easeOut" });
-    this._checkSolve();
+  _tweenWheelTo(target, onDone) {
+    const proxy = { v: this._wheelAngle };
+    this.tweens.add({
+      targets: proxy,
+      v: target,
+      duration: 140,
+      ease: "Cubic.easeOut",
+      onUpdate: () => {
+        this._wheelAngle = proxy.v;
+        if (this._disk) this._disk.setAngle(proxy.v);
+      },
+      onComplete: () => {
+        this._wheelAngle = target;
+        if (this._disk) this._disk.setAngle(target);
+        if (onDone) onDone();
+      },
+    });
+  }
+
+  _snapWheel() {
+    const target = Math.round(this._wheelAngle / this._step) * this._step;
+    this._tweenWheelTo(target);
+  }
+
+  _stepWheel(dir) {
+    const target =
+      (Math.round(this._wheelAngle / this._step) + dir) * this._step;
+    this._tweenWheelTo(target, () => {
+      this._lastTick = Math.round(this._wheelAngle / this._step);
+      if (window.playClick) window.playClick(this);
+    });
   }
 
   // ── parchment ──────────────────────────────────────────────────────────────
 
   _buildParchment(W, H, deskY) {
-    const px = W * 0.2;
-    const py = deskY + (H - deskY) * 0.42;
-    const pw = Math.min(W * 0.17, 150);
-    const ph = pw * 0.68;
+    const px = W * 0.16;
+    const py = deskY + (H - deskY) * 0.46;
+    const pw = Math.min(W * 0.2, 165);
+    const ph = pw * 0.62; // classic envelope proportions
 
-    const p = this.add.container(px, py).setDepth(8).setAngle(-6);
+    // ── a sealed envelope, back side up ──
+    const p = this.add.container(px, py).setDepth(8).setAngle(-4);
     const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.35);
-    g.fillRoundedRect(-pw / 2 + 4, -ph / 2 + 5, pw, ph, 6);
-    g.fillStyle(0xcbb98a, 1);
-    g.fillRoundedRect(-pw / 2, -ph / 2, pw, ph, 6);
-    g.fillStyle(0xb7a274, 0.6);
-    g.fillRoundedRect(-pw / 2, -ph / 2, pw, ph * 0.16, 6);
-    g.lineStyle(1, 0x8a744a, 0.8);
-    g.strokeRoundedRect(-pw / 2, -ph / 2, pw, ph, 6);
-    // unreadable scribbles
-    g.lineStyle(1.2, 0x4a3820, 0.55);
-    for (let i = 0; i < 5; i++) {
-      const ly = -ph * 0.28 + i * ph * 0.14;
-      g.lineBetween(-pw * 0.38, ly, pw * (0.1 + Math.random() * 0.28), ly);
-    }
+
+    // contact shadow on the desk
+    g.fillStyle(0x000000, 0.42);
+    g.fillEllipse(3, ph * 0.42, pw * 1.06, ph * 0.6);
+
+    // body — aged paper
+    g.fillGradientStyle(0xe9dbb2, 0xe3d4a8, 0xbfa87a, 0xc6b083, 1);
+    g.fillRoundedRect(-pw / 2, -ph / 2, pw, ph, 5);
+    g.lineStyle(1, 0x8a744a, 0.85);
+    g.strokeRoundedRect(-pw / 2, -ph / 2, pw, ph, 5);
+
+    // aging blotches
+    g.fillStyle(0x8a744a, 0.08);
+    g.fillEllipse(-pw * 0.3, ph * 0.24, pw * 0.24, ph * 0.2);
+    g.fillEllipse(pw * 0.34, ph * 0.1, pw * 0.16, ph * 0.14);
+
+    // side + bottom folds meeting under the flap tip
+    const tipY = ph * 0.16;
+    g.fillStyle(0x000000, 0.05);
+    g.fillTriangle(-pw / 2 + 2, ph / 2 - 2, pw / 2 - 2, ph / 2 - 2, 0, tipY);
+    g.lineStyle(1, 0x9a835a, 0.7);
+    g.lineBetween(-pw / 2 + 2, ph / 2 - 2, 0, tipY);
+    g.lineBetween(pw / 2 - 2, ph / 2 - 2, 0, tipY);
+
+    // the flap — a shade darker, lit along its folded edges
+    g.fillGradientStyle(0xdccb9d, 0xd6c495, 0xb59e6f, 0xbca677, 1);
+    g.fillTriangle(-pw / 2, -ph / 2, pw / 2, -ph / 2, 0, tipY);
+    // shadow the flap casts on the body, just below its edges
+    g.lineStyle(3, 0x000000, 0.09);
+    g.lineBetween(-pw / 2 + 4, -ph / 2 + 6, 0, tipY + 4);
+    g.lineBetween(pw / 2 - 4, -ph / 2 + 6, 0, tipY + 4);
+    // crisp fold edges with a light catch
+    g.lineStyle(1.2, 0x8a744a, 0.9);
+    g.lineBetween(-pw / 2, -ph / 2, 0, tipY);
+    g.lineBetween(pw / 2, -ph / 2, 0, tipY);
+    g.lineStyle(1, 0xf4e9c6, 0.5);
+    g.lineBetween(-pw / 2 + 2, -ph / 2 + 1, 0, tipY - 2);
+    g.lineBetween(pw / 2 - 2, -ph / 2 + 1, 0, tipY - 2);
     p.add(g);
-    p.setSize(pw, ph);
+
+    // ── the wax seal on the flap tip, pressed with the numeral III ──
+    const sr = ph * 0.27;
+    const sx = 0,
+      sy = tipY;
+
+    const blob = this.add.graphics();
+    blob.fillStyle(0x6e150c, 1);
+    blob.fillCircle(sx, sy, sr);
+    blob.fillCircle(sx - sr * 0.72, sy + sr * 0.34, sr * 0.36);
+    blob.fillCircle(sx + sr * 0.76, sy - sr * 0.22, sr * 0.3);
+    blob.fillCircle(sx + sr * 0.42, sy + sr * 0.62, sr * 0.32);
+    blob.fillStyle(0x8f271a, 1);
+    blob.fillCircle(sx - sr * 0.05, sy - sr * 0.08, sr * 0.82);
+    // impression ring
+    blob.lineStyle(1.5, 0x4a0d06, 0.9);
+    blob.strokeCircle(sx, sy, sr * 0.68);
+    blob.lineStyle(1, 0xc46a50, 0.35);
+    blob.strokeCircle(sx, sy + 1, sr * 0.68);
+    // gloss
+    blob.fillStyle(0xffffff, 0.16);
+    blob.fillEllipse(sx - sr * 0.3, sy - sr * 0.46, sr * 0.52, sr * 0.2);
+    p.add(blob);
+
+    // the shift mark: three plain bars — ||| — pressed into the wax
+    const barH = sr * 0.66;
+    const barW = Math.max(2, sr * 0.13);
+    const barGap = sr * 0.3;
+    const barsG = this.add.graphics();
+    for (let i = -1; i <= 1; i++) {
+      const bx = sx + i * barGap;
+      barsG.lineStyle(barW, 0x2e0602, 1);
+      barsG.lineBetween(bx, sy - barH / 2, bx, sy + barH / 2);
+    }
+    p.add(barsG);
+
+    // on hover the bars heat up like embers — steady color, no halo, no pulse
+    // (additive blend makes them truly incandescent, confined to the bars)
+    const emberG = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    for (let i = -1; i <= 1; i++) {
+      const bx = sx + i * barGap;
+      emberG.lineStyle(barW, 0xff4d14, 1);
+      emberG.lineBetween(bx, sy - barH / 2, bx, sy + barH / 2);
+      emberG.lineStyle(Math.max(1.4, barW * 0.55), 0xffb347, 1);
+      emberG.lineBetween(bx, sy - barH / 2 + 1.2, bx, sy + barH / 2 - 1.2);
+      // white-hot center of the ember
+      emberG.lineStyle(Math.max(1, barW * 0.28), 0xffe9c2, 1);
+      emberG.lineBetween(bx, sy - barH / 2 + 2.2, bx, sy + barH / 2 - 2.2);
+    }
+    emberG.setAlpha(0);
+    p.add(emberG);
+    this._sealGlow = [emberG];
+
+    p.setSize(pw * 1.05, ph * 1.1);
     p.setInteractive({ cursor: "pointer" });
     p.on("pointerdown", (ptr) => {
       if (ptr.event) ptr.event.stopPropagation();
       this._openOverlay();
     });
+    p.on("pointerover", () => this._sealGlowOn());
+    p.on("pointerout", () => this._sealGlowOff());
     this._parchment = p;
 
-    // gentle pulse until first read
-    this._parchPulse = this.tweens.add({
-      targets: p,
-      scale: 1.05,
-      duration: 900,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
-
-    // ── reading overlay (hidden until clicked) ──
+    // ── reading overlay ──
     const ov = this.add.container(0, 0).setDepth(60).setVisible(false);
     const dark = this.add
-      .rectangle(0, 0, W, H, 0x000000, 0.7)
+      .rectangle(0, 0, W, H, 0x05030a, 0.78)
       .setOrigin(0, 0)
       .setInteractive();
     dark.on("pointerdown", () => this._closeOverlay());
     ov.add(dark);
 
-    const bw = Math.min(W * 0.64, 560);
-    const bhh = Math.min(H * 0.6, 420);
+    const bw = Math.min(W * 0.62, 540);
+    const bhh = Math.min(H * 0.62, 430);
+    const ox = W / 2 - bw / 2;
+    const oy = H / 2 - bhh / 2;
     const og = this.add.graphics();
-    og.fillStyle(0x1a1408, 0.9);
-    og.fillRoundedRect(W / 2 - bw / 2 + 8, H / 2 - bhh / 2 + 9, bw, bhh, 10);
-    og.fillStyle(0xd6c497, 1);
-    og.fillRoundedRect(W / 2 - bw / 2, H / 2 - bhh / 2, bw, bhh, 10);
-    og.fillStyle(0xbfa878, 0.5);
-    og.fillRoundedRect(W / 2 - bw / 2, H / 2 - bhh / 2, bw, bhh * 0.1, 10);
-    og.fillRoundedRect(W / 2 - bw / 2, H / 2 + bhh * 0.4, bw, bhh * 0.1, 10);
-    og.lineStyle(2, 0x8a744a, 0.9);
-    og.strokeRoundedRect(W / 2 - bw / 2, H / 2 - bhh / 2, bw, bhh, 10);
+    og.fillStyle(0x000000, 0.55);
+    og.fillRoundedRect(ox + 10, oy + 12, bw, bhh, 8);
+    og.fillGradientStyle(0xe0d0a4, 0xd8c69a, 0xb5a274, 0xc0ad7e, 1);
+    og.fillRoundedRect(ox, oy, bw, bhh, 8);
+    const rnd = this._rng(909);
+    for (let i = 0; i < 7; i++) {
+      og.fillStyle(0x8a744a, 0.07 + rnd() * 0.05);
+      og.fillEllipse(
+        ox + bw * (0.12 + rnd() * 0.76),
+        oy + bhh * (0.12 + rnd() * 0.76),
+        30 + rnd() * 70,
+        20 + rnd() * 40,
+      );
+    }
+    og.lineStyle(3, 0x6b5432, 0.5);
+    og.strokeRoundedRect(ox + 2, oy + 2, bw - 4, bhh - 4, 7);
+    og.lineStyle(1.5, 0x4a3820, 0.7);
+    og.strokeRoundedRect(ox, oy, bw, bhh, 8);
+    og.lineStyle(1, 0x8a744a, 0.35);
+    og.lineBetween(ox + bw * 0.5, oy + 6, ox + bw * 0.5, oy + bhh - 6);
+    og.lineBetween(ox + 6, oy + bhh * 0.48, ox + bw - 6, oy + bhh * 0.48);
     ov.add(og);
 
     const fs = Math.max(16, Math.round(Math.min(W, H) * 0.028));
     const cipherText = this.add
-      .text(W / 2, H / 2 - bhh * 0.08, CRYPTEX_CIPHER.join("\n"), {
+      .text(W / 2, oy + bhh * 0.4, CRYPTEX_CIPHER.join("\n"), {
         fontFamily: '"Special Elite", monospace',
         fontSize: fs + "px",
         color: "#3b2a12",
         align: "center",
-        lineSpacing: 10,
+        lineSpacing: 12,
+        letterSpacing: 2,
       })
       .setOrigin(0.5);
     ov.add(cipherText);
 
-    // the shift hint: three tally scratches
-    const tg = this.add.graphics();
-    const tx = W / 2 + bw / 2 - 52;
-    const ty = H / 2 + bhh / 2 - 46;
-    tg.lineStyle(2.2, 0x5a4526, 0.9);
-    for (let i = 0; i < 3; i++) {
-      tg.lineBetween(tx + i * 9, ty - 12, tx + i * 9 - 3, ty + 12);
+    // the shift hint lives in the wax: the same seal, pressed with III
+    const sgx = ox + bw - 64;
+    const sgy = oy + bhh - 60;
+    const sg = this.add.graphics();
+    sg.fillStyle(0x6e150c, 1);
+    sg.fillCircle(sgx, sgy, 21);
+    sg.fillCircle(sgx - 15, sgy + 8, 8);
+    sg.fillCircle(sgx + 16, sgy - 6, 6.5);
+    sg.fillCircle(sgx + 9, sgy + 14, 7);
+    sg.fillStyle(0x8f271a, 1);
+    sg.fillCircle(sgx - 1, sgy - 2, 17);
+    sg.lineStyle(1.5, 0x4a0d06, 0.9);
+    sg.strokeCircle(sgx, sgy, 14);
+    sg.lineStyle(1, 0xc46a50, 0.3);
+    sg.strokeCircle(sgx, sgy + 1, 14);
+    sg.fillStyle(0xffffff, 0.14);
+    sg.fillEllipse(sgx - 7, sgy - 9, 11, 4);
+    // the same three pressed bars — |||
+    for (let i = -1; i <= 1; i++) {
+      const bx = sgx + i * 6;
+      sg.lineStyle(2.6, 0x2e0602, 1);
+      sg.lineBetween(bx, sgy - 7, bx, sgy + 7);
     }
-    ov.add(tg);
+    ov.add(sg);
 
     const closeHint = this.add
-      .text(W / 2, H / 2 + bhh / 2 - 20, "click anywhere to put it down", {
+      .text(W / 2, oy + bhh - 18, "click anywhere to put it down", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "12px",
         color: "#6b573a",
@@ -429,15 +617,35 @@ class CryptexScene extends Phaser.Scene {
     this._overlay = ov;
   }
 
+  // ember tint on the seal's bars while the cursor rests on the envelope —
+  // a slow, steady warm-up, nothing pulses
+  _sealGlowOn() {
+    if (!this._sealGlow || this._overlayOpen) return;
+    if (this._sealTween) this._sealTween.stop();
+    this._sealTween = this.tweens.add({
+      targets: this._sealGlow,
+      alpha: 1,
+      duration: 900,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  _sealGlowOff() {
+    if (!this._sealGlow) return;
+    if (this._sealTween) this._sealTween.stop();
+    this._sealTween = this.tweens.add({
+      targets: this._sealGlow,
+      alpha: 0,
+      duration: 700,
+      ease: "Sine.easeInOut",
+    });
+  }
+
   _openOverlay() {
-    if (this.isSolved || this._overlayOpen) return;
+    if (this._overlayOpen) return;
     this._overlayOpen = true;
-    this._activeRing = null;
-    if (this._parchPulse) {
-      this._parchPulse.stop();
-      this._parchment.setScale(1);
-      this._parchPulse = null;
-    }
+    this._draggingWheel = false;
+    this._sealGlowOff();
     if (window.playUIClick) window.playUIClick();
     this._overlay.setVisible(true).setAlpha(0);
     this.tweens.add({ targets: this._overlay, alpha: 1, duration: 220 });
@@ -456,168 +664,20 @@ class CryptexScene extends Phaser.Scene {
     });
   }
 
-  // ── solve ──────────────────────────────────────────────────────────────────
-
-  _checkSolve() {
-    if (this.isSolved || this._word() !== CRYPTEX_ANSWER) return;
-    this.isSolved = true;
-    this._activeRing = null;
-    this._thunk();
-
-    this.statusText.setText("The cylinder yields.");
-    this.statusText.setColor("#1aaf7a");
-    this.subText.setAlpha(0);
-
-    this._ringTexts.forEach((t, i) => {
-      t.main.setColor("#ffd98a");
-      this.tweens.add({
-        targets: t.main,
-        scale: 1.25,
-        duration: 260,
-        yoyo: true,
-        delay: i * 90,
-        ease: "Sine.easeInOut",
-      });
-    });
-
-    this.time.delayedCall(700, () => this._showOpened(false));
-  }
-
-  _showOpened(instant) {
-    const { cx, cy, bw, bh } = this._geom;
-    const sw = bw * 0.56;
-    const sh = bh * 0.62;
-    const targetY = cy - bh * 1.15;
-
-    const sc = this.add.container(cx, instant ? targetY : cy).setDepth(25);
-    const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.4);
-    g.fillRoundedRect(-sw / 2 + 3, -sh / 2 + 4, sw, sh, 8);
-    g.fillStyle(0xd9c9a0, 1);
-    g.fillRoundedRect(-sw / 2, -sh / 2, sw, sh, 8);
-    g.lineStyle(1.5, 0x8a744a, 0.9);
-    g.strokeRoundedRect(-sw / 2, -sh / 2, sw, sh, 8);
-    // rolled ends
-    g.fillStyle(0xbfa878, 1);
-    g.fillRoundedRect(-sw / 2 - 7, -sh / 2 - 3, 14, sh + 6, 6);
-    g.fillRoundedRect(sw / 2 - 7, -sh / 2 - 3, 14, sh + 6, 6);
-    sc.add(g);
-
-    const word = this.add
-      .text(0, 0, CRYPTEX_ANSWER, {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: Math.round(sh * 0.42) + "px",
-        color: "#5a3c16",
-        letterSpacing: 6,
-      })
-      .setOrigin(0.5);
-    sc.add(word);
-
-    if (!instant) {
-      sc.setAlpha(0);
-      this.tweens.add({
-        targets: sc,
-        y: targetY,
-        alpha: 1,
-        duration: 800,
-        ease: "Cubic.easeOut",
-      });
-      // gold motes drifting up
-      for (let i = 0; i < 16; i++) {
-        const mote = this.add
-          .circle(
-            cx + Phaser.Math.Between(-bw / 3, bw / 3),
-            cy + Phaser.Math.Between(-10, 30),
-            Phaser.Math.Between(1, 3),
-            0xffd98a,
-          )
-          .setDepth(26)
-          .setAlpha(0);
-        this.tweens.add({
-          targets: mote,
-          y: mote.y - Phaser.Math.Between(60, 140),
-          alpha: { from: 0.9, to: 0 },
-          duration: Phaser.Math.Between(900, 1700),
-          delay: i * 70,
-          ease: "Sine.easeOut",
-          onComplete: () => mote.destroy(),
-        });
-      }
-    }
-  }
-
-  // deep mechanical unlock sound, synthesized
-  _thunk() {
-    try {
-      const ac = this.sound.context;
-      if (!ac || (window.GameAudio && window.GameAudio.muted)) return;
-      const t = ac.currentTime;
-      const master = ac.createGain();
-      master.gain.value = (window.GameAudio ? window.GameAudio.sfxVol : 0.8) * 0.7;
-      master.connect(ac.destination);
-      const dur = 0.28;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++)
-        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
-      const src = ac.createBufferSource();
-      src.buffer = buf;
-      const lp = ac.createBiquadFilter();
-      lp.type = "lowpass";
-      lp.frequency.setValueAtTime(900, t);
-      lp.frequency.exponentialRampToValueAtTime(120, t + dur);
-      src.connect(lp);
-      lp.connect(master);
-      src.start(t);
-      src.stop(t + dur);
-    } catch (e) {}
-  }
-
-  // ── candle flicker ─────────────────────────────────────────────────────────
-
-  update() {
-    if (!this._flameGfx || !this._candle) return;
-    const t = this.time.now / 1000;
-    const fl =
-      0.75 +
-      0.14 * Math.sin(t * 7.3) +
-      0.08 * Math.sin(t * 13.7 + 1.4) +
-      0.05 * Math.sin(t * 23.1 + 4.0);
-    const g = this._flameGfx;
-    const c = this._candle;
-    const fy = c.y - 64;
-    const sway = Math.sin(t * 3.1) * 1.6;
-    g.clear();
-    // halo
-    for (let i = 3; i >= 1; i--) {
-      g.fillStyle(0xffb45e, 0.028 * i * fl);
-      g.fillCircle(c.x + sway, fy, 90 * fl * (i / 1.6));
-    }
-    // flame body
-    g.fillStyle(0xff8a2e, 0.85);
-    g.fillEllipse(c.x + sway, fy, 11, 27 * fl);
-    g.fillStyle(0xffd98a, 0.95);
-    g.fillEllipse(c.x + sway * 0.8, fy + 3, 6.5, 17 * fl);
-    g.fillStyle(0xfff6d8, 1);
-    g.fillEllipse(c.x + sway * 0.6, fy + 6, 3, 8 * fl);
-  }
-
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
     this.tweens.killAll();
     this.children.removeAll(true);
-    this._flameGfx = null;
-    this._candle = null;
-    this._ringTexts = null;
+    this._removeCandleDom();
     this._overlay = null;
     this._parchment = null;
-    this._parchPulse = null;
-    this._maskG = null;
-    this._bodyGfx = null;
-    this._geom = null;
-    this._activeRing = null;
+    this._sealGlow = null;
+    this._sealTween = null;
+    this._wheel = null;
+    this._disk = null;
     this._overlayOpen = false;
+    this._draggingWheel = false;
   }
 
   transitionToLevel(levelKey, skipFade = false) {
@@ -659,6 +719,7 @@ class CryptexScene extends Phaser.Scene {
   }
 
   shutdown() {
+    this._removeCandleDom();
     this.tweens.killAll();
     this.time.removeAllEvents();
   }
