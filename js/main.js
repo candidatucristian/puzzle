@@ -124,7 +124,32 @@ window.GAME_LEVELS = [
   },
 ];
 
-const sceneList = window.GAME_LEVELS.map((level) => level.scene);
+// ── Boot Scene ──
+// Phaser auto-starts the FIRST scene in the list, so without this the first
+// level would run behind (and bleed over) the start screen on every page
+// load. Boot renders nothing — it only loads the global audio so UI clicks
+// and music work before a level starts. Levels start via goToLevel() only.
+class BootScene extends Phaser.Scene {
+  constructor() {
+    super({ key: "Boot" });
+  }
+  preload() {
+    this.load.audio("bgm", "assets/sounds/global/background.mp3");
+    this.load.audio("click", "assets/sounds/global/click.mp3");
+    this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
+    this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
+    this.load.audio("error", "assets/sounds/global/error.mp3");
+  }
+  create() {
+    window.mainScene = this;
+    if (window.initGlobalAudio) window.initGlobalAudio(this);
+  }
+}
+
+const sceneList = [
+  BootScene,
+  ...window.GAME_LEVELS.map((level) => level.scene),
+];
 
 // ── Phaser Config ──
 const config = {

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>The Decoder — A Puzzle Adventure</title>
+    <title>The Descipher — A Puzzle Adventure</title>
 
     <link
       rel="icon"
@@ -33,7 +33,7 @@
     <!-- Left Sidebar -->
     <div id="sidebar">
       <div class="sidebar-title">
-        <h1>The Decoder</h1>
+        <h1>The Descipher</h1>
         <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
       </div>
       <button class="menu-btn" id="btn-howto">How to Play</button>
@@ -47,17 +47,19 @@
 
     <!-- Game Area -->
     <div id="game-wrapper">
-      <!-- Start Screen Overlay -->
+      <!-- Start Screen Overlay — the gold title card -->
       <div id="start-screen">
-        <div id="start-bg"></div>
-        <div id="start-vignette"></div>
         <canvas id="start-particles"></canvas>
-        <div id="start-bottom">
+        <div id="start-title">
           <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+          <h1>The Descipher</h1>
+          <p>A Puzzle Adventure</p>
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+        </div>
+        <div id="start-bottom">
           <p id="start-prompt">Press any key to begin</p>
           <p id="start-footer">
-            A PUZZLE ADVENTURE &nbsp;·&nbsp; TWELVE CHAMBERS &nbsp;·&nbsp;
-            HEADPHONES RECOMMENDED
+            TWELVE CHAMBERS &nbsp;·&nbsp; HEADPHONES RECOMMENDED
           </p>
         </div>
       </div>
@@ -67,11 +69,22 @@
         <p id="intro-line"></p>
         <div id="intro-title">
           <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-          <h1>The Decoder</h1>
+          <h1>The Descipher</h1>
           <p>A Puzzle Adventure</p>
           <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
         </div>
         <p id="intro-skip">PRESS ANY KEY TO SKIP</p>
+      </div>
+
+      <!-- Level Transition Veil -->
+      <div id="level-veil">
+        <div class="veil-content">
+          <p id="veil-caption">Code Accepted</p>
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+          <p class="veil-chamber">Chamber</p>
+          <h2 id="veil-numeral">I</h2>
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+        </div>
       </div>
 
       <div id="game-container"></div>

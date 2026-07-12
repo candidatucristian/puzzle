@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   THE DECODER — "Obsidian & Gold" design system
+   The Descipher — "Obsidian & Gold" design system
    Display: Cinzel · Body: Cormorant Garamond · In-level: Special Elite
    ═══════════════════════════════════════════════════════════════ */
 
@@ -515,6 +515,15 @@ button {
     0 0 18px rgba(200, 60, 60, 0.3);
 }
 
+/* … și la cod corect: gold flash */
+#level-code.success-flash {
+  border-color: rgba(201, 169, 97, 0.85);
+  color: var(--gold-bright);
+  box-shadow:
+    inset 0 3px 9px rgba(0, 0, 0, 0.85),
+    0 0 24px rgba(201, 169, 97, 0.4);
+}
+
 /* gold EXECUTE key */
 #btn-submit {
   position: relative;
@@ -700,12 +709,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 30%,
-    #f2e2ad,
-    #c9a961 55%,
-    #7c6233
-  );
+  background: radial-gradient(circle at 35% 30%, #f2e2ad, #c9a961 55%, #7c6233);
   border: 1px solid #4a3a1c;
   box-shadow:
     0 1px 4px rgba(0, 0, 0, 0.8),
@@ -722,12 +726,7 @@ input[type="range"]::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 30%,
-    #f2e2ad,
-    #c9a961 55%,
-    #7c6233
-  );
+  background: radial-gradient(circle at 35% 30%, #f2e2ad, #c9a961 55%, #7c6233);
   border: 1px solid #4a3a1c;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
   cursor: pointer;
@@ -937,8 +936,8 @@ input[type="range"]::-moz-range-track {
       1px,
     linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 0 100% / 1px
       22px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 100% 100% /
-      22px 1px,
+    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 100% 100% / 22px
+      1px,
     linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 100% 100% / 1px
       22px;
 }
@@ -1265,7 +1264,12 @@ input[type="range"]::-moz-range-track {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000000;
+  background: radial-gradient(
+    120% 100% at 50% 45%,
+    #0c0d11 0%,
+    #050608 70%,
+    #000000 100%
+  );
   display: flex;
   flex-direction: column;
   z-index: 50;
@@ -1287,43 +1291,6 @@ input[type="range"]::-moz-range-track {
   }
 }
 
-/* slow cinematic push-in on the wallpaper */
-#start-bg {
-  position: absolute;
-  inset: 0;
-  background: url("../assets/images/wallpaper-start.jpg") center / cover
-    no-repeat;
-  animation: start-zoom 50s ease-in-out infinite alternate;
-}
-
-@keyframes start-zoom {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.09);
-  }
-}
-
-#start-vignette {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      ellipse at center,
-      transparent 42%,
-      rgba(0, 0, 0, 0.52) 100%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.32),
-      transparent 22%,
-      transparent 52%,
-      rgba(0, 0, 0, 0.9) 97%
-    );
-  pointer-events: none;
-}
-
 /* drifting gold dust */
 #start-particles {
   position: absolute;
@@ -1331,6 +1298,18 @@ input[type="range"]::-moz-range-track {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+/* the gold title card, front and centre */
+#start-title {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  width: min(560px, 80%);
+  margin: auto;
+  animation: start-rise 1.8s ease 0.35s both;
 }
 
 #start-bottom {
@@ -1342,7 +1321,7 @@ input[type="range"]::-moz-range-track {
   align-items: center;
   gap: 18px;
   padding-bottom: 46px;
-  animation: start-rise 1.6s ease 0.6s both;
+  animation: start-rise 1.6s ease 0.9s both;
 }
 
 @keyframes start-rise {
@@ -1398,9 +1377,106 @@ input[type="range"]::-moz-range-track {
 }
 
 /* ═══════════════════════════════════════════════
+   LEVEL TRANSITION VEIL
+   fade to black → chamber card → reveal
+   ═══════════════════════════════════════════════ */
+#level-veil {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 55; /* above start screen (50), below intro (60) */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(
+    120% 100% at 50% 45%,
+    #0c0d11 0%,
+    #050608 70%,
+    #000000 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.55s ease;
+}
+
+#level-veil.cover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.veil-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: min(440px, 70%);
+  opacity: 0;
+  transform: translateY(16px) scale(0.985);
+  transition:
+    opacity 0.9s ease 0.1s,
+    transform 1.3s ease 0.1s;
+}
+
+#level-veil.titled .veil-content {
+  opacity: 1;
+  transform: none;
+}
+
+#veil-caption {
+  margin: 0 0 6px 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 7px;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(201, 169, 97, 0.35);
+}
+
+.veil-chamber {
+  margin: 4px 0 0 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 9px;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+#veil-numeral {
+  margin: 0 0 6px 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 64px;
+  line-height: 1.1;
+  letter-spacing: 12px;
+  padding-left: 12px; /* optical centring vs. letter-spacing */
+  text-align: center;
+  background: linear-gradient(
+    100deg,
+    #8a6f3c 0%,
+    #c9a961 32%,
+    #f7e9bd 50%,
+    #c9a961 68%,
+    #8a6f3c 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95));
+  animation: gold-shimmer 4.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════
    INTRO SEQUENCE — fading epigraphs → title card
    ═══════════════════════════════════════════════ */
 #intro-screen {
+  /* replays whenever the intro is shown (display:none → flex) */
+  animation: start-fade-in 0.8s ease both;
   position: absolute;
   top: 0;
   left: 0;
@@ -1475,7 +1551,8 @@ input[type="range"]::-moz-range-track {
   transform: scale(1);
 }
 
-#intro-title h1 {
+#intro-title h1,
+#start-title h1 {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 700;
@@ -1512,7 +1589,8 @@ input[type="range"]::-moz-range-track {
   }
 }
 
-#intro-title p {
+#intro-title p,
+#start-title p {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 600;
@@ -1570,10 +1648,11 @@ input[type="range"]::-moz-range-track {
 /* respect users who prefer less motion */
 @media (prefers-reduced-motion: reduce) {
   #film-grain,
-  #start-bg,
   #start-prompt,
   .level-btn.current,
-  #intro-title h1 {
+  #intro-title h1,
+  #start-title h1,
+  #veil-numeral {
     animation: none;
   }
 }

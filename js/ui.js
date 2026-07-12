@@ -39,9 +39,10 @@ function goToLevel(index) {
       game.scene.stop(level.key);
     }
   }
-  // Stop every sound EXCEPT the persistent background music
+  // Stop every sound EXCEPT the persistent background music and the
+  // success chime (it plays across the transition veil)
   game.sound.sounds.forEach((s) => {
-    if (s !== window.GameAudio.bgmInstance) s.stop();
+    if (s !== window.GameAudio.bgmInstance && s.key !== "nextlevel") s.stop();
   });
 
   window.currentLevelIndex = index;
@@ -65,7 +66,7 @@ function renderLevels() {
         btn.className = "level-btn unlocked";
       }
       btn.onclick = () => {
-        goToLevel(i);
+        cinematicGoToLevel(i);
       };
     } else {
       btn.className = "level-btn locked";
@@ -75,6 +76,55 @@ function renderLevels() {
 }
 
 renderLevels();
+
+// ── Cinematic Level Transition ──
+// Every route into a level goes through the veil: fade to black, switch the
+// scene behind it, hold on the chamber card, then reveal. `quick` (replay)
+// skips the card; `caption` adds a line above it ("Code Accepted").
+const levelVeil = document.getElementById("level-veil");
+const veilCaption = document.getElementById("veil-caption");
+const veilNumeral = document.getElementById("veil-numeral");
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+
+let veilBusy = false;
+let veilQueued = null; // latest request made while busy — runs when free
+
+function cinematicGoToLevel(index, opts = {}) {
+  if (veilBusy) {
+    veilQueued = () => cinematicGoToLevel(index, opts);
+    return;
+  }
+  veilBusy = true;
+  const caption = opts.caption || "";
+  const quick = !!opts.quick;
+
+  veilCaption.textContent = caption;
+  veilCaption.style.display = caption ? "" : "none";
+  veilNumeral.textContent = ROMAN[index] || String(index + 1);
+
+  levelVeil.classList.add("cover");
+
+  // once fully covered: swap the level behind the veil
+  setTimeout(() => {
+    if (!startScreen.classList.contains("hidden")) initGameScreen();
+    goToLevel(index);
+    if (!quick) levelVeil.classList.add("titled");
+
+    const hold = quick ? 350 : caption ? 2100 : 1500;
+    setTimeout(() => {
+      levelVeil.classList.remove("cover");
+      levelVeil.classList.remove("titled");
+      setTimeout(() => {
+        veilBusy = false;
+        if (veilQueued) {
+          const next = veilQueued;
+          veilQueued = null;
+          next();
+        }
+      }, 650);
+    }, hold);
+  }, 600);
+}
 
 // ── Mobile Block ──
 // phones aren't supported: no keyboard, no hover, tiny canvas
@@ -172,29 +222,35 @@ async function playIntro(onDone) {
   }
 
   introScreen.classList.add("fade-out");
+  // hand over immediately: the transition veil rises BENEATH the fading
+  // intro (z 55 < 60), so the blacks blend into one seamless shot
+  onDone();
   setTimeout(() => {
     introScreen.classList.add("hidden");
     introTitle.classList.remove("show");
     introActive = false;
-    onDone();
   }, 1000); // matches the CSS opacity transition
 }
 
 // any key (or a click on the wallpaper) starts the game
+let gameStarted = false;
+
 function startTheGame() {
-  if (isMobile) return;
+  if (isMobile || gameStarted) return;
   if (startScreen.classList.contains("hidden")) return;
   // don't fire while a modal sits on top of the start screen
   if (!document.getElementById("howto-modal").classList.contains("hidden"))
     return;
   if (!document.getElementById("options-modal").classList.contains("hidden"))
     return;
+  gameStarted = true;
   const firstVisit = !localStorage.getItem("hasPlayedBefore");
-  initGameScreen();
   if (firstVisit) {
-    playIntro(() => goToLevel(window.currentLevelIndex));
+    // the intro fades in OVER the start screen; the veil then hides it
+    playIntro(() => cinematicGoToLevel(window.currentLevelIndex));
   } else {
-    goToLevel(window.currentLevelIndex); // Use the robust helper
+    // the veil rises over the start screen, swaps to the level beneath it
+    cinematicGoToLevel(window.currentLevelIndex);
   }
 }
 
@@ -271,9 +327,13 @@ btnSubmit.addEventListener("click", () => {
     const isLastLevel =
       window.currentLevelIndex === window.GAME_LEVELS.length - 1;
 
+    // gold flash on the code slot + success chime
+    inputCode.classList.add("success-flash");
+    setTimeout(() => inputCode.classList.remove("success-flash"), 1200);
+    if (window.playSuccess && window.mainScene)
+      window.playSuccess(window.mainScene);
+
     if (isLastLevel) {
-      if (window.playSuccess && window.mainScene)
-        window.playSuccess(window.mainScene);
       setTimeout(
         () => alert("CONGRATULATIONS! You have completed the game!"),
         500,
@@ -285,25 +345,7 @@ btnSubmit.addEventListener("click", () => {
         nextLevelIndex,
       );
       localStorage.setItem("puzzleUnlockedLevel", window.unlockedLevelIndex);
-
-      const currentSceneKey = currentLevelConfig.key;
-      const nextSceneKey = window.GAME_LEVELS[nextLevelIndex].key;
-      const currentScene = game.scene.getScene(currentSceneKey);
-
-      // Attempt to transition gracefully
-      if (
-        currentScene &&
-        currentScene.scene.isActive() &&
-        typeof currentScene.transitionToLevel === "function"
-      ) {
-        // Update state and UI before starting the transition
-        window.currentLevelIndex = nextLevelIndex; // Update state
-        renderLevels(); // Redraw UI
-        currentScene.transitionToLevel(nextSceneKey);
-      } else {
-        // Fallback for scenes without a transition method, use the robust helper
-        goToLevel(nextLevelIndex);
-      }
+      cinematicGoToLevel(nextLevelIndex, { caption: "Code Accepted" });
     }
     inputCode.value = "";
   } else if (inputCode.value.trim() !== "") {
@@ -328,6 +370,7 @@ function disarmReset() {
 }
 
 btnNew.addEventListener("click", () => {
+  if (introActive) return; // one intro at a time
   if (!resetArmed) {
     resetArmed = true;
     btnNew.classList.add("armed");
@@ -339,8 +382,9 @@ btnNew.addEventListener("click", () => {
   document.getElementById("options-modal").classList.add("hidden");
   localStorage.setItem("puzzleUnlockedLevel", 0);
   window.unlockedLevelIndex = 0;
+  gameStarted = true;
   initGameScreen();
-  playIntro(() => goToLevel(0));
+  playIntro(() => cinematicGoToLevel(0));
 });
 
 inputCode.addEventListener("keypress", (e) => {
@@ -348,8 +392,9 @@ inputCode.addEventListener("keypress", (e) => {
 });
 
 // ── Replay Button ──
+// quick veil: fade to black and back, no chamber card
 document.getElementById("btn-replay").addEventListener("click", () => {
-  goToLevel(window.currentLevelIndex);
+  cinematicGoToLevel(window.currentLevelIndex, { quick: true });
 });
 
 // ── How to Play Modal ──
