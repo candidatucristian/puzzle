@@ -34,6 +34,8 @@ class LightswitchScene extends Phaser.Scene {
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
+    // Phaser never calls shutdown() by itself — wire it to the scene event
+    this.events.once("shutdown", () => this.shutdown());
 
     // Answer comes from the level config so the Morse always matches the code
     const cfg = (window.GAME_LEVELS || []).find(l => l.key === "Lightswitch");
@@ -496,7 +498,7 @@ class LightswitchScene extends Phaser.Scene {
   _buildMorse(word) {
     const U        = 120;      // base time unit (ms)
     const DOT      = 40;       // dot = a bare camera-flash blink
-    const DASH     = U * 3;    // dash stays long — the contrast IS the code
+    const DASH     = 500;      // dash held a beat longer — the contrast IS the code
     const GAP_EL   = U * 1.4;  // roomier gap so the flash reads as its own beat
     const GAP_CHAR = U * 3;    // between letters
     const steps = [];

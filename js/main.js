@@ -110,6 +110,18 @@ window.GAME_LEVELS = [
     code: "EXIT",
     altCode: null,
   },
+  {
+    key: "Elevator",
+    scene: ElevatorScene,
+    code: "THIRTEEN",
+    altCode: null,
+  },
+  {
+    key: "Typewriter",
+    scene: TypewriterScene,
+    code: "RIBBON",
+    altCode: null,
+  },
 ];
 
 const sceneList = window.GAME_LEVELS.map((level) => level.scene);

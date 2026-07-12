@@ -59,6 +59,8 @@ class ChessboardScene extends Phaser.Scene {
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
+    // Phaser never calls shutdown() by itself — wire it to the scene event
+    this.events.once("shutdown", () => this.shutdown());
 
     this.isSolved = false;
     this._build(this.cameras.main.width, this.cameras.main.height);

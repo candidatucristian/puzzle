@@ -76,16 +76,18 @@ function renderLevels() {
 
 renderLevels();
 
+// ── Mobile Block ──
+// phones aren't supported: no keyboard, no hover, tiny canvas
+const isMobile =
+  /Android|iPhone|iPod|Mobi/i.test(navigator.userAgent) ||
+  (window.matchMedia("(pointer: coarse)").matches &&
+    Math.min(window.screen.width, window.screen.height) < 768);
+if (isMobile) {
+  document.getElementById("mobile-block").classList.remove("hidden");
+}
+
 // ── Start Screen Logic ──
 const startScreen = document.getElementById("start-screen");
-const btnStartGame = document.getElementById("btn-start-game");
-
-const hasPlayedBefore = localStorage.getItem("hasPlayedBefore");
-if (hasPlayedBefore) {
-  btnStartGame.innerText = "CONTINUE";
-} else {
-  btnStartGame.innerText = "START GAME";
-}
 
 function initGameScreen() {
   startScreen.classList.add("hidden");
@@ -101,10 +103,21 @@ function initGameScreen() {
   }
 }
 
-btnStartGame.addEventListener("click", () => {
+// any key (or a click on the wallpaper) starts the game
+function startTheGame() {
+  if (isMobile) return;
+  if (startScreen.classList.contains("hidden")) return;
+  // don't fire while a modal sits on top of the start screen
+  if (!document.getElementById("howto-modal").classList.contains("hidden"))
+    return;
+  if (!document.getElementById("options-modal").classList.contains("hidden"))
+    return;
   initGameScreen();
   goToLevel(window.currentLevelIndex); // Use the robust helper
-});
+}
+
+window.addEventListener("keydown", startTheGame);
+startScreen.addEventListener("click", startTheGame);
 
 // ── Code Submit ──
 const btnSubmit = document.getElementById("btn-submit");
@@ -181,6 +194,15 @@ inputCode.addEventListener("keypress", (e) => {
 // ── Replay Button ──
 document.getElementById("btn-replay").addEventListener("click", () => {
   goToLevel(window.currentLevelIndex);
+});
+
+// ── How to Play Modal ──
+const howtoModal = document.getElementById("howto-modal");
+document.getElementById("btn-howto").addEventListener("click", () => {
+  howtoModal.classList.remove("hidden");
+});
+document.getElementById("btn-close-howto").addEventListener("click", () => {
+  howtoModal.classList.add("hidden");
 });
 
 // ── Options Modal Logic ──
@@ -316,6 +338,16 @@ const levelHints = {
   },
   Mosaic: {
     text: "A RUINED MOSAIC.\nThe masons left their tallies on the frame — each number counts an unbroken run of tiles. Reason it back together. Guessing ruins walls.",
+    sound: false,
+    tool: false,
+  },
+  Elevator: {
+    text: "AN ELEVATOR.\nIt works perfectly. That is the problem.",
+    sound: true,
+    tool: false,
+  },
+  Typewriter: {
+    text: "AN OLD TYPEWRITER.\nIt types what it wants. The note trusted it anyway.",
     sound: false,
     tool: false,
   },

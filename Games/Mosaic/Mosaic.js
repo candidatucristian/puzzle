@@ -56,6 +56,8 @@ class MosaicScene extends Phaser.Scene {
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
+    // Phaser never calls shutdown() by itself — wire it to the scene event
+    this.events.once("shutdown", () => this.shutdown());
     this.input.mouse.disableContextMenu();
 
     this.isSolved = false;

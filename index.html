@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Puzzle Prototype</title>
+    <title>The Decoder</title>
 
     <link
       rel="icon"
@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/style.css" />
@@ -28,8 +28,9 @@
   <body>
     <!-- Left Sidebar -->
     <div id="sidebar">
-      <h1>Spooky Puzzle</h1>
-      <button class="menu-btn" id="btn-new">New Game</button>
+      <h1>The Decoder</h1>
+      <button class="menu-btn" id="btn-new">Reset Game</button>
+      <button class="menu-btn" id="btn-howto">How to Play</button>
       <button class="menu-btn" id="btn-options">Options</button>
     </div>
 
@@ -37,7 +38,7 @@
     <div id="game-wrapper">
       <!-- Start Screen Overlay -->
       <div id="start-screen">
-        <button id="btn-start-game" class="menu-btn"></button>
+        <p id="start-prompt">Press any key to start the game</p>
       </div>
 
       <div id="game-container"></div>
@@ -73,6 +74,11 @@
       </div>
     </div>
 
+    <!-- Mobile Block Overlay -->
+    <div id="mobile-block" class="hidden">
+      <p>Not supported on mobile</p>
+    </div>
+
     <!-- Options Modal -->
     <div id="options-modal" class="hidden">
       <div class="modal-content">
@@ -102,6 +108,114 @@
         <div class="modal-actions">
           <button id="btn-mute" class="menu-btn">🔊 MUTE</button>
           <button id="btn-close-options" class="menu-btn">CLOSE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div id="howto-modal" class="hidden">
+      <div class="modal-content howto-content">
+        <h2>HOW TO PLAY</h2>
+        <div class="howto-body">
+          <div class="howto-section">
+            <h3>THE GOAL</h3>
+            <p class="howto-lead">
+              Every level hides a <b>secret word</b> — the code. Explore the
+              scene: look, listen, count, experiment. When you think you have
+              it, type it in the code box at the bottom of the screen and press
+              <b>EXECUTE</b> (or hit Enter). A wrong code just flashes red —
+              guessing costs nothing, but the answer is always earned.
+            </p>
+          </div>
+
+          <div class="howto-section">
+            <h3>THE CONTROLS</h3>
+            <div class="howto-row">
+              <span class="ui-demo demo-execute">EXECUTE</span>
+              <p>Submits the code you typed in the box next to it.</p>
+            </div>
+            <div class="howto-row">
+              <span class="ui-demo demo-replay">⟳</span>
+              <p>Restarts the current level from scratch.</p>
+            </div>
+            <div class="howto-row">
+              <span class="ui-demo">INFO</span>
+              <p>
+                A short, cryptic hint for the current level. It sets the mood
+                and points a direction — it never spells out the answer.
+              </p>
+            </div>
+            <div class="howto-row">
+              <span class="ui-demo demo-volume">🔊</span>
+              <p>
+                Game volume. Drag the slider, or click the icon to mute and
+                unmute.
+              </p>
+            </div>
+            <div class="howto-row">
+              <span class="ui-demo">New Game</span>
+              <p>Wipes all progress and starts over from Level 1.</p>
+            </div>
+            <div class="howto-row">
+              <span class="ui-demo">Options</span>
+              <p>Music and sound-effect volume settings.</p>
+            </div>
+          </div>
+
+          <div class="howto-section">
+            <h3>THE LEVELS PANEL</h3>
+            <div class="howto-row">
+              <span class="lvl-demo lvl-current">2</span>
+              <p>The level you are playing right now.</p>
+            </div>
+            <div class="howto-row">
+              <span class="lvl-demo lvl-unlocked">1</span>
+              <p>A solved level — click it any time to revisit.</p>
+            </div>
+            <div class="howto-row">
+              <span class="lvl-demo lvl-locked">🔒</span>
+              <p>
+                Still locked. Levels open in order — solve the current one to
+                unlock the next.
+              </p>
+            </div>
+          </div>
+
+          <div class="howto-section">
+            <h3>THE BADGES</h3>
+            <p class="howto-lead">
+              Open INFO and you may find badges under the title. They tell you
+              what kind of attention the level wants:
+            </p>
+            <div class="howto-row">
+              <span class="badge-demo"><i>🔊</i>SOUND</span>
+              <p>
+                Audio matters here. Turn the volume up and listen carefully —
+                something is said only in sound.
+              </p>
+            </div>
+            <div class="howto-row">
+              <span class="badge-demo"><i>🔧</i>TOOL</span>
+              <p>
+                The level speaks a language you may need to look up: an
+                alphabet, a cipher, a notation. Decoding it is the puzzle.
+              </p>
+            </div>
+          </div>
+
+          <div class="howto-section">
+            <h3>ONE LAST THING</h3>
+            <p class="howto-lead">
+              Everything you need is inside the room. Nothing is random — if
+              something feels slightly wrong, it probably is. That is the way
+              in.
+            </p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-close-howto" class="menu-btn" style="width: 100%">
+            CLOSE
+          </button>
         </div>
       </div>
     </div>
@@ -139,6 +253,8 @@
     <script src="Games/Cryptex/Cryptex.js"></script>
     <script src="Games/Chessboard/Chessboard.js"></script>
     <script src="Games/Mosaic/Mosaic.js"></script>
+    <script src="Games/Elevator/Elevator.js"></script>
+    <script src="Games/Typewriter/Typewriter.js"></script>
     <script src="js/main.js"></script>
     <script src="js/ui.js"></script>
   </body>

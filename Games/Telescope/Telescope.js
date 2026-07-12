@@ -105,6 +105,8 @@ class TelescopeScene extends Phaser.Scene {
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
+    // Phaser never calls shutdown() by itself — wire it to the scene event
+    this.events.once("shutdown", () => this.shutdown());
 
     const cfg = (window.GAME_LEVELS || []).find((l) => l.key === "Telescope");
     this.ANSWER = cfg && cfg.code ? cfg.code.toUpperCase() : "ORION";
@@ -529,7 +531,13 @@ class TelescopeScene extends Phaser.Scene {
         return { x: cxw + (c * dx) / 2, y: cyw + r * dy };
       });
 
-      this._cells.push({ cx: cxw, cy: cyw, pts: this._constellationPath(pts) });
+      this._cells.push({
+        cx: cxw,
+        cy: cyw,
+        pts: this._constellationPath(pts),
+        reveal: 0, // lines draw themselves only while the reticle rests here
+        r: this._clearR * 1.15,
+      });
 
       pts.forEach((p, k) => {
         this._stars.push({
@@ -598,7 +606,13 @@ class TelescopeScene extends Phaser.Scene {
       }
       if (pts.some((p) => this._nearCell(p.x, p.y) || nearMoon(p.x, p.y)))
         continue;
-      this._decoys.push({ pts });
+      const dcx = pts.reduce((a, p) => a + p.x, 0) / pts.length;
+      const dcy = pts.reduce((a, p) => a + p.y, 0) / pts.length;
+      const dr =
+        Math.max(
+          ...pts.map((p) => Phaser.Math.Distance.Between(p.x, p.y, dcx, dcy)),
+        ) + dx;
+      this._decoys.push({ pts, cx: dcx, cy: dcy, r: dr, reveal: 0 });
       pts.forEach((p) =>
         this._stars.push({
           x: p.x,
@@ -1022,32 +1036,57 @@ class TelescopeScene extends Phaser.Scene {
       const decoyA = TUNE.DECOY_LINE_ALPHA * (1 - f);
       g.clear();
 
-      // decoy lines: single hairline, barely visible — they should feel
-      // unimportant. Only the code cells get the strong star-chart wiring.
-      if (decoyA > 0.005) {
-        g.lineStyle(1, 0x8fa8cc, decoyA);
-        for (const d of this._decoys) {
-          for (let i = 0; i < d.pts.length - 1; i++)
+      // the lines exist only while the reticle rests on a constellation:
+      // aim at one and its wiring draws itself star by star, chart-style,
+      // then fades away once the eyepiece drifts off
+      const wx = (this._scope.cx - this._sky.x) / this._zoom;
+      const wy = (this._scope.cy - this._sky.y) / this._zoom;
+
+      const aim = (o) => {
+        const on = Phaser.Math.Distance.Between(wx, wy, o.cx, o.cy) < o.r;
+        o.reveal = Phaser.Math.Clamp(
+          o.reveal + (on ? dt / 0.55 : -dt / 0.4),
+          0,
+          1,
+        );
+      };
+
+      // progressive star-to-star drawing along the path
+      const drawPath = (pts, reveal, passes) => {
+        const total = pts.length - 1;
+        if (total < 1 || reveal <= 0) return;
+        const prog = reveal * total;
+        for (const [width, color, alpha] of passes) {
+          g.lineStyle(width, color, alpha);
+          for (let i = 0; i < total; i++) {
+            const t = Phaser.Math.Clamp(prog - i, 0, 1);
+            if (t <= 0) break;
             g.lineBetween(
-              d.pts[i].x,
-              d.pts[i].y,
-              d.pts[i + 1].x,
-              d.pts[i + 1].y,
+              pts[i].x,
+              pts[i].y,
+              Phaser.Math.Linear(pts[i].x, pts[i + 1].x, t),
+              Phaser.Math.Linear(pts[i].y, pts[i + 1].y, t),
             );
+          }
+        }
+      };
+
+      for (const d of this._decoys) {
+        aim(d);
+        if (d.reveal > 0.01 && decoyA > 0.005) {
+          drawPath(d.pts, d.reveal, [
+            [1, 0x8fa8cc, decoyA * Math.min(1, d.reveal * 1.5)],
+          ]);
         }
       }
-      if (cellA > 0.01) {
-        for (const c of this._cells) {
-          for (let i = 0; i < c.pts.length - 1; i++) {
-            const x1 = c.pts[i].x,
-              y1 = c.pts[i].y,
-              x2 = c.pts[i + 1].x,
-              y2 = c.pts[i + 1].y;
-            g.lineStyle(3, 0x5c79b8, cellA * 0.45);
-            g.lineBetween(x1, y1, x2, y2);
-            g.lineStyle(1, 0xd4e2ff, cellA);
-            g.lineBetween(x1, y1, x2, y2);
-          }
+      for (const c of this._cells) {
+        aim(c);
+        if (c.reveal > 0.01 && cellA > 0.01) {
+          const a = cellA * Math.min(1, c.reveal * 1.5);
+          drawPath(c.pts, c.reveal, [
+            [3, 0x5c79b8, a * 0.45],
+            [1, 0xd4e2ff, a],
+          ]);
         }
       }
 

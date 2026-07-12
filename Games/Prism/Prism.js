@@ -135,6 +135,8 @@ class PrismScene extends Phaser.Scene {
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
+    // Phaser never calls shutdown() by itself — wire it to the scene event
+    this.events.once("shutdown", () => this.shutdown());
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
