@@ -238,7 +238,7 @@ class TelescopeScene extends Phaser.Scene {
 
     // subtle prompt, fades in after 1.6s and keeps pulsing
     const hint = this.add
-      .text(W / 2, H * 0.92, "Look at your fingers", {
+      .text(W / 2, H * 0.92, "Find the finger's galaxy", {
         fontFamily: '"Courier New", monospace',
         fontSize: Math.max(14, Math.round(Math.min(W, H) * 0.024)) + "px",
         color: "#cfd8ea",

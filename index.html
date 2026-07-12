@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>The Decoder</title>
+    <title>The Decoder — A Puzzle Adventure</title>
 
     <link
       rel="icon"
@@ -15,8 +15,9 @@
     <script src="https://unpkg.com/shader-doodle@alpha"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Cinzel: UI display font · Cormorant Garamond: body text · Special Elite: in-level canvas text -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Special+Elite&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/style.css" />
@@ -26,40 +27,84 @@
     <link rel="stylesheet" href="Games/Cryptex/Cryptex/Cryptex.css" />
   </head>
   <body>
+    <!-- Cinematic film grain over the whole app -->
+    <div id="film-grain"></div>
+
     <!-- Left Sidebar -->
     <div id="sidebar">
-      <h1>The Decoder</h1>
-      <button class="menu-btn" id="btn-new">Reset Game</button>
+      <div class="sidebar-title">
+        <h1>The Decoder</h1>
+        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
+      </div>
       <button class="menu-btn" id="btn-howto">How to Play</button>
       <button class="menu-btn" id="btn-options">Options</button>
+      <div class="sidebar-footer">
+        <div class="ornate-rule faint"><span></span><i>◆</i><span></span></div>
+        <span>TWELVE CHAMBERS</span>
+        <span>HEADPHONES RECOMMENDED</span>
+      </div>
     </div>
 
     <!-- Game Area -->
     <div id="game-wrapper">
       <!-- Start Screen Overlay -->
       <div id="start-screen">
-        <p id="start-prompt">Press any key to start the game</p>
+        <div id="start-bg"></div>
+        <div id="start-vignette"></div>
+        <canvas id="start-particles"></canvas>
+        <div id="start-bottom">
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+          <p id="start-prompt">Press any key to begin</p>
+          <p id="start-footer">
+            A PUZZLE ADVENTURE &nbsp;·&nbsp; TWELVE CHAMBERS &nbsp;·&nbsp;
+            HEADPHONES RECOMMENDED
+          </p>
+        </div>
+      </div>
+
+      <!-- Intro Sequence Overlay -->
+      <div id="intro-screen" class="hidden">
+        <p id="intro-line"></p>
+        <div id="intro-title">
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+          <h1>The Decoder</h1>
+          <p>A Puzzle Adventure</p>
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+        </div>
+        <p id="intro-skip">PRESS ANY KEY TO SKIP</p>
       </div>
 
       <div id="game-container"></div>
 
-      <!-- Updated Control Panel Input Area -->
+      <!-- Control Console -->
       <div id="input-area">
+        <div class="console-group console-left volume-widget mute-button">
+          <span class="console-label">VOLUME</span>
+          <div class="console-controls">
+            <span id="vol-icon-ui">🔊</span>
+            <input
+              type="range"
+              id="vol-slider-ui"
+              min="0"
+              max="1"
+              step="0.01"
+            />
+          </div>
+        </div>
         <div class="input-container">
+          <span class="panel-label">ACCESS CODE</span>
           <div class="input-wrapper">
             <input
               type="text"
               id="level-code"
-              placeholder="Enter code"
+              placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;"
               autocomplete="off"
             />
             <button id="btn-submit">EXECUTE</button>
-            <button id="btn-replay" class="menu-btn replay-btn">⟳</button>
+            <button id="btn-replay" class="replay-btn" title="Restart level">
+              ⟳
+            </button>
           </div>
-        </div>
-        <div class="volume-widget mute-button">
-          <span id="vol-icon-ui">🔊</span>
-          <input type="range" id="vol-slider-ui" min="0" max="1" step="0.01" />
         </div>
         <button id="btn-info" class="menu-btn info-button">INFO</button>
       </div>
@@ -69,7 +114,10 @@
     <div id="right-sidebar-wrapper">
       <!-- Sliding levels panel -->
       <div id="right-sidebar">
-        <h1>Levels</h1>
+        <div class="sidebar-title">
+          <h1>Levels</h1>
+          <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
+        </div>
         <div id="levels-grid"></div>
       </div>
     </div>
@@ -82,7 +130,8 @@
     <!-- Options Modal -->
     <div id="options-modal" class="hidden">
       <div class="modal-content">
-        <h2>OPTIONS</h2>
+        <h2>Options</h2>
+        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
         <div class="slider-group">
           <label>MUSIC VOLUME</label>
           <input
@@ -109,13 +158,21 @@
           <button id="btn-mute" class="menu-btn">🔊 MUTE</button>
           <button id="btn-close-options" class="menu-btn">CLOSE</button>
         </div>
+        <div class="options-divider"></div>
+        <div class="danger-zone">
+          <button id="btn-new" class="menu-btn danger-btn">RESET GAME</button>
+          <p class="danger-note">
+            Wipes all progress and starts over from Level 1.
+          </p>
+        </div>
       </div>
     </div>
 
     <!-- How to Play Modal -->
     <div id="howto-modal" class="hidden">
       <div class="modal-content howto-content">
-        <h2>HOW TO PLAY</h2>
+        <h2>How to Play</h2>
+        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
         <div class="howto-body">
           <div class="howto-section">
             <h3>THE GOAL</h3>
@@ -153,12 +210,12 @@
               </p>
             </div>
             <div class="howto-row">
-              <span class="ui-demo">New Game</span>
-              <p>Wipes all progress and starts over from Level 1.</p>
-            </div>
-            <div class="howto-row">
               <span class="ui-demo">Options</span>
-              <p>Music and sound-effect volume settings.</p>
+              <p>
+                Music and sound-effect volume settings. This is also where you
+                can <b>reset the game</b> — it wipes all progress and starts
+                over from Level 1 (it asks you to confirm first).
+              </p>
             </div>
           </div>
 
@@ -223,17 +280,10 @@
     <!-- Info Modal -->
     <div id="info-modal" class="hidden">
       <div class="modal-content">
-        <h2>LEVEL INFO</h2>
+        <h2>Level Info</h2>
+        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
         <div id="info-requires"></div>
-        <p
-          id="info-text"
-          style="
-            text-align: center;
-            color: #cccccc;
-            line-height: 1.6;
-            font-size: 18px;
-          "
-        ></p>
+        <p id="info-text"></p>
         <div class="modal-actions">
           <button id="btn-close-info" class="menu-btn" style="width: 100%">
             CLOSE

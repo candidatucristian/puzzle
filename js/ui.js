@@ -103,6 +103,83 @@ function initGameScreen() {
   }
 }
 
+// ── Intro Sequence ──
+// Cinematic opening: epigraph lines fade in and out, then the gold title
+// card. Plays on the first visit ever and after a game reset; returning
+// players go straight into their level. Skippable any time.
+const introScreen = document.getElementById("intro-screen");
+const introLine = document.getElementById("intro-line");
+const introTitle = document.getElementById("intro-title");
+const INTRO_LINES = [
+  "The room is quiet. Too quiet.",
+  "Twelve doors. Twelve locks.",
+  "Each one opens with a single word.",
+  "Everything you need is already in front of you.",
+  "Look closer.",
+];
+
+let introActive = false;
+let introSkipRequested = false;
+let introStartedAt = 0;
+
+function requestIntroSkip() {
+  // ignore the very keypress/click that launched the intro
+  if (introActive && Date.now() - introStartedAt > 400) {
+    introSkipRequested = true;
+  }
+}
+window.addEventListener("keydown", requestIntroSkip);
+introScreen.addEventListener("click", requestIntroSkip);
+
+// sleep that wakes early the moment a skip is requested
+function introSleep(ms) {
+  return new Promise((resolve) => {
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      if (introSkipRequested || Date.now() - t0 >= ms) {
+        clearInterval(iv);
+        resolve();
+      }
+    }, 60);
+  });
+}
+
+async function playIntro(onDone) {
+  introActive = true;
+  introSkipRequested = false;
+  introStartedAt = Date.now();
+  introLine.textContent = "";
+  introLine.classList.remove("show");
+  introTitle.classList.remove("show");
+  introScreen.classList.remove("fade-out");
+  introScreen.classList.remove("hidden");
+
+  for (const line of INTRO_LINES) {
+    if (introSkipRequested) break;
+    introLine.textContent = line;
+    introLine.classList.add("show");
+    await introSleep(2700); // fade in + hold
+    introLine.classList.remove("show");
+    if (introSkipRequested) break;
+    await introSleep(1000); // fade out + beat of black
+  }
+  introLine.classList.remove("show");
+
+  if (!introSkipRequested) {
+    await introSleep(300);
+    introTitle.classList.add("show");
+    await introSleep(3600);
+  }
+
+  introScreen.classList.add("fade-out");
+  setTimeout(() => {
+    introScreen.classList.add("hidden");
+    introTitle.classList.remove("show");
+    introActive = false;
+    onDone();
+  }, 1000); // matches the CSS opacity transition
+}
+
 // any key (or a click on the wallpaper) starts the game
 function startTheGame() {
   if (isMobile) return;
@@ -112,12 +189,71 @@ function startTheGame() {
     return;
   if (!document.getElementById("options-modal").classList.contains("hidden"))
     return;
+  const firstVisit = !localStorage.getItem("hasPlayedBefore");
   initGameScreen();
-  goToLevel(window.currentLevelIndex); // Use the robust helper
+  if (firstVisit) {
+    playIntro(() => goToLevel(window.currentLevelIndex));
+  } else {
+    goToLevel(window.currentLevelIndex); // Use the robust helper
+  }
 }
 
 window.addEventListener("keydown", startTheGame);
 startScreen.addEventListener("click", startTheGame);
+
+// ── Start-screen gold dust ──
+// Slow-drifting, twinkling motes over the wallpaper. Stops (and frees the
+// rAF loop) as soon as the start screen is dismissed.
+(function initStartParticles() {
+  const canvas = document.getElementById("start-particles");
+  if (!canvas || isMobile) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const ctx = canvas.getContext("2d");
+  let w, h;
+
+  function resize() {
+    w = canvas.width = canvas.offsetWidth;
+    h = canvas.height = canvas.offsetHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  function spawn(anywhere) {
+    return {
+      x: Math.random() * w,
+      y: anywhere ? Math.random() * h : h + 8,
+      r: Math.random() * 1.7 + 0.4,
+      speed: Math.random() * 0.22 + 0.06,
+      sway: Math.random() * Math.PI * 2,
+      swayAmp: Math.random() * 0.35 + 0.08,
+      alpha: Math.random() * 0.45 + 0.12,
+      twinkle: Math.random() * 0.03 + 0.008,
+    };
+  }
+
+  const motes = [];
+  for (let i = 0; i < 44; i++) motes.push(spawn(true));
+
+  let t = 0;
+  function frame() {
+    if (startScreen.classList.contains("hidden")) return; // start screen gone — stop for good
+    t++;
+    ctx.clearRect(0, 0, w, h);
+    for (const m of motes) {
+      m.y -= m.speed;
+      m.x += Math.sin(t * 0.008 + m.sway) * m.swayAmp * 0.35;
+      const a = m.alpha * (0.55 + 0.45 * Math.sin(t * m.twinkle * 8 + m.sway));
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(240, 221, 164, " + Math.max(0, a).toFixed(3) + ")";
+      ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+      ctx.fill();
+      if (m.y < -8) Object.assign(m, spawn(false));
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
 
 // ── Code Submit ──
 const btnSubmit = document.getElementById("btn-submit");
@@ -179,12 +315,32 @@ btnSubmit.addEventListener("click", () => {
   }
 });
 
-// ── New Game Button ──
-document.getElementById("btn-new").addEventListener("click", () => {
-  initGameScreen();
+// ── Reset Game Button (inside Options, asks to confirm) ──
+const btnNew = document.getElementById("btn-new");
+let resetArmed = false;
+let resetDisarmTimer = null;
+
+function disarmReset() {
+  resetArmed = false;
+  clearTimeout(resetDisarmTimer);
+  btnNew.classList.remove("armed");
+  btnNew.innerText = "RESET GAME";
+}
+
+btnNew.addEventListener("click", () => {
+  if (!resetArmed) {
+    resetArmed = true;
+    btnNew.classList.add("armed");
+    btnNew.innerText = "CLICK AGAIN TO CONFIRM";
+    resetDisarmTimer = setTimeout(disarmReset, 4000);
+    return;
+  }
+  disarmReset();
+  document.getElementById("options-modal").classList.add("hidden");
   localStorage.setItem("puzzleUnlockedLevel", 0);
   window.unlockedLevelIndex = 0;
-  goToLevel(0); // Use the robust helper
+  initGameScreen();
+  playIntro(() => goToLevel(0));
 });
 
 inputCode.addEventListener("keypress", (e) => {
@@ -216,8 +372,9 @@ const volSliderUI = document.getElementById("vol-slider-ui");
 const volIconUI = document.getElementById("vol-icon-ui");
 
 function syncMuteButtons() {
-  const label = window.GameAudio.muted ? "🔇 UNMUTE" : "🔊 MUTE";
-  btnMute.innerText = label;
+  btnMute.innerHTML = window.GameAudio.muted
+    ? '<span class="btn-emoji">🔇</span> UNMUTE'
+    : '<span class="btn-emoji">🔊</span> MUTE';
   _syncVolIcon();
 }
 
@@ -233,12 +390,14 @@ sfxSlider.value = window.GameAudio.sfxVol;
 syncMuteButtons();
 _syncVolIcon();
 
-btnOptions.addEventListener("click", () =>
-  optionsModal.classList.remove("hidden"),
-);
-btnCloseOptions.addEventListener("click", () =>
-  optionsModal.classList.add("hidden"),
-);
+btnOptions.addEventListener("click", () => {
+  disarmReset();
+  optionsModal.classList.remove("hidden");
+});
+btnCloseOptions.addEventListener("click", () => {
+  disarmReset();
+  optionsModal.classList.add("hidden");
+});
 
 musicSlider.addEventListener("input", (e) => {
   window.GameAudio.musicVol = parseFloat(e.target.value);
