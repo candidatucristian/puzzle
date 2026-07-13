@@ -50,12 +50,259 @@ class ModemScene extends Phaser.Scene {
     });
   }
 
-  // ── Background ──────────────────────────────────────────────────────────────
+  // ── Background: dark air, full of signals ───────────────────────────────────
+  // No room, no furniture — just the transmission itself: radio pulses
+  // rippling out of the antennas, stray binary drifting through the dark,
+  // a live waveform trembling low across the floor, and short packet blips.
+  // Rebuilt cleanly on every resize.
 
   _drawBg(W, H) {
-    this._bgGfx.clear();
-    this._bgGfx.fillGradientStyle(0x050508, 0x050508, 0x020204, 0x020204, 1);
-    this._bgGfx.fillRect(0, 0, W, H);
+    const g = this._bgGfx;
+    g.clear();
+
+    // clear everything from the previous build (rings, digits, texts)
+    if (this._roomObjs) {
+      for (const o of this._roomObjs) {
+        this.tweens.killTweensOf(o);
+        o.destroy();
+      }
+    }
+    this._roomObjs = [];
+    if (this._ambientTimers) {
+      for (const t of this._ambientTimers) t.remove(false);
+    }
+    this._ambientTimers = [];
+
+    // deep signal-black
+    g.fillGradientStyle(0x07090c, 0x090b10, 0x030405, 0x040506, 1);
+    g.fillRect(0, 0, W, H);
+
+    // vignette
+    const v = Math.min(W, H) * 0.2;
+    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0);
+    g.fillRect(0, 0, W, v);
+    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.55, 0.55);
+    g.fillRect(0, H - v, W, v);
+    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0, 0.45, 0);
+    g.fillRect(0, 0, v, H);
+    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.45, 0, 0.45);
+    g.fillRect(W - v, 0, v, H);
+
+    // the live waveform, redrawn every frame in update()
+    if (this._waveGfx) this._waveGfx.destroy();
+    this._waveGfx = this.add.graphics().setDepth(1);
+    this._waveGeom = { W, H };
+
+    // the line idles almost flat, then a burst of chatter shakes it
+    this._burst = { level: 0 };
+    this._ambientTimers.push(
+      this.time.addEvent({
+        delay: 900,
+        loop: true,
+        callback: () => {
+          if (this._burst.level < 0.05 && Math.random() < 0.28) {
+            this.tweens.add({
+              targets: this._burst,
+              level: 1,
+              duration: 130,
+              ease: "Quad.easeIn",
+              onComplete: () => {
+                this.tweens.add({
+                  targets: this._burst,
+                  level: 0,
+                  duration: 850,
+                  ease: "Quad.easeOut",
+                });
+              },
+            });
+          }
+        },
+      }),
+    );
+
+    // antenna tips (same maths as _injectSVG) — where the pulses are born
+    const dW = Math.min(W * 0.78, 520);
+    const dH = dW * (224.68 / 300);
+    const ry = (H - dH) / 2 - H * 0.04;
+    this._tips = [
+      { x: W / 2 - dW * 0.24, y: ry + dH * 0.14 },
+      { x: W / 2, y: ry + dH * 0.08 },
+      { x: W / 2 + dW * 0.24, y: ry + dH * 0.14 },
+    ];
+
+    // rhythm of the transmission: pulses, blips, drifting binary
+    this._ambientTimers.push(
+      this.time.addEvent({
+        delay: 1400,
+        loop: true,
+        callback: () => this._spawnRing(),
+      }),
+    );
+    this._spawnRing();
+
+    this._ambientTimers.push(
+      this.time.addEvent({
+        delay: 700,
+        loop: true,
+        callback: () => {
+          if (Math.random() < 0.65) this._spawnBlip(W, H);
+        },
+      }),
+    );
+
+    for (let i = 0; i < 26; i++) this._spawnDigit(W, H);
+
+    // texts, matching the other chambers
+    const status = this.add
+      .text(W / 2, 40, "It never stopped transmitting.", {
+        fontFamily: '"Special Elite", monospace',
+        fontSize: "20px",
+        color: "#e8dcc0",
+        letterSpacing: 1,
+      })
+      .setOrigin(0.5)
+      .setDepth(20);
+    this._roomObjs.push(status);
+
+    const lvl = this.add
+      .text(W - 30, 28, "Level 6", {
+        fontFamily: '"Special Elite", monospace',
+        fontSize: "28px",
+        color: "#e8dcc0",
+      })
+      .setOrigin(1, 0)
+      .setAlpha(0)
+      .setDepth(20);
+    this.tweens.add({ targets: lvl, alpha: 1, duration: 2000 });
+    this._roomObjs.push(lvl);
+  }
+
+  // a radio pulse rippling out of a random antenna — hair-thin: the radius
+  // is tweened (not the scale), so the stroke never fattens as it grows
+  _spawnRing() {
+    if (!this._tips) return;
+    const t = this._tips[Math.floor(Math.random() * this._tips.length)];
+    const ring = this.add
+      .circle(t.x, t.y, 10)
+      .setStrokeStyle(0.6, 0xd8e8dc, 0.24)
+      .setDepth(1);
+    this._roomObjs.push(ring);
+    this.tweens.add({
+      targets: ring,
+      radius: 55 + Math.random() * 32,
+      alpha: 0,
+      duration: 2400 + Math.random() * 800,
+      ease: "Quad.easeOut",
+      onComplete: () => {
+        const i = this._roomObjs.indexOf(ring);
+        if (i >= 0) this._roomObjs.splice(i, 1);
+        ring.destroy();
+      },
+    });
+  }
+
+  // stray binary, drifting up through the dark and dissolving
+  _spawnDigit(W, H) {
+    const digit = this.add
+      .text(
+        Math.random() * W,
+        H * 0.08 + Math.random() * H * 0.8,
+        Math.random() < 0.5 ? "0" : "1",
+        {
+          fontFamily: "monospace",
+          fontSize: Math.round(10 + Math.random() * 8) + "px",
+          color: "#7fae8c",
+        },
+      )
+      .setAlpha(0.05 + Math.random() * 0.11)
+      .setDepth(1);
+    this._roomObjs.push(digit);
+    this.tweens.add({
+      targets: digit,
+      y: digit.y - (40 + Math.random() * 70),
+      alpha: 0,
+      duration: 7000 + Math.random() * 9000,
+      delay: Math.random() * 4000,
+      repeat: -1,
+      onRepeat: () => {
+        digit.x = Math.random() * W;
+        digit.y = H * 0.08 + Math.random() * H * 0.8;
+        digit.setText(Math.random() < 0.5 ? "0" : "1");
+        digit.setAlpha(0.05 + Math.random() * 0.11);
+      },
+    });
+  }
+
+  // a short packet blip: a dot and its tiny shockwave
+  _spawnBlip(W, H) {
+    const x = W * 0.08 + Math.random() * W * 0.84;
+    const y = H * 0.08 + Math.random() * H * 0.78;
+    const dot = this.add.circle(x, y, 1.6, 0xd8e8dc, 0.55).setDepth(1);
+    const halo = this.add
+      .circle(x, y, 3)
+      .setStrokeStyle(1, 0xd8e8dc, 0.3)
+      .setDepth(1);
+    this._roomObjs.push(dot, halo);
+    const done = (o) => {
+      const i = this._roomObjs.indexOf(o);
+      if (i >= 0) this._roomObjs.splice(i, 1);
+      o.destroy();
+    };
+    this.tweens.add({
+      targets: dot,
+      alpha: 0,
+      duration: 420,
+      onComplete: () => done(dot),
+    });
+    this.tweens.add({
+      targets: halo,
+      scale: 4,
+      alpha: 0,
+      duration: 520,
+      ease: "Quad.easeOut",
+      onComplete: () => done(halo),
+    });
+  }
+
+  // the radio line low across the screen: near-flat carrier hiss, shaken
+  // by a burst of chatter every few seconds
+  update(time) {
+    const g = this._waveGfx;
+    if (!g || !this._waveGeom) return;
+    const { W, H } = this._waveGeom;
+    const b = this._burst ? this._burst.level : 0;
+    const y0 = H * 0.875;
+    g.clear();
+    g.lineStyle(1, 0x8fd4a8, 0.1 + b * 0.14);
+    let px = 0;
+    let py = y0;
+    for (let x = 10; x <= W; x += 10) {
+      const y =
+        y0 +
+        // calm carrier: barely breathing
+        Math.sin(x * 0.02 + time * 0.0012) * (0.9 + b * 1.6) +
+        (Math.random() - 0.5) * (0.9 + b * 2.4) +
+        // the burst: fast, angry vibration
+        Math.sin(x * 0.13 + time * 0.02) * 9 * b +
+        Math.sin(x * 0.31 - time * 0.013) * 5 * b;
+      g.lineBetween(px, py, x, y);
+      px = x;
+      py = y;
+    }
+    // a fainter echo below
+    g.lineStyle(1, 0x8fd4a8, 0.04 + b * 0.05);
+    px = 0;
+    py = y0 + 9;
+    for (let x = 14; x <= W; x += 14) {
+      const y =
+        y0 +
+        9 +
+        Math.sin(x * 0.017 - time * 0.0011) * (0.7 + b * 4.5) +
+        (Math.random() - 0.5) * (0.7 + b * 1.6);
+      g.lineBetween(px, py, x, y);
+      px = x;
+      py = y;
+    }
   }
 
   // ── Scene Build ─────────────────────────────────────────────────────────────

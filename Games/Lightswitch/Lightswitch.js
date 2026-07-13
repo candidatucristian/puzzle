@@ -29,6 +29,8 @@ class LightswitchScene extends Phaser.Scene {
     this.load.audio("error",       "assets/sounds/global/error.mp3");
     this.load.audio("switchsound", "assets/sounds/Lightswitch/switchsound.mp3");
     this.load.audio("sparkle",     "assets/sounds/Lightswitch/sparkle.mp3");
+    // the man himself — hangs on the wall, seen only while the bulb burns
+    this.load.image("samuel", "assets/images/Lightswitch/Samuel.png");
   }
 
   create() {
@@ -311,7 +313,7 @@ class LightswitchScene extends Phaser.Scene {
     g.fillStyle(0x4a3a26, 0.60);
     g.fillRect(tx - tW*0.22, ty - tLH - tTH - H*0.024, tW*0.14, H*0.003);
 
-    // ── FADED PAINTING — right wall, past table, no text ──
+    // ── THE PORTRAIT — right wall: Samuel Morse, lit only by his own code ──
     const px  = W * 0.69, py = H * 0.31;
     const pW  = W * 0.11, pH = H * 0.19;
 
@@ -320,16 +322,27 @@ class LightswitchScene extends Phaser.Scene {
     g.fillRect(px - pW/2 - 7, py - pH/2 - 7, pW + 14, pH + 14);
     g.fillStyle(0x362a12, 1);
     g.fillRect(px - pW/2 - 2, py - pH/2 - 2, pW + 4, pH + 4);
-    // Canvas (dark, aged)
+    // Canvas backing (also the fallback if the photo is missing)
     g.fillStyle(0x28221a, 1);
     g.fillRect(px - pW/2, py - pH/2, pW, pH);
-    // Faded landscape strokes (no text)
-    g.lineStyle(1, 0x3a3228, 0.55);
-    g.lineBetween(px - pW/2 + 5, py + pH*0.14, px + pW/2 - 5, py + pH*0.16);
-    g.lineStyle(1, 0x322c24, 0.40);
-    g.lineBetween(px - pW/2 + 8, py - pH*0.12, px + pW/2 - 8, py - pH*0.08);
-    g.lineStyle(1, 0x2e2820, 0.30);
-    g.lineBetween(px - pW/2 + 5, py + pH*0.30, px + pW/2 - 12, py + pH*0.28);
+
+    if (this.textures.exists("samuel")) {
+      // cover-fit the photo into the frame opening, cropping the overflow
+      const src = this.textures.get("samuel").getSourceImage();
+      const img = this.add.image(px, py, "samuel");
+      const s = Math.max(pW / src.width, pH / src.height);
+      img.setScale(s);
+      const cw = pW / s, ch = pH / s;
+      img.setCrop((src.width - cw) / 2, (src.height - ch) / 2, cw, ch);
+      img.setTint(0xe2cfae); // aged print, warmed by the bulb
+      this._litLayer.add(img); // inherits the light — visible only mid-flash
+
+      // gentle inner shadow so the print sits IN the frame
+      const shade = this.add.graphics();
+      shade.lineStyle(3, 0x000000, 0.35);
+      shade.strokeRect(px - pW/2 + 1.5, py - pH/2 + 1.5, pW - 3, pH - 3);
+      this._litLayer.add(shade);
+    }
   }
 
   // ── DOM: hanging bulb + small switch with LED ─────────────────────────────────
@@ -491,16 +504,16 @@ class LightswitchScene extends Phaser.Scene {
     const letter = this.ANSWER.charAt(this._letterIdx);
     this._morseSteps = this._buildMorse(letter);
     this._morseIdx   = 0;
-    this._morseTimer = this.time.delayedCall(260, () => this._morseStep());
+    this._morseTimer = this.time.delayedCall(520, () => this._morseStep());
   }
 
-  // word/letter → [{ on:bool, dur:ms }, …] with short Morse spacing
+  // word/letter → [{ on:bool, dur:ms }, …] with unhurried Morse spacing
   _buildMorse(word) {
     const U        = 120;      // base time unit (ms)
     const DOT      = 40;       // dot = a bare camera-flash blink
     const DASH     = 500;      // dash held a beat longer — the contrast IS the code
-    const GAP_EL   = U * 1.4;  // roomier gap so the flash reads as its own beat
-    const GAP_CHAR = U * 3;    // between letters
+    const GAP_EL   = U * 3.2;  // long, readable pause between flashes
+    const GAP_CHAR = U * 6.5;  // between letters
     const steps = [];
     const chars = String(word || "").toUpperCase().split("");
 

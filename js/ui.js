@@ -525,8 +525,8 @@ const levelHints = {
     sound: true,
     tool: true,
   },
-  Prism: {
-    text: "BROKEN LIGHT.\nTwelve panes of glass, five empty frames, one word. Pair the panes that belong together and turn them until the light agrees. Mind the maker's marks — and know that two panes belong to no one.",
+  Sequence: {
+    text: "SIX NUMBERS, ONE VOICE.\nSmallest first, and they become one. Then don't just look at it — read it aloud, the way the note in the corner does.",
     sound: false,
     tool: false,
   },
@@ -540,8 +540,8 @@ const levelHints = {
     sound: false,
     tool: true,
   },
-  Mosaic: {
-    text: "A RUINED MOSAIC.\nThe masons left their tallies on the frame — each number counts an unbroken run of tiles. Reason it back together. Guessing ruins walls.",
+  Station: {
+    text: "THE LAST STATION.\nNobody checks the spelling anymore. Four trains are still boarding — leave in order of departure.",
     sound: false,
     tool: false,
   },
@@ -550,8 +550,8 @@ const levelHints = {
     sound: true,
     tool: false,
   },
-  Typewriter: {
-    text: "AN OLD TYPEWRITER.\nIt types what it wants. The note trusted it anyway.",
+  Carbon: {
+    text: "CARBON COPIES.\nThe machine typed the same page three times, and only one sheet bears the stencil's mark. Hold it to the light — and mind which way is up.",
     sound: false,
     tool: false,
   },
