@@ -84,16 +84,21 @@ renderLevels();
 const levelVeil = document.getElementById("level-veil");
 const veilCaption = document.getElementById("veil-caption");
 const veilNumeral = document.getElementById("veil-numeral");
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII"];
 
 let veilBusy = false;
-let veilQueued = null; // latest request made while busy — runs when free
+let veilTimers = []; // pending timeouts for the in-flight transition
+
+function clearVeilTimers() {
+  veilTimers.forEach((id) => clearTimeout(id));
+  veilTimers = [];
+}
 
 function cinematicGoToLevel(index, opts = {}) {
-  if (veilBusy) {
-    veilQueued = () => cinematicGoToLevel(index, opts);
-    return;
-  }
+  // a new pick always wins immediately: drop whatever the previous
+  // transition still had queued instead of waiting for it to finish
+  const wasBusy = veilBusy;
+  clearVeilTimers();
   veilBusy = true;
   const caption = opts.caption || "";
   const quick = !!opts.quick;
@@ -102,28 +107,30 @@ function cinematicGoToLevel(index, opts = {}) {
   veilCaption.style.display = caption ? "" : "none";
   veilNumeral.textContent = ROMAN[index] || String(index + 1);
 
+  levelVeil.classList.remove("titled");
   levelVeil.classList.add("cover");
 
-  // once fully covered: swap the level behind the veil
-  setTimeout(() => {
+  // if the veil is already covering (interrupting a prior transition) there's
+  // no need to wait out the fade-to-black again — swap the scene right away
+  const coverDelay = wasBusy ? 0 : 600;
+
+  const t1 = setTimeout(() => {
     if (!startScreen.classList.contains("hidden")) initGameScreen();
     goToLevel(index);
     if (!quick) levelVeil.classList.add("titled");
 
     const hold = quick ? 350 : caption ? 2100 : 1500;
-    setTimeout(() => {
+    const t2 = setTimeout(() => {
       levelVeil.classList.remove("cover");
       levelVeil.classList.remove("titled");
-      setTimeout(() => {
+      const t3 = setTimeout(() => {
         veilBusy = false;
-        if (veilQueued) {
-          const next = veilQueued;
-          veilQueued = null;
-          next();
-        }
       }, 650);
+      veilTimers.push(t3);
     }, hold);
-  }, 600);
+    veilTimers.push(t2);
+  }, coverDelay);
+  veilTimers.push(t1);
 }
 
 // ── Mobile Block ──
@@ -550,8 +557,13 @@ const levelHints = {
     sound: true,
     tool: false,
   },
-  Carbon: {
-    text: "CARBON COPIES.\nThe machine typed the same page three times, and only one sheet bears the stencil's mark. Hold it to the light — and mind which way is up.",
+  BinaryTree: {
+    text: "A TREE OF FORKS.\nFive paths are written above it — left, or right, three times each. Walk one, see where it lands, and read the leaf.",
+    sound: false,
+    tool: false,
+  },
+  Grille: {
+    text: "THREE PAGES OF NOISE.\nA cut card hides everything but a single line. Rest it on a page, and turn it — most turns show you nothing at all.",
     sound: false,
     tool: false,
   },

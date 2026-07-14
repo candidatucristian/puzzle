@@ -117,9 +117,15 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Carbon",
-    scene: CarbonScene,
-    code: "RIBBON",
+    key: "BinaryTree",
+    scene: BinaryTreeScene,
+    code: "BADGE",
+    altCode: null,
+  },
+  {
+    key: "Grille",
+    scene: GrilleScene,
+    code: "RGB",
     altCode: null,
   },
 ];
