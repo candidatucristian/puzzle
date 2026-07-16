@@ -111,21 +111,33 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Elevator",
-    scene: ElevatorScene,
-    code: "THIRTEEN",
+    key: "Atlas",
+    scene: AtlasScene,
+    code: "HARBOR",
     altCode: null,
   },
   {
     key: "BinaryTree",
     scene: BinaryTreeScene,
-    code: "BADGE",
+    code: "CABBAGE",
     altCode: null,
   },
   {
     key: "Grille",
     scene: GrilleScene,
     code: "RGB",
+    altCode: null,
+  },
+  {
+    key: "Wires",
+    scene: WiresScene,
+    code: "FACADE",
+    altCode: null,
+  },
+  {
+    key: "Teletype",
+    scene: TeletypeScene,
+    code: "SIGNAL",
     altCode: null,
   },
 ];

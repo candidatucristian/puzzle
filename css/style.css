@@ -1,54 +1,52 @@
 /* ═══════════════════════════════════════════════════════════════
-   The Descipher — "Obsidian & Gold" design system
-   Display: Cinzel · Body: Cormorant Garamond · In-level: Special Elite
+   The Descipher — "Pencil & Paper" design system
+   Display: Children (local) · Body: Cormorant Garamond · In-level: Special Elite
+   Hand-drawn frames on dark paper — no metal, no gold.
    ═══════════════════════════════════════════════════════════════ */
+
+/* local handwriting font (assets/fonts) — the UI display face */
+@font-face {
+  font-family: "Children";
+  src: url("../assets/fonts/children/Children.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 * {
   box-sizing: border-box;
 }
 
 :root {
-  /* surfaces */
+  /* surfaces — dark sketchbook page */
   --obsidian: #0a0b0e;
   --steel-900: #101216;
   --steel-800: #16181d;
   --steel-700: #1d2026;
   --steel-600: #262a31;
   --steel-500: #333842;
-  /* gold */
-  --gold: #c9a961;
-  --gold-bright: #f0dda4;
-  --gold-deep: #8a6f3c;
-  --gold-dim: rgba(201, 169, 97, 0.45);
-  --gold-faint: rgba(201, 169, 97, 0.18);
+  /* pencil */
+  --pencil: #b7b1a2;
+  --pencil-bright: #ece7d8;
+  --pencil-deep: #56524a;
+  --pencil-dim: rgba(183, 177, 162, 0.42);
+  --pencil-faint: rgba(183, 177, 162, 0.2);
   /* text */
   --bone: #eae5d6;
   --bone-dim: #9d977f;
-  --ink: #1a1408;
+  --ink: #17140f;
   /* lines */
   --line-dark: #040507;
-  --line-light: rgba(255, 255, 255, 0.07);
+  --line-light: rgba(255, 255, 255, 0.06);
   /* type */
-  --font-display: "Cinzel", serif;
+  --font-display: "Children", "Architects Daughter", cursive;
   --font-body: "Cormorant Garamond", Georgia, serif;
-  /* recurring gradients */
-  --grad-steel: linear-gradient(
-    180deg,
-    var(--steel-500),
-    var(--steel-600) 45%,
-    var(--steel-800)
-  );
-  --grad-gold: linear-gradient(
-    180deg,
-    #f2e2ad 0%,
-    #d7b877 38%,
-    #b08d4b 72%,
-    #caa75f 100%
-  );
+  /* recurring surfaces */
+  --grad-panel: linear-gradient(180deg, #23262c, #1a1c21 55%, #131519);
 }
 
 ::selection {
-  background: var(--gold-deep);
+  background: var(--pencil-deep);
   color: var(--bone);
 }
 
@@ -66,7 +64,7 @@ button {
 }
 
 :focus-visible {
-  outline: 1px solid var(--gold-dim);
+  outline: 1px solid var(--pencil-dim);
   outline-offset: 2px;
 }
 
@@ -76,7 +74,7 @@ button {
   inset: -60px;
   z-index: 500;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.05;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation: grain-shift 0.9s steps(3) infinite;
@@ -97,7 +95,7 @@ button {
   }
 }
 
-/* ── Ornate rule: ──────◆────── ── */
+/* ── Ornate rule: a single hand-drawn line, tick mark at centre ── */
 .ornate-rule {
   display: flex;
   align-items: center;
@@ -108,33 +106,50 @@ button {
 .ornate-rule span {
   flex: 1;
   height: 1px;
+  position: relative;
+}
+
+.ornate-rule span::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -1.5px 0;
+  height: 1px;
+  transform: rotate(-0.4deg);
 }
 
 .ornate-rule span:first-child {
-  background: linear-gradient(90deg, transparent, var(--gold-dim));
+  background: linear-gradient(90deg, transparent, var(--pencil-dim));
+}
+.ornate-rule span:first-child::before {
+  background: linear-gradient(90deg, transparent, var(--pencil-faint));
 }
 
 .ornate-rule span:last-child {
-  background: linear-gradient(90deg, var(--gold-dim), transparent);
+  background: linear-gradient(90deg, var(--pencil-dim), transparent);
+}
+.ornate-rule span:last-child::before {
+  background: linear-gradient(90deg, var(--pencil-faint), transparent);
 }
 
 .ornate-rule i {
   font-style: normal;
-  font-size: 8px;
-  color: var(--gold);
+  font-size: 11px;
+  color: var(--pencil);
   line-height: 1;
-  text-shadow: 0 0 6px rgba(201, 169, 97, 0.5);
+  transform: rotate(45deg);
+  display: inline-block;
 }
 
-.ornate-rule.faint span:first-child {
-  background: linear-gradient(90deg, transparent, var(--gold-faint));
+.ornate-rule.faint span:first-child,
+.ornate-rule.faint span:first-child::before {
+  background: linear-gradient(90deg, transparent, var(--pencil-faint));
 }
-.ornate-rule.faint span:last-child {
-  background: linear-gradient(90deg, var(--gold-faint), transparent);
+.ornate-rule.faint span:last-child,
+.ornate-rule.faint span:last-child::before {
+  background: linear-gradient(90deg, var(--pencil-faint), transparent);
 }
 .ornate-rule.faint i {
-  color: var(--gold-faint);
-  text-shadow: none;
+  color: var(--pencil-faint);
 }
 
 .ornate-rule.wide {
@@ -142,59 +157,62 @@ button {
 }
 
 /* ═══════════════════════════════════════════════
-   METAL PANEL RECIPE (sidebars)
-   corner screws → top sheen → brushed grain →
-   gunmetal tint → rust photo (faint, for realism)
+   SKETCH FRAME — the one recurring hand-drawn motif:
+   a faint doubled outline + four corner overshoots.
+   Reused (recoloured, resized) on panels, buttons, tiles.
+   ═══════════════════════════════════════════════ */
+.sketch-frame {
+  position: relative;
+}
+
+.sketch-frame::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid var(--pencil-faint);
+  border-radius: inherit;
+  transform: rotate(-0.35deg);
+  pointer-events: none;
+}
+
+.sketch-frame::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  pointer-events: none;
+  opacity: 0.8;
+  background:
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 16px
+      1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 1px
+      16px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      16px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      1px 16px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      16px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      1px 16px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      16px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      1px 16px;
+  transform: rotate(0.3deg);
+}
+
+/* ═══════════════════════════════════════════════
+   SIDEBARS — flat charcoal page, sketched inner edge
    ═══════════════════════════════════════════════ */
 #sidebar,
 #right-sidebar {
   background:
     radial-gradient(
-        circle at 38% 32%,
-        #6d747e 0%,
-        #3e444d 38%,
-        #101215 72%,
-        transparent 76%
-      )
-      no-repeat 12px 12px / 10px 10px,
-    radial-gradient(
-        circle at 38% 32%,
-        #6d747e 0%,
-        #3e444d 38%,
-        #101215 72%,
-        transparent 76%
-      )
-      no-repeat calc(100% - 22px) 12px / 10px 10px,
-    radial-gradient(
-        circle at 38% 32%,
-        #6d747e 0%,
-        #3e444d 38%,
-        #101215 72%,
-        transparent 76%
-      )
-      no-repeat 12px calc(100% - 22px) / 10px 10px,
-    radial-gradient(
-        circle at 38% 32%,
-        #6d747e 0%,
-        #3e444d 38%,
-        #101215 72%,
-        transparent 76%
-      )
-      no-repeat calc(100% - 22px) calc(100% - 22px) / 10px 10px,
-    radial-gradient(
       130% 70% at 50% 0%,
-      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.03),
       transparent 60%
     ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.018) 0px,
-      rgba(255, 255, 255, 0.018) 1px,
-      transparent 1px,
-      transparent 3px
-    ),
-    linear-gradient(105deg, rgba(26, 29, 35, 0.94), rgba(12, 13, 17, 0.97)),
-    url("../assets/images/Sidebar.jpg") center / cover no-repeat #131519;
+    linear-gradient(105deg, #17191e, #101216);
 }
 
 /* ── Left Sidebar ── */
@@ -208,7 +226,7 @@ button {
   border-right: 1px solid var(--line-dark);
   box-shadow:
     inset -1px 0 0 var(--line-light),
-    inset 1px 0 0 rgba(255, 255, 255, 0.04),
+    inset -3px 0 0 var(--pencil-faint),
     6px 0 24px rgba(0, 0, 0, 0.6);
   z-index: 10;
 }
@@ -229,12 +247,10 @@ button {
   letter-spacing: 5px;
   text-transform: uppercase;
   text-align: center;
-  /* engraved gold leaf */
-  background: var(--grad-gold);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.9));
+  color: var(--pencil-bright);
+  text-shadow:
+    0.6px 0.6px 0 var(--pencil-faint),
+    -0.5px 0.4px 0 var(--pencil-faint);
 }
 
 .sidebar-footer {
@@ -259,14 +275,13 @@ button {
   text-align: center;
   color: var(--bone-dim);
   opacity: 0.55;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8);
 }
 
-/* ── Metal buttons with gold engraving + light sweep ── */
+/* ── Hand-drawn buttons ── */
 .menu-btn {
-  background: var(--grad-steel);
+  background: var(--grad-panel);
   color: var(--bone);
-  border: 1px solid var(--line-dark);
+  border: 1.5px solid var(--pencil-faint);
   padding: 16px 12px;
   font-family: var(--font-display);
   font-size: 14px;
@@ -274,19 +289,11 @@ button {
   letter-spacing: 3px;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 3px;
-  overflow: hidden;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.42),
-    0 3px 8px rgba(0, 0, 0, 0.55);
+  border-radius: 3px 6px 4px 7px;
+  overflow: visible;
   transition:
     color 0.25s ease,
     border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    filter 0.25s ease,
     transform 0.1s ease;
 }
 
@@ -295,45 +302,32 @@ button {
   position: relative;
 }
 
-/* travelling light sweep */
+/* hand-drawn underline that grows in on hover, instead of a metal sheen */
 .menu-btn::after {
   content: "";
   position: absolute;
-  top: 0;
-  left: -80%;
-  width: 45%;
-  height: 100%;
-  background: linear-gradient(
-    105deg,
-    transparent,
-    rgba(255, 240, 200, 0.14),
-    transparent
-  );
-  transform: skewX(-22deg);
-  transition: left 0.55s ease;
+  left: 14%;
+  right: 14%;
+  bottom: 7px;
+  height: 1px;
+  background: var(--pencil-dim);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
   pointer-events: none;
 }
 
 .menu-btn:hover::after {
-  left: 130%;
+  transform: scaleX(1);
 }
 
 .menu-btn:hover {
-  color: var(--gold-bright);
-  border-color: rgba(201, 169, 97, 0.35);
-  filter: brightness(1.12);
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.42),
-    0 3px 12px rgba(0, 0, 0, 0.6),
-    0 0 16px rgba(201, 169, 97, 0.12);
+  color: var(--pencil-bright);
+  border-color: var(--pencil-dim);
 }
 
 .menu-btn:active {
   transform: translateY(1px);
-  box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.6),
-    0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Game Wrapper ── */
@@ -369,29 +363,20 @@ button {
   background:
     radial-gradient(
       120% 100% at 50% 0%,
-      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.04),
       transparent 55%
     ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.014) 0px,
-      rgba(255, 255, 255, 0.014) 1px,
-      transparent 1px,
-      transparent 3px
-    ),
-    linear-gradient(180deg, #1c1f25, #121419 60%, #0c0e12);
+    linear-gradient(180deg, #1a1c21, #131519 60%, #0c0e12);
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    0 -8px 28px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.7);
   z-index: 5;
   border-top: 1px solid var(--line-dark);
   position: relative;
 }
 
-/* gold filament along the console's top edge */
+/* pencilled dashes along the console's top edge */
 #input-area::before {
   content: "";
   position: absolute;
@@ -399,14 +384,14 @@ button {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(
+  background: repeating-linear-gradient(
     90deg,
-    transparent,
-    var(--gold-dim) 20%,
-    var(--gold-dim) 80%,
-    transparent
+    var(--pencil-dim) 0px,
+    var(--pencil-dim) 8px,
+    transparent 8px,
+    transparent 15px
   );
-  opacity: 0.55;
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -421,30 +406,13 @@ button {
   position: relative;
 }
 
-.input-container::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 12%;
-  right: 12%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--gold-faint),
-    transparent
-  );
-  pointer-events: none;
-}
-
 .panel-label {
   font-family: var(--font-display);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 6px;
-  color: var(--gold);
-  opacity: 0.8;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9);
+  color: var(--pencil);
+  opacity: 0.85;
   user-select: none;
 }
 
@@ -454,14 +422,14 @@ button {
   gap: 12px;
 }
 
-/* recessed code slot */
+/* recessed code slot, sketched frame */
 #level-code {
   width: 300px;
   padding: 9px 15px;
   font-size: 21px;
   border-radius: 3px;
-  border: 1px solid #000000;
-  background: linear-gradient(180deg, #040508, #0b0d12 70%, #08090d);
+  border: 1.5px dashed var(--pencil-faint);
+  background: linear-gradient(180deg, #08090c, #0e1015 70%, #0a0b0e);
   color: var(--bone);
   outline: none;
   text-transform: uppercase;
@@ -469,23 +437,17 @@ button {
   font-weight: 600;
   text-align: center;
   letter-spacing: 7px;
-  caret-color: var(--gold);
-  box-shadow:
-    inset 0 3px 9px rgba(0, 0, 0, 0.9),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-    0 1px 0 rgba(255, 255, 255, 0.06);
+  caret-color: var(--pencil);
+  box-shadow: inset 0 3px 9px rgba(0, 0, 0, 0.85);
   transition:
     border-color 0.3s ease,
-    box-shadow 0.3s ease,
     background 0.3s ease,
     color 0.3s ease;
 }
 
 #level-code:focus {
-  border-color: rgba(201, 169, 97, 0.5);
-  box-shadow:
-    inset 0 3px 9px rgba(0, 0, 0, 0.9),
-    0 0 18px rgba(201, 169, 97, 0.16);
+  border-style: solid;
+  border-color: var(--pencil-dim);
 }
 
 #level-code::placeholder {
@@ -498,113 +460,71 @@ button {
 #level-code.error-flash {
   background: #250408;
   border-color: #8f2f36;
+  border-style: solid;
   color: #e8a0a0;
-  box-shadow:
-    inset 0 3px 9px rgba(0, 0, 0, 0.85),
-    0 0 18px rgba(200, 60, 60, 0.3);
+  box-shadow: inset 0 3px 9px rgba(0, 0, 0, 0.85);
 }
 
-/* … și la cod corect: gold flash */
+/* … și la cod corect ── */
 #level-code.success-flash {
-  border-color: rgba(201, 169, 97, 0.85);
-  color: var(--gold-bright);
-  box-shadow:
-    inset 0 3px 9px rgba(0, 0, 0, 0.85),
-    0 0 24px rgba(201, 169, 97, 0.4);
+  border-color: var(--pencil);
+  border-style: solid;
+  color: var(--pencil-bright);
+  box-shadow: inset 0 3px 9px rgba(0, 0, 0, 0.85);
 }
 
-/* gold EXECUTE key */
+/* EXECUTE — a stamped, hand-boxed key: chalk fill, dark ink */
 #btn-submit {
   position: relative;
-  overflow: hidden;
-  background: var(--grad-gold);
+  background: var(--pencil-bright);
   color: var(--ink);
-  border: 1px solid #5f4b24;
+  border: 1.5px solid var(--pencil-deep);
   padding: 10px 28px;
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
-  border-radius: 3px;
+  border-radius: 3px 6px 4px 7px;
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 4px;
-  text-shadow: 0 1px 0 rgba(255, 248, 224, 0.4);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 250, 230, 0.6),
-    inset 0 -3px 7px rgba(90, 62, 20, 0.45),
-    0 3px 10px rgba(0, 0, 0, 0.6);
+  box-shadow: 2px 2px 0 var(--pencil-faint);
   transition:
     filter 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.1s ease;
-}
-
-#btn-submit::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -80%;
-  width: 45%;
-  height: 100%;
-  background: linear-gradient(
-    105deg,
-    transparent,
-    rgba(255, 255, 255, 0.45),
-    transparent
-  );
-  transform: skewX(-22deg);
-  transition: left 0.5s ease;
-  pointer-events: none;
-}
-
-#btn-submit:hover::after {
-  left: 130%;
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
 }
 
 #btn-submit:hover {
-  filter: brightness(1.07);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 250, 230, 0.6),
-    inset 0 -3px 7px rgba(90, 62, 20, 0.45),
-    0 3px 14px rgba(0, 0, 0, 0.6),
-    0 0 22px rgba(201, 169, 97, 0.35);
+  filter: brightness(1.04);
+  box-shadow: 3px 3px 0 var(--pencil-dim);
 }
 
 #btn-submit:active {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 3px 8px rgba(90, 62, 20, 0.5),
-    0 1px 4px rgba(0, 0, 0, 0.5);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--pencil-faint);
 }
 
 /* restart-level key */
 #btn-replay {
-  background: var(--grad-steel);
+  background: var(--grad-panel);
   color: var(--bone);
-  border: 1px solid var(--line-dark);
-  border-radius: 3px;
+  border: 1.5px solid var(--pencil-faint);
+  border-radius: 3px 6px 4px 7px;
   width: 48px;
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
   user-select: none;
   flex-shrink: 0;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.42),
-    0 3px 8px rgba(0, 0, 0, 0.55);
   transition:
     color 0.25s ease,
     border-color 0.25s ease,
-    filter 0.25s ease,
     transform 0.1s ease;
 }
 
 #btn-replay:hover {
-  color: var(--gold-bright);
-  border-color: rgba(201, 169, 97, 0.35);
-  filter: brightness(1.12);
+  color: var(--pencil-bright);
+  border-color: var(--pencil-dim);
 }
 
 #btn-replay:active {
@@ -637,8 +557,7 @@ button {
   font-weight: 600;
   letter-spacing: 5px;
   color: var(--bone-dim);
-  opacity: 0.6;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9);
+  opacity: 0.65;
   user-select: none;
 }
 
@@ -647,12 +566,9 @@ button {
   align-items: center;
   gap: 12px;
   background: linear-gradient(180deg, #101216, #171a1f);
-  border: 1px solid var(--line-dark);
+  border: 1.5px dashed var(--pencil-faint);
   border-radius: 3px;
   padding: 9px 15px;
-  box-shadow:
-    inset 0 2px 7px rgba(0, 0, 0, 0.65),
-    0 1px 0 rgba(255, 255, 255, 0.05);
   cursor: default;
 }
 
@@ -663,12 +579,11 @@ button {
   transition: transform 0.1s ease;
 }
 
-/* pull emoji glyphs toward the gold palette */
+/* pull emoji glyphs toward the graphite palette */
 .console-controls #vol-icon-ui,
 .btn-emoji,
 .ui-demo.demo-volume {
-  filter: grayscale(1) sepia(0.9) saturate(2.4) hue-rotate(-12deg)
-    brightness(1.05);
+  filter: grayscale(1) brightness(1.3) contrast(0.85);
 }
 
 .console-controls #vol-icon-ui:hover {
@@ -679,30 +594,24 @@ button {
   width: 92px;
 }
 
-/* ── Custom brass sliders (console + options) ── */
+/* ── Sketched sliders: flat track, ringed pencil-circle thumb ── */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, #050608, #14161b);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.9),
-    0 1px 0 rgba(255, 255, 255, 0.05);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--pencil-faint);
   cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f2e2ad, #c9a961 55%, #7c6233);
-  border: 1px solid #4a3a1c;
-  box-shadow:
-    0 1px 4px rgba(0, 0, 0, 0.8),
-    inset 0 1px 1px rgba(255, 250, 230, 0.5);
+  background: var(--steel-800);
+  border: 1.5px solid var(--pencil);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
@@ -712,19 +621,18 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f2e2ad, #c9a961 55%, #7c6233);
-  border: 1px solid #4a3a1c;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  background: var(--steel-800);
+  border: 1.5px solid var(--pencil);
   cursor: pointer;
 }
 
 input[type="range"]::-moz-range-track {
-  height: 3px;
-  border-radius: 2px;
-  background: #0c0e12;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--pencil-faint);
 }
 
 /* ── Right Sidebar ── */
@@ -743,6 +651,7 @@ input[type="range"]::-moz-range-track {
   border-left: 1px solid var(--line-dark);
   box-shadow:
     inset 1px 0 0 var(--line-light),
+    inset 3px 0 0 var(--pencil-faint),
     -6px 0 24px rgba(0, 0, 0, 0.6);
   overflow-y: auto;
 }
@@ -766,7 +675,7 @@ input[type="range"]::-moz-range-track {
   border-radius: 4px;
 }
 #right-sidebar::-webkit-scrollbar-thumb:hover {
-  background: var(--gold-deep);
+  background: var(--pencil-deep);
 }
 
 #levels-grid {
@@ -775,14 +684,15 @@ input[type="range"]::-moz-range-track {
   gap: 10px;
 }
 
-/* engraved metal keys */
+/* sketched tiles */
 .level-btn {
-  background: var(--grad-steel);
-  border: 1px solid var(--line-dark);
-  border-radius: 3px;
+  background: var(--grad-panel);
+  border: 1.5px solid var(--pencil-faint);
+  border-radius: 3px 6px 4px 7px;
   color: var(--bone);
-  font-family: var(--font-display);
-  font-weight: 600;
+  /* Architects Daughter's "1" reads as a capital I — numerals need a font
+     with unambiguous digits, so tile numbers use the typewriter face */
+  font-family: "Special Elite", monospace;
   font-size: 17px;
   aspect-ratio: 1;
   display: flex;
@@ -790,42 +700,33 @@ input[type="range"]::-moz-range-track {
   align-items: center;
   cursor: pointer;
   position: relative;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.42),
-    0 2px 6px rgba(0, 0, 0, 0.55);
   transition:
     color 0.25s ease,
     border-color 0.25s ease,
-    filter 0.25s ease,
     box-shadow 0.25s ease;
   white-space: nowrap;
 }
 
 .level-btn.unlocked:hover {
-  color: var(--gold-bright);
-  border-color: rgba(201, 169, 97, 0.35);
-  filter: brightness(1.18);
+  color: var(--pencil-bright);
+  border-color: var(--pencil-dim);
 }
 
+/* the current tile: bold long-dash outline, like the number boxed in pencil */
 .level-btn.current {
-  border-color: var(--gold-dim);
-  color: var(--gold-bright);
+  border: 3px dashed var(--pencil);
+  border-radius: 20%;
+  color: var(--pencil-bright);
   animation: tile-beacon 3s ease-in-out infinite;
 }
 
 @keyframes tile-beacon {
   0%,
   100% {
-    box-shadow:
-      inset 0 1px 0 var(--line-light),
-      0 0 8px rgba(201, 169, 97, 0.14);
+    border-color: var(--pencil-dim);
   }
   50% {
-    box-shadow:
-      inset 0 1px 0 var(--line-light),
-      0 0 18px rgba(201, 169, 97, 0.38);
+    border-color: var(--pencil-bright);
   }
 }
 
@@ -833,10 +734,7 @@ input[type="range"]::-moz-range-track {
   background: linear-gradient(180deg, #0e1013, #121419);
   color: #4c4f55;
   cursor: not-allowed;
-  box-shadow:
-    inset 0 2px 7px rgba(0, 0, 0, 0.65),
-    0 1px 0 rgba(255, 255, 255, 0.04);
-  text-shadow: none;
+  border-style: dashed;
 }
 
 .level-btn.locked::after {
@@ -856,7 +754,7 @@ input[type="range"]::-moz-range-track {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(4, 5, 8, 0.65);
+  background: rgba(4, 5, 8, 0.7);
   backdrop-filter: blur(10px) saturate(0.75);
   -webkit-backdrop-filter: blur(10px) saturate(0.75);
   display: flex;
@@ -876,59 +774,53 @@ input[type="range"]::-moz-range-track {
 
 .modal-content {
   position: relative;
-  background:
-    radial-gradient(
-      130% 90% at 50% 0%,
-      rgba(255, 255, 255, 0.04),
-      transparent 55%
-    ),
-    linear-gradient(180deg, var(--steel-700), var(--steel-900));
-  border: 1px solid var(--steel-500);
-  outline: 1px solid var(--line-dark);
+  background: linear-gradient(180deg, #1b1d22, #121419);
+  border: 1.5px solid var(--pencil-faint);
   padding: 42px 44px;
-  border-radius: 4px;
+  border-radius: 4px 9px 5px 10px;
   width: 420px;
   color: var(--bone);
   display: flex;
   flex-direction: column;
   gap: 24px;
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    0 20px 60px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
 }
 
-/* hairline inner frame */
+/* doubled hand-drawn outline, slightly askew */
 .modal-content::before {
   content: "";
   position: absolute;
-  inset: 9px;
-  border: 1px solid var(--gold-faint);
-  border-radius: 2px;
+  inset: -7px;
+  border: 1px solid var(--pencil-faint);
+  border-radius: 6px 10px 6px 11px;
+  transform: rotate(-0.25deg);
   pointer-events: none;
 }
 
-/* art-deco corner ticks */
+/* corner overshoots, like a hand-ruled frame */
 .modal-content::after {
   content: "";
   position: absolute;
-  inset: 6px;
+  inset: 8px;
   pointer-events: none;
   opacity: 0.85;
   background:
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 0 0 / 22px 1px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 0 0 / 1px 22px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 100% 0 / 22px
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 22px
       1px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 100% 0 / 1px
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 1px
       22px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 0 100% / 22px
-      1px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 0 100% / 1px
-      22px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 100% 100% / 22px
-      1px,
-    linear-gradient(var(--gold-dim), var(--gold-dim)) no-repeat 100% 100% / 1px
-      22px;
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      22px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      1px 22px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      22px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      1px 22px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      22px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      1px 22px;
 }
 
 .modal-content h2 {
@@ -939,11 +831,10 @@ input[type="range"]::-moz-range-track {
   font-size: 21px;
   letter-spacing: 6px;
   text-transform: uppercase;
-  background: var(--grad-gold);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.9));
+  color: var(--pencil-bright);
+  text-shadow:
+    0.6px 0.6px 0 var(--pencil-faint),
+    -0.5px 0.4px 0 var(--pencil-faint);
 }
 
 .modal-content > .ornate-rule {
@@ -962,8 +853,8 @@ input[type="range"]::-moz-range-track {
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 4px;
-  color: var(--gold);
-  opacity: 0.85;
+  color: var(--pencil);
+  opacity: 0.9;
 }
 
 .modal-actions {
@@ -1009,10 +900,6 @@ input[type="range"]::-moz-range-track {
 .danger-btn:hover {
   color: #f0b0b0;
   border-color: rgba(190, 80, 80, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.42),
-    0 0 16px rgba(200, 70, 70, 0.15);
 }
 
 .danger-btn.armed {
@@ -1082,8 +969,8 @@ input[type="range"]::-moz-range-track {
   font-weight: 600;
   font-size: 14px;
   letter-spacing: 5px;
-  color: var(--gold);
-  border-bottom: 1px solid rgba(201, 169, 97, 0.2);
+  color: var(--pencil);
+  border-bottom: 1px dashed var(--pencil-faint);
   padding-bottom: 9px;
 }
 
@@ -1102,7 +989,7 @@ input[type="range"]::-moz-range-track {
 }
 
 .howto-section b {
-  color: var(--gold-bright);
+  color: var(--pencil-bright);
   font-weight: 600;
 }
 
@@ -1118,13 +1005,13 @@ input[type="range"]::-moz-range-track {
   flex: 1;
 }
 
-/* generic metal button (INFO, Options) */
+/* generic sketched button (INFO, Options) */
 .ui-demo {
   flex: 0 0 128px;
   text-align: center;
-  background: var(--grad-steel);
-  border: 1px solid var(--line-dark);
-  border-radius: 3px;
+  background: var(--grad-panel);
+  border: 1.5px solid var(--pencil-faint);
+  border-radius: 3px 6px 4px 7px;
   padding: 12px 8px;
   font-family: var(--font-display);
   font-weight: 600;
@@ -1132,24 +1019,16 @@ input[type="range"]::-moz-range-track {
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--bone);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.42);
   white-space: nowrap;
 }
 
 /* the EXECUTE key, as on the console */
 .ui-demo.demo-execute {
-  background: var(--grad-gold);
+  background: var(--pencil-bright);
   color: var(--ink);
-  border: 1px solid #5f4b24;
+  border: 1.5px solid var(--pencil-deep);
   letter-spacing: 3px;
   font-weight: 700;
-  text-shadow: 0 1px 0 rgba(255, 248, 224, 0.4);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 250, 230, 0.6),
-    inset 0 -3px 7px rgba(90, 62, 20, 0.45);
 }
 
 /* the replay arrow */
@@ -1176,25 +1055,18 @@ input[type="range"]::-moz-range-track {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: var(--grad-steel);
-  border: 1px solid var(--line-dark);
-  border-radius: 3px;
+  background: var(--grad-panel);
+  border: 1.5px solid var(--pencil-faint);
+  border-radius: 3px 6px 4px 7px;
   color: var(--bone);
-  font-family: var(--font-display);
-  font-weight: 600;
+  font-family: "Special Elite", monospace;
   font-size: 17px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.42);
 }
 
 .lvl-demo.lvl-current {
-  border-color: var(--gold-dim);
-  color: var(--gold-bright);
-  box-shadow:
-    inset 0 1px 0 var(--line-light),
-    0 0 14px rgba(201, 169, 97, 0.3);
+  border: 3px dashed var(--pencil);
+  border-radius: 20%;
+  color: var(--pencil-bright);
 }
 
 .lvl-demo.lvl-locked {
@@ -1202,8 +1074,7 @@ input[type="range"]::-moz-range-track {
   color: #4c4f55;
   font-size: 16px;
   filter: grayscale(100%);
-  text-shadow: none;
-  box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.65);
+  border-style: dashed;
 }
 
 /* INFO badges, exactly like the ones in the hint window */
@@ -1216,7 +1087,7 @@ input[type="range"]::-moz-range-track {
   align-items: center;
   gap: 4px;
   background: #0c0d10;
-  border: 1px solid #2a2d33;
+  border: 1px dashed #2a2d33;
   padding: 9px 12px;
   font-family: var(--font-display);
   font-size: 9px;
@@ -1241,7 +1112,7 @@ input[type="range"]::-moz-range-track {
   border-radius: 4px;
 }
 .howto-body::-webkit-scrollbar-thumb:hover {
-  background: var(--gold-deep);
+  background: var(--pencil-deep);
 }
 
 /* ═══════════════════════════════════════════════
@@ -1280,7 +1151,7 @@ input[type="range"]::-moz-range-track {
   }
 }
 
-/* drifting gold dust */
+/* drifting graphite dust */
 #start-particles {
   position: absolute;
   inset: 0;
@@ -1289,7 +1160,7 @@ input[type="range"]::-moz-range-track {
   pointer-events: none;
 }
 
-/* the gold title card, front and centre */
+/* the title card, front and centre */
 #start-title {
   position: relative;
   display: flex;
@@ -1333,9 +1204,6 @@ input[type="range"]::-moz-range-track {
   text-transform: uppercase;
   color: #f2ecdc;
   text-align: center;
-  text-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.95),
-    0 0 30px rgba(0, 0, 0, 0.8);
   animation: prompt-breathe 3.4s ease-in-out infinite;
 }
 
@@ -1343,15 +1211,9 @@ input[type="range"]::-moz-range-track {
   0%,
   100% {
     opacity: 0.95;
-    text-shadow:
-      0 2px 10px rgba(0, 0, 0, 0.95),
-      0 0 26px rgba(201, 169, 97, 0.25);
   }
   50% {
     opacity: 0.45;
-    text-shadow:
-      0 2px 10px rgba(0, 0, 0, 0.95),
-      0 0 12px rgba(201, 169, 97, 0.05);
   }
 }
 
@@ -1362,7 +1224,6 @@ input[type="range"]::-moz-range-track {
   font-weight: 600;
   letter-spacing: 4px;
   color: rgba(234, 229, 214, 0.55);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 }
 
 /* ═══════════════════════════════════════════════
@@ -1421,8 +1282,7 @@ input[type="range"]::-moz-range-track {
   font-size: 12px;
   letter-spacing: 7px;
   text-transform: uppercase;
-  color: var(--gold);
-  text-shadow: 0 0 14px rgba(201, 169, 97, 0.35);
+  color: var(--pencil);
 }
 
 .veil-chamber {
@@ -1444,20 +1304,10 @@ input[type="range"]::-moz-range-track {
   letter-spacing: 12px;
   padding-left: 12px; /* optical centring vs. letter-spacing */
   text-align: center;
-  background: linear-gradient(
-    100deg,
-    #8a6f3c 0%,
-    #c9a961 32%,
-    #f7e9bd 50%,
-    #c9a961 68%,
-    #8a6f3c 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95));
-  animation: gold-shimmer 4.5s ease-in-out infinite;
+  color: var(--pencil-bright);
+  text-shadow:
+    1px 1px 0 var(--pencil-faint),
+    -0.8px 0.6px 0 var(--pencil-faint);
 }
 
 /* ═══════════════════════════════════════════════
@@ -1551,31 +1401,10 @@ input[type="range"]::-moz-range-track {
   text-align: center;
   padding-left: 18px; /* optical centring vs. letter-spacing */
   white-space: nowrap;
-  /* living gold: shimmering gradient sweep */
-  background: linear-gradient(
-    100deg,
-    #8a6f3c 0%,
-    #c9a961 32%,
-    #f7e9bd 50%,
-    #c9a961 68%,
-    #8a6f3c 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95));
-  animation: gold-shimmer 5.5s ease-in-out infinite;
-}
-
-@keyframes gold-shimmer {
-  0%,
-  100% {
-    background-position: 0% 0;
-  }
-  50% {
-    background-position: 100% 0;
-  }
+  color: var(--pencil-bright);
+  text-shadow:
+    1.2px 1.2px 0 var(--pencil-faint),
+    -1px 0.8px 0 var(--pencil-faint);
 }
 
 #intro-title p,
@@ -1638,10 +1467,7 @@ input[type="range"]::-moz-range-track {
 @media (prefers-reduced-motion: reduce) {
   #film-grain,
   #start-prompt,
-  .level-btn.current,
-  #intro-title h1,
-  #start-title h1,
-  #veil-numeral {
+  .level-btn.current {
     animation: none;
   }
 }

@@ -84,7 +84,7 @@ renderLevels();
 const levelVeil = document.getElementById("level-veil");
 const veilCaption = document.getElementById("veil-caption");
 const veilNumeral = document.getElementById("veil-numeral");
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII"];
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"];
 
 let veilBusy = false;
 let veilTimers = []; // pending timeouts for the in-flight transition
@@ -308,7 +308,7 @@ startScreen.addEventListener("click", startTheGame);
       m.x += Math.sin(t * 0.008 + m.sway) * m.swayAmp * 0.35;
       const a = m.alpha * (0.55 + 0.45 * Math.sin(t * m.twinkle * 8 + m.sway));
       ctx.beginPath();
-      ctx.fillStyle = "rgba(240, 221, 164, " + Math.max(0, a).toFixed(3) + ")";
+      ctx.fillStyle = "rgba(236, 231, 216, " + Math.max(0, a).toFixed(3) + ")";
       ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
       ctx.fill();
       if (m.y < -8) Object.assign(m, spawn(false));
@@ -552,13 +552,13 @@ const levelHints = {
     sound: false,
     tool: false,
   },
-  Elevator: {
-    text: "AN ELEVATOR.\nIt works perfectly. That is the problem.",
-    sound: true,
+  Atlas: {
+    text: "A SAFE PLACE TO ANCHOR.\nOld charts hide more than coastlines.",
+    sound: false,
     tool: false,
   },
   BinaryTree: {
-    text: "A TREE OF FORKS.\nFive paths are written above it — left, or right, three times each. Walk one, see where it lands, and read the leaf.",
+    text: "This looks like a root - could it be a vegetable or a fruit?",
     sound: false,
     tool: false,
   },
@@ -566,6 +566,16 @@ const levelHints = {
     text: "THREE PAGES OF NOISE.\nA cut card hides everything but a single line. Rest it on a page, and turn it — most turns show you nothing at all.",
     sound: false,
     tool: false,
+  },
+  Wires: {
+    text: "THE MORNING CHOIR.\nThey sat down exactly where the composer left them.",
+    sound: true,
+    tool: false,
+  },
+  Teletype: {
+    text: "THE NIGHT SHIFT.\nSomewhere a machine still files its report — in a language everyone reads and nobody sees.",
+    sound: false,
+    tool: true,
   },
 };
 

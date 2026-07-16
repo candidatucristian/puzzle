@@ -18,10 +18,14 @@
 // read it. The wheel is a tool — the answer is typed into the code box.
 //
 // The candle is the CSS-art candle from Games/Cryptex/Cryptex/ (DOM overlay,
-// same pattern as the Modem/TV levels), without the blinking halo.
+// same pattern as the Modem/TV levels), without the blinking halo. It is the
+// ONE thing kept exactly as it was — everything else (wall, desk, wheel,
+// envelope, letter) is drawn in the game's pencil-sketch idiom, with the
+// red wax seal left as the single drop of colour beside the flame.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CRYPTEX_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const CX_SKETCH = 0xd8d2c4; // the pencil itself
 const CRYPTEX_CIPHER = [
   "HYHUB FLSKHU PDFKLQH",
   "JXDUGV LWV VSLQQLQJ KHDUW",
@@ -118,6 +122,62 @@ class CryptexScene extends Phaser.Scene {
     return () => (s = (s * 16807) % 2147483647) / 2147483647;
   }
 
+  // ── the pencil: jittered hand-drawn primitives ─────────────────────────────
+
+  _sketchSeg(rnd, x1, y1, x2, y2, mag) {
+    const pts = [{ x: x1, y: y1 }];
+    const steps = 3;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const off = (rnd() - 0.5) * 2 * mag;
+      pts.push({ x: x1 + dx * t + nx * off, y: y1 + dy * t + ny * off });
+    }
+    pts.push({ x: x2, y: y2 });
+    return pts;
+  }
+
+  _drawPath(g, pts, width, color, alpha) {
+    g.lineStyle(width, color, alpha);
+    for (let i = 0; i < pts.length - 1; i++) {
+      g.lineBetween(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+    }
+  }
+
+  _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
+    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
+      width * 0.6,
+      color,
+      alpha * 0.35,
+    );
+  }
+
+  _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
+    const o = 4; // corner overshoot
+    this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
+  }
+
+  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha) {
+    const steps = 18;
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const jr = r + (rnd() - 0.5) * 1.6;
+      pts.push({ x: cx + Math.cos(a) * jr, y: cy + Math.sin(a) * jr });
+    }
+    this._drawPath(g, pts, width, color, alpha);
+  }
+
   // ── scene construction ─────────────────────────────────────────────────────
 
   _build(W, H) {
@@ -126,19 +186,35 @@ class CryptexScene extends Phaser.Scene {
     const deskY = H * 0.78;
     this._deskY = deskY;
 
-    // wall — clean, warm, quiet
+    // paper: the dark sketched room — only the candle's warmth is real
     const bg = this.add.graphics().setDepth(-10);
-    bg.fillGradientStyle(0x201823, 0x281d28, 0x0c080e, 0x120c12, 1);
-    bg.fillRect(0, 0, W, deskY);
-    bg.fillGradientStyle(0x000000, 0x46290e, 0x000000, 0x341e08, 0, 0.14, 0, 0.1);
+    bg.fillGradientStyle(0x0e1014, 0x101318, 0x07080b, 0x090a0d, 1);
+    bg.fillRect(0, 0, W, H);
+    // candlelight resting on the right half of the wall (the candle's, not ours)
+    bg.fillGradientStyle(0x000000, 0x46290e, 0x000000, 0x341e08, 0, 0.12, 0, 0.08);
     bg.fillRect(W * 0.5, 0, W * 0.5, deskY);
 
-    // desk — a single warm band, no clutter
+    const rnd = this._rng(8228);
+    // wireframe room: corner verticals, ceiling hints
+    this._pencilSeg(bg, rnd, W * 0.06, H * 0.05, W * 0.06, deskY, 1, CX_SKETCH, 0.1, 2.4);
+    this._pencilSeg(bg, rnd, W * 0.94, H * 0.05, W * 0.94, deskY, 1, CX_SKETCH, 0.1, 2.4);
+    this._pencilSeg(bg, rnd, 0, H * 0.03, W * 0.06, H * 0.05, 1, CX_SKETCH, 0.08, 2);
+    this._pencilSeg(bg, rnd, W, H * 0.03, W * 0.94, H * 0.05, 1, CX_SKETCH, 0.08, 2);
+    // stray construction scribbles on the wall
+    for (let i = 0; i < 5; i++) {
+      const x = rnd() * W;
+      const y = rnd() * deskY * 0.5;
+      this._pencilSeg(bg, rnd, x, y, x + 14 + rnd() * 30, y + (rnd() - 0.5) * 10, 1, CX_SKETCH, 0.04, 1.6);
+    }
+    // the desk: a hand-ruled edge, hatch lines below
+    this._pencilSeg(bg, rnd, 0, deskY, W, deskY, 1.4, CX_SKETCH, 0.22, 2);
+    this._pencilSeg(bg, rnd, 0, deskY + 5, W, deskY + 5, 1, CX_SKETCH, 0.1, 2);
+    for (let i = 0; i < 3; i++) {
+      const y = deskY + 24 + i * ((H - deskY) / 3.8);
+      this._pencilSeg(bg, rnd, W * 0.04, y, W * 0.96, y + (rnd() - 0.5) * 6, 1, CX_SKETCH, 0.05, 2.4);
+    }
+    // the candle's pool of light on the desk — unchanged, it belongs to it
     const desk = this.add.graphics().setDepth(-8);
-    desk.fillGradientStyle(0x44290f, 0x4e3013, 0x1c0f05, 0x241407, 1);
-    desk.fillRect(0, deskY, W, H - deskY);
-    desk.fillStyle(0x6b4620, 0.9).fillRect(0, deskY, W, 3);
-    desk.fillStyle(0xffd08a, 0.05).fillRect(0, deskY + 3, W, 8);
     const cx0 = W * 0.86;
     for (let i = 4; i >= 1; i--) {
       desk.fillStyle(0xffb45e, 0.03);
@@ -244,50 +320,28 @@ class CryptexScene extends Phaser.Scene {
     this._wheel = { cx, cy, R };
     this._step = 360 / 26;
 
-    const lerpColor = (c1, c2, t) => {
-      const a = Phaser.Display.Color.ValueToColor(c1);
-      const b = Phaser.Display.Color.ValueToColor(c2);
-      const o = Phaser.Display.Color.Interpolate.ColorWithColor(a, b, 100, t * 100);
-      return Phaser.Display.Color.GetColor(o.r, o.g, o.b);
-    };
-
-    // wall shadow behind the wheel
-    const sh = this.add.graphics().setDepth(2);
-    sh.fillStyle(0x000000, 0.4);
-    sh.fillCircle(cx + 9, cy + 13, R * 1.05);
-
-    // ── fixed outer ring ──
+    // ── fixed outer ring, hand-drawn ──
     const outer = this.add.graphics().setDepth(3);
-    outer.fillStyle(0x150d05, 1).fillCircle(cx, cy, R * 1.05);
-    outer.lineStyle(2, 0xc9a55a, 0.25).strokeCircle(cx, cy, R * 1.05);
-    // domed brass band, shaded ring by ring
-    const bandR0 = R * 0.78;
-    for (let rr = bandR0; rr <= R; rr += 2) {
-      const t = (rr - bandR0) / (R - bandR0);
-      const curve = Math.sin(t * Math.PI);
-      outer.lineStyle(2.6, lerpColor(0x3a2a10, 0x9a7838, curve), 1);
-      outer.strokeCircle(cx, cy, rr);
-    }
-    // soft top-left sheen
-    outer.lineStyle(R * 0.1, 0xffe9b0, 0.07);
-    outer.beginPath();
-    outer.arc(cx, cy, R * 0.89, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(300));
-    outer.strokePath();
-    // clock-like tick marks
+    const rnd = this._rng(4114);
+    // dark backing so the wall never shows through the instrument
+    outer.fillStyle(0x101216, 0.97).fillCircle(cx, cy, R * 1.06);
+    outer.fillStyle(CX_SKETCH, 0.03).fillCircle(cx, cy, R * 1.06);
+    // doubled sketched rim + the groove separating ring from disk
+    this._pencilCircle(outer, rnd, cx, cy, R * 1.05, 1.8, CX_SKETCH, 0.55);
+    this._pencilCircle(outer, rnd, cx, cy, R * 1.0, 1, CX_SKETCH, 0.22);
+    this._pencilCircle(outer, rnd, cx, cy, R * 0.77, 1.4, CX_SKETCH, 0.4);
+    // tick marks, one per letter
     for (let i = 0; i < 26; i++) {
       const a = Phaser.Math.DegToRad(i * this._step - 90);
-      outer.lineStyle(1.5, 0x1c1206, 0.8);
-      outer.lineBetween(
-        cx + Math.cos(a) * R * 0.785,
-        cy + Math.sin(a) * R * 0.785,
-        cx + Math.cos(a) * R * 0.815,
-        cy + Math.sin(a) * R * 0.815,
+      this._pencilSeg(
+        outer, rnd,
+        cx + Math.cos(a) * R * 0.785, cy + Math.sin(a) * R * 0.785,
+        cx + Math.cos(a) * R * 0.815, cy + Math.sin(a) * R * 0.815,
+        1, CX_SKETCH, 0.35, 0.4,
       );
     }
-    // groove that separates the rings
-    outer.fillStyle(0x0e0803, 1).fillCircle(cx, cy, R * 0.77);
 
-    // outer letters — engraved, fixed
+    // outer letters — written in, fixed (a faint ghost stroke behind each)
     const outSize = Math.max(13, Math.round(R * 0.1));
     for (let i = 0; i < 26; i++) {
       const aDeg = i * this._step - 90;
@@ -295,51 +349,51 @@ class CryptexScene extends Phaser.Scene {
       const lx = cx + Math.cos(a) * R * 0.885;
       const ly = cy + Math.sin(a) * R * 0.885;
       this.add
-        .text(lx + 1, ly + 1, CRYPTEX_ALPHA[i], {
+        .text(lx + 1.2, ly + 1, CRYPTEX_ALPHA[i], {
           fontFamily: '"Special Elite", monospace',
           fontSize: outSize + "px",
-          color: "#140c02",
+          color: "#8f8974",
         })
         .setOrigin(0.5)
         .setRotation(Phaser.Math.DegToRad(aDeg + 90))
-        .setAlpha(0.85)
+        .setAlpha(0.3)
         .setDepth(4);
       this.add
         .text(lx, ly, CRYPTEX_ALPHA[i], {
           fontFamily: '"Special Elite", monospace',
           fontSize: outSize + "px",
-          color: "#ead9a8",
+          color: "#e8dcc0",
         })
         .setOrigin(0.5)
         .setRotation(Phaser.Math.DegToRad(aDeg + 90))
         .setDepth(4);
     }
 
-    // fixed reference pointer at 12 o'clock
+    // fixed reference pointer at 12 o'clock — a pencilled arrowhead
     const ptr = this.add.graphics().setDepth(6);
-    ptr.fillStyle(0xffd98a, 0.95);
+    const rndP = this._rng(6336);
+    ptr.fillStyle(CX_SKETCH, 0.22);
     ptr.fillTriangle(cx - 7, cy - R * 1.05, cx + 7, cy - R * 1.05, cx, cy - R * 0.93);
-    ptr.lineStyle(1, 0x5a3c16, 0.9);
-    ptr.strokeTriangle(cx - 7, cy - R * 1.05, cx + 7, cy - R * 1.05, cx, cy - R * 0.93);
+    this._pencilSeg(ptr, rndP, cx - 7, cy - R * 1.05, cx, cy - R * 0.93, 1.3, CX_SKETCH, 0.6, 0.6);
+    this._pencilSeg(ptr, rndP, cx + 7, cy - R * 1.05, cx, cy - R * 0.93, 1.3, CX_SKETCH, 0.6, 0.6);
+    this._pencilSeg(ptr, rndP, cx - 7, cy - R * 1.05, cx + 7, cy - R * 1.05, 1.3, CX_SKETCH, 0.6, 0.6);
 
-    // ── rotating inner disk ──
+    // ── rotating inner disk, hand-drawn ──
     this._disk = this.add.container(cx, cy).setDepth(5);
     const d = this.add.graphics();
+    const rndD = this._rng(5225);
     const diskR = R * 0.745;
-    for (let rr = diskR; rr > 0; rr -= 2) {
-      const t = rr / diskR;
-      const curve = Math.pow(Math.sin((1 - t) * Math.PI * 0.5 + 0.5), 1.4);
-      d.fillStyle(lerpColor(0x4a3312, 0x8f6f30, 1 - t * 0.72), 1);
-      d.fillCircle(0, 0, rr);
-    }
-    d.lineStyle(2, 0x1a1004, 1).strokeCircle(0, 0, diskR);
-    d.lineStyle(1, 0xd9b878, 0.3).strokeCircle(0, 0, diskR - 2);
-    // hub with a clock-hand needle pointing at the disk's own "A"
-    d.fillStyle(0x241708, 1).fillCircle(0, 0, R * 0.16);
-    d.lineStyle(1.5, 0xc9a55a, 0.5).strokeCircle(0, 0, R * 0.16);
-    d.fillStyle(0xc9a55a, 0.9);
-    d.fillTriangle(-5, -R * 0.13, 5, -R * 0.13, 0, -R * 0.5);
-    d.fillCircle(0, 0, 4);
+    d.fillStyle(0x171a20, 0.97).fillCircle(0, 0, diskR);
+    d.fillStyle(CX_SKETCH, 0.045).fillCircle(0, 0, diskR);
+    this._pencilCircle(d, rndD, 0, 0, diskR, 1.6, CX_SKETCH, 0.55);
+    this._pencilCircle(d, rndD, 0, 0, diskR - 5, 1, CX_SKETCH, 0.18);
+    // hub with a pencilled needle pointing at the disk's own "A"
+    this._pencilCircle(d, rndD, 0, 0, R * 0.16, 1.3, CX_SKETCH, 0.45);
+    this._pencilSeg(d, rndD, 0, -R * 0.14, 0, -R * 0.5, 1.6, CX_SKETCH, 0.6, 1);
+    this._pencilSeg(d, rndD, -4, -R * 0.44, 0, -R * 0.5, 1.2, CX_SKETCH, 0.55, 0.5);
+    this._pencilSeg(d, rndD, 4, -R * 0.44, 0, -R * 0.5, 1.2, CX_SKETCH, 0.55, 0.5);
+    d.fillStyle(CX_SKETCH, 0.5);
+    d.fillCircle(0, 0, 3);
     this._disk.add(d);
 
     // inner letters — rotate with the disk
@@ -349,24 +403,24 @@ class CryptexScene extends Phaser.Scene {
       const a = Phaser.Math.DegToRad(aDeg);
       const lx = Math.cos(a) * R * 0.63;
       const ly = Math.sin(a) * R * 0.63;
-      const shadow = this.add
-        .text(lx + 1, ly + 1, CRYPTEX_ALPHA[i], {
+      const ghost = this.add
+        .text(lx + 1.2, ly + 1, CRYPTEX_ALPHA[i], {
           fontFamily: '"Special Elite", monospace',
           fontSize: inSize + "px",
-          color: "#140c02",
+          color: "#8f8974",
         })
         .setOrigin(0.5)
         .setRotation(Phaser.Math.DegToRad(aDeg + 90))
-        .setAlpha(0.8);
+        .setAlpha(0.3);
       const face = this.add
         .text(lx, ly, CRYPTEX_ALPHA[i], {
           fontFamily: '"Special Elite", monospace',
           fontSize: inSize + "px",
-          color: "#f2e3b3",
+          color: "#c9bfa4",
         })
         .setOrigin(0.5)
         .setRotation(Phaser.Math.DegToRad(aDeg + 90));
-      this._disk.add(shadow);
+      this._disk.add(ghost);
       this._disk.add(face);
     }
 
@@ -426,47 +480,26 @@ class CryptexScene extends Phaser.Scene {
     const pw = Math.min(W * 0.2, 165);
     const ph = pw * 0.62; // classic envelope proportions
 
-    // ── a sealed envelope, back side up ──
+    // ── a sealed envelope, back side up — sketched in pencil ──
     const p = this.add.container(px, py).setDepth(8).setAngle(-4);
     const g = this.add.graphics();
+    const rndE = this._rng(7447);
 
-    // contact shadow on the desk
-    g.fillStyle(0x000000, 0.42);
-    g.fillEllipse(3, ph * 0.42, pw * 1.06, ph * 0.6);
-
-    // body — aged paper
-    g.fillGradientStyle(0xe9dbb2, 0xe3d4a8, 0xbfa87a, 0xc6b083, 1);
-    g.fillRoundedRect(-pw / 2, -ph / 2, pw, ph, 5);
-    g.lineStyle(1, 0x8a744a, 0.85);
-    g.strokeRoundedRect(-pw / 2, -ph / 2, pw, ph, 5);
-
-    // aging blotches
-    g.fillStyle(0x8a744a, 0.08);
-    g.fillEllipse(-pw * 0.3, ph * 0.24, pw * 0.24, ph * 0.2);
-    g.fillEllipse(pw * 0.34, ph * 0.1, pw * 0.16, ph * 0.14);
+    // body — dark paper with a graphite tint
+    g.fillStyle(0x14171d, 0.95);
+    g.fillRect(-pw / 2, -ph / 2, pw, ph);
+    g.fillStyle(CX_SKETCH, 0.05);
+    g.fillRect(-pw / 2, -ph / 2, pw, ph);
+    this._pencilRect(g, rndE, -pw / 2, -ph / 2, pw, ph, 1.4, CX_SKETCH, 0.55, 1.6);
 
     // side + bottom folds meeting under the flap tip
     const tipY = ph * 0.16;
-    g.fillStyle(0x000000, 0.05);
-    g.fillTriangle(-pw / 2 + 2, ph / 2 - 2, pw / 2 - 2, ph / 2 - 2, 0, tipY);
-    g.lineStyle(1, 0x9a835a, 0.7);
-    g.lineBetween(-pw / 2 + 2, ph / 2 - 2, 0, tipY);
-    g.lineBetween(pw / 2 - 2, ph / 2 - 2, 0, tipY);
+    this._pencilSeg(g, rndE, -pw / 2 + 2, ph / 2 - 2, 0, tipY, 1, CX_SKETCH, 0.3, 1);
+    this._pencilSeg(g, rndE, pw / 2 - 2, ph / 2 - 2, 0, tipY, 1, CX_SKETCH, 0.3, 1);
 
-    // the flap — a shade darker, lit along its folded edges
-    g.fillGradientStyle(0xdccb9d, 0xd6c495, 0xb59e6f, 0xbca677, 1);
-    g.fillTriangle(-pw / 2, -ph / 2, pw / 2, -ph / 2, 0, tipY);
-    // shadow the flap casts on the body, just below its edges
-    g.lineStyle(3, 0x000000, 0.09);
-    g.lineBetween(-pw / 2 + 4, -ph / 2 + 6, 0, tipY + 4);
-    g.lineBetween(pw / 2 - 4, -ph / 2 + 6, 0, tipY + 4);
-    // crisp fold edges with a light catch
-    g.lineStyle(1.2, 0x8a744a, 0.9);
-    g.lineBetween(-pw / 2, -ph / 2, 0, tipY);
-    g.lineBetween(pw / 2, -ph / 2, 0, tipY);
-    g.lineStyle(1, 0xf4e9c6, 0.5);
-    g.lineBetween(-pw / 2 + 2, -ph / 2 + 1, 0, tipY - 2);
-    g.lineBetween(pw / 2 - 2, -ph / 2 + 1, 0, tipY - 2);
+    // the flap edges, drawn a touch harder — the crease that matters
+    this._pencilSeg(g, rndE, -pw / 2, -ph / 2, 0, tipY, 1.3, CX_SKETCH, 0.5, 1.2);
+    this._pencilSeg(g, rndE, pw / 2, -ph / 2, 0, tipY, 1.3, CX_SKETCH, 0.5, 1.2);
     p.add(g);
 
     // ── the wax seal on the flap tip, pressed with the numeral III ──
@@ -545,27 +578,17 @@ class CryptexScene extends Phaser.Scene {
     const ox = W / 2 - bw / 2;
     const oy = H / 2 - bhh / 2;
     const og = this.add.graphics();
-    og.fillStyle(0x000000, 0.55);
-    og.fillRoundedRect(ox + 10, oy + 12, bw, bhh, 8);
-    og.fillGradientStyle(0xe0d0a4, 0xd8c69a, 0xb5a274, 0xc0ad7e, 1);
-    og.fillRoundedRect(ox, oy, bw, bhh, 8);
     const rnd = this._rng(909);
-    for (let i = 0; i < 7; i++) {
-      og.fillStyle(0x8a744a, 0.07 + rnd() * 0.05);
-      og.fillEllipse(
-        ox + bw * (0.12 + rnd() * 0.76),
-        oy + bhh * (0.12 + rnd() * 0.76),
-        30 + rnd() * 70,
-        20 + rnd() * 40,
-      );
-    }
-    og.lineStyle(3, 0x6b5432, 0.5);
-    og.strokeRoundedRect(ox + 2, oy + 2, bw - 4, bhh - 4, 7);
-    og.lineStyle(1.5, 0x4a3820, 0.7);
-    og.strokeRoundedRect(ox, oy, bw, bhh, 8);
-    og.lineStyle(1, 0x8a744a, 0.35);
-    og.lineBetween(ox + bw * 0.5, oy + 6, ox + bw * 0.5, oy + bhh - 6);
-    og.lineBetween(ox + 6, oy + bhh * 0.48, ox + bw - 6, oy + bhh * 0.48);
+    // the unfolded letter: dark paper, doubled pencil frame, fold creases
+    og.fillStyle(0x121419, 0.97);
+    og.fillRect(ox, oy, bw, bhh);
+    og.fillStyle(CX_SKETCH, 0.04);
+    og.fillRect(ox, oy, bw, bhh);
+    this._pencilRect(og, rnd, ox, oy, bw, bhh, 1.8, CX_SKETCH, 0.55, 2.2);
+    this._pencilRect(og, rnd, ox + 8, oy + 8, bw - 16, bhh - 16, 1, CX_SKETCH, 0.2, 2);
+    // fold creases where the letter was quartered
+    this._pencilSeg(og, rnd, ox + bw * 0.5, oy + 10, ox + bw * 0.5, oy + bhh - 10, 1, CX_SKETCH, 0.12, 2);
+    this._pencilSeg(og, rnd, ox + 10, oy + bhh * 0.48, ox + bw - 10, oy + bhh * 0.48, 1, CX_SKETCH, 0.12, 2);
     ov.add(og);
 
     const fs = Math.max(16, Math.round(Math.min(W, H) * 0.028));
@@ -573,7 +596,7 @@ class CryptexScene extends Phaser.Scene {
       .text(W / 2, oy + bhh * 0.4, CRYPTEX_CIPHER.join("\n"), {
         fontFamily: '"Special Elite", monospace',
         fontSize: fs + "px",
-        color: "#3b2a12",
+        color: "#d9cfae",
         align: "center",
         lineSpacing: 12,
         letterSpacing: 2,
@@ -610,7 +633,7 @@ class CryptexScene extends Phaser.Scene {
       .text(W / 2, oy + bhh - 18, "click anywhere to put it down", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "12px",
-        color: "#6b573a",
+        color: "#8f8974",
       })
       .setOrigin(0.5)
       .setAlpha(0.8);

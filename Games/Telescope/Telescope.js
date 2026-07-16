@@ -1,8 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "TELESCOPE"  ·  code: ORION  ·  hard  ·  TOOL (Braille alphabet)
 //
-// PHASE 1 (ROOM): the image assets/images/Telescope/Telescope.jpg with a slow
-//   breathing zoom, cinematic vignette and a subtle prompt.
+// PHASE 1 (ROOM): a pencil-sketch of the scene (a child on tiptoe at a
+//   telescope, aimed out an arched window at a starry sky — drawn in code,
+//   no image assets) with a slow breathing zoom, vignette and a prompt.
 //   Click anywhere → transition (zoom + lens iris) into the sky.
 // PHASE 2 (SKY): looking through the eyepiece. Pan a 2.6x2.0-screen sky with
 //   inertia, mouse-wheel zoom, a Milky Way band, a cratered moon, slow
@@ -99,7 +100,81 @@ class TelescopeScene extends Phaser.Scene {
     this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
     this.load.audio("error", "assets/sounds/global/error.mp3");
-    this.load.image("telescope_room", "assets/images/Telescope/Telescope.jpg");
+  }
+
+  // ── the pencil: jittered hand-drawn primitives (same idiom as the other
+  //    sketch levels — deterministic, so the drawing never flickers) ─────────
+
+  _rng(seed) {
+    let s = seed;
+    return () => (s = (s * 16807) % 2147483647) / 2147483647;
+  }
+
+  _sketchSeg(rnd, x1, y1, x2, y2, mag) {
+    const pts = [{ x: x1, y: y1 }];
+    const steps = 3;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const off = (rnd() - 0.5) * 2 * mag;
+      pts.push({ x: x1 + dx * t + nx * off, y: y1 + dy * t + ny * off });
+    }
+    pts.push({ x: x2, y: y2 });
+    return pts;
+  }
+
+  _drawPath(g, pts, width, color, alpha) {
+    g.lineStyle(width, color, alpha);
+    for (let i = 0; i < pts.length - 1; i++) {
+      g.lineBetween(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+    }
+  }
+
+  _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1, y1, x2, y2, mag),
+      width,
+      color,
+      alpha,
+    );
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
+      width * 0.6,
+      color,
+      alpha * 0.35,
+    );
+  }
+
+  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha) {
+    const steps = 14;
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const jr = r + (rnd() - 0.5) * 1.4;
+      pts.push({ x: cx + Math.cos(a) * jr, y: cy + Math.sin(a) * jr });
+    }
+    this._drawPath(g, pts, width, color, alpha);
+  }
+
+  // arc from a1 to a2 (radians), jittered
+  _pencilArc(g, rnd, cx, cy, rx, ry, a1, a2, width, color, alpha) {
+    const steps = 12;
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const a = a1 + ((a2 - a1) * i) / steps;
+      const jr = 1 + (rnd() - 0.5) * 0.02;
+      pts.push({
+        x: cx + Math.cos(a) * rx * jr,
+        y: cy + Math.sin(a) * ry * jr,
+      });
+    }
+    this._drawPath(g, pts, width, color, alpha);
   }
 
   create() {
@@ -153,7 +228,7 @@ class TelescopeScene extends Phaser.Scene {
 
   _buildRoom(fadeIn) {
     this.phase = PHASE.ROOM;
-    this.input.setDefaultCursor("pointer");
+    this.input.setDefaultCursor("default");
     const W = this._W,
       H = this._H;
 
@@ -164,28 +239,25 @@ class TelescopeScene extends Phaser.Scene {
     bg.fillStyle(0x04050a, 1).fillRect(0, 0, W, H);
     this._room.add(bg);
 
-    if (this.textures.exists("telescope_room")) {
-      const img = this.add.image(W / 2, H / 2, "telescope_room");
-      const src = this.textures.get("telescope_room").getSourceImage();
-      const cover = Math.max(W / src.width, H / src.height);
-      img.setScale(cover);
-      this._room.add(img);
-      this._roomImg = img;
-      this._roomBaseScale = cover;
+    // the sketch lives in a centred container so the breathing zoom (and the
+    // lean-in zoom on click) scale it around the middle of the screen
+    const sk = this.add.container(W / 2, H / 2);
+    this._room.add(sk);
+    this._roomSketch = sk;
+    this._drawRoomSketch(sk, W, H);
 
-      // slow breathing zoom — the room feels alive
-      this._breath = this.tweens.add({
-        targets: img,
-        scale: cover * 1.035,
-        duration: 9000,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-    } else {
-      this._roomImg = null;
-      this._drawRoomFallback(W, H);
-    }
+    // slow breathing zoom — the room feels alive
+    this._breath = this.tweens.add({
+      targets: sk,
+      scale: 1.035,
+      duration: 9000,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    // twinkling stars in the window — small points breathing in and out
+    this._makeRoomTwinkles(sk);
 
     // cinematic edge vignette
     const vg = this.add.graphics();
@@ -238,7 +310,7 @@ class TelescopeScene extends Phaser.Scene {
 
     // subtle prompt, fades in after 1.6s and keeps pulsing
     const hint = this.add
-      .text(W / 2, H * 0.92, "Find the finger's galaxy", {
+      .text(W / 2, H * 0.92, "Close your eyes and dream", {
         fontFamily: '"Courier New", monospace',
         fontSize: Math.max(14, Math.round(Math.min(W, H) * 0.024)) + "px",
         color: "#cfd8ea",
@@ -268,40 +340,783 @@ class TelescopeScene extends Phaser.Scene {
     }
   }
 
-  // simple painted fallback if the image is missing (never a blank screen)
-  _drawRoomFallback(W, H) {
+  // the whole room, hand-sketched — recreates the old reference image
+  // (child on tiptoe at a telescope, arched window, starry sky) in pencil
+  _drawRoomSketch(sk, W, H) {
+    const SK = 0xd8d2c4;
     const g = this.add.graphics();
-    g.fillGradientStyle(0x0a1226, 0x0a1226, 0x030509, 0x030509, 1);
-    g.fillRect(0, 0, W, H);
-    // window with sky
-    const wx = W * 0.18,
-      wy = H * 0.12,
-      ww = W * 0.42,
-      wh = H * 0.55;
-    g.fillStyle(0x0d1b3a, 1).fillRoundedRect(wx, wy, ww, wh, 10);
-    g.lineStyle(6, 0x1c1610, 1).strokeRoundedRect(wx, wy, ww, wh, 10);
-    g.lineBetween(wx + ww / 2, wy, wx + ww / 2, wy + wh);
-    g.lineBetween(wx, wy + wh / 2, wx + ww, wy + wh / 2);
-    for (let i = 0; i < 40; i++) {
-      g.fillStyle(0xffffff, 0.3 + Math.random() * 0.6);
-      g.fillCircle(
-        wx + 8 + Math.random() * (ww - 16),
-        wy + 8 + Math.random() * (wh - 16),
-        0.6 + Math.random() * 1.2,
+    sk.add(g);
+    // container is centred — draw in local coords
+    const X = (f) => W * f - W / 2;
+    const Y = (f) => H * f - H / 2;
+    const rnd = this._rng(7317);
+
+    // paper: the dark room
+    g.fillGradientStyle(0x0e1014, 0x101318, 0x07080b, 0x090a0d, 1);
+    g.fillRect(-W / 2, -H / 2, W, H);
+
+    // ── the arched window ──
+    const wl = X(0.34);
+    const wr = X(0.66);
+    const archCX = X(0.5);
+    const archCY = Y(0.33);
+    const archRX = W * 0.16;
+    const archRY = H * 0.15;
+    const sillY = Y(0.62);
+
+    // the sky, seen through the opening
+    g.fillStyle(0x0b0f16, 1);
+    g.fillRect(wl, archCY, wr - wl, sillY - archCY);
+    g.fillEllipse(archCX, archCY, archRX * 2, archRY * 2);
+
+    // stars — kept inside the opening
+    const rndS = this._rng(4194);
+    for (let i = 0; i < 34; i++) {
+      const x = wl + rndS() * (wr - wl);
+      const y = Y(0.19) + rndS() * (sillY - Y(0.19));
+      const inArch =
+        y >= archCY ||
+        Math.pow((x - archCX) / archRX, 2) +
+          Math.pow((y - archCY) / archRY, 2) <=
+          0.94;
+      if (!inArch) continue;
+      g.fillStyle(0xffffff, 0.25 + rndS() * 0.6);
+      g.fillCircle(x, y, 0.6 + rndS() * 1.2);
+    }
+    // a few 4-point sparkles, like the drawing's bright stars
+    for (const [fx, fy, s] of [
+      [0.44, 0.26, 5],
+      [0.58, 0.33, 6],
+      [0.51, 0.45, 4],
+      [0.63, 0.52, 5],
+    ]) {
+      const x = X(fx);
+      const y = Y(fy);
+      g.lineStyle(1, 0xffffff, 0.8);
+      g.lineBetween(x - s, y, x + s, y);
+      g.lineBetween(x, y - s, x, y + s);
+    }
+
+    // window frame: arch + jambs + sill, doubled pencil strokes
+    this._pencilArc(
+      g,
+      rnd,
+      archCX,
+      archCY,
+      archRX,
+      archRY,
+      Math.PI,
+      Math.PI * 2,
+      2,
+      SK,
+      0.55,
+    );
+    this._pencilArc(
+      g,
+      rnd,
+      archCX,
+      archCY,
+      archRX + 7,
+      archRY + 7,
+      Math.PI,
+      Math.PI * 2,
+      1.2,
+      SK,
+      0.3,
+    );
+    this._pencilSeg(g, rnd, wl, archCY, wl, sillY, 2, SK, 0.55, 1.6);
+    this._pencilSeg(g, rnd, wr, archCY, wr, sillY, 2, SK, 0.55, 1.6);
+    this._pencilSeg(g, rnd, wl - 7, archCY, wl - 7, sillY, 1.2, SK, 0.3, 1.6);
+    this._pencilSeg(g, rnd, wr + 7, archCY, wr + 7, sillY, 1.2, SK, 0.3, 1.6);
+    // sill
+    this._pencilSeg(g, rnd, X(0.3), sillY, X(0.7), sillY, 2.2, SK, 0.55, 1.6);
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.31),
+      sillY + 9,
+      X(0.69),
+      sillY + 9,
+      1.4,
+      SK,
+      0.35,
+      1.6,
+    );
+
+    // opened shutters, one each side, with two panes
+    const shutter = (xIn, xOut, topIn, topOut) => {
+      this._pencilSeg(g, rnd, xIn, topIn, xOut, topOut, 1.6, SK, 0.45, 1.4);
+      this._pencilSeg(g, rnd, xOut, topOut, xOut, Y(0.665), 1.6, SK, 0.45, 1.4);
+      this._pencilSeg(g, rnd, xOut, Y(0.665), xIn, sillY, 1.6, SK, 0.45, 1.4);
+      const midT = (topIn + topOut) / 2 + 6;
+      const midB = (sillY + Y(0.665)) / 2;
+      this._pencilSeg(
+        g,
+        rnd,
+        (xIn + xOut) / 2,
+        midT,
+        (xIn + xOut) / 2,
+        midB,
+        1,
+        SK,
+        0.3,
+        1.2,
+      );
+      this._pencilSeg(
+        g,
+        rnd,
+        xIn,
+        (topIn + sillY) / 2,
+        xOut,
+        (topOut + Y(0.665)) / 2,
+        1,
+        SK,
+        0.3,
+        1.2,
+      );
+    };
+    shutter(wl - 8, X(0.245), Y(0.245), Y(0.185));
+    shutter(wr + 8, X(0.755), Y(0.245), Y(0.185));
+
+    // ── the telescope, aimed out the window ──
+    const eye = { x: X(0.472), y: Y(0.505) }; // eyepiece end
+    const obj = { x: X(0.615), y: Y(0.345) }; // objective end
+    const tdx = obj.x - eye.x;
+    const tdy = obj.y - eye.y;
+    const tlen = Math.hypot(tdx, tdy);
+    const nx = -tdy / tlen;
+    const ny = tdx / tlen;
+    const tw = W * 0.011; // half-width of the tube
+    g.fillStyle(0x171a20, 0.95);
+    g.fillPoints(
+      [
+        { x: eye.x + nx * tw, y: eye.y + ny * tw },
+        { x: obj.x + nx * tw * 1.25, y: obj.y + ny * tw * 1.25 },
+        { x: obj.x - nx * tw * 1.25, y: obj.y - ny * tw * 1.25 },
+        { x: eye.x - nx * tw, y: eye.y - ny * tw },
+      ],
+      true,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      eye.x + nx * tw,
+      eye.y + ny * tw,
+      obj.x + nx * tw * 1.25,
+      obj.y + ny * tw * 1.25,
+      1.6,
+      SK,
+      0.6,
+      1.2,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      eye.x - nx * tw,
+      eye.y - ny * tw,
+      obj.x - nx * tw * 1.25,
+      obj.y - ny * tw * 1.25,
+      1.6,
+      SK,
+      0.6,
+      1.2,
+    );
+    // objective ring + eyepiece stub
+    this._pencilSeg(
+      g,
+      rnd,
+      obj.x + nx * tw * 1.35,
+      obj.y + ny * tw * 1.35,
+      obj.x - nx * tw * 1.35,
+      obj.y - ny * tw * 1.35,
+      2,
+      SK,
+      0.65,
+      0.8,
+    );
+    const eb = { x: eye.x - tdx * 0.06, y: eye.y - tdy * 0.06 };
+    this._pencilSeg(
+      g,
+      rnd,
+      eye.x + nx * tw * 0.6,
+      eye.y + ny * tw * 0.6,
+      eb.x + nx * tw * 0.6,
+      eb.y + ny * tw * 0.6,
+      1.4,
+      SK,
+      0.55,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      eye.x - nx * tw * 0.6,
+      eye.y - ny * tw * 0.6,
+      eb.x - nx * tw * 0.6,
+      eb.y - ny * tw * 0.6,
+      1.4,
+      SK,
+      0.55,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      eb.x + nx * tw * 0.6,
+      eb.y + ny * tw * 0.6,
+      eb.x - nx * tw * 0.6,
+      eb.y - ny * tw * 0.6,
+      1.4,
+      SK,
+      0.55,
+      0.6,
+    );
+    // a band on the tube
+    const bm = { x: eye.x + tdx * 0.55, y: eye.y + tdy * 0.55 };
+    this._pencilSeg(
+      g,
+      rnd,
+      bm.x + nx * tw * 1.1,
+      bm.y + ny * tw * 1.1,
+      bm.x - nx * tw * 1.1,
+      bm.y - ny * tw * 1.1,
+      1.2,
+      SK,
+      0.4,
+      0.6,
+    );
+
+    // tripod under the tube's balance point
+    const hub = { x: X(0.535), y: Y(0.575) };
+    this._pencilSeg(g, rnd, bm.x, bm.y, hub.x, hub.y, 1.4, SK, 0.5, 1);
+    this._pencilCircle(g, rnd, hub.x, hub.y, 4, 1.2, SK, 0.5);
+    this._pencilSeg(
+      g,
+      rnd,
+      hub.x,
+      hub.y,
+      X(0.465),
+      Y(0.875),
+      1.6,
+      SK,
+      0.55,
+      1.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      hub.x,
+      hub.y,
+      X(0.605),
+      Y(0.875),
+      1.6,
+      SK,
+      0.55,
+      1.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      hub.x,
+      hub.y,
+      X(0.545),
+      Y(0.895),
+      1.6,
+      SK,
+      0.55,
+      1.6,
+    );
+    // leg spreader
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.497),
+      Y(0.73),
+      X(0.573),
+      Y(0.73),
+      1,
+      SK,
+      0.3,
+      1,
+    );
+
+    // ── the sill props: lantern and a potted plant ──
+    const lx = X(0.6);
+    const ly = sillY - 4;
+    this._pencilSeg(g, rnd, lx - 7, ly, lx + 7, ly, 1.2, SK, 0.5, 0.6);
+    this._pencilSeg(
+      g,
+      rnd,
+      lx - 7,
+      ly - H * 0.045,
+      lx + 7,
+      ly - H * 0.045,
+      1.2,
+      SK,
+      0.5,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      lx - 7,
+      ly,
+      lx - 7,
+      ly - H * 0.045,
+      1.2,
+      SK,
+      0.5,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      lx + 7,
+      ly,
+      lx + 7,
+      ly - H * 0.045,
+      1.2,
+      SK,
+      0.5,
+      0.6,
+    );
+    this._pencilArc(
+      g,
+      rnd,
+      lx,
+      ly - H * 0.045,
+      7,
+      6,
+      Math.PI,
+      Math.PI * 2,
+      1.1,
+      SK,
+      0.45,
+    );
+    g.fillStyle(0xe8dcc0, 0.55);
+    g.fillCircle(lx, ly - H * 0.022, 2.4);
+    g.fillStyle(0xe8dcc0, 0.07);
+    g.fillCircle(lx, ly - H * 0.022, 10);
+    // plant
+    const px = X(0.645);
+    const py = sillY - 2;
+    this._pencilSeg(
+      g,
+      rnd,
+      px - 8,
+      py - H * 0.03,
+      px + 8,
+      py - H * 0.03,
+      1.2,
+      SK,
+      0.5,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      px - 8,
+      py - H * 0.03,
+      px - 5,
+      py,
+      1.2,
+      SK,
+      0.5,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      px + 8,
+      py - H * 0.03,
+      px + 5,
+      py,
+      1.2,
+      SK,
+      0.5,
+      0.6,
+    );
+    this._pencilSeg(g, rnd, px - 5, py, px + 5, py, 1.2, SK, 0.5, 0.6);
+    for (const [dx, dy] of [
+      [-7, -22],
+      [0, -26],
+      [7, -21],
+      [-3, -24],
+      [4, -25],
+    ]) {
+      this._pencilSeg(
+        g,
+        rnd,
+        px,
+        py - H * 0.03,
+        px + dx,
+        py - H * 0.03 + dy,
+        1.1,
+        SK,
+        0.45,
+        1.2,
       );
     }
-    // telescope silhouette
-    g.fillStyle(0x11100d, 1);
-    g.save();
-    g.translateCanvas(W * 0.62, H * 0.58);
-    g.rotateCanvas(-0.55);
-    g.fillRoundedRect(-W * 0.02, -H * 0.24, W * 0.045, H * 0.34, 8);
-    g.restore();
-    g.lineStyle(7, 0x11100d, 1);
-    g.lineBetween(W * 0.62, H * 0.62, W * 0.56, H * 0.9);
-    g.lineBetween(W * 0.62, H * 0.62, W * 0.68, H * 0.9);
-    g.lineBetween(W * 0.62, H * 0.62, W * 0.62, H * 0.92);
-    this._room.add(g);
+
+    // ── left wall: two shelves with books, a small plant on top ──
+    for (const [fy, n] of [
+      [0.26, 6],
+      [0.38, 5],
+    ]) {
+      const sy = Y(fy);
+      this._pencilSeg(g, rnd, X(0.075), sy, X(0.205), sy, 1.6, SK, 0.4, 1.4);
+      this._pencilSeg(
+        g,
+        rnd,
+        X(0.08),
+        sy + 4,
+        X(0.09),
+        sy + 12,
+        1,
+        SK,
+        0.25,
+        0.6,
+      );
+      this._pencilSeg(
+        g,
+        rnd,
+        X(0.19),
+        sy + 4,
+        X(0.2),
+        sy + 12,
+        1,
+        SK,
+        0.25,
+        0.6,
+      );
+      const rndB = this._rng(600 + n * 37);
+      for (let i = 0; i < n; i++) {
+        const bx = X(0.09) + i * (W * 0.016) + rndB() * 4;
+        const bh = H * (0.028 + rndB() * 0.016);
+        this._pencilSeg(g, rnd, bx, sy, bx, sy - bh, 1.3, SK, 0.35, 0.8);
+      }
+    }
+    for (const [dx, dy] of [
+      [-6, -16],
+      [0, -19],
+      [6, -15],
+    ]) {
+      this._pencilSeg(
+        g,
+        rnd,
+        X(0.115),
+        Y(0.26) - H * 0.02,
+        X(0.115) + dx,
+        Y(0.26) - H * 0.02 + dy,
+        1,
+        SK,
+        0.3,
+        1,
+      );
+    }
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.108),
+      Y(0.26),
+      X(0.122),
+      Y(0.26),
+      1.1,
+      SK,
+      0.35,
+      0.5,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.108),
+      Y(0.26),
+      X(0.111),
+      Y(0.24),
+      1.1,
+      SK,
+      0.35,
+      0.5,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.122),
+      Y(0.26),
+      X(0.119),
+      Y(0.24),
+      1.1,
+      SK,
+      0.35,
+      0.5,
+    );
+
+    // ── right wall: pinned papers, a desk and chair ──
+    for (const [fx, fy, tilt] of [
+      [0.83, 0.27, 2],
+      [0.885, 0.33, -3],
+    ]) {
+      const pxr = X(fx);
+      const pyr = Y(fy);
+      const pw = W * 0.032;
+      const ph = H * 0.055;
+      this._pencilSeg(
+        g,
+        rnd,
+        pxr,
+        pyr + tilt,
+        pxr + pw,
+        pyr - tilt,
+        1.2,
+        SK,
+        0.35,
+        1,
+      );
+      this._pencilSeg(
+        g,
+        rnd,
+        pxr + pw,
+        pyr - tilt,
+        pxr + pw,
+        pyr + ph - tilt,
+        1.2,
+        SK,
+        0.35,
+        1,
+      );
+      this._pencilSeg(
+        g,
+        rnd,
+        pxr + pw,
+        pyr + ph - tilt,
+        pxr,
+        pyr + ph + tilt,
+        1.2,
+        SK,
+        0.35,
+        1,
+      );
+      this._pencilSeg(
+        g,
+        rnd,
+        pxr,
+        pyr + ph + tilt,
+        pxr,
+        pyr + tilt,
+        1.2,
+        SK,
+        0.35,
+        1,
+      );
+      g.fillStyle(SK, 0.45);
+      g.fillCircle(pxr + pw / 2, pyr - tilt / 2, 1.4);
+    }
+    // desk
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.79),
+      Y(0.585),
+      X(0.955),
+      Y(0.585),
+      1.8,
+      SK,
+      0.45,
+      1.4,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.8),
+      Y(0.585),
+      X(0.8),
+      Y(0.72),
+      1.3,
+      SK,
+      0.35,
+      1,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.945),
+      Y(0.585),
+      X(0.945),
+      Y(0.72),
+      1.3,
+      SK,
+      0.35,
+      1,
+    );
+    // books on the desk
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.815),
+      Y(0.575),
+      X(0.86),
+      Y(0.575),
+      1.3,
+      SK,
+      0.35,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.818),
+      Y(0.565),
+      X(0.855),
+      Y(0.565),
+      1.2,
+      SK,
+      0.3,
+      0.6,
+    );
+    // chair
+    this._pencilCircle(g, rnd, X(0.885), Y(0.635), H * 0.02, 1.3, SK, 0.35);
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.885),
+      Y(0.655),
+      X(0.885),
+      Y(0.73),
+      1.2,
+      SK,
+      0.3,
+      0.8,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.862),
+      Y(0.75),
+      X(0.908),
+      Y(0.73),
+      1.2,
+      SK,
+      0.3,
+      0.8,
+    );
+
+    // ── floor: skirting line and a fringed rug under the scene ──
+    this._pencilSeg(
+      g,
+      rnd,
+      -W / 2,
+      Y(0.745),
+      W / 2,
+      Y(0.74),
+      1.2,
+      SK,
+      0.18,
+      2.4,
+    );
+    this._pencilSeg(g, rnd, X(0.33), Y(0.8), X(0.71), Y(0.8), 1.4, SK, 0.35, 2);
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.71),
+      Y(0.8),
+      X(0.75),
+      Y(0.915),
+      1.4,
+      SK,
+      0.35,
+      2,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.75),
+      Y(0.915),
+      X(0.29),
+      Y(0.915),
+      1.4,
+      SK,
+      0.35,
+      2,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.29),
+      Y(0.915),
+      X(0.33),
+      Y(0.8),
+      1.4,
+      SK,
+      0.35,
+      2,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.345),
+      Y(0.825),
+      X(0.695),
+      Y(0.825),
+      1,
+      SK,
+      0.2,
+      1.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      X(0.315),
+      Y(0.89),
+      X(0.725),
+      Y(0.89),
+      1,
+      SK,
+      0.2,
+      1.6,
+    );
+    // fringes
+    for (let i = 0; i < 9; i++) {
+      const fx1 = X(0.3 + i * 0.05);
+      this._pencilSeg(
+        g,
+        rnd,
+        fx1,
+        Y(0.918),
+        fx1 - 2,
+        Y(0.932),
+        1,
+        SK,
+        0.25,
+        0.4,
+      );
+    }
+
+    // the window opening, in local coords — the meteor spawner uses it
+    this._roomArch = { wl, wr, archCY, sillY };
+  }
+
+  // a handful of stars in the window that slowly brighten and dim
+  _makeRoomTwinkles(sk) {
+    if (!this._roomArch) return;
+    const a = this._roomArch;
+    const rnd = this._rng(5959);
+    const pad = 40;
+    for (let i = 0; i < 12; i++) {
+      const x = a.wl + pad + rnd() * (a.wr - a.wl - pad * 2);
+      const y = a.archCY - 20 + rnd() * (a.sillY - a.archCY - 40);
+      const dot = this.add.circle(x, y, 0.7 + rnd() * 1.1, 0xffffff, 1);
+      dot.setAlpha(0.15 + rnd() * 0.3);
+      sk.add(dot);
+      this.tweens.add({
+        targets: dot,
+        alpha: 0.65 + rnd() * 0.3,
+        duration: 1200 + rnd() * 2200,
+        delay: rnd() * 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
   }
 
   // ── Transition: room → sky ────────────────────────────────────────────────
@@ -322,24 +1137,38 @@ class TelescopeScene extends Phaser.Scene {
       this._breath = null;
     }
 
-    // zoom toward the center + fade — "leaning into the eyepiece"
-    if (this._roomImg) {
+    // a breath backward, then a fast dive INTO the window
+    const W = this._W;
+    const H = this._H;
+    if (this._roomSketch) {
       this.tweens.add({
-        targets: this._roomImg,
-        scale: this._roomBaseScale * 1.55,
-        duration: 750,
-        ease: "Cubic.easeIn",
+        targets: this._roomSketch,
+        scale: 0.93,
+        duration: 320,
+        ease: "Sine.easeOut",
+        onComplete: () => {
+          this.tweens.add({
+            targets: this._roomSketch,
+            scale: 2.1,
+            // scaling happens around screen centre — shifting the container
+            // down keeps the window (which sits above centre) in frame
+            y: H / 2 + H * 0.1 * (2.1 - 1),
+            duration: 620,
+            ease: "Cubic.easeIn",
+          });
+        },
       });
     }
     this.tweens.add({
       targets: [this._room],
       alpha: 0,
-      duration: 750,
+      delay: 460,
+      duration: 480,
       ease: "Cubic.easeIn",
       onComplete: () => {
         this._room.destroy(true);
         this._room = null;
-        this._roomImg = null;
+        this._roomSketch = null;
         this._buildSky(0); // start with the iris closed
         const iris = { r: 0 };
         this.tweens.add({
@@ -472,22 +1301,76 @@ class TelescopeScene extends Phaser.Scene {
       }
     }
 
-    // brass bezel
-    g.lineStyle(R * 0.11, 0x241f14, 1);
-    g.strokeCircle(cx, cy, R + R * 0.055);
-    g.lineStyle(R * 0.06, 0x6a5a34, 1);
-    g.strokeCircle(cx, cy, R + R * 0.02);
-    g.lineStyle(2, 0xa89252, 0.7);
-    g.strokeCircle(cx, cy, R + R * 0.085);
-    // bezel glint
-    g.lineStyle(2, 0xe8d9a0, 0.35);
+    // ── silvered bezel with TWO stacked graduated rings ──
+    // band radii: inner dial hugs the glass, outer dial sits above it
+    const in0 = R * 1.008;
+    const in1 = R * 1.052;
+    const out0 = R * 1.062;
+    const out1 = R * 1.118;
+
+    // metal base under everything
+    g.lineStyle(R * 0.13, 0x1c1f24, 1);
+    g.strokeCircle(cx, cy, (in0 + out1) / 2);
+    // inner band: darker silver
+    g.lineStyle(in1 - in0, 0x8d949e, 1);
+    g.strokeCircle(cx, cy, (in0 + in1) / 2);
+    // outer band: brighter silver
+    g.lineStyle(out1 - out0, 0xb9bfc8, 1);
+    g.strokeCircle(cx, cy, (out0 + out1) / 2);
+    // machined lips and the groove separating the two dials
+    g.lineStyle(1.6, 0xe4e8ee, 0.85).strokeCircle(cx, cy, out1 + 1.5);
+    g.lineStyle(1.4, 0x51565e, 0.95).strokeCircle(cx, cy, (in1 + out0) / 2);
+    g.lineStyle(1.3, 0xe4e8ee, 0.5).strokeCircle(cx, cy, in0 - 1);
+
+    // outer dial graduations: every 5°, engraved dark, bold every 30°
+    for (let deg = 0; deg < 360; deg += 5) {
+      const rad = Phaser.Math.DegToRad(deg);
+      const major = deg % 30 === 0;
+      const rA = out1 - 1;
+      const rB = major ? out0 + 1 : out0 + (out1 - out0) * 0.45;
+      g.lineStyle(major ? 2 : 1, 0x14161a, major ? 0.9 : 0.6);
+      g.lineBetween(
+        cx + Math.cos(rad) * rA,
+        cy + Math.sin(rad) * rA,
+        cx + Math.cos(rad) * rB,
+        cy + Math.sin(rad) * rB,
+      );
+    }
+    // inner dial graduations: finer pitch, offset half a step — a second
+    // independent scale, like paired azimuth/declination rings
+    for (let deg = 5; deg < 365; deg += 10) {
+      const rad = Phaser.Math.DegToRad(deg);
+      const major = (deg - 5) % 90 === 0;
+      const rA = in1 - 1;
+      const rB = major ? in0 + 1 : in0 + (in1 - in0) * 0.5;
+      g.lineStyle(major ? 1.8 : 1, 0x14161a, major ? 0.85 : 0.55);
+      g.lineBetween(
+        cx + Math.cos(rad) * rA,
+        cy + Math.sin(rad) * rA,
+        cx + Math.cos(rad) * rB,
+        cy + Math.sin(rad) * rB,
+      );
+    }
+
+    // cold glint sweeping the upper-left of both bands
+    g.lineStyle(2.2, 0xf2f4f8, 0.4);
     g.beginPath();
     g.arc(
       cx,
       cy,
-      R + R * 0.02,
+      (out0 + out1) / 2,
       Phaser.Math.DegToRad(200),
       Phaser.Math.DegToRad(250),
+    );
+    g.strokePath();
+    g.lineStyle(1.6, 0xf2f4f8, 0.25);
+    g.beginPath();
+    g.arc(
+      cx,
+      cy,
+      (in0 + in1) / 2,
+      Phaser.Math.DegToRad(205),
+      Phaser.Math.DegToRad(245),
     );
     g.strokePath();
   }
@@ -931,9 +1814,40 @@ class TelescopeScene extends Phaser.Scene {
 
   // ── Input ─────────────────────────────────────────────────────────────────
 
+  // is the pointer over the sketched telescope (tube, mount or tripod)?
+  _roomScopeHit(p) {
+    if (!this._roomSketch) return false;
+    const W = this._W;
+    const H = this._H;
+    const s = this._roomSketch.scaleX || 1;
+    const ox = this._roomSketch.x;
+    const oy = this._roomSketch.y;
+    const pt = (fx, fy) => ({
+      x: ox + (W * fx - W / 2) * s,
+      y: oy + (H * fy - H / 2) * s,
+    });
+    const distSeg = (P, A, B) => {
+      const abx = B.x - A.x;
+      const aby = B.y - A.y;
+      const t = Phaser.Math.Clamp(
+        ((P.x - A.x) * abx + (P.y - A.y) * aby) / (abx * abx + aby * aby || 1),
+        0,
+        1,
+      );
+      return Math.hypot(P.x - (A.x + abx * t), P.y - (A.y + aby * t));
+    };
+    const segs = [
+      [pt(0.472, 0.505), pt(0.615, 0.345), 34], // the tube
+      [pt(0.535, 0.575), pt(0.465, 0.875), 18], // tripod legs
+      [pt(0.535, 0.575), pt(0.605, 0.875), 18],
+      [pt(0.535, 0.575), pt(0.545, 0.895), 18],
+    ];
+    return segs.some(([A, B, tol]) => distSeg(p, A, B) <= tol);
+  }
+
   _onDown(p) {
     if (this.phase === PHASE.ROOM) {
-      this._enterSky();
+      if (this._roomScopeHit(p)) this._enterSky();
       return;
     }
     if (this.phase !== PHASE.SKY) return;
@@ -947,6 +1861,13 @@ class TelescopeScene extends Phaser.Scene {
   }
 
   _onMove(p) {
+    if (this.phase === PHASE.ROOM) {
+      // hand cursor only over the telescope — that's the way in
+      this.input.setDefaultCursor(
+        this._roomScopeHit(p) ? "pointer" : "default",
+      );
+      return;
+    }
     if (this.phase !== PHASE.SKY || !this._dragging || !this._sky) return;
     const dx = p.x - this._lastX,
       dy = p.y - this._lastY;
@@ -1361,7 +2282,7 @@ class TelescopeScene extends Phaser.Scene {
     this._maskG = null;
     this._scopeGfx = null;
     this._room = null;
-    this._roomImg = null;
+    this._roomSketch = null;
     this._backZone = null;
     this._backParts = null;
     this._stars = null;

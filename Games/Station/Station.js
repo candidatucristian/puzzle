@@ -1,12 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "STATION"  ·  code: EXIT  ·  observation + ordering
 //
-// The last station. A split-flap departures board still turns for trains
-// that will never come. Four rows are somehow still BOARDING — and the old
-// machine has stopped caring about spelling: in each of those four cities
-// one flap landed on a letter that does not belong (the flap visibly
-// sticks and settles crooked). Read the wrong letters in order of
-// departure time:
+// Drawn in the game's pencil-sketch idiom: a hand-ruled departures board
+// hangs from two sketched chains in an empty station. The ledger still
+// updates itself for trains that will never come. Four rows are somehow
+// still BOARDING — and the tired hand that keeps the board stopped caring
+// about spelling: each of those four cities carries one letter that does
+// not belong (it settles crooked, like a slipped pen stroke). Read the
+// wrong letters in order of departure time:
 //
 //   21:03  P[E]RIS   →  E
 //   22:07  MO[X]COW  →  X
@@ -14,11 +15,11 @@
 //   22:41  GENE[T]A  →  T
 //
 // Row order on the board is scrambled, so the times matter.
-// Clicking a row spins its flaps again — the bad flap always stutters.
+// Clicking a row rewrites it — the bad letter always stutters.
 //
-// Everything is drawn in canvas, deterministic, no assets. Same scene
-// contract as the other levels: GAME_LEVELS, initGlobalAudio,
-// canvas_resized, shutdown().
+// All jitter is deterministic (seeded), so the sketch holds still across
+// redraws. Canvas-drawn, WebAudio sounds, same scene contract as the other
+// levels: GAME_LEVELS, initGlobalAudio, canvas_resized, shutdown().
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATION_ROWS = [
@@ -40,6 +41,7 @@ const ST_REMARK_CELLS = 10;
 const ST_COLS = ST_TIME_CELLS + ST_DEST_CELLS + ST_TRACK_CELLS + ST_REMARK_CELLS;
 
 const ST_FLAP_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:";
+const ST_SKETCH = 0xd8d2c4; // the pencil itself
 
 class StationScene extends Phaser.Scene {
   constructor() {
@@ -65,7 +67,7 @@ class StationScene extends Phaser.Scene {
     // Phaser never calls shutdown() by itself — wire it to the scene event
     this.events.once("shutdown", () => this.shutdown());
 
-    this._entered = false; // first build plays the flap cascade
+    this._entered = false; // first build plays the writing cascade
     this._build(this.cameras.main.width, this.cameras.main.height);
 
     this.events.on("canvas_resized", ({ width, height }) => {
@@ -85,6 +87,73 @@ class StationScene extends Phaser.Scene {
     return ST_FLAP_CHARS[Math.floor(Math.random() * ST_FLAP_CHARS.length)];
   }
 
+  // ── the pencil: jittered hand-drawn primitives ─────────────────────────────
+
+  _sketchSeg(rnd, x1, y1, x2, y2, mag) {
+    const pts = [{ x: x1, y: y1 }];
+    const steps = 3;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const off = (rnd() - 0.5) * 2 * mag;
+      pts.push({ x: x1 + dx * t + nx * off, y: y1 + dy * t + ny * off });
+    }
+    pts.push({ x: x2, y: y2 });
+    return pts;
+  }
+
+  _drawPath(g, pts, width, color, alpha) {
+    g.lineStyle(width, color, alpha);
+    for (let i = 0; i < pts.length - 1; i++) {
+      g.lineBetween(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+    }
+  }
+
+  _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
+    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
+      width * 0.6,
+      color,
+      alpha * 0.35,
+    );
+  }
+
+  _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
+    const o = 4; // corner overshoot
+    this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
+  }
+
+  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha) {
+    const steps = 14;
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const jr = r + (rnd() - 0.5) * 1.4;
+      pts.push({ x: cx + Math.cos(a) * jr, y: cy + Math.sin(a) * jr });
+    }
+    this._drawPath(g, pts, width, color, alpha);
+  }
+
+  _dashedSeg(g, x1, y1, x2, y2, color, alpha) {
+    g.lineStyle(1, color, alpha);
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    const step = 10;
+    const ux = (x2 - x1) / len;
+    const uy = (y2 - y1) / len;
+    for (let d = 0; d < len - 4; d += step) {
+      g.lineBetween(x1 + ux * d, y1 + uy * d, x1 + ux * (d + 5), y1 + uy * (d + 5));
+    }
+  }
+
   // ── scene construction ─────────────────────────────────────────────────────
 
   _build(W, H) {
@@ -94,24 +163,24 @@ class StationScene extends Phaser.Scene {
     this._rowSpinning = STATION_ROWS.map(() => false);
 
     // cell size: fit 8 rows vertically and 24 columns horizontally
-    let ch = Math.min(H * 0.058, 46);
+    let ch = Math.min(H * 0.056, 44);
     let cw = ch * 0.78;
-    const cellGap = 3;
-    const groupGap = () => cw * 0.6;
+    const cellGap = 2;
+    const groupGap = () => cw * 0.7;
     const innerW = () => ST_COLS * cw + (ST_COLS - 1) * cellGap + 3 * groupGap();
-    if (innerW() > W * 0.84) {
-      const k = (W * 0.84) / innerW();
+    if (innerW() > W * 0.8) {
+      const k = (W * 0.8) / innerW();
       cw *= k;
       ch *= k;
     }
-    const rowGap = Math.max(6, ch * 0.2);
+    const rowGap = Math.max(6, ch * 0.22);
     const gW = innerW();
-    const headH = ch * 1.35;
+    const headH = ch * 1.3;
     const colHeadH = ch * 0.72;
     const gH = headH + colHeadH + 8 * ch + 7 * rowGap;
-    const pad = cw * 0.85;
+    const pad = cw * 0.9;
     const bx = W / 2 - (gW + pad * 2) / 2;
-    const by = H * 0.53 - (gH + pad * 1.6) / 2;
+    const by = H * 0.55 - (gH + pad * 1.6) / 2;
 
     this._drawRoom(W, H, bx, by, gW + pad * 2, gH + pad * 1.6);
     this._drawBoard(W, H, bx, by, gW, gH, pad, cw, ch, cellGap, rowGap, headH, colHeadH, groupGap());
@@ -122,63 +191,66 @@ class StationScene extends Phaser.Scene {
 
     if (!this._entered) {
       this._entered = true;
-      this._cascade(); // opening ripple, flaps spin in from blank
+      this._cascade(); // opening ripple: the board writes itself in
     }
   }
 
-  // dark tiled station wall, platform floor, hanging lamp glow
+  // the sketched hall: wireframe walls, a bench, a suitcase left behind
   _drawRoom(W, H, bx, by, bw, bh) {
-    const bg = this.add.graphics().setDepth(-14);
-    bg.fillGradientStyle(0x232220, 0x26241f, 0x121110, 0x151412, 1);
-    bg.fillRect(0, 0, W, H);
+    const g = this.add.graphics().setDepth(-14);
+    g.fillGradientStyle(0x0e1014, 0x101318, 0x07080b, 0x090a0d, 1);
+    g.fillRect(0, 0, W, H);
 
-    // glazed subway tiles — deterministic grid with worn joints
     const rnd = this._rng(9091);
-    const tw = Math.max(54, W / 22);
-    const th = tw * 0.42;
-    bg.lineStyle(1, 0x000000, 0.22);
-    const floorY = H * 0.82;
-    for (let y = 0, row = 0; y < floorY; y += th, row++) {
-      bg.lineBetween(0, y, W, y);
-      const off = (row % 2) * (tw / 2);
-      for (let x = -tw; x < W + tw; x += tw) {
-        bg.lineBetween(x + off, y, x + off, Math.min(y + th, floorY));
-      }
+    const floorY = H * 0.925; // below the board's bottom edge — never through it
+    const cwx1 = W * 0.07;
+    const cwx2 = W * 0.93;
+    // corner verticals + ceiling hints
+    this._pencilSeg(g, rnd, cwx1, H * 0.05, cwx1, floorY, 1, ST_SKETCH, 0.1, 2.4);
+    this._pencilSeg(g, rnd, cwx2, H * 0.05, cwx2, floorY, 1, ST_SKETCH, 0.1, 2.4);
+    this._pencilSeg(g, rnd, 0, H * 0.03, cwx1, H * 0.05, 1, ST_SKETCH, 0.08, 2);
+    this._pencilSeg(g, rnd, W, H * 0.03, cwx2, H * 0.05, 1, ST_SKETCH, 0.08, 2);
+    // floor
+    this._pencilSeg(g, rnd, 0, floorY, W, floorY, 1.4, ST_SKETCH, 0.22, 2);
+    this._pencilSeg(g, rnd, 0, floorY + 5, W, floorY + 5, 1, ST_SKETCH, 0.1, 2);
+    // platform edge line, worn
+    this._dashedSeg(g, 0, floorY + (H - floorY) * 0.5, W, floorY + (H - floorY) * 0.5, ST_SKETCH, 0.18);
+    // faint tile joints on the wall, hand-ruled
+    for (let i = 0; i < 4; i++) {
+      const y = H * (0.18 + i * 0.16);
+      this._pencilSeg(g, rnd, W * 0.03, y, W * 0.97, y + (rnd() - 0.5) * 8, 1, ST_SKETCH, 0.045, 2.6);
     }
-    // faint tile sheen patches
-    bg.fillStyle(0x3a3833, 0.14);
-    for (let i = 0; i < 14; i++) {
-      const x = rnd() * W;
-      const y = rnd() * floorY * 0.9;
-      bg.fillRect(x, y, tw * (0.4 + rnd() * 0.5), 2 + rnd() * 3);
-    }
 
-    // platform floor
-    bg.fillGradientStyle(0x141311, 0x171512, 0x0b0a09, 0x0d0c0a, 1);
-    bg.fillRect(0, floorY, W, H - floorY);
-    // worn safety line along the platform edge
-    bg.fillStyle(0xd8d2c4, 0.16);
-    bg.fillRect(0, floorY + (H - floorY) * 0.42, W, 5);
-    bg.lineStyle(1, 0x000000, 0.4);
-    bg.lineBetween(0, floorY, W, floorY);
+    // a bench, bottom-left — seat, back, legs, a few slats
+    const bxx = W * 0.035;
+    const bwd = W * 0.095;
+    const seatY = floorY - H * 0.055;
+    this._pencilSeg(g, rnd, bxx, seatY, bxx + bwd, seatY, 1.5, ST_SKETCH, 0.35, 1.6);
+    this._pencilSeg(g, rnd, bxx, seatY + 5, bxx + bwd, seatY + 5, 1, ST_SKETCH, 0.2, 1.6);
+    this._pencilSeg(g, rnd, bxx + 4, seatY - H * 0.05, bxx + bwd - 4, seatY - H * 0.05, 1.3, ST_SKETCH, 0.3, 1.6); // backrest
+    this._pencilSeg(g, rnd, bxx + 2, seatY, bxx + 4, seatY - H * 0.05, 1.1, ST_SKETCH, 0.25, 1);
+    this._pencilSeg(g, rnd, bxx + bwd - 2, seatY, bxx + bwd - 4, seatY - H * 0.05, 1.1, ST_SKETCH, 0.25, 1);
+    this._pencilSeg(g, rnd, bxx + 6, seatY, bxx + 6, floorY, 1.2, ST_SKETCH, 0.3, 1);
+    this._pencilSeg(g, rnd, bxx + bwd - 6, seatY, bxx + bwd - 6, floorY, 1.2, ST_SKETCH, 0.3, 1);
 
-    // hanging lamp above the board — warm cone, painted once, breathes softly
-    const lampX = W / 2;
-    const lampY = by - Math.max(26, H * 0.05);
-    const lamp = this.add.graphics().setDepth(-10);
-    lamp.fillStyle(0x0a0a0a, 1);
-    lamp.fillRect(lampX - 1.5, 0, 3, lampY - 8); // pendant stem
-    lamp.fillStyle(0x1c1b18, 1);
-    lamp.fillRoundedRect(lampX - 46, lampY - 10, 92, 12, 5); // shade
-    lamp.fillStyle(0xffe9c0, 0.85);
-    lamp.fillRoundedRect(lampX - 38, lampY - 2, 76, 4, 2); // tube
+    // a suitcase, bottom-right — someone stopped waiting
+    const sx = W * 0.905;
+    const sy = floorY - H * 0.06;
+    const sw = W * 0.05;
+    const shh = H * 0.055;
+    this._pencilRect(g, rnd, sx, sy, sw, shh, 1.3, ST_SKETCH, 0.3, 1.6);
+    this._pencilSeg(g, rnd, sx + sw * 0.38, sy, sx + sw * 0.36, sy - 8, 1.1, ST_SKETCH, 0.3, 0.6);
+    this._pencilSeg(g, rnd, sx + sw * 0.62, sy, sx + sw * 0.64, sy - 8, 1.1, ST_SKETCH, 0.3, 0.6);
+    this._pencilSeg(g, rnd, sx + sw * 0.36, sy - 8, sx + sw * 0.64, sy - 8, 1.1, ST_SKETCH, 0.3, 0.6);
+    this._pencilSeg(g, rnd, sx, sy + shh * 0.5, sx + sw, sy + shh * 0.5, 1, ST_SKETCH, 0.15, 1);
 
-    this._glow = this.add.graphics().setDepth(-9);
-    this._glow.fillGradientStyle(0xffe9c0, 0xffe9c0, 0x000000, 0x000000, 0.13, 0.13, 0, 0);
-    this._glow.fillRect(bx - 30, lampY, bw + 60, by - lampY + bh * 0.8);
+    // a soft pool of light over the board — bone, not warm; it breathes
+    this._glow = this.add.graphics().setDepth(-10);
+    this._glow.fillGradientStyle(ST_SKETCH, ST_SKETCH, 0x000000, 0x000000, 0.06, 0.06, 0, 0);
+    this._glow.fillRect(bx - 30, by - H * 0.08, bw + 60, bh * 0.9);
     this.tweens.add({
       targets: this._glow,
-      alpha: 0.82,
+      alpha: 0.75,
       duration: 3400,
       yoyo: true,
       repeat: -1,
@@ -192,7 +264,7 @@ class StationScene extends Phaser.Scene {
         if (Math.random() < 0.5) return;
         this.tweens.add({
           targets: this._glow,
-          alpha: 0.55,
+          alpha: 0.5,
           duration: 70,
           yoyo: true,
           repeat: 1,
@@ -204,58 +276,47 @@ class StationScene extends Phaser.Scene {
   _drawBoard(W, H, bx, by, gW, gH, pad, cw, ch, cellGap, rowGap, headH, colHeadH, groupGap) {
     const bw = gW + pad * 2;
     const bh = gH + pad * 1.6;
+    const g = this.add.graphics().setDepth(-6);
+    const rnd = this._rng(3131);
 
-    // wall shadow behind the housing
-    const sh = this.add.graphics().setDepth(-7);
-    sh.fillStyle(0x000000, 0.45);
-    sh.fillRoundedRect(bx + 8, by + 12, bw, bh, 16);
-
-    // housing
-    const hs = this.add.graphics().setDepth(-6);
-    hs.fillGradientStyle(0x232630, 0x272a34, 0x101218, 0x13151b, 1);
-    hs.fillRoundedRect(bx, by, bw, bh, 16);
-    hs.lineStyle(2, 0x05060a, 1);
-    hs.strokeRoundedRect(bx, by, bw, bh, 16);
-    hs.lineStyle(1, 0x4a4f5c, 0.35);
-    hs.strokeRoundedRect(bx + 3, by + 3, bw - 6, bh - 6, 13);
-    // corner bolts
-    hs.fillStyle(0x4e5461, 1);
-    const bo = 14;
-    for (const [cxx, cyy] of [
-      [bx + bo, by + bo],
-      [bx + bw - bo, by + bo],
-      [bx + bo, by + bh - bo],
-      [bx + bw - bo, by + bh - bo],
-    ]) {
-      hs.fillCircle(cxx, cyy, 3.4);
-      hs.fillStyle(0x0a0b0f, 1);
-      hs.fillCircle(cxx + 0.8, cyy + 0.9, 1.4);
-      hs.fillStyle(0x4e5461, 1);
+    // hanging chains from the ceiling to the board's top corners
+    for (const hx of [bx + bw * 0.18, bx + bw * 0.82]) {
+      const links = 7;
+      const topY = H * 0.035;
+      for (let i = 0; i < links; i++) {
+        const y1 = topY + ((by - topY) * i) / links;
+        const y2 = topY + ((by - topY) * (i + 1)) / links;
+        this._pencilCircle(g, rnd, hx + (i % 2 ? 1.5 : -1.5), (y1 + y2) / 2, (y2 - y1) * 0.32, 1, ST_SKETCH, 0.3);
+      }
+      // the ring bolted to the board
+      this._pencilCircle(g, rnd, hx, by + 4, 4, 1.2, ST_SKETCH, 0.45);
     }
+
+    // paper tint + doubled hand-drawn frame, slightly askew
+    g.fillStyle(ST_SKETCH, 0.028);
+    g.fillRect(bx, by, bw, bh);
+    this._pencilRect(g, rnd, bx, by, bw, bh, 1.8, ST_SKETCH, 0.55, 2.2);
+    this._pencilRect(g, rnd, bx + 8, by + 8, bw - 16, bh - 16, 1, ST_SKETCH, 0.22, 2);
 
     const x0 = bx + pad;
     let y = by + pad * 0.55;
 
-    // header strip — DEPARTURES
-    const hdr = this.add.graphics().setDepth(-5);
-    hdr.fillStyle(0x0b0c10, 1);
-    hdr.fillRoundedRect(x0, y, gW, headH, 6);
-    hdr.lineStyle(1, 0x000000, 0.8);
-    hdr.strokeRoundedRect(x0, y, gW, headH, 6);
-    hdr.fillStyle(0xd9c9a0, 0.5);
-    hdr.fillRect(x0 + 10, y + headH - 3, gW - 20, 1.5);
+    // header — DEPARTURES, hand-lettered, with a ruled line and a diamond
     this.add
-      .text(x0 + gW / 2, y + headH / 2, "D E P A R T U R E S", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: Math.round(headH * 0.42) + "px",
-        fontStyle: "bold",
-        color: "#e8e2d0",
+      .text(x0 + gW / 2, y + headH / 2 - 4, "D E P A R T U R E S", {
+        fontFamily: '"Special Elite", monospace',
+        fontSize: Math.round(headH * 0.44) + "px",
+        color: "#e8dcc0",
       })
       .setOrigin(0.5)
-      .setAlpha(0.92)
       .setDepth(-4);
+    const ruleY = y + headH - 4;
+    this._pencilSeg(g, rnd, x0 + gW * 0.06, ruleY, x0 + gW * 0.46, ruleY, 1.2, ST_SKETCH, 0.4, 1.6);
+    this._pencilSeg(g, rnd, x0 + gW * 0.54, ruleY, x0 + gW * 0.94, ruleY, 1.2, ST_SKETCH, 0.4, 1.6);
+    g.fillStyle(ST_SKETCH, 0.5);
+    g.fillRect(x0 + gW / 2 - 2, ruleY - 2, 4, 4);
 
-    y += headH + colHeadH * 0.35;
+    y += headH + colHeadH * 0.4;
 
     // column group x-origins
     const gx = [];
@@ -268,14 +329,7 @@ class StationScene extends Phaser.Scene {
     cx += ST_TRACK_CELLS * cw + (ST_TRACK_CELLS - 1) * cellGap + groupGap;
     gx.push(cx); // remarks
 
-    // column headings
-    const colStyle = {
-      fontFamily: "Arial, sans-serif",
-      fontSize: Math.max(10, Math.round(colHeadH * 0.52)) + "px",
-      color: "#8f8975",
-      fontStyle: "bold",
-      letterSpacing: 2,
-    };
+    // column headings, small and dim
     const heads = [
       ["TIME", gx[0], ST_TIME_CELLS],
       ["DESTINATION", gx[1], ST_DEST_CELLS],
@@ -285,14 +339,20 @@ class StationScene extends Phaser.Scene {
     for (const [label, gxx, n] of heads) {
       const gw2 = n * cw + (n - 1) * cellGap;
       this.add
-        .text(gxx + gw2 / 2, y + colHeadH * 0.25, label, colStyle)
-        .setOrigin(0.5, 0.5);
+        .text(gxx + gw2 / 2, y + colHeadH * 0.25, label, {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: Math.max(10, Math.round(colHeadH * 0.5)) + "px",
+          color: "#8f8974",
+        })
+        .setOrigin(0.5, 0.5)
+        .setAlpha(0.85)
+        .setDepth(-4);
     }
 
     y += colHeadH;
 
-    // cells — one flap per character
-    const cellsGfx = this.add.graphics().setDepth(1);
+    // rows — letters written on hand-ruled lines, no metal anywhere
+    const lines = this.add.graphics().setDepth(-5);
     for (let r = 0; r < STATION_ROWS.length; r++) {
       const row = STATION_ROWS[r];
       const rowY = y + r * (ch + rowGap);
@@ -302,17 +362,10 @@ class StationScene extends Phaser.Scene {
         const chars = str.padEnd(nCells, " ").slice(0, nCells);
         for (let i = 0; i < nCells; i++) {
           const x = gxx + i * (cw + cellGap);
-          // flap body
-          cellsGfx.fillGradientStyle(0x2a2d36, 0x2d3039, 0x181a20, 0x1b1d24, 1);
-          cellsGfx.fillRoundedRect(x, rowY, cw, ch, 3);
-          cellsGfx.lineStyle(1, 0x05060a, 0.9);
-          cellsGfx.strokeRoundedRect(x, rowY, cw, ch, 3);
-
           const txt = this.add
             .text(x + cw / 2, rowY + ch / 2, "", {
-              fontFamily: "Arial, sans-serif",
+              fontFamily: '"Special Elite", monospace',
               fontSize: Math.round(ch * 0.62) + "px",
-              fontStyle: "bold",
               color,
             })
             .setOrigin(0.5)
@@ -325,31 +378,30 @@ class StationScene extends Phaser.Scene {
             baseY: rowY + ch / 2,
           });
         }
-        // split line across the group, over the letters
+        // the ruled line each group is written on
         const gw2 = nCells * cw + (nCells - 1) * cellGap;
-        cellsGfx.lineStyle(1, 0x000000, 0.65);
-        cellsGfx.lineBetween(gxx, rowY + ch / 2, gxx + gw2, rowY + ch / 2);
+        this._dashedSeg(lines, gxx, rowY + ch * 0.92, gxx + gw2, rowY + ch * 0.92, ST_SKETCH, 0.22);
       };
 
       const boarding = row.remark === "BOARDING";
-      put(row.time, ST_TIME_CELLS, gx[0], "#b7b1a0");
-      put(row.dest, ST_DEST_CELLS, gx[1], "#e8e2d0", row.wrongIdx);
-      put(row.track, ST_TRACK_CELLS, gx[2], "#b7b1a0");
-      put(row.remark, ST_REMARK_CELLS, gx[3], boarding ? "#d9c9a0" : "#6a6d72");
+      put(row.time, ST_TIME_CELLS, gx[0], "#a9a390");
+      put(row.dest, ST_DEST_CELLS, gx[1], "#e8dcc0", row.wrongIdx);
+      put(row.track, ST_TRACK_CELLS, gx[2], "#a9a390");
+      put(row.remark, ST_REMARK_CELLS, gx[3], boarding ? "#d9c9a0" : "#6a675c");
 
       this._cells.push(rowCells);
 
-      // hover highlight + click-to-respin
+      // hover: a pencil underline slides under the row · click rewrites it
       const zone = this.add
         .zone(x0, rowY, gW, ch)
         .setOrigin(0)
         .setInteractive({ useHandCursor: true })
         .setDepth(5);
       const hl = this.add.graphics().setDepth(0);
+      const rndH = this._rng(5000 + r * 17);
       zone.on("pointerover", () => {
         hl.clear();
-        hl.fillStyle(0xffe9c0, 0.045);
-        hl.fillRoundedRect(x0 - 6, rowY - 3, gW + 12, ch + 6, 4);
+        this._pencilSeg(hl, rndH, x0 - 4, rowY + ch + 2, x0 + gW + 4, rowY + ch + 2, 1.2, ST_SKETCH, 0.4, 1.6);
       });
       zone.on("pointerout", () => hl.clear());
       zone.on("pointerdown", () => this._respinRow(r));
@@ -366,46 +418,43 @@ class StationScene extends Phaser.Scene {
     }
   }
 
-  // station clock on the wall, stopped-calm at 20:47, second hand alive
-  // hangs above the board's left corner so it never collides with it
+  // a pencil station clock, stopped-calm at 20:47, second hand alive
   _drawClock(W, H, bx, by) {
-    const rad = Math.min(Math.min(W, H) * 0.052, (by - 30) / 2.4);
+    // hangs above the board's left corner so it never collides with it
+    const rad = Math.min(Math.min(W, H) * 0.05, (by - 30) / 2.6);
     const cx = bx + rad + 10;
-    const cy = Math.max(rad + 16, by - rad - 26);
+    const cy = Math.max(rad + 18, by - rad - 26);
 
     const g = this.add.graphics().setDepth(-3);
-    g.fillStyle(0x000000, 0.4);
-    g.fillCircle(cx + 3, cy + 5, rad + 6); // shadow
-    g.fillGradientStyle(0x2a2d34, 0x2e313a, 0x14161b, 0x171920, 1);
-    g.fillCircle(cx, cy, rad + 6); // rim
-    g.lineStyle(1.5, 0x05060a, 1);
-    g.strokeCircle(cx, cy, rad + 6);
-    g.fillStyle(0xdcd6c6, 1);
-    g.fillCircle(cx, cy, rad); // face
-    g.fillStyle(0x2a2721, 1);
+    const rnd = this._rng(7722);
+    // doubled sketched rim
+    this._pencilCircle(g, rnd, cx, cy, rad + 5, 1.6, ST_SKETCH, 0.5);
+    this._pencilCircle(g, rnd, cx, cy, rad + 1, 1, ST_SKETCH, 0.25);
+    // hanging stem to the ceiling
+    this._pencilSeg(g, rnd, cx, H * 0.03, cx, cy - rad - 5, 1.1, ST_SKETCH, 0.25, 1.6);
+    // ticks
     for (let i = 0; i < 12; i++) {
       const a = (i / 12) * Math.PI * 2;
-      const r1 = rad * 0.86;
-      const r2 = rad * (i % 3 === 0 ? 0.72 : 0.79);
-      g.fillStyle(0x2a2721, 1);
-      const x1 = cx + Math.cos(a) * r1;
-      const y1 = cy + Math.sin(a) * r1;
-      const x2 = cx + Math.cos(a) * r2;
-      const y2 = cy + Math.sin(a) * r2;
-      g.lineStyle(i % 3 === 0 ? 3 : 1.5, 0x2a2721, 1);
-      g.lineBetween(x1, y1, x2, y2);
+      const r1 = rad * 0.88;
+      const r2 = rad * (i % 3 === 0 ? 0.7 : 0.79);
+      this._pencilSeg(
+        g, rnd,
+        cx + Math.cos(a) * r1, cy + Math.sin(a) * r1,
+        cx + Math.cos(a) * r2, cy + Math.sin(a) * r2,
+        i % 3 === 0 ? 1.6 : 1, ST_SKETCH, i % 3 === 0 ? 0.5 : 0.3, 0.5,
+      );
     }
-    // hands — 20:47
+    // hands — 20:47, drawn like everything else
     const hourA = ((20 + 47 / 60) % 12) * (Math.PI / 6) - Math.PI / 2;
     const minA = (47 / 60) * Math.PI * 2 - Math.PI / 2;
-    g.lineStyle(4, 0x1c1914, 1);
-    g.lineBetween(cx, cy, cx + Math.cos(hourA) * rad * 0.45, cy + Math.sin(hourA) * rad * 0.45);
-    g.lineStyle(3, 0x1c1914, 1);
-    g.lineBetween(cx, cy, cx + Math.cos(minA) * rad * 0.68, cy + Math.sin(minA) * rad * 0.68);
+    this._pencilSeg(g, rnd, cx, cy, cx + Math.cos(hourA) * rad * 0.45, cy + Math.sin(hourA) * rad * 0.45, 2, ST_SKETCH, 0.6, 0.8);
+    this._pencilSeg(g, rnd, cx, cy, cx + Math.cos(minA) * rad * 0.68, cy + Math.sin(minA) * rad * 0.68, 1.4, ST_SKETCH, 0.55, 0.8);
+    g.fillStyle(ST_SKETCH, 0.6);
+    g.fillCircle(cx, cy, 2.2);
 
-    // living second hand
+    // living second hand — a thin graphite needle
     const sec = this.add
-      .rectangle(cx, cy, 1.6, rad * 0.74, 0x8a2f2a, 0.9)
+      .rectangle(cx, cy, 1.2, rad * 0.74, ST_SKETCH, 0.5)
       .setOrigin(0.5, 0.92)
       .setDepth(-2);
     this.tweens.add({
@@ -414,14 +463,6 @@ class StationScene extends Phaser.Scene {
       duration: 60000,
       repeat: -1,
     });
-    const pin = this.add.graphics().setDepth(-1);
-    pin.fillStyle(0x1c1914, 1);
-    pin.fillCircle(cx, cy, 2.6);
-    // glass catch-light
-    pin.lineStyle(1.5, 0xffffff, 0.18);
-    pin.beginPath();
-    pin.arc(cx - rad * 0.25, cy - rad * 0.25, rad * 0.55, Math.PI * 0.9, Math.PI * 1.45);
-    pin.strokePath();
   }
 
   _drawTexts(W, H) {
@@ -436,7 +477,7 @@ class StationScene extends Phaser.Scene {
       .setDepth(20);
 
     this.subText = this.add
-      .text(W / 2, 68, "click a row to spin its flaps", {
+      .text(W / 2, 68, "click a row to rewrite it", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "13px",
         color: "#a8905f",
@@ -470,14 +511,14 @@ class StationScene extends Phaser.Scene {
     vg.fillRect(W - v, 0, v, H);
   }
 
-  // slow dust motes drifting through the lamp light
+  // slow dust motes drifting through the light
   _spawnDust(W, H) {
     const rnd = this._rng(4242);
     for (let i = 0; i < 14; i++) {
       const x = W * 0.3 + rnd() * W * 0.4;
       const y = H * 0.12 + rnd() * H * 0.5;
       const dot = this.add
-        .circle(x, y, 0.8 + rnd() * 1.1, 0xffe9c0, 0.1 + rnd() * 0.16)
+        .circle(x, y, 0.8 + rnd() * 1.1, 0xffffff, 0.08 + rnd() * 0.12)
         .setDepth(-8);
       this.tweens.add({
         targets: dot,
@@ -490,7 +531,7 @@ class StationScene extends Phaser.Scene {
         onRepeat: () => {
           dot.y = H * 0.15 + rnd() * H * 0.55;
           dot.x = W * 0.3 + rnd() * W * 0.4;
-          dot.setAlpha(0.1 + rnd() * 0.16);
+          dot.setAlpha(0.08 + rnd() * 0.12);
         },
       });
     }
@@ -498,7 +539,7 @@ class StationScene extends Phaser.Scene {
 
   // ── flap animation ─────────────────────────────────────────────────────────
 
-  // opening ripple: every flap spins in from blank, left to right
+  // opening ripple: every letter writes itself in, left to right
   _cascade() {
     for (let r = 0; r < this._cells.length; r++) {
       const rowCells = this._cells[r];
@@ -566,7 +607,7 @@ class StationScene extends Phaser.Scene {
     this.time.delayedCall(startDelay, () => step(cycles));
   }
 
-  // the bad flap: catches mid-turn, drops with a dull knock, seats crooked
+  // the bad letter: catches mid-write, drops with a dull knock, seats crooked
   _stutter(cell) {
     const txt = cell.txt;
     this.tweens.add({

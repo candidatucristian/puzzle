@@ -1,22 +1,27 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Level — "BINARY TREE"  ·  code: BADGE  ·  chamber XII  ·  fork, then read
+// Level — "BINARY TREE"  ·  code: CABBAGE  ·  chamber XII  ·  fork, then read
 //
-// Drawn in the game's pencil-sketch idiom: a tree of 8 leaves (A–H) reached
-// from START by three forks each — left or right. A note pinned above the
-// tree lists five paths:  LLR  LLL  LRR  RRL  RLL
+// Drawn in the game's pencil-sketch idiom: a tree of 8 lettered leaves
+// (shuffled — NOT alphabetical) reached from START by three forks each.
+// A note pinned above the tree lists seven paths:
 //
-// Tap a path to walk it — a pencilled point travels fork by fork and the
-// leaf it lands on catches the light for a moment. Reading each leaf in the
-// note's own order spells the access code:
+//   RLR  LRL  LLL  LLL  LRL  LLR  LRR
 //
-//   LLR→B · LLL→A · LRR→D · RRL→G · RLL→E   →   BADGE
+// Nothing in the scene explains the notation and nothing is interactive —
+// the player must realise on their own that each letter picks a branch
+// (L = left, R = right) and walk the tree by eye. Leaf order, root-first,
+// L=0/R=1:  B G A E D C H F
+//
+//   RLR→C · LRL→A · LLL→B · LLL→B · LRL→A · LLR→G · LRR→E   →   CABBAGE
 //
 // All jitter is deterministic (seeded), so the sketch holds still across
 // redraws. Canvas-drawn, WebAudio sounds, same scene contract as the other
 // levels: GAME_LEVELS, initGlobalAudio, canvas_resized, shutdown().
 // ─────────────────────────────────────────────────────────────────────────────
 
-const BT_CODES = ["LLR", "LLL", "LRR", "RRL", "RLL"];
+const BT_CODES = ["RLR", "LRL", "LLL", "LLL", "LRL", "LLR", "LRR"];
+// leaf letters, left to right — deliberately out of alphabetical order
+const BT_LEAVES = ["B", "G", "A", "E", "D", "C", "H", "F"];
 const BT_SKETCH = 0xd8d2c4; // the pencil itself
 
 class BinaryTreeScene extends Phaser.Scene {
@@ -42,11 +47,6 @@ class BinaryTreeScene extends Phaser.Scene {
     if (window.initGlobalAudio) window.initGlobalAudio(this);
     this.events.once("shutdown", () => this.shutdown());
     this.input.mouse.disableContextMenu();
-
-    // walked-path progress survives resizes
-    this._traced = new Set();
-    this._solved = false;
-    this._tracing = false;
 
     this._build(this.cameras.main.width, this.cameras.main.height);
 
@@ -149,8 +149,6 @@ class BinaryTreeScene extends Phaser.Scene {
     this._makeChips(W, depthY[0]);
     this._drawVignette(W, H);
     this._spawnDust(W, H);
-
-    if (this._solved) this._applySolved(true);
   }
 
   // the sketched wall the tree is pinned to
@@ -240,13 +238,13 @@ class BinaryTreeScene extends Phaser.Scene {
       }
     }
 
-    // leaves — round tags, lettered A..H left to right
+    // leaves — round tags, letters deliberately out of alphabetical order
     this._leafLabels = [];
     const rndL = this._rng(6601);
     for (let i = 0; i < 8; i++) {
       const n = this._nodes[3][i];
       this._pencilCircle(g, rndL, n.x, n.y, 15, 1.3, BT_SKETCH, 0.6);
-      const letter = String.fromCharCode(65 + i);
+      const letter = BT_LEAVES[i];
       const t = this.add
         .text(n.x, n.y, letter, {
           fontFamily: '"Special Elite", monospace',
@@ -260,9 +258,9 @@ class BinaryTreeScene extends Phaser.Scene {
     this._nodeGfx = g;
   }
 
-  // the pinned note above START, listing the five paths
+  // the pinned note above START, listing the seven paths
   _drawNote(W, rootY) {
-    const nw = Math.min(W * 0.46, 520);
+    const nw = Math.min(W * 0.56, 660);
     const nh = 58;
     const nx = W / 2 - nw / 2;
     const ny = rootY - 120;
@@ -288,16 +286,6 @@ class BinaryTreeScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(20);
 
-    this.subText = this.add
-      .text(W / 2, 68, "tap a path above to walk it — left, then left, then right", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "13px",
-        color: "#a8905f",
-      })
-      .setOrigin(0.5)
-      .setAlpha(0.85)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(W - 30, 28, "Level 12", {
         fontFamily: '"Special Elite", monospace',
@@ -310,7 +298,7 @@ class BinaryTreeScene extends Phaser.Scene {
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
   }
 
-  // ── the five clickable paths ────────────────────────────────────────────────
+  // ── the seven written paths — just ink on the note, nothing to click ───────
 
   _makeChips(W, rootY) {
     this._chips = [];
@@ -318,129 +306,18 @@ class BinaryTreeScene extends Phaser.Scene {
     const cx0 = r.x;
     const cw = r.w / BT_CODES.length;
     for (let i = 0; i < BT_CODES.length; i++) {
-      const code = BT_CODES[i];
       const cx = cx0 + cw * (i + 0.5);
       const cy = r.y + r.h / 2;
       const t = this.add
-        .text(cx, cy, code, {
+        .text(cx, cy, BT_CODES[i], {
           fontFamily: '"Special Elite", monospace',
           fontSize: "18px",
           color: "#c9bfa4",
           letterSpacing: 2,
         })
         .setOrigin(0.5)
-        .setDepth(-2)
-        .setInteractive({ useHandCursor: true });
-
-      t.on("pointerover", () => {
-        if (!this._traced.has(i)) t.setColor("#e8dcc0");
-      });
-      t.on("pointerout", () => {
-        if (!this._traced.has(i)) t.setColor("#c9bfa4");
-      });
-      t.on("pointerdown", () => this._traceCode(i));
-
+        .setDepth(-2);
       this._chips.push(t);
-    }
-  }
-
-  _chainForCode(code) {
-    const chain = [this._nodes[0][0]];
-    let idx = 0;
-    for (let k = 0; k < code.length; k++) {
-      idx = idx * 2 + (code[k] === "R" ? 1 : 0);
-      chain.push(this._nodes[k + 1][idx]);
-    }
-    return chain;
-  }
-
-  _traceCode(i) {
-    if (this._tracing) return;
-    const code = BT_CODES[i];
-    const chain = this._chainForCode(code);
-    this._tracing = true;
-    this._paperTick(0.12);
-
-    const dot = this.add
-      .circle(chain[0].x, chain[0].y, 5, 0xd9c9a0, 0.95)
-      .setDepth(25);
-    const glow = this.add
-      .circle(chain[0].x, chain[0].y, 9, 0xd9c9a0, 0.25)
-      .setDepth(24);
-
-    let step = 0;
-    const nextStep = () => {
-      if (step >= chain.length - 1) {
-        dot.destroy();
-        glow.destroy();
-        this._flashLeaf(this._leafIndexFor(code));
-        this._tracing = false;
-        this._traced.add(i);
-        this._chips[i].setColor("#d9c9a0");
-        this._checkAllTraced();
-        return;
-      }
-      const to = chain[step + 1];
-      this.tweens.add({
-        targets: [dot, glow],
-        x: to.x,
-        y: to.y,
-        duration: 260,
-        ease: "Quad.easeInOut",
-        onComplete: () => {
-          step++;
-          nextStep();
-        },
-      });
-    };
-    nextStep();
-  }
-
-  _leafIndexFor(code) {
-    return parseInt(code.replace(/L/g, "0").replace(/R/g, "1"), 2);
-  }
-
-  _flashLeaf(leafIndex) {
-    const t = this._leafLabels[leafIndex];
-    if (!t) return;
-    this._paperTick(0.16);
-    this.tweens.add({
-      targets: t,
-      scale: { from: 1, to: 1.5 },
-      duration: 180,
-      yoyo: true,
-      ease: "Quad.easeOut",
-    });
-    const prevColor = t.style.color;
-    t.setColor("#f0e2ba");
-    this.time.delayedCall(420, () => {
-      if (!this._solved) t.setColor(prevColor);
-    });
-  }
-
-  _checkAllTraced() {
-    if (this._solved || this._traced.size < BT_CODES.length) return;
-    this._solved = true;
-    this._chime();
-    this._applySolved();
-  }
-
-  _applySolved(instant) {
-    for (const t of this._leafLabels) t.setColor("#d9c9a0");
-    for (const t of this._chips) t.setColor("#d9c9a0");
-    this.statusText.setText("Five paths walked. Read the leaves, in order.");
-    this.statusText.setColor("#d9c9a0");
-    if (!instant) {
-      this.subText.setAlpha(0);
-      this.tweens.add({
-        targets: this._leafLabels,
-        scale: { from: 1, to: 1.12 },
-        yoyo: true,
-        duration: 260,
-        ease: "Quad.easeOut",
-      });
-    } else {
-      this.subText.setAlpha(0);
     }
   }
 

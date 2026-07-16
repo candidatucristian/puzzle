@@ -15,11 +15,6 @@ class ModemScene extends Phaser.Scene {
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
     this.load.audio("error", "assets/sounds/global/error.mp3");
     this.load.audio("hardware", "assets/sounds/Modem/hardwaresound.mp3");
-    // Load SVG as text so we can inline it and manipulate individual LED elements
-    this.load.text(
-      "router_svg",
-      "assets/images/Modem/wireless-router.svg",
-    );
   }
 
   create() {
@@ -30,8 +25,7 @@ class ModemScene extends Phaser.Scene {
 
     this.isSolved = false;
     this._timerEvents = [];
-    this._svgContainer = null;
-    this._ledEls = null;
+    this._ledDots = null;
 
     // Dark background only
     this._bgGfx = this.add.graphics().setDepth(0);
@@ -44,10 +38,71 @@ class ModemScene extends Phaser.Scene {
     this.events.on("canvas_resized", ({ width, height }) => {
       this._drawBg(width, height);
       this._cancelAnimation();
-      this._destroySVG();
+      this._destroyRouter();
       this._buildScene(width, height);
       this._startAnimation();
     });
+  }
+
+  // ── the pencil: jittered hand-drawn primitives ─────────────────────────────
+
+  _rng(seed) {
+    let s = seed;
+    return () => (s = (s * 16807) % 2147483647) / 2147483647;
+  }
+
+  _sketchSeg(rnd, x1, y1, x2, y2, mag) {
+    const pts = [{ x: x1, y: y1 }];
+    const steps = 3;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const off = (rnd() - 0.5) * 2 * mag;
+      pts.push({ x: x1 + dx * t + nx * off, y: y1 + dy * t + ny * off });
+    }
+    pts.push({ x: x2, y: y2 });
+    return pts;
+  }
+
+  _drawPath(g, pts, width, color, alpha) {
+    g.lineStyle(width, color, alpha);
+    for (let i = 0; i < pts.length - 1; i++) {
+      g.lineBetween(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+    }
+  }
+
+  _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
+    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
+      width * 0.6,
+      color,
+      alpha * 0.35,
+    );
+  }
+
+  _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
+    const o = 4; // corner overshoot
+    this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
+  }
+
+  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha) {
+    const steps = 12;
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const jr = r + (rnd() - 0.5) * 1.2;
+      pts.push({ x: cx + Math.cos(a) * jr, y: cy + Math.sin(a) * jr });
+    }
+    this._drawPath(g, pts, width, color, alpha);
   }
 
   // ── Background: dark air, full of signals ───────────────────────────────────
@@ -120,13 +175,13 @@ class ModemScene extends Phaser.Scene {
       }),
     );
 
-    // antenna tips (same maths as _injectSVG) — where the pulses are born
+    // antenna tips (same maths as _drawRouter) — where the pulses are born
     const dW = Math.min(W * 0.78, 520);
     const dH = dW * (224.68 / 300);
     const ry = (H - dH) / 2 - H * 0.04;
     this._tips = [
       { x: W / 2 - dW * 0.24, y: ry + dH * 0.14 },
-      { x: W / 2, y: ry + dH * 0.08 },
+      { x: W / 2, y: ry + dH * 0.2 },
       { x: W / 2 + dW * 0.24, y: ry + dH * 0.14 },
     ];
 
@@ -308,172 +363,200 @@ class ModemScene extends Phaser.Scene {
   // ── Scene Build ─────────────────────────────────────────────────────────────
 
   _buildScene(W, H) {
-    this._injectSVG(W, H);
+    this._drawRouter(W, H);
   }
 
   replay() {
     this._startAnimation();
   }
 
-  // ── SVG Injection ───────────────────────────────────────────────────────────
+  // ── The router, hand-sketched in pencil ─────────────────────────────────────
+  // Same footprint the old SVG used, so the antenna pulses still line up.
+  // The 13 LEDs are the only living colour — they carry the puzzle.
 
-  _injectSVG(W, H) {
-    const svgText = this.cache.text.get("router_svg");
-    if (!svgText) return;
+  _drawRouter(W, H) {
+    const SK = 0xd8d2c4;
+    const dW = Math.min(W * 0.78, 520);
+    const dH = dW * (224.68 / 300);
+    const x = (W - dW) / 2;
+    const y = (H - dH) / 2 - H * 0.04; // slightly above center
 
-    // SVG native dimensions from viewBox
-    const SVG_W = 300;
-    const SVG_H = 224.68;
+    const objs = [];
+    this._routerObjs = objs;
+    const g = this.add.graphics().setDepth(2);
+    objs.push(g);
+    const rnd = this._rng(6006);
 
-    // Fit SVG responsively inside the canvas
-    const displayW = Math.min(W * 0.78, 520);
-    const displayH = displayW * (SVG_H / SVG_W);
-    const x = (W - displayW) / 2;
-    const y = (H - displayH) / 2 - H * 0.04; // slightly above center
+    // ── the first version's flat face, lowered, with a receding top:
+    // front face wide, back edge shorter (a trapeze top seen from above),
+    // round LEDs, engraved name, and the wifi mark hanging over it all ──
+    const bx = x + dW * 0.08;
+    const bw = dW * 0.84;
+    const byTop = y + dH * 0.52;
+    const bh = dH * 0.34; // lower than before — a slab, not a radio
+    const inset = bw * 0.07; // how much the back edge pulls in, per side
+    const ddy = -dH * 0.11; // how far the top face recedes upward
 
-    const wrap = document.createElement("div");
-    wrap.id = "br-svg-wrap";
-    wrap.className = "scene-dom-overlay";
-    wrap.innerHTML = svgText;
+    // top face — a trapeze: full-width at the front, shorter at the back
+    g.fillStyle(0x1a1e25, 0.96);
+    g.fillPoints(
+      [
+        { x: bx, y: byTop },
+        { x: bx + bw, y: byTop },
+        { x: bx + bw - inset, y: byTop + ddy },
+        { x: bx + inset, y: byTop + ddy },
+      ],
+      true,
+    );
+    g.fillStyle(SK, 0.055);
+    g.fillPoints(
+      [
+        { x: bx, y: byTop },
+        { x: bx + bw, y: byTop },
+        { x: bx + bw - inset, y: byTop + ddy },
+        { x: bx + inset, y: byTop + ddy },
+      ],
+      true,
+    );
+    // front face
+    g.fillStyle(0x14171d, 0.97);
+    g.fillRect(bx, byTop, bw, bh);
+    g.fillStyle(SK, 0.04);
+    g.fillRect(bx, byTop, bw, bh);
 
-    const svg = wrap.querySelector("svg");
-    svg.setAttribute("width", displayW);
-    svg.setAttribute("height", displayH);
+    // pencil edges — front rectangle + the two receding sides + back edge
+    this._pencilRect(g, rnd, bx, byTop, bw, bh, 1.7, SK, 0.55, 2);
+    this._pencilSeg(g, rnd, bx, byTop, bx + inset, byTop + ddy, 1.3, SK, 0.45, 1);
+    this._pencilSeg(g, rnd, bx + bw, byTop, bx + bw - inset, byTop + ddy, 1.3, SK, 0.45, 1);
+    this._pencilSeg(g, rnd, bx + inset, byTop + ddy, bx + bw - inset, byTop + ddy, 1.5, SK, 0.5, 1.6);
 
-    // Add LEIBNIZ label engraved into the router body (y≈131-175 in viewBox).
-    // Debossed look = dark inner-shadow along the top edge of the groove +
-    // a light catch-highlight along the bottom edge + a floor fill that
-    // matches the dark charcoal body so the text reads only via its 3D bevel.
-    this._addEngravedLabel(svg, 150, 155, "W. LEIBNIZ");
-
-    Object.assign(wrap.style, {
-      position: "absolute",
-      left: x + "px",
-      top: y + "px",
-      width: displayW + "px",
-      height: displayH + "px",
-      pointerEvents: "none",
-    });
-
-    const container = document.getElementById("game-container");
-    container.appendChild(wrap);
-    this._svgContainer = wrap;
-    this._svgLayout = { x, y, w: displayW, h: displayH };
-
-    // LED IDs left-to-right as they appear in the SVG (13 total)
-    // 0-4  → letter counter (light up RED left-to-right as each letter completes)
-    // 5-12 → binary signal  (light up GREEN right-to-left for each bit)
-    const LED_IDS = [
-      "path5155",
-      "path5239",
-      "path5241",
-      "path5243",
-      "path5245", // 0-4  letter counter
-      "path5247",
-      "path5249",
-      "path5251",
-      "path5253", // 5-8  binary bits 7→4
-      "path5255",
-      "path5257",
-      "path5259",
-      "path5261", // 9-12 binary bits 3→0
-    ];
-
-    this._ledEls = LED_IDS.map((id) => {
-      const el = wrap.querySelector("#" + id);
-      if (el) this._applyLedStyle(el, "off");
-      return el;
-    });
-  }
-
-  // Builds a debossed/engraved text label out of stacked SVG <text> layers so
-  // the model name looks molded into the router's plastic rather than printed on.
-  _addEngravedLabel(svg, x, y, str) {
-    const SVGNS = "http://www.w3.org/2000/svg";
-
-    // dy: vertical offset in viewBox units; light from top-left, so the top
-    // wall of the groove is in shadow and the bottom wall catches light.
-    const layers = [
-      // deep inner shadow along the top edge of the groove
-      { dx: 0,    dy: -0.7,  fill: "#000000", opacity: 0.9,  blur: 0.3 },
-      // secondary soft shadow for depth
-      { dx: -0.3, dy: -0.3,  fill: "#080807", opacity: 0.6,  blur: 0.5 },
-      // lit lower lip of the groove — brighter so the letters catch the eye
-      { dx: 0,    dy: 0.85,  fill: "#9a9d8e", opacity: 0.95, blur: 0.3 },
-      // faint outer bottom bloom of the highlight
-      { dx: 0,    dy: 1.2,   fill: "#5c5e52", opacity: 0.45, blur: 0.6 },
-      // groove floor — lifted off the body a touch so the text stays legible
-      { dx: 0,    dy: 0,     fill: "#34332a", opacity: 1,    blur: 0 },
-    ];
-
-    const make = ({ dx, dy, fill, opacity, blur }) => {
-      const t = document.createElementNS(SVGNS, "text");
-      t.setAttribute("x", x + dx);
-      t.setAttribute("y", y + dy);
-      t.setAttribute("text-anchor", "middle");
-      t.setAttribute("font-family", "monospace");
-      t.setAttribute("font-size", "9");
-      t.setAttribute("font-weight", "bold");
-      t.setAttribute("letter-spacing", "3");
-      t.setAttribute("fill", fill);
-      t.setAttribute("opacity", opacity);
-      if (blur) t.style.filter = `blur(${blur}px)`;
-      t.style.pointerEvents = "none";
-      t.textContent = str;
-      return t;
-    };
-
-    // Append shadow/highlight layers first, groove floor last (on top).
-    layers.forEach((cfg) => svg.appendChild(make(cfg)));
-  }
-
-  _destroySVG() {
-    if (this._svgContainer) {
-      this._svgContainer.remove();
-      this._svgContainer = null;
+    // vent hatching on the top face, right side
+    for (let i = 0; i < 6; i++) {
+      const t0 = 0.25 + i * 0.11;
+      const vx = bx + bw * 0.68 + i * (bw * 0.028);
+      this._pencilSeg(g, rnd, vx, byTop - 3, vx - inset * 0.5, byTop + ddy + 3, 1, SK, 0.16, 0.6);
     }
-    this._ledEls = null;
+
+    // the engraved model name — the clue stays, on the front face
+    const label = this.add
+      .text(bx + bw / 2, byTop + bh * 0.74, "W .   L E I B N I Z", {
+        fontFamily: '"Special Elite", monospace',
+        fontSize: Math.max(12, Math.round(dH * 0.05)) + "px",
+        color: "#8f8974",
+      })
+      .setOrigin(0.5)
+      .setAlpha(0.8)
+      .setDepth(3);
+    objs.push(label);
+
+    // feet
+    this._pencilSeg(g, rnd, bx + bw * 0.14, byTop + bh, bx + bw * 0.14, byTop + bh + 8, 1.4, SK, 0.45, 0.6);
+    this._pencilSeg(g, rnd, bx + bw * 0.86, byTop + bh, bx + bw * 0.86, byTop + bh + 8, 1.4, SK, 0.45, 0.6);
+    this._pencilSeg(g, rnd, bx + bw * 0.10, byTop + bh + 8, bx + bw * 0.18, byTop + bh + 8, 1.2, SK, 0.4, 0.6);
+    this._pencilSeg(g, rnd, bx + bw * 0.82, byTop + bh + 8, bx + bw * 0.90, byTop + bh + 8, 1.2, SK, 0.4, 0.6);
+
+    // ── two rod antennas on the back edge, and the wifi mark between them ──
+    const backY = byTop + ddy;
+    const tips = [
+      { x: W / 2 - dW * 0.24, y: y + dH * 0.14 },
+      { x: W / 2 + dW * 0.24, y: y + dH * 0.14 },
+    ];
+    const bases = [
+      { x: bx + inset + (bw - 2 * inset) * 0.16, y: backY },
+      { x: bx + inset + (bw - 2 * inset) * 0.84, y: backY },
+    ];
+    for (let i = 0; i < 2; i++) {
+      const b = bases[i];
+      const t = tips[i];
+      this._pencilRect(g, rnd, b.x - 5, b.y - 8, 10, 9, 1.1, SK, 0.4, 0.7);
+      this._pencilSeg(g, rnd, b.x - 1.6, b.y - 7, t.x - 1.6, t.y + 4, 1.5, SK, 0.55, 1.2);
+      this._pencilSeg(g, rnd, b.x + 1.6, b.y - 7, t.x + 1.6, t.y + 4, 1.2, SK, 0.35, 1.2);
+      this._pencilCircle(g, rnd, t.x, t.y, 3.2, 1.2, SK, 0.5);
+    }
+
+    // the wireless mark: a dot and three arcs opening upward, breathing —
+    // hangs in the air over the router's centre
+    const wx = W / 2;
+    const wy = y + dH * 0.2;
+    g.fillStyle(SK, 0.6);
+    g.fillCircle(wx, wy, 2.6);
+    for (let a = 0; a < 3; a++) {
+      const arcG = this.add.graphics().setDepth(2);
+      const rr = 12 + a * 11;
+      const steps = 10;
+      const rndA = this._rng(3000 + a * 71);
+      let prev = null;
+      for (let i = 0; i <= steps; i++) {
+        const ang = Math.PI * 1.25 + (Math.PI * 0.5 * i) / steps; // -135°..-45°
+        const jr = rr + (rndA() - 0.5) * 1.4;
+        const p = { x: wx + Math.cos(ang) * jr, y: wy + Math.sin(ang) * jr };
+        if (prev) {
+          arcG.lineStyle(1.4, SK, 1);
+          arcG.lineBetween(prev.x, prev.y, p.x, p.y);
+        }
+        prev = p;
+      }
+      arcG.setAlpha(0.2);
+      objs.push(arcG);
+      // each arc brightens in turn — the signal climbing outward
+      this.tweens.add({
+        targets: arcG,
+        alpha: 0.6,
+        duration: 700,
+        delay: a * 380,
+        yoyo: true,
+        repeat: -1,
+        repeatDelay: 1200,
+        ease: "Sine.easeInOut",
+      });
+    }
+
+    // ── the 13 LEDs — tiny points, the size the old SVG used: ~2.5px dots
+    // with a soft halo; too small for a sketched socket, so just a hair-thin
+    // ring holds each one ──
+    const ledY = byTop + bh * 0.42;
+    const r = Math.max(2.2, dW * 0.005);
+    const mk = (cx) => {
+      g.lineStyle(1, SK, 0.22);
+      g.strokeCircle(cx, ledY, r + 2);
+      const glow = this.add.circle(cx, ledY, r + 5, 0x3a3e46, 0).setDepth(2);
+      const dot = this.add.circle(cx, ledY, r, 0x3a3e46, 0.9).setDepth(3);
+      objs.push(glow, dot);
+      return { dot, glow };
+    };
+    this._ledDots = [];
+    const cStart = bx + bw * 0.12;
+    const cGap = bw * 0.034;
+    for (let i = 0; i < 5; i++) this._ledDots.push(mk(cStart + i * cGap));
+    const sStart = bx + bw * 0.52;
+    for (let i = 0; i < 8; i++) this._ledDots.push(mk(sStart + i * cGap));
+  }
+
+  _destroyRouter() {
+    if (this._routerObjs) {
+      for (const o of this._routerObjs) {
+        this.tweens.killTweensOf(o);
+        o.destroy();
+      }
+    }
+    this._routerObjs = null;
+    this._ledDots = null;
   }
 
   // ── LED Style ───────────────────────────────────────────────────────────────
 
-  _applyLedStyle(el, state) {
-    if (!el) return;
-    switch (state) {
-      case "off":
-        el.style.fill = "#888";
-        el.style.stroke = "#888";
-        el.style.opacity = "0.75";
-        el.style.filter = "none";
-        break;
-      case "green":
-        el.style.fill = "#00ff44";
-        el.style.stroke = "#00ff44";
-        el.style.opacity = "1";
-        el.style.filter =
-          "drop-shadow(0 0 6px #00ff44) drop-shadow(0 0 3px #00cc33)";
-        break;
-      case "orange":
-        // bit = 0 → brief orange blink, clearly different from green (bit = 1)
-        el.style.fill = "#ff8800";
-        el.style.stroke = "#ff8800";
-        el.style.opacity = "1";
-        el.style.filter =
-          "drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 3px #cc4400)";
-        break;
-      case "red":
-        el.style.fill = "#ff2200";
-        el.style.stroke = "#ff2200";
-        el.style.opacity = "1";
-        el.style.filter =
-          "drop-shadow(0 0 6px #ff2200) drop-shadow(0 0 3px #cc1100)";
-        break;
-    }
-  }
-
   _setLed(index, state) {
-    if (!this._ledEls || !this._ledEls[index]) return;
-    this._applyLedStyle(this._ledEls[index], state);
+    if (!this._ledDots || !this._ledDots[index]) return;
+    const L = this._ledDots[index];
+    const map = {
+      off: { c: 0x3a3e46, a: 0.9, glow: 0 },
+      green: { c: 0x00ff44, a: 1, glow: 0.22 },
+      orange: { c: 0xff8800, a: 1, glow: 0.24 },
+      red: { c: 0xff2200, a: 1, glow: 0.24 },
+    };
+    const m = map[state] || map.off;
+    L.dot.setFillStyle(m.c, m.a);
+    L.glow.setFillStyle(m.c, m.glow);
   }
 
   _resetAllLeds() {
@@ -604,7 +687,7 @@ class ModemScene extends Phaser.Scene {
       this._hwSound = null;
     }
     this._cancelAnimation();
-    this._destroySVG();
+    this._destroyRouter();
     this.tweens.killAll();
     this.time.removeAllEvents();
   }
