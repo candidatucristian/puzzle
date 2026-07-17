@@ -135,9 +135,9 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Teletype",
-    scene: TeletypeScene,
-    code: "SIGNAL",
+    key: "Library",
+    scene: LibraryScene,
+    code: "SHELF",
     altCode: null,
   },
 ];
@@ -157,10 +157,24 @@ class BootScene extends Phaser.Scene {
     this.load.audio("ui_click", "assets/sounds/global/mouseclick.wav");
     this.load.audio("nextlevel", "assets/sounds/global/nextlevel.wav");
     this.load.audio("error", "assets/sounds/global/error.mp3");
+    // feed the loading screen while the audio downloads
+    this.load.on("progress", (v) => {
+      if (window.__bootProgress) window.__bootProgress(v);
+    });
   }
   create() {
     window.mainScene = this;
     if (window.initGlobalAudio) window.initGlobalAudio(this);
+    // everything the first frame needs is in — wait for the display
+    // fonts, then dismiss the loading screen
+    const finish = () => {
+      if (window.__loadingDone) window.__loadingDone();
+    };
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(finish, finish);
+    } else {
+      finish();
+    }
   }
 }
 

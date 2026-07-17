@@ -27,6 +27,75 @@
     <link rel="stylesheet" href="Games/Cryptex/Cryptex/Cryptex.css" />
   </head>
   <body>
+    <!-- Loading screen: rendered before the heavy scripts download.
+         An inline script right below drives it; the Phaser BootScene
+         reports audio progress and removes it when the game is ready. -->
+    <div id="loading-screen">
+      <div class="loading-card">
+        <h1>The Descipher</h1>
+        <div class="loading-bar"><div id="loading-fill"></div></div>
+        <p id="loading-label">sharpening the pencils&nbsp;<span id="loading-pct">0%</span></p>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var fill = document.getElementById("loading-fill");
+        var label = document.getElementById("loading-label");
+        var pctEl = document.getElementById("loading-pct");
+        var current = 0;
+        var target = 6;
+        var labelText = "sharpening the pencils";
+
+        var paint = setInterval(function () {
+          current += (target - current) * 0.09;
+          fill.style.width = current + "%";
+          pctEl.textContent = Math.round(current) + "%";
+          label.childNodes[0].nodeValue = labelText + " ";
+        }, 80);
+
+        // scripts have no measurable progress — trickle while they download
+        var trickle = setInterval(function () {
+          if (target < 55) target += 1.1;
+        }, 200);
+
+        window.__setLoad = function (v, text) {
+          if (v > target) target = v;
+          if (text) labelText = text;
+        };
+
+        window.addEventListener("load", function () {
+          clearInterval(trickle);
+          window.__setLoad(68, "preparing the chambers");
+        });
+
+        // the Phaser boot loader maps its audio progress onto 68–96%
+        window.__bootProgress = function (v) {
+          window.__setLoad(68 + v * 28, "tuning the instruments");
+        };
+
+        var done = false;
+        window.__loadingDone = function () {
+          if (done) return;
+          done = true;
+          window.__setLoad(100, "ready");
+          setTimeout(function () {
+            var el = document.getElementById("loading-screen");
+            if (!el) return;
+            el.classList.add("fade-out");
+            setTimeout(function () {
+              clearInterval(paint);
+              el.remove();
+            }, 750);
+          }, 500);
+        };
+
+        // failsafe: never trap the player on the loader
+        setTimeout(function () {
+          window.__loadingDone();
+        }, 25000);
+      })();
+    </script>
+
     <!-- Cinematic film grain over the whole app -->
     <div id="film-grain"></div>
 
@@ -317,7 +386,7 @@
     <script src="Games/BinaryTree/BinaryTree.js"></script>
     <script src="Games/Grille/Grille.js"></script>
     <script src="Games/Wires/Wires.js"></script>
-    <script src="Games/Teletype/Teletype.js"></script>
+    <script src="Games/Library/Library.js"></script>
     <script src="js/main.js"></script>
     <script src="js/ui.js"></script>
   </body>

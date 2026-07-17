@@ -572,8 +572,8 @@ const levelHints = {
     sound: true,
     tool: false,
   },
-  Teletype: {
-    text: "THE NIGHT SHIFT.\nSomewhere a machine still files its report — in a language everyone reads and nobody sees.",
+  Library: {
+    text: "CLOSED STACKS.\nThe librarian kept only two sizes of book, and was very particular about the order.",
     sound: false,
     tool: true,
   },
