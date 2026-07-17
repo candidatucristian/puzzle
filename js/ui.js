@@ -562,8 +562,8 @@ const levelHints = {
     sound: false,
     tool: false,
   },
-  Grille: {
-    text: "THREE PAGES OF NOISE.\nA cut card hides everything but a single line. Rest it on a page, and turn it — most turns show you nothing at all.",
+  Pi: {
+    text: "ONE BUILDING NEVER SLEEPS.\nThe city keeps its books by lamplight — floor by floor, from the top.",
     sound: false,
     tool: false,
   },

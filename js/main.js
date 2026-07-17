@@ -123,10 +123,10 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Grille",
-    scene: GrilleScene,
-    code: "RGB",
-    altCode: null,
+    key: "Pi",
+    scene: PiScene,
+    code: "PI",
+    altCode: "3.14",
   },
   {
     key: "Wires",
