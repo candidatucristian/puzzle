@@ -41,7 +41,14 @@ const AT_HOLES = [
 const AT_HOLE_W = 96;
 const AT_HOLE_H = 40;
 // target landmark per numeral — initials spell HARBOR
-const AT_TARGETS = ["Hollow Cove", "Ashen Point", "Raven Rock", "Bone Quay", "Old Mill", "Rust Fen"];
+const AT_TARGETS = [
+  "Hollow Cove",
+  "Ashen Point",
+  "Raven Rock",
+  "Bone Quay",
+  "Old Mill",
+  "Rust Fen",
+];
 // decoy landmarks, as fractions of the canvas
 const AT_DECOYS = [
   { n: "Salt Marsh", x: 0.13, y: 0.6 },
@@ -120,7 +127,13 @@ class AtlasScene extends Phaser.Scene {
   }
 
   _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
-    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1, y1, x2, y2, mag),
+      width,
+      color,
+      alpha,
+    );
     this._drawPath(
       g,
       this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
@@ -133,8 +146,30 @@ class AtlasScene extends Phaser.Scene {
   _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
     const o = 4; // corner overshoot
     this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w,
+      y - o,
+      x + w,
+      y + h + o,
+      width,
+      color,
+      alpha,
+      mag,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w + o,
+      y + h,
+      x - o,
+      y + h,
+      width,
+      color,
+      alpha,
+      mag,
+    );
     this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
   }
 
@@ -191,7 +226,18 @@ class AtlasScene extends Phaser.Scene {
     for (let i = 0; i < 6; i++) {
       const x = rnd() * W;
       const y = rnd() * H * 0.9;
-      this._pencilSeg(g, rnd, x, y, x + 14 + rnd() * 30, y + (rnd() - 0.5) * 10, 1, AT_SKETCH, 0.04, 1.6);
+      this._pencilSeg(
+        g,
+        rnd,
+        x,
+        y,
+        x + 14 + rnd() * 30,
+        y + (rnd() - 0.5) * 10,
+        1,
+        AT_SKETCH,
+        0.04,
+        1.6,
+      );
     }
   }
 
@@ -206,8 +252,30 @@ class AtlasScene extends Phaser.Scene {
     g.fillRect(c.x0, c.y0, c.x1 - c.x0, c.y1 - c.y0);
 
     // doubled frame
-    this._pencilRect(g, rnd, c.x0, c.y0, c.x1 - c.x0, c.y1 - c.y0, 1.5, AT_SKETCH, 0.5, 2);
-    this._pencilRect(g, rnd, c.x0 - 8, c.y0 - 8, c.x1 - c.x0 + 16, c.y1 - c.y0 + 16, 1, AT_SKETCH, 0.2, 2);
+    this._pencilRect(
+      g,
+      rnd,
+      c.x0,
+      c.y0,
+      c.x1 - c.x0,
+      c.y1 - c.y0,
+      1.5,
+      AT_SKETCH,
+      0.5,
+      2,
+    );
+    this._pencilRect(
+      g,
+      rnd,
+      c.x0 - 8,
+      c.y0 - 8,
+      c.x1 - c.x0 + 16,
+      c.y1 - c.y0 + 16,
+      1,
+      AT_SKETCH,
+      0.2,
+      2,
+    );
 
     // faint survey grid + coordinates
     const cols = 8;
@@ -251,19 +319,37 @@ class AtlasScene extends Phaser.Scene {
     for (let i = 0; i <= segs; i++) {
       const t = i / segs;
       const x = c.x0 + (c.x1 - c.x0) * t;
-      const midY = c.y0 + (c.y1 - c.y0) * (0.52 + Math.sin(t * Math.PI * 2.3) * 0.16);
+      const midY =
+        c.y0 + (c.y1 - c.y0) * (0.52 + Math.sin(t * Math.PI * 2.3) * 0.16);
       coast.push({ x, y: midY + (rndC() - 0.5) * 26 });
     }
     for (let i = 0; i < coast.length - 1; i++) {
-      this._pencilSeg(g, rndC, coast[i].x, coast[i].y, coast[i + 1].x, coast[i + 1].y, 1.3, AT_SKETCH, 0.3, 2);
+      this._pencilSeg(
+        g,
+        rndC,
+        coast[i].x,
+        coast[i].y,
+        coast[i + 1].x,
+        coast[i + 1].y,
+        1.3,
+        AT_SKETCH,
+        0.3,
+        2,
+      );
     }
     // hatching on the water side of the coast
     for (let i = 1; i < coast.length - 1; i += 2) {
       this._pencilSeg(
-        g, rndC,
-        coast[i].x, coast[i].y + 7,
-        coast[i].x + 16, coast[i].y + 11,
-        1, AT_SKETCH, 0.1, 1.2,
+        g,
+        rndC,
+        coast[i].x,
+        coast[i].y + 7,
+        coast[i].x + 16,
+        coast[i].y + 11,
+        1,
+        AT_SKETCH,
+        0.1,
+        1.2,
       );
     }
 
@@ -273,8 +359,30 @@ class AtlasScene extends Phaser.Scene {
     this._pencilCircle(g, rnd, cx, cy, 20, 1.2, AT_SKETCH, 0.4);
     this._pencilCircle(g, rnd, cx, cy, 13, 1, AT_SKETCH, 0.25);
     this._pencilSeg(g, rnd, cx, cy + 16, cx, cy - 24, 1.3, AT_SKETCH, 0.5, 1);
-    this._pencilSeg(g, rnd, cx - 4, cy - 14, cx, cy - 24, 1.1, AT_SKETCH, 0.5, 0.8);
-    this._pencilSeg(g, rnd, cx + 4, cy - 14, cx, cy - 24, 1.1, AT_SKETCH, 0.5, 0.8);
+    this._pencilSeg(
+      g,
+      rnd,
+      cx - 4,
+      cy - 14,
+      cx,
+      cy - 24,
+      1.1,
+      AT_SKETCH,
+      0.5,
+      0.8,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      cx + 4,
+      cy - 14,
+      cx,
+      cy - 24,
+      1.1,
+      AT_SKETCH,
+      0.5,
+      0.8,
+    );
     this.add
       .text(cx, cy - 34, "N", {
         fontFamily: '"Special Elite", monospace',
@@ -348,8 +456,13 @@ class AtlasScene extends Phaser.Scene {
 
   _makeSheet(W, H) {
     // opaque card with the windows punched straight through the texture
-    if (this.textures.exists("atlasSheetTex")) this.textures.remove("atlasSheetTex");
-    const tex = this.textures.createCanvas("atlasSheetTex", AT_SHEET_W, AT_SHEET_H);
+    if (this.textures.exists("atlasSheetTex"))
+      this.textures.remove("atlasSheetTex");
+    const tex = this.textures.createCanvas(
+      "atlasSheetTex",
+      AT_SHEET_W,
+      AT_SHEET_H,
+    );
     const ctx = tex.getContext();
     ctx.fillStyle = "#14171d";
     ctx.fillRect(0, 0, AT_SHEET_W, AT_SHEET_H);
@@ -371,9 +484,31 @@ class AtlasScene extends Phaser.Scene {
     // pencil dressing: frame, window outlines, numerals, registration mark
     const g = this.add.graphics();
     const rnd = this._rng(7557);
-    this._pencilRect(g, rnd, -AT_SHEET_W / 2, -AT_SHEET_H / 2, AT_SHEET_W, AT_SHEET_H, 1.6, AT_SKETCH, 0.6, 2);
+    this._pencilRect(
+      g,
+      rnd,
+      -AT_SHEET_W / 2,
+      -AT_SHEET_H / 2,
+      AT_SHEET_W,
+      AT_SHEET_H,
+      1.6,
+      AT_SKETCH,
+      0.6,
+      2,
+    );
     for (const h of AT_HOLES) {
-      this._pencilRect(g, rnd, h.x - AT_HOLE_W / 2, h.y - AT_HOLE_H / 2, AT_HOLE_W, AT_HOLE_H, 1.2, AT_SKETCH, 0.5, 1.2);
+      this._pencilRect(
+        g,
+        rnd,
+        h.x - AT_HOLE_W / 2,
+        h.y - AT_HOLE_H / 2,
+        AT_HOLE_W,
+        AT_HOLE_H,
+        1.2,
+        AT_SKETCH,
+        0.5,
+        1.2,
+      );
     }
     const rndM = this._rng(5115);
     this._drawRegMark(g, rndM, AT_MARK_LOCAL.x, AT_MARK_LOCAL.y, 0.75);
@@ -418,13 +553,49 @@ class AtlasScene extends Phaser.Scene {
   _drawVignette(W, H) {
     const vg = this.add.graphics().setDepth(30);
     const v = Math.min(W, H) * 0.2;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.5,
+      0.5,
+      0,
+      0,
+    );
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.55, 0.55);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.55,
+      0.55,
+    );
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0, 0.45, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.45,
+      0,
+      0.45,
+      0,
+    );
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.45, 0, 0.45);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0.45,
+      0,
+      0.45,
+    );
     vg.fillRect(W - v, 0, v, H);
   }
 
@@ -461,7 +632,11 @@ class AtlasScene extends Phaser.Scene {
       if (!ac || (window.GameAudio && window.GameAudio.muted)) return;
       const t = ac.currentTime;
       const dur = 0.05;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+      const buf = ac.createBuffer(
+        1,
+        Math.floor(ac.sampleRate * dur),
+        ac.sampleRate,
+      );
       const d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++)
         d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.6);
@@ -488,12 +663,14 @@ class AtlasScene extends Phaser.Scene {
     this.time.removeAllEvents();
     this.children.removeAll(true);
     this._sheet = null;
-    if (this.textures.exists("atlasSheetTex")) this.textures.remove("atlasSheetTex");
+    if (this.textures.exists("atlasSheetTex"))
+      this.textures.remove("atlasSheetTex");
   }
 
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
-    if (this.textures.exists("atlasSheetTex")) this.textures.remove("atlasSheetTex");
+    if (this.textures.exists("atlasSheetTex"))
+      this.textures.remove("atlasSheetTex");
   }
 }
