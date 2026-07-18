@@ -185,7 +185,7 @@ const introLine = document.getElementById("intro-line");
 const introTitle = document.getElementById("intro-title");
 const INTRO_LINES = [
   "The room is quiet. Too quiet.",
-  "Each one opens with a single word.",
+  "Each room opens with a single word.",
   "Everything you need is already in front of you.",
 ];
 
