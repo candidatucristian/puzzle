@@ -84,7 +84,23 @@ renderLevels();
 const levelVeil = document.getElementById("level-veil");
 const veilCaption = document.getElementById("veil-caption");
 const veilNumeral = document.getElementById("veil-numeral");
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"];
+const ROMAN = [
+  "I",
+  "II",
+  "III",
+  "IV",
+  "V",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "X",
+  "XI",
+  "XII",
+  "XIII",
+  "XIV",
+  "XV",
+];
 
 let veilBusy = false;
 let veilTimers = []; // pending timeouts for the in-flight transition
@@ -169,10 +185,8 @@ const introLine = document.getElementById("intro-line");
 const introTitle = document.getElementById("intro-title");
 const INTRO_LINES = [
   "The room is quiet. Too quiet.",
-  "Twelve doors. Twelve locks.",
   "Each one opens with a single word.",
   "Everything you need is already in front of you.",
-  "Look closer.",
 ];
 
 let introActive = false;
