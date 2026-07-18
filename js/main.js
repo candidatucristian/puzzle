@@ -40,26 +40,21 @@ window.initGlobalAudio = (scene) => {
 
 // Keep the looping background music at its subdued level after a slider change
 window.refreshBgmVolume = () => {
-  if (window.GameAudio.bgmInstance) window.GameAudio.bgmInstance.setVolume(bgmVolume());
+  if (window.GameAudio.bgmInstance)
+    window.GameAudio.bgmInstance.setVolume(bgmVolume());
 };
 
-window.playUIClick    = ()      => playSfx("ui_click");         // UI chrome clicks
-window.playErrorSound = ()      => playSfx("error");            // wrong code entered
-window.playClick      = (scene) => playSfx("click", 1, scene);  // in-level object clicks
-window.playSuccess    = (scene) => playSfx("nextlevel", 1, scene); // EXECUTE → next level
+window.playUIClick = () => playSfx("ui_click"); // UI chrome clicks
+window.playErrorSound = () => playSfx("error"); // wrong code entered
+window.playClick = (scene) => playSfx("click", 1, scene); // in-level object clicks
+window.playSuccess = (scene) => playSfx("nextlevel", 1, scene); // EXECUTE → next level
 
 // ── Level Configuration ──
 window.GAME_LEVELS = [
   {
-    key: "Sequence",
-    scene: SequenceScene,
-    code: "19334488111",
-    altCode: "1 9 33 44 88 111",
-  },
-  {
-    key: "MobilePhone",
-    scene: MobilePhoneScene,
-    code: "GEORGE",
+    key: "BinaryTree",
+    scene: BinaryTreeScene,
+    code: "CABBAGE",
     altCode: null,
   },
   {
@@ -67,6 +62,30 @@ window.GAME_LEVELS = [
     scene: PlantPotScene,
     code: "FIBO",
     altCode: "FIBONACCI",
+  },
+  {
+    key: "Sequence",
+    scene: SequenceScene,
+    code: "19334488111",
+    altCode: "1 9 33 44 88 111",
+  },
+  {
+    key: "Cryptex",
+    scene: CryptexScene,
+    code: "ROTOR",
+    altCode: null,
+  },
+  {
+    key: "Chessboard",
+    scene: ChessboardScene,
+    code: "HEADACHE",
+    altCode: null,
+  },
+  {
+    key: "MobilePhone",
+    scene: MobilePhoneScene,
+    code: "GEORGE",
+    altCode: null,
   },
   {
     key: "Lightswitch",
@@ -93,15 +112,9 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Cryptex",
-    scene: CryptexScene,
-    code: "ROTOR",
-    altCode: null,
-  },
-  {
-    key: "Chessboard",
-    scene: ChessboardScene,
-    code: "HEADACHE",
+    key: "Wires",
+    scene: WiresScene,
+    code: "FACADE",
     altCode: null,
   },
   {
@@ -116,23 +129,12 @@ window.GAME_LEVELS = [
     code: "HARBOR",
     altCode: null,
   },
-  {
-    key: "BinaryTree",
-    scene: BinaryTreeScene,
-    code: "CABBAGE",
-    altCode: null,
-  },
+
   {
     key: "Pi",
     scene: PiScene,
     code: "PI",
     altCode: "3.14",
-  },
-  {
-    key: "Wires",
-    scene: WiresScene,
-    code: "FACADE",
-    altCode: null,
   },
   {
     key: "Library",
