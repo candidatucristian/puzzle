@@ -220,7 +220,7 @@ class ModemScene extends Phaser.Scene {
     this._roomObjs.push(status);
 
     const lvl = this.add
-      .text(W - 30, 28, "Level 6", {
+      .text(W - 30, 28, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#e8dcc0",

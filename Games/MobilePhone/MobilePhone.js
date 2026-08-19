@@ -44,7 +44,7 @@ class MobilePhoneScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.levelText = this.add
-      .text(width - 30, 30, "Level 2", {
+      .text(width - 30, 30, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#ffffff",
@@ -170,7 +170,7 @@ class MobilePhoneScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(100);
       const nextLvlText = this.add
-        .text(width / 2, height / 2, "Level 2...", {
+        .text(width / 2, height / 2, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1) + "...", {
           fontFamily: '"Special Elite", monospace',
           fontSize: "48px",
           color: "#ffffff",

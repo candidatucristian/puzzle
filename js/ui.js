@@ -33,8 +33,13 @@ function goToLevel(index) {
   // Remove all scene-specific DOM overlays immediately (SVGs, TV, switch, etc.)
   document.querySelectorAll(".scene-dom-overlay").forEach((el) => el.remove());
 
-  // Stop ALL active scenes — ensures shutdown() runs regardless of currentLevelIndex state
+  // Stop ALL active scenes — ensures shutdown() runs regardless of currentLevelIndex state.
+  // Also drop each scene's "canvas_resized" listener: Phaser keeps listeners on
+  // scene.events across restarts, so without this every replay would stack one
+  // more handler (create() re-registers it on start).
   for (const level of window.GAME_LEVELS) {
+    const sc = game.scene.getScene(level.key);
+    if (sc) sc.events.off("canvas_resized");
     if (game.scene.isActive(level.key)) {
       game.scene.stop(level.key);
     }
@@ -100,6 +105,12 @@ const ROMAN = [
   "XIII",
   "XIV",
   "XV",
+  "XVI",
+  "XVII",
+  "XVIII",
+  "XIX",
+  "XX",
+  "XXI",
 ];
 
 let veilBusy = false;
@@ -149,12 +160,15 @@ function cinematicGoToLevel(index, opts = {}) {
   veilTimers.push(t1);
 }
 
-// ── Mobile Block ──
-// phones aren't supported: no keyboard, no hover, tiny canvas
+// ── Mobile / Tablet Block ──
+// phones and tablets aren't supported: no keyboard, no hover, tiny canvas.
+// UA regex catches phones and Android tablets; iPadOS 13+ reports itself as
+// "Macintosh", so it's caught via touch support; "pointer: coarse" covers
+// any other touch-first device.
 const isMobile =
-  /Android|iPhone|iPod|Mobi/i.test(navigator.userAgent) ||
-  (window.matchMedia("(pointer: coarse)").matches &&
-    Math.min(window.screen.width, window.screen.height) < 768);
+  /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent) ||
+  (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ||
+  window.matchMedia("(pointer: coarse)").matches;
 if (isMobile) {
   document.getElementById("mobile-block").classList.remove("hidden");
 }
@@ -566,10 +580,10 @@ const levelHints = {
     sound: false,
     tool: false,
   },
-  Atlas: {
-    text: "A SAFE PLACE TO ANCHOR.\nOld charts hide more than coastlines.",
+  Trunk: {
+    text: "A LOCKED TRUNK, A SCRATCHED LINE.\nNot drawings — letters wearing fences.",
     sound: false,
-    tool: false,
+    tool: true,
   },
   BinaryTree: {
     text: "This looks like a root - could it be a vegetable or a fruit?",
@@ -586,8 +600,38 @@ const levelHints = {
     sound: true,
     tool: false,
   },
-  Library: {
-    text: "CLOSED STACKS.\nThe librarian kept only two sizes of book, and was very particular about the order.",
+  Crossing: {
+    text: "MIND THE CROSSING.\nThe paint is not evenly worn. Wide and narrow is a language too.",
+    sound: false,
+    tool: true,
+  },
+  SafeDial: {
+    text: "LISTEN CLOSELY.\nEach click is a step. The tumblers remember the direction.",
+    sound: true,
+    tool: false,
+  },
+  Flags: {
+    text: "DRESS THE SHIP.\nEach colour flies for a country, and every country signs with two letters.",
+    sound: false,
+    tool: false,
+  },
+  Elements: {
+    text: "THE LOCKED CABINET.\nNo names, only numbers — but somewhere there is a table that knows them all.",
+    sound: false,
+    tool: true,
+  },
+  Workbench: {
+    text: "STILL DEAD AIR.\nThe repair was never finished — and every small part on the bench wears its value in colour.",
+    sound: false,
+    tool: true,
+  },
+  TapCode: {
+    text: "KNOCK TWICE.\nA prisoner counts in fives; two numbers find a letter.",
+    sound: false,
+    tool: true,
+  },
+  Signs: {
+    text: "THE COLLECTOR'S WALL.\nAmong the paintings, one series mattered enough to be dated. Time puts things in order.",
     sound: false,
     tool: true,
   },

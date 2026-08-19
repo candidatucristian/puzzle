@@ -487,7 +487,7 @@ class StationScene extends Phaser.Scene {
       .setDepth(20);
 
     this.levelText = this.add
-      .text(W - 30, 28, "Level 10", {
+      .text(W - 30, 28, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#e8dcc0",

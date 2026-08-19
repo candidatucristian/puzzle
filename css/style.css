@@ -1510,14 +1510,22 @@ input[type="range"]::-moz-range-track {
   user-select: none;
 }
 
-/* ── Mobile Block ── */
+/* ── Mobile / Tablet Block ──
+   Same dark-paper theme as the start screen. Shown by ui.js on phones
+   and tablets, and by the media query below when the window is simply
+   too small for the layout. */
 #mobile-block {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: #000000;
+  background: radial-gradient(
+    120% 100% at 50% 45%,
+    #0c0d11 0%,
+    #050608 70%,
+    #000000 100%
+  );
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1528,18 +1536,60 @@ input[type="range"]::-moz-range-track {
   display: none;
 }
 
-#mobile-block p {
-  font-family: var(--font-display);
-  font-size: 22px;
-  letter-spacing: 3px;
-  color: var(--bone);
-  text-align: center;
-  padding: 0 24px;
+.mobile-block-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: min(440px, 86%);
+  animation: start-fade-in 1.2s ease both;
 }
 
-@media screen and (max-width: 1600px) {
-  body {
-    display: none;
+.mobile-block-card h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 7vw, 40px);
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  text-align: center;
+  padding-left: 8px; /* optical centring vs. letter-spacing */
+  color: var(--pencil-bright);
+  text-shadow:
+    0.8px 0.8px 0 var(--pencil-faint),
+    -0.6px 0.5px 0 var(--pencil-faint);
+}
+
+.mobile-block-msg {
+  margin: 8px 0 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 21px;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+  color: #ddd6c5;
+  text-align: center;
+}
+
+.mobile-block-sub {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  line-height: 2;
+  text-align: center;
+  color: var(--bone-dim);
+  opacity: 0.75;
+}
+
+/* window too small for the three-column layout — show the block screen
+   (kept AFTER the .hidden rule so it wins at equal specificity) */
+@media (max-width: 1100px), (max-height: 520px) {
+  #mobile-block,
+  #mobile-block.hidden {
+    display: flex;
   }
 }
 

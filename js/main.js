@@ -124,9 +124,9 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Atlas",
-    scene: AtlasScene,
-    code: "HARBOR",
+    key: "Trunk",
+    scene: TrunkScene,
+    code: "SEXTANT",
     altCode: null,
   },
 
@@ -137,9 +137,45 @@ window.GAME_LEVELS = [
     altCode: "3.14",
   },
   {
-    key: "Library",
-    scene: LibraryScene,
-    code: "SHELF",
+    key: "Crossing",
+    scene: CrossingScene,
+    code: "GO",
+    altCode: null,
+  },
+  {
+    key: "SafeDial",
+    scene: SafeDialScene,
+    code: "SECRET",
+    altCode: null,
+  },
+  {
+    key: "Flags",
+    scene: FlagsScene,
+    code: "DEBRIEFING",
+    altCode: null,
+  },
+  {
+    key: "Elements",
+    scene: ElementsScene,
+    code: "CONCERNS",
+    altCode: null,
+  },
+  {
+    key: "Workbench",
+    scene: WorkbenchScene,
+    code: "1801040915",
+    altCode: "RADIO",
+  },
+  {
+    key: "TapCode",
+    scene: TapCodeScene,
+    code: "ESCAPE",
+    altCode: null,
+  },
+  {
+    key: "Signs",
+    scene: SignsScene,
+    code: "SILENT",
     altCode: null,
   },
 ];

@@ -322,7 +322,7 @@ class ChessboardScene extends Phaser.Scene {
       .setDepth(20);
 
     this.levelText = this.add
-      .text(W - 30, 30, "Level 9", {
+      .text(W - 30, 30, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
         fontFamily: '"Special Elite", monospace',
         fontSize: "28px",
         color: "#e8dcc0",
