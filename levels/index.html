@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>The Descipher — Levels Ledger (Answer Key)</title>
+
+    <link
+      rel="icon"
+      href="../assets/images/favicon/favicon-32x32.png"
+      type="image/x-icon"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Special+Elite&display=swap"
+      rel="stylesheet"
+    />
+    <!-- reuse the app's own design tokens / fonts / hand-drawn motifs -->
+    <link rel="stylesheet" href="../css/style.css" />
+
+    <style>
+      /* ═══════════════════════════════════════════════
+         LEVELS LEDGER — private answer key, built on the
+         app's own "Pencil & Paper" tokens (css/style.css).
+         Not linked from the main UI. ═══════════════════ */
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        display: block;
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+        padding: 0 0 80px;
+      }
+
+      #film-grain {
+        position: fixed;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 56px 28px 0;
+      }
+
+      /* ── Header ── */
+      .ledger-head {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-bottom: 40px;
+      }
+
+      .ledger-head h1 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 34px;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        color: var(--pencil-bright);
+        text-shadow:
+          0.8px 0.8px 0 var(--pencil-faint),
+          -0.6px 0.5px 0 var(--pencil-faint);
+      }
+
+      .ledger-sub {
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: 17px;
+        color: var(--bone-dim);
+        margin: 0;
+        max-width: 640px;
+        line-height: 1.5;
+      }
+
+      .private-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 5px 12px;
+        border: 1px solid var(--pencil-faint);
+        border-radius: 3px;
+        font-family: "Special Elite", monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--bone-dim);
+        opacity: 0.85;
+      }
+
+      .private-tag i {
+        font-style: normal;
+        color: var(--pencil);
+      }
+
+      /* ── Filter box ── */
+      .filter-row {
+        margin: 4px 0 6px;
+      }
+
+      #filter-input {
+        width: 100%;
+        max-width: 360px;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid var(--pencil-faint);
+        color: var(--bone);
+        font-family: var(--font-body);
+        font-size: 17px;
+        padding: 6px 2px 8px;
+        outline: none;
+      }
+
+      #filter-input::placeholder {
+        color: var(--bone-dim);
+        opacity: 0.7;
+      }
+
+      #filter-input:focus {
+        border-bottom-color: var(--pencil);
+      }
+
+      /* ── Quick table ── */
+      .quick-table {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 56px;
+        border-top: 1px solid var(--line-light);
+      }
+
+      .quick-row {
+        display: grid;
+        grid-template-columns: 40px 1fr auto auto;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 6px;
+        border-bottom: 1px solid var(--line-light);
+        text-decoration: none;
+        transition: background 0.15s ease;
+      }
+
+      .quick-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .quick-num {
+        font-family: "Special Elite", monospace;
+        font-size: 12px;
+        color: var(--bone-dim);
+      }
+
+      .quick-name {
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 17px;
+        color: var(--pencil-bright);
+      }
+
+      .quick-code {
+        font-family: "Special Elite", monospace;
+        font-size: 14px;
+        letter-spacing: 1.5px;
+        color: var(--bone);
+        text-align: right;
+      }
+
+      .quick-alt {
+        font-family: "Special Elite", monospace;
+        font-size: 11px;
+        color: var(--bone-dim);
+        text-align: right;
+        min-width: 90px;
+      }
+
+      /* ── Level cards ── */
+      .level-card {
+        position: relative;
+        margin: 0 4px 46px;
+        padding: 26px 28px 28px;
+        background: var(--grad-panel);
+        border-radius: 4px;
+        scroll-margin-top: 24px;
+      }
+
+      .level-card-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+
+      .level-title {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .level-num {
+        font-family: "Special Elite", monospace;
+        font-size: 13px;
+        color: var(--pencil-dim);
+      }
+
+      .level-name {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 22px;
+        letter-spacing: 1.5px;
+        color: var(--pencil-bright);
+      }
+
+      .code-block {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .code-value {
+        font-family: "Special Elite", monospace;
+        font-size: 20px;
+        letter-spacing: 3px;
+        color: var(--bone);
+        border-bottom: 1.5px dashed var(--pencil-faint);
+        padding-bottom: 2px;
+        cursor: pointer;
+      }
+
+      .code-alt {
+        font-family: "Special Elite", monospace;
+        font-size: 12px;
+        color: var(--bone-dim);
+      }
+
+      .copy-btn {
+        background: transparent;
+        border: 1px solid var(--pencil-faint);
+        color: var(--bone-dim);
+        font-family: "Special Elite", monospace;
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .copy-btn:hover {
+        color: var(--pencil-bright);
+        border-color: var(--pencil-dim);
+      }
+
+      .copy-btn.done {
+        color: var(--pencil-bright);
+        border-color: var(--pencil);
+      }
+
+      .badges-row {
+        display: flex;
+        gap: 8px;
+        margin: 10px 0 4px;
+      }
+
+      .mini-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: "Special Elite", monospace;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--bone-dim);
+        border: 1px solid var(--pencil-faint);
+        border-radius: 3px;
+        padding: 3px 8px;
+        opacity: 0.85;
+      }
+
+      .clue-line {
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: 16px;
+        line-height: 1.55;
+        color: var(--bone-dim);
+        white-space: pre-line;
+        margin: 14px 0 16px;
+        padding-left: 14px;
+        border-left: 2px solid var(--pencil-faint);
+      }
+
+      .mech-label,
+      .keys-label {
+        font-family: "Special Elite", monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--pencil);
+        margin: 18px 0 8px;
+      }
+
+      .mech-text {
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.6;
+        color: var(--bone);
+        margin: 0 0 4px;
+      }
+
+      .keys-list {
+        margin: 0;
+        padding-left: 18px;
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--bone-dim);
+      }
+
+      .keys-list li {
+        margin-bottom: 4px;
+      }
+
+      .keys-list code {
+        font-family: "Special Elite", monospace;
+        font-size: 13px;
+        color: var(--pencil-bright);
+        background: rgba(255, 255, 255, 0.04);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+
+      .back-top {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--steel-800);
+        border: 1px solid var(--pencil-faint);
+        color: var(--pencil);
+        font-size: 16px;
+        text-decoration: none;
+        opacity: 0.75;
+        transition: opacity 0.15s ease;
+      }
+
+      .back-top:hover {
+        opacity: 1;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 36px 16px 0;
+        }
+        .quick-row {
+          grid-template-columns: 30px 1fr auto;
+        }
+        .quick-alt {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="film-grain"></div>
+
+    <div class="wrap">
+      <header class="ledger-head">
+        <span class="private-tag"><i>◆</i>Private — not linked in-app</span>
+        <h1>Levels Ledger</h1>
+        <p class="ledger-sub">
+          Every chamber's access code and the reasoning behind it, in solving
+          order. This page is not linked from the game and carries full
+          spoilers — it exists so the codes and the logic don't have to be
+          re-derived from memory.
+        </p>
+        <div class="filter-row">
+          <input
+            id="filter-input"
+            type="text"
+            placeholder="Filter by level name or code…"
+            autocomplete="off"
+          />
+        </div>
+      </header>
+
+      <div class="quick-table" id="quick-table"></div>
+
+      <div id="cards"></div>
+    </div>
+
+    <a href="#top" class="back-top" title="Back to top">↑</a>
+    <span id="top"></span>
+
+    <script>
+      // ── Data: mirrors js/main.js GAME_LEVELS order + js/ui.js levelHints,
+      // plus a full spoiler explanation traced from each level's own source. ──
+      const LEVELS = [
+        {
+          key: "BinaryTree",
+          name: "Binary Tree",
+          code: "CABBAGE",
+          alt: null,
+          sound: false,
+          tool: false,
+          hint: "This looks like a root - could it be a vegetable or a fruit?",
+          mech: "A pencil-sketch binary tree has a note pinned above it listing seven 3-letter paths: RLR, LRL, LLL, LLL, LRL, LLR, LRR. Eight lettered leaves sit at the bottom, left to right: B G A E D C H F — deliberately not alphabetical. Read each path as binary (L=0, R=1) to get a 3-bit index (0–7) into the leaf row: RLR=101=5→C, LRL=010=2→A, LLL=000=0→B, LLL=000=0→B, LRL=010=2→A, LLR=001=1→G, LRR=011=3→E. That spells C-A-B-B-A-G-E.",
+          keys: [
+            "BT_CODES = [\"RLR\",\"LRL\",\"LLL\",\"LLL\",\"LRL\",\"LLR\",\"LRR\"] — the seven written paths",
+            "BT_LEAVES = [\"B\",\"G\",\"A\",\"E\",\"D\",\"C\",\"H\",\"F\"] — leaf letters, index = binary value of the path",
+          ],
+        },
+        {
+          key: "PlantPot",
+          name: "Plant Pot",
+          code: "FIBO",
+          alt: "FIBONACCI",
+          sound: false,
+          tool: true,
+          hint: "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
+          mech: "Pouring water on the plant 5 times grows one new branch each time, and the number of leaves added per pour follows 1, 1, 2, 3, 5 — the Fibonacci sequence. The wall behind the pot is covered in faint math: the recurrence F(n)=F(n-1)+F(n-2), the golden ratio φ≈1.618, Binet's formula, a golden spiral and a pentagon/pentagram (where φ appears naturally). Counting the leaves per branch and reading the scribbled math together points to the name Fibonacci; the level accepts the short form FIBO or the full name.",
+          keys: [
+            "this.fibSeq = [1, 1, 2, 3, 5] — leaves added per pour, stored directly in state",
+            "this.leafDefs — per-step leaf arrays sized 1,1,2,3,5",
+            "_drawMathDecor() — draws the recurrence, φ, Binet's formula, golden spiral, pentagon",
+            "statusText: \"Who am I?\" → \"Whose name does it bear?\"",
+          ],
+        },
+        {
+          key: "Sequence",
+          name: "Sequence",
+          code: "19334488111",
+          alt: "1 9 33 44 88 111",
+          sound: false,
+          tool: false,
+          hint: "SIX NUMBERS, ONE VOICE.\nSmallest first, and they become one. Then don't just look at it — read it aloud, the way the note in the corner does.",
+          mech: "Six cards start shuffled — 23, 31, 11, 28, 19, 24 — over dashed slots with an ascending-order arrow. Dragging them into order gives 11, 19, 23, 24, 28, 31, which fuses into one number, 111923242831. A corner note (\"25 → 55\", \"how many, then what\") teaches the look-and-say rule: read each original two-digit card as COUNT+DIGIT, count repeats of digit. 11→1, 19→9, 23→333? no — per the card values: 11→1, 19→9, 23→33, 24→44, 28→88, 31→111. Concatenated: 1, 9, 33, 44, 88, 111.",
+          keys: [
+            "SEQ_START = [23,31,11,28,19,24] / SEQ_SORTED = [11,19,23,24,28,31]",
+            "_refreshFused() — builds the live fused number under the sorted cards",
+            "corner note \"25 → 55\" — teaches the look-and-say (count, then digit) reading",
+            "statusText after solve: \"One number. Now read it aloud.\"",
+          ],
+        },
+        {
+          key: "Cryptex",
+          name: "Cryptex",
+          code: "ROTOR",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "AN OLD BRASS WHEEL.\nIt turns like a clock that lost its hours.",
+          mech: "A wax-sealed envelope holds three lines of Caesar-shifted ciphertext: \"HYHUB FLSKHU PDFKLQH\", \"JXDUGV LWV VSLQQLQJ KHDUW\", \"WKH URWRU\". The only hint to the shift is the wax seal itself — stamped with three plain bars |||, read as the Roman numeral III, i.e. shift 3. Turning the brass cipher wheel back 3 letters (Caesar shift −3) decodes it to \"EVERY CIPHER MACHINE GUARDS ITS SPINNING HEART — THE ROTOR\".",
+          keys: [
+            "CRYPTEX_CIPHER — the three lines of shift-3 ciphertext",
+            "the |||  wax-seal bars (on the envelope and again inside the opened letter) — the shift-3 tell",
+            "CRYPTEX_ALPHA + the rotating disk — the physical decoder wheel",
+          ],
+        },
+        {
+          key: "Chessboard",
+          name: "Chessboard",
+          code: "HEADACHE",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "AN ABANDONED GAME.\nNobody won. This game is too heavy for the mind - it brings so much ...",
+          mech: "An overhead chessboard with etched algebraic coordinates holds 8 pieces, one per rank: Rook h1, White King e2, Pawn a3, Black Queen d4, Black King a5, Knight c6, White Bishop h7, Black Bishop e8. Reading the FILE letter of each piece in rank order 1→8 gives h-e-a-d-a-c-h-e. Pieces can be picked up but always snap back to their home square, so the message can't be scrambled.",
+          keys: [
+            "CHESS_PIECES — exact squares: h1, e2, a3, d4, a5, c6, h7, e8",
+            "CHESS_FILES = \"abcdefgh\" — the only coordinate tool the level offers",
+            "_placePieces() — pieces always settle back to their home square",
+          ],
+        },
+        {
+          key: "MobilePhone",
+          name: "Mobile Phone",
+          code: "GEORGE",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
+          mech: "An incoming call shows caller ID (433)-666-777-433. Grouped into runs of identical digits — 4, 33, 666, 777, 4, 33 — this is an old T9 multi-tap number: press each digit that many times on the numeric keypad to select the Nth letter of that key's group (4=GHI, 3=DEF, 6=MNO, 7=PQRS). 4×1→G, 3×2→E, 6×3→O, 7×3→R, 4×1→G, 3×2→E spells GEORGE, typed out on the in-scene keypad.",
+          keys: [
+            "callerNumber = \"(433)-666-777-433\" — the multi-tap-encoded caller ID",
+            "keymap — letter groups per digit key (multi-tap letter sets)",
+            "handleKeyPress() / keyPressCount — real multi-tap letter cycling",
+            "updateScreen() checks typed text === \"GEORGE\"",
+          ],
+        },
+        {
+          key: "Lightswitch",
+          name: "Lightswitch",
+          code: "POWER",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "A DARK ROOM. A SWITCH ON THE WALL.\nSome bulbs flicker. This one insists.",
+          mech: "Each press of the wall switch blinks the bulb (and the switch's LED) in Morse for one letter of POWER, then the wiring shorts out and resets. Transcribing each blink burst: P=.--. , O=--- , W=.-- , E=. , R=.-. spells POWER. During the brief full-room flash a portrait of Samuel Morse is visible — \"lit only by his own code\" — confirming the mechanic.",
+          keys: [
+            "BLK_MORSE — standard Morse lookup table",
+            "this.ANSWER = \"POWER\", _letterIdx — which letter blinks next",
+            "_pressSwitch() → _buildMorse() → _morseStep() — dot 40ms / dash 500ms timing",
+            "Samuel Morse portrait, visible only during the flash",
+          ],
+        },
+        {
+          key: "TV",
+          name: "TV",
+          code: "VOID",
+          alt: "NULL",
+          sound: false,
+          tool: false,
+          hint: "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
+          mech: "Four channels each describe absence/nothingness without naming it: a cosmic supervoid on Cosmos Net, a legally unenforceable contract on Lawcourt, a function with no return value on Code Review (\"not zero, not false — and even null still carries meaning\", pointedly ruling NULL out), and a true-vacuum experiment on Science Foundation. The Code Review channel is most direct: it describes a keyword \"reserved for the complete absence of any return\", present in C, C++, Java, Swift — the keyword void. All four fields point at the same unstated word: VOID.",
+          keys: [
+            "_CHANNELS getter — all four broadcast texts",
+            "Channel 2 (\"CODE REVIEW\") explicitly contrasts void with null",
+            "top-of-file comment: \"All four channels describe VOID without ever naming it.\"",
+          ],
+        },
+        {
+          key: "Modem",
+          name: "Modem",
+          code: "HTTPS",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "SIGNAL INTERCEPTED.\nThe old router never stopped transmitting.",
+          mech: "A sketched router blinks two LEDs to transmit the word HTTPS as ASCII binary, letter by letter — one LED flashes for each 0 bit, the other for each 1 bit. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's engraved model name \"W. LEIBNIZ\" nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
+          keys: [
+            "WORD = \"HTTPS\", BINARY — ASCII binary strings per letter",
+            "_startAnimation() — LED 5 = bit 0, LED 6 = bit 1, LED[i] turns red per completed letter",
+            "engraved label \"W. LEIBNIZ\" — binary-notation flavor clue",
+          ],
+        },
+        {
+          key: "Telescope",
+          name: "Telescope",
+          code: "ORION",
+          alt: null,
+          sound: true,
+          tool: true,
+          hint: "A TELESCOPE AT THE WINDOW.\nNot everything up there was arranged by nature.",
+          mech: "Panning the eyepiece across the sky reveals several faint decoy \"constellations\" and five unnaturally regular star groups — each one is secretly a 2×3 Braille cell (dot layout 1 4 / 2 5 / 3 6). Reading each cell's dot pattern as Braille: O=dots 1,3,5 · R=1,2,3,5 · I=2,4 · O=1,3,5 · N=1,3,4,5, spelling O-R-I-O-N. The tell is that the real cells snap to a perfect grid and draw much stronger connecting lines than the deliberately irregular, near-invisible decoys.",
+          keys: [
+            "BRAILLE — letter → dot-number lookup table",
+            "BRAILLE_DOT_POS — dot number → 2×3 grid position",
+            "TUNE.DECOY_LINE_ALPHA (0.06) vs TUNE.CELL_LINE_ALPHA (0.5) — decoy vs. real-cell tell",
+            "_makeSkyContents() — builds one Braille cell per letter of the code",
+          ],
+        },
+        {
+          key: "Wires",
+          name: "Wires",
+          code: "FACADE",
+          alt: null,
+          sound: true,
+          tool: false,
+          hint: "THE MORNING CHOIR.\nThey sat down exactly where the composer left them.",
+          mech: "A telegraph pole carries 5 wires read bottom-to-top as a musical staff (no clef ever drawn) spelling D-F-A-C-E. Six birds perch on fixed wires that, read in the same mapping, already spell F-A-C-A-D-E. A sketched piano below lets the player physically play that note sequence (F, A, C, A, D, E); playing it correctly sends the birds flying, confirming FACADE.",
+          keys: [
+            "header comment states the D-F-A-C-E bottom→top staff reading directly",
+            "WI_BIRDS — each bird's wire position encodes one note of the sequence",
+            "WI_MELODY = [\"F\",\"A\",\"C\",\"A\",\"D\",\"E\"] — required piano input",
+            "_checkMelody() — rolling match against the last 6 keys played",
+          ],
+        },
+        {
+          key: "Station",
+          name: "Station",
+          code: "EXIT",
+          alt: null,
+          sound: false,
+          tool: false,
+          hint: "THE LAST STATION.\nNobody checks the spelling anymore. Four trains are still boarding — leave in order of departure.",
+          mech: "The departures board lists 8 rows; only 4 are marked BOARDING — GENETA 22:41, MOXCOW 22:07, PERIS 21:03, LINDON 22:24 (the rest are cancelled/delayed filler). Each boarding destination has one visibly misspelled letter that stutters into place: P(E)RIS, MO(X)COW, L(I)NDON, GENE(T)A. Sorted by departure time — 21:03 PERIS→E, 22:07 MOXCOW→X, 22:24 LINDON→I, 22:41 GENETA→T — the anomalous letters read E-X-I-T.",
+          keys: [
+            "STATION_ROWS — time, dest, remark, wrongIdx fields",
+            "wrongIdx — the anomalous letter index in each destination",
+            "only remark === \"BOARDING\" rows matter; sort key is time",
+          ],
+        },
+        {
+          key: "Trunk",
+          name: "Trunk",
+          code: "SEXTANT",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "A LOCKED TRUNK, A SCRATCHED LINE.\nNot drawings — letters wearing fences.",
+          mech: "A steamer trunk's lid carries a scratched line of 7 Pigpen-cipher glyphs. The cipher is the standard Masonic/Pigpen grid: A–I use plain tic-tac-toe cells, J–R the same cells with a dot added, S–Z use X-shaped quadrant wedges (plain or dotted). Nothing on screen names the cipher — recognizing the shapes and decoding the 7 glyphs gives S-E-X-T-A-N-T. Port stickers and the lantern are pure flavor.",
+          keys: [
+            "TR_WORD = \"SEXTANT\" — drives the glyph sequence directly",
+            "_pigpen() — implements the full A–Z → glyph mapping",
+          ],
+        },
+        {
+          key: "Pi",
+          name: "Pi",
+          code: "PI",
+          alt: "3.14",
+          sound: false,
+          tool: false,
+          hint: "ONE BUILDING NEVER SLEEPS.\nThe city keeps its books by lamplight — floor by floor, from the top.",
+          mech: "In a sleeping skyline, one building has lit windows on every floor. The count of lit windows per floor, top to bottom, is 3, 1, 4, 1, 5, 9, 2, 6, 5 — the digits of π. Window position within each floor is randomized and irrelevant; only the count per row matters (clicking a lit window relocates it within its own floor, preserving the count).",
+          keys: [
+            "PI_DIGITS = [3,1,4,1,5,9,2,6,5] — lit-window count per floor, top to bottom",
+            "_drawHeroBuilding() — scatters PI_DIGITS[f] lit windows per floor",
+            "_onLitWindowClick() — relocates but never changes the per-floor count",
+          ],
+        },
+        {
+          key: "Crossing",
+          name: "Crossing",
+          code: "GO",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "MIND THE CROSSING.\nThe paint is not evenly worn. Wide and narrow is a language too.",
+          mech: "The zebra crossing is drawn as a real Code 39 barcode encoding the word GO (no start/stop sentinels). Reading the stripe widths — wide vs. narrow — as Code 39 bars, from the near curb to the far one, decodes to G-O. (The file's own header comment is stale and mentions \"WALK\" — trust the CR_WORD constant and the rendering logic, which both spell GO.)",
+          keys: [
+            "CR_WORD = \"GO\" — the encoded string",
+            "CR_CODE39 — letter → wide/narrow bar pattern lookup",
+            "_drawBarcodeCrossing() — renders only the bar elements as painted stripes",
+          ],
+        },
+        {
+          key: "SafeDial",
+          name: "Safe Dial",
+          code: "SECRET",
+          alt: null,
+          sound: true,
+          tool: false,
+          hint: "LISTEN CLOSELY.\nEach click is a step. The tumblers remember the direction.",
+          mech: "There's no visible clue beyond the dial — the combination is generated from the code word SECRET itself: each letter's alphabet position (S=19, E=5, C=3, R=18, E=5, T=20), dialed with alternating Right/Left/Right/Left/Right/Left turns. A soft tick plays passing each number, a sharp click confirms a correct number+direction, and any wrong turn direction resets the whole combination.",
+          keys: [
+            "this._combination — built from the code word via charCode → A=1..Z=26",
+            "this._comboDirs = [\"R\",\"L\",\"R\",\"L\",\"R\",\"L\"] — fixed alternating direction",
+            "_onDialDrag() / _checkCombination() — resets on any direction mismatch",
+          ],
+        },
+        {
+          key: "Flags",
+          name: "Flags",
+          code: "DEBRIEFING",
+          alt: null,
+          sound: false,
+          tool: false,
+          hint: "DRESS THE SHIP.\nEach colour flies for a country, and every country signs with two letters.",
+          mech: "Five national flags hang on a clothesline, left to right: Germany, Brazil, Ireland, Finland, Nigeria — none of them labeled by name, only by their actual colors/pattern. Concatenating each country's ISO two-letter code in hanging order — DE + BR + IE + FI + NG — spells DEBRIEFING.",
+          keys: [
+            "FL_FLAGS = [\"DE\",\"BR\",\"IE\",\"FI\",\"NG\"] — hanging order = code order",
+            "_paintFlag() — per-flag colored geometry, no text labels drawn",
+          ],
+        },
+        {
+          key: "Elements",
+          name: "Elements",
+          code: "CONCERNS",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "THE LOCKED CABINET.\nNo names, only numbers — but somewhere there is a table that knows them all.",
+          mech: "Five apothecary jars are labeled only with a handwritten number, left to right: 27, 7, 58, 86, 16. Read as atomic numbers on the periodic table: 27=Co (Cobalt), 7=N (Nitrogen), 58=Ce (Cerium), 86=Rn (Radon), 16=S (Sulfur). Concatenated: Co-N-Ce-Rn-S = CONCERNS. Liquid colors (cobalt blue, sulfur yellow) and the radon jar's glow are atmospheric nudges, not required.",
+          keys: [
+            "EL_JARS — num field per jar, left to right: 27, 7, 58, 86, 16",
+            "in-file comment states the mapping directly: 27→Co · 7→N · 58→Ce · 86→Rn · 16→S",
+          ],
+        },
+        {
+          key: "Workbench",
+          name: "Workbench",
+          code: "1801040915",
+          alt: "RADIO",
+          sound: false,
+          tool: true,
+          hint: "STILL DEAD AIR.\nThe repair was never finished — and every small part on the bench wears its value in colour.",
+          mech: "A schematic shows 5 resistors in series, each painted with two color bands plus a gold tolerance band marking reading direction. Standard resistor color code (black=0…white=9) gives, left to right: 18, 01, 04, 09, 15 → 1801040915, the primary code. Reading those same five two-digit numbers again as A=1…Z=26 letters (18=R, 1=A, 4=D, 9=I, 15=O) spells RADIO, the accepted alternate — tying back to the dead radio being repaired on the bench.",
+          keys: [
+            "WB_RESISTORS = [[1,8],[0,1],[0,4],[0,9],[1,5]] — band digits per resistor, circuit order",
+            "WB_BAND — color → digit lookup actually rendered (no digits printed as text)",
+            "WB_GOLD — tolerance band marks the reading direction",
+          ],
+        },
+        {
+          key: "TapCode",
+          name: "Tap Code",
+          code: "ESCAPE",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "KNOCK TWICE.\nA prisoner counts in fives; two numbers find a letter.",
+          mech: "A stone slab carries 6 lines of tally marks, two clusters per line, following the classic 5×5 prisoner's tap code (K folded into C's square). Each letter of ESCAPE becomes a (row, column) pair rendered as that many carved marks: E=(1,5), S=(4,3), C=(1,3), A=(1,1), P=(3,5), E=(1,5). Two small scratched \"1\" labels are the only nudge toward counting rows-then-columns from 1.",
+          keys: [
+            "TC_WORD = \"ESCAPE\", TC_GRID = 5×5 tap-code grid (K→C)",
+            "_pair() — converts a letter to its (row, col) grid position",
+            "_drawSlab() — carves row marks, a gap, then column marks per letter",
+          ],
+        },
+        {
+          key: "Signs",
+          name: "Signs",
+          code: "SILENT",
+          alt: null,
+          sound: false,
+          tool: true,
+          hint: "THE COLLECTOR'S WALL.\nAmong the paintings, one series mattered enough to be dated. Time puts things in order.",
+          mech: "A wall of 12 framed pictures mixes 6 decorative sketches with 6 sepia photos of hands fingerspelling in ASL. Read left to right by wall position, the hand photos spell LISTEN — a deliberate trap. Each photo also carries a small brass plate with a year (L=1896, I=1881, S=1874, T=1921, E=1902, N=1913); sorted chronologically instead of by position, they read S(1874)-I(1881)-L(1896)-E(1902)-N(1913)-T(1921) = SILENT, the real code.",
+          keys: [
+            "SG_WALL — each photo has ch (fingerspelled letter), year, and x (decoy position)",
+            "SG_WORD = \"SILENT\" — only recoverable by sorting SG_WALL entries by year",
+            "in-file comment states both the LISTEN decoy and the SILENT solve path",
+          ],
+        },
+      ];
+
+      // ── Render quick table ──
+      const quickTable = document.getElementById("quick-table");
+      const cardsWrap = document.getElementById("cards");
+
+      LEVELS.forEach((lvl, i) => {
+        const n = i + 1;
+
+        const row = document.createElement("a");
+        row.href = "#lvl-" + lvl.key;
+        row.className = "quick-row";
+        row.dataset.search = (lvl.name + " " + lvl.key + " " + lvl.code + " " + (lvl.alt || "")).toLowerCase();
+        row.innerHTML =
+          '<span class="quick-num">' + String(n).padStart(2, "0") + '</span>' +
+          '<span class="quick-name">' + lvl.name + '</span>' +
+          '<span class="quick-alt">' + (lvl.alt ? "alt: " + lvl.alt : "") + '</span>' +
+          '<span class="quick-code">' + lvl.code + '</span>';
+        quickTable.appendChild(row);
+
+        const card = document.createElement("section");
+        card.className = "level-card sketch-frame";
+        card.id = "lvl-" + lvl.key;
+        card.dataset.search = row.dataset.search;
+
+        let badges = "";
+        if (lvl.sound) badges += '<span class="mini-badge">🔊 sound</span>';
+        if (lvl.tool) badges += '<span class="mini-badge">🔧 tool</span>';
+
+        let keysHtml = lvl.keys.map((k) => "<li>" + escapeHtml(k) + "</li>").join("");
+
+        card.innerHTML =
+          '<div class="level-card-head">' +
+            '<div class="level-title">' +
+              '<span class="level-num">CHAMBER ' + String(n).padStart(2, "0") + '</span>' +
+              '<h2 class="level-name">' + lvl.name + '</h2>' +
+            '</div>' +
+            '<div class="code-block">' +
+              '<span class="code-value" title="Click to copy">' + lvl.code + '</span>' +
+              (lvl.alt ? '<span class="code-alt">alt: ' + lvl.alt + '</span>' : '') +
+              '<button class="copy-btn">copy</button>' +
+            '</div>' +
+          '</div>' +
+          (badges ? '<div class="badges-row">' + badges + '</div>' : '') +
+          '<p class="clue-line">' + escapeHtml(lvl.hint) + '</p>' +
+          '<div class="mech-label">How it solves</div>' +
+          '<p class="mech-text">' + escapeHtml(lvl.mech) + '</p>' +
+          '<div class="keys-label">Where it lives in the code</div>' +
+          '<ul class="keys-list">' + keysHtml + '</ul>';
+
+        cardsWrap.appendChild(card);
+
+        const copyBtn = card.querySelector(".copy-btn");
+        const doCopy = () => {
+          const text = lvl.code;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(() => {});
+          }
+          copyBtn.textContent = "copied";
+          copyBtn.classList.add("done");
+          setTimeout(() => {
+            copyBtn.textContent = "copy";
+            copyBtn.classList.remove("done");
+          }, 1200);
+        };
+        copyBtn.addEventListener("click", doCopy);
+        card.querySelector(".code-value").addEventListener("click", doCopy);
+      });
+
+      function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      // ── Filter ──
+      const filterInput = document.getElementById("filter-input");
+      filterInput.addEventListener("input", () => {
+        const q = filterInput.value.trim().toLowerCase();
+        document.querySelectorAll(".quick-row").forEach((el) => {
+          el.hidden = q && !el.dataset.search.includes(q);
+        });
+        document.querySelectorAll(".level-card").forEach((el) => {
+          el.hidden = q && !el.dataset.search.includes(q);
+        });
+      });
+    </script>
+  </body>
+</html>
