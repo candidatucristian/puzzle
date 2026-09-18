@@ -45,12 +45,15 @@ window.currentLevelIndex = Math.min(
   window.GAME_LEVELS.length - 1,
 );
 window.unlockedLevelIndex = window.currentLevelIndex;
+let completionTimer = null;
 
 function goToLevel(index) {
   if (index < 0 || index >= window.GAME_LEVELS.length) {
     console.error("Invalid level index:", index);
     return;
   }
+
+  hideCompletionScreen();
 
   // Remove all scene-specific DOM overlays immediately (SVGs, TV, switch, etc.)
   document.querySelectorAll(".scene-dom-overlay").forEach((el) => el.remove());
@@ -144,6 +147,7 @@ function clearVeilTimers() {
 }
 
 function cinematicGoToLevel(index, opts = {}) {
+  hideCompletionScreen();
   // a new pick always wins immediately: drop whatever the previous
   // transition still had queued instead of waiting for it to finish
   const wasBusy = veilBusy;
@@ -375,6 +379,7 @@ const btnSubmit = document.getElementById("btn-submit");
 const inputCode = document.getElementById("level-code");
 
 btnSubmit.addEventListener("click", () => {
+  if (veilBusy || introActive) return;
   const code = inputCode.value.trim().toUpperCase();
   const currentLevelConfig = window.GAME_LEVELS[window.currentLevelIndex];
 
@@ -395,7 +400,11 @@ btnSubmit.addEventListener("click", () => {
     if (isLastLevel) {
       window.unlockedLevelIndex = window.GAME_LEVELS.length - 1;
       localStorage.setItem("puzzleUnlockedLevel", window.unlockedLevelIndex);
-      setTimeout(showCompletionScreen, 650);
+      clearTimeout(completionTimer);
+      completionTimer = setTimeout(() => {
+        completionTimer = null;
+        showCompletionScreen();
+      }, 650);
     } else {
       const nextLevelIndex = window.currentLevelIndex + 1;
       window.unlockedLevelIndex = Math.max(
@@ -437,6 +446,7 @@ btnNew.addEventListener("click", () => {
     return;
   }
   disarmReset();
+  hideCompletionScreen();
   document.getElementById("options-modal").classList.add("hidden");
   localStorage.setItem("puzzleUnlockedLevel", 0);
   localStorage.setItem("puzzleProgressSchema", PROGRESS_SCHEMA);
@@ -479,6 +489,8 @@ function showCompletionScreen() {
 }
 
 function hideCompletionScreen() {
+  clearTimeout(completionTimer);
+  completionTimer = null;
   completionScreen.classList.add("hidden");
 }
 
@@ -553,6 +565,8 @@ musicSlider.addEventListener("input", (e) => {
 sfxSlider.addEventListener("input", (e) => {
   window.GameAudio.sfxVol = parseFloat(e.target.value);
   localStorage.setItem("sfxVol", window.GameAudio.sfxVol);
+  _syncVolIcon();
+  window.mainScene?.refreshSfxVolume?.();
 });
 
 function toggleMute() {
@@ -578,6 +592,7 @@ volSliderUI.addEventListener("input", (e) => {
   localStorage.setItem("muted", window.GameAudio.muted);
   sfxSlider.value = vol;
   syncMuteButtons();
+  window.mainScene?.refreshSfxVolume?.();
   if (window.mainScene && window.mainScene.sound) {
     window.mainScene.sound.volume = 1;
     window.mainScene.sound.setMute(vol === 0);

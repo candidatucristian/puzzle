@@ -1,10 +1,43 @@
 /* ═══════════════════════════════════════════════════════════════
    The Descipher — "Pencil & Paper" design system
-   Display: Children (local) · Body: Cormorant Garamond · In-level: Special Elite
+   Display / Body: Etude Noire (local) · In-level: Special Elite
    Hand-drawn frames on dark paper — no metal, no gold.
    ═══════════════════════════════════════════════════════════════ */
 
-/* local handwriting font (assets/fonts) — the UI display face */
+/* Local interface font, with a separate file for each available weight. */
+@font-face {
+  font-family: "Etude Noire";
+  src: url("../assets/fonts/EtudeNoir/Etude Noire Light (1).ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Etude Noire";
+  src: url("../assets/fonts/EtudeNoir/Etude Noire Regular (1).ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Etude Noire";
+  src: url("../assets/fonts/EtudeNoir/Etude Noire Medium (1).ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Etude Noire";
+  src: url("../assets/fonts/EtudeNoir/Etude Noire Bold (1).ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Local handwriting fallback. */
 @font-face {
   font-family: "Children";
   src: url("../assets/fonts/children/Children.ttf") format("truetype");
@@ -39,8 +72,8 @@
   --line-dark: #040507;
   --line-light: rgba(255, 255, 255, 0.06);
   /* type */
-  --font-display: "Children", "Architects Daughter", cursive;
-  --font-body: "Cormorant Garamond", Georgia, serif;
+  --font-display: "Etude Noire", "Children", "Architects Daughter", cursive;
+  --font-body: "Etude Noire", "Cormorant Garamond", Georgia, serif;
   /* recurring surfaces */
   --grad-panel: linear-gradient(180deg, #23262c, #1a1c21 55%, #131519);
 }

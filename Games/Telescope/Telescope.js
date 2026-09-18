@@ -188,6 +188,7 @@ class TelescopeScene extends Phaser.Scene {
 
     this.isSolved = false;
     this.phase = PHASE.ROOM;
+    this._transitionTarget = PHASE.ROOM;
 
     this._dragging = false;
     this._velX = 0;
@@ -215,9 +216,13 @@ class TelescopeScene extends Phaser.Scene {
     this.events.on("canvas_resized", ({ width, height }) => {
       this._W = width;
       this._H = height;
-      const wasSky = this.phase !== PHASE.ROOM;
+      const targetPhase = this.phase === PHASE.TRANSITION
+        ? this._transitionTarget
+        : this.phase;
       this._teardown();
-      if (wasSky) {
+      // Resizing cancels the animation that would normally finish the transition.
+      this.phase = targetPhase;
+      if (targetPhase === PHASE.SKY) {
         this._buildSky(1);
         this._focus = 0;
       } else this._buildRoom(true);
@@ -1123,12 +1128,13 @@ class TelescopeScene extends Phaser.Scene {
 
   _enterSky() {
     if (this.phase !== PHASE.ROOM) return;
+    this._transitionTarget = PHASE.SKY;
     this.phase = PHASE.TRANSITION;
     this.input.setDefaultCursor("default");
 
     if (window.GameAudio && !window.GameAudio.muted) {
       const s = this.sound.get("ui_click") || this.sound.add("ui_click");
-      s.play({ volume: (window.GameAudio.sfxVol || 0.8) * 0.8 });
+      s.play({ volume: (window.GameAudio.sfxVol ?? 0.8) * 0.8 });
     }
     this._whoosh();
 
@@ -1191,6 +1197,7 @@ class TelescopeScene extends Phaser.Scene {
 
   _exitSky() {
     if (this.phase !== PHASE.SKY) return;
+    this._transitionTarget = PHASE.ROOM;
     this.phase = PHASE.TRANSITION;
     this.input.setDefaultCursor("default");
     this._whoosh(true);

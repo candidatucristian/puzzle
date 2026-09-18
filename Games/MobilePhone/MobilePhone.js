@@ -155,6 +155,7 @@ class MobilePhoneScene extends Phaser.Scene {
       loop: false,
     });
 
+    this.refreshSfxVolume();
     this.startVibrationSoundLoop();
 
     this.events.on("canvas_resized", (size) => {
@@ -646,7 +647,8 @@ class MobilePhoneScene extends Phaser.Scene {
       }
       return;
     }
-    this.vibrationSound.play({ volume: 0.25 });
+    this.refreshSfxVolume();
+    this.vibrationSound.play();
   }
 
   playKeySound() {
@@ -654,12 +656,20 @@ class MobilePhoneScene extends Phaser.Scene {
     if (this.sound.locked) {
       this.sound.once(Phaser.Sound.Events.UNLOCKED, () => {
         if (!this.isSolved && this.keySound) {
-          this.keySound.play({ volume: 0.62 });
+          this.refreshSfxVolume();
+          this.keySound.play();
         }
       });
       return;
     }
-    this.keySound.play({ volume: 0.62 });
+    this.refreshSfxVolume();
+    this.keySound.play();
+  }
+
+  refreshSfxVolume() {
+    const volume = window.GameAudio ? window.GameAudio.sfxVol : 0.8;
+    if (this.vibrationSound) this.vibrationSound.setVolume(volume * 0.25);
+    if (this.keySound) this.keySound.setVolume(volume * 0.62);
   }
 
   handleKeyPress(key) {

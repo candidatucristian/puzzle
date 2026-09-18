@@ -681,6 +681,14 @@ class ModemScene extends Phaser.Scene {
     } catch (e) {}
   }
 
+  refreshSfxVolume() {
+    if (this._hwSound) {
+      this._hwSound.setVolume(
+        (window.GameAudio ? window.GameAudio.sfxVol : 0.8) * 0.35,
+      );
+    }
+  }
+
   shutdown() {
     if (this._hwSound) {
       try { this._hwSound.stop(); this._hwSound.destroy(); } catch (e) {}
