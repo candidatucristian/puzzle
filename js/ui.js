@@ -691,6 +691,11 @@ const levelHints = {
     sound: false,
     tool: true,
   },
+  DeadLetter: {
+    text: "DEAD LETTER OFFICE.\nThe black card is a key. Start at I and turn clockwise. At each stop, read the windows from left to right, top to bottom. Keep all four impressions.",
+    sound: false,
+    tool: false,
+  },
 };
 
 btnInfo.addEventListener("click", () => {

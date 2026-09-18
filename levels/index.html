@@ -664,6 +664,21 @@
             "_drawSlab() — carves row marks, a gap, then column marks per letter",
           ],
         },
+        {
+          key: "DeadLetter",
+          name: "Dead Letter Office",
+          code: "LANTERN",
+          alt: null,
+          sound: false,
+          tool: false,
+          hint: "The black card is a key. Start at I, turn clockwise, and read the windows left to right, top to bottom at each stop.",
+          mech: "A turning grille covers a 4×4 letter grid. Its four windows expose a different group of four letters at each clockwise quarter-turn. Take impressions at I, II, III and IV to collect THEW / ORDI / SLAN / TERN. Join the groups to read THE WORD IS LANTERN. The clipped corner marks the starting orientation; all necessary instructions are on the clerk's note. No external cipher table or audio is required.",
+          keys: [
+            "DL_HOLES — four positions whose rotations cover all sixteen cells once",
+            "DeadLetterScene.letterGrid() — encodes the message into the paper",
+            "DeadLetterScene.holesAt(turn) — clockwise rotation in reading order",
+          ],
+        },
       ];
 
       // ── Render quick table ──

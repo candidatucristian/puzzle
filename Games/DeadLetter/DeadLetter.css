@@ -1,0 +1,72 @@
+#dead-letter {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 5;
+  background: radial-gradient(ellipse at 49% 43%, #202025, #0b0c10 78%);
+  color: #d4cbb8;
+  user-select: none;
+}
+#dead-letter .dl-stage {
+  position: absolute;
+  width: 900px;
+  height: 650px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(var(--dl-scale, 1));
+}
+#dead-letter .dl-room { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#dead-letter .dl-header { position: absolute; top: 24px; width: 100%; text-align: center; }
+#dead-letter .dl-header p { font: 13px var(--font-display); letter-spacing: 4px; color: #958e80; margin: 0 0 10px; }
+#dead-letter h2 { font: 400 29px var(--font-display); margin: 0; letter-spacing: 1px; }
+#dead-letter .dl-note {
+  position: absolute; top: 172px; left: 44px; width: 195px;
+  padding: 22px 16px 20px; transform: rotate(-4deg);
+  border: 1px solid #625c4d; border-radius: 2px 5px 3px 1px;
+  background: #262520; box-shadow: 5px 8px 0 #090a0c55;
+  font: 16px/1.4 var(--font-body);
+}
+#dead-letter .dl-note p { margin: 0 0 15px; }
+#dead-letter .dl-note .dl-note-title { color: #e1d5bb; font-size: 17px; }
+#dead-letter .dl-signature { display: block; color: #9c9380; text-align: right; font-size: 13px; }
+#dead-letter .dl-spare-stencil { opacity: 1; transition: opacity .3s ease; }
+#dead-letter.dl-placed .dl-spare-stencil { opacity: 0; }
+#dead-letter .dl-pin { position: absolute; width: 8px; height: 8px; top: 8px; left: 94px; border-radius: 50%; background: #9c9483; box-shadow: 2px 3px 2px #0009; }
+#dead-letter .dl-paper { position: absolute; top: 111px; left: 253px; width: 390px; height: 415px; }
+#dead-letter .dl-paper svg { width: 100%; height: 100%; overflow: visible; }
+#dead-letter .dl-letters { font: 28px "Special Elite", monospace; fill: #2e302b; text-anchor: middle; }
+#dead-letter .dl-paper-label { font: 10px "Special Elite", monospace; fill: #766b55; text-anchor: middle; letter-spacing: 3px; }
+#dead-letter .dl-stencil {
+  transform-origin: 195px 202px;
+  opacity: 0;
+  transition: transform .4s ease, opacity .3s ease;
+}
+#dead-letter.dl-placed .dl-stencil { opacity: 1; }
+#dead-letter .dl-stencil-label { font: 9px "Special Elite", monospace; fill: #8f8879; text-anchor: middle; letter-spacing: 3px; }
+#dead-letter .dl-place-hit { position: absolute; top: 52px; left: 46px; width: 298px; height: 302px; border: 0; background: transparent; cursor: pointer; }
+#dead-letter .dl-place-hit:focus-visible { outline: 2px dashed #a99469; outline-offset: 5px; }
+#dead-letter .dl-ledger { position: absolute; top: 170px; left: 673px; width: 188px; transform: rotate(2deg); }
+#dead-letter .dl-ledger h3 { margin: 0 0 8px; font: 16px var(--font-display); letter-spacing: 3px; }
+#dead-letter .dl-ledger > p { margin: 0 0 23px; font: 16px/1.4 var(--font-body); color: #9f9788; }
+#dead-letter .dl-impression { display: flex; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px dashed #514c40; }
+#dead-letter .dl-impression > span { width: 24px; font: 14px var(--font-display); color: #8e8470; }
+#dead-letter .dl-impression output { font: 22px "Special Elite", monospace; color: #cdc3ac; white-space: nowrap; }
+#dead-letter .dl-current { border-color: #b4a37c; }
+#dead-letter .dl-current > span { color: #e1cfa6; }
+#dead-letter .dl-compass { font: 12px var(--font-display); color: #817a6b; margin-top: 19px; letter-spacing: 2px; }
+#dead-letter .dl-controls { position: absolute; top: 542px; left: 205px; right: 205px; display: flex; gap: 12px; }
+#dead-letter .dl-controls button {
+  flex: 1; min-height: 44px; padding: 9px 8px;
+  border: 1px solid #817661; border-radius: 3px 5px 2px 4px;
+  background: #242420; color: #ded3bd; cursor: pointer;
+  font: 13px var(--font-display); letter-spacing: 1px;
+}
+#dead-letter .dl-controls button:hover:not(:disabled) { background: #38352b; border-color: #d5c39c; }
+#dead-letter .dl-controls button:disabled { opacity: .38; cursor: default; }
+#dead-letter .dl-status { position: absolute; top: 601px; width: 100%; margin: 0; text-align: center; font: 17px var(--font-body); color: #b3a890; }
+#dead-letter .dl-ink-in { animation: dl-impression .5s ease both; }
+@keyframes dl-impression { from { opacity: .1; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  #dead-letter .dl-stencil { transition: none; }
+  #dead-letter .dl-ink-in { animation: none; }
+}

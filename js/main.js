@@ -150,6 +150,12 @@ window.GAME_LEVELS = [
     code: "ESCAPE",
     altCode: null,
   },
+  {
+    key: "DeadLetter",
+    scene: DeadLetterScene,
+    code: "LANTERN",
+    altCode: null,
+  },
 ];
 
 // ── Boot Scene ──

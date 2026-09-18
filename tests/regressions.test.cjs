@@ -27,7 +27,7 @@ function element() {
   };
 }
 
-function ui() {
+function ui(savedLevel) {
   const nodes = new Map();
   const node = (id) => {
     if (!nodes.has(id)) nodes.set(id, element());
@@ -77,6 +77,7 @@ function ui() {
   }
   vm.createContext(context);
   vm.runInContext(source("js/main.js"), context);
+  storage.set("puzzleUnlockedLevel", String(savedLevel ?? context.GAME_LEVELS.length - 1));
   vm.runInContext(source("js/ui.js"), context);
   function tick(until) {
     while (true) {
@@ -90,7 +91,10 @@ function ui() {
     now = until;
   }
   return { context, node, tick, game, storage,
-    submit() { node("level-code").value = "ESCAPE"; node("btn-submit").click(); },
+    submit() {
+      node("level-code").value = context.GAME_LEVELS[context.currentLevelIndex].code;
+      node("btn-submit").click();
+    },
     completed: () => !node("completion-screen").classList.contains("hidden"),
   };
 }
@@ -254,4 +258,53 @@ test("An answer entered during navigation cannot reopen completion", () => {
   app.node("levels-grid").children[0].onclick(); app.submit(); app.tick(2000);
   assert.equal(app.completed(), false);
   assert.equal(app.game.lastScene, "BinaryTree");
+});
+
+test("Existing level 16 progress unlocks the new chamber before completion", () => {
+  const app = ui(15);
+  assert.equal(app.context.currentLevelIndex, 15);
+  assert.equal(app.context.GAME_LEVELS.length, 17);
+  app.submit(); app.tick(3500);
+  assert.equal(app.game.lastScene, "DeadLetter");
+  assert.equal(app.storage.get("puzzleUnlockedLevel"), "16");
+  assert.equal(app.completed(), false);
+  app.submit(); app.tick(4500);
+  assert.equal(app.completed(), true);
+  assert.equal(app.node("completion-chambers").textContent, "17 / 17");
+});
+
+test("Turning grille covers the paper exactly once and decodes the configured answer", () => {
+  const { instance } = scene("DeadLetter");
+  const Puzzle = instance.constructor;
+  const grid = Puzzle.letterGrid();
+  const positions = [0, 1, 2, 3].flatMap((turn) => [...Puzzle.holesAt(turn)]);
+  assert.equal(new Set(positions).size, 16);
+  assert.ok(positions.every((cell) => cell >= 0 && cell < 16));
+  const message = positions.map((cell) => grid[cell]).join("");
+  const app = ui();
+  assert.equal(message, "THEWORDIS" + app.context.GAME_LEVELS.at(-1).code);
+  assert.deepEqual([...Puzzle.holesAt(4)], [...Puzzle.holesAt(0)]);
+});
+
+test("Grille actions require placement, finish rotating before tracing, and wrap", () => {
+  const { instance: puzzle } = scene("DeadLetter");
+  puzzle._turn = 0; puzzle._placed = false; puzzle._busy = false;
+  puzzle._traces = [null, null, null, null]; puzzle._timers = [];
+  puzzle._render = () => {};
+  puzzle._dom = { querySelector: () => ({ classList: { add() {}, remove() {} }, offsetWidth: 0 }) };
+  const pending = [];
+  puzzle.time = { delayedCall: (_, callback) => { pending.push(callback); return { remove() {} }; } };
+  puzzle._rotate(); puzzle._trace();
+  assert.equal(puzzle._turn, 0);
+  assert.ok(puzzle._traces.every((value) => value === null));
+  puzzle._place();
+  for (let turn = 0; turn < 4; turn++) {
+    puzzle._trace();
+    puzzle._rotate(); puzzle._rotate(); puzzle._place(); puzzle._trace();
+    assert.equal(puzzle._turn, turn + 1);
+    assert.equal(puzzle._placed, true);
+    pending.shift()();
+  }
+  assert.equal(puzzle._traces.join(""), "THEWORDIS" + ui().context.GAME_LEVELS.at(-1).code);
+  assert.equal(puzzle._turn % 4, 0);
 });
