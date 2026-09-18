@@ -322,16 +322,23 @@ class TapCodeScene extends Phaser.Scene {
     this._pencilSeg(g, rnd, mL - 8, mT - 16, mR + 8, mT - 16, 1.3, TC_SKETCH, 0.3, 1.4);
     this._pencilSeg(g, rnd, mL - 8, mT - 2, mR + 8, mT - 2, 1.6, 0x050607, 0.9, 1);
 
-    // the night beyond: deep blue, a low moon, two stars that live
-    g.fillStyle(0x0c1420, 1);
+    // Near-black night, a warm moon, and stars behind the opaque grille.
+    g.fillStyle(0x03060c, 1);
     g.fillRect(oL, oT, ww, wh);
-    g.fillStyle(0xe8ecf2, 0.75);
+    g.fillStyle(0xf3dea1, 0.85);
     g.fillCircle(oL + ww * 0.72, oT + wh * 0.26, ww * 0.09);
-    g.fillStyle(0x0c1420, 1);
+    g.fillStyle(0x03060c, 1);
     g.fillCircle(oL + ww * 0.66, oT + wh * 0.23, ww * 0.075); // waning crescent
-    for (const [sx, sy] of [[0.24, 0.18], [0.4, 0.55], [0.85, 0.62]]) {
+    const starRandom = this._rng(7319);
+    for (let i = 0; i < 12; i++) {
+      const cell = (i * 7) % 25;
+      const col = cell % 5, row = Math.floor(cell / 5);
+      const sx = (col + 0.27 + starRandom() * 0.46) / 5;
+      const sy = (row + 0.25 + starRandom() * 0.5) / 5;
+      // Leave the moon's disc clear.
+      if (Math.hypot((sx - 0.72) * ww, (sy - 0.26) * wh) < ww * 0.11) continue;
       const star = this.add
-        .circle(oL + ww * sx, oT + wh * sy, 1.1, 0xffffff, 0.7)
+        .circle(oL + ww * sx, oT + wh * sy, 0.5 + starRandom() * 0.8, 0xe5e8f0, 0.55 + starRandom() * 0.3)
         .setDepth(-10);
       this.tweens.add({
         targets: star,
@@ -343,22 +350,30 @@ class TapCodeScene extends Phaser.Scene {
       });
     }
     // haze where the moonlight meets the opening
-    g.fillStyle(TC_LIGHT, 0.1);
+    g.fillStyle(TC_LIGHT, 0.015);
     g.fillRect(oL, oT, ww, wh);
 
-    // the bars: round iron, each with a cold highlight
-    const bars = 3;
-    for (let i = 1; i <= bars; i++) {
-      const bx = oL + (ww * i) / (bars + 1);
-      g.fillStyle(0x07080a, 1);
-      g.fillRect(bx - 2.6, oT - 2, 5.2, wh + 4);
-      g.lineStyle(1.2, TC_LIGHT, 0.35);
-      g.lineBetween(bx + 1.4, oT, bx + 1.4, oB);
+    // One opaque iron grid in front of the sky AND the animated stars.
+    // Shared fills join at every intersection; highlights never cut across joints.
+    const grille = this.add.graphics().setDepth(-9.5);
+    const cells = 5, barWidth = 6, halfBar = barWidth / 2;
+    grille.fillStyle(0x07080a, 1);
+    for (let i = 0; i <= cells; i++) {
+      grille.fillRect(oL + ww * i / cells - halfBar, oT - halfBar, barWidth, wh + barWidth);
+      grille.fillRect(oL - halfBar, oT + wh * i / cells - halfBar, ww + barWidth, barWidth);
     }
-    g.fillStyle(0x07080a, 1);
-    g.fillRect(oL - 2, oT + wh / 2 - 2.4, ww + 4, 4.8);
-    g.lineStyle(1.1, TC_LIGHT, 0.3);
-    g.lineBetween(oL, oT + wh / 2 + 1.6, oR, oT + wh / 2 + 1.6);
+    // Faint inner edges define the openings without splitting the solid iron.
+    grille.lineStyle(0.6, TC_LIGHT, 0.22);
+    for (let row = 0; row < cells; row++) {
+      for (let col = 0; col < cells; col++) {
+        const left = oL + ww * col / cells + halfBar;
+        const right = oL + ww * (col + 1) / cells - halfBar;
+        const top = oT + wh * row / cells + halfBar;
+        const bottom = oT + wh * (row + 1) / cells - halfBar;
+        grille.lineBetween(left - 0.5, top, left - 0.5, bottom);
+        grille.lineBetween(left, bottom + 0.5, right, bottom + 0.5);
+      }
+    }
 
     // someone indexed the panes like a grid: a scratched "1" above the
     // first column, another "1" beside the first row — and stopped.
@@ -369,13 +384,13 @@ class TapCodeScene extends Phaser.Scene {
       color: "#8f9aa8",
     };
     this.add
-      .text(oL + ww / 8, oT - 6, "1", idxStyle)
+      .text(oL + ww / 10, oT - 6, "1", idxStyle)
       .setOrigin(0.5, 1)
       .setAlpha(0.6)
       .setAngle(-4)
       .setDepth(-9);
     this.add
-      .text(oL - 6, oT + wh / 4, "1", idxStyle)
+      .text(oL - 6, oT + wh / 10, "1", idxStyle)
       .setOrigin(1, 0.5)
       .setAlpha(0.6)
       .setAngle(3)
@@ -386,8 +401,6 @@ class TapCodeScene extends Phaser.Scene {
   _drawLightShaft(W, H) {
     const { x: wx, y: wy, w: ww, h: wh } = this._win;
     const fy = this._floorY;
-    const oB = wy + wh;
-
     // where the light lands: a skewed panel on the floor, right of the window
     const p = {
       nearL: { x: wx + W * 0.02, y: H * 0.97 },
@@ -396,22 +409,25 @@ class TapCodeScene extends Phaser.Scene {
       farL: { x: wx - ww * 0.55, y: fy + 10 },
     };
 
-    // the airborne shaft, two nested layers
-    const g = this.add.graphics().setDepth(-4);
+    // Both layers originate at the complete opening, behind its opaque frame.
+    // The window masks the beam inside the aperture so no seam crosses the sky or bars.
+    const sourceL = { x: wx - ww / 2, y: wy };
+    const sourceR = { x: wx + ww / 2, y: wy };
+    const g = this.add.graphics().setDepth(-10.5);
     this._fillPoly(
       g,
-      [{ x: wx - ww / 2, y: oB - wh * 0.6 }, { x: wx + ww / 2, y: oB - wh * 0.7 }, p.nearR, p.nearL],
-      TC_LIGHT, 0.045,
+      [sourceL, sourceR, p.nearR, p.nearL],
+      TC_LIGHT, 0.12,
     );
     this._fillPoly(
       g,
-      [{ x: wx - ww * 0.3, y: oB - wh * 0.5 }, { x: wx + ww * 0.34, y: oB - wh * 0.55 }, { x: wx + W * 0.24, y: H * 0.94 }, { x: wx + W * 0.05, y: H * 0.96 }],
-      TC_LIGHT, 0.05,
+      [sourceL, sourceR, { x: wx + W * 0.24, y: H * 0.94 }, { x: wx + W * 0.05, y: H * 0.96 }],
+      TC_LIGHT, 0.14,
     );
 
     // the lit patch on the flagstones
     const fg = this.add.graphics().setDepth(-8);
-    this._fillPoly(fg, [p.farL, p.farR, p.nearR, p.nearL], TC_LIGHT, 0.1);
+    this._fillPoly(fg, [p.farL, p.farR, p.nearR, p.nearL], TC_LIGHT, 0.24);
     this._fillPoly(
       fg,
       [
@@ -420,17 +436,17 @@ class TapCodeScene extends Phaser.Scene {
         { x: p.nearR.x - 18, y: p.nearR.y - 4 },
         { x: p.nearL.x + 20, y: p.nearL.y - 4 },
       ],
-      TC_LIGHT, 0.07,
+      TC_LIGHT, 0.16,
     );
 
     // the shadows of the bars, stretched long by the low moon
     const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
-    for (let i = 1; i <= 3; i++) {
-      const t = i / 4;
+    for (let i = 1; i <= 4; i++) {
+      const t = i / 5;
       const far = lerp(p.farL, p.farR, t);
       const near = lerp(p.nearL, p.nearR, t);
       const wFar = 3;
-      const wNear = 7;
+      const wNear = 8;
       this._fillPoly(
         fg,
         [
@@ -442,19 +458,21 @@ class TapCodeScene extends Phaser.Scene {
         0x000000, 0.34,
       );
     }
-    // the crossbar's shadow, one broad band across the middle
-    const a = lerp(p.farL, p.nearL, 0.48);
-    const b = lerp(p.farR, p.nearR, 0.48);
-    this._fillPoly(
-      fg,
-      [
-        { x: a.x, y: a.y - 4 },
-        { x: b.x, y: b.y - 5 },
-        { x: b.x, y: b.y + 7 },
-        { x: a.x, y: a.y + 6 },
-      ],
-      0x000000, 0.3,
-    );
+    // Four crossbar shadows complete the projected five-by-five grid.
+    for (let i = 1; i <= 4; i++) {
+      const a = lerp(p.farL, p.nearL, i / 5);
+      const b = lerp(p.farR, p.nearR, i / 5);
+      this._fillPoly(
+        fg,
+        [
+          { x: a.x, y: a.y - 3 },
+          { x: b.x, y: b.y - 5 },
+          { x: b.x, y: b.y + 6 },
+          { x: a.x, y: a.y + 5 },
+        ],
+        0x000000, 0.3,
+      );
+    }
 
     // the shaft breathes, barely — clouds crossing the moon
     this.tweens.add({

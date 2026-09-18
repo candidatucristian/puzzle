@@ -381,7 +381,7 @@ class BinaryTreeScene extends Phaser.Scene {
       g.gain.value = (window.GameAudio ? window.GameAudio.sfxVol : 0.8) * vol;
       src.connect(bp);
       bp.connect(g);
-      g.connect(ac.destination);
+      g.connect(this.sound.destination);
       src.start(t);
       src.stop(t + dur);
     } catch (e) {}
@@ -394,7 +394,7 @@ class BinaryTreeScene extends Phaser.Scene {
       const t = ac.currentTime;
       const master = ac.createGain();
       master.gain.value = (window.GameAudio ? window.GameAudio.sfxVol : 0.8) * 0.35;
-      master.connect(ac.destination);
+      master.connect(this.sound.destination);
       const partials = [
         [523.3, 0.9, 2.0],
         [659.3, 0.6, 1.8],

@@ -33,19 +33,15 @@ class PlantPotScene extends Phaser.Scene {
     this.bgGfx = this.add.graphics().setDepth(-10);
     this.drawBg = (w, h) => {
       this.bgGfx.clear();
-      this.bgGfx.fillGradientStyle(0x222233, 0x222233, 0x0a0a10, 0x0a0a10, 1);
+      this.bgGfx.fillGradientStyle(0x050912, 0x080e19, 0x080d0b, 0x0c120e, 1);
       this.bgGfx.fillRect(0, 0, w, h);
     };
     this.drawBg(width, height);
 
     // ── Room Background (Sketched) ──
     this.roomGfx = this.add.graphics().setDepth(-5);
-    this.drawRoom(this.roomGfx, width, height);
+    this.drawGarden(this.roomGfx, width, height);
 
-    // ── Faded math decorations (Fibonacci formulas, geometry) ──
-    this.mathDecorGfx = this.add.graphics().setDepth(-3);
-    this._mathTexts = [];
-    this._drawMathDecor(width, height);
 
     this.statusText = this.add
       .text(width / 2, 50, "Who am I? ...", {
@@ -83,7 +79,7 @@ class PlantPotScene extends Phaser.Scene {
     let scaleFactor = Math.min(1, height / 600) * 0.85;
 
     // ── mainContainer lăsat mai jos ───────────────────────────────────────
-    this.mainContainer = this.add.container(width / 2, height / 2 + 110);
+    this.mainContainer = this.add.container(width * 0.48, height * 0.89 - 215 * scaleFactor);
     this.mainContainer.setScale(scaleFactor);
 
     // ── Noduri tree ───────────────────────────────────────────────────────
@@ -203,14 +199,10 @@ class PlantPotScene extends Phaser.Scene {
       this.drawBg(size.width, size.height);
       this.statusText.setPosition(size.width / 2, 50);
       this.levelText.setPosition(size.width - 30, 30);
-      this.mainContainer.setPosition(size.width / 2, size.height / 2 + 110);
       let newScale = Math.min(1, size.height / 600) * 0.85;
+      this.mainContainer.setPosition(size.width * 0.48, size.height * 0.89 - 215 * newScale);
       this.mainContainer.setScale(newScale);
-      this.drawRoom(this.roomGfx, size.width, size.height);
-      this.mathDecorGfx.clear();
-      this._mathTexts.forEach((t) => t.destroy());
-      this._mathTexts = [];
-      this._drawMathDecor(size.width, size.height);
+      this.drawGarden(this.roomGfx, size.width, size.height);
     });
 
     if (!this.skipFadeIn) {
@@ -249,74 +241,113 @@ class PlantPotScene extends Phaser.Scene {
     this.pourAndGrow();
   }
 
-  drawRoom(g, w, h) {
+  drawGarden(g, w, h) {
     g.clear();
-    const sketchLine = (x0, y0, x1, y1, alphaMod = 1) => {
-      const drawPass = (ox, oy, noise) => {
-        g.lineStyle(1.2, 0xffffff, 0.25 * alphaMod);
-        g.beginPath();
-        g.moveTo(x0 + ox, y0 + oy);
-        const steps = 8;
-        for (let i = 1; i <= steps; i++) {
-          let t = i / steps;
-          let jx = i < steps ? Phaser.Math.Between(-noise, noise) : 0;
-          let jy = i < steps ? Phaser.Math.Between(-noise, noise) : 0;
-          g.lineTo(x0 + (x1 - x0) * t + ox + jx, y0 + (y1 - y0) * t + oy + jy);
-        }
-        g.strokePath();
-      };
-      drawPass(0, 0, 0);
-      drawPass(-1, 1, 1);
-      drawPass(1, -1, 1);
+    const pencil = 0xd8d2c4;
+    let seed = 31415;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const line = (x1, y1, x2, y2, alpha = 0.35, width = 0.8) => {
+      g.lineStyle(width, pencil, alpha);
+      g.beginPath(); g.moveTo(x1, y1);
+      g.lineTo((x1 + x2) / 2 + (rnd() - 0.5), (y1 + y2) / 2 + (rnd() - 0.5));
+      g.lineTo(x2, y2); g.strokePath();
     };
-    const vx = w / 2;
-    const vy = h * 0.4;
-    const bwW = w * 0.7;
-    const bwH = h * 0.55;
-    const bwL = vx - bwW / 2;
-    const bwR = vx + bwW / 2;
-    const bwT = vy - bwH * 0.35;
-    const bwB = vy + bwH * 0.65;
-    const ext = (px, py) => {
-      let dx = px - vx;
-      let dy = py - vy;
-      return { x: vx + dx * 15, y: vy + dy * 15 };
+    const path = (points, alpha = 0.35, width = 0.8) => {
+      for (let i = 1; i < points.length; i++) line(...points[i - 1], ...points[i], alpha, width);
     };
-    sketchLine(bwL, bwT, bwR, bwT, 0.8);
-    sketchLine(bwL, bwB, bwR, bwB, 0.8);
-    sketchLine(bwL, bwT, bwL, bwB, 0.8);
-    sketchLine(bwR, bwT, bwR, bwB, 0.8);
-    let tl = ext(bwL, bwT);
-    let tr = ext(bwR, bwT);
-    let bl = ext(bwL, bwB);
-    let br = ext(bwR, bwB);
-    sketchLine(bwL, bwT, tl.x, tl.y, 0.5);
-    sketchLine(bwR, bwT, tr.x, tr.y, 0.5);
-    sketchLine(bwL, bwB, bl.x, bl.y, 0.5);
-    sketchLine(bwR, bwB, br.x, br.y, 0.5);
-    let boardH = h * 0.04;
-    sketchLine(bwL, bwB - boardH, bwR, bwB - boardH, 1.5);
-    let baseBl = ext(bwL, bwB - boardH);
-    let baseBr = ext(bwR, bwB - boardH);
-    sketchLine(bwL, bwB - boardH, baseBl.x, baseBl.y, 1.2);
-    sketchLine(bwR, bwB - boardH, baseBr.x, baseBr.y, 1.2);
-    const numBoards = 8;
-    for (let i = 1; i < numBoards; i++) {
-      let t = i / numBoards;
-      let px = bwL + bwW * t;
-      let pExt = ext(px, bwB);
-      sketchLine(px, bwB, pExt.x, pExt.y, 0.25);
+    const ground = h * 0.72;
+    // Fixed pencil stars against the night sky; keep the puzzle silhouette clear.
+    let starSeed = 8123;
+    const starRandom = () => (starSeed = (starSeed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 85; i++) {
+      const x = w * (0.025 + starRandom() * 0.95);
+      const y = h * (0.035 + starRandom() * 0.41);
+      if (x > w * 0.26 && x < w * 0.59 && y > h * 0.17) continue;
+      if (y < 78 && x > w * 0.33 && x < w * 0.67) continue;
+      g.fillStyle(0xd8dfec, 0.3 + starRandom() * 0.4);
+      g.fillCircle(x, y, 0.55 + starRandom() * 0.8);
+      if (i % 14 === 0) {
+        g.lineStyle(0.6, 0xd8dfec, 0.35);
+        g.lineBetween(x - 2.5, y, x + 2.5, y);
+        g.lineBetween(x, y - 2.5, x, y + 2.5);
+      }
     }
-    let winL = vx - bwW * 0.2;
-    let winR = vx + bwW * 0.2;
-    let winT = bwT + bwH * 0.15;
-    let winB = bwT + bwH * 0.5;
-    sketchLine(winL, winT, winR, winT, 0.35);
-    sketchLine(winL, winB, winR, winB, 0.35);
-    sketchLine(winL, winT, winL, winB, 0.35);
-    sketchLine(winR, winT, winR, winB, 0.35);
-    sketchLine(vx, winT, vx, winB, 0.15);
-    sketchLine(winL, (winT + winB) / 2, winR, (winT + winB) / 2, 0.15);
+    // Distant fields and faint clouds under starlight.
+    for (let layer = 0; layer < 2; layer++) {
+      const points = [];
+      for (let i = 0; i <= 48; i++) points.push([w * i / 48,
+        h * (0.50 + layer * 0.07) + Math.sin(i * 0.18 + layer * 2) * h * 0.033]);
+      path(points, 0.10 + layer * 0.04);
+    }
+    for (const [cx, cy, length] of [[0.08,0.18,0.2], [0.72,0.24,0.2], [0.46,0.12,0.12]]) {
+      const points = [];
+      for (let i = 0; i <= 18; i++) points.push([w * (cx + i * length / 18), h * cy + Math.sin(i * 0.8) * 2]);
+      path(points, 0.12);
+    }
+    // Low fence with an opening towards the distant fields.
+    for (let i = 0; i < 24; i++) {
+      const x = w * (0.02 + i * 0.042);
+      if (x > w * 0.37 && x < w * 0.62) continue;
+      const y = ground - h * 0.09;
+      path([[x,ground],[x,y+5],[x+4,y],[x+8,y+5],[x+8,ground]], 0.23);
+    }
+    for (const [left, right] of [[0,0.37],[0.63,1]]) {
+      line(w*left,ground-h*0.035,w*right,ground-h*0.035,0.17);
+      line(w*left,ground-h*0.065,w*right,ground-h*0.065,0.17);
+    }
+    path([[w*0.48,h*0.61],[w*0.53,h*0.7],[w*0.69,h*0.84],[w*0.73,h]],0.12);
+    path([[w*0.54,h*0.61],[w*0.6,h*0.69],[w*0.79,h*0.84],[w*0.91,h]],0.12);
+    for (let i = 0; i < 45; i++) {
+      const x = rnd()*w, y = h*(0.75+rnd()*0.23);
+      if (x>w*0.25 && x<w*0.68) continue;
+      line(x-3,y,x,y-6,0.17); line(x,y-6,x+2,y,0.17);
+    }
+    // Peripheral plants are dimmer than the playable plant on the potting bench.
+    const plant = (x,y,size,flower=false) => {
+      const top=y-size;
+      path([[x,y],[x-size*0.05,y-size*0.45],[x+size*0.06,top]],0.45);
+      for (let i=0;i<4;i++) {
+        const yy=y-size*(0.2+i*0.17), dir=i%2?1:-1;
+        path([[x,yy],[x+dir*size*0.12,yy-size*0.16],[x+dir*size*0.25,yy-size*0.2],
+          [x+dir*size*0.16,yy],[x,yy]],0.35);
+      }
+      if (flower) {
+        g.lineStyle(0.7,pencil,0.4);
+        for(let i=0;i<6;i++) {
+          const a=i*Math.PI/3;
+          g.strokeEllipse(x+size*0.06+Math.cos(a)*5,top+Math.sin(a)*5,7,7);
+        }
+        g.strokeCircle(x+size*0.06,top,3);
+      }
+    };
+    const unit=Math.min(w/1000,h/650);
+    for(const [px,py,size,flower] of [[0.07,0.85,85,true],[0.13,0.87,112,false],
+      [0.20,0.83,70,true],[0.88,0.89,85,false],[0.94,0.87,118,true],
+      [0.08,0.70,45,false],[0.92,0.70,47,true]]) plant(w*px,h*py,size*unit,flower);
+    const sc=Math.min(1,h/600)*0.85, benchY=h*0.89;
+    const left=w*0.48-206*sc, right=w*0.48+215*sc;
+    line(left,benchY,right,benchY,0.48,1);
+    line(left-3,benchY+5,right+3,benchY+5,0.3);
+    for(const xx of [left+20*sc,right-20*sc]) {
+      line(xx,benchY+5,xx-4,h*0.99,0.33);
+      line(xx+5,benchY+5,xx+2,h*0.99,0.2);
+    }
+    // Straw hat, apron, rolled sleeves and a spade resting in the gardener's hand.
+    const gx=w*0.77,gy=h*0.88,s=unit*0.9;
+    const body=(points,alpha=0.58,width=0.85)=>path(points.map(([x,y])=>[gx+x*s,gy+y*s]),alpha,width);
+    body([[-23,-145],[-18,-163],[-4,-167],[11,-160],[15,-144]],0.55);
+    body([[-36,-143],[-16,-148],[20,-145],[31,-139],[5,-136],[-36,-143]],0.65);
+    body([[-15,-137],[-13,-118],[0,-112],[12,-121],[14,-137]],0.5);
+    body([[-9,-115],[-25,-103],[-28,-62],[-17,-48],[19,-48],[26,-72],[18,-105],[7,-115]]);
+    body([[-10,-108],[-13,-57],[17,-57],[10,-108]],0.45);
+    body([[-7,-85],[10,-85],[9,-73],[-6,-73],[-7,-85]],0.3);
+    body([[-24,-99],[-42,-83],[-53,-99],[-47,-106],[-38,-95],[-27,-110]]);
+    body([[20,-102],[34,-82],[24,-66],[18,-70],[24,-84],[13,-98]]);
+    body([[-14,-47],[-17,-10],[-27,-6],[-27,0],[-9,0],[-3,-45]],0.6);
+    body([[4,-46],[13,-12],[12,-3],[30,-3],[31,-8],[21,-13],[19,-47]],0.6);
+    body([[-51,-114],[-50,-23]],0.6,1);
+    body([[-57,-123],[-43,-123],[-43,-114],[-57,-114],[-57,-123]],0.5);
+    body([[-59,-24],[-41,-24],[-43,-7],[-50,0],[-57,-7],[-59,-24]],0.5);
   }
 
   drawPot(g) {
@@ -633,112 +664,6 @@ class PlantPotScene extends Phaser.Scene {
     this.statusText.setColor("#1aaf7a");
   }
 
-  _drawMathDecor(w, h) {
-    const g = this.mathDecorGfx;
-    const PHI = 1.6180339887;
-    const sc = Math.min(w / 700, h / 500);
-
-    const txt = (px, py, str, sz, deg, alpha) => {
-      const t = this.add
-        .text(Math.round(px * w), Math.round(py * h), str, {
-          fontFamily: "monospace",
-          fontSize: Math.max(7, Math.round(sz * sc)) + "px",
-          color: "#c8ddc8",
-        })
-        .setAlpha(alpha)
-        .setDepth(-3)
-        .setOrigin(0, 0);
-      if (deg) t.setAngle(deg);
-      this._mathTexts.push(t);
-    };
-
-    // Recurrence relation — top left
-    txt(0.03, 0.12, "F(n) = F(n-1) + F(n-2)", 10, -2, 0.13);
-    txt(0.03, 0.19, "F(0) = 0,  F(1) = 1", 8, -2, 0.09);
-
-    // Golden ratio — top right
-    txt(0.67, 0.08, "φ = (1 + √5) / 2", 10, 2, 0.13);
-    txt(0.69, 0.15, "  ≈ 1.6180339887...", 9, 2, 0.1);
-
-    // Binet's formula — left middle
-    txt(0.03, 0.49, "F(n) = (φⁿ − ψⁿ) / √5", 9, -1, 0.1);
-    txt(0.03, 0.55, "ψ = (1 − √5) / 2", 8, -1, 0.08);
-
-    // φ identities — right middle
-    txt(0.76, 0.51, "φ² = φ + 1", 10, 2, 0.12);
-    txt(0.76, 0.57, "1/φ  =  φ − 1", 9, 2, 0.1);
-    txt(0.74, 0.63, "φ = 1+1/(1+1/(1+...))", 8, 2, 0.08);
-
-    // Limit — bottom left
-    txt(0.05, 0.85, "lim F(n+1) / F(n)  =  φ", 9, -1, 0.1);
-    txt(0.09, 0.9, "n → ∞", 8, 0, 0.07);
-
-    // Scattered large Fibonacci numbers in corners
-    txt(0.02, 0.32, "233", 20, 10, 0.07);
-    txt(0.88, 0.22, "377", 18, -8, 0.07);
-    txt(0.86, 0.71, "610", 22, 5, 0.06);
-    txt(0.03, 0.73, "144", 16, -5, 0.07);
-
-    // ── Golden (logarithmic) spiral ──────────────────────────────────────
-    const spCx = w * 0.83;
-    const spCy = h * 0.19;
-    const maxR = Math.min(w * 0.18, h * 0.26);
-
-    g.lineStyle(1.2, 0xaabbaa, 0.11);
-    g.beginPath();
-    let spStarted = false;
-    for (let i = 0; i <= 700; i++) {
-      const theta = (i / 700) * 14 * Math.PI;
-      const r = 1.1 * Math.pow(PHI, (2 * theta) / Math.PI);
-      if (r > maxR) break;
-      const x = spCx + r * Math.cos(theta);
-      const y = spCy + r * Math.sin(theta);
-      if (!spStarted) {
-        g.moveTo(x, y);
-        spStarted = true;
-      } else g.lineTo(x, y);
-    }
-    g.strokePath();
-
-    // Concentric Fibonacci-ratio circles around spiral center
-    [2, 3, 5, 8, 13, 21].forEach((n, i) => {
-      g.lineStyle(1, 0x889988, 0.04 + i * 0.005);
-      g.strokeCircle(spCx, spCy, n * (maxR / 22));
-    });
-
-    // ── Pentagon + pentagram (φ lives in the regular pentagon) ──────────
-    const pCx = w * 0.1;
-    const pCy = h * 0.63;
-    const pR = Math.min(w * 0.055, h * 0.08);
-
-    const verts = Array.from({ length: 5 }, (_, i) => {
-      const a = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-      return { x: pCx + pR * Math.cos(a), y: pCy + pR * Math.sin(a) };
-    });
-
-    g.lineStyle(1, 0xaabbaa, 0.09);
-    g.beginPath();
-    verts.forEach((v, i) =>
-      i === 0 ? g.moveTo(v.x, v.y) : g.lineTo(v.x, v.y),
-    );
-    g.closePath();
-    g.strokePath();
-
-    g.lineStyle(1, 0x8899aa, 0.07);
-    g.beginPath();
-    [0, 2, 4, 1, 3, 0].forEach((vi, i) => {
-      const v = verts[vi];
-      i === 0 ? g.moveTo(v.x, v.y) : g.lineTo(v.x, v.y);
-    });
-    g.strokePath();
-
-    // ── Faint ruled lines ─────────────────────────────────────────────────
-    g.lineStyle(1, 0x889988, 0.04);
-    [0.075, 0.83, 0.895].forEach((py) => {
-      g.lineBetween(w * 0.02, h * py, w * 0.98, h * py);
-    });
-  }
-
   transitionToLevel(levelKey, skipFade = false) {
     if (levelKey === this.scene.key && skipFade) {
       this.scene.restart({ skipFade: true });
@@ -780,12 +705,5 @@ class PlantPotScene extends Phaser.Scene {
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
-    if (this._mathTexts)
-      this._mathTexts.forEach((t) => {
-        try {
-          t.destroy();
-        } catch (_) {}
-      });
-    this._mathTexts = [];
   }
 }

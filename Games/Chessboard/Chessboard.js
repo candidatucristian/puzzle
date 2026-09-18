@@ -82,7 +82,12 @@ class ChessboardScene extends Phaser.Scene {
   _lerpColor(c1, c2, t) {
     const a = Phaser.Display.Color.ValueToColor(c1);
     const b = Phaser.Display.Color.ValueToColor(c2);
-    const o = Phaser.Display.Color.Interpolate.ColorWithColor(a, b, 100, t * 100);
+    const o = Phaser.Display.Color.Interpolate.ColorWithColor(
+      a,
+      b,
+      100,
+      t * 100,
+    );
     return Phaser.Display.Color.GetColor(o.r, o.g, o.b);
   }
 
@@ -107,13 +112,49 @@ class ChessboardScene extends Phaser.Scene {
     // still, gentle vignette — painted once, never animated
     const vg = this.add.graphics().setDepth(30);
     const v = Math.min(W, H) * 0.2;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.55, 0.55, 0, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.55,
+      0.55,
+      0,
+      0,
+    );
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.6, 0.6);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.6,
+      0.6,
+    );
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0, 0.5, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.5,
+      0,
+      0.5,
+      0,
+    );
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.5, 0, 0.5);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0.5,
+      0,
+      0.5,
+    );
     vg.fillRect(W - v, 0, v, H);
   }
 
@@ -130,46 +171,23 @@ class ChessboardScene extends Phaser.Scene {
       bg.lineBetween(gx, gy, gx + 40 + rnd() * 110, gy + (rnd() * 4 - 2));
     }
     // one still shaft of window light across the table — painted, not animated
-    bg.fillGradientStyle(0xffe9c0, 0x000000, 0x000000, 0x000000, 0.05, 0, 0.02, 0);
+    bg.fillGradientStyle(
+      0xffe9c0,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.05,
+      0,
+      0.02,
+      0,
+    );
     bg.fillRect(0, 0, W, H);
 
     // green baize mat under the board
     const half = inner / 2 + frame;
     const matPad = Math.min(W, H) * 0.085;
     const mat = this.add.graphics().setDepth(-8);
-    mat.fillStyle(0x000000, 0.4);
-    mat.fillRoundedRect(
-      cx - half - matPad + 5,
-      cy - half - matPad + 7,
-      (half + matPad) * 2,
-      (half + matPad) * 2,
-      14,
-    );
-    mat.fillGradientStyle(0x22402c, 0x1e3a28, 0x122417, 0x15291b, 1);
-    mat.fillRoundedRect(
-      cx - half - matPad,
-      cy - half - matPad,
-      (half + matPad) * 2,
-      (half + matPad) * 2,
-      14,
-    );
-    // stitched double border
-    mat.lineStyle(1.4, 0x0c1a10, 0.9);
-    mat.strokeRoundedRect(
-      cx - half - matPad + 7,
-      cy - half - matPad + 7,
-      (half + matPad) * 2 - 14,
-      (half + matPad) * 2 - 14,
-      10,
-    );
-    mat.lineStyle(1, 0x3d5c46, 0.5);
-    mat.strokeRoundedRect(
-      cx - half - matPad + 10,
-      cy - half - matPad + 10,
-      (half + matPad) * 2 - 20,
-      (half + matPad) * 2 - 20,
-      9,
-    );
+
     // felt weave — tiny stitches, deterministic
     const fr = this._rng(1259);
     mat.lineStyle(1, 0x0e2013, 0.25);
@@ -186,16 +204,40 @@ class ChessboardScene extends Phaser.Scene {
 
     // board shadow on the felt
     g.fillStyle(0x000000, 0.45);
-    g.fillRoundedRect(cx - half - frame + 4, cy - half - frame + 6, (half + frame) * 2, (half + frame) * 2, 10);
+    g.fillRoundedRect(
+      cx - half - frame + 4,
+      cy - half - frame + 6,
+      (half + frame) * 2,
+      (half + frame) * 2,
+      10,
+    );
 
     // walnut frame
     g.fillGradientStyle(0x4a2c14, 0x54331a, 0x241206, 0x2c1709, 1);
-    g.fillRoundedRect(cx - half - frame, cy - half - frame, (half + frame) * 2, (half + frame) * 2, 10);
+    g.fillRoundedRect(
+      cx - half - frame,
+      cy - half - frame,
+      (half + frame) * 2,
+      (half + frame) * 2,
+      10,
+    );
     g.lineStyle(1.5, 0x1a0d04, 1);
-    g.strokeRoundedRect(cx - half - frame, cy - half - frame, (half + frame) * 2, (half + frame) * 2, 10);
+    g.strokeRoundedRect(
+      cx - half - frame,
+      cy - half - frame,
+      (half + frame) * 2,
+      (half + frame) * 2,
+      10,
+    );
     // top edge catches the light
     g.fillStyle(0x8a5c30, 0.35);
-    g.fillRoundedRect(cx - half - frame + 2, cy - half - frame + 2, (half + frame) * 2 - 4, 3, 3);
+    g.fillRoundedRect(
+      cx - half - frame + 2,
+      cy - half - frame + 2,
+      (half + frame) * 2 - 4,
+      3,
+      3,
+    );
     // brass inner trim
     g.lineStyle(1.2, 0xa8894a, 0.55);
     g.strokeRect(cx - half - 2, cy - half - 2, inner + 4, inner + 4);
@@ -219,7 +261,12 @@ class ChessboardScene extends Phaser.Scene {
         g.lineStyle(1, dark ? 0x3a2410 : 0x9a8258, 0.22);
         for (let k = 0; k < 2; k++) {
           const gy = y + rnd() * sq;
-          g.lineBetween(x + 2, gy, x + sq - 2 - rnd() * sq * 0.4, gy + (rnd() - 0.5) * 3);
+          g.lineBetween(
+            x + 2,
+            gy,
+            x + sq - 2 - rnd() * sq * 0.4,
+            gy + (rnd() - 0.5) * 3,
+          );
         }
         // soft edge shading gives each square a hint of depth
         g.lineStyle(1, 0x000000, dark ? 0.16 : 0.08);
@@ -322,11 +369,17 @@ class ChessboardScene extends Phaser.Scene {
       .setDepth(20);
 
     this.levelText = this.add
-      .text(W - 30, 30, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
+      .text(
+        W - 30,
+        30,
+        "Level " +
+          (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1),
+        {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: "28px",
+          color: "#e8dcc0",
+        },
+      )
       .setOrigin(1, 0)
       .setAlpha(0)
       .setDepth(20);
@@ -340,7 +393,11 @@ class ChessboardScene extends Phaser.Scene {
       if (!ac || (window.GameAudio && window.GameAudio.muted)) return;
       const t = ac.currentTime;
       const dur = 0.07;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+      const buf = ac.createBuffer(
+        1,
+        Math.floor(ac.sampleRate * dur),
+        ac.sampleRate,
+      );
       const d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++)
         d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
@@ -354,7 +411,7 @@ class ChessboardScene extends Phaser.Scene {
       g.gain.value = (window.GameAudio ? window.GameAudio.sfxVol : 0.8) * 0.5;
       src.connect(bp);
       bp.connect(g);
-      g.connect(ac.destination);
+      g.connect(this.sound.destination);
       src.start(t);
       src.stop(t + dur);
     } catch (e) {}

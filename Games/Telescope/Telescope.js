@@ -1133,7 +1133,7 @@ class TelescopeScene extends Phaser.Scene {
     this.input.setDefaultCursor("default");
 
     if (window.GameAudio && !window.GameAudio.muted) {
-      const s = this.sound.get("ui_click") || this.sound.add("ui_click");
+      const s = this.sound.get("click") || this.sound.add("click");
       s.play({ volume: (window.GameAudio.sfxVol ?? 0.8) * 0.8 });
     }
     this._whoosh();
@@ -2140,7 +2140,7 @@ class TelescopeScene extends Phaser.Scene {
       const ac = this.sound.context;
       const master = ac.createGain();
       master.gain.value = 0;
-      master.connect(ac.destination);
+      master.connect(this.sound.destination);
 
       const dur = 2;
       const buf = ac.createBuffer(

@@ -23,13 +23,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATION_ROWS = [
-  { time: "22:41", dest: "GENETA", track: "4", remark: "BOARDING", wrongIdx: 4 },
+  {
+    time: "22:41",
+    dest: "GENETA",
+    track: "4",
+    remark: "BOARDING",
+    wrongIdx: 4,
+  },
   { time: "21:26", dest: "VIENNA", track: "7", remark: "CANCELLED" },
-  { time: "22:07", dest: "MOXCOW", track: "2", remark: "BOARDING", wrongIdx: 2 },
+  {
+    time: "22:07",
+    dest: "MOXCOW",
+    track: "2",
+    remark: "BOARDING",
+    wrongIdx: 2,
+  },
   { time: "21:03", dest: "PERIS", track: "9", remark: "BOARDING", wrongIdx: 1 },
   { time: "23:19", dest: "LISBON", track: "3", remark: "DELAYED" },
   { time: "21:48", dest: "MADRID", track: "6", remark: "CANCELLED" },
-  { time: "22:24", dest: "LINDON", track: "1", remark: "BOARDING", wrongIdx: 1 },
+  {
+    time: "22:24",
+    dest: "LINDON",
+    track: "1",
+    remark: "BOARDING",
+    wrongIdx: 1,
+  },
   { time: "23:52", dest: "PRAGUE", track: "5", remark: "NO SERVICE" },
 ];
 
@@ -38,7 +56,8 @@ const ST_TIME_CELLS = 5;
 const ST_DEST_CELLS = 8;
 const ST_TRACK_CELLS = 1;
 const ST_REMARK_CELLS = 10;
-const ST_COLS = ST_TIME_CELLS + ST_DEST_CELLS + ST_TRACK_CELLS + ST_REMARK_CELLS;
+const ST_COLS =
+  ST_TIME_CELLS + ST_DEST_CELLS + ST_TRACK_CELLS + ST_REMARK_CELLS;
 
 const ST_FLAP_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:";
 const ST_SKETCH = 0xd8d2c4; // the pencil itself
@@ -114,7 +133,13 @@ class StationScene extends Phaser.Scene {
   }
 
   _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
-    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1, y1, x2, y2, mag),
+      width,
+      color,
+      alpha,
+    );
     this._drawPath(
       g,
       this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
@@ -127,8 +152,30 @@ class StationScene extends Phaser.Scene {
   _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
     const o = 4; // corner overshoot
     this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w,
+      y - o,
+      x + w,
+      y + h + o,
+      width,
+      color,
+      alpha,
+      mag,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w + o,
+      y + h,
+      x - o,
+      y + h,
+      width,
+      color,
+      alpha,
+      mag,
+    );
     this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
   }
 
@@ -150,7 +197,12 @@ class StationScene extends Phaser.Scene {
     const ux = (x2 - x1) / len;
     const uy = (y2 - y1) / len;
     for (let d = 0; d < len - 4; d += step) {
-      g.lineBetween(x1 + ux * d, y1 + uy * d, x1 + ux * (d + 5), y1 + uy * (d + 5));
+      g.lineBetween(
+        x1 + ux * d,
+        y1 + uy * d,
+        x1 + ux * (d + 5),
+        y1 + uy * (d + 5),
+      );
     }
   }
 
@@ -163,11 +215,12 @@ class StationScene extends Phaser.Scene {
     this._rowSpinning = STATION_ROWS.map(() => false);
 
     // cell size: fit 8 rows vertically and 24 columns horizontally
-    let ch = Math.min(H * 0.056, 44);
+    let ch = Math.min(H * 0.056, 44) * 0.8;
     let cw = ch * 0.78;
     const cellGap = 2;
     const groupGap = () => cw * 0.7;
-    const innerW = () => ST_COLS * cw + (ST_COLS - 1) * cellGap + 3 * groupGap();
+    const innerW = () =>
+      ST_COLS * cw + (ST_COLS - 1) * cellGap + 3 * groupGap();
     if (innerW() > W * 0.8) {
       const k = (W * 0.8) / innerW();
       cw *= k;
@@ -183,7 +236,22 @@ class StationScene extends Phaser.Scene {
     const by = H * 0.55 - (gH + pad * 1.6) / 2;
 
     this._drawRoom(W, H, bx, by, gW + pad * 2, gH + pad * 1.6);
-    this._drawBoard(W, H, bx, by, gW, gH, pad, cw, ch, cellGap, rowGap, headH, colHeadH, groupGap());
+    this._drawBoard(
+      W,
+      H,
+      bx,
+      by,
+      gW,
+      gH,
+      pad,
+      cw,
+      ch,
+      cellGap,
+      rowGap,
+      headH,
+      colHeadH,
+      groupGap(),
+    );
     this._drawClock(W, H, bx, by);
     this._drawTexts(W, H);
     this._drawVignette(W, H);
@@ -206,32 +274,150 @@ class StationScene extends Phaser.Scene {
     const cwx1 = W * 0.07;
     const cwx2 = W * 0.93;
     // corner verticals + ceiling hints
-    this._pencilSeg(g, rnd, cwx1, H * 0.05, cwx1, floorY, 1, ST_SKETCH, 0.1, 2.4);
-    this._pencilSeg(g, rnd, cwx2, H * 0.05, cwx2, floorY, 1, ST_SKETCH, 0.1, 2.4);
+    this._pencilSeg(
+      g,
+      rnd,
+      cwx1,
+      H * 0.05,
+      cwx1,
+      floorY,
+      1,
+      ST_SKETCH,
+      0.1,
+      2.4,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      cwx2,
+      H * 0.05,
+      cwx2,
+      floorY,
+      1,
+      ST_SKETCH,
+      0.1,
+      2.4,
+    );
     this._pencilSeg(g, rnd, 0, H * 0.03, cwx1, H * 0.05, 1, ST_SKETCH, 0.08, 2);
     this._pencilSeg(g, rnd, W, H * 0.03, cwx2, H * 0.05, 1, ST_SKETCH, 0.08, 2);
     // floor
     this._pencilSeg(g, rnd, 0, floorY, W, floorY, 1.4, ST_SKETCH, 0.22, 2);
     this._pencilSeg(g, rnd, 0, floorY + 5, W, floorY + 5, 1, ST_SKETCH, 0.1, 2);
     // platform edge line, worn
-    this._dashedSeg(g, 0, floorY + (H - floorY) * 0.5, W, floorY + (H - floorY) * 0.5, ST_SKETCH, 0.18);
+    this._dashedSeg(
+      g,
+      0,
+      floorY + (H - floorY) * 0.5,
+      W,
+      floorY + (H - floorY) * 0.5,
+      ST_SKETCH,
+      0.18,
+    );
     // faint tile joints on the wall, hand-ruled
     for (let i = 0; i < 4; i++) {
       const y = H * (0.18 + i * 0.16);
-      this._pencilSeg(g, rnd, W * 0.03, y, W * 0.97, y + (rnd() - 0.5) * 8, 1, ST_SKETCH, 0.045, 2.6);
+      this._pencilSeg(
+        g,
+        rnd,
+        W * 0.03,
+        y,
+        W * 0.97,
+        y + (rnd() - 0.5) * 8,
+        1,
+        ST_SKETCH,
+        0.045,
+        2.6,
+      );
     }
 
     // a bench, bottom-left — seat, back, legs, a few slats
     const bxx = W * 0.035;
     const bwd = W * 0.095;
     const seatY = floorY - H * 0.055;
-    this._pencilSeg(g, rnd, bxx, seatY, bxx + bwd, seatY, 1.5, ST_SKETCH, 0.35, 1.6);
-    this._pencilSeg(g, rnd, bxx, seatY + 5, bxx + bwd, seatY + 5, 1, ST_SKETCH, 0.2, 1.6);
-    this._pencilSeg(g, rnd, bxx + 4, seatY - H * 0.05, bxx + bwd - 4, seatY - H * 0.05, 1.3, ST_SKETCH, 0.3, 1.6); // backrest
-    this._pencilSeg(g, rnd, bxx + 2, seatY, bxx + 4, seatY - H * 0.05, 1.1, ST_SKETCH, 0.25, 1);
-    this._pencilSeg(g, rnd, bxx + bwd - 2, seatY, bxx + bwd - 4, seatY - H * 0.05, 1.1, ST_SKETCH, 0.25, 1);
-    this._pencilSeg(g, rnd, bxx + 6, seatY, bxx + 6, floorY, 1.2, ST_SKETCH, 0.3, 1);
-    this._pencilSeg(g, rnd, bxx + bwd - 6, seatY, bxx + bwd - 6, floorY, 1.2, ST_SKETCH, 0.3, 1);
+    this._pencilSeg(
+      g,
+      rnd,
+      bxx,
+      seatY,
+      bxx + bwd,
+      seatY,
+      1.5,
+      ST_SKETCH,
+      0.35,
+      1.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      bxx,
+      seatY + 5,
+      bxx + bwd,
+      seatY + 5,
+      1,
+      ST_SKETCH,
+      0.2,
+      1.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      bxx + 4,
+      seatY - H * 0.05,
+      bxx + bwd - 4,
+      seatY - H * 0.05,
+      1.3,
+      ST_SKETCH,
+      0.3,
+      1.6,
+    ); // backrest
+    this._pencilSeg(
+      g,
+      rnd,
+      bxx + 2,
+      seatY,
+      bxx + 4,
+      seatY - H * 0.05,
+      1.1,
+      ST_SKETCH,
+      0.25,
+      1,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      bxx + bwd - 2,
+      seatY,
+      bxx + bwd - 4,
+      seatY - H * 0.05,
+      1.1,
+      ST_SKETCH,
+      0.25,
+      1,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      bxx + 6,
+      seatY,
+      bxx + 6,
+      floorY,
+      1.2,
+      ST_SKETCH,
+      0.3,
+      1,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      bxx + bwd - 6,
+      seatY,
+      bxx + bwd - 6,
+      floorY,
+      1.2,
+      ST_SKETCH,
+      0.3,
+      1,
+    );
 
     // a suitcase, bottom-right — someone stopped waiting
     const sx = W * 0.905;
@@ -239,14 +425,67 @@ class StationScene extends Phaser.Scene {
     const sw = W * 0.05;
     const shh = H * 0.055;
     this._pencilRect(g, rnd, sx, sy, sw, shh, 1.3, ST_SKETCH, 0.3, 1.6);
-    this._pencilSeg(g, rnd, sx + sw * 0.38, sy, sx + sw * 0.36, sy - 8, 1.1, ST_SKETCH, 0.3, 0.6);
-    this._pencilSeg(g, rnd, sx + sw * 0.62, sy, sx + sw * 0.64, sy - 8, 1.1, ST_SKETCH, 0.3, 0.6);
-    this._pencilSeg(g, rnd, sx + sw * 0.36, sy - 8, sx + sw * 0.64, sy - 8, 1.1, ST_SKETCH, 0.3, 0.6);
-    this._pencilSeg(g, rnd, sx, sy + shh * 0.5, sx + sw, sy + shh * 0.5, 1, ST_SKETCH, 0.15, 1);
+    this._pencilSeg(
+      g,
+      rnd,
+      sx + sw * 0.38,
+      sy,
+      sx + sw * 0.36,
+      sy - 8,
+      1.1,
+      ST_SKETCH,
+      0.3,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      sx + sw * 0.62,
+      sy,
+      sx + sw * 0.64,
+      sy - 8,
+      1.1,
+      ST_SKETCH,
+      0.3,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      sx + sw * 0.36,
+      sy - 8,
+      sx + sw * 0.64,
+      sy - 8,
+      1.1,
+      ST_SKETCH,
+      0.3,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      sx,
+      sy + shh * 0.5,
+      sx + sw,
+      sy + shh * 0.5,
+      1,
+      ST_SKETCH,
+      0.15,
+      1,
+    );
 
     // a soft pool of light over the board — bone, not warm; it breathes
     this._glow = this.add.graphics().setDepth(-10);
-    this._glow.fillGradientStyle(ST_SKETCH, ST_SKETCH, 0x000000, 0x000000, 0.06, 0.06, 0, 0);
+    this._glow.fillGradientStyle(
+      ST_SKETCH,
+      ST_SKETCH,
+      0x000000,
+      0x000000,
+      0.06,
+      0.06,
+      0,
+      0,
+    );
     this._glow.fillRect(bx - 30, by - H * 0.08, bw + 60, bh * 0.9);
     this.tweens.add({
       targets: this._glow,
@@ -273,7 +512,22 @@ class StationScene extends Phaser.Scene {
     });
   }
 
-  _drawBoard(W, H, bx, by, gW, gH, pad, cw, ch, cellGap, rowGap, headH, colHeadH, groupGap) {
+  _drawBoard(
+    W,
+    H,
+    bx,
+    by,
+    gW,
+    gH,
+    pad,
+    cw,
+    ch,
+    cellGap,
+    rowGap,
+    headH,
+    colHeadH,
+    groupGap,
+  ) {
     const bw = gW + pad * 2;
     const bh = gH + pad * 1.6;
     const g = this.add.graphics().setDepth(-6);
@@ -286,7 +540,16 @@ class StationScene extends Phaser.Scene {
       for (let i = 0; i < links; i++) {
         const y1 = topY + ((by - topY) * i) / links;
         const y2 = topY + ((by - topY) * (i + 1)) / links;
-        this._pencilCircle(g, rnd, hx + (i % 2 ? 1.5 : -1.5), (y1 + y2) / 2, (y2 - y1) * 0.32, 1, ST_SKETCH, 0.3);
+        this._pencilCircle(
+          g,
+          rnd,
+          hx + (i % 2 ? 1.5 : -1.5),
+          (y1 + y2) / 2,
+          (y2 - y1) * 0.32,
+          1,
+          ST_SKETCH,
+          0.3,
+        );
       }
       // the ring bolted to the board
       this._pencilCircle(g, rnd, hx, by + 4, 4, 1.2, ST_SKETCH, 0.45);
@@ -296,7 +559,18 @@ class StationScene extends Phaser.Scene {
     g.fillStyle(ST_SKETCH, 0.028);
     g.fillRect(bx, by, bw, bh);
     this._pencilRect(g, rnd, bx, by, bw, bh, 1.8, ST_SKETCH, 0.55, 2.2);
-    this._pencilRect(g, rnd, bx + 8, by + 8, bw - 16, bh - 16, 1, ST_SKETCH, 0.22, 2);
+    this._pencilRect(
+      g,
+      rnd,
+      bx + 8,
+      by + 8,
+      bw - 16,
+      bh - 16,
+      1,
+      ST_SKETCH,
+      0.22,
+      2,
+    );
 
     const x0 = bx + pad;
     let y = by + pad * 0.55;
@@ -311,8 +585,30 @@ class StationScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(-4);
     const ruleY = y + headH - 4;
-    this._pencilSeg(g, rnd, x0 + gW * 0.06, ruleY, x0 + gW * 0.46, ruleY, 1.2, ST_SKETCH, 0.4, 1.6);
-    this._pencilSeg(g, rnd, x0 + gW * 0.54, ruleY, x0 + gW * 0.94, ruleY, 1.2, ST_SKETCH, 0.4, 1.6);
+    this._pencilSeg(
+      g,
+      rnd,
+      x0 + gW * 0.06,
+      ruleY,
+      x0 + gW * 0.46,
+      ruleY,
+      1.2,
+      ST_SKETCH,
+      0.4,
+      1.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x0 + gW * 0.54,
+      ruleY,
+      x0 + gW * 0.94,
+      ruleY,
+      1.2,
+      ST_SKETCH,
+      0.4,
+      1.6,
+    );
     g.fillStyle(ST_SKETCH, 0.5);
     g.fillRect(x0 + gW / 2 - 2, ruleY - 2, 4, 4);
 
@@ -365,7 +661,8 @@ class StationScene extends Phaser.Scene {
           const txt = this.add
             .text(x + cw / 2, rowY + ch / 2, "", {
               fontFamily: '"Special Elite", monospace',
-              fontSize: Math.round(ch * 0.62) + "px",
+              // Modifică aici: scade multiplicatorul 0.62
+              fontSize: Math.round(ch * 0.45) + "px",
               color,
             })
             .setOrigin(0.5)
@@ -380,7 +677,15 @@ class StationScene extends Phaser.Scene {
         }
         // the ruled line each group is written on
         const gw2 = nCells * cw + (nCells - 1) * cellGap;
-        this._dashedSeg(lines, gxx, rowY + ch * 0.92, gxx + gw2, rowY + ch * 0.92, ST_SKETCH, 0.22);
+        this._dashedSeg(
+          lines,
+          gxx,
+          rowY + ch * 0.92,
+          gxx + gw2,
+          rowY + ch * 0.92,
+          ST_SKETCH,
+          0.22,
+        );
       };
 
       const boarding = row.remark === "BOARDING";
@@ -401,7 +706,18 @@ class StationScene extends Phaser.Scene {
       const rndH = this._rng(5000 + r * 17);
       zone.on("pointerover", () => {
         hl.clear();
-        this._pencilSeg(hl, rndH, x0 - 4, rowY + ch + 2, x0 + gW + 4, rowY + ch + 2, 1.2, ST_SKETCH, 0.4, 1.6);
+        this._pencilSeg(
+          hl,
+          rndH,
+          x0 - 4,
+          rowY + ch + 2,
+          x0 + gW + 4,
+          rowY + ch + 2,
+          1.2,
+          ST_SKETCH,
+          0.4,
+          1.6,
+        );
       });
       zone.on("pointerout", () => hl.clear());
       zone.on("pointerdown", () => this._respinRow(r));
@@ -431,24 +747,63 @@ class StationScene extends Phaser.Scene {
     this._pencilCircle(g, rnd, cx, cy, rad + 5, 1.6, ST_SKETCH, 0.5);
     this._pencilCircle(g, rnd, cx, cy, rad + 1, 1, ST_SKETCH, 0.25);
     // hanging stem to the ceiling
-    this._pencilSeg(g, rnd, cx, H * 0.03, cx, cy - rad - 5, 1.1, ST_SKETCH, 0.25, 1.6);
+    this._pencilSeg(
+      g,
+      rnd,
+      cx,
+      H * 0.03,
+      cx,
+      cy - rad - 5,
+      1.1,
+      ST_SKETCH,
+      0.25,
+      1.6,
+    );
     // ticks
     for (let i = 0; i < 12; i++) {
       const a = (i / 12) * Math.PI * 2;
       const r1 = rad * 0.88;
       const r2 = rad * (i % 3 === 0 ? 0.7 : 0.79);
       this._pencilSeg(
-        g, rnd,
-        cx + Math.cos(a) * r1, cy + Math.sin(a) * r1,
-        cx + Math.cos(a) * r2, cy + Math.sin(a) * r2,
-        i % 3 === 0 ? 1.6 : 1, ST_SKETCH, i % 3 === 0 ? 0.5 : 0.3, 0.5,
+        g,
+        rnd,
+        cx + Math.cos(a) * r1,
+        cy + Math.sin(a) * r1,
+        cx + Math.cos(a) * r2,
+        cy + Math.sin(a) * r2,
+        i % 3 === 0 ? 1.6 : 1,
+        ST_SKETCH,
+        i % 3 === 0 ? 0.5 : 0.3,
+        0.5,
       );
     }
     // hands — 20:47, drawn like everything else
     const hourA = ((20 + 47 / 60) % 12) * (Math.PI / 6) - Math.PI / 2;
     const minA = (47 / 60) * Math.PI * 2 - Math.PI / 2;
-    this._pencilSeg(g, rnd, cx, cy, cx + Math.cos(hourA) * rad * 0.45, cy + Math.sin(hourA) * rad * 0.45, 2, ST_SKETCH, 0.6, 0.8);
-    this._pencilSeg(g, rnd, cx, cy, cx + Math.cos(minA) * rad * 0.68, cy + Math.sin(minA) * rad * 0.68, 1.4, ST_SKETCH, 0.55, 0.8);
+    this._pencilSeg(
+      g,
+      rnd,
+      cx,
+      cy,
+      cx + Math.cos(hourA) * rad * 0.45,
+      cy + Math.sin(hourA) * rad * 0.45,
+      2,
+      ST_SKETCH,
+      0.6,
+      0.8,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      cx,
+      cy,
+      cx + Math.cos(minA) * rad * 0.68,
+      cy + Math.sin(minA) * rad * 0.68,
+      1.4,
+      ST_SKETCH,
+      0.55,
+      0.8,
+    );
     g.fillStyle(ST_SKETCH, 0.6);
     g.fillCircle(cx, cy, 2.2);
 
@@ -487,11 +842,17 @@ class StationScene extends Phaser.Scene {
       .setDepth(20);
 
     this.levelText = this.add
-      .text(W - 30, 28, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
+      .text(
+        W - 30,
+        28,
+        "Level " +
+          (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1),
+        {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: "28px",
+          color: "#e8dcc0",
+        },
+      )
       .setOrigin(1, 0)
       .setAlpha(0)
       .setDepth(20);
@@ -501,13 +862,49 @@ class StationScene extends Phaser.Scene {
   _drawVignette(W, H) {
     const vg = this.add.graphics().setDepth(30);
     const v = Math.min(W, H) * 0.2;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.5,
+      0.5,
+      0,
+      0,
+    );
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.55, 0.55);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.55,
+      0.55,
+    );
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0, 0.45, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.45,
+      0,
+      0.45,
+      0,
+    );
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.45, 0, 0.45);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0.45,
+      0,
+      0.45,
+    );
     vg.fillRect(W - v, 0, v, H);
   }
 
@@ -643,7 +1040,11 @@ class StationScene extends Phaser.Scene {
       if (!ac || (window.GameAudio && window.GameAudio.muted)) return;
       const t = ac.currentTime;
       const dur = 0.05;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+      const buf = ac.createBuffer(
+        1,
+        Math.floor(ac.sampleRate * dur),
+        ac.sampleRate,
+      );
       const d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++)
         d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.5);
@@ -657,7 +1058,7 @@ class StationScene extends Phaser.Scene {
       g.gain.value = (window.GameAudio ? window.GameAudio.sfxVol : 0.8) * vol;
       src.connect(bp);
       bp.connect(g);
-      g.connect(ac.destination);
+      g.connect(this.sound.destination);
       src.start(t);
       src.stop(t + dur);
     } catch (e) {}

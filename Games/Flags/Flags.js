@@ -104,7 +104,13 @@ class FlagsScene extends Phaser.Scene {
   }
 
   _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
-    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1, y1, x2, y2, mag),
+      width,
+      color,
+      alpha,
+    );
     this._drawPath(
       g,
       this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
@@ -117,8 +123,30 @@ class FlagsScene extends Phaser.Scene {
   _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
     const o = 3;
     this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w,
+      y - o,
+      x + w,
+      y + h + o,
+      width,
+      color,
+      alpha,
+      mag,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w + o,
+      y + h,
+      x - o,
+      y + h,
+      width,
+      color,
+      alpha,
+      mag,
+    );
     this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
   }
 
@@ -160,7 +188,18 @@ class FlagsScene extends Phaser.Scene {
     // the floor: a darker plane with receding boards
     g.fillStyle(0x0a0c10, 0.85);
     g.fillRect(0, this._floorY, W, H - this._floorY);
-    this._pencilSeg(g, rnd, 0, this._floorY, W, this._floorY, 1.4, FL_SKETCH, 0.25, 2);
+    this._pencilSeg(
+      g,
+      rnd,
+      0,
+      this._floorY,
+      W,
+      this._floorY,
+      1.4,
+      FL_SKETCH,
+      0.25,
+      2,
+    );
     // floorboard seams fanning gently toward the viewer
     for (let i = 0; i <= 10; i++) {
       const t = i / 10;
@@ -174,8 +213,16 @@ class FlagsScene extends Phaser.Scene {
       const x = rnd() * W;
       const y = rnd() * H * 0.55;
       this._pencilSeg(
-        g, rnd, x, y, x + 14 + rnd() * 26, y + (rnd() - 0.5) * 8,
-        1, FL_SKETCH, 0.04, 1.6,
+        g,
+        rnd,
+        x,
+        y,
+        x + 14 + rnd() * 26,
+        y + (rnd() - 0.5) * 8,
+        1,
+        FL_SKETCH,
+        0.04,
+        1.6,
       );
     }
   }
@@ -196,15 +243,50 @@ class FlagsScene extends Phaser.Scene {
       const a = (k / 12) * Math.PI * 2;
       g.lineStyle(1, FL_SKETCH, 0.35);
       g.lineBetween(
-        cx + Math.cos(a) * r * 0.75, cy + Math.sin(a) * r * 0.75,
-        cx + Math.cos(a) * r * 0.85, cy + Math.sin(a) * r * 0.85,
+        cx + Math.cos(a) * r * 0.75,
+        cy + Math.sin(a) * r * 0.75,
+        cx + Math.cos(a) * r * 0.85,
+        cy + Math.sin(a) * r * 0.85,
       );
     }
     // hands, stopped somewhere in the small hours
-    this._pencilSeg(g, rnd, cx, cy, cx + r * 0.36, cy - r * 0.3, 1.6, FL_SKETCH, 0.55, 0.6);
-    this._pencilSeg(g, rnd, cx, cy, cx - r * 0.14, cy - r * 0.55, 1.3, FL_SKETCH, 0.5, 0.6);
+    this._pencilSeg(
+      g,
+      rnd,
+      cx,
+      cy,
+      cx + r * 0.36,
+      cy - r * 0.3,
+      1.6,
+      FL_SKETCH,
+      0.55,
+      0.6,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      cx,
+      cy,
+      cx - r * 0.14,
+      cy - r * 0.55,
+      1.3,
+      FL_SKETCH,
+      0.5,
+      0.6,
+    );
     // the case below, and a pendulum that still swings
-    this._pencilRect(g, rnd, cx - r * 0.34, cy + r, r * 0.68, r * 1.5, 1.2, FL_SKETCH, 0.35, 1);
+    this._pencilRect(
+      g,
+      rnd,
+      cx - r * 0.34,
+      cy + r,
+      r * 0.68,
+      r * 1.5,
+      1.2,
+      FL_SKETCH,
+      0.35,
+      1,
+    );
     const pend = this.add.container(cx, cy + r).setDepth(-9);
     const pg = this.add.graphics();
     pg.lineStyle(1.4, FL_SKETCH, 0.4);
@@ -247,10 +329,54 @@ class FlagsScene extends Phaser.Scene {
     g.lineTo(cx - botW, baseY);
     g.closePath();
     g.fillPath();
-    this._pencilSeg(g, rnd, cx - topW, topY, cx + topW, topY, 1.6, FL_SKETCH, 0.5, 1.4);
-    this._pencilSeg(g, rnd, cx + topW, topY, cx + botW, baseY, 1.5, FL_SKETCH, 0.45, 1.4);
-    this._pencilSeg(g, rnd, cx + botW, baseY, cx - botW, baseY, 1.4, FL_SKETCH, 0.4, 1.4);
-    this._pencilSeg(g, rnd, cx - botW, baseY, cx - topW, topY, 1.5, FL_SKETCH, 0.45, 1.4);
+    this._pencilSeg(
+      g,
+      rnd,
+      cx - topW,
+      topY,
+      cx + topW,
+      topY,
+      1.6,
+      FL_SKETCH,
+      0.5,
+      1.4,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      cx + topW,
+      topY,
+      cx + botW,
+      baseY,
+      1.5,
+      FL_SKETCH,
+      0.45,
+      1.4,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      cx + botW,
+      baseY,
+      cx - botW,
+      baseY,
+      1.4,
+      FL_SKETCH,
+      0.4,
+      1.4,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      cx - botW,
+      baseY,
+      cx - topW,
+      topY,
+      1.5,
+      FL_SKETCH,
+      0.45,
+      1.4,
+    );
     // slanted reading top
     g.fillStyle(0x20242b, 1);
     g.beginPath();
@@ -260,16 +386,51 @@ class FlagsScene extends Phaser.Scene {
     g.lineTo(cx - topW * 0.92, topY - ph * 0.09);
     g.closePath();
     g.fillPath();
-    this._pencilSeg(g, rnd, cx - topW * 0.92, topY - ph * 0.09, cx + topW * 0.92, topY - ph * 0.07, 1.6, FL_SKETCH, 0.55, 1.2);
+    this._pencilSeg(
+      g,
+      rnd,
+      cx - topW * 0.92,
+      topY - ph * 0.09,
+      cx + topW * 0.92,
+      topY - ph * 0.07,
+      1.6,
+      FL_SKETCH,
+      0.55,
+      1.2,
+    );
     // a sheet of notes left on the lectern, corner lifted
     g.fillStyle(0xe7e1d1, 0.22);
     g.fillRect(cx - topW * 0.5, topY - ph * 0.07, topW * 0.9, ph * 0.05);
     // a small reading lamp, its warm pool breathing
     const lampX = cx + topW * 0.62;
     const lampY = topY - ph * 0.08;
-    this._pencilSeg(g, rnd, lampX, lampY, lampX, lampY - 16, 1.3, FL_SKETCH, 0.5, 0.8);
-    this._pencilSeg(g, rnd, lampX, lampY - 16, lampX - 9, lampY - 20, 1.3, FL_SKETCH, 0.5, 0.6);
-    const glow = this.add.circle(lampX - 11, lampY - 18, 16, 0xe6b458, 0.1).setDepth(-4);
+    this._pencilSeg(
+      g,
+      rnd,
+      lampX,
+      lampY,
+      lampX,
+      lampY - 16,
+      1.3,
+      FL_SKETCH,
+      0.5,
+      0.8,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      lampX,
+      lampY - 16,
+      lampX - 9,
+      lampY - 20,
+      1.3,
+      FL_SKETCH,
+      0.5,
+      0.6,
+    );
+    const glow = this.add
+      .circle(lampX - 11, lampY - 18, 16, 0xe6b458, 0.1)
+      .setDepth(-4);
     this.add.circle(lampX - 11, lampY - 18, 3, 0xe6b458, 0.75).setDepth(-4);
     this.tweens.add({
       targets: glow,
@@ -292,12 +453,45 @@ class FlagsScene extends Phaser.Scene {
     for (const row of rows) {
       for (let i = 0; i < row.n; i++) {
         const t = (i + 1) / (row.n + 1);
-        const cx = W * 0.14 + (W * 0.72) * t + (rnd() - 0.5) * W * 0.02;
+        const cx = W * 0.14 + W * 0.72 * t + (rnd() - 0.5) * W * 0.02;
         const s = H * 0.055 * row.s;
         // seat back: an open rectangle with two uprights
-        this._pencilRect(g, rnd, cx - s * 0.7, row.y - s * 1.5, s * 1.4, s * 0.9, 1.4, FL_SKETCH, 0.35, 1.2);
-        this._pencilSeg(g, rnd, cx - s * 0.55, row.y - s * 0.6, cx - s * 0.6, row.y, 1.2, FL_SKETCH, 0.3, 0.8);
-        this._pencilSeg(g, rnd, cx + s * 0.55, row.y - s * 0.6, cx + s * 0.6, row.y, 1.2, FL_SKETCH, 0.3, 0.8);
+        this._pencilRect(
+          g,
+          rnd,
+          cx - s * 0.7,
+          row.y - s * 1.5,
+          s * 1.4,
+          s * 0.9,
+          1.4,
+          FL_SKETCH,
+          0.35,
+          1.2,
+        );
+        this._pencilSeg(
+          g,
+          rnd,
+          cx - s * 0.55,
+          row.y - s * 0.6,
+          cx - s * 0.6,
+          row.y,
+          1.2,
+          FL_SKETCH,
+          0.3,
+          0.8,
+        );
+        this._pencilSeg(
+          g,
+          rnd,
+          cx + s * 0.55,
+          row.y - s * 0.6,
+          cx + s * 0.6,
+          row.y,
+          1.2,
+          FL_SKETCH,
+          0.3,
+          0.8,
+        );
       }
     }
   }
@@ -380,14 +574,20 @@ class FlagsScene extends Phaser.Scene {
   // paint a specific national flag inside the rect (x,y,w,h)
   _paintFlag(g, code, x, y, w, h) {
     switch (code) {
-      case "DE": { // Germany — black / red / gold, horizontal
-        g.fillStyle(FL_COL.black, 1); g.fillRect(x, y, w, h / 3);
-        g.fillStyle(FL_COL.red, 1); g.fillRect(x, y + h / 3, w, h / 3);
-        g.fillStyle(FL_COL.gold, 1); g.fillRect(x, y + (2 * h) / 3, w, h / 3);
+      case "DE": {
+        // Germany — black / red / gold, horizontal
+        g.fillStyle(FL_COL.black, 1);
+        g.fillRect(x, y, w, h / 3);
+        g.fillStyle(FL_COL.red, 1);
+        g.fillRect(x, y + h / 3, w, h / 3);
+        g.fillStyle(FL_COL.gold, 1);
+        g.fillRect(x, y + (2 * h) / 3, w, h / 3);
         break;
       }
-      case "BR": { // Brazil — green field, yellow lozenge, blue globe
-        g.fillStyle(FL_COL.green, 1); g.fillRect(x, y, w, h);
+      case "BR": {
+        // Brazil — green field, yellow lozenge, blue globe
+        g.fillStyle(FL_COL.green, 1);
+        g.fillRect(x, y, w, h);
         const cx = x + w / 2;
         const cy = y + h / 2;
         g.fillStyle(FL_COL.yellow, 1);
@@ -407,24 +607,34 @@ class FlagsScene extends Phaser.Scene {
         g.fillRect(cx - h * 0.19, cy - h * 0.035, h * 0.38, h * 0.07);
         break;
       }
-      case "IE": { // Ireland — green / white / orange, vertical
-        g.fillStyle(FL_COL.green, 1); g.fillRect(x, y, w / 3, h);
-        g.fillStyle(FL_COL.white, 1); g.fillRect(x + w / 3, y, w / 3, h);
-        g.fillStyle(FL_COL.orange, 1); g.fillRect(x + (2 * w) / 3, y, w / 3, h);
+      case "IE": {
+        // Ireland — green / white / orange, vertical
+        g.fillStyle(FL_COL.green, 1);
+        g.fillRect(x, y, w / 3, h);
+        g.fillStyle(FL_COL.white, 1);
+        g.fillRect(x + w / 3, y, w / 3, h);
+        g.fillStyle(FL_COL.orange, 1);
+        g.fillRect(x + (2 * w) / 3, y, w / 3, h);
         break;
       }
-      case "FI": { // Finland — white field, blue Nordic cross (offset to hoist)
-        g.fillStyle(FL_COL.white, 1); g.fillRect(x, y, w, h);
+      case "FI": {
+        // Finland — white field, blue Nordic cross (offset to hoist)
+        g.fillStyle(FL_COL.white, 1);
+        g.fillRect(x, y, w, h);
         g.fillStyle(FL_COL.blue, 1);
         const barX = x + w * 0.3;
         g.fillRect(barX - w * 0.09, y, w * 0.18, h); // vertical bar
         g.fillRect(x, y + h * 0.5 - h * 0.13, w, h * 0.26); // horizontal bar
         break;
       }
-      case "NG": { // Nigeria — green / white / green, vertical
-        g.fillStyle(FL_COL.green, 1); g.fillRect(x, y, w / 3, h);
-        g.fillStyle(FL_COL.white, 1); g.fillRect(x + w / 3, y, w / 3, h);
-        g.fillStyle(FL_COL.green, 1); g.fillRect(x + (2 * w) / 3, y, w / 3, h);
+      case "NG": {
+        // Nigeria — green / white / green, vertical
+        g.fillStyle(FL_COL.green, 1);
+        g.fillRect(x, y, w / 3, h);
+        g.fillStyle(FL_COL.white, 1);
+        g.fillRect(x + w / 3, y, w / 3, h);
+        g.fillStyle(FL_COL.green, 1);
+        g.fillRect(x + (2 * w) / 3, y, w / 3, h);
         break;
       }
     }
@@ -432,7 +642,7 @@ class FlagsScene extends Phaser.Scene {
 
   _drawTexts(W, H) {
     this.statusText = this.add
-      .text(W / 2, 40, "THE LAST BRIEFING ENDED. NOBODY TOOK THE COLOURS DOWN.", {
+      .text(W / 2, 40, "A new alliance has been formed.", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
         color: "#e8dcc0",
@@ -442,11 +652,17 @@ class FlagsScene extends Phaser.Scene {
       .setDepth(20);
 
     this.levelText = this.add
-      .text(W - 30, 28, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
+      .text(
+        W - 30,
+        28,
+        "Level " +
+          (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1),
+        {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: "28px",
+          color: "#e8dcc0",
+        },
+      )
       .setOrigin(1, 0)
       .setAlpha(0)
       .setDepth(20);
@@ -456,13 +672,49 @@ class FlagsScene extends Phaser.Scene {
   _drawVignette(W, H) {
     const vg = this.add.graphics().setDepth(30);
     const v = Math.min(W, H) * 0.2;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.5,
+      0.5,
+      0,
+      0,
+    );
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.55, 0.55);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.55,
+      0.55,
+    );
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0, 0.45, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.45,
+      0,
+      0.45,
+      0,
+    );
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.45, 0, 0.45);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0.45,
+      0,
+      0.45,
+    );
     vg.fillRect(W - v, 0, v, H);
   }
 

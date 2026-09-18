@@ -11,6 +11,7 @@ function readStoredVolume(key, fallback) {
 
 // ── Global Audio State ──
 window.GameAudio = {
+  masterVol: readStoredVolume("masterVol", 1),
   musicVol: readStoredVolume("musicVol", 0.5),
   sfxVol: readStoredVolume("sfxVol", 0.8),
   muted: localStorage.getItem("muted") === "true",
@@ -527,6 +528,7 @@ const sfxSlider = document.getElementById("sfx-slider");
 const btnMute = document.getElementById("btn-mute");
 const volSliderUI = document.getElementById("vol-slider-ui");
 const volIconUI = document.getElementById("vol-icon-ui");
+let lastAudibleMasterVol = window.GameAudio.masterVol || 1;
 
 function syncMuteButtons() {
   btnMute.innerHTML = window.GameAudio.muted
@@ -537,7 +539,7 @@ function syncMuteButtons() {
 
 function _syncVolIcon() {
   const muted = window.GameAudio.muted;
-  const vol = window.GameAudio.sfxVol;
+  const vol = window.GameAudio.masterVol;
   volIconUI.textContent = muted || vol === 0 ? "🔇" : vol < 0.5 ? "🔉" : "🔊";
   volSliderUI.value = muted ? 0 : vol;
 }
@@ -571,32 +573,27 @@ sfxSlider.addEventListener("input", (e) => {
 
 function toggleMute() {
   window.GameAudio.muted = !window.GameAudio.muted;
+  if (!window.GameAudio.muted && window.GameAudio.masterVol === 0) {
+    window.GameAudio.masterVol = lastAudibleMasterVol;
+    localStorage.setItem("masterVol", lastAudibleMasterVol);
+  }
   localStorage.setItem("muted", window.GameAudio.muted);
   syncMuteButtons();
-  if (window.mainScene && window.mainScene.sound) {
-    // Individual sounds already apply their own SFX/music volume. Keep the
-    // manager at unity so unmuting never applies the SFX value a second time.
-    window.mainScene.sound.volume = 1;
-    window.mainScene.sound.setMute(window.GameAudio.muted);
-  }
+  window.refreshMasterVolume();
 }
 
 btnMute.addEventListener("click", toggleMute);
 
-// Volume widget controls SFX volume; zero also mutes all audio.
+// Master volume scales both music and effects without changing their balance.
 volSliderUI.addEventListener("input", (e) => {
   const vol = parseFloat(e.target.value);
-  window.GameAudio.sfxVol = vol;
+  window.GameAudio.masterVol = vol;
+  if (vol > 0) lastAudibleMasterVol = vol;
   window.GameAudio.muted = vol === 0;
-  localStorage.setItem("sfxVol", vol);
+  localStorage.setItem("masterVol", vol);
   localStorage.setItem("muted", window.GameAudio.muted);
-  sfxSlider.value = vol;
   syncMuteButtons();
-  window.mainScene?.refreshSfxVolume?.();
-  if (window.mainScene && window.mainScene.sound) {
-    window.mainScene.sound.volume = 1;
-    window.mainScene.sound.setMute(vol === 0);
-  }
+  window.refreshMasterVolume();
 });
 
 // Icon click toggles mute (slider position preserved)
@@ -614,12 +611,12 @@ const levelHints = {
   MobilePhone: {
     text: "AN OLD FRIEND CALLS.\nFind out who he actually is.",
     sound: false,
-    tool: true,
+    tool: false,
   },
   PlantPot: {
     text: "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
     sound: false,
-    tool: true,
+    tool: false,
   },
   TV: {
     text: "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
@@ -638,7 +635,7 @@ const levelHints = {
   },
   Telescope: {
     text: "A TELESCOPE AT THE WINDOW.\nNot everything up there was arranged by nature.",
-    sound: true,
+    sound: false,
     tool: true,
   },
   Sequence: {
@@ -649,12 +646,12 @@ const levelHints = {
   Cryptex: {
     text: "AN OLD BRASS WHEEL.\nIt turns like a clock that lost its hours.",
     sound: false,
-    tool: true,
+    tool: false,
   },
   Chessboard: {
     text: "AN ABANDONED GAME.\nNobody won. This game is too heavy for the mind - it brings so much ...",
     sound: false,
-    tool: true,
+    tool: false,
   },
   Station: {
     text: "THE LAST STATION.\nNobody checks the spelling anymore. Four trains are still boarding — leave in order of departure.",
@@ -673,8 +670,8 @@ const levelHints = {
   },
   Wires: {
     text: "THE MORNING CHOIR.\nThey sat down exactly where the composer left them.",
-    sound: true,
-    tool: false,
+    sound: false,
+    tool: true,
   },
   Crossing: {
     text: "MIND THE CROSSING.\nThe paint is not evenly worn. Wide and narrow is a language too.",
@@ -684,7 +681,7 @@ const levelHints = {
   Flags: {
     text: "DRESS THE SHIP.\nEach colour flies for a country, and every country signs with two letters.",
     sound: false,
-    tool: false,
+    tool: true,
   },
   TapCode: {
     text: "KNOCK TWICE.\nA prisoner counts in fives; two numbers find a letter.",
@@ -710,25 +707,18 @@ btnInfo.addEventListener("click", () => {
 
   const reqDiv = document.getElementById("info-requires");
   reqDiv.innerHTML = "";
-  if (hint.sound || hint.tool) {
-    const badges = document.createElement("div");
-    badges.style.cssText =
-      "display:flex;gap:12px;justify-content:center;margin-bottom:18px;";
-    if (hint.sound) {
-      const b = document.createElement("div");
-      b.style.cssText =
-        "display:flex;flex-direction:column;align-items:center;gap:4px;background:#111;border:1px solid #333;padding:8px 18px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#777;";
-      b.innerHTML = `<span style="font-size:22px;">🔊</span><span>SOUND</span>`;
-      badges.appendChild(b);
-    }
-    if (hint.tool) {
-      const b = document.createElement("div");
-      b.style.cssText =
-        "display:flex;flex-direction:column;align-items:center;gap:4px;background:#111;border:1px solid #333;padding:8px 18px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#777;";
-      b.innerHTML = `<span style="font-size:22px;">🔧</span><span>TOOL</span>`;
-      badges.appendChild(b);
-    }
-    reqDiv.appendChild(badges);
+  reqDiv.hidden = !hint.sound && !hint.tool;
+  for (const [needed, label, icon, description] of [
+    [hint.tool, "TOOL", "&#128295;", "This level requires a measuring tool"],
+    [hint.sound, "SOUND", "&#128266;", "This level requires listening to sound"],
+  ]) {
+    if (!needed) continue;
+    const badge = document.createElement("span");
+    badge.className = "info-badge";
+    badge.tabIndex = 0;
+    badge.title = description;
+    badge.innerHTML = '<span aria-hidden="true">' + icon + '</span><span>' + label + '</span>';
+    reqDiv.appendChild(badge);
   }
 
   infoModal.classList.remove("hidden");
@@ -737,12 +727,19 @@ btnInfo.addEventListener("click", () => {
 btnCloseInfo.addEventListener("click", () => infoModal.classList.add("hidden"));
 
 // ── Global UI Click Sound ──
-// UI click sound — only for app chrome (buttons, sliders, level tiles), never the game area
-document.body.addEventListener("mousedown", (e) => {
+// Options controls and Execute use the mouse sound; other controls use click.mp3.
+function playInterfaceClick(e) {
   if (e.target.closest("#game-container")) return;
-  if (e.target.closest("button, input, .level-btn, #vol-icon-ui")) {
-    if (window.playUIClick) window.playUIClick();
+  if (e.target.closest("#btn-options, #options-modal, #btn-submit")) {
+    window.playUIClick?.();
+  } else {
+    window.playClick?.();
   }
+}
+document.body.addEventListener("mousedown", playInterfaceClick);
+document.body.addEventListener("click", (e) => {
+  // Keyboard activation and Execute via Enter do not generate mousedown.
+  if (e.detail === 0) playInterfaceClick(e);
 });
 
 // ── Fix Phaser Resize Lag ──

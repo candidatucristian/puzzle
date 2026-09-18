@@ -192,7 +192,7 @@ test("Phone effects respect zero, fractional and changed volume after audio unlo
   assert.equal(phone.keySound.plays.at(-1), 0);
 });
 
-test("Options and main SFX controls update each other and active persistent sounds", () => {
+test("SFX settings update persistent effects independently of master volume", () => {
   for (const name of ["MobilePhone", "Modem"]) {
     const app = ui();
     const { instance: active, context } = scene(name);
@@ -202,17 +202,172 @@ test("Options and main SFX controls update each other and active persistent soun
     for (const volume of [0, 0.3, 1]) {
       app.node("sfx-slider").value = String(volume);
       app.node("sfx-slider").dispatch("input");
-      assert.equal(Number(app.node("vol-slider-ui").value), volume);
-      assert.equal(app.node("vol-icon-ui").textContent, volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊");
+      assert.equal(Number(app.node("vol-slider-ui").value), 1);
+      assert.equal(app.context.GameAudio.masterVol, 1);
       assert.equal(name === "Modem" ? active._hwSound.volume : active.vibrationSound.volume,
         volume * (name === "Modem" ? 0.35 : 0.25));
     }
     app.node("vol-slider-ui").value = "0.2";
     app.node("vol-slider-ui").dispatch("input");
-    assert.equal(Number(app.node("sfx-slider").value), 0.2);
+    assert.equal(Number(app.node("sfx-slider").value), 1);
+    assert.equal(app.context.GameAudio.masterVol, 0.2);
     assert.equal(name === "Modem" ? active._hwSound.volume : active.keySound.volume,
-      0.2 * (name === "Modem" ? 0.35 : 0.62));
+      (name === "Modem" ? 0.35 : 0.62));
   }
+});
+
+test("Master volume scales music and effects together and survives scene entry", () => {
+  const app = ui();
+  const bgm = sound();
+  bgm.manager = {}; bgm.isPlaying = true;
+  app.context.GameAudio.bgmInstance = bgm;
+  const manager = {
+    volume: 1, setMute(value) { this.muted = value; },
+    play(key, options) { this.lastEffectVolume = options.volume; },
+  };
+  const active = { sound: manager, cache: { audio: { exists: () => true } } };
+  app.context.mainScene = active;
+  app.context.initGlobalAudio(active);
+  app.node("vol-slider-ui").value = "0.25";
+  app.node("vol-slider-ui").dispatch("input");
+  app.context.playClick(active);
+  assert.equal(manager.volume, 0.25);
+  assert.equal(bgm.volume * manager.volume, 0.05);
+  assert.equal(manager.lastEffectVolume * manager.volume, 0.2);
+  assert.equal(Number(app.node("music-slider").value), 0.5);
+  assert.equal(Number(app.node("sfx-slider").value), 0.8);
+  assert.equal(app.storage.get("masterVol"), "0.25");
+  manager.volume = 1;
+  app.context.initGlobalAudio(active);
+  assert.equal(manager.volume, 0.25);
+  app.node("vol-icon-ui").click();
+  assert.equal(manager.muted, true);
+  app.node("vol-icon-ui").click();
+  assert.equal(manager.muted, false);
+  assert.equal(manager.volume, 0.25);
+  app.node("vol-slider-ui").value = "0";
+  app.node("vol-slider-ui").dispatch("input");
+  assert.equal(manager.volume, 0);
+  assert.equal(manager.muted, true);
+  app.node("btn-mute").click();
+  assert.equal(manager.muted, false);
+  assert.equal(manager.volume, 0.25);
+  assert.equal(Number(app.node("vol-slider-ui").value), 0.25);
+});
+
+test("Click sounds reserve mouseclick for Options and Execute", () => {
+  const app = ui();
+  const played = [];
+  app.context.playUIClick = () => played.push("mouseclick");
+  app.context.playClick = () => played.push("click");
+  const body = app.context.document.body;
+  for (const id of ["btn-options", "options-modal", "btn-submit", "btn-howto", "btn-replay", "vol-icon-ui", "levels-grid"]) {
+    const event = { detail: 1, target: { closest: (selector) =>
+      selector.split(", ").includes("#" + id) ? {} : null } };
+    body.listeners.mousedown[0](event);
+    body.listeners.click[0](event);
+    assert.equal(played.pop(), ["btn-options", "options-modal", "btn-submit"].includes(id) ? "mouseclick" : "click");
+    assert.equal(played.length, 0);
+  }
+  body.listeners.click[0]({ detail: 0, target: { closest: selector =>
+    selector.includes("#btn-submit") ? {} : null } });
+  assert.deepEqual(played, ["mouseclick"]);
+});
+
+test("Info requirements clear between levels and support tool and sound badges", () => {
+  const app = ui();
+  const show = (key) => {
+    app.context.currentLevelIndex = app.context.GAME_LEVELS.findIndex(level => level.key === key);
+    app.node("btn-info").click();
+    return app.node("info-requires");
+  };
+  for (const key of ["Modem", "Lightswitch", "Telescope", "Wires", "Crossing", "Flags", "TapCode"]) {
+    const requirements = show(key);
+    assert.equal(requirements.hidden, false);
+    assert.equal(requirements.children.length, 1);
+    assert.equal(requirements.children[0].title, "This level requires a measuring tool");
+  }
+  for (const key of ["BinaryTree", "PlantPot", "Cryptex", "Chessboard", "TV", "DeadLetter"]) {
+    const requirements = show(key);
+    assert.equal(requirements.hidden, true);
+    assert.equal(requirements.children.length, 0);
+  }
+  // Exercise sound rendering without labeling ambient audio as a puzzle requirement.
+  vm.runInContext("levelHints.Modem.sound = true", app.context);
+  const requirements = show("Modem");
+  assert.equal(requirements.children.length, 2);
+  assert.equal(requirements.children[1].title, "This level requires listening to sound");
+});
+
+test("Master slider updates the music owner even without an active scene", () => {
+  const app = ui();
+  const music = sound();
+  music.manager = { setMute(value) { this.muted = value; } };
+  app.context.GameAudio.bgmInstance = music;
+  for (const volume of [0.5, 0.1, 0]) {
+    app.node("vol-slider-ui").value = String(volume);
+    app.node("vol-slider-ui").dispatch("input");
+    assert.equal(app.game.sound.volume, volume);
+    assert.equal(music.manager.volume, volume);
+    assert.equal(music.manager.muted, volume === 0);
+    assert.equal(music.volume * music.manager.volume, 0.2 * volume);
+  }
+});
+
+test("Synthesized effects pass through the master gain instead of speaker output", () => {
+  const { instance, context } = scene("BinaryTree");
+  context.window.GameAudio.sfxVol = 0.8;
+  const connections = [];
+  let started = false;
+  const node = () => ({ gain: {}, frequency: {}, Q: {},
+    connect(target) { connections.push(target); },
+    start() { started = true; }, stop() {},
+  });
+  const speaker = {}, master = {};
+  instance.sound = { destination: master, context: {
+    destination: speaker, currentTime: 0, sampleRate: 100,
+    createBuffer: () => ({ getChannelData: () => new Float32Array(5) }),
+    createBufferSource: node, createBiquadFilter: node, createGain: node,
+  } };
+  instance._paperTick(0.5);
+  assert.equal(started, true);
+  assert.equal(connections.includes(master), true);
+  assert.equal(connections.includes(speaker), false);
+});
+
+test("Wires tolerates a missing recording and restores background music on exit", () => {
+  const { instance, context } = scene("Wires");
+  let available = false, additions = 0, pauses = 0, resumes = 0, destroyed = 0;
+  const music = sound();
+  music.destroy = () => destroyed++;
+  const bgm = { isPlaying: true, isPaused: false,
+    pause() { pauses++; this.isPlaying = false; this.isPaused = true; },
+    resume() { resumes++; this.isPlaying = true; this.isPaused = false; },
+  };
+  context.window.GameAudio.musicVol = 0.4;
+  context.window.GameAudio.bgmInstance = bgm;
+  instance.cache = { audio: { exists: () => available } };
+  instance.sound = { add(key, options) {
+    assert.equal(key, "wires_music"); assert.equal(options.loop, true);
+    additions++; return music;
+  } };
+  instance._startMusic();
+  assert.equal(additions, 0); assert.equal(pauses, 0);
+  available = true;
+  instance._startMusic();
+  assert.equal(additions, 1); assert.equal(pauses, 1);
+  assert.equal(music.plays.length, 1);
+  assert.equal(music.volume, 0.4 * 0.7);
+  context.window.GameAudio.musicVol = 0;
+  instance.refreshMusicVolume();
+  assert.equal(music.volume, 0);
+  instance.tweens = { killAll() {} };
+  instance.time = { removeAllEvents() {} };
+  instance.children = { removeAll() {} };
+  instance._teardown(); // resizing redraws artwork without restarting the recording
+  assert.equal(destroyed, 0); assert.equal(resumes, 0);
+  instance.shutdown();
+  assert.equal(destroyed, 1); assert.equal(resumes, 1);
 });
 
 test("Last answer still shows completion normally", () => {

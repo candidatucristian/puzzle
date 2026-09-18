@@ -19,10 +19,22 @@ function playSfx(key, vol, scene) {
 }
 
 // ── Global Audio Helpers ──
+window.refreshMasterVolume = (scene = window.mainScene) => {
+  const audio = window.GameAudio;
+  if (!audio) return;
+  // Include the persistent music owner even while scenes are changing.
+  const managers = new Set([game.sound, scene?.sound, audio.bgmInstance?.manager]);
+  for (const manager of managers) {
+    if (!manager) continue;
+    manager.volume = audio.masterVol;
+    manager.setMute?.(audio.muted);
+  }
+  window.refreshBgmVolume?.();
+};
+
 window.initGlobalAudio = (scene) => {
-  // Music and effects carry their own volumes; manager volume must remain at
-  // unity so their gains are not multiplied by the SFX setting.
-  scene.sound.volume = 1;
+  // Apply the master gain once to all audio, after individual music/SFX gains.
+  scene.sound.volume = window.GameAudio.masterVol;
   const bgm = window.GameAudio.bgmInstance;
   const bgmAlive = bgm && bgm.manager && bgm.isPlaying;
   if (!bgmAlive) {
@@ -38,16 +50,17 @@ window.initGlobalAudio = (scene) => {
   } else {
     bgm.setVolume(bgmVolume());
   }
-  scene.sound.setMute(window.GameAudio.muted);
+  window.refreshMasterVolume(scene);
 };
 
 // Keep the looping background music at its subdued level after a slider change
 window.refreshBgmVolume = () => {
   if (window.GameAudio.bgmInstance)
     window.GameAudio.bgmInstance.setVolume(bgmVolume());
+  window.mainScene?.refreshMusicVolume?.();
 };
 
-window.playUIClick = () => playSfx("ui_click"); // UI chrome clicks
+window.playUIClick = () => playSfx("ui_click"); // Options and Execute only
 window.playErrorSound = () => playSfx("error"); // wrong code entered
 window.playClick = (scene) => playSfx("click", 1, scene); // in-level object clicks
 window.playSuccess = (scene) => playSfx("nextlevel", 1, scene); // EXECUTE → next level

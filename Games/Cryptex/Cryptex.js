@@ -24,7 +24,7 @@
 // red wax seal left as the single drop of colour beside the flame.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CRYPTEX_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const CRYPTEX_ALPHA = "AZYXWVUTSRQPONMLKJIHGFEDCB";
 const CX_SKETCH = 0xd8d2c4; // the pencil itself
 const CRYPTEX_CIPHER = [
   "HYHUB FLSKHU PDFKLQH",
@@ -89,7 +89,10 @@ class CryptexScene extends Phaser.Scene {
       if (!this._draggingWheel || !p.isDown || !this._wheel) return;
       const { cx, cy } = this._wheel;
       const deg = Phaser.Math.RadToDeg(Math.atan2(p.y - cy, p.x - cx));
-      const delta = Phaser.Math.Angle.ShortestBetween(this._lastPointerDeg, deg);
+      const delta = Phaser.Math.Angle.ShortestBetween(
+        this._lastPointerDeg,
+        deg,
+      );
       this._lastPointerDeg = deg;
       this._setWheelAngle(this._wheelAngle + delta);
     });
@@ -149,7 +152,13 @@ class CryptexScene extends Phaser.Scene {
   }
 
   _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
-    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1, y1, x2, y2, mag),
+      width,
+      color,
+      alpha,
+    );
     this._drawPath(
       g,
       this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
@@ -162,8 +171,30 @@ class CryptexScene extends Phaser.Scene {
   _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
     const o = 4; // corner overshoot
     this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w,
+      y - o,
+      x + w,
+      y + h + o,
+      width,
+      color,
+      alpha,
+      mag,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w + o,
+      y + h,
+      x - o,
+      y + h,
+      width,
+      color,
+      alpha,
+      mag,
+    );
     this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
   }
 
@@ -191,34 +222,114 @@ class CryptexScene extends Phaser.Scene {
     bg.fillGradientStyle(0x0e1014, 0x101318, 0x07080b, 0x090a0d, 1);
     bg.fillRect(0, 0, W, H);
     // candlelight resting on the right half of the wall (the candle's, not ours)
-    bg.fillGradientStyle(0x000000, 0x46290e, 0x000000, 0x341e08, 0, 0.12, 0, 0.08);
+    bg.fillGradientStyle(
+      0x000000,
+      0x46290e,
+      0x000000,
+      0x341e08,
+      0,
+      0.12,
+      0,
+      0.08,
+    );
     bg.fillRect(W * 0.5, 0, W * 0.5, deskY);
 
     const rnd = this._rng(8228);
     // wireframe room: corner verticals, ceiling hints
-    this._pencilSeg(bg, rnd, W * 0.06, H * 0.05, W * 0.06, deskY, 1, CX_SKETCH, 0.1, 2.4);
-    this._pencilSeg(bg, rnd, W * 0.94, H * 0.05, W * 0.94, deskY, 1, CX_SKETCH, 0.1, 2.4);
-    this._pencilSeg(bg, rnd, 0, H * 0.03, W * 0.06, H * 0.05, 1, CX_SKETCH, 0.08, 2);
-    this._pencilSeg(bg, rnd, W, H * 0.03, W * 0.94, H * 0.05, 1, CX_SKETCH, 0.08, 2);
+    this._pencilSeg(
+      bg,
+      rnd,
+      W * 0.06,
+      H * 0.05,
+      W * 0.06,
+      deskY,
+      1,
+      CX_SKETCH,
+      0.1,
+      2.4,
+    );
+    this._pencilSeg(
+      bg,
+      rnd,
+      W * 0.94,
+      H * 0.05,
+      W * 0.94,
+      deskY,
+      1,
+      CX_SKETCH,
+      0.1,
+      2.4,
+    );
+    this._pencilSeg(
+      bg,
+      rnd,
+      0,
+      H * 0.03,
+      W * 0.06,
+      H * 0.05,
+      1,
+      CX_SKETCH,
+      0.08,
+      2,
+    );
+    this._pencilSeg(
+      bg,
+      rnd,
+      W,
+      H * 0.03,
+      W * 0.94,
+      H * 0.05,
+      1,
+      CX_SKETCH,
+      0.08,
+      2,
+    );
     // stray construction scribbles on the wall
     for (let i = 0; i < 5; i++) {
       const x = rnd() * W;
       const y = rnd() * deskY * 0.5;
-      this._pencilSeg(bg, rnd, x, y, x + 14 + rnd() * 30, y + (rnd() - 0.5) * 10, 1, CX_SKETCH, 0.04, 1.6);
+      this._pencilSeg(
+        bg,
+        rnd,
+        x,
+        y,
+        x + 14 + rnd() * 30,
+        y + (rnd() - 0.5) * 10,
+        1,
+        CX_SKETCH,
+        0.04,
+        1.6,
+      );
     }
     // the desk: a hand-ruled edge, hatch lines below
     this._pencilSeg(bg, rnd, 0, deskY, W, deskY, 1.4, CX_SKETCH, 0.22, 2);
     this._pencilSeg(bg, rnd, 0, deskY + 5, W, deskY + 5, 1, CX_SKETCH, 0.1, 2);
     for (let i = 0; i < 3; i++) {
       const y = deskY + 24 + i * ((H - deskY) / 3.8);
-      this._pencilSeg(bg, rnd, W * 0.04, y, W * 0.96, y + (rnd() - 0.5) * 6, 1, CX_SKETCH, 0.05, 2.4);
+      this._pencilSeg(
+        bg,
+        rnd,
+        W * 0.04,
+        y,
+        W * 0.96,
+        y + (rnd() - 0.5) * 6,
+        1,
+        CX_SKETCH,
+        0.05,
+        2.4,
+      );
     }
     // the candle's pool of light on the desk — unchanged, it belongs to it
     const desk = this.add.graphics().setDepth(-8);
     const cx0 = W * 0.86;
     for (let i = 4; i >= 1; i--) {
       desk.fillStyle(0xffb45e, 0.03);
-      desk.fillEllipse(cx0, deskY + (H - deskY) * 0.3, W * 0.1 * i, (H - deskY) * 0.4 * (i / 2.5));
+      desk.fillEllipse(
+        cx0,
+        deskY + (H - deskY) * 0.3,
+        W * 0.1 * i,
+        (H - deskY) * 0.4 * (i / 2.5),
+      );
     }
 
     this._buildCandleDom(W, H, deskY);
@@ -229,13 +340,49 @@ class CryptexScene extends Phaser.Scene {
     // vignette
     const vg = this.add.graphics().setDepth(30);
     const v = Math.min(W, H) * 0.26;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.85, 0.85, 0, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.85,
+      0.85,
+      0,
+      0,
+    );
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.85, 0.85);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.85,
+      0.85,
+    );
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.7, 0, 0.7, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.7,
+      0,
+      0.7,
+      0,
+    );
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.55, 0, 0.55);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0.55,
+      0,
+      0.55,
+    );
     vg.fillRect(W - v, 0, v, H);
   }
 
@@ -259,11 +406,17 @@ class CryptexScene extends Phaser.Scene {
       .setAlpha(0.85)
       .setDepth(20);
     this.levelText = this.add
-      .text(W - 30, 30, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
+      .text(
+        W - 30,
+        30,
+        "Level " +
+          (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1),
+        {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: "28px",
+          color: "#e8dcc0",
+        },
+      )
       .setOrigin(1, 0)
       .setAlpha(0)
       .setDepth(20);
@@ -334,10 +487,16 @@ class CryptexScene extends Phaser.Scene {
     for (let i = 0; i < 26; i++) {
       const a = Phaser.Math.DegToRad(i * this._step - 90);
       this._pencilSeg(
-        outer, rnd,
-        cx + Math.cos(a) * R * 0.785, cy + Math.sin(a) * R * 0.785,
-        cx + Math.cos(a) * R * 0.815, cy + Math.sin(a) * R * 0.815,
-        1, CX_SKETCH, 0.35, 0.4,
+        outer,
+        rnd,
+        cx + Math.cos(a) * R * 0.785,
+        cy + Math.sin(a) * R * 0.785,
+        cx + Math.cos(a) * R * 0.815,
+        cy + Math.sin(a) * R * 0.815,
+        1,
+        CX_SKETCH,
+        0.35,
+        0.4,
       );
     }
 
@@ -373,10 +532,50 @@ class CryptexScene extends Phaser.Scene {
     const ptr = this.add.graphics().setDepth(6);
     const rndP = this._rng(6336);
     ptr.fillStyle(CX_SKETCH, 0.22);
-    ptr.fillTriangle(cx - 7, cy - R * 1.05, cx + 7, cy - R * 1.05, cx, cy - R * 0.93);
-    this._pencilSeg(ptr, rndP, cx - 7, cy - R * 1.05, cx, cy - R * 0.93, 1.3, CX_SKETCH, 0.6, 0.6);
-    this._pencilSeg(ptr, rndP, cx + 7, cy - R * 1.05, cx, cy - R * 0.93, 1.3, CX_SKETCH, 0.6, 0.6);
-    this._pencilSeg(ptr, rndP, cx - 7, cy - R * 1.05, cx + 7, cy - R * 1.05, 1.3, CX_SKETCH, 0.6, 0.6);
+    ptr.fillTriangle(
+      cx - 7,
+      cy - R * 1.05,
+      cx + 7,
+      cy - R * 1.05,
+      cx,
+      cy - R * 0.93,
+    );
+    this._pencilSeg(
+      ptr,
+      rndP,
+      cx - 7,
+      cy - R * 1.05,
+      cx,
+      cy - R * 0.93,
+      1.3,
+      CX_SKETCH,
+      0.6,
+      0.6,
+    );
+    this._pencilSeg(
+      ptr,
+      rndP,
+      cx + 7,
+      cy - R * 1.05,
+      cx,
+      cy - R * 0.93,
+      1.3,
+      CX_SKETCH,
+      0.6,
+      0.6,
+    );
+    this._pencilSeg(
+      ptr,
+      rndP,
+      cx - 7,
+      cy - R * 1.05,
+      cx + 7,
+      cy - R * 1.05,
+      1.3,
+      CX_SKETCH,
+      0.6,
+      0.6,
+    );
 
     // ── rotating inner disk, hand-drawn ──
     this._disk = this.add.container(cx, cy).setDepth(5);
@@ -390,8 +589,30 @@ class CryptexScene extends Phaser.Scene {
     // hub with a pencilled needle pointing at the disk's own "A"
     this._pencilCircle(d, rndD, 0, 0, R * 0.16, 1.3, CX_SKETCH, 0.45);
     this._pencilSeg(d, rndD, 0, -R * 0.14, 0, -R * 0.5, 1.6, CX_SKETCH, 0.6, 1);
-    this._pencilSeg(d, rndD, -4, -R * 0.44, 0, -R * 0.5, 1.2, CX_SKETCH, 0.55, 0.5);
-    this._pencilSeg(d, rndD, 4, -R * 0.44, 0, -R * 0.5, 1.2, CX_SKETCH, 0.55, 0.5);
+    this._pencilSeg(
+      d,
+      rndD,
+      -4,
+      -R * 0.44,
+      0,
+      -R * 0.5,
+      1.2,
+      CX_SKETCH,
+      0.55,
+      0.5,
+    );
+    this._pencilSeg(
+      d,
+      rndD,
+      4,
+      -R * 0.44,
+      0,
+      -R * 0.5,
+      1.2,
+      CX_SKETCH,
+      0.55,
+      0.5,
+    );
     d.fillStyle(CX_SKETCH, 0.5);
     d.fillCircle(0, 0, 3);
     this._disk.add(d);
@@ -490,16 +711,71 @@ class CryptexScene extends Phaser.Scene {
     g.fillRect(-pw / 2, -ph / 2, pw, ph);
     g.fillStyle(CX_SKETCH, 0.05);
     g.fillRect(-pw / 2, -ph / 2, pw, ph);
-    this._pencilRect(g, rndE, -pw / 2, -ph / 2, pw, ph, 1.4, CX_SKETCH, 0.55, 1.6);
+    this._pencilRect(
+      g,
+      rndE,
+      -pw / 2,
+      -ph / 2,
+      pw,
+      ph,
+      1.4,
+      CX_SKETCH,
+      0.55,
+      1.6,
+    );
 
     // side + bottom folds meeting under the flap tip
     const tipY = ph * 0.16;
-    this._pencilSeg(g, rndE, -pw / 2 + 2, ph / 2 - 2, 0, tipY, 1, CX_SKETCH, 0.3, 1);
-    this._pencilSeg(g, rndE, pw / 2 - 2, ph / 2 - 2, 0, tipY, 1, CX_SKETCH, 0.3, 1);
+    this._pencilSeg(
+      g,
+      rndE,
+      -pw / 2 + 2,
+      ph / 2 - 2,
+      0,
+      tipY,
+      1,
+      CX_SKETCH,
+      0.3,
+      1,
+    );
+    this._pencilSeg(
+      g,
+      rndE,
+      pw / 2 - 2,
+      ph / 2 - 2,
+      0,
+      tipY,
+      1,
+      CX_SKETCH,
+      0.3,
+      1,
+    );
 
     // the flap edges, drawn a touch harder — the crease that matters
-    this._pencilSeg(g, rndE, -pw / 2, -ph / 2, 0, tipY, 1.3, CX_SKETCH, 0.5, 1.2);
-    this._pencilSeg(g, rndE, pw / 2, -ph / 2, 0, tipY, 1.3, CX_SKETCH, 0.5, 1.2);
+    this._pencilSeg(
+      g,
+      rndE,
+      -pw / 2,
+      -ph / 2,
+      0,
+      tipY,
+      1.3,
+      CX_SKETCH,
+      0.5,
+      1.2,
+    );
+    this._pencilSeg(
+      g,
+      rndE,
+      pw / 2,
+      -ph / 2,
+      0,
+      tipY,
+      1.3,
+      CX_SKETCH,
+      0.5,
+      1.2,
+    );
     p.add(g);
 
     // ── the wax seal on the flap tip, pressed with the numeral III ──
@@ -585,10 +861,43 @@ class CryptexScene extends Phaser.Scene {
     og.fillStyle(CX_SKETCH, 0.04);
     og.fillRect(ox, oy, bw, bhh);
     this._pencilRect(og, rnd, ox, oy, bw, bhh, 1.8, CX_SKETCH, 0.55, 2.2);
-    this._pencilRect(og, rnd, ox + 8, oy + 8, bw - 16, bhh - 16, 1, CX_SKETCH, 0.2, 2);
+    this._pencilRect(
+      og,
+      rnd,
+      ox + 8,
+      oy + 8,
+      bw - 16,
+      bhh - 16,
+      1,
+      CX_SKETCH,
+      0.2,
+      2,
+    );
     // fold creases where the letter was quartered
-    this._pencilSeg(og, rnd, ox + bw * 0.5, oy + 10, ox + bw * 0.5, oy + bhh - 10, 1, CX_SKETCH, 0.12, 2);
-    this._pencilSeg(og, rnd, ox + 10, oy + bhh * 0.48, ox + bw - 10, oy + bhh * 0.48, 1, CX_SKETCH, 0.12, 2);
+    this._pencilSeg(
+      og,
+      rnd,
+      ox + bw * 0.5,
+      oy + 10,
+      ox + bw * 0.5,
+      oy + bhh - 10,
+      1,
+      CX_SKETCH,
+      0.12,
+      2,
+    );
+    this._pencilSeg(
+      og,
+      rnd,
+      ox + 10,
+      oy + bhh * 0.48,
+      ox + bw - 10,
+      oy + bhh * 0.48,
+      1,
+      CX_SKETCH,
+      0.12,
+      2,
+    );
     ov.add(og);
 
     const fs = Math.max(16, Math.round(Math.min(W, H) * 0.028));
@@ -671,7 +980,7 @@ class CryptexScene extends Phaser.Scene {
     this._overlayOpen = true;
     this._draggingWheel = false;
     this._sealGlowOff();
-    if (window.playUIClick) window.playUIClick();
+    if (window.playClick) window.playClick(this);
     this._overlay.setVisible(true).setAlpha(0);
     this.tweens.add({ targets: this._overlay, alpha: 1, duration: 220 });
   }

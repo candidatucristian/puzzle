@@ -106,7 +106,7 @@ class ModemScene extends Phaser.Scene {
   }
 
   // ── Background: dark air, full of signals ───────────────────────────────────
-  // No room, no furniture — just the transmission itself: radio pulses
+  // Radio pulses surround the router resting on a sketched perspective table:
   // rippling out of the antennas, stray binary drifting through the dark,
   // a live waveform trembling low across the floor, and short packet blips.
   // Rebuilt cleanly on every resize.
@@ -396,6 +396,7 @@ class ModemScene extends Phaser.Scene {
     const bh = dH * 0.34; // lower than before — a slab, not a radio
     const inset = bw * 0.07; // how much the back edge pulls in, per side
     const ddy = -dH * 0.11; // how far the top face recedes upward
+    objs.push(this._drawTable(W, H, byTop + bh + 8, bx, bw));
 
     // top face — a trapeze: full-width at the front, shorter at the back
     g.fillStyle(0x1a1e25, 0.96);
@@ -679,6 +680,63 @@ class ModemScene extends Phaser.Scene {
         this._hwSound.play();
       }
     } catch (e) {}
+  }
+
+  _drawTable(W, H, feetY, routerX, routerWidth) {
+    const g = this.add.graphics().setDepth(1.5);
+    const rnd = this._rng(8119);
+    const color = 0xd8d2c4;
+    const backY = feetY - Math.min(H * 0.14, 85);
+    const frontY = Math.min(H * 0.88, feetY + H * 0.15);
+    const backHalf = Math.min(W * 0.40, Math.max(W * 0.32, routerWidth * 0.6));
+    const frontHalf = W * 0.46;
+    const backL = W / 2 - backHalf, backR = W / 2 + backHalf;
+    const frontL = W / 2 - frontHalf, frontR = W / 2 + frontHalf;
+    const thickness = Math.min(12, H * 0.02);
+    const edge = (x1, y1, x2, y2, alpha = 0.45, width = 0.9) =>
+      this._pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, 0.65);
+
+    // Broad wooden top: the far edge is shorter than the near edge.
+    g.fillStyle(0x171a1f, 1);
+    g.fillPoints([{ x: backL, y: backY }, { x: backR, y: backY },
+      { x: frontR, y: frontY }, { x: frontL, y: frontY }], true);
+    g.fillStyle(0x0e1115, 1);
+    g.fillRect(frontL, frontY, frontR - frontL, thickness);
+    edge(backL, backY, backR, backY, 0.32);
+    edge(backL, backY, frontL, frontY);
+    edge(backR, backY, frontR, frontY);
+    edge(frontL, frontY, frontR, frontY, 0.6);
+    edge(frontL, frontY + thickness, frontR, frontY + thickness, 0.34);
+    edge(frontL, frontY, frontL, frontY + thickness, 0.3);
+    edge(frontR, frontY, frontR, frontY + thickness, 0.3);
+
+    // Fine plank seams converge towards the back of the tabletop.
+    for (let i = 1; i < 7; i++) {
+      const t = i / 7;
+      edge(backL + (backR - backL) * t, backY + 2,
+        frontL + (frontR - frontL) * t, frontY - 2, 0.12, 0.65);
+    }
+    // Contact shadows touch the router's two feet, anchoring it to the surface.
+    g.fillStyle(0x020304, 0.55);
+    g.fillEllipse(routerX + routerWidth / 2, feetY - 2, routerWidth * 1.04, Math.min(25, H * 0.04));
+    g.fillStyle(0x020304, 0.8);
+    for (const t of [0.14, 0.86])
+      g.fillEllipse(routerX + routerWidth * t, feetY, routerWidth * 0.1, 5);
+
+    // Two front legs and a quiet cross-brace give the table weight.
+    const legBottom = H * 0.99;
+    const legWidth = Math.min(15, W * 0.018);
+    const leftLeg = frontL + W * 0.035, rightLeg = frontR - W * 0.035 - legWidth;
+    for (const x of [leftLeg, rightLeg]) {
+      g.fillStyle(0x101318, 1);
+      g.fillRect(x, frontY + thickness, legWidth, legBottom - frontY - thickness);
+      edge(x, frontY + thickness, x, legBottom, 0.35);
+      edge(x + legWidth, frontY + thickness, x + legWidth, legBottom, 0.22);
+      edge(x, legBottom, x + legWidth, legBottom, 0.22);
+    }
+    const braceY = frontY + (legBottom - frontY) * 0.68;
+    edge(leftLeg + legWidth, braceY, rightLeg, braceY, 0.12);
+    return g;
   }
 
   refreshSfxVolume() {

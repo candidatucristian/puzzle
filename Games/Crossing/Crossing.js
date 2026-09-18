@@ -748,7 +748,7 @@ class CrossingScene extends Phaser.Scene {
     }
   }
 
-  // a cat sitting on the far sidewalk, tail swaying, eyes blinking
+  // The cat alternates a seated pause with a short walk along the far sidewalk.
   _drawCat(W, H) {
     const cx = W * 0.62;
     const cy = this._curbY - 2; // sitting on the far sidewalk, at the curb
@@ -786,9 +786,9 @@ class CrossingScene extends Phaser.Scene {
     });
 
     // two warm eyes that blink shut now and then
-    const eyes = this.add.container(0, 0);
+    const eyes = this.add.container(0, -s * 1.64);
     for (const ex of [s * 0.38, s * 0.6]) {
-      eyes.add(this.add.rectangle(ex, -s * 1.64, s * 0.11, s * 0.09, CR_WARM, 0.9));
+      eyes.add(this.add.rectangle(ex, 0, s * 0.11, s * 0.09, CR_WARM, 0.9));
     }
     cont.add(eyes);
     const blink = () => {
@@ -803,6 +803,71 @@ class CrossingScene extends Phaser.Scene {
       });
     };
     this.time.delayedCall(1600, blink);
+
+    // A separate walking silhouette keeps the seated cat from sliding across the curb.
+    const walking = this.add.graphics().setVisible(false);
+    cont.add(walking);
+    const drawWalk = (phase) => {
+      walking.clear();
+      const bob = Math.sin(phase * 2) * s * 0.035;
+      walking.fillStyle(0x0a0b0e, 1);
+      walking.fillEllipse(0, -s * 0.7 + bob, s * 1.7, s * 0.72);
+      walking.fillCircle(s * 0.8, -s * 1.02 + bob, s * 0.34);
+      walking.fillTriangle(s * 0.53, -s * 1.16 + bob, s * 0.57, -s * 1.55 + bob,
+        s * 0.78, -s * 1.25 + bob);
+      walking.fillTriangle(s * 0.82, -s * 1.26 + bob, s * 1.02, -s * 1.49 + bob,
+        s * 1.08, -s * 1.07 + bob);
+      walking.lineStyle(0.75, CR_SKETCH, 0.24);
+      walking.strokeEllipse(0, -s * 0.7 + bob, s * 1.7, s * 0.72);
+      walking.strokeCircle(s * 0.8, -s * 1.02 + bob, s * 0.34);
+      // Diagonal pairs of paws take turns supporting the body.
+      for (let i = 0; i < 4; i++) {
+        const hip = (i < 2 ? -0.5 : 0.5) * s + (i % 2) * s * 0.08;
+        const step = phase + (i === 0 || i === 3 ? 0 : Math.PI);
+        const foot = hip + Math.sin(step) * s * 0.22;
+        const lift = Math.max(0, Math.cos(step)) * s * 0.12;
+        walking.lineStyle(s * 0.13, 0x0a0b0e, 1);
+        walking.lineBetween(hip, -s * 0.55 + bob, foot, -lift);
+        walking.lineStyle(0.6, CR_SKETCH, i % 2 ? 0.12 : 0.24);
+        walking.lineBetween(hip, -s * 0.5 + bob, foot, -lift);
+        walking.lineBetween(foot, -lift, foot + s * 0.14, -lift);
+      }
+      const sway = Math.sin(phase * 0.5) * s * 0.12;
+      walking.lineStyle(2, 0x0a0b0e, 1);
+      walking.beginPath();
+      walking.moveTo(-s * 0.7, -s * 0.65 + bob);
+      walking.lineTo(-s * 1.1, -s * 0.95 + sway);
+      walking.lineTo(-s * 1.3, -s * 1.45 + sway);
+      walking.lineTo(-s * 1.14, -s * 1.62 + sway);
+      walking.strokePath();
+      walking.fillStyle(CR_WARM, 0.75);
+      walking.fillEllipse(s * 0.97, -s * 1.06 + bob, s * 0.1, s * 0.07);
+    };
+    let headLeft = true;
+    const stroll = () => {
+      const destination = W * (headLeft ? 0.39 : 0.64);
+      cont.setScale(headLeft ? -1 : 1, 1);
+      g.setVisible(false);
+      tail.setVisible(false);
+      eyes.setVisible(false);
+      walking.setVisible(true);
+      const duration = Math.abs(destination - cont.x) / (W * 0.035) * 1000;
+      const startX = cont.x;
+      drawWalk(0);
+      this.tweens.add({
+        targets: cont, x: destination, duration, ease: "Linear",
+        onUpdate: () => drawWalk(Math.abs(cont.x - startX) / (s * 0.6)),
+        onComplete: () => {
+          walking.setVisible(false);
+          g.setVisible(true);
+          tail.setVisible(true);
+          eyes.setVisible(true);
+          headLeft = !headLeft;
+          this.time.delayedCall(2200 + Math.random() * 2800, stroll);
+        },
+      });
+    };
+    this.time.delayedCall(2400, stroll);
   }
 
   _drawTexts(W, H) {
