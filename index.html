@@ -142,6 +142,29 @@
         <p id="intro-skip">PRESS ANY KEY TO SKIP</p>
       </div>
 
+      <!-- Completion Screen -->
+      <div id="completion-screen" class="hidden" aria-live="polite">
+        <div class="completion-card">
+          <p class="completion-kicker">Case file closed</p>
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+          <h1>Deciphered</h1>
+          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+          <p class="completion-message">
+            Every chamber yielded its word. The room is quiet again.
+          </p>
+          <div class="completion-stats" aria-label="Completion statistics">
+            <div><span id="completion-chambers">16 / 16</span><small>CHAMBERS CLEARED</small></div>
+            <div><span id="completion-time">0m 00s</span><small>SESSION TIME</small></div>
+          </div>
+          <p class="completion-credits">THE DESCIPHER &mdash; THANK YOU FOR PLAYING</p>
+          <div class="completion-actions">
+            <button id="btn-completion-replay" class="menu-btn">REPLAY CHAMBER</button>
+            <button id="btn-completion-first" class="menu-btn primary-action">BEGIN AGAIN</button>
+            <button id="btn-completion-close" class="menu-btn">VIEW LEVELS</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Level Transition Veil -->
       <div id="level-veil">
         <div class="veil-content">
@@ -392,17 +415,12 @@
     <script src="Games/Cryptex/Cryptex.js"></script>
     <script src="Games/Chessboard/Chessboard.js"></script>
     <script src="Games/Station/Station.js"></script>
-    <script src="Games/Trunk/Trunk.js"></script>
     <script src="Games/BinaryTree/BinaryTree.js"></script>
     <script src="Games/Pi/Pi.js"></script>
     <script src="Games/Wires/Wires.js"></script>
     <script src="Games/Crossing/Crossing.js"></script>
-    <script src="Games/Safedial/SafeDial.js"></script>
     <script src="Games/Flags/Flags.js"></script>
-    <script src="Games/Elements/Elements.js"></script>
-    <script src="Games/Workbench/Workbench.js"></script>
     <script src="Games/TapCode/TapCode.js"></script>
-    <script src="Games/Signs/Signs.js"></script>
     <script src="js/main.js"></script>
     <script src="js/ui.js"></script>
   </body>

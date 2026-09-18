@@ -20,6 +20,9 @@ function playSfx(key, vol, scene) {
 
 // ── Global Audio Helpers ──
 window.initGlobalAudio = (scene) => {
+  // Music and effects carry their own volumes; manager volume must remain at
+  // unity so their gains are not multiplied by the SFX setting.
+  scene.sound.volume = 1;
   const bgm = window.GameAudio.bgmInstance;
   const bgmAlive = bgm && bgm.manager && bgm.isPlaying;
   if (!bgmAlive) {
@@ -124,13 +127,6 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "Trunk",
-    scene: TrunkScene,
-    code: "SEXTANT",
-    altCode: null,
-  },
-
-  {
     key: "Pi",
     scene: PiScene,
     code: "PI",
@@ -143,39 +139,15 @@ window.GAME_LEVELS = [
     altCode: null,
   },
   {
-    key: "SafeDial",
-    scene: SafeDialScene,
-    code: "SECRET",
-    altCode: null,
-  },
-  {
     key: "Flags",
     scene: FlagsScene,
     code: "DEBRIEFING",
     altCode: null,
   },
   {
-    key: "Elements",
-    scene: ElementsScene,
-    code: "CONCERNS",
-    altCode: null,
-  },
-  {
-    key: "Workbench",
-    scene: WorkbenchScene,
-    code: "1801040915",
-    altCode: "RADIO",
-  },
-  {
     key: "TapCode",
     scene: TapCodeScene,
     code: "ESCAPE",
-    altCode: null,
-  },
-  {
-    key: "Signs",
-    scene: SignsScene,
-    code: "SILENT",
     altCode: null,
   },
 ];

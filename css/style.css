@@ -1510,6 +1510,142 @@ input[type="range"]::-moz-range-track {
   user-select: none;
 }
 
+/* ═══════════════════════════════════════════════
+   COMPLETION SCREEN
+   ═══════════════════════════════════════════════ */
+#completion-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 550;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  background:
+    radial-gradient(80% 90% at 50% 44%, rgba(39, 40, 38, 0.35), transparent 65%),
+    radial-gradient(120% 100% at 50% 45%, #0c0d11 0%, #050608 70%, #000 100%);
+  opacity: 1;
+  transition: opacity 0.55s ease;
+}
+
+#completion-screen.hidden {
+  display: none;
+}
+
+.completion-card {
+  width: min(620px, 92vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding: 48px 54px 42px;
+  border: 1.5px solid var(--pencil-faint);
+  border-radius: 5px 12px 6px 13px;
+  background: linear-gradient(180deg, rgba(31, 33, 38, 0.94), rgba(13, 14, 17, 0.97));
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.78), inset 0 0 0 6px rgba(255, 255, 255, 0.012);
+  animation: completion-arrive 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes completion-arrive {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.completion-kicker,
+.completion-credits {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+.completion-card h1 {
+  margin: -4px 0;
+  padding-left: 12px;
+  color: var(--pencil-bright);
+  font-family: var(--font-display);
+  font-size: clamp(42px, 7vw, 68px);
+  font-weight: 700;
+  letter-spacing: 12px;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 var(--pencil-faint), -0.8px 0.6px 0 var(--pencil-faint);
+}
+
+.completion-message {
+  max-width: 450px;
+  margin: 2px 0 4px;
+  color: #d9d3c4;
+  font-family: var(--font-body);
+  font-size: 21px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.completion-stats {
+  width: min(420px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-top: 1px dashed var(--pencil-faint);
+  border-bottom: 1px dashed var(--pencil-faint);
+}
+
+.completion-stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 17px 12px;
+}
+
+.completion-stats div + div {
+  border-left: 1px dashed var(--pencil-faint);
+}
+
+.completion-stats span {
+  color: var(--pencil-bright);
+  font-family: "Special Elite", monospace;
+  font-size: 20px;
+}
+
+.completion-stats small {
+  color: var(--bone-dim);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+}
+
+.completion-actions {
+  width: min(460px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.completion-actions .menu-btn {
+  min-height: 46px;
+  padding: 10px 8px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+
+.completion-actions .primary-action {
+  background: var(--pencil-bright);
+  border-color: var(--pencil-deep);
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .completion-card { padding: 34px 24px 28px; gap: 18px; }
+  .completion-actions { grid-template-columns: 1fr; }
+}
+
 /* ── Mobile / Tablet Block ──
    Same dark-paper theme as the start screen. Shown by ui.js on phones
    and tablets, and by the media query below when the window is simply

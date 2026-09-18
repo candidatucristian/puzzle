@@ -1,25 +1,47 @@
 // Forțăm browserul să selecteze fereastra jocului imediat după refresh
 window.focus();
 
+function readStoredVolume(key, fallback) {
+  const raw = localStorage.getItem(key);
+  const value = Number(raw);
+  return raw !== null && raw.trim() !== "" && Number.isFinite(value)
+    ? Math.min(1, Math.max(0, value))
+    : fallback;
+}
+
 // ── Global Audio State ──
 window.GameAudio = {
-  musicVol:
-    localStorage.getItem("musicVol") !== null
-      ? parseFloat(localStorage.getItem("musicVol"))
-      : 0.5,
-  sfxVol:
-    localStorage.getItem("sfxVol") !== null
-      ? parseFloat(localStorage.getItem("sfxVol"))
-      : 0.8,
+  musicVol: readStoredVolume("musicVol", 0.5),
+  sfxVol: readStoredVolume("sfxVol", 0.8),
   muted: localStorage.getItem("muted") === "true",
   bgmInstance: null,
 };
 
 // ── Levels Logic ──
+const PROGRESS_SCHEMA = "2";
 const savedLevel = localStorage.getItem("puzzleUnlockedLevel");
-// clamp: the level list may have shrunk since the progress was saved
+let savedLevelIndex = Number(savedLevel);
+
+// Version 1 had 21 levels. Map its numeric progress to the 16-level order
+// so returning players neither lose progress nor skip a level that remains.
+if (localStorage.getItem("puzzleProgressSchema") !== PROGRESS_SCHEMA) {
+  if (Number.isInteger(savedLevelIndex) && savedLevelIndex >= 0) {
+    if (savedLevelIndex >= 17) savedLevelIndex = 15;
+    else if (savedLevelIndex >= 15) savedLevelIndex = 14;
+    else if (savedLevelIndex === 14) savedLevelIndex = 13;
+    else if (savedLevelIndex >= 12) savedLevelIndex = 12;
+    localStorage.setItem("puzzleUnlockedLevel", savedLevelIndex);
+  }
+  localStorage.setItem("puzzleProgressSchema", PROGRESS_SCHEMA);
+}
+
+// Ignore malformed storage and clamp progress if the level list changes again.
+if (!Number.isInteger(savedLevelIndex) || savedLevelIndex < 0) {
+  savedLevelIndex = 0;
+  localStorage.setItem("puzzleUnlockedLevel", savedLevelIndex);
+}
 window.currentLevelIndex = Math.min(
-  savedLevel ? parseInt(savedLevel) : 0,
+  savedLevelIndex,
   window.GAME_LEVELS.length - 1,
 );
 window.unlockedLevelIndex = window.currentLevelIndex;
@@ -269,6 +291,7 @@ async function playIntro(onDone) {
 
 // any key (or a click on the wallpaper) starts the game
 let gameStarted = false;
+let sessionStartedAt = null;
 
 function startTheGame() {
   if (isMobile || gameStarted) return;
@@ -279,6 +302,7 @@ function startTheGame() {
   if (!document.getElementById("options-modal").classList.contains("hidden"))
     return;
   gameStarted = true;
+  sessionStartedAt = Date.now();
   const firstVisit = !localStorage.getItem("hasPlayedBefore");
   if (firstVisit) {
     // the intro fades in OVER the start screen; the veil then hides it
@@ -351,7 +375,7 @@ const btnSubmit = document.getElementById("btn-submit");
 const inputCode = document.getElementById("level-code");
 
 btnSubmit.addEventListener("click", () => {
-  const code = inputCode.value.toUpperCase();
+  const code = inputCode.value.trim().toUpperCase();
   const currentLevelConfig = window.GAME_LEVELS[window.currentLevelIndex];
 
   let isCorrect =
@@ -369,10 +393,9 @@ btnSubmit.addEventListener("click", () => {
       window.playSuccess(window.mainScene);
 
     if (isLastLevel) {
-      setTimeout(
-        () => alert("CONGRATULATIONS! You have completed the game!"),
-        500,
-      );
+      window.unlockedLevelIndex = window.GAME_LEVELS.length - 1;
+      localStorage.setItem("puzzleUnlockedLevel", window.unlockedLevelIndex);
+      setTimeout(showCompletionScreen, 650);
     } else {
       const nextLevelIndex = window.currentLevelIndex + 1;
       window.unlockedLevelIndex = Math.max(
@@ -416,8 +439,10 @@ btnNew.addEventListener("click", () => {
   disarmReset();
   document.getElementById("options-modal").classList.add("hidden");
   localStorage.setItem("puzzleUnlockedLevel", 0);
+  localStorage.setItem("puzzleProgressSchema", PROGRESS_SCHEMA);
   window.unlockedLevelIndex = 0;
   gameStarted = true;
+  sessionStartedAt = Date.now();
   initGameScreen();
   playIntro(() => cinematicGoToLevel(0));
 });
@@ -430,6 +455,46 @@ inputCode.addEventListener("keypress", (e) => {
 // quick veil: fade to black and back, no chamber card
 document.getElementById("btn-replay").addEventListener("click", () => {
   cinematicGoToLevel(window.currentLevelIndex, { quick: true });
+});
+
+// ── Completion Screen ──
+const completionScreen = document.getElementById("completion-screen");
+const completionTime = document.getElementById("completion-time");
+const completionChambers = document.getElementById("completion-chambers");
+
+function formatSessionTime(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${minutes}m ${seconds}s`;
+}
+
+function showCompletionScreen() {
+  completionChambers.textContent = `${window.GAME_LEVELS.length} / ${window.GAME_LEVELS.length}`;
+  completionTime.textContent = formatSessionTime(
+    sessionStartedAt ? Date.now() - sessionStartedAt : 0,
+  );
+  completionScreen.classList.remove("hidden");
+  document.getElementById("btn-completion-first").focus();
+}
+
+function hideCompletionScreen() {
+  completionScreen.classList.add("hidden");
+}
+
+document.getElementById("btn-completion-replay").addEventListener("click", () => {
+  hideCompletionScreen();
+  cinematicGoToLevel(window.currentLevelIndex, { quick: true });
+});
+
+document.getElementById("btn-completion-first").addEventListener("click", () => {
+  hideCompletionScreen();
+  sessionStartedAt = Date.now();
+  cinematicGoToLevel(0);
+});
+
+document.getElementById("btn-completion-close").addEventListener("click", () => {
+  hideCompletionScreen();
 });
 
 // ── How to Play Modal ──
@@ -495,15 +560,16 @@ function toggleMute() {
   localStorage.setItem("muted", window.GameAudio.muted);
   syncMuteButtons();
   if (window.mainScene && window.mainScene.sound) {
-    const vol = window.GameAudio.muted ? 0 : window.GameAudio.sfxVol;
-    window.mainScene.sound.volume = vol;
+    // Individual sounds already apply their own SFX/music volume. Keep the
+    // manager at unity so unmuting never applies the SFX value a second time.
+    window.mainScene.sound.volume = 1;
     window.mainScene.sound.setMute(window.GameAudio.muted);
   }
 }
 
 btnMute.addEventListener("click", toggleMute);
 
-// Volume widget — slider controls master volume; vol=0 auto-mutes
+// Volume widget controls SFX volume; zero also mutes all audio.
 volSliderUI.addEventListener("input", (e) => {
   const vol = parseFloat(e.target.value);
   window.GameAudio.sfxVol = vol;
@@ -513,7 +579,7 @@ volSliderUI.addEventListener("input", (e) => {
   sfxSlider.value = vol;
   syncMuteButtons();
   if (window.mainScene && window.mainScene.sound) {
-    window.mainScene.sound.volume = vol; // schimbă volumul sunetelor deja pornite
+    window.mainScene.sound.volume = 1;
     window.mainScene.sound.setMute(vol === 0);
   }
 });
@@ -580,11 +646,6 @@ const levelHints = {
     sound: false,
     tool: false,
   },
-  Trunk: {
-    text: "A LOCKED TRUNK, A SCRATCHED LINE.\nNot drawings — letters wearing fences.",
-    sound: false,
-    tool: true,
-  },
   BinaryTree: {
     text: "This looks like a root - could it be a vegetable or a fruit?",
     sound: false,
@@ -605,33 +666,13 @@ const levelHints = {
     sound: false,
     tool: true,
   },
-  SafeDial: {
-    text: "LISTEN CLOSELY.\nEach click is a step. The tumblers remember the direction.",
-    sound: true,
-    tool: false,
-  },
   Flags: {
     text: "DRESS THE SHIP.\nEach colour flies for a country, and every country signs with two letters.",
     sound: false,
     tool: false,
   },
-  Elements: {
-    text: "THE LOCKED CABINET.\nNo names, only numbers — but somewhere there is a table that knows them all.",
-    sound: false,
-    tool: true,
-  },
-  Workbench: {
-    text: "STILL DEAD AIR.\nThe repair was never finished — and every small part on the bench wears its value in colour.",
-    sound: false,
-    tool: true,
-  },
   TapCode: {
     text: "KNOCK TWICE.\nA prisoner counts in fives; two numbers find a letter.",
-    sound: false,
-    tool: true,
-  },
-  Signs: {
-    text: "THE COLLECTOR'S WALL.\nAmong the paintings, one series mattered enough to be dated. Time puts things in order.",
     sound: false,
     tool: true,
   },
