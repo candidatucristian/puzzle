@@ -664,6 +664,25 @@
             "_drawSlab() — carves row marks, a gap, then column marks per letter",
           ],
         },
+        {
+          key: "Rally",
+          name: "Rally",
+          code: "SILVER",
+          alt: null,
+          sound: false,
+          tool: false,
+          hint: "THE STAGE FINISH.\nEach car wears a number, and every number has a place.",
+          mech: "The finish of a floodlit night rally stage: a gravel road, a chequered gantry, a marshal with a flag and a few spectators behind him. Six plain, very dark cars (burgundy, navy, forest, ochre, plum, petrol) come through in bunches, three seconds apart — one alone, then two nose-to-tail almost touching, then two in line, then the last two almost touching again — each with its race number painted on the door: 19, 9, 12, 22, 5, 18. Each number is a position in the alphabet (A=1 … Z=26): 19=S, 9=I, 12=L, 22=V, 5=E, 18=R — in order of crossing the line, that spells SILVER. When the last car is through, the floodlights and lanterns go out, the marshal lowers his flag, and a TOP 3 board comes up: 1. Alan Brown (gold cup), 2. Chad Dawson (silver), 3. Eugene Fontaine (bronze). The race runs once and does not repeat; the game's restart button (⟳) runs it again. The only text in the scene is the numbers. Each car crossing the line plays a whoosh (assets/sounds/Rally/wroom.mp3, optional — the level is solvable without it).",
+          keys: [
+            "RY_NUMBERS = [19, 9, 12, 22, 5, 18] — the door numbers, in order of crossing",
+            "RY_CROSS_MS = [0, 3000, 3210, 6210, 6960, 7170] — when each car's centre crosses the line; the bunches, 3 s apart (the tight pairs are 210 ms apart)",
+            "RY_SPEED — each car runs a touch faster or slower; the crossing times stay exact",
+            "RY_DIGITS — hand-painted numeral strokes (no font); _paintNumber() draws them on the plate",
+            "_planRound() / _runRace() — work out launches and whooshes from RY_CROSS_MS, then lights out, then the podium (RY_PODIUM_MS later); the race runs once",
+            "_soundLead() — measures the loudest moment of wroom.mp3 so it lands on the line",
+            "RY_WINNERS / RY_CUPS — the top three and their cups; _drawPodium() / _drawCup() draw the board",
+          ],
+        },
       ];
 
       // ── Render quick table ──

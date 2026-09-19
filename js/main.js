@@ -163,6 +163,12 @@ window.GAME_LEVELS = [
     code: "ESCAPE",
     altCode: null,
   },
+  {
+    key: "Rally",
+    scene: RallyScene,
+    code: "SILVER",
+    altCode: null,
+  },
 ];
 
 // ── Boot Scene ──

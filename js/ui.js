@@ -689,6 +689,11 @@ const levelHints = {
     sound: false,
     tool: true,
   },
+  Rally: {
+    text: "THE STAGE FINISH.\nEach car wears a number, and every number has a place.",
+    sound: false,
+    tool: false,
+  },
 };
 
 btnInfo.addEventListener("click", () => {
