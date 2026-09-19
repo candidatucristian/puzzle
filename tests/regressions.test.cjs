@@ -287,7 +287,7 @@ test("Info requirements clear between levels and support tool and sound badges",
     assert.equal(requirements.children.length, 1);
     assert.equal(requirements.children[0].title, "This level requires a measuring tool");
   }
-  for (const key of ["BinaryTree", "PlantPot", "Cryptex", "Chessboard", "TV", "DeadLetter"]) {
+  for (const key of ["BinaryTree", "PlantPot", "Cryptex", "Chessboard", "TV"]) {
     const requirements = show(key);
     assert.equal(requirements.hidden, true);
     assert.equal(requirements.children.length, 0);
@@ -415,51 +415,51 @@ test("An answer entered during navigation cannot reopen completion", () => {
   assert.equal(app.game.lastScene, "BinaryTree");
 });
 
-test("Existing level 16 progress unlocks the new chamber before completion", () => {
-  const app = ui(15);
-  assert.equal(app.context.currentLevelIndex, 15);
-  assert.equal(app.context.GAME_LEVELS.length, 17);
-  app.submit(); app.tick(3500);
-  assert.equal(app.game.lastScene, "DeadLetter");
-  assert.equal(app.storage.get("puzzleUnlockedLevel"), "16");
-  assert.equal(app.completed(), false);
-  app.submit(); app.tick(4500);
-  assert.equal(app.completed(), true);
-  assert.equal(app.node("completion-chambers").textContent, "17 / 17");
-});
-
-test("Turning grille covers the paper exactly once and decodes the configured answer", () => {
-  const { instance } = scene("DeadLetter");
-  const Puzzle = instance.constructor;
-  const grid = Puzzle.letterGrid();
-  const positions = [0, 1, 2, 3].flatMap((turn) => [...Puzzle.holesAt(turn)]);
-  assert.equal(new Set(positions).size, 16);
-  assert.ok(positions.every((cell) => cell >= 0 && cell < 16));
-  const message = positions.map((cell) => grid[cell]).join("");
-  const app = ui();
-  assert.equal(message, "THEWORDIS" + app.context.GAME_LEVELS.at(-1).code);
-  assert.deepEqual([...Puzzle.holesAt(4)], [...Puzzle.holesAt(0)]);
-});
-
-test("Grille actions require placement, finish rotating before tracing, and wrap", () => {
-  const { instance: puzzle } = scene("DeadLetter");
-  puzzle._turn = 0; puzzle._placed = false; puzzle._busy = false;
-  puzzle._traces = [null, null, null, null]; puzzle._timers = [];
-  puzzle._render = () => {};
-  puzzle._dom = { querySelector: () => ({ classList: { add() {}, remove() {} }, offsetWidth: 0 }) };
-  const pending = [];
-  puzzle.time = { delayedCall: (_, callback) => { pending.push(callback); return { remove() {} }; } };
-  puzzle._rotate(); puzzle._trace();
-  assert.equal(puzzle._turn, 0);
-  assert.ok(puzzle._traces.every((value) => value === null));
-  puzzle._place();
-  for (let turn = 0; turn < 4; turn++) {
-    puzzle._trace();
-    puzzle._rotate(); puzzle._rotate(); puzzle._place(); puzzle._trace();
-    assert.equal(puzzle._turn, turn + 1);
-    assert.equal(puzzle._placed, true);
-    pending.shift()();
+test("Removed level progress clamps to the final remaining chamber", () => {
+  for (const saved of [15, 16]) {
+    const app = ui(saved);
+    assert.equal(app.context.currentLevelIndex, 15);
+    assert.equal(app.context.GAME_LEVELS.length, 16);
+    assert.equal(app.context.GAME_LEVELS.at(-1).key, "TapCode");
+    assert.equal(app.storage.get("puzzleUnlockedLevel"), "15");
+    app.submit(); app.tick(3500);
+    assert.equal(app.completed(), true);
+    assert.equal(app.node("completion-chambers").textContent, "16 / 16");
   }
-  assert.equal(puzzle._traces.join(""), "THEWORDIS" + ui().context.GAME_LEVELS.at(-1).code);
-  assert.equal(puzzle._turn % 4, 0);
+});
+
+test("Candle dims in three clicks, ignores the open letter, and retains state on rebuild", () => {
+  const { instance: candle, context } = scene("Cryptex");
+  let clicks = 0;
+  context.window.playClick = () => clicks++;
+  const button = {};
+  let strength;
+  const dom = { classList: element().classList,
+    style: { setProperty: (key, value) => { if (key === "--candle-strength") strength = value; } },
+    querySelector: () => button };
+  const light = () => ({ setAlpha(value) { this.alpha = value; return this; }, setScale(value) { this.scale = value; return this; } });
+  candle._candleDom = dom;
+  candle._candleWallLight = light(); candle._candleDeskLight = light();
+  candle._candleClicks = 0;
+  candle._overlayOpen = true;
+  candle._dimCandle();
+  assert.equal(clicks, 0);
+  candle._overlayOpen = false;
+  for (const expected of [2 / 3, 1 / 3, 0]) {
+    candle._dimCandle();
+    assert.equal(strength, expected);
+    assert.equal(candle._candleWallLight.alpha, expected);
+    assert.equal(candle._candleDeskLight.scale, expected);
+  }
+  assert.equal(button.disabled, true);
+  candle._dimCandle();
+  assert.equal(clicks, 3);
+  candle.tweens = { killAll() {} };
+  candle.children = { removeAll() {} };
+  candle._teardown();
+  candle._candleDom = dom;
+  candle._candleWallLight = light(); candle._candleDeskLight = light();
+  candle._updateCandleLight();
+  assert.equal(strength, 0);
+  assert.equal(candle._candleDeskLight.alpha, 0);
 });

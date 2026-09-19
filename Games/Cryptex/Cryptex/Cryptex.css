@@ -1,13 +1,21 @@
 /* ── Cryptex candle (CSS art) ─────────────────────────────────────────────
    Embedded as a DOM overlay above the Phaser canvas in the Cryptex level.
-   The page boilerplate from the original snippet was removed so it cannot
-   leak into the game UI; every candle rule below is unchanged.
-   The .cryptex-candle wrapper is positioned/scaled from Cryptex.js.        */
+   The .cryptex-candle wrapper is positioned/scaled from Cryptex.js.
+
+   Flacăra e făcută din straturi, ca una adevărată:
+     • flame-outer – corpul portocaliu, cu vârful ascuțit și roșiatic
+     • flame-core  – miezul alb-gălbui, cel mai luminos
+     • flame-dark  – zona mai închisă din jurul fitilului
+     • flame-blue  – "cupa" albastră de la bază
+   Pâlpâirea folosește ritmuri care nu se repetă sincron, deci nu arată
+   mecanic. Suflul (rafala), jarul din fitil și fumul sunt pornite din JS
+   (_playCandleGust), cu Web Animations API.                                */
 
 .cryptex-candle {
   position: absolute;
   pointer-events: none;
   transform-origin: bottom center;
+  --candle-strength: 1;
 }
 
 .cryptex-candle .holder {
@@ -24,7 +32,12 @@
   content: "";
 }
 
+/* ── ceara ─────────────────────────────────────────────────────────────── */
+
 .cryptex-candle .candle {
+  /* ceara e luminată de propria flacără: se întunecă odată cu ea */
+  filter: brightness(calc(0.4 + var(--candle-strength, 1) * 0.6));
+  transition: filter 900ms ease 250ms;
   bottom: 0;
   width: 100px;
   height: 300px;
@@ -56,85 +69,460 @@
   background: radial-gradient(rgba(0, 0, 0, 0.6), transparent 45%);
 }
 
-.cryptex-candle .thread {
-  width: 6px;
-  height: 36px;
-  top: -17px;
+/* ceara topită din jurul fitilului, luminată de flacără */
+.cryptex-candle .candle-pool {
   left: 50%;
+  top: 6px;
+  width: 64px;
+  height: 24px;
+  margin-left: -32px;
   z-index: 1;
-  border-radius: 40% 40% 0 0;
-  transform: translateX(-50%);
-  background: #121212;
-  background: linear-gradient(#d6994a, #4b232c, #121212, black, #e8bb31 90%);
-}
-
-.cryptex-candle .flame {
-  width: 24px;
-  height: 120px;
-  left: 50%;
-  transform-origin: 50% 100%;
-  transform: translateX(-50%);
-  bottom: 100%;
-  border-radius: 50% 50% 20% 20%;
-  background: rgba(255, 255, 255, 1);
-  background: linear-gradient(white 80%, transparent);
-  animation:
-    cryptexMoveFlame 6s linear infinite,
-    cryptexEnlargeFlame 5s linear infinite;
-}
-
-.cryptex-candle .flame:before {
-  width: 100%;
-  height: 100%;
-  border-radius: 50% 50% 20% 20%;
-  box-shadow:
-    0 0 15px 0 rgba(247, 93, 0, 0.4),
-    0 -6px 4px 0 rgba(247, 128, 0, 0.7);
-}
-
-@keyframes cryptexMoveFlame {
-  0%,
-  100% {
-    transform: translateX(-50%) rotate(-2deg);
-  }
-  50% {
-    transform: translateX(-50%) rotate(2deg);
-  }
-}
-
-@keyframes cryptexEnlargeFlame {
-  0%,
-  100% {
-    height: 120px;
-  }
-  50% {
-    height: 140px;
-  }
-}
-
-.cryptex-candle .glow {
-  width: 26px;
-  height: 60px;
-  border-radius: 50% 50% 35% 35%;
-  left: 50%;
-  top: -48px;
-  transform: translateX(-50%);
-  background: rgba(0, 133, 255, 0.7);
-  box-shadow:
-    0 -40px 30px 0 #dc8a0c,
-    0 40px 50px 0 #dc8a0c,
-    inset 3px 0 2px 0 rgba(0, 133, 255, 0.6),
-    inset -3px 0 2px 0 rgba(0, 133, 255, 0.6);
-}
-
-.cryptex-candle .glow:before {
-  width: 70%;
-  height: 60%;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 0;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.35);
+  background: radial-gradient(
+    ellipse at 50% 55%,
+    rgba(255, 220, 150, 0.8),
+    rgba(255, 170, 70, 0.35) 45%,
+    rgba(255, 150, 50, 0) 72%
+  );
+  opacity: var(--candle-strength, 1);
+  transition: opacity 900ms ease 250ms;
 }
 
-/* .blinking-glow intentionally not used — the pulsing halo was removed */
+/* ── fitilul și jarul ──────────────────────────────────────────────────── */
+
+.cryptex-candle .wick {
+  left: 47px;
+  top: 84px;
+  width: 6px;
+  height: 34px;
+  z-index: 2;
+  border-radius: 45% 45% 20% 20%;
+  background: linear-gradient(#2b1b12, #140c08 30%, #0b0706 70%, #5a3a1a);
+  transform: rotate(4deg);
+  transform-origin: 50% 100%;
+}
+
+/* vârful fitilului e încins cât timp arde */
+.cryptex-candle .wick:before {
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(
+    #ffb25c,
+    rgba(255, 90, 20, 0.6) 55%,
+    transparent 75%
+  );
+  opacity: calc(var(--candle-strength, 1) * 0.9);
+  transition: opacity 500ms ease 300ms;
+}
+
+/* jarul care rămâne după stingere (animat din JS) */
+.cryptex-candle .wick-ember {
+  left: 50%;
+  top: -3px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff3c8 0%,
+    #ffab4a 30%,
+    #ff4a14 55%,
+    rgba(255, 60, 10, 0) 72%
+  );
+  box-shadow: 0 0 8px 2px rgba(255, 90, 20, 0.55);
+  opacity: 0;
+}
+
+/* ── haloul de lumină ──────────────────────────────────────────────────── */
+
+.cryptex-candle .candle-halo {
+  left: 50px;
+  top: 50px;
+  width: 0;
+  height: 0;
+  z-index: 3;
+  opacity: var(--candle-strength, 1);
+  transform: scale(calc(0.55 + 0.45 * var(--candle-strength, 1)));
+  transition:
+    opacity 800ms ease 250ms,
+    transform 800ms ease 250ms;
+}
+
+/* stratul interior e cel care "tresare" la suflu (din JS) */
+.cryptex-candle .candle-halo i {
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+.cryptex-candle .candle-halo i:before {
+  width: 260px;
+  height: 260px;
+  left: -130px;
+  top: -130px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 196, 120, 0.3) 0%,
+    rgba(255, 160, 70, 0.15) 28%,
+    rgba(255, 130, 50, 0.05) 52%,
+    rgba(255, 120, 40, 0) 70%
+  );
+  animation: cryptexHalo 2.3s linear infinite;
+}
+
+/* ── flacăra ───────────────────────────────────────────────────────────── */
+
+/* punctul de ancorare = baza flăcării, chiar deasupra fitilului.
+   Toate straturile au 0×0 px și se rotesc/scalează în jurul acestui punct. */
+.cryptex-candle .candle-light,
+.cryptex-candle .flame-ghost {
+  left: 50px;
+  top: 96px;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  transform-origin: 0 0;
+}
+
+.cryptex-candle .candle-size,
+.cryptex-candle .flame-body,
+.cryptex-candle .flame-outer,
+.cryptex-candle .flame-core {
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+
+/* lumina caldă strânsă în jurul flăcării: se apleacă odată cu ea la suflu */
+.cryptex-candle .candle-size:before {
+  width: 64px;
+  height: 118px;
+  left: -32px;
+  top: -100px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(255, 210, 140, 0.28),
+    rgba(255, 160, 70, 0.1) 45%,
+    rgba(255, 150, 60, 0) 70%
+  );
+  animation: cryptexHalo 1.7s linear infinite reverse;
+}
+
+/* mărimea flăcării după câte sufluri a primit (revine cu un mic "resort") */
+.cryptex-candle .candle-size {
+  transform: scale(calc(0.4 + 0.6 * var(--candle-strength, 1)));
+  transition: transform 900ms cubic-bezier(0.34, 1.4, 0.5, 1) 380ms;
+}
+
+.cryptex-candle.is-out .candle-size {
+  transform: scale(0);
+  transition: transform 260ms ease-in 300ms;
+}
+
+/* legănarea lentă; o flacără slăbită pâlpâie mai repede */
+.cryptex-candle .flame-body {
+  animation: cryptexSway 3.7s ease-in-out infinite;
+  animation-duration: calc(3.7s * (0.55 + 0.45 * var(--candle-strength, 1)));
+}
+
+.cryptex-candle .flame-outer {
+  animation: cryptexFlicker 1.9s linear infinite;
+}
+
+/* lacrimă cu vârful în sus: pătrat cu un colț ascuțit, rotit și întins */
+.cryptex-candle .flame-outer:before {
+  width: 30px;
+  height: 30px;
+  left: -15px;
+  bottom: 25px;
+  border-radius: 50% 0 50% 50%;
+  transform: scaleY(2.7) rotate(-45deg);
+  background: radial-gradient(
+    circle at 50% 50%,
+    #fffdf2 0%,
+    #fff1c1 26%,
+    #ffd57e 44%,
+    #ffab3d 58%,
+    #ff7c1e 68%,
+    rgba(255, 84, 14, 0.55) 82%,
+    rgba(255, 60, 0, 0) 100%
+  );
+  box-shadow:
+    0 0 14px 3px rgba(255, 140, 40, 0.45),
+    0 0 34px 10px rgba(255, 110, 30, 0.18);
+  filter: blur(1.1px);
+}
+
+.cryptex-candle .flame-core {
+  animation: cryptexCore 1.3s linear infinite;
+}
+
+.cryptex-candle .flame-core:before {
+  width: 16px;
+  height: 16px;
+  left: -8px;
+  bottom: 21px;
+  border-radius: 50% 0 50% 50%;
+  transform: scaleY(2.3) rotate(-45deg);
+  background: radial-gradient(
+    circle,
+    #ffffff 0%,
+    #fffef6 35%,
+    rgba(255, 244, 200, 0.85) 58%,
+    rgba(255, 226, 150, 0) 85%
+  );
+  filter: blur(1.2px);
+}
+
+.cryptex-candle .flame-dark {
+  left: -5px;
+  bottom: -2px;
+  width: 10px;
+  height: 24px;
+  border-radius: 50% 50% 40% 40%;
+  background: radial-gradient(
+    ellipse at 50% 75%,
+    rgba(70, 30, 10, 0.75),
+    rgba(120, 55, 15, 0.35) 45%,
+    rgba(150, 70, 20, 0) 75%
+  );
+  filter: blur(1.4px);
+}
+
+.cryptex-candle .flame-blue {
+  left: -11px;
+  bottom: -4px;
+  width: 22px;
+  height: 20px;
+  border-radius: 50% 50% 45% 45% / 55% 55% 45% 45%;
+  background: radial-gradient(
+    ellipse at 50% 80%,
+    rgba(110, 160, 255, 0) 32%,
+    rgba(80, 130, 255, 0.7) 56%,
+    rgba(60, 100, 255, 0.25) 68%,
+    rgba(50, 90, 255, 0) 78%
+  );
+  filter: blur(1px);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+/* bucata de flacără smulsă de suflul final (creată din JS) */
+.cryptex-candle .flame-ghost .flame-outer:before {
+  box-shadow: none;
+  filter: blur(1.6px);
+}
+
+/* ── fumul (fuiorii sunt creați din JS) ────────────────────────────────── */
+
+.cryptex-candle .candle-smoke {
+  left: 50px;
+  top: 86px;
+  width: 0;
+  height: 0;
+  z-index: 5;
+}
+
+.cryptex-candle .candle-smoke i {
+  left: -8px;
+  bottom: 0;
+  width: 16px;
+  height: 40px;
+  border-left: 2px solid rgba(214, 208, 196, 0.6);
+  border-radius: 50%;
+  filter: blur(1.3px);
+  opacity: 0;
+  transform-origin: 50% 100%;
+}
+
+.cryptex-candle .candle-smoke i.r {
+  border-left: 0;
+  border-right: 2px solid rgba(214, 208, 196, 0.6);
+}
+
+.cryptex-candle .candle-smoke b {
+  left: -14px;
+  bottom: 0;
+  width: 28px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(200, 196, 188, 0.22),
+    rgba(200, 196, 188, 0) 70%
+  );
+  filter: blur(4px);
+  opacity: 0;
+  transform-origin: 50% 100%;
+}
+
+/* ── pâlpâirea: ritmuri neregulate care nu se sincronizează ────────────── */
+
+@keyframes cryptexSway {
+  0% {
+    transform: rotate(-1deg) skewX(0deg) scale(1, 1);
+  }
+  13% {
+    transform: rotate(1.4deg) skewX(-2deg) scale(0.97, 1.04);
+  }
+  27% {
+    transform: rotate(-0.6deg) skewX(1.5deg) scale(1.02, 0.96);
+  }
+  41% {
+    transform: rotate(2deg) skewX(-1deg) scale(0.96, 1.07);
+  }
+  58% {
+    transform: rotate(-1.8deg) skewX(2deg) scale(1.01, 0.98);
+  }
+  74% {
+    transform: rotate(0.8deg) skewX(-1.5deg) scale(0.98, 1.05);
+  }
+  88% {
+    transform: rotate(-1.2deg) skewX(0.5deg) scale(1.02, 0.99);
+  }
+  100% {
+    transform: rotate(-1deg) skewX(0deg) scale(1, 1);
+  }
+}
+
+@keyframes cryptexFlicker {
+  0% {
+    transform: scale(1, 1);
+  }
+  9% {
+    transform: scale(0.98, 1.04);
+  }
+  17% {
+    transform: scale(1.01, 0.97);
+  }
+  23% {
+    transform: scale(0.97, 1.06);
+  }
+  38% {
+    transform: scale(1, 1.01);
+  }
+  46% {
+    transform: scale(1.02, 0.95);
+  }
+  52% {
+    transform: scale(0.98, 1.05);
+  }
+  67% {
+    transform: scale(1, 0.99);
+  }
+  79% {
+    transform: scale(0.97, 1.07);
+  }
+  86% {
+    transform: scale(1.01, 0.98);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes cryptexCore {
+  0%,
+  100% {
+    transform: scale(1, 1);
+    opacity: 0.95;
+  }
+  21% {
+    transform: scale(0.96, 1.05);
+    opacity: 1;
+  }
+  44% {
+    transform: scale(1.03, 0.96);
+    opacity: 0.88;
+  }
+  63% {
+    transform: scale(0.98, 1.03);
+    opacity: 1;
+  }
+  81% {
+    transform: scale(1.02, 0.98);
+    opacity: 0.92;
+  }
+}
+
+@keyframes cryptexHalo {
+  0%,
+  100% {
+    opacity: 0.92;
+    transform: scale(1);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  27% {
+    opacity: 0.86;
+    transform: scale(0.98);
+  }
+  41% {
+    opacity: 0.97;
+    transform: scale(1.01);
+  }
+  58% {
+    opacity: 0.84;
+    transform: scale(0.97);
+  }
+  73% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  88% {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cryptex-candle .flame-body,
+  .cryptex-candle .flame-outer,
+  .cryptex-candle .flame-core,
+  .cryptex-candle .candle-halo i:before,
+  .cryptex-candle .candle-size:before {
+    animation: none;
+  }
+}
+
+/* ── zona pe care dai click ────────────────────────────────────────────── */
+
+.cryptex-candle .candle-action {
+  inset: -40px auto 0 -15px;
+  width: 130px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  z-index: 6;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.cryptex-candle .candle-action::before,
+.cryptex-candle .candle-action::after {
+  display: none;
+}
+
+.cryptex-candle .candle-action:focus-visible {
+  outline: 1px dashed #b9ab8d;
+  outline-offset: 4px;
+}
+
+.cryptex-candle .candle-action:disabled {
+  cursor: default;
+}

@@ -1382,7 +1382,7 @@ class WiresScene extends Phaser.Scene {
 
   _drawTexts(W, H) {
     this.statusText = this.add
-      .text(W / 2, 40, "FIVE WIRES. SIX BIRDS.", {
+      .text(W / 2, 40, "The star-Spangled Banner", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
         color: "#e8dcc0",

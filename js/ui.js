@@ -46,6 +46,7 @@ window.currentLevelIndex = Math.min(
   window.GAME_LEVELS.length - 1,
 );
 window.unlockedLevelIndex = window.currentLevelIndex;
+localStorage.setItem("puzzleUnlockedLevel", window.unlockedLevelIndex);
 let completionTimer = null;
 
 function goToLevel(index) {
@@ -687,11 +688,6 @@ const levelHints = {
     text: "KNOCK TWICE.\nA prisoner counts in fives; two numbers find a letter.",
     sound: false,
     tool: true,
-  },
-  DeadLetter: {
-    text: "DEAD LETTER OFFICE.\nThe black card is a key. Start at I and turn clockwise. At each stop, read the windows from left to right, top to bottom. Keep all four impressions.",
-    sound: false,
-    tool: false,
   },
 };
 

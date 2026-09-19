@@ -4,9 +4,8 @@
 // A quiet, candle-lit wall. Mounted on it: a brass cipher wheel — a fixed
 // outer alphabet and a rotating inner disk, turning with the slow click of a
 // clock. On the desk: a sealed envelope holding a letter enciphered with a
-// Caesar shift of 3. The wax seal is pressed with three plain bars — ||| —
-// the only hint to the shift (they warm up like embers on hover; no halos,
-// nothing pulses):
+// Caesar shift of 3. Extinguishing the candle takes three clicks,
+// providing the hint to the shift.
 //
 //   "HYHUB FLSKHU PDFKLQH / JXDUGV LWV VSLQQLQJ KHDUW / WKH URWRU"
 //    →  EVERY CIPHER MACHINE GUARDS ITS SPINNING HEART — THE ROTOR
@@ -17,14 +16,20 @@
 // like winding a clock), or scroll over the wheel. Click the parchment to
 // read it. The wheel is a tool — the answer is typed into the code box.
 //
-// The candle is the CSS-art candle from Games/Cryptex/Cryptex/ (DOM overlay,
-// same pattern as the Modem/TV levels), without the blinking halo. It is the
-// ONE thing kept exactly as it was — everything else (wall, desk, wheel,
-// envelope, letter) is drawn in the game's pencil-sketch idiom, with the
-// red wax seal left as the single drop of colour beside the flame.
+// The wheel's letters are painted in luminous ink: while the candle burns
+// they can't be seen and the disk is locked. Put out the candle and the
+// letters light up one by one around the rings; only then does the disk turn.
+//
+// The candle is a CSS-art candle (DOM overlay, same pattern as the Modem/TV
+// levels). Each click is a breath: the flame bends away from the click,
+// nearly dies, and recovers smaller. The third breath tears the flame off,
+// leaves a glowing ember on the wick and a curling thread of smoke. The
+// candlelight on the wall and desk flickers with the flame and dims with it.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CRYPTEX_ALPHA = "AZYXWVUTSRQPONMLKJIHGFEDCB";
+// both rings read A→Z clockwise (left to right across the top); the cipher
+// is unchanged, so the answer is still ROTOR
+const CRYPTEX_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const CX_SKETCH = 0xd8d2c4; // the pencil itself
 const CRYPTEX_CIPHER = [
   "HYHUB FLSKHU PDFKLQH",
@@ -32,16 +37,21 @@ const CRYPTEX_CIPHER = [
   "WKH URWRU",
 ];
 
-// markup of the CSS candle (Games/Cryptex/Cryptex/Cryptex.html),
-// minus the pulsing .blinking-glow halo
+// markup of the CSS candle — the flame is built from layers, like a real one:
+// orange body, white core, dark zone around the wick and a blue base
 const CRYPTEX_CANDLE_HTML =
   '<div class="holder">' +
-  '<div class="candle">' +
-  '<div class="thread"></div>' +
-  '<div class="glow"></div>' +
-  '<div class="flame"></div>' +
-  "</div>" +
-  "</div>";
+  '<div class="candle"><div class="candle-pool"></div></div>' +
+  '<div class="wick"><div class="wick-ember"></div></div>' +
+  '<div class="candle-halo"><i></i></div>' +
+  '<div class="candle-light"><div class="candle-size"><div class="flame-body">' +
+  '<div class="flame-outer"></div>' +
+  '<div class="flame-core"></div>' +
+  '<div class="flame-dark"></div>' +
+  '<div class="flame-blue"></div>' +
+  "</div></div></div>" +
+  '<div class="candle-smoke"></div>' +
+  '<button type="button" class="candle-action" aria-label="Put out the candle"></button></div>';
 
 class CryptexScene extends Phaser.Scene {
   constructor() {
@@ -68,9 +78,13 @@ class CryptexScene extends Phaser.Scene {
     this.events.once("shutdown", () => this.shutdown());
 
     this.isSolved = false;
+    this._candleClicks = 0;
+    // the candlelight level on the wall/desk (tweened, flickered in update)
+    this._candleFx = { level: 1, gustUntil: 0 };
     this._wheelAngle = 0; // degrees; 0 = A over A
     this._overlayOpen = false;
     this._draggingWheel = false;
+    this._lettersShown = false; // the letters appear only in the dark
 
     this._build(this.cameras.main.width, this.cameras.main.height);
 
@@ -79,6 +93,10 @@ class CryptexScene extends Phaser.Scene {
       if (this._overlayOpen || !this._wheel) return;
       const { cx, cy, R } = this._wheel;
       if (Phaser.Math.Distance.Between(p.x, p.y, cx, cy) > R * 0.78) return;
+      if (!this._lettersShown) {
+        this._jiggleLockedWheel();
+        return;
+      }
       this._draggingWheel = true;
       this._lastPointerDeg = Phaser.Math.RadToDeg(
         Math.atan2(p.y - cy, p.x - cx),
@@ -107,17 +125,29 @@ class CryptexScene extends Phaser.Scene {
       if (this._overlayOpen || !this._wheel) return;
       const { cx, cy, R } = this._wheel;
       if (Phaser.Math.Distance.Between(p.x, p.y, cx, cy) > R * 1.1) return;
+      if (!this._lettersShown) {
+        this._jiggleLockedWheel();
+        return;
+      }
       this._stepWheel(dy > 0 ? 1 : -1);
     });
 
-    this.events.on("canvas_resized", ({ width, height }) => {
+    // kept as a reference so shutdown() can remove it (otherwise every
+    // restart of the level would add one more listener)
+    this._onResize = ({ width, height }) => {
       this._teardown();
       this._build(width, height);
-    });
+    };
+    this.events.on("canvas_resized", this._onResize);
 
     this.events.once("shutdown", () => this._removeCandleDom());
 
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
+  }
+
+  // the candlelight on the wall and desk trembles with the flame
+  update(time) {
+    this._tickCandleLights(time);
   }
 
   _rng(seed) {
@@ -222,7 +252,9 @@ class CryptexScene extends Phaser.Scene {
     bg.fillGradientStyle(0x0e1014, 0x101318, 0x07080b, 0x090a0d, 1);
     bg.fillRect(0, 0, W, H);
     // candlelight resting on the right half of the wall (the candle's, not ours)
-    bg.fillGradientStyle(
+    const wallLight = this.add.graphics().setDepth(-9.9);
+    this._candleWallLight = wallLight;
+    wallLight.fillGradientStyle(
       0x000000,
       0x46290e,
       0x000000,
@@ -232,7 +264,8 @@ class CryptexScene extends Phaser.Scene {
       0,
       0.08,
     );
-    bg.fillRect(W * 0.5, 0, W * 0.5, deskY);
+    wallLight.setPosition(W * 0.86, deskY * 0.6);
+    wallLight.fillRect(-W * 0.36, -deskY * 0.6, W * 0.5, deskY);
 
     const rnd = this._rng(8228);
     // wireframe room: corner verticals, ceiling hints
@@ -321,18 +354,16 @@ class CryptexScene extends Phaser.Scene {
     }
     // the candle's pool of light on the desk — unchanged, it belongs to it
     const desk = this.add.graphics().setDepth(-8);
-    const cx0 = W * 0.86;
+    this._candleDeskLight = desk;
+    desk.setPosition(W * 0.86, deskY + (H - deskY) * 0.3);
     for (let i = 4; i >= 1; i--) {
       desk.fillStyle(0xffb45e, 0.03);
-      desk.fillEllipse(
-        cx0,
-        deskY + (H - deskY) * 0.3,
-        W * 0.1 * i,
-        (H - deskY) * 0.4 * (i / 2.5),
-      );
+      desk.fillEllipse(0, 0, W * 0.1 * i, (H - deskY) * 0.4 * (i / 2.5));
     }
 
     this._buildCandleDom(W, H, deskY);
+    // instant: after a resize the light jumps straight to the right level
+    this._updateCandleLight(true);
     this._buildTexts(W, H);
     this._buildWheel(W, H);
     this._buildParchment(W, H, deskY);
@@ -388,7 +419,7 @@ class CryptexScene extends Phaser.Scene {
 
   _buildTexts(W, H) {
     this.statusText = this.add
-      .text(W / 2, 46, "An old wheel. An older message.", {
+      .text(W / 2, 46, "Put out the light!", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
         color: "#e8dcc0",
@@ -423,7 +454,7 @@ class CryptexScene extends Phaser.Scene {
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
   }
 
-  // ── the CSS-art candle, as a DOM overlay (no blinking halo) ────────────────
+  // ── the CSS-art candle, as a DOM overlay ───────────────────────────────────
 
   _buildCandleDom(W, H, deskY) {
     this._removeCandleDom();
@@ -445,6 +476,10 @@ class CryptexScene extends Phaser.Scene {
     el.style.transformOrigin = "top left";
     container.appendChild(el);
     this._candleDom = el;
+    el.querySelector(".candle-action").addEventListener("click", (event) => {
+      event.stopPropagation();
+      this._dimCandle(event);
+    });
 
     const g = this.add.graphics().setDepth(-7);
     g.fillStyle(0x000000, 0.5);
@@ -455,6 +490,409 @@ class CryptexScene extends Phaser.Scene {
     g.fillEllipse(cx, bottomY - 1, 118 * s, 17 * s);
     g.fillStyle(0x54390f, 1);
     g.fillEllipse(cx, bottomY - 3, 104 * s, 13 * s);
+  }
+
+  // one click = one breath on the candle
+  _dimCandle(event) {
+    if (this._overlayOpen || this.isSolved || this._candleClicks >= 3) return;
+    this._candleClicks++;
+    if (window.playClick) window.playClick(this);
+    this._updateCandleLight();
+    this._playCandleGust(event);
+    // once the flame and its light are gone, the luminous letters show up
+    if (this._candleClicks >= 3) {
+      this.time.delayedCall(900, () => this._revealLetters());
+    }
+  }
+
+  // flame size, button state and room light for the current number of clicks
+  _updateCandleLight(instant = false) {
+    const strength = (3 - this._candleClicks) / 3;
+    const dom = this._candleDom;
+    if (dom) {
+      dom.style.setProperty("--candle-strength", strength);
+      dom.classList.toggle("is-out", strength === 0);
+      const btn = dom.querySelector(".candle-action");
+      if (btn) btn.disabled = strength === 0;
+    }
+    this._setCandleLightLevel(strength, instant);
+  }
+
+  // The breath: the flame bends away from the click, stretches thin, nearly
+  // dies, then recovers smaller with a springy sway. The third breath tears
+  // the flame off, leaves an ember on the wick and a thread of smoke.
+  _playCandleGust(event) {
+    const dom = this._candleDom;
+    if (!dom) return;
+    const clicks = this._candleClicks;
+    const strength = (3 - clicks) / 3;
+    const out = strength === 0;
+    const reduce =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // the breath comes from the side you clicked on
+    let dir = Math.random() < 0.5 ? -1 : 1;
+    const wick = dom.querySelector(".wick");
+    if (event && typeof event.clientX === "number" && wick) {
+      const r = wick.getBoundingClientRect();
+      dir = event.clientX < r.left + r.width / 2 ? 1 : -1;
+    }
+
+    const D = out ? 1000 : 1350;
+    this._dipCandleLights(strength, out, reduce, D);
+
+    if (reduce) {
+      if (out) this._candleEmber(dom);
+      return;
+    }
+
+    // no new breath while the flame is still fighting the last one
+    const btn = dom.querySelector(".candle-action");
+    if (btn && !out) {
+      btn.disabled = true;
+      setTimeout(() => {
+        if (btn.isConnected) btn.disabled = (3 - this._candleClicks) / 3 === 0;
+      }, D * 0.7);
+    }
+
+    const k = clicks <= 1 ? 0.85 : clicks === 2 ? 1 : 1.12; // each breath stronger
+    const low = clicks <= 1 ? 0.42 : 0.28; // how small it gets mid-breath
+    const R = (deg) => `${(deg * dir * k).toFixed(1)}deg`;
+
+    const light = dom.querySelector(".candle-light");
+    const halo = dom.querySelector(".candle-halo i");
+    if (!light || !light.animate) return;
+    if (light.getAnimations) light.getAnimations().forEach((a) => a.cancel());
+
+    if (!out) {
+      light.animate(
+        [
+          {
+            offset: 0,
+            transform: "rotate(0deg) scale(1, 1)",
+            opacity: 1,
+            easing: "cubic-bezier(.2,.7,.3,1)",
+          },
+          {
+            offset: 0.07,
+            transform: `rotate(${R(40)}) scale(0.8, 1.25)`,
+            opacity: 0.95,
+          },
+          {
+            offset: 0.15,
+            transform: `rotate(${R(68)}) scale(0.55, 1.45)`,
+            opacity: 0.85,
+          },
+          {
+            offset: 0.22,
+            transform: `rotate(${R(55)}) scale(0.62, 1.12)`,
+            opacity: 0.9,
+          },
+          {
+            offset: 0.3,
+            transform: `rotate(${R(74)}) scale(${low + 0.1}, ${low + 0.3})`,
+            opacity: 0.7,
+          },
+          {
+            offset: 0.38,
+            transform: `rotate(${R(60)}) scale(${low}, ${low})`,
+            opacity: 0.55,
+          },
+          {
+            offset: 0.44,
+            transform: `rotate(${R(35)}) scale(${low * 0.9}, ${low * 1.2})`,
+            opacity: 0.6,
+          },
+          {
+            offset: 0.5,
+            transform: `rotate(${R(12)}) scale(${low + 0.05}, ${low + 0.15})`,
+            opacity: 0.65,
+            easing: "cubic-bezier(.3,0,.2,1)",
+          },
+          {
+            offset: 0.62,
+            transform: `rotate(${R(-14)}) scale(0.78, 0.9)`,
+            opacity: 0.9,
+          },
+          {
+            offset: 0.73,
+            transform: `rotate(${R(9)}) scale(0.96, 1.12)`,
+            opacity: 1,
+          },
+          { offset: 0.84, transform: `rotate(${R(-4)}) scale(1.02, 0.96)` },
+          { offset: 0.93, transform: `rotate(${R(1.5)}) scale(1, 1.02)` },
+          { offset: 1, transform: "rotate(0deg) scale(1, 1)", opacity: 1 },
+        ],
+        { duration: D },
+      );
+      if (halo)
+        halo.animate(
+          [
+            { opacity: 1 },
+            { opacity: 0.55, offset: 0.15 },
+            { opacity: 0.3, offset: 0.38 },
+            { opacity: 0.45, offset: 0.5 },
+            { opacity: 0.95, offset: 0.7 },
+            { opacity: 1 },
+          ],
+          { duration: D },
+        );
+      return;
+    }
+
+    // ── the third breath: the flame goes out ──
+    light.animate(
+      [
+        {
+          offset: 0,
+          transform: "rotate(0deg) scale(1, 1)",
+          opacity: 1,
+          easing: "cubic-bezier(.2,.7,.3,1)",
+        },
+        {
+          offset: 0.1,
+          transform: `rotate(${R(45)}) scale(0.75, 1.3)`,
+          opacity: 0.95,
+        },
+        {
+          offset: 0.2,
+          transform: `rotate(${R(75)}) scale(0.5, 1.5)`,
+          opacity: 0.8,
+        },
+        {
+          offset: 0.3,
+          transform: `rotate(${R(70)}) scale(0.35, 0.6)`,
+          opacity: 0.6,
+        },
+        {
+          offset: 0.4,
+          transform: `rotate(${R(40)}) scale(0.22, 0.28)`,
+          opacity: 0.55,
+        },
+        {
+          offset: 0.47,
+          transform: `rotate(${R(15)}) scale(0.25, 0.3)`,
+          opacity: 0.5,
+        },
+        {
+          offset: 0.58,
+          transform: `rotate(${R(5)}) scale(0.08, 0.1)`,
+          opacity: 0.2,
+        },
+        { offset: 1, transform: "rotate(0deg) scale(0, 0)", opacity: 0 },
+      ],
+      { duration: D },
+    );
+    if (halo)
+      halo.animate(
+        [
+          { opacity: 1 },
+          { opacity: 0.5, offset: 0.2 },
+          { opacity: 0.2, offset: 0.45 },
+          { opacity: 0, offset: 0.6 },
+          { opacity: 0 },
+        ],
+        { duration: D },
+      );
+
+    this._candleGhost(dom, dir);
+    setTimeout(() => this._candleEmber(dom), 430);
+    setTimeout(() => this._candleSmoke(dom, dir), 480);
+  }
+
+  // the tip of the flame, torn off by the breath, drifts away and vanishes
+  _candleGhost(dom, dir) {
+    const holder = dom.querySelector(".holder");
+    if (!holder) return;
+    const f = 0.6; // flame size before the last breath
+    const ghost = document.createElement("div");
+    ghost.className = "flame-ghost";
+    ghost.innerHTML = '<div class="flame-outer"></div>';
+    holder.appendChild(ghost);
+    const anim = ghost.animate(
+      [
+        {
+          transform: `rotate(${75 * dir}deg) scale(${0.5 * f}, ${1.5 * f})`,
+          opacity: 0,
+        },
+        {
+          transform: `rotate(${80 * dir}deg) scale(${0.5 * f}, ${1.4 * f})`,
+          opacity: 0.75,
+          offset: 0.12,
+        },
+        {
+          transform: `translate(${dir * 38}px, -46px) rotate(${95 * dir}deg) scale(${0.32 * f}, ${0.8 * f})`,
+          opacity: 0.45,
+          offset: 0.55,
+        },
+        {
+          transform: `translate(${dir * 60}px, -78px) rotate(${110 * dir}deg) scale(${0.12 * f}, ${0.3 * f})`,
+          opacity: 0,
+        },
+      ],
+      {
+        duration: 650,
+        delay: 190,
+        easing: "cubic-bezier(.25,.6,.4,1)",
+        fill: "backwards",
+      },
+    );
+    anim.onfinish = () => ghost.remove();
+  }
+
+  // the ember on the wick: flares, flickers once more, cools down
+  _candleEmber(dom) {
+    const ember = dom.querySelector(".wick-ember");
+    if (!ember || !ember.isConnected) return;
+    ember.animate(
+      [
+        { opacity: 0, transform: "scale(0.6)" },
+        { opacity: 1, transform: "scale(1.15)", offset: 0.06 },
+        { opacity: 0.8, transform: "scale(1)", offset: 0.22 },
+        { opacity: 0.95, transform: "scale(1.05)", offset: 0.3 },
+        { opacity: 0.6, transform: "scale(0.9)", offset: 0.55 },
+        { opacity: 0.25, transform: "scale(0.75)", offset: 0.8 },
+        { opacity: 0, transform: "scale(0.6)" },
+      ],
+      { duration: 3400, easing: "ease-out" },
+    );
+  }
+
+  // A thread of smoke: small overlapping wisps rising on the same wave, so
+  // together they read as one ribbon curling upward. Pushed sideways by the
+  // breath at first, then rising straight and thinning out.
+  _candleSmoke(dom, dir) {
+    const box = dom.querySelector(".candle-smoke");
+    if (!box || !box.isConnected) return;
+    const start = performance.now();
+    const LIFE = 3200;
+    const spawn = () => {
+      if (!box.isConnected) return;
+      const age = performance.now() - start;
+      if (age > LIFE) return;
+      const fresh = 1 - age / LIFE; // the smoke thins out over time
+      const phase = age * 0.0045; // shared wave → a ribbon
+      const haze = Math.random() < 0.18;
+      const w = document.createElement(haze ? "b" : "i");
+      if (!haze && Math.random() < 0.5) w.className = "r";
+      box.appendChild(w);
+
+      const drift = dir * (18 + 30 * fresh);
+      const sway = (s) => Math.sin(phase + s) * (8 + 10 * (1 - fresh));
+      const op = (0.35 + 0.35 * fresh) * (haze ? 0.8 : 1);
+      const rot = () => ((Math.random() - 0.5) * 50).toFixed(1);
+      const anim = w.animate(
+        [
+          {
+            transform: `translate(0px, 0px) rotate(${rot()}deg) scale(0.3, 0.45)`,
+            opacity: op * 0.5,
+          },
+          {
+            transform: `translate(${(drift * 0.12 + sway(0)).toFixed(1)}px, -16px) rotate(${rot()}deg) scale(0.7, 0.85)`,
+            opacity: op,
+            offset: 0.12,
+          },
+          {
+            transform: `translate(${(drift * 0.55 + sway(1.4)).toFixed(1)}px, -80px) rotate(${rot()}deg) scale(1.4, 1.3)`,
+            opacity: op * 0.6,
+            offset: 0.48,
+          },
+          {
+            transform: `translate(${(drift + sway(2.8)).toFixed(1)}px, -150px) rotate(${rot()}deg) scale(2.3, 1.8)`,
+            opacity: 0,
+          },
+        ],
+        {
+          duration: 2400 + Math.random() * 900,
+          easing: "cubic-bezier(.3,.55,.4,1)",
+        },
+      );
+      anim.onfinish = () => w.remove();
+      setTimeout(spawn, age < 700 ? 55 : 90 + 120 * (1 - fresh));
+    };
+    spawn();
+  }
+
+  // ── the candlelight on the wall and desk ──
+  // one light "level", tweened smoothly; update() adds a small flicker on top
+
+  _setCandleLightLevel(strength, instant = false) {
+    const fx = this._candleFx;
+    if (!fx) return;
+    if (instant) {
+      this.tweens.killTweensOf(fx);
+      fx.level = strength;
+      fx.gustUntil = 0;
+      return;
+    }
+    // during a breath, the breath decides how the light comes back
+    if (this.time.now < fx.gustUntil) return;
+    this.tweens.killTweensOf(fx);
+    this.tweens.add({
+      targets: fx,
+      level: strength,
+      duration: 700,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  _tickCandleLights(time) {
+    const fx = this._candleFx;
+    if (!fx) return;
+    const t = time / 1000;
+    const flick =
+      1 +
+      0.045 * Math.sin(t * 5.3) +
+      0.03 * Math.sin(t * 11.7 + 1.3) +
+      0.02 * Math.sin(t * 23.1 + 0.4);
+    const a = Math.max(0, Math.min(1, fx.level * flick));
+    const s = Math.max(0, fx.level * (1 + (flick - 1) * 0.35));
+    for (const light of [this._candleWallLight, this._candleDeskLight]) {
+      if (light) light.setAlpha(a).setScale(s);
+    }
+  }
+
+  // the light drops with the breath, trembles, then returns (or dies)
+  _dipCandleLights(target, out, reduce, D) {
+    const fx = this._candleFx;
+    if (!fx) return;
+    this.tweens.killTweensOf(fx);
+    fx.gustUntil = this.time.now + D;
+    if (reduce) {
+      this.tweens.add({ targets: fx, level: target, duration: 600 });
+      return;
+    }
+    const from = fx.level;
+    const steps = out
+      ? [
+          [from * 0.55, 90],
+          [from * 0.3, 160],
+          [from * 0.42, 110],
+          [from * 0.12, 180],
+          [0, 350],
+        ]
+      : [
+          [from * 0.55, 90],
+          [from * 0.3, 190],
+          [from * 0.4, 120],
+          [from * 0.22, 150],
+          [target * 0.9, 260],
+          [target * 1.05, 200],
+          [target, 250],
+        ];
+    const next = (i) => {
+      if (i >= steps.length || this._candleFx !== fx) return;
+      const [level, duration] = steps[i];
+      this.tweens.add({
+        targets: fx,
+        level,
+        duration,
+        ease: "Sine.easeInOut",
+        onComplete: () => next(i + 1),
+      });
+    };
+    next(0);
   }
 
   _removeCandleDom() {
@@ -500,6 +938,14 @@ class CryptexScene extends Phaser.Scene {
       );
     }
 
+    // every letter on both rings; hidden until the candle is out
+    this._letters = [];
+    const addLetter = (obj, alpha, ring, i) => {
+      this._letters.push({ obj, alpha, ring, i });
+      obj.setAlpha(this._lettersShown ? alpha : 0);
+      return obj;
+    };
+
     // outer letters — written in, fixed (a faint ghost stroke behind each)
     const outSize = Math.max(13, Math.round(R * 0.1));
     for (let i = 0; i < 26; i++) {
@@ -507,7 +953,7 @@ class CryptexScene extends Phaser.Scene {
       const a = Phaser.Math.DegToRad(aDeg);
       const lx = cx + Math.cos(a) * R * 0.885;
       const ly = cy + Math.sin(a) * R * 0.885;
-      this.add
+      const ghost = this.add
         .text(lx + 1.2, ly + 1, CRYPTEX_ALPHA[i], {
           fontFamily: '"Special Elite", monospace',
           fontSize: outSize + "px",
@@ -515,9 +961,9 @@ class CryptexScene extends Phaser.Scene {
         })
         .setOrigin(0.5)
         .setRotation(Phaser.Math.DegToRad(aDeg + 90))
-        .setAlpha(0.3)
         .setDepth(4);
-      this.add
+      addLetter(ghost, 0.3, "outer", i);
+      const face = this.add
         .text(lx, ly, CRYPTEX_ALPHA[i], {
           fontFamily: '"Special Elite", monospace',
           fontSize: outSize + "px",
@@ -525,7 +971,9 @@ class CryptexScene extends Phaser.Scene {
         })
         .setOrigin(0.5)
         .setRotation(Phaser.Math.DegToRad(aDeg + 90))
+        .setShadow(0, 0, "rgba(240, 226, 186, 0.55)", 6, false, true)
         .setDepth(4);
+      addLetter(face, 1, "outer", i);
     }
 
     // fixed reference pointer at 12 o'clock — a pencilled arrowhead
@@ -631,8 +1079,8 @@ class CryptexScene extends Phaser.Scene {
           color: "#8f8974",
         })
         .setOrigin(0.5)
-        .setRotation(Phaser.Math.DegToRad(aDeg + 90))
-        .setAlpha(0.3);
+        .setRotation(Phaser.Math.DegToRad(aDeg + 90));
+      addLetter(ghost, 0.3, "inner", i);
       const face = this.add
         .text(lx, ly, CRYPTEX_ALPHA[i], {
           fontFamily: '"Special Elite", monospace',
@@ -640,13 +1088,62 @@ class CryptexScene extends Phaser.Scene {
           color: "#c9bfa4",
         })
         .setOrigin(0.5)
-        .setRotation(Phaser.Math.DegToRad(aDeg + 90));
+        .setRotation(Phaser.Math.DegToRad(aDeg + 90))
+        .setShadow(0, 0, "rgba(220, 208, 170, 0.5)", 5, false, true);
+      addLetter(face, 1, "inner", i);
       this._disk.add(ghost);
       this._disk.add(face);
     }
 
     this._disk.setAngle(this._wheelAngle);
     this._lastTick = Math.round(this._wheelAngle / this._step);
+  }
+
+  // the luminous letters light up one by one, clockwise from the top:
+  // first the outer ring, then the inner disk
+  _revealLetters() {
+    if (this._lettersShown) return;
+    this._lettersShown = true;
+    for (const L of this._letters || []) {
+      const delay = (L.ring === "outer" ? 0 : 520) + L.i * 38;
+      L.obj.setScale(1.45).setAlpha(0);
+      this.tweens.add({
+        targets: L.obj,
+        alpha: L.alpha,
+        scale: 1,
+        delay,
+        duration: 460,
+        ease: "Back.easeOut",
+      });
+    }
+  }
+
+  // while the candle burns the disk is locked: it only trembles a little,
+  // and the instruction pulses to point at the candle
+  _jiggleLockedWheel() {
+    if (!this._disk || this._jiggling) return;
+    this._jiggling = true;
+    this.tweens.add({
+      targets: this._disk,
+      angle: this._wheelAngle + 2.5,
+      duration: 55,
+      yoyo: true,
+      repeat: 2,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        if (this._disk) this._disk.setAngle(this._wheelAngle);
+        this._jiggling = false;
+      },
+    });
+    if (this.statusText) {
+      this.tweens.add({
+        targets: this.statusText,
+        scale: 1.1,
+        duration: 130,
+        yoyo: true,
+        ease: "Sine.easeOut",
+      });
+    }
   }
 
   _setWheelAngle(deg) {
@@ -778,7 +1275,7 @@ class CryptexScene extends Phaser.Scene {
     );
     p.add(g);
 
-    // ── the wax seal on the flap tip, pressed with the numeral III ──
+    // ── the wax seal on the flap tip, without a shift marking ──
     const sr = ph * 0.27;
     const sx = 0,
       sy = tipY;
@@ -801,43 +1298,12 @@ class CryptexScene extends Phaser.Scene {
     blob.fillEllipse(sx - sr * 0.3, sy - sr * 0.46, sr * 0.52, sr * 0.2);
     p.add(blob);
 
-    // the shift mark: three plain bars — ||| — pressed into the wax
-    const barH = sr * 0.66;
-    const barW = Math.max(2, sr * 0.13);
-    const barGap = sr * 0.3;
-    const barsG = this.add.graphics();
-    for (let i = -1; i <= 1; i++) {
-      const bx = sx + i * barGap;
-      barsG.lineStyle(barW, 0x2e0602, 1);
-      barsG.lineBetween(bx, sy - barH / 2, bx, sy + barH / 2);
-    }
-    p.add(barsG);
-
-    // on hover the bars heat up like embers — steady color, no halo, no pulse
-    // (additive blend makes them truly incandescent, confined to the bars)
-    const emberG = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-    for (let i = -1; i <= 1; i++) {
-      const bx = sx + i * barGap;
-      emberG.lineStyle(barW, 0xff4d14, 1);
-      emberG.lineBetween(bx, sy - barH / 2, bx, sy + barH / 2);
-      emberG.lineStyle(Math.max(1.4, barW * 0.55), 0xffb347, 1);
-      emberG.lineBetween(bx, sy - barH / 2 + 1.2, bx, sy + barH / 2 - 1.2);
-      // white-hot center of the ember
-      emberG.lineStyle(Math.max(1, barW * 0.28), 0xffe9c2, 1);
-      emberG.lineBetween(bx, sy - barH / 2 + 2.2, bx, sy + barH / 2 - 2.2);
-    }
-    emberG.setAlpha(0);
-    p.add(emberG);
-    this._sealGlow = [emberG];
-
     p.setSize(pw * 1.05, ph * 1.1);
     p.setInteractive({ cursor: "pointer" });
     p.on("pointerdown", (ptr) => {
       if (ptr.event) ptr.event.stopPropagation();
       this._openOverlay();
     });
-    p.on("pointerover", () => this._sealGlowOn());
-    p.on("pointerout", () => this._sealGlowOff());
     this._parchment = p;
 
     // ── reading overlay ──
@@ -913,7 +1379,7 @@ class CryptexScene extends Phaser.Scene {
       .setOrigin(0.5);
     ov.add(cipherText);
 
-    // the shift hint lives in the wax: the same seal, pressed with III
+    // the same unmarked wax seal
     const sgx = ox + bw - 64;
     const sgy = oy + bhh - 60;
     const sg = this.add.graphics();
@@ -930,12 +1396,6 @@ class CryptexScene extends Phaser.Scene {
     sg.strokeCircle(sgx, sgy + 1, 14);
     sg.fillStyle(0xffffff, 0.14);
     sg.fillEllipse(sgx - 7, sgy - 9, 11, 4);
-    // the same three pressed bars — |||
-    for (let i = -1; i <= 1; i++) {
-      const bx = sgx + i * 6;
-      sg.lineStyle(2.6, 0x2e0602, 1);
-      sg.lineBetween(bx, sgy - 7, bx, sgy + 7);
-    }
     ov.add(sg);
 
     const closeHint = this.add
@@ -951,35 +1411,10 @@ class CryptexScene extends Phaser.Scene {
     this._overlay = ov;
   }
 
-  // ember tint on the seal's bars while the cursor rests on the envelope —
-  // a slow, steady warm-up, nothing pulses
-  _sealGlowOn() {
-    if (!this._sealGlow || this._overlayOpen) return;
-    if (this._sealTween) this._sealTween.stop();
-    this._sealTween = this.tweens.add({
-      targets: this._sealGlow,
-      alpha: 1,
-      duration: 900,
-      ease: "Sine.easeInOut",
-    });
-  }
-
-  _sealGlowOff() {
-    if (!this._sealGlow) return;
-    if (this._sealTween) this._sealTween.stop();
-    this._sealTween = this.tweens.add({
-      targets: this._sealGlow,
-      alpha: 0,
-      duration: 700,
-      ease: "Sine.easeInOut",
-    });
-  }
-
   _openOverlay() {
     if (this._overlayOpen) return;
     this._overlayOpen = true;
     this._draggingWheel = false;
-    this._sealGlowOff();
     if (window.playClick) window.playClick(this);
     this._overlay.setVisible(true).setAlpha(0);
     this.tweens.add({ targets: this._overlay, alpha: 1, duration: 220 });
@@ -1006,10 +1441,12 @@ class CryptexScene extends Phaser.Scene {
     this._removeCandleDom();
     this._overlay = null;
     this._parchment = null;
-    this._sealGlow = null;
-    this._sealTween = null;
+    this._candleWallLight = null;
+    this._candleDeskLight = null;
     this._wheel = null;
     this._disk = null;
+    this._letters = [];
+    this._jiggling = false;
     this._overlayOpen = false;
     this._draggingWheel = false;
   }
@@ -1053,8 +1490,11 @@ class CryptexScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this._onResize) this.events.off("canvas_resized", this._onResize);
+    this._onResize = null;
     this._removeCandleDom();
     this.tweens.killAll();
     this.time.removeAllEvents();
+    this._candleFx = null;
   }
 }

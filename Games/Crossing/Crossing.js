@@ -33,15 +33,42 @@ const CR_PERSP = 0.9; // foreshortening: how hard the far stripes compress
 
 // Code 39 — each glyph is 9 elements (bar,space,bar,…,bar), 3 of them wide
 const CR_CODE39 = {
-  A: "wnnnnwnnw", B: "nnwnnwnnw", C: "wnwnnwnnn", D: "nnnnwwnnw",
-  E: "wnnnwwnnn", F: "nnwnwwnnn", G: "nnnnnwwnw", H: "wnnnnwwnn",
-  I: "nnwnnwwnn", J: "nnnnwwwnn", K: "wnnnnnnww", L: "nnwnnnnww",
-  M: "wnwnnnnwn", N: "nnnnwnnww", O: "wnnnwnnwn", P: "nnwnwnnwn",
-  Q: "nnnnnnwww", R: "wnnnnnwwn", S: "nnwnnnwwn", T: "nnnnwnwwn",
-  U: "wwnnnnnnw", V: "nwwnnnnnw", W: "wwwnnnnnn", X: "nwnnwnnnw",
-  Y: "wwnnwnnnn", Z: "nwwnwnnnn", "0": "nnnwwnwnn", "1": "wnnwnnnnw",
-  "2": "nnwwnnnnw", "3": "wnwwnnnnn", "4": "nnnwwnnnw", "5": "wnnwwnnnn",
-  "6": "nnwwwnnnn", "7": "nnnwnnwnw", "8": "wnnwnnwnn", "9": "nnwwnnwnn",
+  A: "wnnnnwnnw",
+  B: "nnwnnwnnw",
+  C: "wnwnnwnnn",
+  D: "nnnnwwnnw",
+  E: "wnnnwwnnn",
+  F: "nnwnwwnnn",
+  G: "nnnnnwwnw",
+  H: "wnnnnwwnn",
+  I: "nnwnnwwnn",
+  J: "nnnnwwwnn",
+  K: "wnnnnnnww",
+  L: "nnwnnnnww",
+  M: "wnwnnnnwn",
+  N: "nnnnwnnww",
+  O: "wnnnwnnwn",
+  P: "nnwnwnnwn",
+  Q: "nnnnnnwww",
+  R: "wnnnnnwwn",
+  S: "nnwnnnwwn",
+  T: "nnnnwnwwn",
+  U: "wwnnnnnnw",
+  V: "nwwnnnnnw",
+  W: "wwwnnnnnn",
+  X: "nwnnwnnnw",
+  Y: "wwnnwnnnn",
+  Z: "nwwnwnnnn",
+  0: "nnnwwnwnn",
+  1: "wnnwnnnnw",
+  2: "nnwwnnnnw",
+  3: "wnwwnnnnn",
+  4: "nnnwwnnnw",
+  5: "wnnwwnnnn",
+  6: "nnwwwnnnn",
+  7: "nnnwnnwnw",
+  8: "wnnwnnwnn",
+  9: "nnwwnnwnn",
   "*": "nwnnwnwnn",
 };
 
@@ -110,7 +137,13 @@ class CrossingScene extends Phaser.Scene {
   }
 
   _pencilSeg(g, rnd, x1, y1, x2, y2, width, color, alpha, mag = 2) {
-    this._drawPath(g, this._sketchSeg(rnd, x1, y1, x2, y2, mag), width, color, alpha);
+    this._drawPath(
+      g,
+      this._sketchSeg(rnd, x1, y1, x2, y2, mag),
+      width,
+      color,
+      alpha,
+    );
     this._drawPath(
       g,
       this._sketchSeg(rnd, x1 + 1.2, y1 + 1, x2 + 1.2, y2 + 1, mag),
@@ -123,8 +156,30 @@ class CrossingScene extends Phaser.Scene {
   _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
     const o = 4;
     this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w, y - o, x + w, y + h + o, width, color, alpha, mag);
-    this._pencilSeg(g, rnd, x + w + o, y + h, x - o, y + h, width, color, alpha, mag);
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w,
+      y - o,
+      x + w,
+      y + h + o,
+      width,
+      color,
+      alpha,
+      mag,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x + w + o,
+      y + h,
+      x - o,
+      y + h,
+      width,
+      color,
+      alpha,
+      mag,
+    );
     this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
   }
 
@@ -212,8 +267,30 @@ class CrossingScene extends Phaser.Scene {
     for (const cy of [H * 0.09, H * 0.2]) {
       const cx = W * (0.3 + rndC() * 0.35);
       const cw = W * (0.1 + rndC() * 0.12);
-      this._pencilSeg(cg, rndC, cx, cy, cx + cw, cy + (rndC() - 0.5) * 6, 1.2, CR_SKETCH, 0.08, 2);
-      this._pencilSeg(cg, rndC, cx + cw * 0.2, cy + 6, cx + cw * 0.85, cy + 5, 1, CR_SKETCH, 0.05, 2);
+      this._pencilSeg(
+        cg,
+        rndC,
+        cx,
+        cy,
+        cx + cw,
+        cy + (rndC() - 0.5) * 6,
+        1.2,
+        CR_SKETCH,
+        0.08,
+        2,
+      );
+      this._pencilSeg(
+        cg,
+        rndC,
+        cx + cw * 0.2,
+        cy + 6,
+        cx + cw * 0.85,
+        cy + 5,
+        1,
+        CR_SKETCH,
+        0.05,
+        2,
+      );
     }
   }
 
@@ -231,16 +308,49 @@ class CrossingScene extends Phaser.Scene {
     g.fillStyle(0xe8e2d2, 0.12);
     g.fillCircle(mx, my, r);
     this._pencilCircle(g, rnd, mx, my, r, 1.4, CR_SKETCH, 0.5);
-    this._pencilCircle(g, rnd, mx - r * 0.3, my - r * 0.25, r * 0.22, 1, CR_SKETCH, 0.3);
-    this._pencilCircle(g, rnd, mx + r * 0.35, my + r * 0.2, r * 0.16, 1, CR_SKETCH, 0.25);
-    this._pencilCircle(g, rnd, mx - r * 0.05, my + r * 0.42, r * 0.12, 1, CR_SKETCH, 0.22);
+    this._pencilCircle(
+      g,
+      rnd,
+      mx - r * 0.3,
+      my - r * 0.25,
+      r * 0.22,
+      1,
+      CR_SKETCH,
+      0.3,
+    );
+    this._pencilCircle(
+      g,
+      rnd,
+      mx + r * 0.35,
+      my + r * 0.2,
+      r * 0.16,
+      1,
+      CR_SKETCH,
+      0.25,
+    );
+    this._pencilCircle(
+      g,
+      rnd,
+      mx - r * 0.05,
+      my + r * 0.42,
+      r * 0.12,
+      1,
+      CR_SKETCH,
+      0.22,
+    );
     for (let i = 0; i < 4; i++) {
       const a = Math.PI * (0.75 + i * 0.1);
       this._pencilSeg(
-        g, rnd,
-        mx + Math.cos(a) * r * 0.55, my + Math.sin(a) * r * 0.55,
-        mx + Math.cos(a) * r * 0.92, my + Math.sin(a) * r * 0.92,
-        1, CR_SKETCH, 0.12, 0.8,
+        g,
+        rnd,
+        mx + Math.cos(a) * r * 0.55,
+        my + Math.sin(a) * r * 0.55,
+        mx + Math.cos(a) * r * 0.92,
+        my + Math.sin(a) * r * 0.92,
+        1,
+        CR_SKETCH,
+        0.12,
+        0.8,
       );
     }
   }
@@ -270,8 +380,13 @@ class CrossingScene extends Phaser.Scene {
       const wy = base - H * (0.04 + rnd() * 0.11);
       const dot = this.add.rectangle(wx, wy, 3, 4, CR_WARM, 0.5).setDepth(-12);
       this.tweens.add({
-        targets: dot, alpha: 0.2, duration: 2000 + rnd() * 2000,
-        delay: rnd() * 1500, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+        targets: dot,
+        alpha: 0.2,
+        duration: 2000 + rnd() * 2000,
+        delay: rnd() * 1500,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
       });
     }
   }
@@ -280,8 +395,26 @@ class CrossingScene extends Phaser.Scene {
   _drawBuilding(W, H, side) {
     const left = side === "left";
     const o = left
-      ? { x0: -0.02, x1: 0.3, top: 0.07, seed: 11, lit: 0.24, cols: 4, chimney: true, fireEscape: true }
-      : { x0: 0.7, x1: 1.02, top: 0.11, seed: 77, lit: 0.24, cols: 4, cornice: true, cafe: true };
+      ? {
+          x0: -0.02,
+          x1: 0.3,
+          top: 0.07,
+          seed: 11,
+          lit: 0.24,
+          cols: 4,
+          chimney: true,
+          fireEscape: true,
+        }
+      : {
+          x0: 0.7,
+          x1: 1.02,
+          top: 0.11,
+          seed: 77,
+          lit: 0.24,
+          cols: 4,
+          cornice: true,
+          cafe: true,
+        };
 
     const g = this.add.graphics().setDepth(-8);
     const rnd = this._rng(o.seed * 977 + 5);
@@ -300,14 +433,47 @@ class CrossingScene extends Phaser.Scene {
 
     // roofline
     if (o.cornice) {
-      this._pencilSeg(g, rnd, bx - 8, by, bx + bw + 8, by, 1.6, CR_SKETCH, 0.55, 1.6);
-      this._pencilSeg(g, rnd, bx - 5, by + 6, bx + bw + 5, by + 6, 1.1, CR_SKETCH, 0.3, 1.4);
+      this._pencilSeg(
+        g,
+        rnd,
+        bx - 8,
+        by,
+        bx + bw + 8,
+        by,
+        1.6,
+        CR_SKETCH,
+        0.55,
+        1.6,
+      );
+      this._pencilSeg(
+        g,
+        rnd,
+        bx - 5,
+        by + 6,
+        bx + bw + 5,
+        by + 6,
+        1.1,
+        CR_SKETCH,
+        0.3,
+        1.4,
+      );
       for (let x = bx + 8; x < bx + bw - 6; x += 14) {
         g.lineStyle(1, CR_SKETCH, 0.2);
         g.lineBetween(x, by + 6, x, by + 10);
       }
     } else {
-      this._pencilSeg(g, rnd, bx - 6, by, bx + bw + 6, by, 1.5, CR_SKETCH, 0.5, 1.6);
+      this._pencilSeg(
+        g,
+        rnd,
+        bx - 6,
+        by,
+        bx + bw + 6,
+        by,
+        1.5,
+        CR_SKETCH,
+        0.5,
+        1.6,
+      );
     }
 
     // rooftop props
@@ -331,8 +497,30 @@ class CrossingScene extends Phaser.Scene {
       g.fillStyle(0x101216, 1);
       g.fillRect(tx, ty, tw, th);
       this._pencilRect(g, rnd, tx, ty, tw, th, 1.2, CR_SKETCH, 0.45, 1);
-      this._pencilSeg(g, rnd, tx - 2, ty, tx + tw / 2, ty - 8, 1.1, CR_SKETCH, 0.4, 0.8);
-      this._pencilSeg(g, rnd, tx + tw / 2, ty - 8, tx + tw + 2, ty, 1.1, CR_SKETCH, 0.4, 0.8);
+      this._pencilSeg(
+        g,
+        rnd,
+        tx - 2,
+        ty,
+        tx + tw / 2,
+        ty - 8,
+        1.1,
+        CR_SKETCH,
+        0.4,
+        0.8,
+      );
+      this._pencilSeg(
+        g,
+        rnd,
+        tx + tw / 2,
+        ty - 8,
+        tx + tw + 2,
+        ty,
+        1.1,
+        CR_SKETCH,
+        0.4,
+        0.8,
+      );
     }
 
     // ground floor: café (right) or a doorway with a lamp (left)
@@ -342,7 +530,18 @@ class CrossingScene extends Phaser.Scene {
     } else {
       const doorW = bw * 0.12;
       const doorX = bx + bw * 0.72;
-      this._pencilRect(g, rnd, doorX, base - groundH * 0.85, doorW, groundH * 0.85, 1.3, CR_SKETCH, 0.4, 1);
+      this._pencilRect(
+        g,
+        rnd,
+        doorX,
+        base - groundH * 0.85,
+        doorW,
+        groundH * 0.85,
+        1.3,
+        CR_SKETCH,
+        0.4,
+        1,
+      );
       const lx = doorX + doorW / 2;
       const ly = base - groundH * 0.85 - 8;
       this.add.circle(lx, ly, 12, CR_WARM, 0.06).setDepth(-7);
@@ -366,8 +565,12 @@ class CrossingScene extends Phaser.Scene {
         const cy = rowY + winH / 2;
         if (cx < -winW || cx > W + winW) continue;
         if (litRng() < o.lit) {
-          const glow = this.add.circle(cx, cy, winW * 1.3, CR_WARM, 0.05).setDepth(-7);
-          const pane = this.add.rectangle(cx, cy, winW, winH, CR_WARM, 0.75).setDepth(-6);
+          const glow = this.add
+            .circle(cx, cy, winW * 1.3, CR_WARM, 0.05)
+            .setDepth(-7);
+          const pane = this.add
+            .rectangle(cx, cy, winW, winH, CR_WARM, 0.75)
+            .setDepth(-6);
           pane.setAlpha(0.6 + litRng() * 0.2);
           this.tweens.add({
             targets: [pane, glow],
@@ -379,7 +582,9 @@ class CrossingScene extends Phaser.Scene {
             ease: "Sine.easeInOut",
           });
         } else {
-          const pane = this.add.rectangle(cx, cy, winW, winH, 0x14171d, 0).setDepth(-6);
+          const pane = this.add
+            .rectangle(cx, cy, winW, winH, 0x14171d, 0)
+            .setDepth(-6);
           pane.setStrokeStyle(1, CR_SKETCH, 0.13);
           if (litRng() < 0.5) {
             const mg = this.add.graphics().setDepth(-6);
@@ -424,17 +629,37 @@ class CrossingScene extends Phaser.Scene {
     const winW = bw * 0.42;
     const winY = top + groundH * 0.24;
     const winH = groundH * 0.6;
-    this.add.rectangle(winX + winW / 2, winY + winH / 2, winW, winH, CR_WARM, 0.35).setDepth(-7);
-    this.add.circle(winX + winW / 2, winY + winH / 2, winW * 0.6, CR_WARM, 0.05).setDepth(-7);
+    this.add
+      .rectangle(winX + winW / 2, winY + winH / 2, winW, winH, CR_WARM, 0.35)
+      .setDepth(-7);
+    this.add
+      .circle(winX + winW / 2, winY + winH / 2, winW * 0.6, CR_WARM, 0.05)
+      .setDepth(-7);
     this._pencilRect(g, rnd, winX, winY, winW, winH, 1.3, CR_SKETCH, 0.5, 1);
     g.lineStyle(1, CR_SKETCH, 0.3);
     g.lineBetween(winX + winW / 3, winY, winX + winW / 3, winY + winH);
-    g.lineBetween(winX + (2 * winW) / 3, winY, winX + (2 * winW) / 3, winY + winH);
+    g.lineBetween(
+      winX + (2 * winW) / 3,
+      winY,
+      winX + (2 * winW) / 3,
+      winY + winH,
+    );
 
     // the door beside it
     const doorX = bx + bw * 0.58;
     const doorW = bw * 0.14;
-    this._pencilRect(g, rnd, doorX, winY, doorW, winH + groundH * 0.14, 1.3, CR_SKETCH, 0.45, 1);
+    this._pencilRect(
+      g,
+      rnd,
+      doorX,
+      winY,
+      doorW,
+      winH + groundH * 0.14,
+      1.3,
+      CR_SKETCH,
+      0.45,
+      1,
+    );
 
     // scalloped awning over the shopfront
     const awnY = top + groundH * 0.16;
@@ -443,7 +668,18 @@ class CrossingScene extends Phaser.Scene {
     g.fillStyle(0x1a1d24, 1);
     g.fillTriangle(awnX0, awnY, awnX1, awnY, awnX1, awnY - 11);
     g.fillTriangle(awnX0, awnY, awnX1, awnY - 11, awnX0, awnY - 11);
-    this._pencilSeg(g, rnd, awnX0 - 2, awnY - 11, awnX1 + 2, awnY - 11, 1.3, CR_SKETCH, 0.5, 1.2);
+    this._pencilSeg(
+      g,
+      rnd,
+      awnX0 - 2,
+      awnY - 11,
+      awnX1 + 2,
+      awnY - 11,
+      1.3,
+      CR_SKETCH,
+      0.5,
+      1.2,
+    );
     const scallops = 6;
     const sw = (awnX1 - awnX0) / scallops;
     for (let i = 0; i < scallops; i++) {
@@ -464,12 +700,12 @@ class CrossingScene extends Phaser.Scene {
     sg.lineStyle(1.2, CR_SKETCH, 0.5);
     sg.lineBetween(0, 0, 0, 9);
     sg.fillStyle(0x1a1d24, 1);
-    sg.fillRect(-14, 9, 28, 15);
+    sg.fillRect(-27, 9, 54, 15);
     sg.lineStyle(1.2, CR_SKETCH, 0.55);
-    sg.strokeRect(-14, 9, 28, 15);
+    sg.strokeRect(-27, 9, 54, 15);
     sign.add(sg);
     const txt = this.add
-      .text(0, 16.5, "CAFE", {
+      .text(0, 16.5, "CAT FOOD", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "9px",
         color: "#c9bfa4",
@@ -477,7 +713,12 @@ class CrossingScene extends Phaser.Scene {
       .setOrigin(0.5);
     sign.add(txt);
     this.tweens.add({
-      targets: sign, angle: 3, duration: 2200, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+      targets: sign,
+      angle: 3,
+      duration: 2200,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
     });
 
     // lamplight spilling onto the far sidewalk
@@ -489,7 +730,9 @@ class CrossingScene extends Phaser.Scene {
   _makeSmoke(x, y) {
     const rnd = this._rng(Math.round(x));
     for (let i = 0; i < 3; i++) {
-      const puff = this.add.circle(x, y, 3 + rnd() * 2, CR_SKETCH, 0.1).setDepth(-9);
+      const puff = this.add
+        .circle(x, y, 3 + rnd() * 2, CR_SKETCH, 0.1)
+        .setDepth(-9);
       const drift = (rnd() - 0.3) * 24;
       const dur = 5200 + rnd() * 2400;
       this.tweens.add({
@@ -546,7 +789,8 @@ class CrossingScene extends Phaser.Scene {
     this._pencilCircle(g, rnd, mhX, mhY, 15, 1.2, CR_SKETCH, 0.3, 14, 1);
     this._pencilCircle(g, rnd, mhX, mhY, 10, 1, CR_SKETCH, 0.2, 12, 0.8);
     g.lineStyle(1, CR_SKETCH, 0.15);
-    for (let i = -1; i <= 1; i++) g.lineBetween(mhX - 7, mhY + i * 5, mhX + 7, mhY + i * 5);
+    for (let i = -1; i <= 1; i++)
+      g.lineBetween(mhX - 7, mhY + i * 5, mhX + 7, mhY + i * 5);
   }
 
   // the crossing: runs from our feet to the far curb, wide → narrow,
@@ -590,12 +834,14 @@ class CrossingScene extends Phaser.Scene {
       // a worn scuff across the rung
       g.fillStyle(0x000000, 0.05);
       const sy = (y0 + y1) / 2;
-      g.fillRect(cx - hw0 * 0.4 + rnd() * hw0 * 0.5, Math.min(y0, y1), hw0 * 0.3, Math.abs(y1 - y0) * 0.5);
+      g.fillRect(
+        cx - hw0 * 0.4 + rnd() * hw0 * 0.5,
+        Math.min(y0, y1),
+        hw0 * 0.3,
+        Math.abs(y1 - y0) * 0.5,
+      );
     }
 
-    // faint pencil edges tracing the crossing's sides
-    this._pencilSeg(g, rnd, cx - halfBot, yBot - 2, cx - halfTop, yTop, 1.1, CR_SKETCH, 0.14, 1.4);
-    this._pencilSeg(g, rnd, cx + halfBot, yBot - 2, cx + halfTop, yTop, 1.1, CR_SKETCH, 0.14, 1.4);
   }
 
   _drawStreetlamp(px, dir) {
@@ -606,8 +852,30 @@ class CrossingScene extends Phaser.Scene {
     const top = H * 0.24;
 
     this._pencilSeg(g, rnd, px, base, px, top + 14, 1.8, CR_SKETCH, 0.45, 1.2);
-    this._pencilSeg(g, rnd, px, top + 14, px + 10 * dir, top + 4, 1.5, CR_SKETCH, 0.45, 0.8);
-    this._pencilSeg(g, rnd, px + 10 * dir, top + 4, px + 22 * dir, top, 1.5, CR_SKETCH, 0.45, 0.8);
+    this._pencilSeg(
+      g,
+      rnd,
+      px,
+      top + 14,
+      px + 10 * dir,
+      top + 4,
+      1.5,
+      CR_SKETCH,
+      0.45,
+      0.8,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      px + 10 * dir,
+      top + 4,
+      px + 22 * dir,
+      top,
+      1.5,
+      CR_SKETCH,
+      0.45,
+      0.8,
+    );
 
     const lx = px + 24 * dir;
     const ly = top + 2;
@@ -617,14 +885,36 @@ class CrossingScene extends Phaser.Scene {
     g.fillCircle(lx, ly, 13);
     g.fillStyle(CR_WARM, 0.85);
     g.fillCircle(lx, ly, 4.5);
-    this._pencilSeg(g, rnd, lx - 7, ly - 5, lx + 7, ly - 5, 1.3, CR_SKETCH, 0.5, 0.6);
+    this._pencilSeg(
+      g,
+      rnd,
+      lx - 7,
+      ly - 5,
+      lx + 7,
+      ly - 5,
+      1.3,
+      CR_SKETCH,
+      0.5,
+      0.6,
+    );
 
     g.fillStyle(CR_WARM, 0.028);
     g.fillTriangle(lx, ly, lx - 34, base + 12, lx + 34, base + 12);
     g.fillStyle(CR_WARM, 0.05);
     g.fillEllipse(lx, base + 10, 74, 14);
 
-    this._pencilSeg(g, rnd, px - 5, base, px + 5, base, 1.5, CR_SKETCH, 0.4, 0.6);
+    this._pencilSeg(
+      g,
+      rnd,
+      px - 5,
+      base,
+      px + 5,
+      base,
+      1.5,
+      CR_SKETCH,
+      0.4,
+      0.6,
+    );
   }
 
   _drawTrafficLight(px) {
@@ -635,7 +925,18 @@ class CrossingScene extends Phaser.Scene {
     const top = H * 0.33;
 
     this._pencilSeg(g, rnd, px, base, px, top, 1.5, CR_SKETCH, 0.42, 1);
-    this._pencilSeg(g, rnd, px - 4, base, px + 4, base, 1.4, CR_SKETCH, 0.4, 0.5);
+    this._pencilSeg(
+      g,
+      rnd,
+      px - 4,
+      base,
+      px + 4,
+      base,
+      1.4,
+      CR_SKETCH,
+      0.4,
+      0.5,
+    );
 
     const hw = 22;
     const hh = 56;
@@ -648,7 +949,18 @@ class CrossingScene extends Phaser.Scene {
     for (let i = 0; i < 3; i++) {
       const cyL = hy + 11 + i * 17;
       const live = i === 2;
-      this._pencilSeg(g, rnd, hx + 2, cyL - 7, hx + hw - 2, cyL - 7, 1, CR_SKETCH, 0.25, 0.5);
+      this._pencilSeg(
+        g,
+        rnd,
+        hx + 2,
+        cyL - 7,
+        hx + hw - 2,
+        cyL - 7,
+        1,
+        CR_SKETCH,
+        0.25,
+        0.5,
+      );
       if (live) {
         g.fillStyle(lamps[i], 0.16);
         g.fillCircle(px, cyL, 12);
@@ -667,7 +979,18 @@ class CrossingScene extends Phaser.Scene {
     const top = H * 0.37;
 
     this._pencilSeg(g, rnd, px, base, px, top, 1.5, CR_SKETCH, 0.42, 1);
-    this._pencilSeg(g, rnd, px - 4, base, px + 4, base, 1.4, CR_SKETCH, 0.4, 0.5);
+    this._pencilSeg(
+      g,
+      rnd,
+      px - 4,
+      base,
+      px + 4,
+      base,
+      1.4,
+      CR_SKETCH,
+      0.4,
+      0.5,
+    );
 
     const bw = 30;
     const bh = 36;
@@ -691,7 +1014,12 @@ class CrossingScene extends Phaser.Scene {
     wg.lineBetween(fx, fy - 4, fx - 5, fy - 1);
     wg.lineBetween(fx, fy - 4, fx + 6, fy - 7);
     this.tweens.add({
-      targets: wg, alpha: 0.5, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+      targets: wg,
+      alpha: 0.5,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
     });
   }
 
@@ -706,16 +1034,55 @@ class CrossingScene extends Phaser.Scene {
 
     g.fillStyle(0x101216, 1);
     g.fillRoundedRect(x0, y0, cw, ch, ch * 0.35);
-    g.fillRoundedRect(x0 + cw * 0.22, y0 - ch * 0.5, cw * 0.5, ch * 0.6, ch * 0.25);
-    this._pencilSeg(g, rnd, x0 + 2, y0, x0 + cw - 2, y0, 1.2, CR_SKETCH, 0.4, 1);
-    this._pencilSeg(g, rnd, x0 + cw * 0.22, y0 - ch * 0.5 + 2, x0 + cw * 0.72, y0 - ch * 0.5 + 2, 1.1, CR_SKETCH, 0.4, 0.8);
+    g.fillRoundedRect(
+      x0 + cw * 0.22,
+      y0 - ch * 0.5,
+      cw * 0.5,
+      ch * 0.6,
+      ch * 0.25,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x0 + 2,
+      y0,
+      x0 + cw - 2,
+      y0,
+      1.2,
+      CR_SKETCH,
+      0.4,
+      1,
+    );
+    this._pencilSeg(
+      g,
+      rnd,
+      x0 + cw * 0.22,
+      y0 - ch * 0.5 + 2,
+      x0 + cw * 0.72,
+      y0 - ch * 0.5 + 2,
+      1.1,
+      CR_SKETCH,
+      0.4,
+      0.8,
+    );
     g.lineStyle(1, CR_SKETCH, 0.3);
     g.strokeRect(x0 + cw * 0.28, y0 - ch * 0.38, cw * 0.38, ch * 0.38);
     const wy = y0 + ch * 0.92;
     for (const wx of [x0 + cw * 0.22, x0 + cw * 0.78]) {
       g.fillStyle(0x0a0b0e, 1);
       g.fillCircle(wx, wy, ch * 0.28);
-      this._pencilCircle(g, rnd, wx, wy, ch * 0.28, 1.1, CR_SKETCH, 0.4, 10, 0.6);
+      this._pencilCircle(
+        g,
+        rnd,
+        wx,
+        wy,
+        ch * 0.28,
+        1.1,
+        CR_SKETCH,
+        0.4,
+        10,
+        0.6,
+      );
     }
     g.fillStyle(0x000000, 0.3);
     g.fillEllipse(cxx, wy + ch * 0.3, cw * 1.05, ch * 0.3);
@@ -761,8 +1128,22 @@ class CrossingScene extends Phaser.Scene {
     g.fillEllipse(0, -s * 0.5, s * 1.3, s * 1.05); // haunches
     g.fillEllipse(s * 0.42, -s * 0.85, s * 0.75, s * 1.25); // upright chest
     g.fillCircle(s * 0.5, -s * 1.62, s * 0.42); // head
-    g.fillTriangle(s * 0.24, -s * 1.82, s * 0.38, -s * 2.12, s * 0.52, -s * 1.9); // ear
-    g.fillTriangle(s * 0.52, -s * 1.92, s * 0.66, -s * 2.16, s * 0.76, -s * 1.78); // ear
+    g.fillTriangle(
+      s * 0.24,
+      -s * 1.82,
+      s * 0.38,
+      -s * 2.12,
+      s * 0.52,
+      -s * 1.9,
+    ); // ear
+    g.fillTriangle(
+      s * 0.52,
+      -s * 1.92,
+      s * 0.66,
+      -s * 2.16,
+      s * 0.76,
+      -s * 1.78,
+    ); // ear
     // faint pencil rim so it reads against the dark slab
     g.lineStyle(1, CR_SKETCH, 0.22);
     g.strokeCircle(s * 0.5, -s * 1.62, s * 0.42);
@@ -813,10 +1194,22 @@ class CrossingScene extends Phaser.Scene {
       walking.fillStyle(0x0a0b0e, 1);
       walking.fillEllipse(0, -s * 0.7 + bob, s * 1.7, s * 0.72);
       walking.fillCircle(s * 0.8, -s * 1.02 + bob, s * 0.34);
-      walking.fillTriangle(s * 0.53, -s * 1.16 + bob, s * 0.57, -s * 1.55 + bob,
-        s * 0.78, -s * 1.25 + bob);
-      walking.fillTriangle(s * 0.82, -s * 1.26 + bob, s * 1.02, -s * 1.49 + bob,
-        s * 1.08, -s * 1.07 + bob);
+      walking.fillTriangle(
+        s * 0.53,
+        -s * 1.16 + bob,
+        s * 0.57,
+        -s * 1.55 + bob,
+        s * 0.78,
+        -s * 1.25 + bob,
+      );
+      walking.fillTriangle(
+        s * 0.82,
+        -s * 1.26 + bob,
+        s * 1.02,
+        -s * 1.49 + bob,
+        s * 1.08,
+        -s * 1.07 + bob,
+      );
       walking.lineStyle(0.75, CR_SKETCH, 0.24);
       walking.strokeEllipse(0, -s * 0.7 + bob, s * 1.7, s * 0.72);
       walking.strokeCircle(s * 0.8, -s * 1.02 + bob, s * 0.34);
@@ -851,11 +1244,14 @@ class CrossingScene extends Phaser.Scene {
       tail.setVisible(false);
       eyes.setVisible(false);
       walking.setVisible(true);
-      const duration = Math.abs(destination - cont.x) / (W * 0.035) * 1000;
+      const duration = (Math.abs(destination - cont.x) / (W * 0.035)) * 1000;
       const startX = cont.x;
       drawWalk(0);
       this.tweens.add({
-        targets: cont, x: destination, duration, ease: "Linear",
+        targets: cont,
+        x: destination,
+        duration,
+        ease: "Linear",
         onUpdate: () => drawWalk(Math.abs(cont.x - startX) / (s * 0.6)),
         onComplete: () => {
           walking.setVisible(false);
@@ -872,7 +1268,7 @@ class CrossingScene extends Phaser.Scene {
 
   _drawTexts(W, H) {
     this.statusText = this.add
-      .text(W / 2, 40, "THE LIGHTS STILL CHANGE FOR NO ONE.", {
+      .text(W / 2, 40, "Go fetch her a bag of cat food.", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
         color: "#e8dcc0",
@@ -882,11 +1278,17 @@ class CrossingScene extends Phaser.Scene {
       .setDepth(20);
 
     this.levelText = this.add
-      .text(W - 30, 28, "Level " + (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
+      .text(
+        W - 30,
+        28,
+        "Level " +
+          (window.GAME_LEVELS.findIndex((l) => l.key === this.scene.key) + 1),
+        {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: "28px",
+          color: "#e8dcc0",
+        },
+      )
       .setOrigin(1, 0)
       .setAlpha(0)
       .setDepth(20);
@@ -896,13 +1298,49 @@ class CrossingScene extends Phaser.Scene {
   _drawVignette(W, H) {
     const vg = this.add.graphics().setDepth(30);
     const v = Math.min(W, H) * 0.2;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.5,
+      0.5,
+      0,
+      0,
+    );
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.55, 0.55);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.55,
+      0.55,
+    );
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0, 0.45, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.45,
+      0,
+      0.45,
+      0,
+    );
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.45, 0, 0.45);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0.45,
+      0,
+      0.45,
+    );
     vg.fillRect(W - v, 0, v, H);
   }
 
