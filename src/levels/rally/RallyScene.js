@@ -129,11 +129,16 @@ export default class RallyScene extends BasePuzzleScene {
     this._roadTop = H * 0.62;
     this._roadBot = H * 0.8;
     this._finishX = W * 0.6;
+    // The track is the near straight of an oval: level where it passes us and
+    // lifting away at both ends, so it reads as a loop, not a drag strip.
+    this._ovalCx = W * 0.5;
+    this._ovalRx = W * 0.56;
+    this._ovalRise = H * 0.14;
     // the scenery — people, gantry, tape — is scaled off one metre; the cars
     // themselves run smaller than that metre would make them, so they don't
     // crowd the frame
     this._m = Math.min(W * 0.22, H * 0.36) / 4;
-    this._carLen = Math.min(W * 0.16, H * 0.27);
+    this._carLen = Math.min(W * 0.075, H * 0.13);
     this._crowd = [];
     this._cars = [];
     this._lights = []; // everything that goes dark when the stage ends
@@ -163,6 +168,26 @@ export default class RallyScene extends BasePuzzleScene {
       // a beat of quiet before the first car
       this.time.delayedCall(RALLY_START_DELAY_MS, () => this._runRace());
     }
+  }
+
+  // ── the oval ───────────────────────────────────────────────────────────────
+
+  // how far the track has lifted away from us at this x: 0 where it runs past
+  // us, rising toward both ends as the oval turns away
+  _bowAt(x) {
+    const t = Math.max(-1, Math.min(1, (x - this._ovalCx) / this._ovalRx));
+    return -this._ovalRise * (1 - Math.sqrt(1 - t * t));
+  }
+
+  // 1 at the closest point of the oval, falling off toward either end
+  _nearnessAt(x) {
+    return 1 + this._bowAt(x) / this._ovalRise;
+  }
+
+  // the track's gradient on screen, for pointing a car along it
+  _bowSlopeAt(x) {
+    const t = Math.max(-0.995, Math.min(0.995, (x - this._ovalCx) / this._ovalRx));
+    return (-this._ovalRise * t) / (Math.sqrt(1 - t * t) * this._ovalRx);
   }
 
   // ── night, forest, floodlit bank ───────────────────────────────────────────
@@ -300,14 +325,23 @@ export default class RallyScene extends BasePuzzleScene {
     const rnd = this._rng(2909);
     const top = H * 0.47;
     const bot = this._roadTop;
-    g.fillGradientStyle(0x0f1216, 0x0f1216, 0x15181d, 0x15181d, 1);
-    g.fillRect(0, top, W, bot - top);
+    const bxs = [];
+    for (let i = 0; i <= 48; i++) bxs.push((W * i) / 48);
+    g.fillStyle(0x12151a, 1);
+    g.fillPoints(
+      [
+        { x: 0, y: top },
+        { x: W, y: top },
+        ...bxs.slice().reverse().map((x) => ({ x, y: bot + this._bowAt(x) })),
+      ],
+      true,
+    );
     this._pencilSeg(g, rnd, 0, top, W, top, 1.4, RY_SKETCH, 0.16, 2);
     // a few tufts of grass, denser toward the top of the slope
     for (let i = 0; i < 60; i++) {
       const x = rnd() * W;
       const t = rnd();
-      const y = top + 4 + t * (bot - top - 8);
+      const y = top + 4 + t * (bot + this._bowAt(x) - top - 8);
       const h = 2 + rnd() * 4;
       g.lineStyle(1, RY_SKETCH, 0.03 + (1 - t) * 0.05);
       g.lineBetween(x, y, x + (rnd() - 0.5) * 2, y - h);
@@ -431,7 +465,7 @@ export default class RallyScene extends BasePuzzleScene {
 
     // the cone: layered wedges from the lamps down to a pool on the gravel
     const gx = px + dir * W * 0.2;
-    const gy = this._roadBot + 6;
+    const gy = this._roadBot + 6 + this._bowAt(gx);
     const layers = [
       [W * 0.19, 0.02],
       [W * 0.12, 0.026],
@@ -442,7 +476,7 @@ export default class RallyScene extends BasePuzzleScene {
       cone.fillStyle(RY_WARM, a);
       cone.fillTriangle(hx, hy + 6, gx - s, gy, gx + s, gy);
     }
-    const mid = (this._roadTop + this._roadBot) / 2 + 10;
+    const mid = (this._roadTop + this._roadBot) / 2 + 10 + this._bowAt(gx);
     cone.fillStyle(RY_WARM, 0.03);
     cone.fillEllipse(gx, mid, W * 0.4, H * 0.1);
     cone.fillStyle(RY_WARM, 0.04);
@@ -458,59 +492,76 @@ export default class RallyScene extends BasePuzzleScene {
     const top = this._roadTop;
     const bot = this._roadBot;
 
-    // the gravel itself, a shade darker toward us
-    g.fillGradientStyle(0x16181d, 0x16181d, 0x121418, 0x121418, 1);
-    g.fillRect(0, top, W, bot - top);
-    // the near verge, all the way down to our feet
-    g.fillStyle(0x0f1114, 1);
-    g.fillRect(0, bot, W, H - bot);
-
-    this._pencilSeg(g, rnd, 0, top, W, top, 1.5, RY_SKETCH, 0.32, 1.6);
-    this._pencilSeg(g, rnd, 0, bot, W, bot, 1.5, RY_SKETCH, 0.38, 1.6);
-    this._pencilSeg(g, rnd, 0, bot + 5, W, bot + 5, 1, RY_SKETCH, 0.16, 1.6);
-
-    // two long ruts where the tyres have been all day
-    for (const t of [0.34, 0.7]) {
-      const y = top + (bot - top) * t;
-      this._pencilSeg(
+    const xs = [];
+    for (let i = 0; i <= 64; i++) xs.push((W * i) / 64);
+    const bow = (x) => this._bowAt(x);
+    const band = (t) => (x) => top + (bot - top) * t + bow(x);
+    const stroke = (fy, width, alpha, jit) =>
+      this._drawPath(
         g,
-        rnd,
-        0,
-        y,
-        W * 0.5,
-        y + (rnd() - 0.5) * 3,
-        1.1,
+        xs.map((x) => ({ x, y: fy(x) + (rnd() - 0.5) * (jit || 1.4) })),
+        width,
         RY_SKETCH,
-        0.1,
-        2,
+        alpha,
       );
-      this._pencilSeg(
-        g,
-        rnd,
-        W * 0.5,
-        y,
-        W,
-        y + (rnd() - 0.5) * 3,
-        1.1,
-        RY_SKETCH,
-        0.1,
-        2,
+
+    // the gravel itself, a shade darker toward us, following the oval
+    const BANDS = 8;
+    const mixByte = (a, b, t, sh) => {
+      const av = (a >> sh) & 255;
+      const bv = (b >> sh) & 255;
+      return (av + (bv - av) * t) | 0;
+    };
+    for (let k = 0; k < BANDS; k++) {
+      const t0 = k / BANDS;
+      const t1 = (k + 1) / BANDS;
+      const mid = (t0 + t1) / 2;
+      const col =
+        (mixByte(0x16181d, 0x121418, mid, 16) << 16) |
+        (mixByte(0x16181d, 0x121418, mid, 8) << 8) |
+        mixByte(0x16181d, 0x121418, mid, 0);
+      g.fillStyle(col, 1);
+      g.fillPoints(
+        [
+          ...xs.map((x) => ({ x, y: band(t0)(x) })),
+          ...xs.slice().reverse().map((x) => ({ x, y: band(t1)(x) })),
+        ],
+        true,
       );
     }
+    // the near verge, all the way down to our feet
+    g.fillStyle(0x0f1114, 1);
+    g.fillPoints(
+      [
+        ...xs.map((x) => ({ x, y: bot + bow(x) })),
+        { x: W, y: H },
+        { x: 0, y: H },
+      ],
+      true,
+    );
+
+    stroke((x) => top + bow(x), 1.5, 0.32);
+    stroke((x) => bot + bow(x), 1.5, 0.38);
+    stroke((x) => bot + 5 + bow(x), 1, 0.16);
+
+    // two long ruts where the tyres have been all day
+    for (const t of [0.34, 0.7]) stroke(band(t), 1.1, 0.1, 2.4);
 
     // loose stones: small far away, bigger near us
     for (let i = 0; i < 110; i++) {
       const t = rnd();
-      const y = top + 3 + t * (bot - top - 6);
+      const sx = rnd() * W;
+      const y = top + 3 + t * (bot - top - 6) + bow(sx);
       const r = 0.5 + t * 1.4 + rnd() * 0.6;
       g.fillStyle(RY_SKETCH, 0.04 + rnd() * 0.07);
-      g.fillCircle(rnd() * W, y, r);
+      g.fillCircle(sx, y, r);
     }
     for (let i = 0; i < 40; i++) {
+      const sx = rnd() * W;
       const y = bot + 8 + rnd() * (H - bot - 12);
       const t = (y - bot) / (H - bot);
       g.fillStyle(RY_SKETCH, 0.03 + rnd() * 0.05);
-      g.fillCircle(rnd() * W, y, 1 + t * 2 + rnd());
+      g.fillCircle(sx, y + bow(sx) * (1 - t), 1 + t * 2 + rnd());
     }
   }
 
@@ -518,8 +569,9 @@ export default class RallyScene extends BasePuzzleScene {
   _finishPt(u, t) {
     const W = this._W;
     const fx = this._finishX;
-    const yFar = this._roadTop + 3;
-    const yNear = this._roadBot - 3;
+    const fbow = this._bowAt(fx);
+    const yFar = this._roadTop + 3 + fbow;
+    const yNear = this._roadBot - 3 + fbow;
     const skew = W * 0.015;
     const width = W * (0.03 + 0.012 * t);
     const cx = fx + skew * (1 - 2 * t);
@@ -635,37 +687,37 @@ export default class RallyScene extends BasePuzzleScene {
       const rnd = this._rng(run.seed);
       const xs = [];
       for (let i = 0; i <= 5; i++) xs.push(sx0 + i * gap);
-      this._stakes = xs.map((x) => ({ x, y: run.y - run.h }));
+      const yAt = (x) => run.y + this._bowAt(x);
+      this._stakes = xs.map((x) => ({ x, y: yAt(x) - run.h }));
       for (const x of xs) {
         this._pencilSeg(
           g,
           rnd,
           x,
-          run.y,
+          yAt(x),
           x,
-          run.y - run.h,
+          yAt(x) - run.h,
           1.6,
           RY_SKETCH,
           run.alpha,
           0.5,
         );
         g.fillStyle(RY_SKETCH, run.alpha * 0.8);
-        g.fillCircle(x, run.y - run.h, 1.8);
+        g.fillCircle(x, yAt(x) - run.h, 1.8);
       }
       // two strands of tape, sagging a little between the stakes, hazard-striped
       for (const k of [0.92, 0.6]) {
         for (let i = 0; i < xs.length - 1; i++) {
           const x0 = xs[i];
           const x1 = xs[i + 1];
-          const y = run.y - run.h * k;
           const sag = 3 + rnd() * 2;
           const seg = 8;
           let px = x0;
-          let py = y;
+          let py = yAt(x0) - run.h * k;
           for (let s = 1; s <= seg; s++) {
             const t = s / seg;
             const nx = x0 + (x1 - x0) * t;
-            const ny = y + Math.sin(t * Math.PI) * sag;
+            const ny = yAt(nx) - run.h * k + Math.sin(t * Math.PI) * sag;
             const on = (i * seg + s) % 2 === 0;
             g.lineStyle(
               on ? 2.4 : 2,
@@ -747,15 +799,17 @@ export default class RallyScene extends BasePuzzleScene {
     const m = this._m;
     const fx = this._finishX;
     const skew = W * 0.045;
+    const nearBow = this._bowAt(fx - skew);
+    const farBow = this._bowAt(fx + skew);
     const near = {
       x: fx - skew,
-      base: this._roadBot + 10,
-      top: this._roadBot + 10 - m * 5.6,
+      base: this._roadBot + 10 + nearBow,
+      top: this._roadBot + 10 + nearBow - m * 5.6,
     };
     const far = {
       x: fx + skew,
-      base: this._roadTop + 2,
-      top: this._roadTop + 2 - m * 3.3,
+      base: this._roadTop + 2 + farBow,
+      top: this._roadTop + 2 + farBow - m * 3.3,
     };
     const rnd = this._rng(5150);
 
@@ -1060,7 +1114,7 @@ export default class RallyScene extends BasePuzzleScene {
         if (rnd() < 0.15) continue; // a gap in the crowd
         const cheer = rnd() < 0.4;
         const g = this.add.graphics().setDepth(row.depth);
-        g.setPosition(x, row.y);
+        g.setPosition(x, row.y + this._bowAt(x));
         this._person(g, rnd, row.k * (0.94 + rnd() * 0.12), {
           tone: tones[Math.floor(rnd() * tones.length)],
           arms: cheer ? (rnd() < 0.5 ? "both" : "one") : "down",
@@ -1106,7 +1160,7 @@ export default class RallyScene extends BasePuzzleScene {
   _drawMarshal(W, H) {
     const k = this._m * 0.72;
     const x = this._marshalX;
-    const y = this._roadTop + H * 0.012;
+    const y = this._roadTop + H * 0.012 + this._bowAt(this._marshalX);
     const rnd = this._rng(6262);
 
     const g = this.add.graphics().setDepth(-5);
@@ -1241,6 +1295,7 @@ export default class RallyScene extends BasePuzzleScene {
 
   _buildCars(W, H) {
     this._groundY = H * 0.755;
+    this._carGroundAt = (x, lane) => this._groundY + lane + this._bowAt(x);
     // each car keeps to its own line on the gravel, a few pixels apart
     this._lanes = [0, -1, 1, -0.5, 0.8, -0.8].map((n) => n * H * 0.012);
     this._cars = RY_NUMBERS.map((n, i) => createCar(
@@ -1307,14 +1362,28 @@ export default class RallyScene extends BasePuzzleScene {
     let crossed = false;
     let lastDust = x0;
 
+    const lane = this._lanes[i];
+    // x still runs dead straight in time, so every crossing lands exactly when
+    // planRallyRound says it does; only the drawing follows the oval
+    const ride = () => {
+      c.y = this._carGroundAt(c.x, lane);
+      c.setScale(0.62 + 0.38 * this._nearnessAt(c.x));
+      c.rotation = Math.max(
+        -0.34,
+        Math.min(0.34, Math.atan(this._bowSlopeAt(c.x))),
+      );
+    };
+
     c.setVisible(true);
     c.x = x0;
+    ride();
     this.tweens.add({
       targets: c,
       x: x1,
       duration: (x1 - x0) / speed,
       ease: "Linear",
       onUpdate: () => {
+        ride();
         if (!crossed && c.x >= this._finishX) {
           crossed = true;
           this._cheer();

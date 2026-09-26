@@ -21,9 +21,9 @@ test("Rally door numbers in crossing order spell the configured answer", () => {
 });
 
 test("Rally preserves the exact bunch spacing and never ties cars at the line", () => {
-  assert.deepEqual([...RALLY_CROSS_MS], [0, 3000, 3210, 6210, 6960, 7170]);
+  assert.deepEqual([...RALLY_CROSS_MS], [0, 3000, 3420, 6420, 7170, 7590]);
   const gaps = RALLY_CROSS_MS.slice(1).map((cross, i) => cross - RALLY_CROSS_MS[i]);
-  assert.deepEqual(gaps, [3000, 210, 3000, 750, 210]);
+  assert.deepEqual(gaps, [3000, 420, 3000, 750, 420]);
   assert.ok(gaps.every((gap) => gap > 0));
   assert.equal(RALLY_SPEED.length, RALLY_NUMBERS.length);
   assert.ok(new Set(RALLY_SPEED).size > 1);
@@ -31,7 +31,7 @@ test("Rally preserves the exact bunch spacing and never ties cars at the line", 
 
 test("resizing changes speed but preserves crossing order, readable durations and sound alignment", () => {
   for (const [width, height] of [[640, 480], [1100, 720], [1920, 1080]]) {
-    const carLength = Math.min(width * 0.16, height * 0.27);
+    const carLength = Math.min(width * 0.075, height * 0.13);
     const finishX = width * 0.6;
     const x0 = -carLength * 0.7;
     for (const soundLead of [0, 625, 1800]) {
@@ -43,7 +43,7 @@ test("resizing changes speed but preserves crossing order, readable durations an
         assert.equal(car.whoosh + soundLead, car.cross);
         assert.ok(car.launch + base >= 0 && car.whoosh + base >= 0);
         const visibleMs = car.gone - car.launch;
-        assert.ok(visibleMs >= 1250 && visibleMs <= 1500);
+        assert.ok(visibleMs >= 3400 && visibleMs <= 3800);
       }
       assert.equal(lightsOut - plan.at(-1).cross, 350);
       assert.equal(podiumAt - lightsOut, 1800);
@@ -53,7 +53,7 @@ test("resizing changes speed but preserves crossing order, readable durations an
 
 test("Rally's close pairs remain visibly separated throughout the screen crossing", () => {
   const width = 1100;
-  const carLength = 176;
+  const carLength = Math.min(width * 0.075, 720 * 0.13);
   const x0 = -carLength * 0.7;
   const x1 = width + carLength * 0.7;
   const { plan } = planRallyRound({ width, carLength, finishX: 660, soundLead: 625 });

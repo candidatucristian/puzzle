@@ -1,8 +1,8 @@
 // The puzzle is the order at the finish line, independently of rendering speed.
 export const RALLY_NUMBERS = Object.freeze([19, 9, 12, 22, 5, 18]);
-export const RALLY_CROSS_MS = Object.freeze([0, 3000, 3210, 6210, 6960, 7170]);
+export const RALLY_CROSS_MS = Object.freeze([0, 3000, 3420, 6420, 7170, 7590]);
 export const RALLY_SPEED = Object.freeze([1, 0.99, 1.01, 1.02, 0.98, 1.0]);
-export const RALLY_CAR_MS = 1350;
+export const RALLY_CAR_MS = 3600;
 export const RALLY_START_DELAY_MS = 900;
 export const RALLY_LIGHTS_OUT_DELAY_MS = 350;
 export const RALLY_PODIUM_MS = 1800;
