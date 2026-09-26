@@ -69,24 +69,24 @@ for (const level of LEVEL_METADATA) {
 test('master and channel settings reach real music and scene effects', async ({ page }) => {
   await launch(page); await navigate(page, 'Wires');
   await page.locator('#vol-slider-ui').fill('0.2');
-  expect(await sceneState(page, 'scene.sound.volume')).toBeCloseTo(.2);
+  await expect.poll(() => sceneState(page, 'scene.sound.volume')).toBeCloseTo(.2);
   expect(await sceneState(page, 'services.audio.state.masterVol')).toBe(.2);
   await page.locator('#btn-options').click();
   await page.locator('#music-slider').fill('0.3');
-  expect(await sceneState(page, 'scene._music.volume')).toBeCloseTo(.21);
+  await expect.poll(() => sceneState(page, 'scene._music.volume')).toBeCloseTo(.21);
   await page.locator('#sfx-slider').fill('0');
   expect(await sceneState(page, 'services.audio.state.sfxVol')).toBe(0);
   await page.locator('#btn-close-options').click();
   await navigate(page, 'MobilePhone');
-  expect(await sceneState(page, 'scene.sound.volume')).toBeCloseTo(.2);
+  await expect.poll(() => sceneState(page, 'scene.sound.volume')).toBeCloseTo(.2);
   // Phaser applies the configured gain when playback starts; a new idle
   // WebAudio sound still exposes its untouched GainNode's default value.
   await sceneState(page, 'scene.playKeySound()');
-  expect(await sceneState(page, 'scene.keySound.volume')).toBe(0);
+  await expect.poll(() => sceneState(page, 'scene.keySound.volume')).toBe(0);
   await page.locator('#vol-slider-ui').fill('0');
-  expect(await sceneState(page, 'scene.sound.mute')).toBe(true);
+  await expect.poll(() => sceneState(page, 'scene.sound.mute')).toBe(true);
   await page.locator('#vol-icon-ui').click();
-  expect(await sceneState(page, 'scene.sound.volume')).toBeCloseTo(.2);
+  await expect.poll(() => sceneState(page, 'scene.sound.volume')).toBeCloseTo(.2);
 });
 
 test('final answer, replay and navigation own exactly one completion callback', async ({ page }) => {

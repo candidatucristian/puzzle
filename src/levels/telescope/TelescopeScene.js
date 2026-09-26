@@ -1,6 +1,7 @@
 import { drawRoom } from "./room.js";
-import { drawWindow } from "./window.js";
+import { drawWindow, releaseWindowArt } from "./window.js";
 import { makeMoonTexture } from "./textures.js";
+import { ConstellationHover, HOVER_TUNE } from "./constellations.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 
@@ -9,27 +10,52 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 //
 // PHASE 1 (ROOM): a pencil sketch of a child on tiptoe at a telescope, aimed
 //   out the window. Click the telescope to go to the glass.
-// PHASE 2 (SKY): the same window, right up close and filling the screen, the
-//   veranda rail just outside. Five groups of stars sit on perfect 2×3 grids —
-//   Braille cells (dot layout 1 4 / 2 5 / 3 6), read left to right. Hovering
-//   one lights its connecting line up slowly.
+// PHASE 2 (SKY): the same window, right up close — a tall arch filling the
+//   screen, sheer curtains tied back either side, a moonlit valley beyond.
+//   Five groups of stars sit on perfect 2×3 grids — Braille cells (dot layout
+//   1 4 / 2 5 / 3 6), read left to right. Hovering one draws its
+//   constellation, star by star (see constellations.js).
 //
 //   O = 1,3,5   R = 1,2,3,5   I = 2,4   O = 1,3,5   N = 1,3,4,5  →  ORION
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BRAILLE = {
-  A: [1], B: [1, 2], C: [1, 4], D: [1, 4, 5], E: [1, 5], F: [1, 2, 4],
-  G: [1, 2, 4, 5], H: [1, 2, 5], I: [2, 4], J: [2, 4, 5], K: [1, 3],
-  L: [1, 2, 3], M: [1, 3, 4], N: [1, 3, 4, 5], O: [1, 3, 5], P: [1, 2, 3, 4],
-  Q: [1, 2, 3, 4, 5], R: [1, 2, 3, 5], S: [2, 3, 4], T: [2, 3, 4, 5],
-  U: [1, 3, 6], V: [1, 2, 3, 6], W: [2, 4, 5, 6], X: [1, 3, 4, 6],
-  Y: [1, 3, 4, 5, 6], Z: [1, 3, 5, 6],
+  A: [1],
+  B: [1, 2],
+  C: [1, 4],
+  D: [1, 4, 5],
+  E: [1, 5],
+  F: [1, 2, 4],
+  G: [1, 2, 4, 5],
+  H: [1, 2, 5],
+  I: [2, 4],
+  J: [2, 4, 5],
+  K: [1, 3],
+  L: [1, 2, 3],
+  M: [1, 3, 4],
+  N: [1, 3, 4, 5],
+  O: [1, 3, 5],
+  P: [1, 2, 3, 4],
+  Q: [1, 2, 3, 4, 5],
+  R: [1, 2, 3, 5],
+  S: [2, 3, 4],
+  T: [2, 3, 4, 5],
+  U: [1, 3, 6],
+  V: [1, 2, 3, 6],
+  W: [2, 4, 5, 6],
+  X: [1, 3, 4, 6],
+  Y: [1, 3, 4, 5, 6],
+  Z: [1, 3, 5, 6],
 };
 
 // dot number -> [col(-1|+1), row(-1|0|+1)]
 const BRAILLE_DOT_POS = {
-  1: [-1, -1], 2: [-1, 0], 3: [-1, 1],
-  4: [1, -1], 5: [1, 0], 6: [1, 1],
+  1: [-1, -1],
+  2: [-1, 0],
+  3: [-1, 1],
+  4: [1, -1],
+  5: [1, 0],
+  6: [1, 1],
 };
 
 // vertical slots, deliberately out of order so the cells never line up in a
@@ -41,9 +67,8 @@ const TUNE = {
   CELL_H: 0.05, // row pitch of a cell, same units
   STAR_COUNT: 90, // background decorative stars
   TWINKLE: 1.4, // global multiplier on star twinkle amplitude
-  HOVER_IN: 0.95, // seconds for a connection to light up — slow on purpose
-  HOVER_OUT: 0.5, // seconds for it to fade back down
-  LINE_ALPHA: 0.38, // peak alpha of a lit connection — soft, faded
+  // the hover itself — speed, line strength, halo, ghost dots, chime — is
+  // tuned in HOVER_TUNE, in constellations.js
 };
 
 const PHASE = { ROOM: 0, TRANSITION: 1, SKY: 2 };
@@ -105,6 +130,7 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._pointerOut = false;
     this._backHit = false;
     this._groups = [];
+    this._hover = null;
 
     this._W = this.cameras.main.width;
     this._H = this.cameras.main.height;
@@ -117,7 +143,7 @@ export default class TelescopeScene extends BasePuzzleScene {
     this.input.on("pointerup", () => this._onUp());
     this.input.on("pointerupoutside", () => this._onUp());
     // Phaser stops updating the pointer once it leaves the canvas, so without
-    // this a connection lit just before the cursor wanders off stays lit
+    // this a constellation drawn just before the cursor wanders off stays lit
     this.input.on("gameout", () => {
       this._pointerOut = true;
     });
@@ -172,13 +198,49 @@ export default class TelescopeScene extends BasePuzzleScene {
 
     const vg = this.add.graphics();
     const v = Math.min(W, H) * 0.22;
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.85, 0.85, 0, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.85,
+      0.85,
+      0,
+      0,
+    );
     vg.fillRect(0, 0, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.85, 0.85);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.85,
+      0.85,
+    );
     vg.fillRect(0, H - v, W, v);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.7, 0, 0.7, 0);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0.7,
+      0,
+      0.7,
+      0,
+    );
     vg.fillRect(0, 0, v, H);
-    vg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0.7, 0, 0.7);
+    vg.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0.7,
+      0,
+      0.7,
+    );
     vg.fillRect(W - v, 0, v, H);
     this._room.add(vg);
 
@@ -350,17 +412,18 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._stars = [];
     this._groups = [];
 
+    // the moon hangs where the window's painted moonlight expects it
     makeMoonTexture(this.textures, "tele_moon");
-    const moonR = H * 0.062;
+    const moonR = geo.moon.r;
     this._moon = this.add
-      .image(W * 0.63, H * 0.19, "tele_moon")
+      .image(geo.moon.x, geo.moon.y, "tele_moon")
       .setDepth(1);
     this._moon.setDisplaySize((moonR * 2) / 0.72, (moonR * 2) / 0.72);
 
     // 1) the Braille cells — one per character, spread left to right in
-    //    reading order. Every cell uses the same exact 2×3 grid, with no
-    //    jitter at all: that perfect alignment is what marks them out from
-    //    the scattered stars around them.
+    //    reading order across the clear sky between the curtains. Every cell
+    //    uses the same exact 2×3 grid, with no jitter at all: that perfect
+    //    alignment is what marks them out from the scattered stars around.
     const letters = this.ANSWER.split("");
     const n = letters.length;
     const cellRnd = this._rng(2861);
@@ -369,6 +432,10 @@ export default class TelescopeScene extends BasePuzzleScene {
     const marginX = dx / 2 + pad;
     const top = area.y0 + dy + pad;
     const bottom = area.y1 - dy - pad;
+    // on a narrow screen the hover boxes shrink so neighbours never overlap
+    const spacing =
+      n > 1 ? (area.x1 - area.x0 - marginX * 2) / (n - 1) : Infinity;
+    const hoverPad = Math.max(6, Math.min(pad, (spacing - dx) / 2 - 2));
 
     letters.forEach((ch, i) => {
       const cx = Phaser.Math.Linear(
@@ -379,17 +446,13 @@ export default class TelescopeScene extends BasePuzzleScene {
       const slot = ROW_ORDER[i % ROW_ORDER.length] % Math.max(n, 1);
       const cy = Phaser.Math.Linear(top, bottom, (slot + 0.5) / Math.max(n, 1));
 
-      // dots come out in ascending number, so the line drawn through them
-      // traces the cell the way it is read
-      const pts = (BRAILLE[ch] || []).map((num) => {
+      // dots in ascending number — the order the constellation draws in
+      const dots = BRAILLE[ch] || [];
+      dots.forEach((num, j) => {
         const [col, row] = BRAILLE_DOT_POS[num];
-        return { x: cx + (col * dx) / 2, y: cy + row * dy };
-      });
-
-      for (const p of pts) {
         this._stars.push({
-          x: p.x,
-          y: p.y,
+          x: cx + (col * dx) / 2,
+          y: cy + row * dy,
           r: scaleRef * 0.003 * (0.85 + cellRnd() * 0.3),
           base: 0.85,
           amp: 0.12,
@@ -397,55 +460,62 @@ export default class TelescopeScene extends BasePuzzleScene {
           phase: cellRnd() * Math.PI * 2,
           tint: 0xeaf4ff,
           signal: true,
+          cell: i,
+          dot: j,
         });
-      }
+      });
 
       this._groups.push({
-        pts,
+        dots,
+        cx,
+        cy,
         box: {
-          x0: cx - dx / 2 - pad,
-          x1: cx + dx / 2 + pad,
-          y0: cy - dy - pad,
-          y1: cy + dy + pad,
+          x0: cx - dx / 2 - hoverPad,
+          x1: cx + dx / 2 + hoverPad,
+          y0: cy - dy - hoverPad,
+          y1: cy + dy + hoverPad,
         },
-        reveal: 0,
       });
     });
 
-    // 2) background scatter — plain stars filling the opening, arch included,
-    //    kept clear of the cells and the moon
+    this._hover = new ConstellationHover(this, {
+      cells: this._groups,
+      dx,
+      dy,
+      S: scaleRef,
+    });
+
+    // 2) background scatter — plain stars across the open sky (not behind
+    //    the curtains or the hills), kept clear of the cells and the moon
     const nearGroup = (x, y) =>
       this._groups.some(
-        (gr) => x > gr.box.x0 && x < gr.box.x1 && y > gr.box.y0 && y < gr.box.y1,
+        (gr) =>
+          Math.abs(x - gr.cx) < dx / 2 + pad && Math.abs(y - gr.cy) < dy + pad,
       );
     const nearMoon = (x, y) =>
       Phaser.Math.Distance.Between(x, y, this._moon.x, this._moon.y) <
       moonR * 1.6;
-    const inOpening = (x, y) => {
-      if (x < geo.wl + 8 || x > geo.wr - 8 || y > geo.horizonY - 8) return false;
-      if (y >= geo.archCY) return true;
-      return (
-        ((x - geo.archCX) / geo.archRX) ** 2 +
-          ((y - geo.archCY) / geo.archRY) ** 2 <=
-        0.9
-      );
-    };
 
     const bgRnd = this._rng(5531);
     const tints = [0xffffff, 0xffffff, 0xbfd4ff, 0xffe9c9, 0xd7e6ff];
     const sky = {
-      x0: geo.wl,
-      x1: geo.wr,
-      y0: geo.archCY - geo.archRY,
+      x0: geo.hole.wl,
+      x1: geo.hole.wr,
+      y0: geo.hole.top,
       y1: geo.horizonY,
     };
     for (let k = 0; k < TUNE.STAR_COUNT; k++) {
-      let x, y, tries = 0;
+      let x,
+        y,
+        tries = 0;
       do {
         x = sky.x0 + bgRnd() * (sky.x1 - sky.x0);
         y = sky.y0 + bgRnd() * (sky.y1 - sky.y0);
         tries++;
-      } while ((!inOpening(x, y) || nearGroup(x, y) || nearMoon(x, y)) && tries < 20);
+      } while (
+        (!geo.inSky(x, y) || nearGroup(x, y) || nearMoon(x, y)) &&
+        tries < 20
+      );
       if (tries >= 20) continue;
       this._stars.push({
         x,
@@ -517,42 +587,26 @@ export default class TelescopeScene extends BasePuzzleScene {
   // ── Render loop ───────────────────────────────────────────────────────────
 
   update(time, delta) {
+    this._updateAmbience();
     if (this.phase === PHASE.ROOM || !this._starGfx || !this._stars) return;
-    const dt = delta / 1000;
+    const dt = Math.min(delta / 1000, 0.1);
     const t = this.time.now / 1000;
     const g = this._starGfx;
     g.clear();
 
     const ptr = this.input.activePointer;
     const live = ptr && !this._pointerOut && this.phase === PHASE.SKY;
-    const px = live ? ptr.x : -99999,
-      py = live ? ptr.y : -99999;
+    const px = live ? ptr.x : NaN,
+      py = live ? ptr.y : NaN;
 
-    // a hovered chain lights up slowly, and fades back down once you leave
-    let onChain = false;
-    for (const gr of this._groups) {
-      const b = gr.box;
-      const hover = px >= b.x0 && px <= b.x1 && py >= b.y0 && py <= b.y1;
-      if (hover) onChain = true;
-      const speed = (hover ? 1 / TUNE.HOVER_IN : 1 / TUNE.HOVER_OUT) * dt;
-      gr.reveal = Phaser.Math.Clamp(gr.reveal + (hover ? speed : -speed), 0, 1);
-      if (gr.reveal > 0.01) {
-        // ease the glow so it swells in rather than ramping flatly
-        const k = gr.reveal * gr.reveal * (3 - 2 * gr.reveal);
-        const a = TUNE.LINE_ALPHA * k;
-        for (let i = 0; i < gr.pts.length - 1; i++) {
-          const A = gr.pts[i],
-            B = gr.pts[i + 1];
-          g.lineStyle(3, 0x5c79b8, a * 0.4);
-          g.lineBetween(A.x, A.y, B.x, B.y);
-          g.lineStyle(1.2, 0xd4e2ff, a);
-          g.lineBetween(A.x, A.y, B.x, B.y);
-        }
-      }
-    }
+    // the hovered cell draws its constellation, star by star, and the rest
+    // of the sky steps back a little while it does
+    const onCell = this._hover ? this._hover.update(dt, px, py, t) : false;
     if (this.phase === PHASE.SKY) {
-      this.input.setDefaultCursor(onChain ? "pointer" : "default");
+      this.input.setDefaultCursor(onCell ? "pointer" : "default");
     }
+    const focus = this._hover ? this._hover.focus : 0;
+    const dim = 1 - HOVER_TUNE.FOCUS_DIM * focus;
 
     for (const s of this._stars) {
       let a = s.base + s.amp * TUNE.TWINKLE * Math.sin(t * s.spd + s.phase);
@@ -560,11 +614,15 @@ export default class TelescopeScene extends BasePuzzleScene {
       a = Phaser.Math.Clamp(a, 0, 1);
 
       if (s.signal) {
-        const R = s.r * (2.2 + sparkle * 0.6);
-        this._fillSparkle(g, s.x, s.y, R, s.tint, a);
-        g.fillStyle(0xffffff, Phaser.Math.Clamp(a + 0.1, 0, 1));
-        g.fillCircle(s.x, s.y, Math.max(0.8, s.r * 0.5));
+        // a star brightens as its constellation's line reaches it
+        const lit = this._hover ? this._hover.lit(s.cell, s.dot) : 0;
+        const la = Phaser.Math.Clamp(a + 0.15 * lit, 0, 1);
+        const R = s.r * (2.2 + sparkle * 0.6) * (1 + 0.35 * lit);
+        this._fillSparkle(g, s.x, s.y, R, s.tint, la);
+        g.fillStyle(0xffffff, Phaser.Math.Clamp(la + 0.1, 0, 1));
+        g.fillCircle(s.x, s.y, Math.max(0.8, s.r * 0.5 * (1 + 0.4 * lit)));
       } else {
+        a *= dim;
         if (s.r > 1.4) {
           g.fillStyle(s.tint, a * 0.1);
           g.fillCircle(s.x, s.y, s.r * 2.4);
@@ -573,17 +631,29 @@ export default class TelescopeScene extends BasePuzzleScene {
         g.fillCircle(s.x, s.y, s.r);
       }
     }
-
-    if (this._amb && this._amb.master) {
-      const muted = this.services.audio.state && this.services.audio.state.muted;
-      const vol = this.services.audio.state ? this.services.audio.state.sfxVol : 0.8;
-      this._amb.master.gain.value = muted ? 0 : vol * 0.5;
-    }
   }
 
   // ── Synthesized ambience: night wind and crickets ─────────────────────────
 
+  // The night comes in through the open window: wind and crickets play at the
+  // glass and during the dive to it, not in the room, and follow mute and the
+  // effects volume. (The gain used to be set only at the window, so the first
+  // dive's whoosh went unheard and the room stayed noisy after a visit.)
+  _updateAmbience() {
+    const amb = this._amb;
+    if (!amb || !amb.master) return;
+    const st = this.services.audio.state;
+    const vol = st ? (st.muted ? 0 : st.sfxVol) : 0.8;
+    const target = this.phase === PHASE.ROOM ? 0 : vol * 0.5;
+    if (target === this._ambTarget) return;
+    this._ambTarget = target;
+    const now = amb.ac.currentTime;
+    amb.master.gain.cancelScheduledValues(now);
+    amb.master.gain.setTargetAtTime(target, now, 0.12);
+  }
+
   _startAmbient() {
+    this._ambTarget = null;
     try {
       const ac = this.sound.context;
       const master = ac.createGain();
@@ -591,7 +661,11 @@ export default class TelescopeScene extends BasePuzzleScene {
       master.connect(this.sound.destination);
 
       const dur = 2;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+      const buf = ac.createBuffer(
+        1,
+        Math.floor(ac.sampleRate * dur),
+        ac.sampleRate,
+      );
       const d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const wind = ac.createBufferSource();
@@ -647,7 +721,11 @@ export default class TelescopeScene extends BasePuzzleScene {
       const ac = this._amb.ac,
         t = ac.currentTime,
         dur = 0.7;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+      const buf = ac.createBuffer(
+        1,
+        Math.floor(ac.sampleRate * dur),
+        ac.sampleRate,
+      );
       const d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const src = ac.createBufferSource();
@@ -655,7 +733,10 @@ export default class TelescopeScene extends BasePuzzleScene {
       const lp = ac.createBiquadFilter();
       lp.type = "lowpass";
       lp.frequency.setValueAtTime(reverse ? 2200 : 260, t);
-      lp.frequency.exponentialRampToValueAtTime(reverse ? 260 : 2200, t + dur * 0.8);
+      lp.frequency.exponentialRampToValueAtTime(
+        reverse ? 260 : 2200,
+        t + dur * 0.8,
+      );
       const g = ac.createGain();
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(0.5, t + 0.12);
@@ -689,7 +770,12 @@ export default class TelescopeScene extends BasePuzzleScene {
 
   _teardown() {
     this.tweens.killAll();
-    this.children.removeAll(true);
+    // destroy rather than just detach: removeAll(true) only took objects off
+    // the display list, and a detached zone stays interactive — the back
+    // button used to go on catching clicks, invisibly, in the room
+    for (const obj of this.children.list.slice()) obj.destroy();
+    releaseWindowArt(this.textures);
+    this._hover = null;
     this._room = null;
     this._roomSketch = null;
     this._roomArch = null;
@@ -712,5 +798,7 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._stopAmbient();
     this.tweens.killAll();
     this.time.removeAllEvents();
+    this._hover = null;
+    releaseWindowArt(this.textures);
   }
 }
