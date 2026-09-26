@@ -11,6 +11,7 @@ import {
   measureWhooshLead,
   planRallyRound,
 } from "../../src/levels/rally/puzzle.js";
+import { makeTrack, checkPerspective } from "../../src/levels/rally/track.js";
 
 test("Rally door numbers in crossing order spell the configured answer", () => {
   assert.deepEqual([...RALLY_NUMBERS], [19, 9, 12, 22, 5, 18]);
@@ -86,4 +87,39 @@ test("silent, missing or unreadable recordings use the existing 600 ms fallback"
   assert.equal(measureWhooshLead(new Float32Array(2000), 1000), 600);
   assert.equal(measureWhooshLead(new Float32Array(2000), NaN), 600);
   assert.equal(measureWhooshLead(new Float32Array(2000), 0), 600);
+});
+
+test("the track is one projection: a car's size always follows its height below the horizon", () => {
+  for (const [width, height] of [[640, 480], [910, 876], [1400, 800], [1920, 1080]]) {
+    const track = makeTrack(width, height);
+    // the rule the whole scene rests on — size is set by depth, nothing else
+    assert.ok(checkPerspective(track) < 1e-9, "perspective drifts at " + width + "x" + height);
+
+    // the drive enters and leaves off screen, and never doubles back
+    let last = -Infinity;
+    for (let i = 0; i <= 100; i++) {
+      const c = track.centre(i / 100);
+      assert.ok(c.x > last, "x must advance the whole way");
+      last = c.x;
+    }
+    assert.ok(track.centre(0).x < 0 && track.centre(1).x > width);
+
+    // the car is at its biggest, and so most readable, on the finish line
+    const atFinish = track.scaleAt(track.finishU);
+    for (let i = 0; i <= 100; i++) {
+      assert.ok(track.scaleAt(i / 100) <= atFinish + 1e-9);
+    }
+    assert.equal(Math.round(atFinish * 1e9) / 1e9, 1);
+
+    // and it never shrinks so far that the number stops being legible
+    let smallest = Infinity;
+    for (let i = 0; i <= 100; i++) smallest = Math.min(smallest, track.scaleAt(i / 100));
+    assert.ok(smallest > 0.8, "a car shrinks to " + smallest.toFixed(2) + " of its size");
+
+    // the near side of the oval really is nearer than the far side
+    const near = track.edges(0.5).near.y;
+    const far = track.edges(0.5).far.y;
+    assert.ok(near > far && far > track.horizonY);
+    assert.ok(track.scaleAtY(near) > track.scaleAtY(far));
+  }
 });

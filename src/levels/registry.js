@@ -15,7 +15,7 @@ import CrossingScene from "./crossing/CrossingScene.js";
 import FlagsScene from "./flags/FlagsScene.js";
 import TapCodeScene from "./tapcode/TapCodeScene.js";
 import RallyScene from "./rally/RallyScene.js";
-import OvertimeScene from "./overtime/OvertimeScene.js";
+import OvertimeScene from "./overtime/Overtime.js";
 import { LEVEL_METADATA } from "./metadata.js";
 
 const scenes = {
