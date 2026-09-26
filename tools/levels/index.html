@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>The Descipher — Levels Ledger (Answer Key)</title>
+
+    <link
+      rel="icon"
+      href="/assets/images/favicon/favicon-32x32.png"
+      type="image/x-icon"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Special+Elite&display=swap"
+      rel="stylesheet"
+    />
+    <!-- reuse the app's own design tokens / fonts / hand-drawn motifs -->
+    <link rel="stylesheet" href="/src/ui/styles/index.css" />
+
+    <link rel="stylesheet" href="./ledger.css" />
+  </head>
+  <body>
+    <div id="film-grain"></div>
+
+    <div class="wrap">
+      <header class="ledger-head">
+        <span class="private-tag"><i>◆</i>Private — not linked in-app</span>
+        <h1>Levels Ledger</h1>
+        <p class="ledger-sub">
+          Every chamber's access code and the reasoning behind it, in solving
+          order. This page is not linked from the game and carries full
+          spoilers — it exists so the codes and the logic don't have to be
+          re-derived from memory.
+        </p>
+        <div class="filter-row">
+          <input
+            id="filter-input"
+            type="text"
+            placeholder="Filter by level name or code…"
+            autocomplete="off"
+          />
+        </div>
+      </header>
+
+      <div class="quick-table" id="quick-table"></div>
+
+      <div id="cards"></div>
+    </div>
+
+    <a href="#top" class="back-top" title="Back to top">↑</a>
+    <span id="top"></span>
+
+    <script type="module" src="./ledger.js"></script>
+  </body>
+</html>

@@ -10,9 +10,7 @@
       type="image/x-icon"
     />
 
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <!-- CRT shader web-component used by the TV level -->
-    <script src="https://unpkg.com/shader-doodle@alpha"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Architects Daughter: UI display font (hand-lettered) · Cormorant Garamond: body text · Special Elite: in-level canvas text -->
@@ -20,11 +18,6 @@
       href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Special+Elite&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="Games/MobilePhone/MobilePhone.css" />
-    <link rel="stylesheet" href="Games/PlantPot/PlantPot.css" />
-    <link rel="stylesheet" href="Games/TV/TV.css" />
-    <link rel="stylesheet" href="Games/Cryptex/Cryptex/Cryptex.css" />
   </head>
   <body>
     <!-- Loading screen: rendered before the heavy scripts download.
@@ -39,64 +32,6 @@
         </p>
       </div>
     </div>
-    <script>
-      (function () {
-        var fill = document.getElementById("loading-fill");
-        var label = document.getElementById("loading-label");
-        var pctEl = document.getElementById("loading-pct");
-        var current = 0;
-        var target = 6;
-        var labelText = "sharpening the pencils";
-
-        var paint = setInterval(function () {
-          current += (target - current) * 0.09;
-          fill.style.width = current + "%";
-          pctEl.textContent = Math.round(current) + "%";
-          label.childNodes[0].nodeValue = labelText + " ";
-        }, 80);
-
-        // scripts have no measurable progress — trickle while they download
-        var trickle = setInterval(function () {
-          if (target < 55) target += 1.1;
-        }, 200);
-
-        window.__setLoad = function (v, text) {
-          if (v > target) target = v;
-          if (text) labelText = text;
-        };
-
-        window.addEventListener("load", function () {
-          clearInterval(trickle);
-          window.__setLoad(68, "preparing the chambers");
-        });
-
-        // the Phaser boot loader maps its audio progress onto 68–96%
-        window.__bootProgress = function (v) {
-          window.__setLoad(68 + v * 28, "tuning the instruments");
-        };
-
-        var done = false;
-        window.__loadingDone = function () {
-          if (done) return;
-          done = true;
-          window.__setLoad(100, "ready");
-          setTimeout(function () {
-            var el = document.getElementById("loading-screen");
-            if (!el) return;
-            el.classList.add("fade-out");
-            setTimeout(function () {
-              clearInterval(paint);
-              el.remove();
-            }, 750);
-          }, 500);
-        };
-
-        // failsafe: never trap the player on the loader
-        setTimeout(function () {
-          window.__loadingDone();
-        }, 25000);
-      })();
-    </script>
 
     <!-- Cinematic film grain over the whole app -->
     <div id="film-grain"></div>
@@ -153,7 +88,7 @@
             Every chamber yielded its word. The room is quiet again.
           </p>
           <div class="completion-stats" aria-label="Completion statistics">
-            <div><span id="completion-chambers">17 / 17</span><small>CHAMBERS CLEARED</small></div>
+            <div><span id="completion-chambers">18 / 18</span><small>CHAMBERS CLEARED</small></div>
             <div><span id="completion-time">0m 00s</span><small>SESSION TIME</small></div>
           </div>
           <p class="completion-credits">THE DESCIPHER &mdash; THANK YOU FOR PLAYING</p>
@@ -406,25 +341,6 @@
       </div>
     </div>
 
-    <!-- Game scripts -->
-    <script src="Games/MobilePhone/MobilePhone.js"></script>
-    <script src="Games/PlantPot/PlantPot.js"></script>
-    <script src="Games/Lightswitch/Lightswitch.js"></script>
-    <script src="Games/TV/TV.js"></script>
-    <script src="Games/Modem/Modem.js"></script>
-    <script src="Games/Telescope/Telescope.js"></script>
-    <script src="Games/Sequence/Sequence.js"></script>
-    <script src="Games/Cryptex/Cryptex.js"></script>
-    <script src="Games/Chessboard/Chessboard.js"></script>
-    <script src="Games/Station/Station.js"></script>
-    <script src="Games/BinaryTree/BinaryTree.js"></script>
-    <script src="Games/Pi/Pi.js"></script>
-    <script src="Games/Wires/Wires.js"></script>
-    <script src="Games/Crossing/Crossing.js"></script>
-    <script src="Games/Flags/Flags.js"></script>
-    <script src="Games/TapCode/TapCode.js"></script>
-    <script src="Games/Rally/Rally.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/ui.js"></script>
+    <script type="module" src="/src/entry.js"></script>
   </body>
 </html>

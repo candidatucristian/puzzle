@@ -1,0 +1,70 @@
+#blk-overlay{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:5;}
+
+/* ── Bulb ── */
+#blk-bulb{position:absolute;width:0;height:0;transform-origin:0 0;
+  animation:blkSway 3s ease-in-out infinite alternate;}
+#blk-bulb .cord{position:absolute;left:-1px;top:0;width:2px;height:var(--cord);
+  background:#020202;}
+#blk-bulb .socket{position:absolute;left:-5px;top:calc(var(--cord) - 2px);
+  width:10px;height:13px;background:#0d0d0d;border-radius:2px 2px 3px 3px;
+  box-shadow:inset 0 -2px 3px rgba(0,0,0,.5);}
+#blk-bulb .bulb{position:absolute;top:calc(var(--cord) + 12px);
+  left:calc(var(--bulb)/-2);width:var(--bulb);height:var(--bulb);
+  border-radius:50% 50% 45% 45%;
+  background:radial-gradient(circle at 40% 34%,rgba(255,255,255,.07),rgba(60,60,60,.03));
+  border:1px solid rgba(255,255,255,.04);
+  transition:background .015s linear,box-shadow .015s linear;}
+#blk-bulb.on .bulb{
+  background:radial-gradient(circle at 42% 36%,#fffef0 0%,#fff4c8 52%,#ffd880 100%);
+  border-color:rgba(255,248,200,.9);
+  box-shadow:0 0 10px #fff,0 0 28px rgba(255,244,192,.96),
+    0 0 68px rgba(255,228,160,.72),0 0 130px rgba(255,218,142,.50),
+    0 0 210px rgba(255,208,130,.26);}
+
+/* ── Switch ── */
+#blk-switch-wrap{position:absolute;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transform:translate(-50%,-50%);}
+#blk-switch{position:relative;width:var(--sw-w);height:var(--sw-h);
+  background:linear-gradient(155deg,#f6f6f6,#dcdcdc);
+  border-radius:4px;border:2px solid #c2c2c2;
+  cursor:pointer;pointer-events:auto;
+  box-shadow:inset 1px 1px 3px rgba(255,255,255,.70),
+    inset -2px -2px 4px rgba(0,0,0,.16),
+    2px 5px 14px rgba(0,0,0,.70);}
+#blk-switch .screw{position:absolute;left:50%;transform:translateX(-50%);
+  width:18%;aspect-ratio:1;border-radius:50%;background:#e4e4e4;
+  box-shadow:inset -1px -1px 2px rgba(0,0,0,.18);}
+#blk-switch .screw.top{top:8%;}
+#blk-switch .screw.bottom{bottom:8%;}
+#blk-switch .screw::after{content:"";position:absolute;inset:30% 12%;
+  background:#cacaca;border-radius:1px;transform:rotate(20deg);}
+#blk-switch .screw.bottom::after{transform:rotate(-30deg);}
+#blk-switch .rocker{position:absolute;left:18%;top:20%;width:64%;height:60%;
+  border-radius:3px;overflow:hidden;background:#dedede;
+  box-shadow:inset 1px 1px 2px rgba(0,0,0,.18);}
+#blk-switch .rocker .half{position:absolute;left:0;width:100%;height:50%;
+  transition:background .14s ease,box-shadow .14s ease;}
+#blk-switch .rocker .half.top{top:0;background:#ebebeb;
+  box-shadow:inset 0 -9px 12px rgba(0,0,0,.09);}
+#blk-switch .rocker .half.bottom{bottom:0;background:#f6f6f6;}
+#blk-switch .rocker .half.bottom::after{content:"";position:absolute;bottom:0;
+  left:0;width:100%;height:6px;background:linear-gradient(90deg,#d8d8d8,#c8c8c8);}
+#blk-switch.on .rocker .half.top{background:#e0e0e0;
+  box-shadow:inset 0 7px 11px rgba(0,0,0,.11);}
+#blk-switch.on .rocker .half.top::after{content:"";position:absolute;top:0;
+  left:0;width:100%;height:6px;background:linear-gradient(90deg,#f4f4f4,#eaeaea);}
+#blk-switch.on .rocker .half.bottom{background:#f0f0f0;box-shadow:none;}
+#blk-switch.on .rocker .half.bottom::after{display:none;}
+
+/* LED — green idle (off) · dark red armed · bright red on each Morse flash */
+#blk-led{width:8px;height:8px;border-radius:50%;
+  background:#22bb44;
+  border:1px solid rgba(0,0,0,.25);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.45);
+  transition:background .015s linear, box-shadow .015s linear;}
+#blk-led.on{background:#5a1414;}                        /* armed, between flashes */
+#blk-led.on.lit{background:#ff2a2a;                     /* flashing on */
+  box-shadow:0 0 5px rgba(255,50,50,.9),0 0 9px rgba(255,40,40,.45);}
+
+@keyframes blkSway{from{transform:rotate(1.8deg);}to{transform:rotate(-1.8deg);}}

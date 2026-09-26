@@ -1,0 +1,363 @@
+
+      /* ═══════════════════════════════════════════════
+         LEVELS LEDGER — private answer key, built on the
+         app's own "Pencil & Paper" tokens (css/style.css).
+         Not linked from the main UI. ═══════════════════ */
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        display: block;
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+        padding: 0 0 80px;
+      }
+
+      #film-grain {
+        position: fixed;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 56px 28px 0;
+      }
+
+      /* ── Header ── */
+      .ledger-head {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-bottom: 40px;
+      }
+
+      .ledger-head h1 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 34px;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        color: var(--pencil-bright);
+        text-shadow:
+          0.8px 0.8px 0 var(--pencil-faint),
+          -0.6px 0.5px 0 var(--pencil-faint);
+      }
+
+      .ledger-sub {
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: 17px;
+        color: var(--bone-dim);
+        margin: 0;
+        max-width: 640px;
+        line-height: 1.5;
+      }
+
+      .private-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 5px 12px;
+        border: 1px solid var(--pencil-faint);
+        border-radius: 3px;
+        font-family: "Special Elite", monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--bone-dim);
+        opacity: 0.85;
+      }
+
+      .private-tag i {
+        font-style: normal;
+        color: var(--pencil);
+      }
+
+      /* ── Filter box ── */
+      .filter-row {
+        margin: 4px 0 6px;
+      }
+
+      #filter-input {
+        width: 100%;
+        max-width: 360px;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid var(--pencil-faint);
+        color: var(--bone);
+        font-family: var(--font-body);
+        font-size: 17px;
+        padding: 6px 2px 8px;
+        outline: none;
+      }
+
+      #filter-input::placeholder {
+        color: var(--bone-dim);
+        opacity: 0.7;
+      }
+
+      #filter-input:focus {
+        border-bottom-color: var(--pencil);
+      }
+
+      /* ── Quick table ── */
+      .quick-table {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 56px;
+        border-top: 1px solid var(--line-light);
+      }
+
+      .quick-row {
+        display: grid;
+        grid-template-columns: 40px 1fr auto auto;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 6px;
+        border-bottom: 1px solid var(--line-light);
+        text-decoration: none;
+        transition: background 0.15s ease;
+      }
+
+      .quick-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .quick-num {
+        font-family: "Special Elite", monospace;
+        font-size: 12px;
+        color: var(--bone-dim);
+      }
+
+      .quick-name {
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 17px;
+        color: var(--pencil-bright);
+      }
+
+      .quick-code {
+        font-family: "Special Elite", monospace;
+        font-size: 14px;
+        letter-spacing: 1.5px;
+        color: var(--bone);
+        text-align: right;
+      }
+
+      .quick-alt {
+        font-family: "Special Elite", monospace;
+        font-size: 11px;
+        color: var(--bone-dim);
+        text-align: right;
+        min-width: 90px;
+      }
+
+      /* ── Level cards ── */
+      .level-card {
+        position: relative;
+        margin: 0 4px 46px;
+        padding: 26px 28px 28px;
+        background: var(--grad-panel);
+        border-radius: 4px;
+        scroll-margin-top: 24px;
+      }
+
+      .level-card-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+
+      .level-title {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .level-num {
+        font-family: "Special Elite", monospace;
+        font-size: 13px;
+        color: var(--pencil-dim);
+      }
+
+      .level-name {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 22px;
+        letter-spacing: 1.5px;
+        color: var(--pencil-bright);
+      }
+
+      .code-block {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .code-value {
+        font-family: "Special Elite", monospace;
+        font-size: 20px;
+        letter-spacing: 3px;
+        color: var(--bone);
+        border-bottom: 1.5px dashed var(--pencil-faint);
+        padding-bottom: 2px;
+        cursor: pointer;
+      }
+
+      .code-alt {
+        font-family: "Special Elite", monospace;
+        font-size: 12px;
+        color: var(--bone-dim);
+      }
+
+      .copy-btn {
+        background: transparent;
+        border: 1px solid var(--pencil-faint);
+        color: var(--bone-dim);
+        font-family: "Special Elite", monospace;
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .copy-btn:hover {
+        color: var(--pencil-bright);
+        border-color: var(--pencil-dim);
+      }
+
+      .copy-btn.done {
+        color: var(--pencil-bright);
+        border-color: var(--pencil);
+      }
+
+      .badges-row {
+        display: flex;
+        gap: 8px;
+        margin: 10px 0 4px;
+      }
+
+      .mini-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: "Special Elite", monospace;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--bone-dim);
+        border: 1px solid var(--pencil-faint);
+        border-radius: 3px;
+        padding: 3px 8px;
+        opacity: 0.85;
+      }
+
+      .clue-line {
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: 16px;
+        line-height: 1.55;
+        color: var(--bone-dim);
+        white-space: pre-line;
+        margin: 14px 0 16px;
+        padding-left: 14px;
+        border-left: 2px solid var(--pencil-faint);
+      }
+
+      .mech-label,
+      .keys-label {
+        font-family: "Special Elite", monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--pencil);
+        margin: 18px 0 8px;
+      }
+
+      .mech-text {
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.6;
+        color: var(--bone);
+        margin: 0 0 4px;
+      }
+
+      .keys-list {
+        margin: 0;
+        padding-left: 18px;
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--bone-dim);
+      }
+
+      .keys-list li {
+        margin-bottom: 4px;
+      }
+
+      .keys-list code {
+        font-family: "Special Elite", monospace;
+        font-size: 13px;
+        color: var(--pencil-bright);
+        background: rgba(255, 255, 255, 0.04);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+
+      .back-top {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--steel-800);
+        border: 1px solid var(--pencil-faint);
+        color: var(--pencil);
+        font-size: 16px;
+        text-decoration: none;
+        opacity: 0.75;
+        transition: opacity 0.15s ease;
+      }
+
+      .back-top:hover {
+        opacity: 1;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 36px 16px 0;
+        }
+        .quick-row {
+          grid-template-columns: 30px 1fr auto;
+        }
+        .quick-alt {
+          display: none;
+        }
+      }
+    

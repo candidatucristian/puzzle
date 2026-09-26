@@ -1,0 +1,438 @@
+/* ── Modals ── */
+#options-modal,
+#info-modal,
+#howto-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 5, 8, 0.7);
+  backdrop-filter: blur(10px) saturate(0.75);
+  -webkit-backdrop-filter: blur(10px) saturate(0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+#options-modal.hidden,
+#info-modal.hidden,
+#howto-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-content {
+  position: relative;
+  background: linear-gradient(180deg, #1b1d22, #121419);
+  border: 1.5px solid var(--pencil-faint);
+  padding: 42px 44px;
+  border-radius: 4px 9px 5px 10px;
+  width: 420px;
+  color: var(--bone);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+}
+
+/* doubled hand-drawn outline, slightly askew */
+.modal-content::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1px solid var(--pencil-faint);
+  border-radius: 6px 10px 6px 11px;
+  transform: rotate(-0.25deg);
+  pointer-events: none;
+}
+
+/* corner overshoots, like a hand-ruled frame */
+.modal-content::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  opacity: 0.85;
+  background:
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 22px
+      1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 1px
+      22px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      22px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      1px 22px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      22px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      1px 22px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      22px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      1px 22px;
+}
+
+.modal-content h2 {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--pencil-bright);
+  text-shadow:
+    0.6px 0.6px 0 var(--pencil-faint),
+    -0.5px 0.4px 0 var(--pencil-faint);
+}
+
+.modal-content > .ornate-rule {
+  margin: -8px auto 0;
+  max-width: 260px;
+}
+
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slider-group label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--pencil);
+  opacity: 0.9;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.modal-actions .menu-btn {
+  flex: 1;
+  padding: 13px;
+  font-size: 12px;
+}
+
+/* ── Reset Game (inside Options) ── */
+.options-divider {
+  height: 1px;
+  margin: 2px 8px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.1) 80%,
+    transparent
+  );
+}
+
+.danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.danger-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 12px;
+  color: #cf9090;
+  border-color: #351214;
+}
+
+.danger-btn:hover {
+  color: #f0b0b0;
+  border-color: rgba(190, 80, 80, 0.45);
+}
+
+.danger-btn.armed {
+  background: linear-gradient(180deg, #571c1e, #401113 60%, #300b0d);
+  color: #ffd9d9;
+  border-color: #7a2a2c;
+  animation: danger-pulse 1s ease-in-out infinite;
+}
+
+@keyframes danger-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(220, 70, 70, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(220, 70, 70, 0.45);
+  }
+}
+
+.danger-note {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 15px;
+  letter-spacing: 0.4px;
+  color: var(--bone-dim);
+  opacity: 0.8;
+}
+
+/* ── Level Info modal ── */
+#info-requires {
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+#info-requires[hidden] {
+  display: none;
+}
+
+#info-modal .modal-content {
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  /* The decorative outline extends outside the card; it must not create scrollbars. */
+  max-height: none;
+  overflow: visible;
+  padding: 28px;
+  gap: 16px;
+}
+
+#info-modal .modal-content h2 {
+  font-size: 20px;
+  letter-spacing: 2px;
+}
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  background: #17191e;
+  border: 1px solid var(--pencil-faint);
+  border-radius: 3px;
+  color: var(--bone);
+  font: 11px/1.4 var(--font-body);
+  letter-spacing: 1px;
+  cursor: help;
+}
+
+.info-badge > span:first-child {
+  font-size: 16px;
+  filter: grayscale(1);
+}
+
+#info-modal .modal-actions {
+  margin-top: 4px;
+  justify-content: center;
+}
+
+#info-modal #btn-close-info {
+  flex: none;
+  width: auto;
+  min-width: 112px;
+  min-height: 40px;
+  padding: 10px 20px;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  background: #17191e;
+  color: var(--bone);
+  border-color: var(--pencil-faint);
+  box-shadow: none;
+  text-shadow: none;
+  transition: none;
+  transform: none;
+}
+
+#btn-close-info::after {
+  content: none;
+}
+
+#info-text {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.15px;
+  color: #d9d3c4;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* ── How to Play ── */
+.modal-content.howto-content {
+  width: 760px;
+  max-width: 92vw;
+  max-height: 88vh;
+  gap: 18px;
+  padding: 36px 40px;
+}
+
+.howto-body {
+  overflow-y: auto;
+  padding-right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.howto-section h3 {
+  margin: 0 0 12px 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 5px;
+  color: var(--pencil);
+  border-bottom: 1px dashed var(--pencil-faint);
+  padding-bottom: 9px;
+}
+
+.howto-section p {
+  margin: 0;
+  font-family: var(--font-body);
+  color: #d5cfc0;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}
+
+.howto-lead {
+  margin-bottom: 10px !important;
+}
+
+.howto-section b {
+  color: var(--pencil-bright);
+  font-weight: 600;
+}
+
+/* each control: the button shown as it really looks, explanation beside it */
+.howto-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 7px 0;
+}
+
+.howto-row p {
+  flex: 1;
+}
+
+/* generic sketched button (INFO, Options) */
+.ui-demo {
+  flex: 0 0 128px;
+  text-align: center;
+  background: var(--grad-panel);
+  border: 1.5px solid var(--pencil-faint);
+  border-radius: 3px 6px 4px 7px;
+  padding: 12px 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bone);
+  white-space: nowrap;
+}
+
+/* the EXECUTE key, as on the console */
+.ui-demo.demo-execute {
+  background: var(--pencil-bright);
+  color: var(--ink);
+  border: 1.5px solid var(--pencil-deep);
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+/* the replay arrow */
+.ui-demo.demo-replay {
+  flex: 0 0 48px;
+  margin-left: 40px;
+  margin-right: 40px;
+  font-size: 20px;
+  padding: 9px 8px;
+}
+
+/* the volume widget */
+.ui-demo.demo-volume {
+  font-size: 18px;
+  padding: 10px 8px;
+}
+
+/* level tiles, exactly like the panel on the right */
+.lvl-demo {
+  flex: 0 0 52px;
+  height: 52px;
+  margin-left: 38px;
+  margin-right: 38px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--grad-panel);
+  border: 1.5px solid var(--pencil-faint);
+  border-radius: 3px 6px 4px 7px;
+  color: var(--bone);
+  font-family: "Special Elite", monospace;
+  font-size: 17px;
+}
+
+.lvl-demo.lvl-current {
+  border: 3px dashed var(--pencil);
+  border-radius: 20%;
+  color: var(--pencil-bright);
+}
+
+.lvl-demo.lvl-locked {
+  background: linear-gradient(180deg, #0e1013, #121419);
+  color: #4c4f55;
+  font-size: 16px;
+  filter: grayscale(100%);
+  border-style: dashed;
+}
+
+/* INFO badges, exactly like the ones in the hint window */
+.badge-demo {
+  flex: 0 0 92px;
+  margin-left: 18px;
+  margin-right: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #0c0d10;
+  border: 1px dashed #2a2d33;
+  padding: 9px 12px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #6f6a5b;
+}
+
+.badge-demo i {
+  font-style: normal;
+  font-size: 20px;
+}
+
+.howto-body::-webkit-scrollbar {
+  width: 8px;
+}
+.howto-body::-webkit-scrollbar-track {
+  background: var(--steel-900);
+  border-radius: 4px;
+}
+.howto-body::-webkit-scrollbar-thumb {
+  background: var(--steel-500);
+  border-radius: 4px;
+}
+.howto-body::-webkit-scrollbar-thumb:hover {
+  background: var(--pencil-deep);
+}
+

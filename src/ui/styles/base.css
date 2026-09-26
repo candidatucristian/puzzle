@@ -1,0 +1,330 @@
+/* ═══════════════════════════════════════════════════════════════
+   The Descipher — "Pencil & Paper" design system
+   Display / Body: Etude Noire (local) · In-level: Special Elite
+   Hand-drawn frames on dark paper — no metal, no gold.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Local interface font, with a separate file for each available weight. */
+@font-face {
+  font-family: "Etude Noire";
+  src: url("/assets/fonts/EtudeNoir/Etude Noire Light (1).ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Etude Noire";
+  src: url("/assets/fonts/EtudeNoir/Etude Noire Regular (1).ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Etude Noire";
+  src: url("/assets/fonts/EtudeNoir/Etude Noire Medium (1).ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Etude Noire";
+  src: url("/assets/fonts/EtudeNoir/Etude Noire Bold (1).ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Local handwriting fallback. */
+@font-face {
+  font-family: "Children";
+  src: url("/assets/fonts/children/Children.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* surfaces — dark sketchbook page */
+  --obsidian: #0a0b0e;
+  --steel-900: #101216;
+  --steel-800: #16181d;
+  --steel-700: #1d2026;
+  --steel-600: #262a31;
+  --steel-500: #333842;
+  /* pencil */
+  --pencil: #b7b1a2;
+  --pencil-bright: #ece7d8;
+  --pencil-deep: #56524a;
+  --pencil-dim: rgba(183, 177, 162, 0.42);
+  --pencil-faint: rgba(183, 177, 162, 0.2);
+  /* text */
+  --bone: #eae5d6;
+  --bone-dim: #9d977f;
+  --ink: #17140f;
+  /* lines */
+  --line-dark: #040507;
+  --line-light: rgba(255, 255, 255, 0.06);
+  /* type */
+  --font-display: "Etude Noire", "Children", "Architects Daughter", cursive;
+  --font-body: "Etude Noire", "Cormorant Garamond", Georgia, serif;
+  /* recurring surfaces */
+  --grad-panel: linear-gradient(180deg, #23262c, #1a1c21 55%, #131519);
+}
+
+::selection {
+  background: var(--pencil-deep);
+  color: var(--bone);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  height: 100vh;
+  background-color: var(--obsidian);
+  font-family: var(--font-display);
+  overflow: hidden;
+}
+
+button {
+  font-family: var(--font-display);
+}
+
+:focus-visible {
+  outline: 1px solid var(--pencil-dim);
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════
+   LOADING SCREEN — shown while scripts/assets download
+   ═══════════════════════════════════════════════ */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 600; /* above everything, film grain included */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(
+    120% 100% at 50% 45%,
+    #0c0d11 0%,
+    #050608 70%,
+    #000000 100%
+  );
+  opacity: 1;
+  transition: opacity 0.7s ease;
+}
+
+#loading-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: min(340px, 80%);
+}
+
+.loading-card h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 9px;
+  text-transform: uppercase;
+  text-align: center;
+  padding-left: 9px; /* optical centring vs. letter-spacing */
+  color: var(--pencil-bright);
+  text-shadow:
+    0.8px 0.8px 0 var(--pencil-faint),
+    -0.6px 0.5px 0 var(--pencil-faint);
+}
+
+/* the progress slot: a hand-ruled dashed box, filling with graphite */
+.loading-bar {
+  width: 100%;
+  height: 12px;
+  border: 1.5px dashed var(--pencil-faint);
+  border-radius: 2px 5px 3px 6px;
+  padding: 2px;
+}
+
+#loading-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--pencil);
+  opacity: 0.85;
+  border-radius: 1px 3px 2px 3px;
+  transition: width 0.15s linear;
+}
+
+#loading-label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+  opacity: 0.85;
+}
+
+#loading-label #loading-pct {
+  color: var(--pencil-bright);
+}
+
+/* ── Cinematic film grain over everything (3% — felt, not seen) ── */
+#film-grain {
+  position: fixed;
+  inset: -60px;
+  z-index: 500;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 0.9s steps(3) infinite;
+}
+
+@keyframes grain-shift {
+  0% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(-24px, 16px);
+  }
+  66% {
+    transform: translate(18px, -22px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* ── Ornate rule: a single hand-drawn line, tick mark at centre ── */
+.ornate-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.ornate-rule span {
+  flex: 1;
+  height: 1px;
+  position: relative;
+}
+
+.ornate-rule span::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -1.5px 0;
+  height: 1px;
+  transform: rotate(-0.4deg);
+}
+
+.ornate-rule span:first-child {
+  background: linear-gradient(90deg, transparent, var(--pencil-dim));
+}
+.ornate-rule span:first-child::before {
+  background: linear-gradient(90deg, transparent, var(--pencil-faint));
+}
+
+.ornate-rule span:last-child {
+  background: linear-gradient(90deg, var(--pencil-dim), transparent);
+}
+.ornate-rule span:last-child::before {
+  background: linear-gradient(90deg, var(--pencil-faint), transparent);
+}
+
+.ornate-rule i {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--pencil);
+  line-height: 1;
+  transform: rotate(45deg);
+  display: inline-block;
+}
+
+.ornate-rule.faint span:first-child,
+.ornate-rule.faint span:first-child::before {
+  background: linear-gradient(90deg, transparent, var(--pencil-faint));
+}
+.ornate-rule.faint span:last-child,
+.ornate-rule.faint span:last-child::before {
+  background: linear-gradient(90deg, var(--pencil-faint), transparent);
+}
+.ornate-rule.faint i {
+  color: var(--pencil-faint);
+}
+
+.ornate-rule.wide {
+  max-width: 420px;
+}
+
+/* ═══════════════════════════════════════════════
+   SKETCH FRAME — the one recurring hand-drawn motif:
+   a faint doubled outline + four corner overshoots.
+   Reused (recoloured, resized) on panels, buttons, tiles.
+   ═══════════════════════════════════════════════ */
+.sketch-frame {
+  position: relative;
+}
+
+.sketch-frame::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid var(--pencil-faint);
+  border-radius: inherit;
+  transform: rotate(-0.35deg);
+  pointer-events: none;
+}
+
+.sketch-frame::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  pointer-events: none;
+  opacity: 0.8;
+  background:
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 16px
+      1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 0 / 1px
+      16px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      16px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 0 /
+      1px 16px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      16px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 0 100% /
+      1px 16px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      16px 1px,
+    linear-gradient(var(--pencil-dim), var(--pencil-dim)) no-repeat 100% 100% /
+      1px 16px;
+  transform: rotate(0.3deg);
+}
+
+/* ═══════════════════════════════════════════════
+   SIDEBARS — flat charcoal page, sketched inner edge
+   ═══════════════════════════════════════════════ */
+#sidebar,
+#right-sidebar {
+  background:
+    radial-gradient(
+      130% 70% at 50% 0%,
+      rgba(255, 255, 255, 0.03),
+      transparent 60%
+    ),
+    linear-gradient(105deg, #17191e, #101216);
+}
+

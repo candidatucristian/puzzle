@@ -1,0 +1,30 @@
+{
+  "name": "the-descipher",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "lint": "eslint .",
+    "test": "node --test --experimental-test-isolation=none tests/unit/*.test.js",
+    "test:browser": "playwright test",
+    "test:production": "playwright test --config playwright.production.config.js",
+    "check": "npm run lint && npm test && npm run build && npm run test:browser && npm run test:production"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "dependencies": {
+    "phaser": "3.60.0",
+    "shader-doodle": "1.0.0-alpha.22"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "eslint": "10.11.0",
+    "globals": "17.12.0",
+    "vite": "8.3.0"
+  }
+}
