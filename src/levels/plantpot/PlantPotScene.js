@@ -1,14 +1,77 @@
-import GardenEnvironment from "./environment.js";
-import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { makeMoonTexture } from "../../shared/moon.js";
+import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
+import {
+  paintPlantArt,
+  releasePlantArt,
+  paintStems,
+  POT,
+  BUCKET,
+  RES,
+  WATER_LEVELS,
+} from "./plant.js";
 
-// PLANT POT: o grădină sub cerul nopții. Udă planta de 5 ori și ea crește
-// după șirul lui Fibonacci (1, 1, 2, 3, 5 frunze).
+// ─────────────────────────────────────────────────────────────────────────────
+// Level — "PLANT POT"  ·  code: FIBO / FIBONACCI  ·  water the plant
 //
-// Decorul e desenat "cu creionul" și animat din update(): stelele sclipesc,
-// trece din când în când o stea căzătoare, iarba și florile se
-// leagănă în vânt, iar grădinarul respiră. Ghiveciul e colorat (teracotă închisă);
-// găleata cu apă și planta sunt exact ca înainte.
+// A garden at night under a full moon, told as simply as the valley through
+// the telescope's window. On the potting bench in front of us, beside a
+// storm lantern, stand a terracotta pot and a zinc bucket of water. Drag the
+// bucket to the pot and it pours; each pour grows the plant one branch, and
+// each new branch brings its leaves: 1, 1, 2, 3, 5. Five pours, and the plant
+// has grown the sequence that bears a name. The scenery holds no formula and
+// nothing on screen explains the counting.
+//
+// The garden is painted once per screen size (garden.js), the pot and the
+// bucket too (plant.js); the stems are painted live as they grow, and the
+// leaves are the level's own leaf image (assets/images/PlantPot/leaf.png).
+// What moves is driven from here: the lantern's flame, fireflies over the
+// grass, the grass in the corners stirring, the stars, now and then a
+// shooting star.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// the plant's skeleton, in cm from the middle of the soil: one segment per
+// pour, each a curve from `from` to `to`, `w0` to `w1` thick
+const SEGMENTS = [
+  { from: { x: 0, y: 0 }, cp: { x: 5, y: -13 }, to: { x: -2.4, y: -26 }, w0: 2.4, w1: 1.7 },
+  { from: { x: -2.4, y: -26 }, cp: { x: -8, y: -39 }, to: { x: 3, y: -53 }, w0: 1.7, w1: 1.05 },
+  { from: { x: -2.4, y: -26 }, cp: { x: 12, y: -27 }, to: { x: 28, y: -37 }, w0: 1.15, w1: 0.55 },
+  { from: { x: 3, y: -53 }, cp: { x: -10, y: -51 }, to: { x: -26, y: -65 }, w0: 1.0, w1: 0.5 },
+  { from: { x: 3, y: -53 }, cp: { x: 6, y: -69 }, to: { x: 17, y: -85 }, w0: 0.95, w1: 0.45 },
+];
+
+// the leaves each pour brings — 1, 1, 2, 3 and 5 — where on the new branch
+// (t along it) and which way they point (0 up, + clockwise)
+const LEAF_DEFS = [
+  [{ seg: 0, t: 0.6, angle: 35, scale: 1 }],
+  [{ seg: 1, t: 0.4, angle: -35, scale: 1 }],
+  [
+    { seg: 2, t: 0.4, angle: 25, scale: 0.9 },
+    { seg: 2, t: 0.85, angle: 55, scale: 0.9 },
+  ],
+  [
+    { seg: 3, t: 0.3, angle: -20, scale: 0.85 },
+    { seg: 3, t: 0.6, angle: -45, scale: 0.85 },
+    { seg: 3, t: 0.9, angle: -70, scale: 0.85 },
+  ],
+  [
+    { seg: 4, t: 0.18, angle: 20, scale: 0.75 },
+    { seg: 4, t: 0.38, angle: -15, scale: 0.75 },
+    { seg: 4, t: 0.58, angle: 35, scale: 0.75 },
+    { seg: 4, t: 0.78, angle: -5, scale: 0.75 },
+    { seg: 4, t: 0.96, angle: 45, scale: 0.75 },
+  ],
+];
+
+// the leaf image (assets/images/PlantPot/leaf.png, 378 × 508): its stalk at
+// the lower left, the leaf leaning 45° right of upright; drawn the size it
+// always was — 0.034 cm to one of its pixels, a leaf about 17 cm long
+const LEAF_IMAGE = { ox: 0.05, oy: 0.95, turn: -45, cmPerPx: 0.034 };
+
+// the stems' canvas: the plant's reach, in cm from the soil
+const PLANT_BOX = { x0: -46, x1: 40, y0: -100, y1: 4 };
+const TIP = -80; // degrees the bucket tips to pour
+const DEG = Math.PI / 180;
 
 export default class PlantPotScene extends BasePuzzleScene {
   constructor() {
@@ -22,683 +85,663 @@ export default class PlantPotScene extends BasePuzzleScene {
 
   preload() {
     this.load.image("leaf", "assets/images/PlantPot/leaf.png");
-    this.load.audio(
-      "wateringplant",
-      "assets/sounds/PlantPot/wateringplant.mp3",
-    );
+    this.load.audio("wateringplant", "assets/sounds/PlantPot/wateringplant.mp3");
   }
 
   create() {
     this.beginScene();
 
-    const width = this.cameras.main.width;
-    const height = this.cameras.main.height;
-
-    // ── State ── (înaintea decorului: la restart scena păstrează valorile vechi)
+    // the puzzle's state, kept across resizes
     this.isSolved = false;
     this.isAnimating = false;
     this.currentStep = 0;
-    this.fibSeq = [1, 1, 2, 3, 5];
     this.canPour = true;
 
-    // ── Decorul animat ─────────────────────────────────────────────────────
-    this.environment = new GardenEnvironment(this);
-    this.environment._buildScenery(width, height);
-
-    this.statusText = this.add
-      .text(width / 2, 50, "Who am I? ...", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "22px",
-        color: "#ffffff",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-
-    this.levelText = this.add
-      .text(width - 30, 30, "Level " + this._levelNumber(this.scene.key), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#ffffff",
-      })
-      .setOrigin(1, 0)
-      .setAlpha(0)
-      .setDepth(20);
-
-    this.tweens.add({
-      targets: this.levelText,
-      alpha: 1,
-      duration: 2000,
-      ease: "Power2",
+    this._build(this.cameras.main.width, this.cameras.main.height);
+    this.listenToResize(({ width, height }) => {
+      this._teardown();
+      this._build(width, height);
     });
 
-    // ── Scale factor ────────────────────────────────────────────────────────
-    let scaleFactor = Math.min(1, height / 600) * 0.85;
-
-    // ── mainContainer lăsat mai jos ───────────────────────────────────────
-    this.mainContainer = this.add.container(
-      width * 0.48,
-      height * 0.89 - 215 * scaleFactor,
-    );
-    this.mainContainer.setScale(scaleFactor);
-
-    // ── Noduri tree ───────────────────────────────────────────────────────
-    const n0 = { x: 0, y: 55 };
-    const nMid = { x: -12, y: -75 };
-    const nT = { x: 15, y: -210 };
-    const nBR = { x: 140, y: -130 };
-    const nBL = { x: -130, y: -270 };
-    const nBR2 = { x: 85, y: -370 };
-
-    this.segments = [
-      { from: n0, to: nMid, cp: { x: 25, y: -10 } },
-      { from: nMid, to: nT, cp: { x: -40, y: -140 } },
-      { from: nMid, to: nBR, cp: { x: 60, y: -80 } },
-      { from: nT, to: nBL, cp: { x: -50, y: -200 } },
-      { from: nT, to: nBR2, cp: { x: 30, y: -290 } },
-    ];
-
-    this.segWidths = [16, 10, 6, 6, 6];
-    this.segGfx = this.segments.map(() => this.add.graphics());
-
-    // ── plantContainer — poziție locală în mainContainer ─────────────────
-    // The pot and the whole plant (stem, leaves) are drawn 30% smaller than
-    // they were. The container is scaled about the middle of the pot's base, so
-    // the pot keeps sitting exactly where it did on the table.
-    this.PLANT_SCALE = 0.7;
-    const POT_BASE_Y = 155; // the pot's bottom, in the pot's own drawing
-    this.PLANT_LOCAL_X = -130;
-    this.PLANT_LOCAL_Y = 60 + POT_BASE_Y * (1 - this.PLANT_SCALE);
-
-    this.plantContainer = this.add.container(
-      this.PLANT_LOCAL_X,
-      this.PLANT_LOCAL_Y,
-    );
-    this.plantContainer.setScale(this.PLANT_SCALE);
-
-    this.potGfx = this.add.graphics();
-    this.drawPot(this.potGfx);
-    this.potRimGfx = this.add.graphics();
-    this.drawPotRim(this.potRimGfx);
-    this.plantContainer.add([this.potGfx, ...this.segGfx, this.potRimGfx]);
-
-    // ── Frunze ─────────────────────────────────────────────────────────────
-    this.leafDefs = [
-      [{ segIdx: 0, t: 0.6, ox: 0, oy: 0, angle: 35, scale: 1 }],
-      [{ segIdx: 1, t: 0.4, ox: 0, oy: 0, angle: -35, scale: 1 }],
-      [
-        { segIdx: 2, t: 0.4, ox: 0, oy: 0, angle: 25, scale: 0.9 },
-        { segIdx: 2, t: 0.85, ox: 0, oy: 0, angle: 55, scale: 0.9 },
-      ],
-      [
-        { segIdx: 3, t: 0.3, ox: 0, oy: 0, angle: -20, scale: 0.85 },
-        { segIdx: 3, t: 0.6, ox: 0, oy: 0, angle: -45, scale: 0.85 },
-        { segIdx: 3, t: 0.9, ox: 0, oy: 0, angle: -70, scale: 0.85 },
-      ],
-      [
-        { segIdx: 4, t: 0.18, ox: 0, oy: 0, angle: 20, scale: 0.75 },
-        { segIdx: 4, t: 0.38, ox: 0, oy: 0, angle: -15, scale: 0.75 },
-        { segIdx: 4, t: 0.58, ox: 0, oy: 0, angle: 35, scale: 0.75 },
-        { segIdx: 4, t: 0.78, ox: 0, oy: 0, angle: -5, scale: 0.75 },
-        { segIdx: 4, t: 0.96, ox: 0, oy: 0, angle: 45, scale: 0.75 },
-      ],
-    ];
-
-    // ── bucketContainer — poziție locală în mainContainer ─────────────────
-    this.BUCKET_HOME_X = 150;
-    this.BUCKET_HOME_Y = 162;
-
-    this.bucketContainer = this.add.container(
-      this.BUCKET_HOME_X,
-      this.BUCKET_HOME_Y,
-    );
-    this.bucketContainer.setSize(100, 100).setInteractive({ cursor: "grab" });
-    this.bucketGfx = this.add.graphics();
-    this.waterFillGfx = this.add.graphics();
-    this.drawBucket(this.bucketGfx, this.waterFillGfx, 1.0);
-    this.bucketContainer.add([this.waterFillGfx, this.bucketGfx]);
-    this.input.setDraggable(this.bucketContainer);
-
-    // Asamblăm containerul principal
-    this.mainContainer.add([this.plantContainer, this.bucketContainer]);
-
-    // ── Drag Handlers ──────────────────────────────────────────────────────
-    this.input.on("dragstart", (pointer, gameObject) => {
-      if (this.isSolved || this.isAnimating) return;
-      this.mainContainer.bringToTop(gameObject);
-      let localMouseX =
-        (pointer.x - this.mainContainer.x) / this.mainContainer.scaleX;
-      let localMouseY =
-        (pointer.y - this.mainContainer.y) / this.mainContainer.scaleY;
-      gameObject.dragOffsetX = gameObject.x - localMouseX;
-      gameObject.dragOffsetY = gameObject.y - localMouseY;
+    // drag the bucket to the pot; close enough and it pours
+    this.input.on("dragstart", (pointer, obj) => {
+      if (obj !== this.bucket || this.isSolved || this.isAnimating) return;
+      const p = this._local(pointer);
+      this._dragOffset = { x: obj.x - p.x, y: obj.y - p.y };
       this.services.audio.playClick(this);
     });
-
-    this.input.on("drag", (pointer, gameObject, dragX, dragY) => {
-      if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
-      let localMouseX =
-        (pointer.x - this.mainContainer.x) / this.mainContainer.scaleX;
-      let localMouseY =
-        (pointer.y - this.mainContainer.y) / this.mainContainer.scaleY;
-      gameObject.x = localMouseX + gameObject.dragOffsetX;
-      gameObject.y = localMouseY + gameObject.dragOffsetY;
+    this.input.on("drag", (pointer, obj) => {
+      if (obj !== this.bucket || this.isSolved || this.isAnimating || this.currentStep >= 5) return;
+      const p = this._local(pointer);
+      const off = this._dragOffset || { x: 0, y: 0 };
+      obj.x = Math.max(-75, Math.min(75, p.x + off.x));
+      obj.y = Math.max(-95, Math.min(-BUCKET.h / 2, p.y + off.y));
+      this._placeBucketShadow();
       const pour = this._pourPoint();
-      const dist = Phaser.Math.Distance.Between(
-        this.bucketContainer.x,
-        this.bucketContainer.y,
-        pour.x,
-        pour.y,
-      );
-      if (dist > 100) {
-        this.canPour = true;
-      }
-      if (dist < 60 && this.canPour) {
+      const d = Math.hypot(obj.x - pour.x, obj.y - pour.y);
+      if (d > 28) this.canPour = true;
+      if (d < 17 && this.canPour) {
         this.canPour = false;
         this.triggerPour();
       }
     });
-
-    // ── Resize ─────────────────────────────────────────────────────────────
-    // păstrăm referința ca să scoatem listener-ul la shutdown
-    this._onResize = (size) => {
-      this.environment._buildScenery(size.width, size.height);
-      this.statusText.setPosition(size.width / 2, 50);
-      this.levelText.setPosition(size.width - 30, 30);
-      let newScale = Math.min(1, size.height / 600) * 0.85;
-      this.mainContainer.setPosition(
-        size.width * 0.48,
-        size.height * 0.89 - 215 * newScale,
-      );
-      this.mainContainer.setScale(newScale);
-    };
-    this.listenToResize(this._onResize);
+    this.input.on("dragend", (pointer, obj) => {
+      // let go anywhere else and the bucket goes back to its place
+      if (obj !== this.bucket || this.isAnimating) return;
+      this.tweens.add({
+        targets: this.bucket,
+        x: BUCKET_X,
+        y: -BUCKET.h / 2,
+        duration: 320,
+        ease: "Sine.easeOut",
+        onUpdate: () => this._placeBucketShadow(),
+      });
+    });
 
     if (!this.skipFadeIn) {
-      const fadeOverlay = this.add
-        .rectangle(0, 0, width, height, 0x000000)
-        .setOrigin(0, 0)
-        .setDepth(100);
-      const nextLvlText = this.add
-        .text(
-          width / 2,
-          height / 2,
-          "Level " + this._levelNumber(this.scene.key) + "...",
-          {
-            fontFamily: '"Special Elite", monospace',
-            fontSize: "48px",
-            color: "#ffffff",
-          },
-        )
+      const { width, height } = this.cameras.main;
+      const veil = this.add.rectangle(0, 0, width, height, 0x000000).setOrigin(0, 0).setDepth(100);
+      const title = this.add
+        .text(width / 2, height / 2, "Level " + this._levelNumber() + "...", {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: "48px",
+          color: "#ffffff",
+        })
         .setOrigin(0.5)
         .setDepth(101);
       this.tweens.add({
-        targets: [fadeOverlay, nextLvlText],
+        targets: [veil, title],
         alpha: 0,
         duration: 1000,
         delay: 500,
         onComplete: () => {
-          fadeOverlay.destroy();
-          nextLvlText.destroy();
+          veil.destroy();
+          title.destroy();
         },
       });
     }
   }
 
-  _levelNumber(key) {
+  _levelNumber() {
     const i = this.services.levels.definitions
-      ? this.services.levels.definitions.findIndex((l) => l.key === key)
+      ? this.services.levels.definitions.findIndex((l) => l.key === this.scene.key)
       : -1;
     return i !== -1 ? i + 1 : "?";
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  //  ANIMAȚIILE DECORULUI (rulează în fiecare cadru)
-  // ══════════════════════════════════════════════════════════════════════════
+  // ── construction ───────────────────────────────────────────────────────────
+
+  _build(W, H) {
+    this._W = W;
+    this._H = H;
+    this._fireflies = [];
+    this._sway = [];
+    this._drops = [];
+    this._stream = null;
+    this._shoot = null;
+    this._shootTimer = 3500 + Math.random() * 4000;
+
+    const art = (this._art = paintGarden(this, W, H));
+    const L = (this._L = art.L);
+    const K = art.keys;
+    this.add.image(0, 0, K.sky).setOrigin(0, 0).setDepth(-30);
+    this._makeMoon(L);
+    this._makeStars(L, K);
+    this._shootGfx = this.add.graphics().setDepth(-28);
+    this.add.image(0, 0, K.land).setOrigin(0, 0).setDepth(-20);
+    this._makeFireflies();
+
+    this._makeBench(L);
+    this._makeLantern(L);
+    this._makeTufts(L);
+    this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
+    this._drawTexts(W);
+    this._built = true;
+  }
+
+  // the same moon that hangs over the valley through the telescope: one
+  // texture, painted once and kept for the session
+  _makeMoon(L) {
+    makeMoonTexture(this.textures, "tele_moon");
+    const { x, y, r } = L.moon;
+    this.add
+      .image(x, y, "tele_moon")
+      .setDepth(-29)
+      .setDisplaySize((r * 2) / 0.72, (r * 2) / 0.72);
+  }
+
+  // stars in the open sky: most of them faint points, a few bright ones
+  // that glint, each breathing at its own pace
+  _makeStars(L, K) {
+    const { W, H, S } = L;
+    const rnd = this._rng(8123);
+    const k = Math.max(0.8, Math.min(1.4, S / 800));
+    let bright = 0;
+    for (let i = 0; i < 70; i++) {
+      const x = W * (0.02 + rnd() * 0.96);
+      const y = H * (0.02 + Math.pow(rnd(), 1.15) * 0.5);
+      const glint = rnd() < 0.16 && bright < 8;
+      if (!L.inSky(x, y)) continue;
+      if (y < 78 && x > W * 0.3 && x < W * 0.7) continue; // the title
+      if (y < 70 && x > W - 170) continue; // the level's number
+      if (glint) bright++;
+      const size = (glint ? 11 + rnd() * 6 : 3 + rnd() * 4) * k;
+      const star = this.add
+        .image(x, y, glint ? K.sparkle : K.star)
+        .setDepth(-29)
+        .setBlendMode("ADD")
+        .setDisplaySize(size, size)
+        .setAlpha(0.25);
+      this.tweens.add({
+        targets: star,
+        alpha: glint ? 0.75 + rnd() * 0.25 : 0.45 + rnd() * 0.45,
+        duration: 1200 + rnd() * 2600,
+        delay: rnd() * 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
+  }
+
+  // tall grass in the bottom corners, dark against the slope, stirring
+  _makeTufts(L) {
+    const rnd = this._rng(2024);
+    for (const fx of [0.015, 0.06, 0.115, 0.885, 0.94, 0.99]) {
+      const x = L.W * fx + (rnd() - 0.5) * 16;
+      const s = (L.u * (0.8 + rnd() * 0.5)) / 2; // the tuft is painted at twice its size
+      const img = this.add
+        .image(x, L.H + 4, this._art.keys.tuft)
+        .setOrigin(0.5, 1)
+        .setScale(s)
+        .setDepth(12);
+      this._sway.push({ img, amp: 0.045, ph: rnd() * 6.28, sp: 1.1 + rnd() * 0.7 });
+    }
+  }
+
+  _makeFireflies() {
+    const { W, H } = this._L;
+    const rnd = this._rng(777);
+    for (let i = 0; i < 16; i++) {
+      const front = rnd() < 0.25;
+      const img = this.add
+        .image(0, 0, this._art.keys.firefly)
+        .setBlendMode("ADD")
+        .setDepth(front ? 6 : -9)
+        .setAlpha(0);
+      const s = (front ? 18 : 10 + rnd() * 6) * this._L.u;
+      img.setDisplaySize(s, s);
+      this._fireflies.push({
+        img,
+        x: W * rnd(),
+        y: H * (0.5 + rnd() * (front ? 0.45 : 0.3)),
+        vx: 0,
+        vy: 0,
+        ph: rnd() * 100,
+        blink: 2 + rnd() * 3,
+        seed: rnd() * 1000,
+      });
+    }
+  }
+
+  // ── the bench: pot, plant, bucket ──────────────────────────────────────────
+
+  _makeBench(L) {
+    const cm = L.cm;
+    // everything on the bench lives in centimetres, about the bench-top middle
+    const bench = (this.bench = this.add.container(L.bench.x, L.bench.y).setScale(cm).setDepth(0));
+    const soilY = POT.soilY;
+    this._soil = { x: POT_X, y: soilY };
+    this._lantern = { x: LANTERN.x - POT_X, y: LANTERN.flameY - soilY }; // from the soil, cm
+    const art = (this._plantArt = paintPlantArt(this.textures, cm));
+    const k = 1 / (cm * RES);
+    const potBack = this.add.image(POT_X, 0, art.pot.back).setOrigin(art.pot.ox, art.pot.oy).setScale(k);
+    this.wet = this.add.image(POT_X, 0, art.pot.wet).setOrigin(art.pot.ox, art.pot.oy).setScale(k);
+    this.wet.setAlpha(Math.min(1, this.currentStep * 0.3));
+    // the stems, painted live onto their own canvas
+    const px = cm * RES;
+    const box = PLANT_BOX;
+    const key = "pp_stems";
+    if (this.textures.exists(key)) this.textures.remove(key);
+    this._stemsCanvas = makeCanvas((box.x1 - box.x0) * px, (box.y1 - box.y0) * px);
+    this._stemsTex = this.textures.addCanvas(key, this._stemsCanvas);
+    this._stemsOrigin = { x: -box.x0 * px, y: -box.y0 * px };
+    this._stemPx = px;
+    this.stems = this.add
+      .image(POT_X + box.x0, soilY + box.y0, key)
+      .setOrigin(0, 0)
+      .setScale(k);
+    this.leafLayer = this.add.container(0, 0);
+    const potFront = this.add.image(POT_X, 0, art.pot.front).setOrigin(art.pot.ox, art.pot.oy).setScale(k);
+    this._grown = SEGMENTS.map((_, i) => (i < this.currentStep ? 1 : 0));
+    this._paintStems();
+    this.leaves = [];
+    for (let s = 0; s < Math.min(this.currentStep, 5); s++) this._addLeaves(s, false);
+
+    // the bucket: its shadow on the planks, then the bucket, at its level
+    this.bucketShadow = this.add.image(BUCKET_X, -0.3, art.shadow).setOrigin(0.44, 0.5).setScale(k);
+    const level = Math.min(WATER_LEVELS - 1, this.currentStep);
+    this.bucket = this.add
+      .image(BUCKET_X, -BUCKET.h / 2, art.buckets[level])
+      .setOrigin(art.bucketOrigin.ox, art.bucketOrigin.oy)
+      .setScale(k);
+    this.streamGfx = this.add.graphics();
+    this.dropLayer = this.add.container(0, 0);
+    bench.add([potBack, this.wet, this.leafLayer, this.stems, potFront, this.bucketShadow, this.bucket, this.streamGfx, this.dropLayer]);
+
+    if (!this.isSolved && this.currentStep < 5) {
+      this.bucket.setInteractive({ cursor: "grab" });
+      this.input.setDraggable(this.bucket);
+    }
+  }
+
+  // the lantern's flame: breathing, and now and then a gutter
+  _makeLantern(L) {
+    const f = L.flame;
+    const glow = this.add.image(f.x, f.y, this._art.keys.glow).setBlendMode("ADD").setDepth(1);
+    const size = 44 * L.cm;
+    glow.setDisplaySize(size, size).setAlpha(0.55);
+    const core = this.add.image(f.x, f.y, this._art.keys.glow).setBlendMode("ADD").setDepth(1.1);
+    core.setDisplaySize(12 * L.cm, 16 * L.cm).setAlpha(0.8);
+    this._flame = { glow, core, size };
+  }
+
+  // ── what moves ─────────────────────────────────────────────────────────────
 
   update(time, delta) {
-    this.environment?.update(time, delta);
+    if (!this._built) return;
+    const t = time / 1000;
+    const dt = Math.min(delta || 16, 100);
+    const wind = 0.55 * Math.sin(t * 0.63) + 0.3 * Math.sin(t * 1.71 + 1.2) + 0.15 * Math.sin(t * 3.1 + 0.4);
+
+    for (const s of this._sway) s.img.rotation = s.amp * (wind * 0.8 + 0.35 * Math.sin(t * s.sp + s.ph));
+
+    // the flame
+    const f = this._flame;
+    const flick = 0.9 + 0.06 * Math.sin(t * 13.1) + 0.04 * Math.sin(t * 23.7 + 1) + 0.05 * Math.sin(t * 2.3);
+    f.glow.setAlpha(0.5 * flick);
+    f.glow.setDisplaySize(f.size * (0.97 + 0.03 * flick), f.size * (0.97 + 0.03 * flick));
+    f.core.setAlpha(0.75 * flick);
+
+    this._updateFireflies(t, dt);
+    this._updateShootingStar(dt);
+    this._updateStream();
   }
 
-
-
-  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha) {
-    const steps = Math.max(14, Math.round(r * 0.9));
-    const pts = [];
-    for (let i = 0; i <= steps; i++) {
-      const a = (i / steps) * Math.PI * 2;
-      const jr = r + (rnd() - 0.5) * 1.2;
-      pts.push({ x: cx + Math.cos(a) * jr, y: cy + Math.sin(a) * jr });
+  // fireflies drift and wander, glowing up and dying down, each to its own time
+  _updateFireflies(t, dt) {
+    const { W, H, u } = this._L;
+    for (const f of this._fireflies) {
+      const s = f.seed;
+      f.vx += (Math.sin(t * 0.7 + s) + Math.sin(t * 1.9 + s * 2)) * 0.004 * u * dt;
+      f.vy += (Math.cos(t * 0.8 + s * 1.3) + Math.sin(t * 2.3 + s)) * 0.003 * u * dt;
+      f.vx *= 0.96;
+      f.vy *= 0.96;
+      f.x += f.vx;
+      f.y += f.vy;
+      if (f.x < -20) f.x = W + 20;
+      if (f.x > W + 20) f.x = -20;
+      f.y = Math.max(H * 0.45, Math.min(H * 0.98, f.y));
+      const phase = (t + f.ph) % f.blink;
+      const on = phase < 1.1 ? Math.sin((phase / 1.1) * Math.PI) : 0;
+      f.img.setPosition(f.x, f.y).setAlpha(0.95 * on);
     }
-    this._drawPath(g, pts, width, color, alpha);
   }
 
-  _pencilArc(g, rnd, cx, cy, r, a0, a1, width, color, alpha) {
-    const steps = Math.max(6, Math.ceil((Math.abs(a1 - a0) * r) / 6));
-    const pts = [];
-    for (let i = 0; i <= steps; i++) {
-      const a = a0 + ((a1 - a0) * i) / steps;
-      const jr = r + (rnd() - 0.5) * 1.2;
-      pts.push({ x: cx + Math.cos(a) * jr, y: cy + Math.sin(a) * jr });
+  _launchShootingStar() {
+    const { W, H, u } = this._L;
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    const ang = (22 + Math.random() * 18) * DEG;
+    this._shoot = {
+      x: dir > 0 ? W * (0.05 + Math.random() * 0.4) : W * (0.55 + Math.random() * 0.4),
+      y: H * (0.04 + Math.random() * 0.16),
+      dx: Math.cos(ang) * dir,
+      dy: Math.sin(ang),
+      speed: (700 + Math.random() * 400) * u,
+      tail: (70 + Math.random() * 50) * u,
+      life: 700 + Math.random() * 400,
+      age: 0,
+    };
+  }
+
+  _updateShootingStar(dt) {
+    if (!this._shoot) {
+      this._shootTimer -= dt;
+      if (this._shootTimer <= 0) {
+        this._launchShootingStar();
+        this._shootTimer = 7000 + Math.random() * 9000;
+      }
     }
-    this._drawPath(g, pts, width, color, alpha);
+    const g = this._shootGfx;
+    g.clear();
+    const sh = this._shoot;
+    if (!sh) return;
+    sh.age += dt;
+    const p = sh.age / sh.life;
+    if (p >= 1) {
+      this._shoot = null;
+      return;
+    }
+    const dist = (sh.speed * sh.age) / 1000;
+    const hx = sh.x + sh.dx * dist;
+    const hy = sh.y + sh.dy * dist;
+    const tail = Math.min(sh.tail, dist);
+    const fade = p < 0.15 ? p / 0.15 : p > 0.7 ? (1 - p) / 0.3 : 1;
+    for (let i = 0; i < 10; i++) {
+      const a0 = i / 10;
+      const a1 = (i + 1) / 10;
+      g.lineStyle(1.6 * (1 - a0) + 0.3, 0xeef2ff, fade * (1 - a0) * 0.85);
+      g.lineBetween(hx - sh.dx * tail * a0, hy - sh.dy * tail * a0, hx - sh.dx * tail * a1, hy - sh.dy * tail * a1);
+    }
+    g.fillStyle(0xffffff, fade);
+    g.fillCircle(hx, hy, 1.4);
+  }
+
+  // ── pouring and growing ────────────────────────────────────────────────────
+
+  _local(pointer) {
+    return { x: (pointer.x - this.bench.x) / this.bench.scaleX, y: (pointer.y - this.bench.y) / this.bench.scaleY };
+  }
+
+  // where the bucket's middle must be for its lip, tipped, to hang over the
+  // middle of the pot
+  _pourPoint() {
+    const lip = this._lipOffset(TIP);
+    return { x: POT_X + 1.5 - lip.x, y: -POT.h - 6 - lip.y };
+  }
+
+  // the pouring lip (the rim's left end), from the bucket's middle, tipped
+  _lipOffset(deg) {
+    const a = deg * DEG;
+    const lx = -(BUCKET.topR - 0.3);
+    const ly = -BUCKET.h / 2;
+    return { x: lx * Math.cos(a) - ly * Math.sin(a), y: lx * Math.sin(a) + ly * Math.cos(a) };
+  }
+
+  _placeBucketShadow() {
+    const b = this.bucket;
+    const lift = Math.max(0, -BUCKET.h / 2 - b.y);
+    this.bucketShadow.x = b.x;
+    this.bucketShadow.setAlpha(Math.max(0, 1 - lift / 25));
   }
 
   triggerPour() {
     if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
     this.isAnimating = true;
-    this.input.setDraggable(this.bucketContainer, false);
+    this._pouring = this.currentStep;
+    this.input.setDraggable(this.bucket, false);
     this.services.audio.playSfx("wateringplant", 1, this);
-    this.pourAndGrow();
+    this._pourAndGrow(this.currentStep);
   }
 
-  // puncte de-a lungul unei curbe Bézier pătratice
-  _qPts(x0, y0, cx, cy, x1, y1, n = 14) {
-    const pts = [];
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      pts.push({ x: this.qBez(t, x0, cx, x1), y: this.qBez(t, y0, cy, y1) });
-    }
-    return pts;
-  }
-
-  drawPot(g) {
-    g.clear();
-
-    // ── culoarea: lut ars, dar închis la culoare ca să se potrivească temei ──
-    // corpul ghiveciului
-    const body = [
-      ...this._qPts(-55, 50, 0, 65, 55, 50),
-      ...this._qPts(55, 50, 45, 110, 30, 150).slice(1),
-      ...this._qPts(30, 150, 0, 160, -30, 150).slice(1),
-      ...this._qPts(-30, 150, -45, 110, -55, 50).slice(1),
-    ];
-    g.fillStyle(0x50301f, 1);
-    g.fillPoints(body, true);
-    // umbră pe partea dreaptă, pentru volum
-    g.fillStyle(0x2a170d, 0.6);
-    g.fillPoints(
-      [
-        ...this._qPts(55, 50, 45, 110, 30, 150),
-        ...this._qPts(18, 152, 32, 110, 40, 58),
-      ],
-      true,
-    );
-    // lumină pe partea stângă
-    g.lineStyle(5, 0x8a5a3e, 0.26);
-    const hi = this._qPts(-42, 72, -36, 110, -24, 144);
-    for (let i = 1; i < hi.length; i++)
-      g.lineBetween(hi[i - 1].x, hi[i - 1].y, hi[i].x, hi[i].y);
-    // pământul din ghiveci
-    g.fillStyle(0x2b1d15, 1);
-    g.fillPoints(
-      [
-        ...this._qPts(-55, 50, 0, 35, 55, 50),
-        ...this._qPts(55, 50, 0, 65, -55, 50).slice(1),
-      ],
-      true,
-    );
-    g.fillStyle(0x4a3526, 0.8);
-    for (const [px, py] of [
-      [-30, 48],
-      [-12, 45],
-      [22, 47],
-      [36, 51],
-      [-38, 52],
-    ])
-      g.fillCircle(px, py, 1.4);
-
-    g.lineStyle(1.2, 0xffffff, 0.7);
-    const sketchCurve = (x0, y0, cx, cy, x1, y1) => {
-      const d = (ox, oy, dcx, dcy, alphaMod) => {
-        g.lineStyle(1.2, 0xffffff, 0.7 * alphaMod);
-        g.beginPath();
-        g.moveTo(x0 + ox, y0 + oy);
-        for (let i = 1; i <= 12; i++) {
-          let t = i / 12;
-          g.lineTo(
-            this.qBez(t, x0 + ox, cx + dcx, x1 + ox),
-            this.qBez(t, y0 + oy, cy + dcy, y1 + oy),
-          );
-        }
-        g.strokePath();
-      };
-      d(0, 0, 0, 0, 1);
-      d(-1, 1, 1, -1, 0.6);
-      d(1, -1, -1, 1, 0.4);
-    };
-    sketchCurve(-55, 50, 0, 35, 55, 50);
-    sketchCurve(-55, 50, 0, 65, 55, 50);
-    sketchCurve(-45, 55, 0, 62, 45, 55);
-    sketchCurve(-55, 50, -45, 110, -30, 150);
-    sketchCurve(55, 50, 45, 110, 30, 150);
-    sketchCurve(-30, 150, 0, 160, 30, 150);
-  }
-
-  // buza ghiveciului: stă în fața tulpinii, deci planta pare înfiptă în pământ
-  drawPotRim(g) {
-    g.clear();
-    const band = [
-      ...this._qPts(-55, 50, 0, 65, 55, 50),
-      ...this._qPts(52.9, 62, 0, 77, -52.9, 62),
-    ];
-    g.fillStyle(0x63402b, 1);
-    g.fillPoints(band, true);
-    const stroke = (pts, alpha) => {
-      g.lineStyle(1.2, 0xffffff, alpha);
-      for (let i = 1; i < pts.length; i++)
-        g.lineBetween(pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y);
-    };
-    stroke(this._qPts(-55, 50, 0, 65, 55, 50), 0.7);
-    stroke(this._qPts(-54, 51, 1, 64, 56, 49), 0.3);
-    stroke(this._qPts(-52.9, 62, 0, 77, 52.9, 62), 0.45);
-  }
-
-  drawBucket(gOutline, gWater, waterRatio) {
-    gOutline.clear();
-    gWater.clear();
-    gOutline.lineStyle(1.2, 0xffffff, 0.7);
-    const sketchCurve = (x0, y0, cx, cy, x1, y1) => {
-      const d = (ox, oy, dcx, dcy, alphaMod) => {
-        gOutline.lineStyle(1.2, 0xffffff, 0.7 * alphaMod);
-        gOutline.beginPath();
-        gOutline.moveTo(x0 + ox, y0 + oy);
-        for (let i = 1; i <= 12; i++) {
-          let t = i / 12;
-          gOutline.lineTo(
-            this.qBez(t, x0 + ox, cx + dcx, x1 + ox),
-            this.qBez(t, y0 + oy, cy + dcy, y1 + oy),
-          );
-        }
-        gOutline.strokePath();
-      };
-      d(0, 0, 0, 0, 1);
-      d(-1, 1, 1, -1, 0.6);
-      d(1, -1, -1, 1, 0.4);
-    };
-    sketchCurve(-38, -35, 0, -100, 38, -35);
-    gOutline.fillStyle(0xffffff, 0.8);
-    gOutline.fillCircle(-38, -35, 3.5);
-    gOutline.fillCircle(38, -35, 3.5);
-    sketchCurve(-38, -35, 0, -20, 38, -35);
-    sketchCurve(-38, -35, 0, -14, 38, -35);
-    sketchCurve(-38, -35, 0, -50, 38, -35);
-    sketchCurve(-38, -35, -34, 10, -26, 45);
-    sketchCurve(38, -35, 34, 10, 26, 45);
-    sketchCurve(-26, 45, 0, 58, 26, 45);
-    sketchCurve(-26, 45, 0, 32, 26, 45);
-    gOutline.lineStyle(1, 0xffffff, 0.3);
-    sketchCurve(-28, -25, -24, 10, -18, 35);
-    gOutline.lineStyle(1, 0xffffff, 0.15);
-    sketchCurve(28, -25, 24, 10, 18, 35);
-
-    if (waterRatio > 0.02) {
-      let wH = 80 * waterRatio;
-      let wY = 45 - wH;
-      let t = (45 - wY) / 80;
-      let wX = 26 + t * 12;
-      gWater.fillStyle(0x00e5ff, 0.55);
-      gWater.beginPath();
-      gWater.moveTo(-wX, wY);
-      gWater.lineTo(wX, wY);
-      gWater.lineTo(26, 45);
-      for (let i = 1; i <= 10; i++) {
-        let ct = i / 10;
-        gWater.lineTo(this.qBez(ct, 26, 0, -26), this.qBez(ct, 45, 58, 45));
-      }
-      gWater.closePath();
-      gWater.fillPath();
-      gWater.fillStyle(0x00e5ff, 0.9);
-      gWater.beginPath();
-      for (let i = 0; i <= 10; i++) {
-        let ct = i / 10;
-        gWater.lineTo(
-          this.qBez(ct, -wX, 0, wX),
-          this.qBez(ct, wY, wY + wX * 0.35, wY),
-        );
-      }
-      for (let i = 0; i <= 10; i++) {
-        let ct = i / 10;
-        gWater.lineTo(
-          this.qBez(ct, wX, 0, -wX),
-          this.qBez(ct, wY, wY - wX * 0.35, wY),
-        );
-      }
-      gWater.closePath();
-      gWater.fillPath();
-      gWater.lineStyle(1, 0xffffff, 0.4);
-      gWater.beginPath();
-      gWater.moveTo(-wX + 4, wY + wX * 0.1);
-      for (let i = 1; i <= 10; i++) {
-        let ct = i / 10;
-        gWater.lineTo(
-          this.qBez(ct, -wX + 4, 0, wX - 4),
-          this.qBez(ct, wY + wX * 0.1, wY + wX * 0.3, wY + wX * 0.1),
-        );
-      }
-      gWater.strokePath();
-    }
-  }
-
-  qBez(t, p0, cp, p1) {
-    const mt = 1 - t;
-    return mt * mt * p0 + 2 * mt * t * cp + t * t * p1;
-  }
-
-  getSegPoint(seg, t) {
-    const cp = seg.cp || { x: seg.to.x, y: seg.from.y };
-    return {
-      x: this.qBez(t, seg.from.x, cp.x, seg.to.x),
-      y: this.qBez(t, seg.from.y, cp.y, seg.to.y),
-    };
-  }
-
-  drawSegment(gfx, seg, progress, lineWidth) {
-    gfx.clear();
-    const cp = seg.cp || { x: seg.to.x, y: seg.from.y };
-    const STEPS = 60;
-    gfx.fillStyle(0x6d4c41, 1);
-    for (let s = 0; s <= STEPS; s++) {
-      const t = (s / STEPS) * progress;
-      const x = this.qBez(t, seg.from.x, cp.x, seg.to.x);
-      const y = this.qBez(t, seg.from.y, cp.y, seg.to.y);
-      const currentWidth = lineWidth * (1 - t * 0.4);
-      gfx.fillCircle(x, y, currentWidth / 2);
-    }
-  }
-
-  // Where the bucket's middle goes to pour: its lip (about 41 px left of and
-  // 31 px below its middle when tipped) sits just above the middle of the pot's
-  // rim, whatever size the pot is drawn at.
-  _pourPoint() {
-    const k = this.PLANT_SCALE;
-    return {
-      x: this.plantContainer.x + 4 * k + 41,
-      y: this.plantContainer.y + 16 * k - 31,
-    };
-  }
-
-  pourAndGrow() {
-    const step = this.currentStep;
-    this.tweens.addCounter({
-      from: 1 - step / 5,
-      to: 1 - (step + 1) / 5,
-      duration: 1200,
-      ease: "Sine.easeInOut",
-      onUpdate: (tween) => {
-        this.drawBucket(this.bucketGfx, this.waterFillGfx, tween.getValue());
-      },
-    });
+  _pourAndGrow(step) {
     const pour = this._pourPoint();
+    // over the pot, and tip
     this.tweens.add({
-      targets: this.bucketContainer,
-      angle: -80,
+      targets: this.bucket,
       x: pour.x,
       y: pour.y,
+      angle: TIP,
       duration: 400,
       ease: "Sine.easeInOut",
+      onUpdate: () => this._placeBucketShadow(),
       onComplete: () => {
+        // the level drops while it is tipped, where the water cannot be seen
+        this.bucket.setTexture(this._plantArt.buckets[Math.min(WATER_LEVELS - 1, step + 1)]);
+        this._stream = { start: this.time.now, dur: 1000, step };
         this.time.delayedCall(1000, () => {
+          this._stream = null;
+          this.streamGfx.clear();
           this.tweens.add({
-            targets: this.bucketContainer,
+            targets: this.bucket,
+            x: BUCKET_X,
+            y: -BUCKET.h / 2,
             angle: 0,
-            x: this.BUCKET_HOME_X,
-            y: this.BUCKET_HOME_Y,
             duration: 400,
             ease: "Sine.easeInOut",
+            onUpdate: () => this._placeBucketShadow(),
             onComplete: () => {
               this.canPour = true;
             },
           });
+          this._grow(step);
         });
       },
     });
-    this.time.delayedCall(400, () => {
-      let dropsPoured = 0;
-      this.time.addEvent({
-        delay: 15,
-        repeat: 55,
-        callback: () => {
-          let rad = Phaser.Math.DegToRad(this.bucketContainer.angle);
-          let cos = Math.cos(rad);
-          let sin = Math.sin(rad);
-          let lipLocalX = this.bucketContainer.x + (-38 * cos - -35 * sin);
-          let lipLocalY = this.bucketContainer.y + (-38 * sin + -35 * cos);
-          const dropGfx = this.add.graphics();
-          dropGfx.fillStyle(0x00e5ff, 0.9);
-          dropGfx.fillEllipse(
-            0,
-            0,
-            Phaser.Math.Between(3, 5),
-            Phaser.Math.Between(6, 12),
-          );
-          dropGfx.setPosition(
-            lipLocalX + Phaser.Math.Between(-5, 5),
-            lipLocalY + Phaser.Math.Between(-5, 5),
-          );
-          dropGfx.rotation = Phaser.Math.DegToRad(
-            -15 + Phaser.Math.Between(-5, 5),
-          );
-          this.mainContainer.add(dropGfx);
-          // the drops land on the soil, which is smaller now too
-          const k = this.PLANT_SCALE;
-          const targetX =
-            this.plantContainer.x + Phaser.Math.Between(-15, 15) * k;
-          const targetY = this.plantContainer.y + 55 * k;
-          this.tweens.add({
-            targets: dropGfx,
-            x: targetX,
-            duration: 350 + Phaser.Math.Between(0, 100),
-            ease: "Linear",
-          });
-          this.tweens.add({
-            targets: dropGfx,
-            y: targetY,
-            duration: 350 + Phaser.Math.Between(0, 100),
-            ease: "Quad.easeIn",
-            alpha: { from: 1, to: 0 },
-            onComplete: () => {
-              dropGfx.destroy();
-              dropsPoured++;
-              if (dropsPoured === 56) {
-                this.growCurrentSegment(step);
-              }
-            },
-          });
-        },
-      });
+  }
+
+  // the water, pouring from the lip onto the soil: a stream that thins as it
+  // falls, drops flung off it, a splash where it lands; the soil darkening
+  _updateStream() {
+    const s = this._stream;
+    const g = this.streamGfx;
+    if (!s) return;
+    const p = Math.min(1, (this.time.now - s.start) / s.dur);
+    const flow = Math.sin(Math.PI * Math.min(1, p * 1.15)); // swells, then thins
+    const lip = this._lipOffset(this.bucket.angle);
+    const x0 = this.bucket.x + lip.x;
+    const y0 = this.bucket.y + lip.y;
+    const x1 = this._soil.x + 1;
+    const y1 = this._soil.y;
+    g.clear();
+    if (flow > 0.02) {
+      const N = 12;
+      const pts = [];
+      for (let i = 0; i <= N; i++) {
+        const q = i / N;
+        // leaves the lip moving left, then falls
+        const x = x0 + (x1 - x0) * (1 - (1 - q) * (1 - q)) + Math.sin(this.time.now / 60 + q * 9) * 0.12 * q;
+        const y = y0 + (y1 - y0) * q * q;
+        pts.push({ x, y, w: (2.4 - q * 1.1) * (0.35 + 0.65 * flow) });
+      }
+      // the body of the water, its bright core, and the lantern caught
+      // along its near edge
+      for (const [col, a, k, dx] of [
+        [0x6f95b0, 0.55, 1, 0],
+        [0xcfe2f2, 0.75, 0.5, 0.1],
+        [0xffffff, 0.85, 0.16, 0.25],
+        [0xffc890, 0.8, 0.14, -0.55],
+      ]) {
+        for (let i = 1; i < pts.length; i++) {
+          g.lineStyle(Math.max(0.12, pts[i].w * k), col, a);
+          g.lineBetween(pts[i - 1].x + dx * pts[i - 1].w, pts[i - 1].y, pts[i].x + dx * pts[i].w, pts[i].y);
+        }
+      }
+      // where it lands: a pale ring of splash on the soil
+      g.lineStyle(0.35, 0xdfeaf5, 0.45 * flow);
+      g.strokeEllipse(x1, y1, 3.2 + Math.sin(this.time.now / 45) * 0.4, 0.7);
+    }
+    // drops flung off the stream, a splash off the soil
+    if (flow > 0.2 && Math.random() < 0.7) this._drop(x1 + (Math.random() - 0.5) * 3, y1 - 0.3, true);
+    if (flow > 0.3 && Math.random() < 0.35) this._drop(x0 + (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.2, false);
+    this.wet.setAlpha(Math.min(1, s.step * 0.3 + 0.3 * p));
+  }
+
+  _drop(x, y, splash) {
+    const d = this.add.image(x, y, this._plantArt.drop).setScale(0.045 + Math.random() * 0.05);
+    this.dropLayer.add(d);
+    const vx = (Math.random() - 0.5) * (splash ? 9 : 4);
+    const vy = splash ? -(3 + Math.random() * 5) : 1;
+    const g = 60;
+    const life = splash ? 380 : 300;
+    const x0 = x;
+    const y0 = y;
+    this.tweens.addCounter({
+      from: 0,
+      to: life / 1000,
+      duration: life,
+      onUpdate: (tw) => {
+        const s = tw.getValue();
+        d.x = x0 + vx * s;
+        d.y = y0 + vy * s + 0.5 * g * s * s;
+        d.setAlpha(1 - s / (life / 1000));
+      },
+      onComplete: () => d.destroy(),
     });
   }
 
-  growCurrentSegment(step) {
-    const seg = this.segments[step];
-    const gfx = this.segGfx[step];
-    const lw = this.segWidths[step];
+  // the new branch draws itself out, then its leaves open along it
+  _grow(step) {
     this.tweens.addCounter({
       from: 0,
       to: 1,
       duration: 800,
       ease: "Sine.easeOut",
-      onUpdate: (tween) => {
-        this.drawSegment(gfx, seg, tween.getValue(), lw);
+      onUpdate: (tw) => {
+        this._grown[step] = tw.getValue();
+        this._paintStems();
       },
       onComplete: () => {
-        this.drawSegment(gfx, seg, 1, lw);
-        this.spawnLeaves(step, () => {
-          this.currentStep++;
-          if (this.currentStep >= 5) {
-            this.finishLevel();
-          } else {
+        this._grown[step] = 1;
+        this._paintStems();
+        this._addLeaves(step, true, () => {
+          this.currentStep = step + 1;
+          this._pouring = null;
+          if (this.currentStep >= 5) this.finishLevel();
+          else {
             this.isAnimating = false;
+            this.input.setDraggable(this.bucket, true);
           }
         });
       },
     });
   }
 
-  spawnLeaves(step, onDone) {
-    const defs = this.leafDefs[step];
-    for (let i = 0; i < defs.length; i++) {
-      const d = defs[i];
-      const seg = this.segments[d.segIdx];
-      const pos = this.getSegPoint(seg, d.t);
-      const leafImg = this.add.image(pos.x + d.ox, pos.y + d.oy, "leaf");
-      const BASE_SCALE = 0.17;
-      const ANGLE_OFFSET = -45;
-      leafImg.setOrigin(0.05, 0.95);
-      leafImg.setAngle(d.angle + ANGLE_OFFSET);
-      leafImg.baseAngle = d.angle + ANGLE_OFFSET;
-      leafImg.setScale(0);
-      leafImg.setInteractive({ cursor: "pointer" });
-      leafImg.on("pointerdown", () => {
-        if (leafImg.isSwinging) return;
-        leafImg.isSwinging = true;
+  _paintStems() {
+    const ctx = this._stemsCanvas.getContext("2d");
+    paintStems(ctx, this._stemPx, this._stemsOrigin, SEGMENTS, this._grown, this._lantern);
+    this._stemsTex.refresh();
+  }
+
+  _segPoint(seg, t) {
+    const m = 1 - t;
+    return {
+      x: m * m * seg.from.x + 2 * m * t * seg.cp.x + t * t * seg.to.x,
+      y: m * m * seg.from.y + 2 * m * t * seg.cp.y + t * t * seg.to.y,
+    };
+  }
+
+  // the leaves a pour brings (the level's own leaf image, its stalk at the
+  // lower left, the leaf pointing up and right — turned back 45° so that
+  // angle 0 points straight up); `grow` animates them opening, else they are
+  // simply there (a rebuild)
+  _addLeaves(step, grow, onDone) {
+    const defs = LEAF_DEFS[step];
+    defs.forEach((d, i) => {
+      const seg = SEGMENTS[d.seg];
+      const p = this._segPoint(seg, d.t);
+      const angle = d.angle + LEAF_IMAGE.turn;
+      const leaf = this.add
+        .image(this._soil.x + p.x, this._soil.y + p.y, "leaf")
+        .setOrigin(LEAF_IMAGE.ox, LEAF_IMAGE.oy)
+        .setAngle(angle);
+      leaf.baseAngle = angle;
+      const full = LEAF_IMAGE.cmPerPx * d.scale;
+      leaf.setScale(grow ? 0 : full);
+      leaf.setInteractive({ cursor: "pointer" });
+      leaf.on("pointerdown", () => this._swing(leaf));
+      this.leafLayer.add(leaf);
+      this.leaves.push(leaf);
+      if (grow) {
         this.tweens.add({
-          targets: leafImg,
-          angle: leafImg.baseAngle + Phaser.Math.Between(12, 22),
-          duration: 150,
-          yoyo: true,
-          repeat: 1,
-          ease: "Sine.easeInOut",
-          onComplete: () => {
-            leafImg.angle = leafImg.baseAngle;
-            leafImg.isSwinging = false;
-          },
+          targets: leaf,
+          scaleX: full,
+          scaleY: full,
+          duration: 500,
+          delay: i * 220,
+          ease: "Back.easeOut",
         });
-      });
-      this.plantContainer.addAt(leafImg, 0);
-      const finalScale = (d.scale || 1) * BASE_SCALE;
-      this.tweens.add({
-        targets: leafImg,
-        scaleX: finalScale,
-        scaleY: finalScale,
-        duration: 500,
-        delay: i * 220,
-        ease: "Back.easeOut",
-      });
-    }
-    const totalDelay = (defs.length - 1) * 220 + 510;
-    this.time.delayedCall(totalDelay, () => {
-      this.input.setDraggable(this.bucketContainer, true);
-      onDone();
+      }
+    });
+    if (!grow) return;
+    this.time.delayedCall((defs.length - 1) * 220 + 510, () => onDone && onDone());
+  }
+
+  // a leaf touched: it swings on its stalk and settles
+  _swing(leaf) {
+    if (leaf.isSwinging) return;
+    leaf.isSwinging = true;
+    this.tweens.add({
+      targets: leaf,
+      angle: leaf.baseAngle + 12 + Math.random() * 10,
+      duration: 150,
+      yoyo: true,
+      repeat: 1,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        leaf.angle = leaf.baseAngle;
+        leaf.isSwinging = false;
+      },
     });
   }
 
   finishLevel() {
     this.isSolved = true;
-    this.statusText.setText(
-      "Nature's sequence is complete. Whose name does it bear?",
-    );
+    this.isAnimating = false;
+    this.bucket.disableInteractive();
+    this._setSolvedText();
+    // a small reward: a star falls
+    if (!this._shoot) this._launchShootingStar();
+  }
+
+  _setSolvedText() {
+    this.statusText.setText("Nature's sequence is complete. Whose name does it bear?");
     this.statusText.setColor("#1aaf7a");
-    // mică recompensă: trece o stea căzătoare
-    this.environment.celebrate();
+  }
+
+  _drawTexts(W) {
+    this.statusText = this.add
+      .text(W / 2, 50, "Who am I? ...", {
+        fontFamily: '"Special Elite", monospace',
+        fontSize: "22px",
+        color: "#e8dcc0",
+        letterSpacing: 1,
+      })
+      .setOrigin(0.5)
+      .setDepth(20);
+    if (this.isSolved) this._setSolvedText();
+    this.levelText = this.add
+      .text(W - 30, 30, "Level " + this._levelNumber(), {
+        fontFamily: '"Special Elite", monospace',
+        fontSize: "28px",
+        color: "#e8dcc0",
+      })
+      .setOrigin(1, 0)
+      .setAlpha(0)
+      .setDepth(20);
+    this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000, ease: "Power2" });
+  }
+
+  // ── lifecycle ──────────────────────────────────────────────────────────────
+
+  // a resize: everything is painted again at the new size, the plant as
+  // grown as it was — a pour caught halfway is simply finished
+  _teardown() {
+    this._built = false;
+    if (this._pouring !== null && this._pouring !== undefined) {
+      this.currentStep = this._pouring + 1;
+      this._pouring = null;
+      this.isAnimating = false;
+      this.canPour = true;
+      if (this.currentStep >= 5) this.isSolved = true;
+    }
+    this.tweens.killAll();
+    this.time.removeAllEvents();
+    for (const obj of this.children.list.slice()) obj.destroy();
+    this._releaseArt();
+  }
+
+  _releaseArt() {
+    releaseGardenArt(this.textures);
+    releasePlantArt(this.textures);
+    if (this.textures.exists("pp_stems")) this.textures.remove("pp_stems");
   }
 
   shutdown() {
-    this._onResize = null;
+    this._built = false;
+    this._pouring = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
-    this.environment?.destroy();
-    this.environment = null;
+    this._releaseArt();
   }
 }

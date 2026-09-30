@@ -1,9 +1,10 @@
 import { buildMorseSteps } from "./puzzle.js";
+import { paintRoom, releaseRoom } from "./room.js";
 import './scene.css';
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 
-// Level 4 — "LIGHTSWITCH"
+// Level 7 — "LIGHTSWITCH"
 // Dark room. Open door — warm hallway light. Small switch left of the door.
 // Press the switch: the bulb (and the switch LED) blink the answer in Morse
 // code — short flash = dot, long flash = dash — then the wiring shorts out.
@@ -50,6 +51,7 @@ export default class LightswitchScene extends BasePuzzleScene {
     this.tweens.killAll();
     this.time.removeAllEvents();
     this.children.removeAll(true);
+    releaseRoom(this.textures);
     this._removeDOM();
     this._sparks = [];
     this._arcTicks = 0;
@@ -61,18 +63,11 @@ export default class LightswitchScene extends BasePuzzleScene {
     this._busy = false;
     this._computeGeo(W, H);
 
-    this._roomGfx  = this.add.graphics().setDepth(0);   // dark base
-    this._doorGfx  = this.add.graphics().setDepth(1);   // hallway + light cones
-    this._litLayer = this.add.container(0, 0).setDepth(3).setAlpha(0);
-    this._litGfx   = this.add.graphics();
-    this._litLayer.add(this._litGfx);
-    this._frameGfx = this.add.graphics().setDepth(10);  // black door frame, always on top
+    const art = paintRoom(this, W, H, this._geo);
+    this.add.image(0, 0, art.dark).setOrigin(0).setDepth(0);
+    this._litLayer = this.add.image(0, 0, art.lit).setOrigin(0).setDepth(3).setAlpha(0);
     this._sparkGfx = this.add.graphics().setDepth(20);
 
-    this._drawRoom(W, H);
-    this._drawDoorLight(W, H);
-    this._drawDoorFrame();
-    this._drawLitRoom(W, H);
     this._injectDOM(W, H);
   }
 
@@ -101,238 +96,6 @@ export default class LightswitchScene extends BasePuzzleScene {
   }
 
   // ── Dark base room ───────────────────────────────────────────────────────────
-
-  _drawRoom(W, H) {
-    const g = this._roomGfx;
-    g.clear();
-    const { floorY } = this._geo;
-
-    // Warm dark (not purple)
-    g.fillGradientStyle(0x0f0d0a, 0x0f0d0a, 0x0a0806, 0x0a0806, 1);
-    g.fillRect(0, 0, W, floorY);
-    g.fillGradientStyle(0x0b0906, 0x0b0906, 0x060403, 0x060403, 1);
-    g.fillRect(0, floorY, W, H - floorY);
-    g.lineStyle(1, 0x1c1a16, 1);
-    g.lineBetween(0, floorY, W, floorY);
-
-    // Soft vignette
-    for (let i = 0; i < 5; i++) {
-      g.fillStyle(0x000000, 0.08);
-      const t = (5 - i) * 22;
-      g.fillRect(0, 0, t, H); g.fillRect(W - t, 0, t, H);
-      g.fillRect(0, 0, W, t * 0.5); g.fillRect(0, H - t * 0.5, W, t * 0.5);
-    }
-  }
-
-  // ── Hallway warm light + light cones into the room ───────────────────────────
-
-  _drawDoorLight(W, H) {
-    const g = this._doorGfx;
-    g.clear();
-    const d = this._geo.door;
-    const { floorY } = this._geo;
-
-    // ── Doorway interior: dark back → bright center ──
-    g.fillStyle(0x1c1408, 1);
-    g.fillRect(d.x, d.y, d.w, d.h);
-
-    // Warm layers from edge inward (nested, progressively brighter + more yellow)
-    const layers = [
-      { shrink: 0.06, col: 0xa87828 },
-      { shrink: 0.14, col: 0xc89838 },
-      { shrink: 0.22, col: 0xe0b450 },
-      { shrink: 0.30, col: 0xf4cc68 },
-      { shrink: 0.38, col: 0xfff0b0 },
-    ];
-    layers.forEach(({ shrink, col }) => {
-      g.fillStyle(col, 1);
-      g.fillRect(
-        d.x + d.w * shrink,
-        d.y + d.h * (shrink * 0.3),
-        d.w * (1 - shrink * 2),
-        d.h * (1 - shrink * 0.3)
-      );
-    });
-
-    // ── Open door panel (swung toward viewer, dark parallelogram) ──
-    const p = d.w * 0.55;
-    g.fillStyle(0x0d0b10, 1);
-    g.fillPoints([
-      { x: d.x,     y: d.y },
-      { x: d.x - p, y: d.y + d.h * 0.08 },
-      { x: d.x - p, y: floorY + d.h * 0.05 },
-      { x: d.x,     y: floorY },
-    ], true);
-    g.lineStyle(1, 0x201e2c, 0.6);
-    g.lineBetween(d.x - p, d.y + d.h * 0.08, d.x - p, floorY + d.h * 0.05);
-    // Door knob
-    g.fillStyle(0x3e3624, 1);
-    g.fillCircle(d.x - p * 0.14, d.y + d.h * 0.55, Math.max(2, d.w * 0.025));
-
-    // ── Light cones spreading into dark room ──
-
-    // Widest outer cone (floor)
-    g.fillStyle(0xb08828, 0.15);
-    g.fillPoints([
-      { x: d.x + d.w * 0.02, y: floorY },
-      { x: d.x + d.w * 0.98, y: floorY },
-      { x: d.x + d.w * 4.0,  y: H },
-      { x: d.x - d.w * 1.5,  y: H },
-    ], true);
-
-    // Mid cone
-    g.fillStyle(0xc8a038, 0.22);
-    g.fillPoints([
-      { x: d.x + d.w * 0.10, y: floorY },
-      { x: d.x + d.w * 0.90, y: floorY },
-      { x: d.x + d.w * 2.8,  y: H },
-      { x: d.x - d.w * 0.7,  y: H },
-    ], true);
-
-    // Bright center strip
-    g.fillStyle(0xe4b84e, 0.32);
-    g.fillPoints([
-      { x: d.x + d.w * 0.25, y: floorY },
-      { x: d.x + d.w * 0.75, y: floorY },
-      { x: d.x + d.w * 1.7,  y: H },
-      { x: d.x + d.w * 0.15, y: H },
-    ], true);
-
-    // Hot highlight directly in front
-    g.fillStyle(0xfadc7a, 0.22);
-    g.fillPoints([
-      { x: d.x + d.w * 0.38, y: floorY },
-      { x: d.x + d.w * 0.62, y: floorY },
-      { x: d.x + d.w * 1.05, y: H },
-      { x: d.x + d.w * 0.58, y: H },
-    ], true);
-
-    // Warm glow on right wall section (light bouncing off)
-    for (let i = 5; i >= 1; i--) {
-      g.fillStyle(0xc09030, 0.014 * i);
-      const wallSection = W - d.x - d.w;
-      g.fillRect(d.x + d.w, d.y, wallSection * (i / 5), d.h * 0.85);
-    }
-
-    // Soft atmospheric haze around door frame
-    for (let i = 3; i >= 1; i--) {
-      g.fillStyle(0xffd060, 0.009 * i);
-      g.fillRect(d.x - i * 6, d.y - i * 5, d.w + i * 12, d.h + i * 6);
-    }
-  }
-
-  // ── Black door frame — always on top ─────────────────────────────────────────
-
-  _drawDoorFrame() {
-    const g = this._frameGfx;
-    g.clear();
-    const d = this._geo.door;
-    const fw = Math.max(4, Math.round(d.w * 0.055));
-    g.lineStyle(fw, 0x000000, 1);
-    g.strokeRect(d.x, d.y, d.w, d.h);
-  }
-
-  // ── Lit room: warm walls, furniture, faded painting (no text) ───────────────
-
-  _drawLitRoom(W, H) {
-    const g = this._litGfx;
-    g.clear();
-    const { floorY } = this._geo;
-    const d = this._geo.door;
-    const b = this._geo.bulb;
-
-    // ── Warm walls — leave door opening transparent ──
-    g.fillStyle(0x5c4c34, 1);
-    g.fillRect(0,          0, d.x,           floorY);   // left
-    g.fillRect(d.x + d.w, 0, W - d.x - d.w, floorY);   // right
-    g.fillRect(d.x,        0, d.w,           d.y);       // above door
-
-    // Ceiling darker
-    g.fillStyle(0x28200e, 0.50);
-    g.fillRect(0, 0, W, H * 0.10);
-
-    // Bulb light bloom (single-source warmth)
-    for (let i = 10; i >= 1; i--) {
-      g.fillStyle(0xcca054, 0.025 * i);
-      g.fillEllipse(b.x, b.y + H * 0.10, W * (0.04 + i * 0.07), H * (0.04 + i * 0.07));
-    }
-
-    // ── Floor ──
-    g.fillStyle(0x1c1810, 1);
-    g.fillRect(0, floorY, W, H - floorY);
-    // Baseboard
-    g.fillStyle(0x2e2616, 1);
-    g.fillRect(0, floorY - H * 0.016, W, H * 0.016);
-    // Plank lines
-    g.lineStyle(1, 0x26200e, 0.40);
-    for (let i = 1; i < 5; i++) {
-      const y = floorY + (H - floorY) * (i / 5);
-      g.lineBetween(0, y, W, y);
-    }
-
-    // ── CHAIR — far right ──
-    const cx  = W * 0.83, cy = floorY;
-    const chW = W * 0.095, chLH = H * 0.12, chSH = H * 0.018, chLW = W * 0.009;
-
-    g.fillStyle(0x5a4730, 1);
-    g.fillRect(cx - chW/2, cy - chLH - chSH, chW, chSH);                           // seat
-    g.fillRect(cx - chW/2 + chLW, cy - chLH - H*0.135, chLW, H*0.135);             // back-left post
-    g.fillRect(cx + chW/2 - chLW*2.2, cy - chLH - H*0.135, chLW, H*0.135);         // back-right post
-    g.fillRect(cx - chW/2 + chLW, cy - chLH - H*0.135, chW - chLW*3.2, chLW*0.7); // top rail
-    g.fillRect(cx - chW/2 + chLW, cy - chLH - H*0.072, chW - chLW*3.2, chLW*0.55);// mid rail
-    g.fillStyle(0x46381e, 1);
-    g.fillRect(cx - chW/2 + chLW*0.5, cy - chLH, chLW, chLH);                      // left leg
-    g.fillRect(cx + chW/2 - chLW*1.5, cy - chLH, chLW, chLH);                      // right leg
-
-    // ── TABLE — centre of room, clearly away from door ──
-    const tx  = W * 0.50, ty = floorY;
-    const tW  = W * 0.18, tTH = H * 0.017, tLH = H * 0.12, tLW = tW * 0.055;
-
-    g.fillStyle(0x6a5236, 1);
-    g.fillRect(tx - tW/2, ty - tLH - tTH, tW, tTH);          // tabletop
-    g.fillStyle(0x4e3c22, 1);
-    g.fillRect(tx - tW/2 + tLW,    ty - tLH, tLW, tLH);      // left leg
-    g.fillRect(tx + tW/2 - tLW*2,  ty - tLH, tLW, tLH);      // right leg
-    g.fillRect(tx - tW/2 + tLW*2, ty - tLH*0.44, tW - tLW*4, tLW*0.5); // crossbar
-    // Book on table
-    g.fillStyle(0x3c2e1a, 1);
-    g.fillRect(tx - tW*0.22, ty - tLH - tTH - H*0.022, tW*0.14, H*0.022);
-    g.fillStyle(0x4a3a26, 0.60);
-    g.fillRect(tx - tW*0.22, ty - tLH - tTH - H*0.024, tW*0.14, H*0.003);
-
-    // ── THE PORTRAIT — right wall: Samuel Morse, lit only by his own code ──
-    const px  = W * 0.69, py = H * 0.31;
-    const pW  = W * 0.11, pH = H * 0.19;
-
-    // Frame
-    g.fillStyle(0x4a3a20, 1);
-    g.fillRect(px - pW/2 - 7, py - pH/2 - 7, pW + 14, pH + 14);
-    g.fillStyle(0x362a12, 1);
-    g.fillRect(px - pW/2 - 2, py - pH/2 - 2, pW + 4, pH + 4);
-    // Canvas backing (also the fallback if the photo is missing)
-    g.fillStyle(0x28221a, 1);
-    g.fillRect(px - pW/2, py - pH/2, pW, pH);
-
-    if (this.textures.exists("samuel")) {
-      // cover-fit the photo into the frame opening, cropping the overflow
-      const src = this.textures.get("samuel").getSourceImage();
-      const img = this.add.image(px, py, "samuel");
-      const s = Math.max(pW / src.width, pH / src.height);
-      img.setScale(s);
-      const cw = pW / s, ch = pH / s;
-      img.setCrop((src.width - cw) / 2, (src.height - ch) / 2, cw, ch);
-      img.setTint(0xe2cfae); // aged print, warmed by the bulb
-      this._litLayer.add(img); // inherits the light — visible only mid-flash
-
-      // gentle inner shadow so the print sits IN the frame
-      const shade = this.add.graphics();
-      shade.lineStyle(3, 0x000000, 0.35);
-      shade.strokeRect(px - pW/2 + 1.5, py - pH/2 + 1.5, pW - 3, pH - 3);
-      this._litLayer.add(shade);
-    }
-  }
-
-  // ── DOM: hanging bulb + small switch with LED ─────────────────────────────────
 
   _injectDOM(W, H) {
     this._removeDOM();
@@ -552,5 +315,7 @@ const overlay = document.createElement("div");
   shutdown() {
     if (this._sparkTimer) { this._sparkTimer.remove(false); this._sparkTimer = null; }
     this.tweens.killAll(); this.time.removeAllEvents(); this._removeDOM();
+    this.children.removeAll(true);
+    releaseRoom(this.textures);
   }
 }

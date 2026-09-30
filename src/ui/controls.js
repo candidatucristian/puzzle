@@ -7,6 +7,7 @@ import { createIntro } from './intro.js';
 import { createDialogs } from './dialogs.js';
 import { mountAudioControls } from './audioControls.js';
 import { mountStartParticles } from './particles.js';
+import { mountFullscreenControl } from './fullscreen.js';
 
 export function mountUI(game, { levels, audio, storage }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -59,6 +60,7 @@ export function mountUI(game, { levels, audio, storage }) {
   }
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
   mountStartParticles({ scope, startScreen: start, disabled: mobile });
+  mountFullscreenControl(scope, byId('btn-fullscreen'));
 
   scope.on(byId('btn-submit'), 'click', () => {
     if (transitions.busy || intro.active || dialogs.isOpen) return;

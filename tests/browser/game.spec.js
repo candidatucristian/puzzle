@@ -134,10 +134,29 @@ test('candle stays extinguished through resize and resets on replay', async ({ p
   await expect.poll(() => sceneState(page, 'scene._overlayOpen')).toBe(false);
   for (let i = 0; i < 3; i++) { await expect(candle).toBeEnabled(); await candle.click(); }
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(3);
+  await expect.poll(() => sceneState(page, 'scene._lettersShown')).toBe(true);
+  await expect.poll(() => sceneState(page, 'scene.candle.lightState.level')).toBe(0);
+  await page.waitForTimeout(1800);
+  mkdirSync('.artifacts/after', { recursive: true });
+  await page.screenshot({ path: '.artifacts/after/Cryptex-extinguished.png' });
+  const angle = await sceneState(page, 'scene._wheelAngle');
+  const wheel = await sceneState(page, 'scene._wheel');
+  const canvas = await page.locator('#game-container > canvas').boundingBox();
+  await page.mouse.move(canvas.x + wheel.cx, canvas.y + wheel.cy);
+  await page.mouse.wheel(0, 120);
+  await expect.poll(() => sceneState(page, 'scene._wheelAngle')).not.toBe(angle);
   await page.setViewportSize({ width: 1360, height: 900 }); await page.waitForTimeout(500);
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(3);
   await expect(page.locator('.candle-action')).toBeDisabled();
   await navigate(page, 'Cryptex'); expect(await sceneState(page, 'scene.candle.clicks')).toBe(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await expect.poll(() => sceneState(page, 'scene._W')).toBeGreaterThan(1100);
+  await expect(page.locator('.candle-action')).toBeInViewport();
+  await page.screenshot({ path: '.artifacts/after/Cryptex-wide.png' });
+  await candle.focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => sceneState(page, 'scene.candle.clicks')).toBe(1);
 });
 
 test('a missing optional Wires recording preserves the default background music', async ({ page }) => {

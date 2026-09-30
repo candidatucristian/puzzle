@@ -29,10 +29,11 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Watering the plant five times adds branches with 1, 1, 2, 3 and 5 leaves. The growing pattern is the Fibonacci sequence. A gardener, plants and a starry garden surround the pot; the scenery contains no written formula. The name of the sequence gives FIBO or FIBONACCI.",
+    "description": "Dragging the bucket to the pot waters the plant; five pours add branches with 1, 1, 2, 3 and 5 leaves. The growing pattern is the Fibonacci sequence. A moonlit garden surrounds the potting bench — hills, cypresses, a lantern on the bench; the scenery contains no written formula. The name of the sequence gives FIBO or FIBONACCI.",
     "references": [
-      "fibSeq = [1, 1, 2, 3, 5] — leaves added per pour",
-      "leafDefs — leaf positions for each growth stage"
+      "LEAF_DEFS (PlantPotScene.js) — the leaves each pour brings: 1, 1, 2, 3 and 5, and where on the new branch they grow",
+      "SEGMENTS — the plant's five branches, one per pour, in cm from the soil; paintStems() (plant.js) draws them as they grow",
+      "triggerPour() / _pourPoint() — dragging the bucket over the pot tips it and pours"
     ]
   },
   {
@@ -157,11 +158,11 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "A sketched router blinks two LEDs to transmit the word HTTPS as ASCII binary, letter by letter — one LED flashes for each 0 bit, the other for each 1 bit. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's engraved model name \"W. LEIBNIZ\" nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
+    "description": "An old router on a desk in a lamplit room at night blinks two LEDs to transmit the word HTTPS as ASCII binary, letter by letter — one LED flashes for each 0 bit, the other for each 1 bit. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
     "references": [
       "modem/puzzle.js: MODEM_WORD = \"HTTPS\", planTransmission() — ASCII binary LED schedule",
       "_startAnimation() — LED 5 = bit 0, LED 6 = bit 1, LED[i] turns red per completed letter",
-      "engraved label \"W. LEIBNIZ\" — binary-notation flavor clue"
+      "room.js paintRouter() — the maker's name \"W. LEIBNIZ\" printed on the router's front, the binary-notation flavor clue"
     ]
   },
   {
@@ -195,9 +196,10 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "Six birds perch on five overhead wires, read bottom to top as D, F, A, C, E. From left to right their positions spell F, A, C, A, D, E. A small house and a person playing harmonica in a rocking chair sit under a starry sky. The harmonica recording and drifting notes are atmosphere; listening and playing an instrument are not required to solve the puzzle.",
+    "description": "Six birds perch on five overhead wires, read bottom to top as D, F, A, C, E. From left to right their positions spell F, A, C, A, D, E. The scene is the minute before sunrise on a country hill — the dawn's early light the Star-Spangled Banner opens with — with a farmhouse below, its porch lantern still lit and an old man in a rocking chair playing the harmonica. The harmonica recording and drifting notes are atmosphere; listening and playing an instrument are not required to solve the puzzle.",
     "references": [
       "WI_BIRDS — each bird’s wire position encodes one letter",
+      "meadow.js wireY() — the five wires the birds are placed on",
       "Optional ambience: assets/sounds/Wires/music.mp3"
     ]
   },
@@ -266,10 +268,10 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "Five national flags hang on a clothesline, left to right: Germany, Brazil, Ireland, Finland, Nigeria — none of them labeled by name, only by their actual colors/pattern. Concatenating each country's ISO two-letter code in hanging order — DE + BR + IE + FI + NG — spells DEBRIEFING.",
+    "description": "In a harbour on a sunny day, five national flags hang pegged to a line strung between two harbour lamps on the quay, left to right: Germany, Brazil, Ireland, Finland, Nigeria — none of them labeled by name, only by their actual colors/pattern. Concatenating each country's ISO two-letter code in hanging order — DE + BR + IE + FI + NG — spells DEBRIEFING.",
     "references": [
       "FL_FLAGS = [\"DE\",\"BR\",\"IE\",\"FI\",\"NG\"] — hanging order = code order",
-      "_paintFlag() — per-flag colored geometry, no text labels drawn"
+      "harbour.js paintDesign() — per-flag colored geometry, no text labels drawn; paintFlagFrames() makes them flutter"
     ]
   },
   {
@@ -301,15 +303,17 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Six numbered cars cross a night rally finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the lights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level.",
+    "description": "Six numbered rally cars come round a floodlit gravel oval at night and cross the finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the floodlights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level.",
     "references": [
-      "RY_NUMBERS = [19, 9, 12, 22, 5, 18] — the door numbers, in order of crossing",
-      "RY_CROSS_MS = [0, 3000, 3210, 6210, 6960, 7170] — when each car's centre crosses the line; the bunches, 3 s apart (the tight pairs are 210 ms apart)",
-      "RY_SPEED — each car runs a touch faster or slower; the crossing times stay exact",
-      "cars.js: RY_DIGITS — hand-painted numeral strokes (no font); paintNumber() draws them on the plate",
-      "_planRound() / _runRace() — work out launches and whooshes from RY_CROSS_MS, then lights out, then the podium (RY_PODIUM_MS later); the race runs once",
+      "RALLY_NUMBERS = [19, 9, 12, 22, 5, 18] (puzzle.js) — the door numbers, in order of crossing",
+      "RALLY_CROSS_MS = [0, 3000, 3420, 6420, 7170, 7590] — when each car's centre crosses the line; the bunches, 3 s apart (the tight pairs are 420 ms apart)",
+      "RALLY_SPEED — each car runs a touch faster or slower; the crossing times stay exact",
+      "track.js — the oval as one projection: a car's size follows from its height below the horizon, and it is never tilted",
+      "cars.js — one 3D rally car rendered in software at every angle the drive needs (FRAME_COUNT views; side-on, exactly, at the line); paintPanel() puts the number on the white door panel",
+      "stage.js — the floodlit stage, its ground lit pixel by pixel by the real lamps; CAR_LANES keeps each car on its own line, the close pairs one near and one far",
+      "_planRound() / _runRace() — work out launches and whooshes from RALLY_CROSS_MS, then lights out, then the podium (RALLY_PODIUM_MS later); the race runs once",
       "_soundLead() — measures the loudest moment of wroom.mp3 so it lands on the line",
-      "podium.js: RY_WINNERS / RY_CUPS — the top three and their cups; drawPodium() / drawCup() draw the board"
+      "podium.js: RY_WINNERS — the top three and their cups; drawPodium() paints the board"
     ]
   },
   {

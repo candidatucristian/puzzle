@@ -1,8 +1,8 @@
-import { createCar } from "./cars.js";
-import { makeTrack } from "./track.js";
-import { drawPodium, RY_WINNERS } from "./podium.js";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { PENCIL } from "../../shared/theme.js";
+import { paintStage, releaseStageArt, groundLight, CAR_LANES } from "./stage.js";
+import { paintCarsSteps, releaseCarArt, relativeYaw, frameAt, FRAME_COUNT } from "./cars.js";
+import { paintPeople, releasePeopleArt, FLAG_FRAMES } from "./people.js";
+import { drawPodium, releasePodiumArt, RY_WINNERS } from "./podium.js";
 import {
   RALLY_NUMBERS as RY_NUMBERS,
   RALLY_START_DELAY_MS,
@@ -16,11 +16,11 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "RALLY"  ·  code: SILVER   ·  read the numbers
 //
-// Drawn in the game's pencil-sketch idiom: the finish of a night rally stage.
-// A gravel road runs left to right in front of us, floodlit from two towers,
-// with a chequered gantry over the line and a bank of spectators standing
-// behind the tape on the far side. Six cars come through in a fixed order, each
-// with its race number painted on the door:
+// The finish of a night stage: a floodlit gravel oval cut into a pine forest,
+// the timing hut and the red flying-finish board across the line, a marshal
+// in orange with the chequered flag, spectators behind the tape. Six rally
+// cars come round the bend and through the line in a fixed order, each with
+// its race number on the door:
 //
 //   19  9  12  22  5  18   →   S I L V E R
 //
@@ -28,17 +28,21 @@ import {
 // scene. The cars come in bunches, like a real stage — one alone, two close,
 // two in line, the last two tight — each with a whoosh as it crosses the line
 // (assets/sounds/Rally/wroom.mp3 — optional; the level stays silent and fully
-// solvable without it). When the last car is through, the floodlights and
-// lanterns go out and the marshal lowers his flag, and the top three of the
-// stage come up on a board with their cups. That is the end: the race runs once
-// (the game's restart button brings it back).
+// solvable without it). When the last car is through, the floodlights go out,
+// the marshal lowers his flag, and the top three of the stage come up on a
+// board with their cups. That is the end: the race runs once (the game's
+// restart button brings it back).
 //
-// All jitter is deterministic (seeded), so the sketch holds still across
-// redraws. Canvas-drawn, with lifecycle provided by BasePuzzleScene.
+// The stage is painted once per screen size (stage.js), the people with it
+// (people.js); the cars are real 3D models rendered at every angle the drive
+// needs (cars.js) and placed by the track's one projection (track.js) — so a
+// car is seen from the front coming round the bend, side-on at the line, from
+// behind as it goes, and is never tilted or squashed by hand.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const RY_SKETCH = PENCIL; // the pencil itself
-const RY_WARM = 0xffdf9e; // floodlight and headlamp colour
+const DEG = Math.PI / 180;
+const MOONLIT = [86, 96, 122]; // what the floodlit things fall to at the end
+
 export default class RallyScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Rally" });
@@ -87,38 +91,10 @@ export default class RallyScene extends BasePuzzleScene {
     return RY_WINNERS.map((w) => ({ ...w }));
   }
 
-  // ── the pencil: jittered hand-drawn primitives (shared idiom) ──────────────
-
-  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha, steps = 16, mag = 1.4) {
-    super._pencilCircle(g, rnd, cx, cy, r, width, color, alpha, steps, mag);
-  }
-
-  // a closed polygon: near-black fill, pencil outline
-  _pencilPoly(g, rnd, pts, fill, fillAlpha, width, alpha, mag = 1) {
-    if (fill !== null) {
-      g.fillStyle(fill, fillAlpha);
-      g.beginPath();
-      g.moveTo(pts[0][0], pts[0][1]);
-      for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
-      g.closePath();
-      g.fillPath();
-    }
-    for (let i = 0; i < pts.length; i++) {
-      const a = pts[i];
-      const b = pts[(i + 1) % pts.length];
-      this._pencilSeg(
-        g,
-        rnd,
-        a[0],
-        a[1],
-        b[0],
-        b[1],
-        width,
-        RY_SKETCH,
-        alpha,
-        mag,
-      );
-    }
+  update(time, delta) {
+    // the cars are rendered a slice per frame while the stage waits
+    if (this._carJob) this._pumpCars(12);
+    this._updateStones(Math.min(delta || 16, 50));
   }
 
   // ── construction ───────────────────────────────────────────────────────────
@@ -126,1086 +102,189 @@ export default class RallyScene extends BasePuzzleScene {
   _build(W, H) {
     this._W = W;
     this._H = H;
-    // One projection places everything: the track is a real oval on the
-    // ground, and each object's size follows from how far below the horizon
-    // it stands. Nothing is positioned or scaled by hand.
-    const track = (this._track = makeTrack(W, H));
-    this._horizonY = track.horizonY;
-    this._farYAt = (x) => track.farYAt(x);
-    this._nearYAt = (x) => track.nearYAt(x);
-    // the band at mid-screen, for the few places that want a nominal depth
-    this._roadTop = track.edges(0.5).far.y;
-    this._roadBot = track.edges(0.5).near.y;
-    this._finishX = track.centre(track.finishU).x;
-    // How big something standing at this height should be drawn, measured
-    // against the track's far edge. The scenery was tuned at that depth, so
-    // it keeps the size it had and only changes as it comes nearer or goes
-    // further — no object carries its own hand-drawn perspective any more.
-    this._depthAt = (y) => track.scaleAtY(y) / track.scaleAtY(this._roadTop);
-    // the scenery — people, gantry, tape — is scaled off one metre; the cars
-    // themselves run smaller than that metre would make them, so they don't
-    // crowd the frame
-    this._m = Math.min(W * 0.22, H * 0.36) / 4;
-    this._carLen = Math.min(W * 0.075, H * 0.13);
-    this._crowd = [];
-    this._cars = [];
     this._lights = []; // everything that goes dark when the stage ends
-    // the marshal stands just past the line; the few spectators stand behind him
-    this._marshalX = this._finishX + W * 0.085;
+    this._dim = []; // floodlit things that fall to moonlight
+    this._cars = [];
+    this._crowd = [];
+    this._stones = [];
+    this._puffs = new Set();
+    this._lamp = 1; // how much of the floodlight is still on
+    this._carArt = null;
 
-    this._drawSky(W, H);
-    this._drawTreeline(W, H);
-    this._drawFloodlight(W * 0.13, 1);
-    this._drawFloodlight(W * 0.9, -1);
-    this._drawBank(W, H);
-    this._drawCrowd(W, H);
-    this._drawRoad(W, H);
-    this._drawFinishLine(W, H);
-    this._drawTape(W, H);
-    this._drawLanterns(W, H);
-    this._drawMarshal(W, H);
-    this._drawGantry(W, H);
-    this._buildCars(W, H);
+    const art = (this._art = paintStage(this, W, H));
+    const L = (this._L = art.L);
+    const K = art.keys;
+    this._finishX = L.finishX;
+    this._carLen = L.carLenPx;
+
+    // (the smooth layers are painted small; they are stretched to the screen)
+    this.add.image(0, 0, K.sky).setOrigin(0, 0).setDisplaySize(W, H).setDepth(-30);
+    this.add.image(art.moon.x, art.moon.y, K.moon).setDepth(-29.8);
+    this._light(this.add.image(0, 0, K.dome).setOrigin(0, 0).setDisplaySize(W, H).setDepth(-29.5).setBlendMode("ADD"));
+    this._makeStars(art);
+    this.add.image(0, art.landY, K.land).setOrigin(0, 0).setDepth(-20);
+    this._light(this.add.image(0, art.landLitY, K.landLit).setOrigin(0, 0).setDepth(-19).setBlendMode("ADD"));
+    this._dim.push(this.add.image(0, 0, K.props).setOrigin(0, 0).setDepth(-15));
+    for (const g of art.glares) {
+      this._light(
+        this.add.image(g.x, g.y, K.glow).setDepth(-14).setBlendMode("ADD").setDisplaySize(g.size, g.size * 0.8),
+      );
+    }
+    // the hut's window and the bulbs over the tent stay lit after the stage
+    const win = art.window;
+    this.add
+      .image(win.x, win.y, K.glow)
+      .setDepth(-14)
+      .setBlendMode("ADD")
+      .setDisplaySize(win.w * 3.2, win.h * 3.6)
+      .setAlpha(0.45);
+    for (const b of art.festoon) {
+      const s = Math.max(5, L.px(L.tent.z) * L.m * 0.9);
+      this.add.image(b.x, b.y, K.glow).setDepth(-14).setBlendMode("ADD").setDisplaySize(s, s).setAlpha(0.7);
+    }
+    this._makePeople();
+    this._dim.push(this.add.image(0, art.frontY, K.front).setOrigin(0, 0).setDepth(5));
+    this._light(this.add.image(0, 0, K.haze).setOrigin(0, 0).setDisplaySize(W, H).setDepth(8).setBlendMode("ADD"));
+    this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
     this._drawTexts(W, H);
-    this._drawVignette(W, H);
 
     if (this._finished) {
       // rebuilt after the race (a resize): straight to the dark stage and the podium
       this._showFinal();
-    } else {
-      // a beat of quiet before the first car
-      this.time.delayedCall(RALLY_START_DELAY_MS, () => this._runRace());
+      return;
     }
+    // the cars are modelled for exactly this camera: how far down it looks
+    // at them, and how big they are at the line
+    const pitch = Math.atan2(L.camH - 0.7 * L.m, L.wzFinish) / DEG;
+    this._carJob = paintCarsSteps(this.textures, {
+      numbers: RY_NUMBERS,
+      carLenPx: L.carLenPx,
+      pitchDeg: pitch,
+      res: Math.min(2, 280 / L.carLenPx),
+    });
+    // a beat of quiet before the first car
+    this.time.delayedCall(RALLY_START_DELAY_MS, () => this._runRace());
   }
 
-  // ── night, forest, floodlit bank ───────────────────────────────────────────
+  _light(obj) {
+    this._lights.push(obj);
+    return obj;
+  }
 
-  _drawSky(W, H) {
-    const g = this.add.graphics().setDepth(-20);
-    g.fillGradientStyle(0x0b0d12, 0x0d0f15, 0x07080b, 0x090a0d, 1);
-    g.fillRect(0, 0, W, H);
-
-    const rnd = this._rng(4021);
+  // the stars that still show through the glow, twinkling
+  _makeStars(art) {
+    const { W, H, moon } = art.L;
+    const rnd = this._rng(8123);
+    const k = Math.max(0.8, Math.min(1.4, Math.min(W, H) / 800));
     for (let i = 0; i < 34; i++) {
-      const dot = this.add
-        .circle(rnd() * W, rnd() * H * 0.36, 0.6 + rnd() * 1, 0xffffff, 1)
-        .setAlpha(0.12 + rnd() * 0.25)
-        .setDepth(-19);
+      const x = W * (0.02 + rnd() * 0.96);
+      const y = H * (0.01 + Math.pow(rnd(), 1.3) * 0.32);
+      if (Math.hypot(x - moon.x, y - moon.y) < moon.r * 5) continue;
+      const fade = 1 - Math.max(0, (y - H * 0.18) / (H * 0.16));
+      const size = (3 + rnd() * 4) * k;
+      const star = this.add
+        .image(x, y, art.keys.star)
+        .setDepth(-29)
+        .setBlendMode("ADD")
+        .setDisplaySize(size, size)
+        .setAlpha(0.15 * fade);
       this.tweens.add({
-        targets: dot,
-        alpha: 0.5 + rnd() * 0.3,
-        duration: 1400 + rnd() * 2600,
+        targets: star,
+        alpha: (0.45 + rnd() * 0.45) * fade,
+        duration: 1300 + rnd() * 2600,
         delay: rnd() * 2000,
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut",
       });
     }
-
-    // a slim moon between the towers
-    const mg = this.add.graphics().setDepth(-18);
-    const mr = Math.min(W, H) * 0.036;
-    const mx = W * 0.46;
-    const my = H * 0.15;
-    mg.fillStyle(0xffffff, 0.03);
-    mg.fillCircle(mx, my, mr * 2.1);
-    mg.fillStyle(0xe8e2d2, 0.1);
-    mg.fillCircle(mx, my, mr);
-    this._pencilCircle(mg, rnd, mx, my, mr, 1.3, RY_SKETCH, 0.45);
-    this._pencilCircle(
-      mg,
-      rnd,
-      mx - mr * 0.3,
-      my - mr * 0.2,
-      mr * 0.22,
-      1,
-      RY_SKETCH,
-      0.25,
-    );
-    this._pencilCircle(
-      mg,
-      rnd,
-      mx + mr * 0.35,
-      my + mr * 0.25,
-      mr * 0.15,
-      1,
-      RY_SKETCH,
-      0.2,
-    );
-
-    // two thin drifting cloud strokes
-    const cg = this.add.graphics().setDepth(-18);
-    for (const cy of [H * 0.09, H * 0.23]) {
-      const cx = W * (0.25 + rnd() * 0.4);
-      const cw = W * (0.1 + rnd() * 0.12);
-      this._pencilSeg(
-        cg,
-        rnd,
-        cx,
-        cy,
-        cx + cw,
-        cy + (rnd() - 0.5) * 6,
-        1.2,
-        RY_SKETCH,
-        0.08,
-        2,
-      );
-      this._pencilSeg(
-        cg,
-        rnd,
-        cx + cw * 0.2,
-        cy + 6,
-        cx + cw * 0.85,
-        cy + 5,
-        1,
-        RY_SKETCH,
-        0.05,
-        2,
-      );
-    }
   }
 
-  // pines along the horizon — the stage runs through a forest
-  _drawTreeline(W, H) {
-    const g = this.add.graphics().setDepth(-16);
-    const rnd = this._rng(6113);
-    const base = this._horizonY;
-    // one quiet row of pines — the stage runs through a forest, no more than that
-    const layers = [
-      { fill: 0x0a0c0f, lift: 0, hMin: 0.04, hMax: 0.08, alpha: 0.09 },
-    ];
-    for (const L of layers) {
-      const pts = [[-10, base]];
-      let x = -10;
-      while (x < W + 10) {
-        const w = 14 + rnd() * 20;
-        const h = H * (L.hMin + rnd() * (L.hMax - L.hMin));
-        const top = base - L.lift - h;
-        // three tiers per pine, so it reads as a pine and not a spike
-        pts.push([x + w * 0.05, base - L.lift - h * 0.28]);
-        pts.push([x + w * 0.2, base - L.lift - h * 0.3]);
-        pts.push([x + w * 0.12, base - L.lift - h * 0.55]);
-        pts.push([x + w * 0.3, base - L.lift - h * 0.55]);
-        pts.push([x + w * 0.5, top]);
-        pts.push([x + w * 0.7, base - L.lift - h * 0.55]);
-        pts.push([x + w * 0.88, base - L.lift - h * 0.55]);
-        pts.push([x + w * 0.8, base - L.lift - h * 0.3]);
-        pts.push([x + w * 0.95, base - L.lift - h * 0.28]);
-        x += w;
-      }
-      pts.push([W + 10, base], [W + 10, base + 4], [-10, base + 4]);
-      g.fillStyle(L.fill, 1);
-      g.beginPath();
-      g.moveTo(pts[0][0], pts[0][1]);
-      for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
-      g.closePath();
-      g.fillPath();
-      g.lineStyle(1, RY_SKETCH, L.alpha);
-      for (let i = 0; i < pts.length - 4; i++) {
-        g.lineBetween(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]);
-      }
-    }
-  }
+  // ── the people ─────────────────────────────────────────────────────────────
 
-  // the spectators' bank: a grassy slope between the forest and the stage
-  _drawBank(W, H) {
-    const g = this.add.graphics().setDepth(-14);
-    const rnd = this._rng(2909);
-    const top = this._horizonY;
-    const bot = this._horizonY + H * 0.055;
-    g.fillGradientStyle(0x141922, 0x141922, 0x0a0d11, 0x0a0d11, 1);
-    g.fillRect(0, top, W, bot - top);
-    this._pencilSeg(g, rnd, 0, top, W, top, 1.4, RY_SKETCH, 0.16, 2);
-    // a few tufts of grass, denser toward the top of the slope
-    for (let i = 0; i < 60; i++) {
-      const x = rnd() * W;
-      const t = rnd();
-      const y = top + 4 + t * (bot - top - 8);
-      const h = 2 + rnd() * 4;
-      g.lineStyle(1, RY_SKETCH, 0.03 + (1 - t) * 0.05);
-      g.lineBetween(x, y, x + (rnd() - 0.5) * 2, y - h);
-      g.lineBetween(x + 2, y, x + 3 + (rnd() - 0.5) * 2, y - h * 0.7);
-    }
-  }
-
-  // a lattice mast with a bank of lamps, throwing real cones onto the stage
-  _drawFloodlight(px, dir) {
-    const W = this._W;
-    const H = this._H;
-    const g = this.add.graphics().setDepth(-11);
-    const rnd = this._rng(Math.round(px) * 7 + 3);
-    const base = H * 0.585;
-    const top = H * 0.18;
-    const wb = 5;
-    const wt = 3;
-
-    // mast: two rails, cross-braces
-    this._pencilSeg(
-      g,
-      rnd,
-      px - wb,
-      base,
-      px - wt,
-      top,
-      1.4,
-      RY_SKETCH,
-      0.4,
-      0.9,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      px + wb,
-      base,
-      px + wt,
-      top,
-      1.4,
-      RY_SKETCH,
-      0.4,
-      0.9,
-    );
-    const steps = 14;
-    for (let i = 0; i < steps; i++) {
-      const y0 = base + ((top - base) * i) / steps;
-      const y1 = base + ((top - base) * (i + 1)) / steps;
-      const h0 = wb + ((wt - wb) * i) / steps;
-      const h1 = wb + ((wt - wb) * (i + 1)) / steps;
-      g.lineStyle(1, RY_SKETCH, 0.2);
-      g.lineBetween(px - h0, y0, px + h1, y1);
-      g.lineBetween(px + h0, y0, px - h1, y1);
+  _makePeople() {
+    const L = this._L;
+    const P = (this._people = paintPeople(this.textures, L, (x, z) => groundLight(L, x, z)));
+    const rnd = this._rng(4545);
+    for (const c of P.crowd) {
+      const img = this.add
+        .image(c.x, c.y, P.key, c.frame)
+        .setOrigin(c.ox, c.oy)
+        .setScale(1 / P.res)
+        .setDepth(-12 - c.z * 0.01);
+      this._dim.push(img);
+      const person = { img, x: c.x, y: c.y, frame: c.frame, cheerFrame: c.cheerFrame, h: img.displayHeight * 0.62 };
+      // shifting from foot to foot, no two alike
+      img.setAngle((rnd() - 0.5) * 1.6);
+      this.tweens.add({
+        targets: img,
+        angle: (rnd() - 0.5) * 1.6 + (rnd() < 0.5 ? 1.4 : -1.4),
+        duration: 1600 + rnd() * 2200,
+        delay: rnd() * 1500,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+      this._crowd.push(person);
     }
 
-    // lamp bank, angled inward
-    const hx = px + dir * 6;
-    const hy = top - 4;
-    g.fillStyle(0x0d0f13, 1);
-    g.fillRect(hx - 17, hy - 9, 34, 15);
-    this._pencilSeg(
-      g,
-      rnd,
-      hx - 17,
-      hy - 9,
-      hx + 17,
-      hy - 9,
-      1.2,
-      RY_SKETCH,
-      0.5,
-      0.5,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      hx - 17,
-      hy + 6,
-      hx + 17,
-      hy + 6,
-      1.2,
-      RY_SKETCH,
-      0.5,
-      0.5,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      hx - 17,
-      hy - 9,
-      hx - 17,
-      hy + 6,
-      1.2,
-      RY_SKETCH,
-      0.5,
-      0.5,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      hx + 17,
-      hy - 9,
-      hx + 17,
-      hy + 6,
-      1.2,
-      RY_SKETCH,
-      0.5,
-      0.5,
-    );
-    // the bulbs and their glow live on their own layer, so they can go out
-    const lamp = this.add.graphics().setDepth(-11);
-    lamp.fillStyle(RY_WARM, 0.05);
-    lamp.fillCircle(hx, hy, 46);
-    lamp.fillStyle(RY_WARM, 0.1);
-    lamp.fillCircle(hx, hy, 24);
-    for (let r = 0; r < 2; r++) {
-      for (let c = 0; c < 4; c++) {
-        lamp.fillStyle(RY_WARM, 0.92);
-        lamp.fillCircle(hx - 12 + c * 8, hy - 4 + r * 8, 2.6);
-      }
-    }
-    this._lights.push(lamp);
-
-    // the cone: layered wedges from the lamps down to a pool on the gravel
-    const gx = px + dir * W * 0.2;
-    const gy = this._nearYAt(gx) + 6;
-    const layers = [
-      [W * 0.19, 0.02],
-      [W * 0.12, 0.026],
-      [W * 0.06, 0.032],
-    ];
-    const cone = this.add.graphics().setDepth(-9);
-    for (const [s, a] of layers) {
-      cone.fillStyle(RY_WARM, a);
-      cone.fillTriangle(hx, hy + 6, gx - s, gy, gx + s, gy);
-    }
-    const mid = (this._farYAt(gx) + this._nearYAt(gx)) / 2 + 10;
-    cone.fillStyle(RY_WARM, 0.03);
-    cone.fillEllipse(gx, mid, W * 0.4, H * 0.1);
-    cone.fillStyle(RY_WARM, 0.04);
-    cone.fillEllipse(gx, mid, W * 0.24, H * 0.06);
-    this._lights.push(cone);
-  }
-
-  // ── the stage: gravel, the line, the tape, the gantry ──────────────────────
-
-  _drawRoad(W, H) {
-    const g = this.add.graphics().setDepth(-10);
-    const rnd = this._rng(1777);
-    const T = this._track;
-    const N = 72;
-
-    // the ground this all sits on, from the horizon down to our feet
-    g.fillGradientStyle(0x0a0d11, 0x0a0d11, 0x070809, 0x070809, 1);
-    g.fillRect(0, T.horizonY, W, H - T.horizonY);
-
-    // the oval, back to front: the far side, the grass it encloses, then the
-    // near side we race on, each a clear step lighter than the last
-    g.fillStyle(0x1b2029, 1);
-    g.fillPoints(T.farBand(), true);
-    g.fillStyle(0x101620, 1);
-    g.fillPoints(T.infield(), true);
-    g.fillStyle(0x24282f, 1);
-    g.fillPoints(T.nearBand(), true);
-    // the near side is lit from above, so it pales toward us
-    g.fillStyle(0x2d323b, 0.5);
-    g.fillPoints(
-      [
-        ...Array.from({ length: N + 1 }, (_, i) => {
-          const e = T.edges(i / N);
-          return {
-            x: e.far.x + (e.near.x - e.far.x) * 0.55,
-            y: e.far.y + (e.near.y - e.far.y) * 0.55,
-          };
-        }),
-        ...Array.from({ length: N + 1 }, (_, i) => T.edges(1 - i / N).near),
-      ],
-      true,
-    );
-
-    // a line running the length of the track, t across the band (0 far, 1 near)
-    const across = (t, jit) => {
-      const pts = [];
-      for (let i = 0; i <= N; i++) {
-        const e = T.edges(i / N);
-        pts.push({
-          x: e.far.x + (e.near.x - e.far.x) * t,
-          y:
-            e.far.y +
-            (e.near.y - e.far.y) * t +
-            (rnd() - 0.5) * (jit === undefined ? 1.4 : jit),
-        });
-      }
-      return pts;
-    };
-
-    this._drawPath(g, across(0), 1.7, RY_SKETCH, 0.5);
-    this._drawPath(g, across(1), 1.7, RY_SKETCH, 0.55);
-    this._drawPath(g, across(1.06), 1.1, RY_SKETCH, 0.2);
-    // the far side of the oval gets its own edges, fainter with distance
-    {
-      const fb = T.farBand();
-      const half = fb.length / 2;
-      this._drawPath(g, fb.slice(0, half), 1.2, RY_SKETCH, 0.22);
-      this._drawPath(g, fb.slice(half), 1.2, RY_SKETCH, 0.16);
-    }
-    // two long ruts where the tyres have been all day
-    for (const t of [0.34, 0.7]) this._drawPath(g, across(t, 2.4), 1.1, RY_SKETCH, 0.1);
-
-    // loose stones, each the size its depth allows
-    for (let i = 0; i < 130; i++) {
-      const u = rnd();
-      const t = rnd();
-      const e = T.edges(u);
-      const x = e.far.x + (e.near.x - e.far.x) * t;
-      const y = e.far.y + (e.near.y - e.far.y) * t;
-      const k = T.scaleAtY(y);
-      g.fillStyle(RY_SKETCH, 0.04 + rnd() * 0.07);
-      g.fillCircle(x, y, (0.6 + rnd() * 1.5) * k);
-    }
-    // and a scatter on the near verge, in front of the track
-    for (let i = 0; i < 40; i++) {
-      const x = rnd() * W;
-      const y0 = this._nearYAt(x);
-      const y = y0 + 8 + rnd() * Math.max(10, H - y0 - 12);
-      g.fillStyle(RY_SKETCH, 0.03 + rnd() * 0.05);
-      g.fillCircle(x, y, 1 + ((y - y0) / Math.max(1, H - y0)) * 2 + rnd());
-    }
-  }
-
-  // bilinear point inside the finish band: u across the band, t far(0) → near(1)
-  _finishPt(u, t) {
-    const W = this._W;
-    const e = this._track.edges(this._track.finishU);
-    // straight across the track: the two edges already lean the right way
-    const x = e.far.x + (e.near.x - e.far.x) * t;
-    const y = e.far.y + (e.near.y - e.far.y) * t;
-    const width = W * 0.055 * this._track.scaleAtY(y);
-    return [x - width / 2 + width * u, y];
-  }
-
-  _drawFinishLine(W, H) {
-    const g = this.add.graphics().setDepth(-8);
-    const rnd = this._rng(3303);
-    const cols = 2;
-    const rows = 9;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const a = this._finishPt(c / cols, r / rows);
-        const b = this._finishPt((c + 1) / cols, r / rows);
-        const d = this._finishPt(c / cols, (r + 1) / rows);
-        const e = this._finishPt((c + 1) / cols, (r + 1) / rows);
-        const light = (r + c) % 2 === 0;
-        g.fillStyle(light ? 0xdcd6c8 : 0x0a0b0d, light ? 0.78 : 0.7);
-        g.beginPath();
-        g.moveTo(a[0], a[1]);
-        g.lineTo(b[0], b[1]);
-        g.lineTo(e[0], e[1]);
-        g.lineTo(d[0], d[1]);
-        g.closePath();
-        g.fillPath();
-      }
-    }
-    // worn edges and a few scuffs, like the rest of the paint in this game
-    const p0 = this._finishPt(0, 0);
-    const p1 = this._finishPt(1, 0);
-    const p2 = this._finishPt(1, 1);
-    const p3 = this._finishPt(0, 1);
-    this._pencilSeg(
-      g,
-      rnd,
-      p0[0],
-      p0[1],
-      p1[0],
-      p1[1],
-      1,
-      RY_SKETCH,
-      0.35,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      p1[0],
-      p1[1],
-      p2[0],
-      p2[1],
-      1,
-      RY_SKETCH,
-      0.35,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      p2[0],
-      p2[1],
-      p3[0],
-      p3[1],
-      1,
-      RY_SKETCH,
-      0.35,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      p3[0],
-      p3[1],
-      p0[0],
-      p0[1],
-      1,
-      RY_SKETCH,
-      0.35,
-      0.6,
-    );
-    for (let i = 0; i < 10; i++) {
-      const [x, y] = this._finishPt(rnd(), rnd());
-      g.fillStyle(0x000000, 0.1);
-      g.fillEllipse(x, y, 6 + rnd() * 8, 2 + rnd() * 2);
-    }
-  }
-
-  // the few spectators stand right behind the marshal
-  _crowdSpan() {
-    const W = this._W;
-    return [this._marshalX - W * 0.075, this._marshalX + W * 0.165];
-  }
-
-  // tape on stakes, only where the spectators are: between them and the road
-  _drawTape(W, H) {
-    const m = this._m;
-    const [sx0, sx1] = this._crowdSpan();
-    const gap = (sx1 - sx0) / 5;
-    const runs = [
-      {
-        y: this._roadTop + 3,
-        h: m * 0.68,
-        gap,
-        depth: -6,
-        alpha: 0.34,
-        seed: 8802,
+    // the marshal, and his flag arm pivoting at the shoulder
+    const M = P.marshal;
+    const body = this.add
+      .image(M.x, M.y, P.key, M.frame)
+      .setOrigin(M.ox, M.oy)
+      .setScale(1 / P.res)
+      .setDepth(-11.9);
+    const arm = this.add
+      .image(M.shoulder.x, M.shoulder.y, P.key, M.arms[0].frame)
+      .setOrigin(M.arms[0].ox, M.arms[0].oy)
+      .setScale(1 / P.res)
+      .setDepth(-11.89);
+    this._dim.push(body, arm);
+    this._flag = arm;
+    this._flagUp = true;
+    this._flagFast = false;
+    this._flagFrame = 0;
+    let tick = 0;
+    this._flagTimer = this.time.addEvent({
+      delay: 60,
+      loop: true,
+      callback: () => {
+        if (!this._flagUp) return;
+        tick++;
+        if (!this._flagFast && tick % 3) return;
+        this._flagFrame = (this._flagFrame + 1) % FLAG_FRAMES;
+        this._flag.setFrame(M.arms[this._flagFrame].frame, false, false);
       },
-    ];
-    this._stakes = [];
-    for (const run of runs) {
-      const g = this.add.graphics().setDepth(run.depth);
-      const rnd = this._rng(run.seed);
-      const xs = [];
-      for (let i = 0; i <= 5; i++) xs.push(sx0 + i * gap);
-      const yAt = (x) => this._farYAt(x) + 3;
-      const hAt = (x) => run.h * this._depthAt(yAt(x));
-      this._stakes = xs.map((x) => ({ x, y: yAt(x) - hAt(x) }));
-      for (const x of xs) {
-        this._pencilSeg(
-          g,
-          rnd,
-          x,
-          yAt(x),
-          x,
-          yAt(x) - hAt(x),
-          1.6,
-          RY_SKETCH,
-          run.alpha,
-          0.5,
-        );
-        g.fillStyle(RY_SKETCH, run.alpha * 0.8);
-        g.fillCircle(x, yAt(x) - hAt(x), 1.8);
-      }
-      // two strands of tape, sagging a little between the stakes, hazard-striped
-      for (const k of [0.92, 0.6]) {
-        for (let i = 0; i < xs.length - 1; i++) {
-          const x0 = xs[i];
-          const x1 = xs[i + 1];
-          const sag = 3 + rnd() * 2;
-          const seg = 8;
-          let px = x0;
-          let py = yAt(x0) - hAt(x0) * k;
-          for (let s = 1; s <= seg; s++) {
-            const t = s / seg;
-            const nx = x0 + (x1 - x0) * t;
-            const ny = yAt(nx) - hAt(nx) * k + Math.sin(t * Math.PI) * sag;
-            const on = (i * seg + s) % 2 === 0;
-            g.lineStyle(
-              on ? 2.4 : 2,
-              on ? 0xdcd6c8 : 0x0a0b0d,
-              on ? run.alpha * 0.9 : 0.8,
-            );
-            g.lineBetween(px, py, nx, ny);
-            px = nx;
-            py = ny;
-          }
-        }
-      }
-    }
+    });
+    this._flagSway();
   }
 
-  // three storm lanterns hung on the tape stakes; they go out with the floodlights
-  _drawLanterns(W, H) {
-    const rnd = this._rng(4747);
-    const glow = this.add.graphics().setDepth(-5.6);
-    const body = this.add.graphics().setDepth(-5.5);
-    const s = Math.max(0.8, this._m / 62);
-    for (const i of [0, 2, 5]) {
-      const st = this._stakes && this._stakes[i];
-      if (!st) continue;
-      const lx = st.x;
-      const ly = st.y + 8 * s; // hangs just under the top of the stake
-      glow.fillStyle(RY_WARM, 0.045);
-      glow.fillCircle(lx, ly + 6 * s, 34 * s);
-      glow.fillStyle(RY_WARM, 0.09);
-      glow.fillCircle(lx, ly + 6 * s, 16 * s);
-      // hook, cage, glass, flame
-      body.lineStyle(1.2, RY_SKETCH, 0.45);
-      body.lineBetween(lx, st.y, lx, ly - 4 * s);
-      body.fillStyle(0x0d0f13, 1);
-      body.fillRect(lx - 4 * s, ly - 4 * s, 8 * s, 15 * s);
-      this._pencilSeg(
-        body,
-        rnd,
-        lx - 4 * s,
-        ly - 4 * s,
-        lx + 4 * s,
-        ly - 4 * s,
-        1.2,
-        RY_SKETCH,
-        0.5,
-        0.3,
-      );
-      this._pencilSeg(
-        body,
-        rnd,
-        lx - 4 * s,
-        ly + 11 * s,
-        lx + 4 * s,
-        ly + 11 * s,
-        1.2,
-        RY_SKETCH,
-        0.5,
-        0.3,
-      );
-      body.lineStyle(1, RY_SKETCH, 0.4);
-      body.lineBetween(lx - 4 * s, ly - 4 * s, lx - 4 * s, ly + 11 * s);
-      body.lineBetween(lx + 4 * s, ly - 4 * s, lx + 4 * s, ly + 11 * s);
-    }
-    // the flames are what goes out; cage and hook stay
-    const flames = this.add.graphics().setDepth(-5.4);
-    for (const i of [0, 2, 5]) {
-      const st = this._stakes && this._stakes[i];
-      if (!st) continue;
-      flames.fillStyle(RY_WARM, 0.95);
-      flames.fillEllipse(st.x, st.y + 14 * s, 3.4 * s, 7 * s);
-      flames.fillStyle(0xffffff, 0.6);
-      flames.fillEllipse(st.x, st.y + 15 * s, 1.4 * s, 3.4 * s);
-    }
-    this._lights.push(glow, flames);
-  }
-
-  // the finish gantry, seen at a slant: two posts, a chequered banner between
-  _drawGantry(W, H) {
-    const m = this._m;
-    const fx = this._finishX;
-    const skew = W * 0.045;
-    // each post stands on its own edge of the track, and is as tall as its
-    // own depth allows
-    const nearBase = this._nearYAt(fx - skew) + 10;
-    const farBase = this._farYAt(fx + skew) + 2;
-    // both posts are the same height on the ground; the near one only looks
-    // taller because it is nearer
-    const POST = 1.9;
-    const near = {
-      x: fx - skew,
-      base: nearBase,
-      top: nearBase - m * POST * this._depthAt(nearBase),
-    };
-    const far = {
-      x: fx + skew,
-      base: farBase,
-      top: farBase - m * POST * this._depthAt(farBase),
-    };
-    const rnd = this._rng(5150);
-
-    // far post: behind the cars
-    const gf = this.add.graphics().setDepth(2);
-    this._pencilSeg(
-      gf,
-      rnd,
-      far.x - 3,
-      far.base,
-      far.x - 3,
-      far.top,
-      1.4,
-      RY_SKETCH,
-      0.4,
-      0.6,
-    );
-    this._pencilSeg(
-      gf,
-      rnd,
-      far.x + 3,
-      far.base,
-      far.x + 3,
-      far.top,
-      1.4,
-      RY_SKETCH,
-      0.4,
-      0.6,
-    );
-    gf.fillStyle(0x0d0f13, 1);
-    gf.fillRect(far.x - 3, far.top, 6, far.base - far.top);
-
-    // banner + beam + near post: in front of them
-    const g = this.add.graphics().setDepth(7);
-    const nh = m * 0.95;
-    const fh = m * 0.55;
-    const pt = (u, v) => {
-      // u along the beam (near → far), v down the banner (0 top → 1 bottom)
-      const x = near.x + (far.x - near.x) * u;
-      const top = near.top + (far.top - near.top) * u;
-      const h = nh + (fh - nh) * u;
-      return [x, top + h * v];
-    };
-    const cols = 10;
-    const rows = 2;
-    for (let c = 0; c < cols; c++) {
-      for (let r = 0; r < rows; r++) {
-        const a = pt(c / cols, r / rows);
-        const b = pt((c + 1) / cols, r / rows);
-        const d = pt(c / cols, (r + 1) / rows);
-        const e = pt((c + 1) / cols, (r + 1) / rows);
-        const light = (c + r) % 2 === 0;
-        g.fillStyle(light ? 0xdcd6c8 : 0x0a0b0d, light ? 0.85 : 0.92);
-        g.beginPath();
-        g.moveTo(a[0], a[1]);
-        g.lineTo(b[0], b[1]);
-        g.lineTo(e[0], e[1]);
-        g.lineTo(d[0], d[1]);
-        g.closePath();
-        g.fillPath();
-      }
-    }
-    const q0 = pt(0, 0);
-    const q1 = pt(1, 0);
-    const q2 = pt(1, 1);
-    const q3 = pt(0, 1);
-    this._pencilSeg(
-      g,
-      rnd,
-      q0[0],
-      q0[1],
-      q1[0],
-      q1[1],
-      1.6,
-      RY_SKETCH,
-      0.55,
-      0.8,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      q1[0],
-      q1[1],
-      q2[0],
-      q2[1],
-      1.2,
-      RY_SKETCH,
-      0.45,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      q2[0],
-      q2[1],
-      q3[0],
-      q3[1],
-      1.2,
-      RY_SKETCH,
-      0.45,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      q3[0],
-      q3[1],
-      q0[0],
-      q0[1],
-      1.2,
-      RY_SKETCH,
-      0.45,
-      0.6,
-    );
-    // the beam it hangs from, and a second, lighter line above it
-    this._pencilSeg(
-      g,
-      rnd,
-      near.x,
-      near.top - 5,
-      far.x,
-      far.top - 4,
-      1.5,
-      RY_SKETCH,
-      0.5,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      near.x,
-      near.top - 10,
-      far.x,
-      far.top - 8,
-      1,
-      RY_SKETCH,
-      0.22,
-      0.6,
-    );
-
-    // near post: a tube with a base plate, and the timing box strapped to it
-    g.fillStyle(0x0d0f13, 1);
-    g.fillRect(near.x - 3.5, near.top - 10, 7, near.base - near.top + 10);
-    this._pencilSeg(
-      g,
-      rnd,
-      near.x - 3.5,
-      near.base,
-      near.x - 3.5,
-      near.top - 10,
-      1.5,
-      RY_SKETCH,
-      0.5,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      near.x + 3.5,
-      near.base,
-      near.x + 3.5,
-      near.top - 10,
-      1.5,
-      RY_SKETCH,
-      0.5,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      near.x - 12,
-      near.base,
-      near.x + 12,
-      near.base,
-      1.4,
-      RY_SKETCH,
-      0.45,
-      0.5,
-    );
-    // low on the post, under the height of a door plate
-    const bx = near.x - 14;
-    const by = near.base - m * 0.62;
-    g.fillStyle(0x15181d, 1);
-    g.fillRect(bx, by, 10, 16);
-    g.lineStyle(1, RY_SKETCH, 0.45);
-    g.strokeRect(bx, by, 10, 16);
-    g.fillStyle(RY_WARM, 0.85);
-    g.fillCircle(bx + 5, by + 5, 1.8);
-  }
-
-  // ── people ─────────────────────────────────────────────────────────────────
-
-  // One standing figure, feet at the local origin, k = pixels per metre.
-  // opts: arms "down" | "one" | "both" | "left", flag, hat, lit = side the floodlight is on
-  _person(g, rnd, k, o) {
-    // single light strokes: at this size a doubled pencil line turns to mush
-    const line = o.line === undefined ? 0.24 : o.line;
-    const seg = (x1, y1, x2, y2, w, a) => {
-      g.lineStyle(w, RY_SKETCH, a);
-      g.lineBetween(x1 * k, y1 * k, x2 * k, y2 * k);
-    };
-    const lw = Math.max(1.2, k * 0.05);
-
-    // legs (dark trousers), then torso over them
-    g.lineStyle(k * 0.09, o.trousers || 0x0c0e11, 1);
-    g.lineBetween(-0.09 * k, -0.82 * k, -0.11 * k, 0);
-    g.lineBetween(0.09 * k, -0.82 * k, 0.11 * k, 0);
-    seg(-0.14, -0.82, -0.15, 0, lw, line);
-    seg(0.14, -0.82, 0.15, 0, lw, line);
-    g.fillStyle(o.tone, 1);
-    g.beginPath();
-    g.moveTo(-0.23 * k, -1.45 * k);
-    g.lineTo(0.23 * k, -1.45 * k);
-    g.lineTo(0.19 * k, -0.78 * k);
-    g.lineTo(-0.19 * k, -0.78 * k);
-    g.closePath();
-    g.fillPath();
-    seg(-0.23, -1.45, 0.23, -1.45, lw, line);
-    seg(-0.23, -1.45, -0.19, -0.78, lw, line);
-    seg(0.23, -1.45, 0.19, -0.78, lw, line);
-
-    // arms
-    const left = o.arms === "both" ? [-0.4, -1.88] : [-0.27, -0.95];
-    // "left": only the left arm — the right one is drawn separately (the marshal's)
-    const right =
-      o.arms === "left"
-        ? null
-        : o.arms === "down"
-          ? [0.27, -0.95]
-          : [0.4, -1.88];
-    seg(-0.23, -1.42, left[0], left[1], lw * 1.3, line + 0.06);
-    if (right) seg(0.23, -1.42, right[0], right[1], lw * 1.3, line + 0.06);
-
-    // head (and a hat, on some)
-    const hy = -1.6 * k;
-    g.fillStyle(o.tone, 1);
-    g.fillCircle(0, hy, 0.115 * k);
-    g.lineStyle(lw, RY_SKETCH, line + 0.04);
-    g.strokeCircle(0, hy, 0.115 * k);
-    if (o.hat) {
-      g.fillStyle(o.tone, 1);
-      g.beginPath();
-      g.arc(0, hy - 0.01 * k, 0.125 * k, Math.PI, Math.PI * 2);
-      g.closePath();
-      g.fillPath();
-      seg(-0.13, -1.62, 0.13, -1.62, lw, 0.45);
-    }
-
-    // a pennant on a stick, now and then
-    if (o.flag && right) {
-      const hx = right[0];
-      const hyy = right[1];
-      seg(hx, hyy + 0.1, hx + 0.02, hyy - 0.72, lw, 0.45);
-      g.fillStyle(RY_SKETCH, 0.22);
-      g.fillTriangle(
-        (hx + 0.02) * k,
-        (hyy - 0.72) * k,
-        (hx + 0.34) * k,
-        (hyy - 0.6) * k,
-        (hx + 0.02) * k,
-        (hyy - 0.46) * k,
-      );
-    }
-
-    // floodlight catching one shoulder and one cheek
-    g.lineStyle(Math.max(1, k * 0.04), RY_WARM, 0.2);
-    const side = o.lit;
-    g.lineBetween(side * 0.23 * k, -1.44 * k, side * 0.19 * k, -0.9 * k);
-    g.beginPath();
-    g.arc(
-      0,
-      hy,
-      0.115 * k,
-      side > 0 ? -1.1 : Math.PI - 0.5,
-      side > 0 ? 0.5 : Math.PI + 1.1,
-    );
-    g.strokePath();
-  }
-
-  _drawCrowd(W, H) {
-    const k0 = this._m * 0.6; // far side: smaller than the cars' metre
-    const rows = [
-      { dy: -5, k: k0, depth: -12, seed: 111 },
-      {
-        dy: -5 - k0 * 0.7,
-        k: k0 * 0.88,
-        depth: -12.2,
-        seed: 222,
-      },
-    ];
-    const tones = [0x1a1d23, 0x1f2229, 0x22262d, 0x181b20];
-    // only the ones standing behind the marshal — nobody anywhere else
-    const [sx0, sx1] = this._crowdSpan();
-    for (const row of rows) {
-      const rnd = this._rng(row.seed);
-      const step = row.k * 0.78;
-      for (
-        let x = sx0 + rnd() * step;
-        x < sx1;
-        x += step * (0.8 + rnd() * 0.7)
-      ) {
-        if (rnd() < 0.15) continue; // a gap in the crowd
-        const cheer = rnd() < 0.4;
-        const g = this.add.graphics().setDepth(row.depth);
-        g.setPosition(x, this._farYAt(x) + row.dy);
-        this._person(g, rnd, row.k * (0.94 + rnd() * 0.12) * this._depthAt(this._farYAt(x) + row.dy), {
-          tone: tones[Math.floor(rnd() * tones.length)],
-          arms: cheer ? (rnd() < 0.5 ? "both" : "one") : "down",
-          flag: cheer && rnd() < 0.3,
-          hat: rnd() < 0.3,
-          lit: x < W / 2 ? -1 : 1,
-        });
-        // a slow sway from the feet, no two alike
-        g.setAngle((rnd() - 0.5) * 3);
-        this.tweens.add({
-          targets: g,
-          angle: (rnd() - 0.5) * 3 + (rnd() < 0.5 ? 2.4 : -2.4),
-          duration: 1400 + rnd() * 1800,
-          delay: rnd() * 1500,
-          yoyo: true,
-          repeat: -1,
-          ease: "Sine.easeInOut",
-        });
-        this._crowd.push({ g, x, y: row.y, k: row.k });
-      }
-    }
-  }
-
-  // the crowd jumps as a car crosses, ripples out from the line
+  // the crowd jumps and throws its arms up as a car crosses, rippling out
+  // from the line
   _cheer() {
     const fx = this._finishX;
     const rnd = this._rng(Math.round(this.time.now) + 5);
     for (const p of this._crowd) {
       const d = Math.abs(p.x - fx);
-      if (d > this._W * 0.42) continue;
+      if (d > this._W * 0.45) continue;
+      const delay = d * 0.3 + rnd() * 110;
+      const jumps = rnd() < 0.4 ? 1 : 0;
+      this.time.delayedCall(delay, () => p.img.setFrame(p.cheerFrame, false, false));
       this.tweens.add({
-        targets: p.g,
-        y: p.y - (4 + rnd() * 5),
+        targets: p.img,
+        y: p.y - p.h * (0.05 + rnd() * 0.05),
         duration: 170,
-        delay: d * 0.25 + rnd() * 90,
+        delay,
         yoyo: true,
+        repeat: jumps,
         ease: "Quad.easeOut",
+        onComplete: () => {
+          p.img.y = p.y;
+          this.time.delayedCall(250 + rnd() * 500, () => p.img.setFrame(p.frame, false, false));
+        },
       });
     }
-  }
-
-  // the marshal on the far edge, chequered flag in hand
-  _drawMarshal(W, H) {
-    const x = this._marshalX;
-    const y = this._farYAt(this._marshalX) + H * 0.012;
-    const k = this._m * 0.72 * this._depthAt(y);
-    const rnd = this._rng(6262);
-
-    const g = this.add.graphics().setDepth(-5);
-    g.setPosition(x, y);
-    // the same figure, in a hi-vis vest and a helmet — minus the flag arm
-    this._person(g, rnd, k, {
-      tone: 0x33373b,
-      arms: "left",
-      flag: false,
-      hat: true,
-      lit: 1,
-      line: 0.5,
-      trousers: 0x14161a,
-    });
-    // the vest, with its two reflective bands
-    g.fillStyle(0xdcd6c8, 0.42);
-    g.fillRect(-0.2 * k, -1.42 * k, 0.4 * k, 0.6 * k);
-    g.fillStyle(0x0a0b0d, 0.5);
-    g.fillRect(-0.2 * k, -1.24 * k, 0.4 * k, 0.05 * k);
-    g.fillRect(-0.2 * k, -1.06 * k, 0.4 * k, 0.05 * k);
-    g.fillStyle(0x000000, 0.28);
-    g.fillEllipse(0, 2, k * 0.6, k * 0.12);
-
-    // the raised arm and the flag are one piece, pivoting at the shoulder, so
-    // the whole thing can drop when the stage is over
-    const arm = this.add.graphics().setDepth(-4.9);
-    arm.setPosition(x + 0.23 * k, y - 1.42 * k);
-    const hx = 0.17 * k;
-    const hy = -0.46 * k; // the hand
-    arm.lineStyle(Math.max(1.6, k * 0.065), RY_SKETCH, 0.55);
-    arm.lineBetween(0, 0, hx, hy);
-    const len = k * 0.95;
-    this._pencilSeg(
-      arm,
-      rnd,
-      hx,
-      hy + 0.1 * k,
-      hx + 0.02 * k,
-      hy - len,
-      1.6,
-      RY_SKETCH,
-      0.55,
-      0.3,
-    );
-    const cs = k * 0.15;
-    for (let cx = 0; cx < 4; cx++) {
-      for (let cy = 0; cy < 3; cy++) {
-        const light = (cx + cy) % 2 === 0;
-        arm.fillStyle(light ? 0xdcd6c8 : 0x0a0b0d, light ? 0.85 : 0.9);
-        arm.fillRect(hx + 0.02 * k + cx * cs, hy - len + cy * cs, cs, cs);
-      }
-    }
-    arm.lineStyle(1, RY_SKETCH, 0.4);
-    arm.strokeRect(hx + 0.02 * k, hy - len, cs * 4, cs * 3);
-    this._flag = arm;
-    this._flagUp = true;
-    this._flagSway();
   }
 
   // a slow sway while the flag is up
@@ -1224,13 +303,17 @@ export default class RallyScene extends BasePuzzleScene {
 
   _waveFlag() {
     if (!this._flag || !this._flagUp) return;
+    this._flagFast = true;
     this.tweens.add({
       targets: this._flag,
-      angle: { from: -22, to: 26 },
+      angle: { from: -24, to: 28 },
       duration: 210,
       yoyo: true,
       repeat: 3,
       ease: "Sine.easeInOut",
+      onComplete: () => {
+        this._flagFast = false;
+      },
     });
   }
 
@@ -1247,26 +330,58 @@ export default class RallyScene extends BasePuzzleScene {
     });
   }
 
-  // ── floodlights and lanterns ───────────────────────────────────────────────
+  // ── the end of the stage ───────────────────────────────────────────────────
 
-  // the last car is through: everything that was lit goes out, the flag drops
+  // the last car is through: the floodlights go out, the flag drops
   _lightsOut() {
     // from here on the stage stays dark: a resize rebuilds it as it is now
     this._finished = true;
-    for (const layer of this._lights || []) {
-      this.tweens.add({
-        targets: layer,
-        alpha: 0,
-        duration: 650,
-        ease: "Quad.easeIn",
-      });
+    for (const layer of this._lights) {
+      this.tweens.add({ targets: layer, alpha: 0, duration: 650, ease: "Quad.easeIn" });
     }
+    this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: 650,
+      ease: "Quad.easeIn",
+      onUpdate: (tw) => this._moonlight(tw.getValue()),
+    });
     this._lowerFlag();
+  }
+
+  // everything the floodlights lit, left under the moon
+  _moonlight(t) {
+    this._lamp = 1 - t;
+    const c = MOONLIT.map((v) => Math.round(255 + (v - 255) * t));
+    const tint = (c[0] << 16) | (c[1] << 8) | c[2];
+    for (const obj of this._dim) if (obj.active) obj.setTint(tint);
+    for (const puff of this._puffs) puff.setTint(this._dustTint(puff._lit));
+  }
+
+  // how a car, or dust, looks where the floodlight falls with strength
+  // `lit` (1 at the line) — fading to the moon's blue as the lamps go out
+  _lightTint(lit, floor = 0.42) {
+    const on = Math.min(1, floor + (1 - floor) * lit) * this._lamp;
+    const off = 1 - this._lamp;
+    const r = Math.round(255 * Math.min(1, on + (off * MOONLIT[0]) / 255));
+    const g = Math.round(255 * Math.min(1, on + (off * MOONLIT[1]) / 255));
+    const b = Math.round(255 * Math.min(1, on + (off * MOONLIT[2]) / 255));
+    return (r << 16) | (g << 8) | b;
+  }
+
+  _dustTint(lit) {
+    const c = this._lightTint(lit, 0.25);
+    // a warm cast: the gravel's own colour in the dust
+    const r = (c >> 16) & 255;
+    const g = (c >> 8) & 255;
+    const b = c & 255;
+    return (r << 16) | (Math.round(g * 0.95) << 8) | Math.round(b * 0.86);
   }
 
   // rebuilt after the race is over: dark stage, flag down, podium up
   _showFinal() {
-    for (const layer of this._lights || []) layer.setAlpha(0);
+    for (const layer of this._lights) layer.setAlpha(0);
+    this._moonlight(1);
     if (this._flag) {
       this.tweens.killTweensOf(this._flag);
       this._flagUp = false;
@@ -1281,20 +396,103 @@ export default class RallyScene extends BasePuzzleScene {
 
   // ── the cars ───────────────────────────────────────────────────────────────
 
-  _buildCars(W, H) {
-    const T = this._track;
-    // Each car is built at the size it should be ON the finish line, so its
-    // scale there is exactly 1 — it is largest and clearest where it is read.
-    this._groundY = T.centre(T.finishU).y;
-    // each car keeps to its own line across the track, as a fraction of the
-    // track's width at that point rather than a fixed number of pixels
-    this._lanes = [0, -1, 1, -0.5, 0.8, -0.8].map((k) => k * 0.16);
-    this._cars = RY_NUMBERS.map((n, i) =>
-      createCar(this, { length: this._carLen, groundY: this._groundY }, n, i),
-    );
+  // run the rendering job for up to `ms`; when it finishes, make the cars
+  _pumpCars(ms) {
+    const t0 = performance.now();
+    let step;
+    do step = this._carJob.next();
+    while (!step.done && performance.now() - t0 < ms);
+    if (!step.done) return;
+    this._carJob = null;
+    this._makeCars(step.value);
   }
 
-  // ── the rounds: bunches of cars through the line, then lights out ─────────
+  _makeCars(art) {
+    this._carArt = art;
+    const glowKey = this._art.keys.glow;
+    this._cars = art.keys.map((key, i) => {
+      const view = () =>
+        this.add
+          .image(-9999, 0, key, "0")
+          .setOrigin(art.origin.x, art.origin.y)
+          .setVisible(false);
+      const lamps = art.frames[0].lamps.map((l) =>
+        this.add
+          .image(-9999, 0, l.kind === "tail" ? glowKey : art.glare)
+          .setBlendMode("ADD")
+          .setTint(l.kind === "tail" ? 0xff3322 : 0xffffff)
+          .setVisible(false),
+      );
+      // the pool its lamps throw on the gravel ahead
+      const pool = this.add.image(-9999, 0, glowKey).setBlendMode("ADD").setVisible(false);
+      return { i, a: view(), b: view(), lamps, pool, lane: CAR_LANES[i] };
+    });
+  }
+
+  // a car u of the way along the drive: where it is, which way it is seen
+  // from, how much light is on it, and its lamps
+  _placeCar(car, u) {
+    const L = this._L;
+    const art = this._carArt;
+    const at = L.carAt(u, car.lane);
+    const { i, t } = frameAt(relativeYaw(at.wx, at.wz, at.heading));
+    const s = at.scale / art.res;
+    // nearer cars draw over the ones still further away
+    const depth = 0.5 - 0.05 / at.scale;
+    const tint = this._lightTint(groundLight(L, at.wx, at.wz));
+    car.a.setFrame(String(i)).setPosition(at.x, at.y).setScale(s).setDepth(depth).setTint(tint).setVisible(true);
+    if (t > 0.02 && i < FRAME_COUNT - 1) {
+      car.b.setFrame(String(i + 1)).setPosition(at.x, at.y).setScale(s).setDepth(depth + 1e-4).setTint(tint);
+      car.b.setAlpha(t).setVisible(true);
+    } else car.b.setVisible(false);
+
+    const fa = art.frames[i].lamps;
+    const fb = art.frames[Math.min(FRAME_COUNT - 1, i + 1)].lamps;
+    const len = this._carLen * at.scale;
+    car.lamps.forEach((img, j) => {
+      const la = fa[j];
+      const lb = fb[j];
+      const facing = la.facing + (lb.facing - la.facing) * t;
+      if (facing < 0.03) {
+        img.setVisible(false);
+        return;
+      }
+      const x = at.x + (la.x + (lb.x - la.x) * t) * s;
+      const y = at.y + (la.y + (lb.y - la.y) * t) * s;
+      let size;
+      let alpha;
+      if (la.kind === "pod") {
+        size = len * (0.28 + 0.6 * facing * facing);
+        alpha = Math.min(1, 1.2 * Math.pow(facing, 1.3));
+      } else if (la.kind === "head") {
+        size = len * (0.2 + 0.4 * facing * facing);
+        alpha = Math.min(1, 0.9 * Math.pow(facing, 1.3));
+      } else {
+        size = len * 0.22;
+        alpha = Math.min(0.9, facing);
+      }
+      img.setPosition(x, y).setDisplaySize(size, size).setAlpha(alpha).setDepth(depth + 2e-4).setVisible(true);
+    });
+
+    // the headlamps on the gravel: a long pool some metres ahead, flattened
+    // by the angle we see the ground at
+    const ch = Math.cos(at.heading);
+    const sh = Math.sin(at.heading);
+    const ahead = 8 * L.m;
+    const pw = at.wx + ch * ahead;
+    const pz = at.wz + sh * ahead;
+    const pp = L.P(pw, 0, pz);
+    const k = L.px(pz) * L.m;
+    const along = 11;
+    const across = 4.5;
+    car.pool
+      .setPosition(pp.x, pp.y)
+      .setDisplaySize(k * (Math.abs(ch) * along + Math.abs(sh) * across), k * (L.camH / pz) * (Math.abs(sh) * along + Math.abs(ch) * across))
+      .setDepth(0.5 - 0.05 / L.track.scaleAtY(pp.y) - 2e-3)
+      .setAlpha(0.3)
+      .setVisible(true);
+    return at;
+  }
 
   // ms from the start of the recording to its loudest moment. That is when the
   // car passes you, so that is the moment that has to land on the line. Measured
@@ -1303,8 +501,7 @@ export default class RallyScene extends BasePuzzleScene {
     if (this._lead !== undefined) return this._lead;
     let lead = RALLY_SOUND_LEAD_MS;
     try {
-      const buf =
-        this.cache.audio.exists("wroom") && this.cache.audio.get("wroom");
+      const buf = this.cache.audio.exists("wroom") && this.cache.audio.get("wroom");
       if (buf && typeof buf.getChannelData === "function" && buf.length > 0) {
         lead = measureWhooshLead(buf.getChannelData(0), buf.sampleRate);
       }
@@ -1328,6 +525,9 @@ export default class RallyScene extends BasePuzzleScene {
   // gone by — lights out, flag down — and the podium comes up. It does not repeat;
   // the game's restart button runs it again.
   _runRace() {
+    // the cars must be ready before the first one leaves
+    if (this._carJob) this._pumpCars(Infinity);
+    if (!this._carArt) return;
     const race = (this._round = (this._round || 0) + 1);
     const { plan, base, lightsOut, podiumAt } = this._planRound();
     const at = (ms, fn) =>
@@ -1346,37 +546,19 @@ export default class RallyScene extends BasePuzzleScene {
     const car = this._cars && this._cars[i];
     if (!car) return;
     const W = this._W;
-    const L = this._carLen;
-    const T = this._track;
-    const c = car.container;
-    const x0 = -L * 0.7;
-    const x1 = W + L * 0.7;
-    const lane = this._lanes[i];
+    const Lc = this._carLen;
+    const x0 = -Lc * 0.7;
+    const x1 = W + Lc * 0.7;
     let crossed = false;
     let lastDust = x0;
 
     // The tween still runs a plain number dead straight in time, so every
     // crossing lands exactly when planRallyRound says it does. That number is
-    // only a parameter now: where it puts the car on screen is the oval's
-    // business, and how big the car is drawn follows from how far below the
-    // horizon it ended up. It is never rotated — a car on flat ground stays
-    // upright however the road bends.
+    // only a parameter: where it puts the car on screen is the oval's business,
+    // which way it is seen from follows from where it is and where it heads,
+    // and how big it is drawn from how far below the horizon it stands.
     const drive = { p: x0 };
-    const ride = () => {
-      const u = (drive.p - x0) / (x1 - x0);
-      const mid = T.centre(u);
-      const band = T.nearYAt(mid.x) - T.farYAt(mid.x);
-      const y = mid.y + lane * band;
-      const k = T.scaleAtY(y);
-      c.x = mid.x;
-      c.y = y;
-      c.setScale(k);
-      // nearer cars draw over the ones still further away
-      c.setDepth(0.5 - 0.05 / k);
-    };
-
-    c.setVisible(true);
-    drive.p = x0;
+    const ride = () => this._placeCar(car, (drive.p - x0) / (x1 - x0));
     ride();
     this.tweens.add({
       targets: drive,
@@ -1384,46 +566,108 @@ export default class RallyScene extends BasePuzzleScene {
       duration: (x1 - x0) / speed,
       ease: "Linear",
       onUpdate: () => {
-        ride();
+        const at = ride();
         if (!crossed && drive.p >= this._finishX) {
           crossed = true;
           this._cheer();
           this._waveFlag();
         }
-        if (drive.p - lastDust >= 46) {
+        if (drive.p - lastDust >= Lc * 0.22) {
           lastDust = drive.p;
-          this._dust(c.x - L * 0.36 * c.scaleX, c.y, c.scaleX);
+          this._dust(at);
         }
       },
       onComplete: () => {
-        c.setVisible(false);
-        c.x = -L * 2;
+        car.a.setVisible(false);
+        car.b.setVisible(false);
+        car.pool.setVisible(false);
+        for (const l of car.lamps) l.setVisible(false);
       },
     });
   }
 
-  // gravel dust kicked up behind the rear wheel, left hanging where it fell
-  _dust(x, groundY, k = 1) {
-    const L = this._carLen * k;
-    const puff = this.add
-      .circle(
-        x,
-        groundY - L * 0.03,
-        L * 0.03 + Math.random() * L * 0.025,
-        RY_SKETCH,
-        0.09,
-      )
-      .setDepth(4);
-    this.tweens.add({
-      targets: puff,
-      x: x - L * 0.1,
-      y: puff.y - L * (0.08 + Math.random() * 0.1),
-      scale: 2.6,
-      alpha: 0,
-      duration: 600 + Math.random() * 400,
-      ease: "Sine.easeOut",
-      onComplete: () => puff.destroy(),
+  // gravel dust off the rear wheels, left hanging in the light where it was
+  // thrown, billowing and settling; and now and then a stone
+  _dust(at) {
+    const L = this._L;
+    const ch = Math.cos(at.heading);
+    const sh = Math.sin(at.heading);
+    const back = -1.55 * L.m;
+    for (const side of [-1, 1]) {
+      const lat = side * 0.77 * L.m;
+      const wx = at.wx + ch * back - sh * lat;
+      const wz = at.wz + sh * back + ch * lat;
+      const p = L.P(wx, 0, wz);
+      const mpx = L.px(wz) * L.m; // pixels per metre there
+      const scale = L.track.scaleAtY(p.y);
+      const lit = groundLight(L, wx, wz);
+      const size = mpx * (0.7 + Math.random() * 0.5);
+      // the wheel on our side throws the dust we see; the far one's is
+      // mostly behind the car
+      const peak = side < 0 ? 0.34 : 0.22;
+      const puff = this.add
+        .image(p.x, p.y - mpx * 0.2, this._art.keys.dust)
+        .setDepth(0.5 - 0.05 / scale - 1e-3)
+        .setDisplaySize(size, size * 0.75)
+        .setRotation(Math.random() * Math.PI * 2)
+        .setAlpha(0);
+      puff._lit = lit;
+      puff.setTint(this._dustTint(lit));
+      this._puffs.add(puff);
+      this.tweens.add({
+        targets: puff,
+        x: p.x - ch * mpx * (0.6 + Math.random()) + mpx * (0.3 + Math.random() * 0.6),
+        y: p.y - mpx * (0.7 + Math.random() * 1.1),
+        displayWidth: size * (3.4 + Math.random() * 1.4),
+        displayHeight: size * (2.2 + Math.random()),
+        rotation: puff.rotation + (Math.random() - 0.5),
+        duration: 1700 + Math.random() * 1300,
+        ease: "Sine.easeOut",
+        onUpdate: (tw) => {
+          const q = tw.progress;
+          puff.setAlpha(peak * (q < 0.08 ? q / 0.08 : Math.pow(1 - (q - 0.08) / 0.92, 1.3)));
+        },
+        onComplete: () => {
+          this._puffs.delete(puff);
+          puff.destroy();
+        },
+      });
+      if (side < 0 && Math.random() < 0.7) this._stone(p.x, p.y, mpx, ch, scale);
+    }
+  }
+
+  // a stone flicked up by a tyre, falling back onto the gravel
+  _stone(x, y, mpx, ch, scale) {
+    const r = Math.max(1, mpx * 0.07);
+    const obj = this.add
+      .rectangle(x, y - r, r, r, 0x2b2621)
+      .setDepth(0.5 - 0.05 / scale + 1e-3);
+    this._stones.push({
+      obj,
+      x,
+      y: y - r,
+      ground: y,
+      vx: (-ch * (2 + Math.random() * 3) + (Math.random() - 0.5)) * mpx,
+      vy: -(2.5 + Math.random() * 3) * mpx,
+      g: 9.8 * mpx,
     });
+  }
+
+  _updateStones(dtMs) {
+    if (!this._stones.length) return;
+    const dt = dtMs / 1000;
+    for (let i = this._stones.length - 1; i >= 0; i--) {
+      const s = this._stones[i];
+      s.vy += s.g * dt;
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      if (s.y >= s.ground || !s.obj.active) {
+        s.obj.destroy();
+        this._stones.splice(i, 1);
+        continue;
+      }
+      s.obj.setPosition(s.x, s.y);
+    }
   }
 
   // the car crossing the line — assets/sounds/Rally/wroom.mp3; silent if absent
@@ -1431,7 +675,7 @@ export default class RallyScene extends BasePuzzleScene {
     this.services.audio.playSfx("wroom", 1, this);
   }
 
-  _drawTexts(W, H) {
+  _drawTexts(W) {
     this.statusText = this.add
       .text(W / 2, 40, ".", {
         fontFamily: '"Special Elite", monospace',
@@ -1462,18 +706,40 @@ export default class RallyScene extends BasePuzzleScene {
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
+  _releaseArt() {
+    releaseStageArt(this.textures);
+    releaseCarArt(this.textures);
+    releasePeopleArt(this.textures);
+    releasePodiumArt(this.textures);
+  }
+
+  // a resize: everything is painted again from scratch
   _teardown() {
     this._round = (this._round || 0) + 1; // orphan any pending round callbacks
+    this._carJob = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
-    this.children.removeAll(true);
+    for (const obj of this.children.list.slice()) obj.destroy();
+    this._releaseArt();
     this._cars = [];
     this._crowd = [];
+    this._stones = [];
+    this._puffs = new Set();
+    this._lights = [];
+    this._dim = [];
+    this._flag = null;
+    this._podium = null;
   }
 
   shutdown() {
     this._round = (this._round || 0) + 1;
+    this._carJob = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
+    this._releaseArt();
+    this._cars = [];
+    this._crowd = [];
+    this._stones = [];
+    this._puffs = new Set();
   }
 }

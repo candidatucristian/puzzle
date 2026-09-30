@@ -1,6 +1,6 @@
 import { drawRoom } from "./room.js";
 import { drawWindow, releaseWindowArt } from "./window.js";
-import { makeMoonTexture } from "./textures.js";
+import { makeMoonTexture } from "../../shared/moon.js";
 import { ConstellationHover, HOVER_TUNE } from "./constellations.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";

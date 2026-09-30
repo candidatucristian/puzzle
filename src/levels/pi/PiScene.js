@@ -1,29 +1,31 @@
+import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { PENCIL } from "../../shared/theme.js";
+import { paintCity, releaseCityArt } from "./City.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PI"  ·  code: PI   ·  count the windows
 //
-// Drawn in the game's pencil-sketch idiom: a sleeping city at night. A
-// crescent of skyline, a moon with its craters, a suspension bridge over
-// the river, a little boat drifting through — and ONE building whose
+// A river city asleep under the moon: a hazy skyline, dark towers, a
+// suspension bridge, a little boat drifting through — and ONE building whose
 // lights are still on. Floor by floor, top to bottom, the number of lit
 // windows is:
 //
 //   3 · 1 · 4 · 1 · 5 · 9 · 2 · 6 · 5
 //
 // The lit windows sit at random positions on each floor (seeded), so the
-// building just looks awake — until someone counts. Nothing on screen
-// explains anything; the access code is the name of the number:  PI
+// building just looks awake — until someone counts. Click a lit window and
+// its light moves to another window on the same floor: the count never
+// changes. Hover the moon and a line is drawn straight across it. Nothing on
+// screen explains anything; the access code is the name of the number:  PI
 //
-// The warm window light is the scene's only living colour, like the
-// candle and the router LEDs elsewhere in the game.
+// The warm window light is the scene's only living colour, like the candle
+// and the router LEDs elsewhere in the game.
 //
-// All jitter is deterministic (seeded), so the sketch holds still across
-// redraws. Canvas-drawn, with lifecycle provided by BasePuzzleScene.
+// The city is painted once per screen size (city.js); the lit windows, their
+// light on the water, the twinkling stars, the boat and the moon's line are
+// live. Lifecycle provided by BasePuzzleScene.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PI_SKETCH = PENCIL; // the pencil itself
 const PI_DIGITS = [3, 1, 4, 1, 5, 9, 2, 6, 5]; // floors, top to bottom
 const PI_COLS = 10; // windows per floor
 
@@ -50,58 +52,46 @@ export default class PiScene extends BasePuzzleScene {
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
-  // ── the pencil: jittered hand-drawn primitives ─────────────────────────────
-
-  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha) {
-    const steps = 16;
-    const pts = [];
-    for (let i = 0; i <= steps; i++) {
-      const a = (i / steps) * Math.PI * 2;
-      const jr = r + (rnd() - 0.5) * 1.5;
-      pts.push({ x: cx + Math.cos(a) * jr, y: cy + Math.sin(a) * jr });
-    }
-    this._drawPath(g, pts, width, color, alpha);
-  }
-
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
     this._W = W;
     this._H = H;
-    this._winState = []; // ← stare interactivă ferestre
-    this._secantGraphics = null; // ← secanta lunii
-    this._moonHitArea = null; // ← hit-area lunii
-    this._secantTween = null; // ← tween-ul secantei
+    this._winState = [];
+    this._secantGraphics = null;
+    this._moonHitArea = null;
+    this._secantTween = null;
 
-    const groundY = H * 0.72; // where the city stands
-    const waterY = H * 0.8; // the river begins
+    const art = paintCity(this, W, H, PI_DIGITS.length, PI_COLS);
+    this._art = art;
+    this.add.image(0, 0, art.city).setOrigin(0, 0).setDepth(-16);
 
-    this._drawSky(W, H);
-    this._drawMoon(W, H);
-    this._drawSkyline(W, H, groundY);
-    this._drawHeroBuilding(W, H, groundY);
-    this._drawRiverAndBridge(W, H, groundY, waterY);
-    this._makeBoat(W, H, waterY);
+    this._makeStars(W, H, art);
+    this._makeMoon(art.moon);
+    this._makeWindows(art);
+    this._makeBoat(W, art);
     this._drawTexts(W, H);
-    this._drawVignette(W, H);
   }
 
-  _drawSky(W, H) {
-    const g = this.add.graphics().setDepth(-16);
-    g.fillGradientStyle(0x0b0d12, 0x0d0f15, 0x07080b, 0x090a0d, 1);
-    g.fillRect(0, 0, W, H);
-
-    // a scatter of stars, breathing at their own pace
+  // a scatter of stars, breathing at their own pace — only in open sky
+  _makeStars(W, H, art) {
     const rnd = this._rng(7551);
     for (let i = 0; i < 26; i++) {
       const x = rnd() * W;
       const y = rnd() * H * 0.45;
-      const dot = this.add
-        .circle(x, y, 0.6 + rnd() * 1, 0xffffff, 1)
+      const r = 0.6 + rnd() * 1;
+      const star = this.add
+        .image(x, y, art.star)
+        .setDisplaySize(r * 7, r * 7)
+        .setBlendMode(Phaser.BlendModes.ADD)
         .setAlpha(0.12 + rnd() * 0.25)
         .setDepth(-15);
+      const open =
+        art.skyAt(x, y) &&
+        Math.hypot(x - art.moon.x, y - art.moon.y) > art.moon.r * 2.4;
+      if (!open) star.setVisible(false);
       this.tweens.add({
-        targets: dot,
+        targets: star,
         alpha: 0.55 + rnd() * 0.3,
         duration: 1400 + rnd() * 2600,
         delay: rnd() * 2000,
@@ -112,79 +102,17 @@ export default class PiScene extends BasePuzzleScene {
     }
   }
 
-  _drawMoon(W, H) {
-    const g = this.add.graphics().setDepth(-14);
-    const rnd = this._rng(3113);
-    const mx = W * 0.79;
-    const my = H * 0.14;
-    const r = Math.min(W, H) * 0.048;
-
-    // soft halo
-    g.fillStyle(0xffffff, 0.03);
-    g.fillCircle(mx, my, r * 2.1);
-    g.fillStyle(0xffffff, 0.05);
-    g.fillCircle(mx, my, r * 1.4);
-    // the disk, hatched lightly, with craters
-    g.fillStyle(0xe8e2d2, 0.1);
-    g.fillCircle(mx, my, r);
-    this._pencilCircle(g, rnd, mx, my, r, 1.4, PI_SKETCH, 0.5);
-    this._pencilCircle(
-      g,
-      rnd,
-      mx - r * 0.3,
-      my - r * 0.25,
-      r * 0.22,
-      1,
-      PI_SKETCH,
-      0.3,
-    );
-    this._pencilCircle(
-      g,
-      rnd,
-      mx + r * 0.35,
-      my + r * 0.2,
-      r * 0.16,
-      1,
-      PI_SKETCH,
-      0.25,
-    );
-    this._pencilCircle(
-      g,
-      rnd,
-      mx - r * 0.05,
-      my + r * 0.42,
-      r * 0.12,
-      1,
-      PI_SKETCH,
-      0.22,
-    );
-    // light hatching along the shadowed limb
-    for (let i = 0; i < 4; i++) {
-      const a = Math.PI * (0.75 + i * 0.1);
-      this._pencilSeg(
-        g,
-        rnd,
-        mx + Math.cos(a) * r * 0.55,
-        my + Math.sin(a) * r * 0.55,
-        mx + Math.cos(a) * r * 0.92,
-        my + Math.sin(a) * r * 0.92,
-        1,
-        PI_SKETCH,
-        0.12,
-        0.8,
-      );
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  SECANTĂ ANIMATĂ LA HOVER PE LUNĂ
-    //  O singură animație per hover: linie orizontală prin centru
-    //  care se desenează o dată de la stânga la dreapta, apoi rămâne.
-    //  Când iei mouse-ul, dispare; la următorul hover, reîncepe.
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  THE LINE ACROSS THE MOON, ON HOVER
+  //  One animation per hover: a line through the centre, drawn once from left
+  //  to right, then it stays. Move away and it goes; hover again and it
+  //  starts over.
+  // ═══════════════════════════════════════════════════════════════════════════
+  _makeMoon({ x: mx, y: my, r }) {
     this._secantGraphics = this.add.graphics().setDepth(-13);
     this._secantGraphics.setVisible(false);
 
-    // hit-area invizibilă (include halo-ul)
+    // invisible hit area (the halo included)
     this._moonHitArea = this.add
       .circle(mx, my, r * 2.2, 0xffffff, 0.001)
       .setDepth(-12);
@@ -204,13 +132,30 @@ export default class PiScene extends BasePuzzleScene {
         repeat: 0,
         ease: "Linear",
         onUpdate: () => {
-          if (!this._secantGraphics) return;
-          this._secantGraphics.clear();
-          const startX = mx - r;
-          const endX = mx - r + 2 * r * proxy.t; // nu depășește mx + r
-          const segRnd = this._rng(3113);
-          const pts = this._sketchSeg(segRnd, startX, my, endX, my, 0.6);
-          this._drawPath(this._secantGraphics, pts, 1.6, PI_SKETCH, 0.75);
+          const g = this._secantGraphics;
+          if (!g) return;
+          g.clear();
+          const x0 = mx - r;
+          const x1 = mx - r + 2 * r * proxy.t; // never past mx + r
+          // a fine line of light, with a faint glow round it
+          g.lineStyle(Math.max(3, r * 0.1), 0xdfe8ff, 0.16).lineBetween(
+            x0,
+            my,
+            x1,
+            my,
+          );
+          g.lineStyle(Math.max(1.2, r * 0.03), 0xf6f8ff, 0.85).lineBetween(
+            x0,
+            my,
+            x1,
+            my,
+          );
+          g.fillStyle(0xf6f8ff, 0.9).fillCircle(
+            x0,
+            my,
+            Math.max(1.6, r * 0.045),
+          );
+          g.fillCircle(x1, my, Math.max(1.6, r * 0.045));
         },
       });
     });
@@ -227,450 +172,142 @@ export default class PiScene extends BasePuzzleScene {
     });
   }
 
-  // dark buildings, all asleep
-  _drawSkyline(W, H, groundY) {
-    const g = this.add.graphics().setDepth(-10);
-    const rnd = this._rng(6226);
-    const blocks = [
-      { x: 0.06, w: 0.1, h: 0.3 },
-      { x: 0.175, w: 0.08, h: 0.42 },
-      { x: 0.56, w: 0.09, h: 0.34 },
-      { x: 0.66, w: 0.11, h: 0.48 },
-      { x: 0.86, w: 0.09, h: 0.38 },
-    ];
-    for (const b of blocks) {
-      const bx = W * b.x;
-      const bw = W * b.w;
-      const bh = H * b.h;
-      const by = groundY - bh;
-      g.fillStyle(0x101216, 0.95);
-      g.fillRect(bx, by, bw, bh);
-      g.fillStyle(PI_SKETCH, 0.02);
-      g.fillRect(bx, by, bw, bh);
-      this._pencilRect(g, rnd, bx, by, bw, bh, 1.3, PI_SKETCH, 0.35, 1.8);
-      // dead windows — barely-there outlines
-      const cols = Math.max(3, Math.round(bw / 26));
-      const rows = Math.max(4, Math.round(bh / 40));
-      for (let r2 = 0; r2 < rows; r2++) {
-        for (let c = 0; c < cols; c++) {
-          if (rnd() < 0.24) continue; // some walls, not windows
-          const wx = bx + bw * 0.12 + (bw * 0.76 * c) / (cols - 1 || 1) - 4;
-          const wy = by + bh * 0.1 + (bh * 0.78 * r2) / (rows - 1 || 1) - 5;
-          g.lineStyle(1, PI_SKETCH, 0.1);
-          g.strokeRect(wx, wy, 8, 10);
-        }
-      }
-      // a rooftop hint
-      if (rnd() < 0.6) {
-        this._pencilSeg(
-          g,
-          rnd,
-          bx + bw * 0.3,
-          by,
-          bx + bw * 0.3,
-          by - 10,
-          1,
-          PI_SKETCH,
-          0.25,
-          0.6,
-        );
-      }
-    }
-    // the ground line the city stands on
-    this._pencilSeg(g, rnd, 0, groundY, W, groundY, 1.4, PI_SKETCH, 0.25, 2);
-  }
-
-  // the one building still awake — its lit windows count the digits
-  _drawHeroBuilding(W, H, groundY) {
-    const g = this.add.graphics().setDepth(-8);
-    const rnd = this._rng(9449);
-
-    const floors = PI_DIGITS.length;
-    const bw = W * 0.23;
-    const bx = W * 0.32;
-    const floorH = H * 0.056;
-    const bh = floors * floorH + H * 0.02;
-    const by = groundY - bh;
-
-    // body
-    g.fillStyle(0x14171d, 0.97);
-    g.fillRect(bx, by, bw, bh);
-    g.fillStyle(PI_SKETCH, 0.035);
-    g.fillRect(bx, by, bw, bh);
-    this._pencilRect(g, rnd, bx, by, bw, bh, 1.7, PI_SKETCH, 0.55, 2);
-    // roof ledge + a rooftop antenna
-    this._pencilSeg(
-      g,
-      rnd,
-      bx - 8,
-      by,
-      bx + bw + 8,
-      by,
-      1.5,
-      PI_SKETCH,
-      0.5,
-      1.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      bx + bw * 0.72,
-      by,
-      bx + bw * 0.72,
-      by - H * 0.035,
-      1.2,
-      PI_SKETCH,
-      0.4,
-      1,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      bx + bw * 0.72 - 5,
-      by - H * 0.022,
-      bx + bw * 0.72 + 5,
-      by - H * 0.022,
-      1,
-      PI_SKETCH,
-      0.3,
-      0.5,
-    );
-    // entrance
-    this._pencilRect(
-      g,
-      rnd,
-      bx + bw * 0.44,
-      groundY - H * 0.028,
-      bw * 0.12,
-      H * 0.028,
-      1.2,
-      PI_SKETCH,
-      0.4,
-      1,
-    );
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  FERESTRE INTERACTIVE — click pe bec aprins mută lumina pe rând
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  THE WINDOWS — click a lit one and its light moves along the floor
+  // ═══════════════════════════════════════════════════════════════════════════
+  _makeWindows(art) {
     const rndPick = this._rng(2718);
-    const winW = bw / (PI_COLS + 2.6);
-    const winH = floorH * 0.48;
-    const x0 = bx + (bw - PI_COLS * winW * 1.18) / 2 + winW * 0.09;
-
-    for (let f = 0; f < floors; f++) {
+    art.windows.forEach((row, f) => {
       this._winState[f] = [];
-      const rowY = by + H * 0.014 + f * floorH + floorH * 0.2;
-
       // choose which windows burn tonight — seeded, scattered
       const litSet = new Set();
-      while (litSet.size < PI_DIGITS[f]) {
+      while (litSet.size < PI_DIGITS[f])
         litSet.add(Math.floor(rndPick() * PI_COLS));
-      }
 
-      for (let c = 0; c < PI_COLS; c++) {
-        const wx = x0 + c * winW * 1.18;
-        const cx = wx + winW / 2;
-        const cy = rowY + winH / 2;
-
-        if (litSet.has(c)) {
-          // the warm light — the only colour awake in the whole city
-          const glow = this.add
-            .circle(cx, cy, winW * 1.5, 0xffdf9e, 0.05)
-            .setDepth(-8);
-          const pane = this.add
-            .rectangle(cx, cy, winW, winH, 0xffdf9e, 0.8)
-            .setDepth(-7);
-
-          pane.setAlpha(0.68 + rndPick() * 0.2);
-          this.tweens.add({
-            targets: [pane, glow],
-            alpha: { from: pane.alpha, to: pane.alpha - 0.14 },
-            duration: 2200 + rndPick() * 2600,
-            delay: rndPick() * 1800,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut",
-          });
-
-          // interactivitate
-          pane.setInteractive({ useHandCursor: true });
-          pane.on("pointerdown", () => this._onLitWindowClick(f, c));
-
-          this._winState[f][c] = {
-            lit: true,
-            pane,
-            glow,
-            tweenTargets: [pane, glow],
-          };
-        } else {
-          const pane = this.add
-            .rectangle(cx, cy, winW, winH, 0x14171d, 0)
-            .setDepth(-7);
-          pane.setStrokeStyle(1, PI_SKETCH, 0.14);
-          this._winState[f][c] = {
-            lit: false,
-            pane,
-            glow: null,
-            tweenTargets: null,
-          };
-        }
-      }
-    }
+      row.forEach((w, c) => {
+        // the light it throws on the wall round it
+        const glow = this.add
+          .image(w.x, w.y, art.glow)
+          .setDisplaySize(w.w * 3.6, w.w * 3.6)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setDepth(-9)
+          .setVisible(false);
+        // the room behind the glass
+        const pane = this.add
+          .image(w.x, w.y, w.key)
+          .setDisplaySize(w.w, w.h)
+          .setDepth(-8)
+          .setVisible(false);
+        pane.on("pointerdown", () => this._onLitWindowClick(f, c));
+        // and its light on the river
+        const streak = w.streak
+          ? this.add
+              .image(w.streak.x, w.streak.y, art.streak)
+              .setOrigin(0.5, 0)
+              .setDisplaySize(w.w * 0.9, w.h * 3.4)
+              .setBlendMode(Phaser.BlendModes.ADD)
+              .setDepth(-6)
+              .setVisible(false)
+          : null;
+        this._winState[f][c] = { lit: false, pane, glow, streak, fx: null };
+        if (litSet.has(c)) this._setWindowLit(f, c, true, rndPick);
+      });
+    });
   }
 
   _onLitWindowClick(floor, col) {
     const row = this._winState[floor];
     if (!row || !row[col] || !row[col].lit) return;
 
-    // Găsim toate ferestrele stinse de pe același rând
+    // every dark window on the same floor
     const unlitCols = [];
     for (let c = 0; c < PI_COLS; c++) {
       if (!row[c].lit) unlitCols.push(c);
     }
     if (unlitCols.length === 0) return;
 
-    // Alegem una aleatoriu
+    // one of them, at random
     const targetCol = unlitCols[Math.floor(Math.random() * unlitCols.length)];
 
-    // Stingem fereastra clicată, aprindem pe cealaltă
+    // this one goes dark, that one lights up
     this._setWindowLit(floor, col, false);
     this._setWindowLit(floor, targetCol, true);
 
-    // Sunet de feedback
     this.services.audio.playClick(this);
   }
 
-  _setWindowLit(floor, col, lit) {
+  _setWindowLit(floor, col, lit, rnd = null) {
     const win = this._winState[floor][col];
     if (!win || win.lit === lit) return;
 
     if (lit) {
-      // APRINDEM
-      const pane = win.pane;
-      const rndDyn = this._rng(Date.now() + floor * 137 + col * 53);
-      pane.setFillStyle(0xffdf9e, 0.8);
-      pane.setStrokeStyle(0);
-      pane.setAlpha(0.68 + rndDyn() * 0.2);
-
-      const glow = this.add
-        .circle(pane.x, pane.y, pane.width * 1.5, 0xffdf9e, 0.05)
-        .setDepth(-8);
-
+      const r = rnd || this._rng(Date.now() + floor * 137 + col * 53);
+      const a = 0.86 + r() * 0.14;
+      // a room's light is never quite steady: it breathes, slowly
+      const fx = { v: a };
+      const show = () => {
+        win.pane.setAlpha(fx.v);
+        win.glow.setAlpha(fx.v * 0.5);
+        if (win.streak) win.streak.setAlpha(fx.v * 0.55);
+      };
+      win.pane.setVisible(true);
+      win.glow.setVisible(true);
+      if (win.streak) win.streak.setVisible(true);
+      show();
+      win.pane.setInteractive({ useHandCursor: true });
       this.tweens.add({
-        targets: [pane, glow],
-        alpha: { from: pane.alpha, to: pane.alpha - 0.14 },
-        duration: 2200 + rndDyn() * 2600,
-        delay: rndDyn() * 1800,
+        targets: fx,
+        v: a - 0.12,
+        duration: 2200 + r() * 2600,
+        delay: r() * 1800,
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut",
+        onUpdate: show,
       });
-
-      pane.setInteractive({ useHandCursor: true });
-      pane.on("pointerdown", () => this._onLitWindowClick(floor, col));
-
+      if (win.streak) {
+        this.tweens.add({
+          targets: win.streak,
+          scaleX: win.streak.scaleX * 1.35,
+          duration: 900 + r() * 700,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      }
+      win.fx = fx;
       win.lit = true;
-      win.glow = glow;
-      win.tweenTargets = [pane, glow];
     } else {
-      // STINGEM
-      if (win.glow) {
-        win.glow.destroy();
-        win.glow = null;
+      if (win.fx) this.tweens.killTweensOf(win.fx);
+      win.fx = null;
+      win.pane.setVisible(false);
+      win.pane.disableInteractive();
+      win.glow.setVisible(false);
+      if (win.streak) {
+        this.tweens.killTweensOf(win.streak);
+        win.streak
+          .setVisible(false)
+          .setDisplaySize(
+            win.pane.displayWidth * 0.9,
+            win.pane.displayHeight * 3.4,
+          );
       }
-      if (win.tweenTargets) {
-        this.tweens.killTweensOf(win.tweenTargets);
-        win.tweenTargets = null;
-      }
-      win.pane.setFillStyle(0x14171d, 0);
-      win.pane.setStrokeStyle(1, PI_SKETCH, 0.14);
-      win.pane.removeInteractive();
-      win.pane.off("pointerdown");
       win.lit = false;
     }
   }
 
-  // the river, its bank, a suspension bridge, the moon's shimmer
-  _drawRiverAndBridge(W, H, groundY, waterY) {
-    const g = this.add.graphics().setDepth(-6);
-    const rnd = this._rng(5335);
-
-    // embankment
-    this._pencilSeg(g, rnd, 0, waterY, W, waterY, 1.4, PI_SKETCH, 0.3, 2);
-    this._pencilSeg(
-      g,
-      rnd,
-      0,
-      waterY + 4,
-      W,
-      waterY + 4,
-      1,
-      PI_SKETCH,
-      0.14,
-      2,
-    );
-
-    // still water: sparse drifting strokes
-    for (let i = 0; i < 10; i++) {
-      const y = waterY + 14 + rnd() * (H - waterY - 24);
-      const x = rnd() * W * 0.9;
-      this._pencilSeg(
-        g,
-        rnd,
-        x,
-        y,
-        x + 30 + rnd() * 60,
-        y + (rnd() - 0.5) * 3,
-        1,
-        PI_SKETCH,
-        0.08,
-        1,
-      );
-    }
-    // the moon's reflection — broken shimmer under it
-    const mx = W * 0.79;
-    for (let i = 0; i < 5; i++) {
-      const y = waterY + 12 + i * ((H - waterY) * 0.16);
-      const wgl = 18 + rnd() * 22;
-      this._pencilSeg(
-        g,
-        rnd,
-        mx - wgl / 2 + (rnd() - 0.5) * 16,
-        y,
-        mx + wgl / 2,
-        y,
-        1.1,
-        PI_SKETCH,
-        0.16 - i * 0.02,
-        0.8,
-      );
-    }
-
-    // the suspension bridge, spanning the river on the right
-    const bxA = W * 0.58;
-    const bxB = W * 0.995;
-    const deckY = waterY + (H - waterY) * 0.3;
-    const t1 = W * 0.68;
-    const t2 = W * 0.9;
-    const towerTop = deckY - H * 0.085;
-    // deck
-    this._pencilSeg(g, rnd, bxA, deckY, bxB, deckY, 1.6, PI_SKETCH, 0.45, 1.6);
-    this._pencilSeg(
-      g,
-      rnd,
-      bxA,
-      deckY + 5,
-      bxB,
-      deckY + 5,
-      1.1,
-      PI_SKETCH,
-      0.25,
-      1.6,
-    );
-    // towers with piers into the water
-    for (const tx of [t1, t2]) {
-      this._pencilSeg(
-        g,
-        rnd,
-        tx - 3,
-        towerTop,
-        tx - 3,
-        deckY + 16,
-        1.5,
-        PI_SKETCH,
-        0.5,
-        1,
-      );
-      this._pencilSeg(
-        g,
-        rnd,
-        tx + 3,
-        towerTop,
-        tx + 3,
-        deckY + 16,
-        1.5,
-        PI_SKETCH,
-        0.5,
-        1,
-      );
-      this._pencilSeg(
-        g,
-        rnd,
-        tx - 6,
-        towerTop,
-        tx + 6,
-        towerTop,
-        1.3,
-        PI_SKETCH,
-        0.45,
-        0.6,
-      );
-    }
-    // main cables: sagging between the towers, anchored at the ends
-    const cable = (xa, ya, xb, yb, sag) => {
-      const steps = 12;
-      let prev = null;
-      for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        const x = xa + (xb - xa) * t;
-        const y = ya + (yb - ya) * t + Math.sin(t * Math.PI) * sag;
-        if (prev)
-          this._pencilSeg(
-            g,
-            rnd,
-            prev.x,
-            prev.y,
-            x,
-            y,
-            1.1,
-            PI_SKETCH,
-            0.35,
-            0.7,
-          );
-        prev = { x, y };
-      }
-    };
-    cable(bxA, deckY - 4, t1, towerTop, H * 0.028);
-    cable(t1, towerTop, t2, towerTop, H * 0.055);
-    cable(t2, towerTop, bxB, deckY - 6, H * 0.02);
-    // hangers from the middle cable down to the deck
-    for (let i = 1; i < 7; i++) {
-      const t = i / 7;
-      const x = t1 + (t2 - t1) * t;
-      const y = towerTop + Math.sin(t * Math.PI) * H * 0.055;
-      this._pencilSeg(g, rnd, x, y, x, deckY, 1, PI_SKETCH, 0.2, 0.5);
-    }
-  }
-
-  // a little boat, drifting slowly across the river all night
-  _makeBoat(W, H, waterY) {
-    const cont = this.add
-      .container(W * 1.06, waterY + (H - waterY) * 0.55)
-      .setDepth(-5);
-    const g = this.add.graphics();
-    const rnd = this._rng(8668);
-    // hull
-    g.fillStyle(0x14171d, 0.95);
-    g.fillPoints(
-      [
-        { x: -26, y: 0 },
-        { x: 26, y: 0 },
-        { x: 16, y: 9 },
-        { x: -18, y: 9 },
-      ],
-      true,
-    );
-    this._pencilSeg(g, rnd, -26, 0, 26, 0, 1.2, PI_SKETCH, 0.5, 0.8);
-    this._pencilSeg(g, rnd, 26, 0, 16, 9, 1.1, PI_SKETCH, 0.45, 0.6);
-    this._pencilSeg(g, rnd, 16, 9, -18, 9, 1.1, PI_SKETCH, 0.45, 0.8);
-    this._pencilSeg(g, rnd, -18, 9, -26, 0, 1.1, PI_SKETCH, 0.45, 0.6);
-    // a small cabin and a mast
-    this._pencilRect(g, rnd, -8, -10, 14, 10, 1, PI_SKETCH, 0.4, 0.6);
-    this._pencilSeg(g, rnd, 12, 0, 12, -18, 1.1, PI_SKETCH, 0.45, 0.6);
-    // wake behind
-    this._pencilSeg(g, rnd, -30, 6, -48, 7, 1, PI_SKETCH, 0.14, 0.8);
-    this._pencilSeg(g, rnd, -32, 2, -44, 3, 1, PI_SKETCH, 0.1, 0.8);
-    cont.add(g);
+  // a little boat, drifting slowly downriver all night, its reflection under it
+  _makeBoat(W, art) {
+    const b = art.boat;
+    const cont = this.add.container(W * 1.06, b.y).setDepth(-5);
+    const hull = this.add.image(0, 0, b.key).setOrigin(b.originX, 1);
+    const mirror = this.add
+      .image(0, 0, b.key)
+      .setOrigin(b.originX, 0)
+      .setFlipY(true)
+      .setScale(1, 0.8)
+      .setAlpha(0.25);
+    cont.add([mirror, hull]);
 
     // the long, slow crossing — then it comes back around
     this.tweens.add({
@@ -693,7 +330,7 @@ export default class PiScene extends BasePuzzleScene {
     });
   }
 
-  _drawTexts(W, H) {
+  _drawTexts(W) {
     this.statusText = this.add
       .text(W / 2, 40, "The whole city sleeps. One building counts.", {
         fontFamily: '"Special Elite", monospace',
@@ -705,17 +342,25 @@ export default class PiScene extends BasePuzzleScene {
       .setDepth(20);
 
     this.levelText = this.add
-      .text(W - 30, 28, "Level " + (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
+      .text(
+        W - 30,
+        28,
+        "Level " +
+          (this.services.levels.definitions.findIndex(
+            (l) => l.key === this.scene.key,
+          ) +
+            1),
+        {
+          fontFamily: '"Special Elite", monospace',
+          fontSize: "28px",
+          color: "#e8dcc0",
+        },
+      )
       .setOrigin(1, 0)
       .setAlpha(0)
       .setDepth(20);
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
   }
-
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
@@ -726,7 +371,11 @@ export default class PiScene extends BasePuzzleScene {
     }
     this.tweens.killAll();
     this.time.removeAllEvents();
-    this.children.removeAll(true);
+    // destroy rather than just detach: removeAll(true) only took objects off
+    // the display list, and the old windows and the moon went on catching
+    // clicks and hovers after a resize
+    for (const obj of this.children.list.slice()) obj.destroy();
+    releaseCityArt(this.textures);
     this._winState = [];
     this._secantGraphics = null;
     this._moonHitArea = null;
@@ -739,5 +388,6 @@ export default class PiScene extends BasePuzzleScene {
     }
     this.tweens.killAll();
     this.time.removeAllEvents();
+    releaseCityArt(this.textures);
   }
 }

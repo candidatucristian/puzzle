@@ -114,7 +114,7 @@
 }
 
 /* Match the level tiles, with a quieter matte hover for the main menu. */
-:is(#btn-howto, #btn-options, #btn-info) {
+:is(#btn-howto, #btn-options, #btn-info, #btn-fullscreen) {
   background: #17191e;
   border: 1.5px solid var(--pencil-faint);
   border-radius: 3px 6px 4px 7px;
@@ -124,17 +124,17 @@
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-:is(#btn-howto, #btn-options, #btn-info)::after {
+:is(#btn-howto, #btn-options, #btn-info, #btn-fullscreen)::after {
   content: none;
 }
 
-:is(#btn-howto, #btn-options, #btn-info):hover {
+:is(#btn-howto, #btn-options, #btn-info, #btn-fullscreen):hover {
   background: #1c1e23;
   border-color: rgba(183, 177, 162, 0.3);
   color: var(--bone);
 }
 
-:is(#btn-howto, #btn-options, #btn-info):active {
+:is(#btn-howto, #btn-options, #btn-info, #btn-fullscreen):active {
   background: #14161a;
   transform: none;
 }
@@ -553,4 +553,3 @@ input[type="range"]::-moz-range-track {
   opacity: 0.4;
   filter: grayscale(100%);
 }
-

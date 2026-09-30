@@ -1,16 +1,15 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { PENCIL } from "../../shared/theme.js";
+import { paintHall, releaseHallArt } from "./hall.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "STATION"  ·  code: EXIT  ·  observation + ordering
 //
-// Drawn in the game's pencil-sketch idiom: a hand-ruled departures board
-// hangs from two sketched chains in an empty station. The ledger still
-// updates itself for trains that will never come. Four rows are somehow
-// still BOARDING — and the tired hand that keeps the board stopped caring
-// about spelling: each of those four cities carries one letter that does
-// not belong (it settles crooked, like a slipped pen stroke). Read the
-// wrong letters in order of departure time:
+// An empty station hall at night. Hanging from the girder on two chains, a
+// split-flap departures board still updates itself for trains that will
+// never come. Four rows are somehow still BOARDING — and the board's old
+// flaps have worn: each of those four cities carries one letter that does not
+// belong (its flap jams and settles crooked). Read the wrong letters in order
+// of departure time:
 //
 //   21:03  P[E]RIS   →  E
 //   22:07  MO[X]COW  →  X
@@ -18,10 +17,11 @@ import { PENCIL } from "../../shared/theme.js";
 //   22:41  GENE[T]A  →  T
 //
 // Row order on the board is scrambled, so the times matter.
-// Clicking a row rewrites it — the bad letter always stutters.
+// Clicking a row flips it again — the bad letter always stutters.
 //
-// All jitter is deterministic (seeded), so the sketch holds still across
-// redraws. Canvas-drawn, with lifecycle provided by BasePuzzleScene.
+// The hall is painted once per screen size (hall.js); the letters, the
+// lamp's light, the clock's second hand and the dust are live. Lifecycle
+// provided by BasePuzzleScene.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATION_ROWS = [
@@ -62,7 +62,16 @@ const ST_COLS =
   ST_TIME_CELLS + ST_DEST_CELLS + ST_TRACK_CELLS + ST_REMARK_CELLS;
 
 const ST_FLAP_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:";
-const ST_SKETCH = PENCIL; // the pencil itself
+
+// the flaps' lettering: a condensed grotesque, as on the real boards
+const FLAP_FONT =
+  '"Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif';
+const INK = { time: "#dedbd2", dest: "#f5f2ea", track: "#dedbd2" };
+const REMARK_INK = {
+  BOARDING: "#f2c54e",
+  CANCELLED: "#df6450",
+  DELAYED: "#eda13c",
+};
 
 export default class StationScene extends BasePuzzleScene {
   constructor() {
@@ -77,7 +86,7 @@ export default class StationScene extends BasePuzzleScene {
   create() {
     this.beginScene();
 
-    this._entered = false; // first build plays the writing cascade
+    this._entered = false; // first build plays the flipping cascade
     this._build(this.cameras.main.width, this.cameras.main.height);
 
     this.listenToResize(({ width, height }) => {
@@ -92,36 +101,33 @@ export default class StationScene extends BasePuzzleScene {
     return ST_FLAP_CHARS[Math.floor(Math.random() * ST_FLAP_CHARS.length)];
   }
 
-  // ── the pencil: jittered hand-drawn primitives ─────────────────────────────
-
-  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha) {
-    super._pencilCircle(g, rnd, cx, cy, r, width, color, alpha, 14, 1.4);
-  }
-
-  _dashedSeg(g, x1, y1, x2, y2, color, alpha) {
-    g.lineStyle(1, color, alpha);
-    const len = Math.hypot(x2 - x1, y2 - y1);
-    const step = 10;
-    const ux = (x2 - x1) / len;
-    const uy = (y2 - y1) / len;
-    for (let d = 0; d < len - 4; d += step) {
-      g.lineBetween(
-        x1 + ux * d,
-        y1 + uy * d,
-        x1 + ux * (d + 5),
-        y1 + uy * (d + 5),
-      );
-    }
-  }
-
   // ── scene construction ─────────────────────────────────────────────────────
 
   _build(W, H) {
     this._W = W;
     this._H = H;
-    this._cells = []; // [row][col] = { txt, finalChar, anomalous, cx, cy }
+    this._cells = []; // [row][col] = { txt, finalChar, anomalous, baseY }
     this._rowSpinning = STATION_ROWS.map(() => false);
 
+    const L = this._layout(W, H);
+    const art = paintHall(this, L);
+    this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-14);
+    this._makeLight(art);
+    this._makeRows(L);
+    // the split across each flap lies over its letter
+    this.add.image(0, 0, art.splits).setOrigin(0, 0).setDepth(3);
+    this._makeSecondHand(L, art.hand);
+    this._drawTexts(W, H);
+    this._spawnDust(W, H, art.mote);
+
+    if (!this._entered) {
+      this._entered = true;
+      this._cascade(); // opening ripple: the board flips itself in
+    }
+  }
+
+  // where everything on the board goes (as it always has)
+  _layout(W, H) {
     // cell size: fit 8 rows vertically and 24 columns horizontally
     let ch = Math.min(H * 0.056, 44) * 0.8;
     let cw = ch * 0.78;
@@ -140,261 +146,86 @@ export default class StationScene extends BasePuzzleScene {
     const colHeadH = ch * 0.72;
     const gH = headH + colHeadH + 8 * ch + 7 * rowGap;
     const pad = cw * 0.9;
-    const bx = W / 2 - (gW + pad * 2) / 2;
-    const by = H * 0.55 - (gH + pad * 1.6) / 2;
+    const bw = gW + pad * 2;
+    const bh = gH + pad * 1.6;
+    const bx = W / 2 - bw / 2;
+    const by = H * 0.55 - bh / 2;
+    const x0 = bx + pad;
+    const headY = by + pad * 0.55;
+    const colHeadY = headY + headH + colHeadH * 0.4 + colHeadH * 0.25;
+    const rowsY = headY + headH + colHeadH * 1.4;
 
-    this._drawRoom(W, H, bx, by, gW + pad * 2, gH + pad * 1.6);
-    this._drawBoard(
+    const groups = [];
+    let gx = x0;
+    for (const n of [
+      ST_TIME_CELLS,
+      ST_DEST_CELLS,
+      ST_TRACK_CELLS,
+      ST_REMARK_CELLS,
+    ]) {
+      groups.push(gx);
+      gx += n * cw + (n - 1) * cellGap + groupGap();
+    }
+    const sizes = [
+      ST_TIME_CELLS,
+      ST_DEST_CELLS,
+      ST_TRACK_CELLS,
+      ST_REMARK_CELLS,
+    ];
+    const rowY = (r) => rowsY + r * (ch + rowGap);
+    const cellsOf = (r) => {
+      const out = [];
+      sizes.forEach((n, g) => {
+        for (let i = 0; i < n; i++)
+          out.push({
+            x: groups[g] + i * (cw + cellGap),
+            y: rowY(r),
+            group: g,
+            i,
+          });
+      });
+      return out;
+    };
+
+    // the clock hangs above the board's left corner, clear of it
+    const rad = Math.min(Math.min(W, H) * 0.05, (by - 30) / 2.6);
+    const clock = {
+      cx: bx + rad + 10,
+      cy: Math.max(rad + 18, by - rad - 26),
+      rad,
+    };
+
+    return {
       W,
       H,
-      bx,
-      by,
+      S: Math.min(W, H),
+      floorY: H * 0.925,
+      board: { x: bx, y: by, w: bw, h: bh, headY, colHeadY },
+      x0,
       gW,
-      gH,
-      pad,
+      headH,
+      colHeadH,
       cw,
       ch,
       cellGap,
       rowGap,
-      headH,
-      colHeadH,
-      groupGap(),
-    );
-    this._drawClock(W, H, bx, by);
-    this._drawTexts(W, H);
-    this._drawVignette(W, H);
-    this._spawnDust(W, H);
-
-    if (!this._entered) {
-      this._entered = true;
-      this._cascade(); // opening ripple: the board writes itself in
-    }
+      groups,
+      rows: STATION_ROWS.length,
+      rowY,
+      cellsOf,
+      chains: [bx + bw * 0.18, bx + bw * 0.82],
+      clock,
+    };
   }
 
-  // the sketched hall: wireframe walls, a bench, a suitcase left behind
-  _drawRoom(W, H, bx, by, bw, bh) {
-    const g = this.add.graphics().setDepth(-14);
-    g.fillGradientStyle(0x0e1014, 0x101318, 0x07080b, 0x090a0d, 1);
-    g.fillRect(0, 0, W, H);
-
-    const rnd = this._rng(9091);
-    const floorY = H * 0.925; // below the board's bottom edge — never through it
-    const cwx1 = W * 0.07;
-    const cwx2 = W * 0.93;
-    // corner verticals + ceiling hints
-    this._pencilSeg(
-      g,
-      rnd,
-      cwx1,
-      H * 0.05,
-      cwx1,
-      floorY,
-      1,
-      ST_SKETCH,
-      0.1,
-      2.4,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      cwx2,
-      H * 0.05,
-      cwx2,
-      floorY,
-      1,
-      ST_SKETCH,
-      0.1,
-      2.4,
-    );
-    this._pencilSeg(g, rnd, 0, H * 0.03, cwx1, H * 0.05, 1, ST_SKETCH, 0.08, 2);
-    this._pencilSeg(g, rnd, W, H * 0.03, cwx2, H * 0.05, 1, ST_SKETCH, 0.08, 2);
-    // floor
-    this._pencilSeg(g, rnd, 0, floorY, W, floorY, 1.4, ST_SKETCH, 0.22, 2);
-    this._pencilSeg(g, rnd, 0, floorY + 5, W, floorY + 5, 1, ST_SKETCH, 0.1, 2);
-    // platform edge line, worn
-    this._dashedSeg(
-      g,
-      0,
-      floorY + (H - floorY) * 0.5,
-      W,
-      floorY + (H - floorY) * 0.5,
-      ST_SKETCH,
-      0.18,
-    );
-    // faint tile joints on the wall, hand-ruled
-    for (let i = 0; i < 4; i++) {
-      const y = H * (0.18 + i * 0.16);
-      this._pencilSeg(
-        g,
-        rnd,
-        W * 0.03,
-        y,
-        W * 0.97,
-        y + (rnd() - 0.5) * 8,
-        1,
-        ST_SKETCH,
-        0.045,
-        2.6,
-      );
-    }
-
-    // a bench, bottom-left — seat, back, legs, a few slats
-    const bxx = W * 0.035;
-    const bwd = W * 0.095;
-    const seatY = floorY - H * 0.055;
-    this._pencilSeg(
-      g,
-      rnd,
-      bxx,
-      seatY,
-      bxx + bwd,
-      seatY,
-      1.5,
-      ST_SKETCH,
-      0.35,
-      1.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      bxx,
-      seatY + 5,
-      bxx + bwd,
-      seatY + 5,
-      1,
-      ST_SKETCH,
-      0.2,
-      1.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      bxx + 4,
-      seatY - H * 0.05,
-      bxx + bwd - 4,
-      seatY - H * 0.05,
-      1.3,
-      ST_SKETCH,
-      0.3,
-      1.6,
-    ); // backrest
-    this._pencilSeg(
-      g,
-      rnd,
-      bxx + 2,
-      seatY,
-      bxx + 4,
-      seatY - H * 0.05,
-      1.1,
-      ST_SKETCH,
-      0.25,
-      1,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      bxx + bwd - 2,
-      seatY,
-      bxx + bwd - 4,
-      seatY - H * 0.05,
-      1.1,
-      ST_SKETCH,
-      0.25,
-      1,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      bxx + 6,
-      seatY,
-      bxx + 6,
-      floorY,
-      1.2,
-      ST_SKETCH,
-      0.3,
-      1,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      bxx + bwd - 6,
-      seatY,
-      bxx + bwd - 6,
-      floorY,
-      1.2,
-      ST_SKETCH,
-      0.3,
-      1,
-    );
-
-    // a suitcase, bottom-right — someone stopped waiting
-    const sx = W * 0.905;
-    const sy = floorY - H * 0.06;
-    const sw = W * 0.05;
-    const shh = H * 0.055;
-    this._pencilRect(g, rnd, sx, sy, sw, shh, 1.3, ST_SKETCH, 0.3, 1.6);
-    this._pencilSeg(
-      g,
-      rnd,
-      sx + sw * 0.38,
-      sy,
-      sx + sw * 0.36,
-      sy - 8,
-      1.1,
-      ST_SKETCH,
-      0.3,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      sx + sw * 0.62,
-      sy,
-      sx + sw * 0.64,
-      sy - 8,
-      1.1,
-      ST_SKETCH,
-      0.3,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      sx + sw * 0.36,
-      sy - 8,
-      sx + sw * 0.64,
-      sy - 8,
-      1.1,
-      ST_SKETCH,
-      0.3,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      sx,
-      sy + shh * 0.5,
-      sx + sw,
-      sy + shh * 0.5,
-      1,
-      ST_SKETCH,
-      0.15,
-      1,
-    );
-
-    // a soft pool of light over the board — bone, not warm; it breathes
-    this._glow = this.add.graphics().setDepth(-10);
-    this._glow.fillGradientStyle(
-      ST_SKETCH,
-      ST_SKETCH,
-      0x000000,
-      0x000000,
-      0.06,
-      0.06,
-      0,
-      0,
-    );
-    this._glow.fillRect(bx - 30, by - H * 0.08, bw + 60, bh * 0.9);
+  // the lamp in the board's hood: its light breathes, and now and then the
+  // old tube stutters — an old tube, not a haunted one
+  _makeLight(art) {
+    this._glow = this.add
+      .image(0, 0, art.glow)
+      .setOrigin(0, 0)
+      .setDepth(-9)
+      .setBlendMode("ADD");
     this.tweens.add({
       targets: this._glow,
       alpha: 0.75,
@@ -403,12 +234,11 @@ export default class StationScene extends BasePuzzleScene {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
-    // a rare, gentle double-dip — an old tube, not a haunted one
     this.time.addEvent({
       delay: 9000,
       loop: true,
       callback: () => {
-        if (Math.random() < 0.5) return;
+        if (Math.random() < 0.5 || !this._glow) return;
         this.tweens.add({
           targets: this._glow,
           alpha: 0.5,
@@ -420,212 +250,58 @@ export default class StationScene extends BasePuzzleScene {
     });
   }
 
-  _drawBoard(
-    W,
-    H,
-    bx,
-    by,
-    gW,
-    gH,
-    pad,
-    cw,
-    ch,
-    cellGap,
-    rowGap,
-    headH,
-    colHeadH,
-    groupGap,
-  ) {
-    const bw = gW + pad * 2;
-    const bh = gH + pad * 1.6;
-    const g = this.add.graphics().setDepth(-6);
-    const rnd = this._rng(3131);
-
-    // hanging chains from the ceiling to the board's top corners
-    for (const hx of [bx + bw * 0.18, bx + bw * 0.82]) {
-      const links = 7;
-      const topY = H * 0.035;
-      for (let i = 0; i < links; i++) {
-        const y1 = topY + ((by - topY) * i) / links;
-        const y2 = topY + ((by - topY) * (i + 1)) / links;
-        this._pencilCircle(
-          g,
-          rnd,
-          hx + (i % 2 ? 1.5 : -1.5),
-          (y1 + y2) / 2,
-          (y2 - y1) * 0.32,
-          1,
-          ST_SKETCH,
-          0.3,
-        );
-      }
-      // the ring bolted to the board
-      this._pencilCircle(g, rnd, hx, by + 4, 4, 1.2, ST_SKETCH, 0.45);
-    }
-
-    // paper tint + doubled hand-drawn frame, slightly askew
-    g.fillStyle(ST_SKETCH, 0.028);
-    g.fillRect(bx, by, bw, bh);
-    this._pencilRect(g, rnd, bx, by, bw, bh, 1.8, ST_SKETCH, 0.55, 2.2);
-    this._pencilRect(
-      g,
-      rnd,
-      bx + 8,
-      by + 8,
-      bw - 16,
-      bh - 16,
-      1,
-      ST_SKETCH,
-      0.22,
-      2,
-    );
-
-    const x0 = bx + pad;
-    let y = by + pad * 0.55;
-
-    // header — DEPARTURES, hand-lettered, with a ruled line and a diamond
-    this.add
-      .text(x0 + gW / 2, y + headH / 2 - 4, "D E P A R T U R E S", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: Math.round(headH * 0.44) + "px",
-        color: "#e8dcc0",
-      })
-      .setOrigin(0.5)
-      .setDepth(-4);
-    const ruleY = y + headH - 4;
-    this._pencilSeg(
-      g,
-      rnd,
-      x0 + gW * 0.06,
-      ruleY,
-      x0 + gW * 0.46,
-      ruleY,
-      1.2,
-      ST_SKETCH,
-      0.4,
-      1.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      x0 + gW * 0.54,
-      ruleY,
-      x0 + gW * 0.94,
-      ruleY,
-      1.2,
-      ST_SKETCH,
-      0.4,
-      1.6,
-    );
-    g.fillStyle(ST_SKETCH, 0.5);
-    g.fillRect(x0 + gW / 2 - 2, ruleY - 2, 4, 4);
-
-    y += headH + colHeadH * 0.4;
-
-    // column group x-origins
-    const gx = [];
-    let cx = x0;
-    gx.push(cx); // time
-    cx += ST_TIME_CELLS * cw + (ST_TIME_CELLS - 1) * cellGap + groupGap;
-    gx.push(cx); // destination
-    cx += ST_DEST_CELLS * cw + (ST_DEST_CELLS - 1) * cellGap + groupGap;
-    gx.push(cx); // track
-    cx += ST_TRACK_CELLS * cw + (ST_TRACK_CELLS - 1) * cellGap + groupGap;
-    gx.push(cx); // remarks
-
-    // column headings, small and dim
-    const heads = [
-      ["TIME", gx[0], ST_TIME_CELLS],
-      ["DESTINATION", gx[1], ST_DEST_CELLS],
-      ["TRK", gx[2], ST_TRACK_CELLS],
-      ["REMARKS", gx[3], ST_REMARK_CELLS],
-    ];
-    for (const [label, gxx, n] of heads) {
-      const gw2 = n * cw + (n - 1) * cellGap;
-      this.add
-        .text(gxx + gw2 / 2, y + colHeadH * 0.25, label, {
-          fontFamily: '"Special Elite", monospace',
-          fontSize: Math.max(10, Math.round(colHeadH * 0.5)) + "px",
-          color: "#8f8974",
-        })
-        .setOrigin(0.5, 0.5)
-        .setAlpha(0.85)
-        .setDepth(-4);
-    }
-
-    y += colHeadH;
-
-    // rows — letters written on hand-ruled lines, no metal anywhere
-    const lines = this.add.graphics().setDepth(-5);
+  _makeRows(L) {
+    const { ch, cw, x0, gW } = L;
     for (let r = 0; r < STATION_ROWS.length; r++) {
       const row = STATION_ROWS[r];
-      const rowY = y + r * (ch + rowGap);
-      const rowCells = [];
-
-      const put = (str, nCells, gxx, color, anomalyAt) => {
-        const chars = str.padEnd(nCells, " ").slice(0, nCells);
-        for (let i = 0; i < nCells; i++) {
-          const x = gxx + i * (cw + cellGap);
-          const txt = this.add
-            .text(x + cw / 2, rowY + ch / 2, "", {
-              fontFamily: '"Special Elite", monospace',
-              // Modifică aici: scade multiplicatorul 0.62
-              fontSize: Math.round(ch * 0.45) + "px",
-              color,
-            })
-            .setOrigin(0.5)
-            .setDepth(2);
-
-          rowCells.push({
-            txt,
-            finalChar: chars[i] === " " ? "" : chars[i],
-            anomalous: anomalyAt === i,
-            baseY: rowY + ch / 2,
-          });
-        }
-        // the ruled line each group is written on
-        const gw2 = nCells * cw + (nCells - 1) * cellGap;
-        this._dashedSeg(
-          lines,
-          gxx,
-          rowY + ch * 0.92,
-          gxx + gw2,
-          rowY + ch * 0.92,
-          ST_SKETCH,
-          0.22,
-        );
-      };
-
+      const rowY = L.rowY(r);
       const boarding = row.remark === "BOARDING";
-      put(row.time, ST_TIME_CELLS, gx[0], "#a9a390");
-      put(row.dest, ST_DEST_CELLS, gx[1], "#e8dcc0", row.wrongIdx);
-      put(row.track, ST_TRACK_CELLS, gx[2], "#a9a390");
-      put(row.remark, ST_REMARK_CELLS, gx[3], boarding ? "#d9c9a0" : "#6a675c");
-
+      const text = [
+        [row.time, ST_TIME_CELLS, INK.time, -1],
+        [row.dest, ST_DEST_CELLS, INK.dest, row.wrongIdx],
+        [row.track, ST_TRACK_CELLS, INK.track, -1],
+        [row.remark, ST_REMARK_CELLS, REMARK_INK[row.remark] || "#8a8d93", -1],
+      ];
+      const rowCells = [];
+      for (const cell of L.cellsOf(r)) {
+        const [str, n, color, anomalyAt] = text[cell.group];
+        const ch2 = str.padEnd(n, " ").slice(0, n)[cell.i];
+        const txt = this.add
+          .text(cell.x + cw / 2, rowY + ch / 2, "", {
+            fontFamily: FLAP_FONT,
+            fontStyle: "bold",
+            fontSize: Math.round(ch * 0.66) + "px",
+            color,
+          })
+          .setOrigin(0.5)
+          .setDepth(2);
+        rowCells.push({
+          txt,
+          finalChar: ch2 === " " ? "" : ch2,
+          anomalous: anomalyAt === cell.i,
+          baseY: rowY + ch / 2,
+        });
+      }
       this._cells.push(rowCells);
+      void boarding;
 
-      // hover: a pencil underline slides under the row · click rewrites it
+      // hover: a line of light under the row · click flips it again
       const zone = this.add
         .zone(x0, rowY, gW, ch)
         .setOrigin(0)
         .setInteractive({ useHandCursor: true })
         .setDepth(5);
-      const hl = this.add.graphics().setDepth(0);
-      const rndH = this._rng(5000 + r * 17);
+      const hl = this.add.graphics().setDepth(4);
       zone.on("pointerover", () => {
         hl.clear();
-        this._pencilSeg(
-          hl,
-          rndH,
+        const y = rowY + ch + Math.min(3, L.rowGap * 0.4);
+        hl.lineStyle(Math.max(3, ch * 0.1), 0xf3e7c8, 0.12).lineBetween(
           x0 - 4,
-          rowY + ch + 2,
+          y,
           x0 + gW + 4,
-          rowY + ch + 2,
-          1.2,
-          ST_SKETCH,
-          0.4,
-          1.6,
+          y,
         );
+        hl.lineStyle(1.2, 0xf6edd4, 0.6).lineBetween(x0 - 4, y, x0 + gW + 4, y);
       });
       zone.on("pointerout", () => hl.clear());
       zone.on("pointerdown", () => this._respinRow(r));
@@ -640,85 +316,15 @@ export default class StationScene extends BasePuzzleScene {
         }
       }
     }
+    void cw;
   }
 
-  // a pencil station clock, stopped-calm at 20:47, second hand alive
-  _drawClock(W, H, bx, by) {
-    // hangs above the board's left corner so it never collides with it
-    const rad = Math.min(Math.min(W, H) * 0.05, (by - 30) / 2.6);
-    const cx = bx + rad + 10;
-    const cy = Math.max(rad + 18, by - rad - 26);
-
-    const g = this.add.graphics().setDepth(-3);
-    const rnd = this._rng(7722);
-    // doubled sketched rim
-    this._pencilCircle(g, rnd, cx, cy, rad + 5, 1.6, ST_SKETCH, 0.5);
-    this._pencilCircle(g, rnd, cx, cy, rad + 1, 1, ST_SKETCH, 0.25);
-    // hanging stem to the ceiling
-    this._pencilSeg(
-      g,
-      rnd,
-      cx,
-      H * 0.03,
-      cx,
-      cy - rad - 5,
-      1.1,
-      ST_SKETCH,
-      0.25,
-      1.6,
-    );
-    // ticks
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2;
-      const r1 = rad * 0.88;
-      const r2 = rad * (i % 3 === 0 ? 0.7 : 0.79);
-      this._pencilSeg(
-        g,
-        rnd,
-        cx + Math.cos(a) * r1,
-        cy + Math.sin(a) * r1,
-        cx + Math.cos(a) * r2,
-        cy + Math.sin(a) * r2,
-        i % 3 === 0 ? 1.6 : 1,
-        ST_SKETCH,
-        i % 3 === 0 ? 0.5 : 0.3,
-        0.5,
-      );
-    }
-    // hands — 20:47, drawn like everything else
-    const hourA = ((20 + 47 / 60) % 12) * (Math.PI / 6) - Math.PI / 2;
-    const minA = (47 / 60) * Math.PI * 2 - Math.PI / 2;
-    this._pencilSeg(
-      g,
-      rnd,
-      cx,
-      cy,
-      cx + Math.cos(hourA) * rad * 0.45,
-      cy + Math.sin(hourA) * rad * 0.45,
-      2,
-      ST_SKETCH,
-      0.6,
-      0.8,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      cx,
-      cy,
-      cx + Math.cos(minA) * rad * 0.68,
-      cy + Math.sin(minA) * rad * 0.68,
-      1.4,
-      ST_SKETCH,
-      0.55,
-      0.8,
-    );
-    g.fillStyle(ST_SKETCH, 0.6);
-    g.fillCircle(cx, cy, 2.2);
-
-    // living second hand — a thin graphite needle
+  // the clock stopped calm at 20:47 — only its red second hand goes round
+  _makeSecondHand(L, hand) {
+    const { cx, cy } = L.clock;
     const sec = this.add
-      .rectangle(cx, cy, 1.2, rad * 0.74, ST_SKETCH, 0.5)
-      .setOrigin(0.5, 0.92)
+      .image(cx, cy, hand.key)
+      .setOrigin(0.5, hand.originY)
       .setDepth(-2);
     this.tweens.add({
       targets: sec,
@@ -728,7 +334,7 @@ export default class StationScene extends BasePuzzleScene {
     });
   }
 
-  _drawTexts(W, H) {
+  _drawTexts(W) {
     this.statusText = this.add
       .text(W / 2, 40, "The last board still turns.", {
         fontFamily: '"Special Elite", monospace',
@@ -740,7 +346,7 @@ export default class StationScene extends BasePuzzleScene {
       .setDepth(20);
 
     this.subText = this.add
-      .text(W / 2, 68, "click a row to rewrite it", {
+      .text(W / 2, 68, "click a row to flip it again", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "13px",
         color: "#a8905f",
@@ -754,7 +360,10 @@ export default class StationScene extends BasePuzzleScene {
         W - 30,
         28,
         "Level " +
-          (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1),
+          (this.services.levels.definitions.findIndex(
+            (l) => l.key === this.scene.key,
+          ) +
+            1),
         {
           fontFamily: '"Special Elite", monospace',
           fontSize: "28px",
@@ -767,14 +376,18 @@ export default class StationScene extends BasePuzzleScene {
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
   }
 
-  // slow dust motes drifting through the light
-  _spawnDust(W, H) {
+  // slow dust motes drifting through the lamp's light
+  _spawnDust(W, H, mote) {
     const rnd = this._rng(4242);
     for (let i = 0; i < 14; i++) {
       const x = W * 0.3 + rnd() * W * 0.4;
       const y = H * 0.12 + rnd() * H * 0.5;
+      const r = 0.8 + rnd() * 1.1;
       const dot = this.add
-        .circle(x, y, 0.8 + rnd() * 1.1, 0xffffff, 0.08 + rnd() * 0.12)
+        .image(x, y, mote)
+        .setDisplaySize(r * 5, r * 5)
+        .setBlendMode("ADD")
+        .setAlpha(0.08 + rnd() * 0.12)
         .setDepth(-8);
       this.tweens.add({
         targets: dot,
@@ -795,7 +408,7 @@ export default class StationScene extends BasePuzzleScene {
 
   // ── flap animation ─────────────────────────────────────────────────────────
 
-  // opening ripple: every letter writes itself in, left to right
+  // opening ripple: every flap flips itself in, left to right
   _cascade() {
     for (let r = 0; r < this._cells.length; r++) {
       const rowCells = this._cells[r];
@@ -863,7 +476,8 @@ export default class StationScene extends BasePuzzleScene {
     this.time.delayedCall(startDelay, () => step(cycles));
   }
 
-  // the bad letter: catches mid-write, drops with a dull knock, seats crooked
+  // the bad letter: its flap catches mid-fall, drops with a dull knock and
+  // jams crooked
   _stutter(cell) {
     const txt = cell.txt;
     this.tweens.add({
@@ -887,7 +501,7 @@ export default class StationScene extends BasePuzzleScene {
 
   _seatCrooked(cell) {
     cell.txt.setAngle(3.2);
-    cell.txt.y = cell.baseY + 1.8;
+    cell.txt.y = cell.baseY + Math.max(1.8, cell.txt.height * 0.04);
     cell.txt.setAlpha(0.88);
   }
 
@@ -896,7 +510,8 @@ export default class StationScene extends BasePuzzleScene {
   _clack(freq, vol) {
     try {
       const ac = this.sound.context;
-      if (!ac || (this.services.audio.state && this.services.audio.state.muted)) return;
+      if (!ac || (this.services.audio.state && this.services.audio.state.muted))
+        return;
       const t = ac.currentTime;
       const dur = 0.05;
       const buf = ac.createBuffer(
@@ -914,7 +529,9 @@ export default class StationScene extends BasePuzzleScene {
       bp.frequency.value = freq;
       bp.Q.value = 2.4;
       const g = ac.createGain();
-      g.gain.value = (this.services.audio.state ? this.services.audio.state.sfxVol : 0.8) * vol;
+      g.gain.value =
+        (this.services.audio.state ? this.services.audio.state.sfxVol : 0.8) *
+        vol;
       src.connect(bp);
       bp.connect(g);
       g.connect(this.sound.destination);
@@ -928,7 +545,10 @@ export default class StationScene extends BasePuzzleScene {
   _teardown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
-    this.children.removeAll(true);
+    // destroy rather than just detach: removeAll(true) only took objects off
+    // the display list, and the old rows went on catching clicks after a resize
+    for (const obj of this.children.list.slice()) obj.destroy();
+    releaseHallArt(this.textures);
     this._cells = [];
     this._glow = null;
   }
@@ -936,5 +556,6 @@ export default class StationScene extends BasePuzzleScene {
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
+    releaseHallArt(this.textures);
   }
 }

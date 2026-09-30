@@ -1,12 +1,17 @@
+import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { PENCIL } from "../../shared/theme.js";
+import { paintHarbour, releaseHarbourArt, FLAG_FRAMES } from "./harbour.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "FLAGS"  ·  code: DEBRIEFING   ·  dress the ship
 //
-// Drawn in the game's pencil-sketch idiom: a rope of signal bunting strung
-// across a quiet harbour office — five national flags pegged to a sagging
-// line, swaying a little in the draught.
+// A harbour at dusk, painted like a background from an animated film: the
+// sun going down into the sea and laying a road of gold across it, the sky
+// burning from gold to violet with the first stars out, the lighthouse on
+// the headland just lit and turning, a little boat at anchor with a lantern
+// in her rigging, gulls going home — and on the quay, a line strung between
+// two old harbour lamps, lit, dressed with five national flags, pegged on
+// and stirring in the breeze, the sunset shining through them.
 //
 // Read left to right. Each flag is a country; each country has its two-letter
 // code. Concatenate the codes in hanging order:
@@ -15,30 +20,16 @@ import { PENCIL } from "../../shared/theme.js";
 //                                                    →  DEBRIEFING
 //
 // Nothing on screen names a country or a code, and nothing snaps. The access
-// code is the proof. Colour survives the scene's grayscale wash just enough
-// to read the flags; the shapes carry the rest.
+// code is the proof.
 //
-// All jitter is deterministic (seeded), so the sketch holds still across
-// redraws. Canvas-drawn, with lifecycle provided by BasePuzzleScene.
+// The harbour is painted once per screen size (harbour.js); what moves is
+// driven from here: the flags' folds and their sway, the clouds drifting, the
+// gulls, the boat riding the swell and her lantern, the lighthouse's beam,
+// the lamps, the stars, the glints on the water.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const FL_SKETCH = PENCIL; // the pencil itself
 
 // hanging order — the initials of the countries spell the code
 const FL_FLAGS = ["DE", "BR", "IE", "FI", "NG"];
-
-// a small, muted palette that still reads under the grayscale wash
-const FL_COL = {
-  black: 0x20242b,
-  red: 0xb23b30,
-  gold: 0xd7a828,
-  green: 0x2f7d46,
-  yellow: 0xdcc233,
-  blue: 0x28539c,
-  navy: 0x1d3b7a,
-  white: 0xe7e1d1,
-  orange: 0xd07a2c,
-};
 
 export default class FlagsScene extends BasePuzzleScene {
   constructor() {
@@ -52,8 +43,10 @@ export default class FlagsScene extends BasePuzzleScene {
 
   create() {
     this.beginScene();
-    this.input.mouse.disableContextMenu();
+    // (there is no mouse manager on a touch-only setup)
+    if (this.input.mouse) this.input.mouse.disableContextMenu();
 
+    this._flagPhase = 0;
     this._build(this.cameras.main.width, this.cameras.main.height);
 
     this.listenToResize(({ width, height }) => {
@@ -64,531 +57,149 @@ export default class FlagsScene extends BasePuzzleScene {
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
-  // ── the pencil: jittered hand-drawn primitives ─────────────────────────────
-
-  _pencilRect(g, rnd, x, y, w, h, width, color, alpha, mag = 2) {
-    const o = 3;
-    this._pencilSeg(g, rnd, x - o, y, x + w + o, y, width, color, alpha, mag);
-    this._pencilSeg(
-      g,
-      rnd,
-      x + w,
-      y - o,
-      x + w,
-      y + h + o,
-      width,
-      color,
-      alpha,
-      mag,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      x + w + o,
-      y + h,
-      x - o,
-      y + h,
-      width,
-      color,
-      alpha,
-      mag,
-    );
-    this._pencilSeg(g, rnd, x, y + h + o, x, y - o, width, color, alpha, mag);
-  }
-
-  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha, steps = 16, mag = 1.4) {
-    super._pencilCircle(g, rnd, cx, cy, r, width, color, alpha, steps, mag);
-  }
-
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
-    this._W = W;
-    this._H = H;
-
-    this._drawRoom(W, H);
-    this._drawClock(W, H);
-    this._drawBunting(W, H);
-    this._drawPodium(W, H);
-    this._drawChairs(W, H);
-    this._drawTexts(W, H);
-    this._drawVignette(W, H);
-    this._spawnDust(W, H);
-  }
-
-  _drawRoom(W, H) {
-    const g = this.add.graphics().setDepth(-14);
-    g.fillGradientStyle(0x11141a, 0x0f1319, 0x080a0e, 0x090b0f, 1);
-    g.fillRect(0, 0, W, H);
-
-    const rnd = this._rng(4413);
-    // wainscot rail along the back wall
-    this._floorY = H * 0.78;
-    this._pencilSeg(g, rnd, 0, H * 0.62, W, H * 0.62, 1, FL_SKETCH, 0.07, 2);
-    // the floor: a darker plane with receding boards
-    g.fillStyle(0x0a0c10, 0.85);
-    g.fillRect(0, this._floorY, W, H - this._floorY);
-    this._pencilSeg(
-      g,
-      rnd,
-      0,
-      this._floorY,
-      W,
-      this._floorY,
-      1.4,
-      FL_SKETCH,
-      0.25,
-      2,
-    );
-    // floorboard seams fanning gently toward the viewer
-    for (let i = 0; i <= 10; i++) {
-      const t = i / 10;
-      const xTop = W * t;
-      const xBot = W * 0.5 + (t - 0.5) * W * 1.3;
-      g.lineStyle(1, FL_SKETCH, 0.06);
-      g.lineBetween(xTop, this._floorY, xBot, H);
-    }
-    // a couple of stray pencil marks on the wall
-    for (let i = 0; i < 6; i++) {
-      const x = rnd() * W;
-      const y = rnd() * H * 0.55;
-      this._pencilSeg(
-        g,
-        rnd,
-        x,
-        y,
-        x + 14 + rnd() * 26,
-        y + (rnd() - 0.5) * 8,
-        1,
-        FL_SKETCH,
-        0.04,
-        1.6,
-      );
-    }
-  }
-
-  // a wall clock, stopped hands, pendulum still keeping its own time
-  _drawClock(W, H) {
-    const g = this.add.graphics().setDepth(-8);
-    const rnd = this._rng(8123);
-    const cx = W * 0.09;
-    const cy = H * 0.3;
-    const r = Math.min(W, H) * 0.045;
-
-    g.fillStyle(0x0d0f13, 0.9);
-    g.fillCircle(cx, cy, r);
-    this._pencilCircle(g, rnd, cx, cy, r, 1.6, FL_SKETCH, 0.5, 20, 1.2);
-    this._pencilCircle(g, rnd, cx, cy, r * 0.85, 1, FL_SKETCH, 0.2, 18, 1);
-    for (let k = 0; k < 12; k++) {
-      const a = (k / 12) * Math.PI * 2;
-      g.lineStyle(1, FL_SKETCH, 0.35);
-      g.lineBetween(
-        cx + Math.cos(a) * r * 0.75,
-        cy + Math.sin(a) * r * 0.75,
-        cx + Math.cos(a) * r * 0.85,
-        cy + Math.sin(a) * r * 0.85,
-      );
-    }
-    // hands, stopped somewhere in the small hours
-    this._pencilSeg(
-      g,
-      rnd,
-      cx,
-      cy,
-      cx + r * 0.36,
-      cy - r * 0.3,
-      1.6,
-      FL_SKETCH,
-      0.55,
-      0.6,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      cx,
-      cy,
-      cx - r * 0.14,
-      cy - r * 0.55,
-      1.3,
-      FL_SKETCH,
-      0.5,
-      0.6,
-    );
-    // the case below, and a pendulum that still swings
-    this._pencilRect(
-      g,
-      rnd,
-      cx - r * 0.34,
-      cy + r,
-      r * 0.68,
-      r * 1.5,
-      1.2,
-      FL_SKETCH,
-      0.35,
-      1,
-    );
-    const pend = this.add.container(cx, cy + r).setDepth(-9);
-    const pg = this.add.graphics();
-    pg.lineStyle(1.4, FL_SKETCH, 0.4);
-    pg.lineBetween(0, 0, 0, r * 1.2);
-    pg.fillStyle(FL_SKETCH, 0.35);
-    pg.fillCircle(0, r * 1.2, r * 0.16);
-    pend.add(pg);
-    pend.setAngle(-9);
-    this.tweens.add({
-      targets: pend,
-      angle: 9,
-      duration: 1200,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
-  }
-
-  // the lectern the debrief was read from, still facing the empty chairs
-  _drawPodium(W, H) {
-    const g = this.add.graphics().setDepth(-4);
-    const rnd = this._rng(5511);
-    const cx = W * 0.5;
-    const baseY = H * 0.9;
-    const ph = H * 0.24; // lectern height
-    const topW = W * 0.13;
-    const botW = W * 0.095;
-    const topY = baseY - ph;
-
-    // shadow pooling at its feet
-    g.fillStyle(0x000000, 0.3);
-    g.fillEllipse(cx, baseY + 4, botW * 2.6, ph * 0.16);
-
-    // tapered body
-    g.fillGradientStyle(0x191c22, 0x15181d, 0x0d0f13, 0x0e1014, 1);
-    g.beginPath();
-    g.moveTo(cx - topW, topY);
-    g.lineTo(cx + topW, topY);
-    g.lineTo(cx + botW, baseY);
-    g.lineTo(cx - botW, baseY);
-    g.closePath();
-    g.fillPath();
-    this._pencilSeg(
-      g,
-      rnd,
-      cx - topW,
-      topY,
-      cx + topW,
-      topY,
-      1.6,
-      FL_SKETCH,
-      0.5,
-      1.4,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      cx + topW,
-      topY,
-      cx + botW,
-      baseY,
-      1.5,
-      FL_SKETCH,
-      0.45,
-      1.4,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      cx + botW,
-      baseY,
-      cx - botW,
-      baseY,
-      1.4,
-      FL_SKETCH,
-      0.4,
-      1.4,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      cx - botW,
-      baseY,
-      cx - topW,
-      topY,
-      1.5,
-      FL_SKETCH,
-      0.45,
-      1.4,
-    );
-    // slanted reading top
-    g.fillStyle(0x20242b, 1);
-    g.beginPath();
-    g.moveTo(cx - topW, topY);
-    g.lineTo(cx + topW, topY);
-    g.lineTo(cx + topW * 0.92, topY - ph * 0.07);
-    g.lineTo(cx - topW * 0.92, topY - ph * 0.09);
-    g.closePath();
-    g.fillPath();
-    this._pencilSeg(
-      g,
-      rnd,
-      cx - topW * 0.92,
-      topY - ph * 0.09,
-      cx + topW * 0.92,
-      topY - ph * 0.07,
-      1.6,
-      FL_SKETCH,
-      0.55,
-      1.2,
-    );
-    // a sheet of notes left on the lectern, corner lifted
-    g.fillStyle(0xe7e1d1, 0.22);
-    g.fillRect(cx - topW * 0.5, topY - ph * 0.07, topW * 0.9, ph * 0.05);
-    // a small reading lamp, its warm pool breathing
-    const lampX = cx + topW * 0.62;
-    const lampY = topY - ph * 0.08;
-    this._pencilSeg(
-      g,
-      rnd,
-      lampX,
-      lampY,
-      lampX,
-      lampY - 16,
-      1.3,
-      FL_SKETCH,
-      0.5,
-      0.8,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      lampX,
-      lampY - 16,
-      lampX - 9,
-      lampY - 20,
-      1.3,
-      FL_SKETCH,
-      0.5,
-      0.6,
-    );
-    const glow = this.add
-      .circle(lampX - 11, lampY - 18, 16, 0xe6b458, 0.1)
-      .setDepth(-4);
-    this.add.circle(lampX - 11, lampY - 18, 3, 0xe6b458, 0.75).setDepth(-4);
-    this.tweens.add({
-      targets: glow,
-      alpha: 0.55,
-      duration: 2600,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
-  }
-
-  // rows of empty chairs facing the lectern, backs to the viewer
-  _drawChairs(W, H) {
-    const g = this.add.graphics().setDepth(-3);
-    const rnd = this._rng(6644);
-    const rows = [
-      { y: H * 0.93, s: 1.0, n: 3 },
-      { y: H * 0.99, s: 1.18, n: 2 },
-    ];
-    for (const row of rows) {
-      for (let i = 0; i < row.n; i++) {
-        const t = (i + 1) / (row.n + 1);
-        const cx = W * 0.14 + W * 0.72 * t + (rnd() - 0.5) * W * 0.02;
-        const s = H * 0.055 * row.s;
-        // seat back: an open rectangle with two uprights
-        this._pencilRect(
-          g,
-          rnd,
-          cx - s * 0.7,
-          row.y - s * 1.5,
-          s * 1.4,
-          s * 0.9,
-          1.4,
-          FL_SKETCH,
-          0.35,
-          1.2,
-        );
-        this._pencilSeg(
-          g,
-          rnd,
-          cx - s * 0.55,
-          row.y - s * 0.6,
-          cx - s * 0.6,
-          row.y,
-          1.2,
-          FL_SKETCH,
-          0.3,
-          0.8,
-        );
-        this._pencilSeg(
-          g,
-          rnd,
-          cx + s * 0.55,
-          row.y - s * 0.6,
-          cx + s * 0.6,
-          row.y,
-          1.2,
-          FL_SKETCH,
-          0.3,
-          0.8,
-        );
-      }
-    }
-  }
-
-  // the sagging line and the five hanging flags
-  _drawBunting(W, H) {
-    const g = this.add.graphics().setDepth(-6);
-    const rnd = this._rng(1701);
-
-    // the rope: a shallow catenary from one wall peg to the other
-    const x0 = W * 0.1;
-    const x1 = W * 0.9;
-    const yTop = H * 0.2;
-    const sag = H * 0.1;
-    const rope = (x) => {
-      const t = (x - x0) / (x1 - x0);
-      return yTop + Math.sin(t * Math.PI) * sag;
+    const art = (this._art = paintHarbour(this, W, H, FL_FLAGS));
+    const L = (this._L = art.L);
+    const K = art.keys;
+    const ADD = Phaser.BlendModes.ADD;
+    this.add.image(0, 0, K.sky).setOrigin(0, 0).setDepth(-30);
+    this._stars = art.stars.map((s, i) => ({
+      img: this.add
+        .image(s.x, s.y, K.star)
+        .setDisplaySize(s.s * 7 * L.u, s.s * 7 * L.u)
+        .setBlendMode(ADD)
+        .setDepth(-29.5),
+      ph: i * 1.9,
+      sp: 1.2 + (i % 5) * 0.35,
+    }));
+    // clouds heaped on the horizon, drifting very slowly; the sea and the
+    // hills in front of them hide their feet
+    this._clouds = art.clouds.map((c) => ({
+      img: this.add.image(c.x, c.y, c.key).setOrigin(0.5, c.oy).setDepth(-29),
+      speed: (2 + Math.random() * 2) * L.u, // px a second, drifting left
+    }));
+    this.add.image(0, 0, K.land).setOrigin(0, 0).setDepth(-27);
+    this._makeBeacon(art, K);
+    this._makeGlints(L, K);
+    this._makeGulls(L, K);
+    const b = art.boat;
+    this._boat = this.add
+      .image(b.x, b.y, K.boat)
+      .setOrigin(b.ox, b.oy)
+      .setScale(1 / art.res)
+      .setDepth(-22);
+    this._boatLight = {
+      ...b.lantern,
+      img: this.add
+        .image(b.x, b.y, K.glow)
+        .setBlendMode(ADD)
+        .setDisplaySize(26 * L.u, 26 * L.u)
+        .setDepth(-21.9),
     };
-
-    // wall pegs
-    this._pencilCircle(g, rnd, x0, yTop, 5, 1.6, FL_SKETCH, 0.5, 12, 0.8);
-    this._pencilCircle(g, rnd, x1, yTop, 5, 1.6, FL_SKETCH, 0.5, 12, 0.8);
-
-    // draw the rope as a chain of short pencil segments
-    const N = 40;
-    let px = x0;
-    let py = rope(x0);
-    for (let i = 1; i <= N; i++) {
-      const x = x0 + (x1 - x0) * (i / N);
-      const y = rope(x);
-      this._pencilSeg(g, rnd, px, py, x, y, 1.6, FL_SKETCH, 0.55, 1);
-      px = x;
-      py = y;
-    }
-
-    // five flags, evenly spaced along the span
-    this._flags = [];
-    const fw = Math.min(W * 0.12, 128);
-    const fh = fw * 0.66;
-    for (let i = 0; i < FL_FLAGS.length; i++) {
-      const t = (i + 1) / (FL_FLAGS.length + 1);
-      const fx = x0 + (x1 - x0) * t;
-      const fy = rope(fx);
-      this._makeFlag(FL_FLAGS[i], fx, fy, fw, fh, i);
-    }
+    this.add.image(0, 0, K.front).setOrigin(0, 0).setDepth(-10);
+    // the harbour lamps' light, never quite steady
+    this._lamps = art.lamps.map((p, i) => ({
+      img: this.add
+        .image(p.x, p.y, K.glow)
+        .setBlendMode(ADD)
+        .setDisplaySize(L.postW * 12, L.postW * 12)
+        .setDepth(-9),
+      ph: i * 2.7,
+    }));
+    this._flags = art.flags.map((f, i) => ({
+      img: this.add
+        .image(f.x, f.y, f.key, 0)
+        .setOrigin(0.5, f.oy)
+        .setScale(1 / art.res)
+        .setRotation(f.angle)
+        .setDepth(2 + i * 0.01),
+      angle: f.angle,
+      ph: i * 1.7,
+    }));
+    this.add
+      .image(0, 0, K.veil)
+      .setOrigin(0, 0)
+      .setDisplaySize(W, H)
+      .setDepth(18);
+    this._drawTexts(W);
+    this._built = true;
   }
 
-  _makeFlag(code, x, y, w, h, index) {
-    const cont = this.add.container(x, y).setDepth(2);
-    const g = this.add.graphics();
-    const rnd = this._rng(3300 + index * 137);
-
-    // the clip/ring that pegs the flag to the rope
-    this._pencilCircle(g, rnd, 0, -2, 4, 1.4, FL_SKETCH, 0.6, 10, 0.6);
-    this._pencilSeg(g, rnd, -w / 2, 4, w / 2, 4, 1.4, FL_SKETCH, 0.5, 1);
-
-    // the cloth: national design, then a pencil border and a fold
-    this._paintFlag(g, code, -w / 2, 4, w, h);
-    this._pencilRect(g, rnd, -w / 2, 4, w, h, 1.6, FL_SKETCH, 0.6, 1.4);
-    // a soft diagonal fold-shadow across the cloth
-    g.fillStyle(0x000000, 0.12);
-    g.fillTriangle(-w / 2, 4 + h, -w / 2 + w * 0.4, 4 + h, -w / 2, 4 + h * 0.4);
-
-    cont.add(g);
-    this._flags.push(cont);
-
-    // a lazy pendulum sway, each flag slightly out of phase
-    cont.setAngle(-2);
-    this.tweens.add({
-      targets: cont,
-      angle: 2,
-      duration: 2600 + index * 180,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-      delay: index * 200,
-    });
+  // the lighthouse's lamp, turning: its beam swings out across the sea and
+  // round behind, and flashes as it comes round to face us
+  _makeBeacon(art, K) {
+    const L = art.L;
+    const p = art.beacon;
+    this._beamScale = (L.W * 0.42) / 512;
+    this._beam = this.add
+      .image(p.x, p.y, K.beam)
+      .setOrigin(0, 0.5)
+      .setScale(this._beamScale, (L.H * 0.1) / 128)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(-26);
+    this._flash = this.add
+      .image(p.x, p.y, K.glow)
+      .setDisplaySize(L.lighthouse.w * 11, L.lighthouse.w * 11)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0)
+      .setDepth(-25.9);
   }
 
-  // paint a specific national flag inside the rect (x,y,w,h)
-  _paintFlag(g, code, x, y, w, h) {
-    switch (code) {
-      case "DE": {
-        // Germany — black / red / gold, horizontal
-        g.fillStyle(FL_COL.black, 1);
-        g.fillRect(x, y, w, h / 3);
-        g.fillStyle(FL_COL.red, 1);
-        g.fillRect(x, y + h / 3, w, h / 3);
-        g.fillStyle(FL_COL.gold, 1);
-        g.fillRect(x, y + (2 * h) / 3, w, h / 3);
-        break;
-      }
-      case "BR": {
-        // Brazil — green field, yellow lozenge, blue globe
-        g.fillStyle(FL_COL.green, 1);
-        g.fillRect(x, y, w, h);
-        const cx = x + w / 2;
-        const cy = y + h / 2;
-        g.fillStyle(FL_COL.yellow, 1);
-        g.fillPoints(
-          [
-            { x: cx, y: y + h * 0.12 },
-            { x: x + w * 0.9, y: cy },
-            { x: cx, y: y + h * 0.88 },
-            { x: x + w * 0.1, y: cy },
-          ],
-          true,
-        );
-        g.fillStyle(FL_COL.navy, 1);
-        g.fillCircle(cx, cy, h * 0.2);
-        // the pale banner arcing across the globe
-        g.fillStyle(FL_COL.white, 0.85);
-        g.fillRect(cx - h * 0.19, cy - h * 0.035, h * 0.38, h * 0.07);
-        break;
-      }
-      case "IE": {
-        // Ireland — green / white / orange, vertical
-        g.fillStyle(FL_COL.green, 1);
-        g.fillRect(x, y, w / 3, h);
-        g.fillStyle(FL_COL.white, 1);
-        g.fillRect(x + w / 3, y, w / 3, h);
-        g.fillStyle(FL_COL.orange, 1);
-        g.fillRect(x + (2 * w) / 3, y, w / 3, h);
-        break;
-      }
-      case "FI": {
-        // Finland — white field, blue Nordic cross (offset to hoist)
-        g.fillStyle(FL_COL.white, 1);
-        g.fillRect(x, y, w, h);
-        g.fillStyle(FL_COL.blue, 1);
-        const barX = x + w * 0.3;
-        g.fillRect(barX - w * 0.09, y, w * 0.18, h); // vertical bar
-        g.fillRect(x, y + h * 0.5 - h * 0.13, w, h * 0.26); // horizontal bar
-        break;
-      }
-      case "NG": {
-        // Nigeria — green / white / green, vertical
-        g.fillStyle(FL_COL.green, 1);
-        g.fillRect(x, y, w / 3, h);
-        g.fillStyle(FL_COL.white, 1);
-        g.fillRect(x + w / 3, y, w / 3, h);
-        g.fillStyle(FL_COL.green, 1);
-        g.fillRect(x + (2 * w) / 3, y, w / 3, h);
-        break;
-      }
+  // the sunset glinting on the wave tops: most of it on the sun's road,
+  // a little everywhere else; each glint catching the light and losing it
+  _makeGlints(L, K) {
+    this._glints = [];
+    const rnd = this._rng(5150);
+    for (let i = 0; i < 36; i++) {
+      const t = Math.pow(rnd(), 0.9);
+      const y = L.horizon + 4 + t * (L.pier - L.horizon - 12);
+      const onRoad = i < 26;
+      const spread = L.S * (0.02 + t * 0.2);
+      const x = onRoad
+        ? L.sun.x + (rnd() + rnd() - 1) * spread
+        : L.W * (0.02 + rnd() * 0.96);
+      const s = (5 + t * 9 + rnd() * 4) * L.u;
+      const img = this.add
+        .image(x, y, K.glint)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDisplaySize(s, s)
+        .setDepth(-24)
+        .setAlpha(0);
+      this._glints.push({
+        img,
+        ph: rnd() * 10,
+        sp: 1.5 + rnd() * 2.5,
+        peak: onRoad ? 0.35 : 0.2,
+      });
     }
   }
 
-  _drawTexts(W, H) {
+  // two gulls going home across the sunset
+  _makeGulls(L, K) {
+    this._gulls = [0, 1].map((i) => ({
+      img: this.add
+        .image(-50, 0, K.gull, 0)
+        .setScale((0.5 + i * 0.12) * L.u)
+        .setDepth(-23),
+      x: L.W * (0.3 + i * 0.35),
+      y0: L.H * (0.46 + i * 0.05),
+      speed: (18 + i * 7) * L.u,
+      ph: i * 2.3,
+    }));
+  }
+
+  _drawTexts(W) {
     this.statusText = this.add
       .text(W / 2, 40, "A new alliance has been formed.", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
-        color: "#e8dcc0",
+        color: "#fff1dc",
         letterSpacing: 1,
       })
       .setOrigin(0.5)
+      .setShadow(0, 2, "rgba(20,12,48,0.95)", 8, false, true)
       .setDepth(20);
 
     this.levelText = this.add
@@ -596,55 +207,113 @@ export default class FlagsScene extends BasePuzzleScene {
         W - 30,
         28,
         "Level " +
-          (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1),
+          (this.services.levels.definitions.findIndex(
+            (l) => l.key === this.scene.key,
+          ) +
+            1),
         {
           fontFamily: '"Special Elite", monospace',
           fontSize: "28px",
-          color: "#e8dcc0",
+          color: "#fff1dc",
         },
       )
       .setOrigin(1, 0)
+      .setShadow(0, 2, "rgba(20,12,48,0.95)", 8, false, true)
       .setAlpha(0)
       .setDepth(20);
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
   }
 
-  _spawnDust(W, H) {
-    const rnd = this._rng(9091);
-    for (let i = 0; i < 12; i++) {
-      const dx = W * 0.1 + rnd() * W * 0.8;
-      const dy = H * 0.15 + rnd() * H * 0.6;
-      const dot = this.add
-        .circle(dx, dy, 0.7 + rnd() * 1, 0xffffff, 0.08 + rnd() * 0.1)
-        .setDepth(-2);
-      this.tweens.add({
-        targets: dot,
-        x: dx + (rnd() * 44 - 22),
-        y: dy + 24 + rnd() * 40,
-        alpha: 0,
-        duration: 8000 + rnd() * 8000,
-        delay: rnd() * 5000,
-        repeat: -1,
-        onRepeat: () => {
-          dot.x = W * 0.1 + rnd() * W * 0.8;
-          dot.y = H * 0.15 + rnd() * H * 0.5;
-          dot.setAlpha(0.08 + rnd() * 0.1);
-        },
-      });
+  // ── what moves ─────────────────────────────────────────────────────────────
+
+  update(time, delta) {
+    if (!this._built) return;
+    const t = time / 1000;
+    const dt = Math.min(delta || 16, 100) / 1000;
+    const L = this._L;
+    const breeze = 0.6 + 0.4 * Math.sin(t * 0.37) * Math.sin(t * 0.23 + 1);
+
+    // the flags: their folds run with the breeze — the phase is added up
+    // frame by frame, so a change in the breeze changes the speed only (it
+    // used to be time × speed, which jumped backwards and raced as the
+    // minutes went by) — and they sway on the line
+    this._flagPhase += dt * (6 + 3 * breeze);
+    for (const f of this._flags) {
+      f.img.setFrame(Math.floor(this._flagPhase + f.ph * 3) % FLAG_FRAMES);
+      f.img.rotation =
+        f.angle +
+        0.03 * breeze * Math.sin(t * 1.3 + f.ph) +
+        0.01 * Math.sin(t * 3.1 + f.ph * 2);
+    }
+
+    for (const c of this._clouds) {
+      c.img.x -= c.speed * dt;
+      if (c.img.x < -c.img.displayWidth / 2)
+        c.img.x = L.W + c.img.displayWidth / 2;
+    }
+
+    for (const g of this._gulls) {
+      g.x += g.speed * dt;
+      if (g.x > L.W + 60) g.x = -60;
+      g.img.setPosition(g.x, g.y0 + Math.sin(t * 0.7 + g.ph) * L.H * 0.02);
+      // a few slow wingbeats, then a long glide
+      const beat = (t * 1.6 + g.ph) % 4;
+      g.img.setFrame(beat < 1.2 ? Math.floor(beat * 5) % 3 : 1);
+    }
+
+    // the boat on the swell, her lantern swinging with her
+    const rot = 0.035 * Math.sin(t * 0.9);
+    this._boat.rotation = rot;
+    this._boat.y = L.boat.y + Math.sin(t * 0.9 + 0.8) * 1.5 * L.u;
+    const bl = this._boatLight;
+    bl.img.setPosition(
+      this._boat.x + bl.dx * Math.cos(rot) - bl.dy * Math.sin(rot),
+      this._boat.y + bl.dx * Math.sin(rot) + bl.dy * Math.cos(rot),
+    );
+    bl.img.setAlpha(0.75 + 0.2 * Math.sin(t * 6.1) * Math.sin(t * 2.3));
+
+    // the lighthouse: a turn every eight seconds or so
+    const th = t * 0.8;
+    const c = Math.cos(th);
+    const s = Math.sin(th);
+    this._beam.scaleX = this._beamScale * c;
+    this._beam.setAlpha(Math.abs(c) * (0.55 + 0.35 * s));
+    this._flash.setAlpha(Math.pow(Math.max(0, s), 6) * 0.95);
+
+    for (const lamp of this._lamps) {
+      lamp.img.setAlpha(
+        0.92 +
+          0.1 * Math.sin(t * 7.3 + lamp.ph) * Math.sin(t * 3.1 + lamp.ph * 2) +
+          0.04 * Math.sin(t * 17 + lamp.ph),
+      );
+    }
+
+    for (const st of this._stars) {
+      st.img.setAlpha(0.35 + 0.35 * (0.5 + 0.5 * Math.sin(t * st.sp + st.ph)));
+    }
+
+    for (const g of this._glints) {
+      const a = Math.sin(t * g.sp + g.ph);
+      g.img.setAlpha(a > 0.55 ? ((a - 0.55) / 0.45) * g.peak : 0);
     }
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
+    this._built = false;
     this.tweens.killAll();
     this.time.removeAllEvents();
-    this.children.removeAll(true);
+    for (const obj of this.children.list.slice()) obj.destroy();
     this._flags = null;
+    releaseHarbourArt(this.textures);
   }
 
   shutdown() {
+    this._built = false;
     this.tweens.killAll();
     this.time.removeAllEvents();
+    this._flags = null;
+    releaseHarbourArt(this.textures);
   }
 }

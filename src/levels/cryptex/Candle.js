@@ -1,478 +1,462 @@
 import Phaser from "phaser";
 
-const CRYPTEX_CANDLE_HTML =
-  '<div class="holder">' +
-  '<div class="candle"><div class="candle-pool"></div></div>' +
-  '<div class="wick"><div class="wick-ember"></div></div>' +
-  '<div class="candle-halo"><i></i></div>' +
-  '<div class="candle-light"><div class="candle-size"><div class="flame-body">' +
-  '<div class="flame-outer"></div>' +
-  '<div class="flame-core"></div>' +
-  '<div class="flame-dark"></div>' +
-  '<div class="flame-blue"></div>' +
-  "</div></div></div>" +
-  '<div class="candle-smoke"></div>' +
-  '<button type="button" class="candle-action" aria-label="Put out the candle"></button></div>';
+/** The candle's life. Its wax is baked into the study's two layers; here are
+ * the flame, the light round it, the ember and the smoke — and a transparent
+ * button over the candle, so it can be blown out from the keyboard too.
+ *
+ * The flame is painted once, as a strip of frames of a real candle flame:
+ * a faint orange mantle, a yellow body, a white-hot heart, the dark zone
+ * round the wick and the blue at its root. It quivers through them, leans
+ * with the breath, shrinks as it weakens, and a soft bloom breathes round it. */
 
-/** Owns the candle, its breath animation and the two room lights. */
+const FLAME = "cx_flame";
+const HALO = "cx_flame_halo";
+const CORE = "cx_flame_core";
+const EMBER = "cx_ember";
+const FRAMES = 16;
+const COLS = 8;
+const FW = 72; // one frame
+const FH = 160;
+const BASE = 146; // where the wick is, in a frame
+const TEX_W = 34; // the flame's width, in a frame, at rest
+const TEX_H = 124; // ...and its height
+
 export default class Candle {
   constructor(scene, { isBlocked, onExtinguished }) {
     this.scene = scene;
     this.isBlocked = isBlocked;
     this.onExtinguished = onExtinguished;
     this.clicks = 0;
-    this.lightState = { level: 1, gustUntil: 0 };
+    this.lightState = { level: 1, bend: 0 };
     this._timers = new Set();
   }
 
-  build(W, H, deskY) {
+  build(art) {
     this.removeDom();
-    const container = document.getElementById("game-container");
-    if (!container) return;
-
-    const s = Phaser.Math.Clamp((H * 0.4) / 400, 0.3, 0.8);
-    const cx = W * 0.86;
-    const bottomY = deskY + (H - deskY) * 0.3;
+    this.art = art;
+    this.reducedMotion =
+      typeof matchMedia === "function" &&
+      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.smokeSince = null;
+    this._frame = Math.random() * FRAMES;
+    this._lastT = null;
+    makeTextures(this.scene.textures);
+    const { wick, scale: k, height, radius } = art;
+    const add = this.scene.add;
+    const ADD = Phaser.BlendModes.ADD;
+    this.halo = add.image(wick.x, wick.y, HALO).setBlendMode(ADD).setDepth(7.9);
+    this.flame = add
+      .image(wick.x, wick.y, FLAME, 0)
+      .setOrigin(0.5, BASE / FH)
+      .setDepth(8);
+    this.core = add
+      .image(wick.x, wick.y, CORE)
+      .setBlendMode(ADD)
+      .setDepth(8.05);
+    this.ember = add
+      .image(wick.x, wick.y, EMBER)
+      .setBlendMode(ADD)
+      .setDepth(8.1)
+      .setAlpha(0);
+    this.smoke = add.graphics().setDepth(9);
 
     const el = document.createElement("div");
     el.className = "scene-dom-overlay cryptex-candle";
-    el.innerHTML = CRYPTEX_CANDLE_HTML;
-    // the 100px-wide .candle sits at the LEFT edge of the 150px .holder,
-    // so its visual center is at 50px — align that with the dish at cx
-    el.style.left = cx - 50 * s + "px";
-    el.style.top = bottomY - 400 * s + "px";
-    el.style.transform = "scale(" + s + ")";
-    el.style.transformOrigin = "top left";
-    container.appendChild(el);
-    this.dom = el;
-    el.querySelector(".candle-action").addEventListener("click", (event) => {
+    el.style.left = `${wick.x - (radius + 1.1) * k}px`;
+    el.style.top = `${wick.y - 3 * k}px`;
+    el.style.width = `${(radius + 1.1) * k * 2}px`;
+    el.style.height = `${(height + 4) * k}px`;
+    el.innerHTML =
+      '<button type="button" class="candle-action" aria-label="Put out the candle"></button>';
+    el.querySelector("button").addEventListener("click", (event) => {
       event.stopPropagation();
       this.blow(event);
     });
-
-    const g = this.scene.add.graphics().setDepth(-7);
-    g.fillStyle(0x000000, 0.5);
-    g.fillEllipse(cx, bottomY + 4, 130 * s, 26 * s);
-    g.fillStyle(0x3a2a10, 1);
-    g.fillEllipse(cx, bottomY + 2, 124 * s, 20 * s);
-    g.fillStyle(0x8a6a30, 0.9);
-    g.fillEllipse(cx, bottomY - 1, 118 * s, 17 * s);
-    g.fillStyle(0x54390f, 1);
-    g.fillEllipse(cx, bottomY - 3, 104 * s, 13 * s);
-  }
-
-  blow(event) {
-    if (this.isBlocked() || this.clicks >= 3) return;
-    this.clicks++;
-    this.scene.services.audio.playClick(this.scene);
-    this.refresh();
-    this.animateGust(event);
-    // once the flame and its light are gone, the luminous letters show up
-    if (this.clicks >= 3) {
-      this.scene.time.delayedCall(900, () => this.onExtinguished());
-    }
+    const box = document.getElementById("game-container");
+    if (box) box.appendChild(el);
+    this.dom = el;
+    this.refresh(true);
+    this.update(this.scene.time.now);
   }
 
   refresh(instant = false) {
     const strength = (3 - this.clicks) / 3;
-    const dom = this.dom;
-    if (dom) {
-      dom.style.setProperty("--candle-strength", strength);
-      dom.classList.toggle("is-out", strength === 0);
-      const btn = dom.querySelector(".candle-action");
-      if (btn) btn.disabled = strength === 0;
-    }
-    this.setLightLevel(strength, instant);
-  }
-
-  animateGust(event) {
-    const dom = this.dom;
-    if (!dom) return;
-    const clicks = this.clicks;
-    const strength = (3 - clicks) / 3;
-    const out = strength === 0;
-    const reduce =
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    // the breath comes from the side you clicked on
-    let dir = Math.random() < 0.5 ? -1 : 1;
-    const wick = dom.querySelector(".wick");
-    if (event && typeof event.clientX === "number" && wick) {
-      const r = wick.getBoundingClientRect();
-      dir = event.clientX < r.left + r.width / 2 ? 1 : -1;
-    }
-
-    const D = out ? 1000 : 1350;
-    this.dipLights(strength, out, reduce, D);
-
-    if (reduce) {
-      if (out) this.ember(dom);
-      return;
-    }
-
-    // no new breath while the flame is still fighting the last one
-    const btn = dom.querySelector(".candle-action");
-    if (btn && !out) {
-      btn.disabled = true;
-      this._later(() => {
-        if (btn.isConnected) btn.disabled = (3 - this.clicks) / 3 === 0;
-      }, D * 0.7);
-    }
-
-    const k = clicks <= 1 ? 0.85 : clicks === 2 ? 1 : 1.12; // each breath stronger
-    const low = clicks <= 1 ? 0.42 : 0.28; // how small it gets mid-breath
-    const R = (deg) => `${(deg * dir * k).toFixed(1)}deg`;
-
-    const light = dom.querySelector(".candle-light");
-    const halo = dom.querySelector(".candle-halo i");
-    if (!light || !light.animate) return;
-    if (light.getAnimations) light.getAnimations().forEach((a) => a.cancel());
-
-    if (!out) {
-      light.animate(
-        [
-          {
-            offset: 0,
-            transform: "rotate(0deg) scale(1, 1)",
-            opacity: 1,
-            easing: "cubic-bezier(.2,.7,.3,1)",
-          },
-          {
-            offset: 0.07,
-            transform: `rotate(${R(40)}) scale(0.8, 1.25)`,
-            opacity: 0.95,
-          },
-          {
-            offset: 0.15,
-            transform: `rotate(${R(68)}) scale(0.55, 1.45)`,
-            opacity: 0.85,
-          },
-          {
-            offset: 0.22,
-            transform: `rotate(${R(55)}) scale(0.62, 1.12)`,
-            opacity: 0.9,
-          },
-          {
-            offset: 0.3,
-            transform: `rotate(${R(74)}) scale(${low + 0.1}, ${low + 0.3})`,
-            opacity: 0.7,
-          },
-          {
-            offset: 0.38,
-            transform: `rotate(${R(60)}) scale(${low}, ${low})`,
-            opacity: 0.55,
-          },
-          {
-            offset: 0.44,
-            transform: `rotate(${R(35)}) scale(${low * 0.9}, ${low * 1.2})`,
-            opacity: 0.6,
-          },
-          {
-            offset: 0.5,
-            transform: `rotate(${R(12)}) scale(${low + 0.05}, ${low + 0.15})`,
-            opacity: 0.65,
-            easing: "cubic-bezier(.3,0,.2,1)",
-          },
-          {
-            offset: 0.62,
-            transform: `rotate(${R(-14)}) scale(0.78, 0.9)`,
-            opacity: 0.9,
-          },
-          {
-            offset: 0.73,
-            transform: `rotate(${R(9)}) scale(0.96, 1.12)`,
-            opacity: 1,
-          },
-          { offset: 0.84, transform: `rotate(${R(-4)}) scale(1.02, 0.96)` },
-          { offset: 0.93, transform: `rotate(${R(1.5)}) scale(1, 1.02)` },
-          { offset: 1, transform: "rotate(0deg) scale(1, 1)", opacity: 1 },
-        ],
-        { duration: D },
-      );
-      if (halo)
-        halo.animate(
-          [
-            { opacity: 1 },
-            { opacity: 0.55, offset: 0.15 },
-            { opacity: 0.3, offset: 0.38 },
-            { opacity: 0.45, offset: 0.5 },
-            { opacity: 0.95, offset: 0.7 },
-            { opacity: 1 },
-          ],
-          { duration: D },
-        );
-      return;
-    }
-
-    // ── the third breath: the flame goes out ──
-    light.animate(
-      [
-        {
-          offset: 0,
-          transform: "rotate(0deg) scale(1, 1)",
-          opacity: 1,
-          easing: "cubic-bezier(.2,.7,.3,1)",
-        },
-        {
-          offset: 0.1,
-          transform: `rotate(${R(45)}) scale(0.75, 1.3)`,
-          opacity: 0.95,
-        },
-        {
-          offset: 0.2,
-          transform: `rotate(${R(75)}) scale(0.5, 1.5)`,
-          opacity: 0.8,
-        },
-        {
-          offset: 0.3,
-          transform: `rotate(${R(70)}) scale(0.35, 0.6)`,
-          opacity: 0.6,
-        },
-        {
-          offset: 0.4,
-          transform: `rotate(${R(40)}) scale(0.22, 0.28)`,
-          opacity: 0.55,
-        },
-        {
-          offset: 0.47,
-          transform: `rotate(${R(15)}) scale(0.25, 0.3)`,
-          opacity: 0.5,
-        },
-        {
-          offset: 0.58,
-          transform: `rotate(${R(5)}) scale(0.08, 0.1)`,
-          opacity: 0.2,
-        },
-        { offset: 1, transform: "rotate(0deg) scale(0, 0)", opacity: 0 },
-      ],
-      { duration: D },
-    );
-    if (halo)
-      halo.animate(
-        [
-          { opacity: 1 },
-          { opacity: 0.5, offset: 0.2 },
-          { opacity: 0.2, offset: 0.45 },
-          { opacity: 0, offset: 0.6 },
-          { opacity: 0 },
-        ],
-        { duration: D },
-      );
-
-    this.ghost(dom, dir);
-    this._later(() => this.ember(dom), 430);
-    this._later(() => this.smoke(dom, dir), 480);
-  }
-
-  ghost(dom, dir) {
-    const holder = dom.querySelector(".holder");
-    if (!holder) return;
-    const f = 0.6; // flame size before the last breath
-    const ghost = document.createElement("div");
-    ghost.className = "flame-ghost";
-    ghost.innerHTML = '<div class="flame-outer"></div>';
-    holder.appendChild(ghost);
-    const anim = ghost.animate(
-      [
-        {
-          transform: `rotate(${75 * dir}deg) scale(${0.5 * f}, ${1.5 * f})`,
-          opacity: 0,
-        },
-        {
-          transform: `rotate(${80 * dir}deg) scale(${0.5 * f}, ${1.4 * f})`,
-          opacity: 0.75,
-          offset: 0.12,
-        },
-        {
-          transform: `translate(${dir * 38}px, -46px) rotate(${95 * dir}deg) scale(${0.32 * f}, ${0.8 * f})`,
-          opacity: 0.45,
-          offset: 0.55,
-        },
-        {
-          transform: `translate(${dir * 60}px, -78px) rotate(${110 * dir}deg) scale(${0.12 * f}, ${0.3 * f})`,
-          opacity: 0,
-        },
-      ],
-      {
+    const button = this.dom?.querySelector("button");
+    if (button) button.disabled = strength === 0;
+    this.scene.tweens.killTweensOf(this.lightState);
+    if (instant) Object.assign(this.lightState, { level: strength, bend: 0 });
+    else
+      this.scene.tweens.add({
+        targets: this.lightState,
+        level: strength,
         duration: 650,
-        delay: 190,
-        easing: "cubic-bezier(.25,.6,.4,1)",
-        fill: "backwards",
-      },
-    );
-    anim.onfinish = () => ghost.remove();
+        ease: "Sine.easeInOut",
+      });
   }
 
-  ember(dom) {
-    const ember = dom.querySelector(".wick-ember");
-    if (!ember || !ember.isConnected) return;
-    ember.animate(
-      [
-        { opacity: 0, transform: "scale(0.6)" },
-        { opacity: 1, transform: "scale(1.15)", offset: 0.06 },
-        { opacity: 0.8, transform: "scale(1)", offset: 0.22 },
-        { opacity: 0.95, transform: "scale(1.05)", offset: 0.3 },
-        { opacity: 0.6, transform: "scale(0.9)", offset: 0.55 },
-        { opacity: 0.25, transform: "scale(0.75)", offset: 0.8 },
-        { opacity: 0, transform: "scale(0.6)" },
-      ],
-      { duration: 3400, easing: "ease-out" },
-    );
-  }
-
-  smoke(dom, dir) {
-    const box = dom.querySelector(".candle-smoke");
-    if (!box || !box.isConnected) return;
-    const start = performance.now();
-    const LIFE = 3200;
-    const spawn = () => {
-      if (!box.isConnected) return;
-      const age = performance.now() - start;
-      if (age > LIFE) return;
-      const fresh = 1 - age / LIFE; // the smoke thins out over time
-      const phase = age * 0.0045; // shared wave → a ribbon
-      const haze = Math.random() < 0.18;
-      const w = document.createElement(haze ? "b" : "i");
-      if (!haze && Math.random() < 0.5) w.className = "r";
-      box.appendChild(w);
-
-      const drift = dir * (18 + 30 * fresh);
-      const sway = (s) => Math.sin(phase + s) * (8 + 10 * (1 - fresh));
-      const op = (0.35 + 0.35 * fresh) * (haze ? 0.8 : 1);
-      const rot = () => ((Math.random() - 0.5) * 50).toFixed(1);
-      const anim = w.animate(
-        [
-          {
-            transform: `translate(0px, 0px) rotate(${rot()}deg) scale(0.3, 0.45)`,
-            opacity: op * 0.5,
-          },
-          {
-            transform: `translate(${(drift * 0.12 + sway(0)).toFixed(1)}px, -16px) rotate(${rot()}deg) scale(0.7, 0.85)`,
-            opacity: op,
-            offset: 0.12,
-          },
-          {
-            transform: `translate(${(drift * 0.55 + sway(1.4)).toFixed(1)}px, -80px) rotate(${rot()}deg) scale(1.4, 1.3)`,
-            opacity: op * 0.6,
-            offset: 0.48,
-          },
-          {
-            transform: `translate(${(drift + sway(2.8)).toFixed(1)}px, -150px) rotate(${rot()}deg) scale(2.3, 1.8)`,
-            opacity: 0,
-          },
-        ],
-        {
-          duration: 2400 + Math.random() * 900,
-          easing: "cubic-bezier(.3,.55,.4,1)",
-        },
-      );
-      anim.onfinish = () => w.remove();
-      this._later(spawn, age < 700 ? 55 : 90 + 120 * (1 - fresh));
-    };
-    spawn();
-  }
-
-  setLightLevel(strength, instant = false) {
+  // One click is one breath: the flame bows away from it, nearly goes, and
+  // comes back smaller; the third takes it
+  blow(event) {
+    const button = this.dom?.querySelector("button");
+    if (this.isBlocked() || this.clicks >= 3 || button?.disabled) return;
+    this.clicks++;
+    this.scene.services.audio.playClick(this.scene);
+    if (button) button.disabled = true;
+    const target = (3 - this.clicks) / 3;
     const fx = this.lightState;
-    if (!fx) return;
-    if (instant) {
-      this.scene.tweens.killTweensOf(fx);
-      fx.level = strength;
-      fx.gustUntil = 0;
-      return;
-    }
-    // during a breath, the breath decides how the light comes back
-    if (this.scene.time.now < fx.gustUntil) return;
+    const rect = this.dom.getBoundingClientRect();
+    const dir =
+      event?.clientX && event.clientX < rect.left + rect.width / 2 ? 1 : -1;
     this.scene.tweens.killTweensOf(fx);
-    this.scene.tweens.add({
-      targets: fx,
-      level: strength,
-      duration: 700,
-      ease: "Sine.easeInOut",
-    });
-  }
-
-  update(time) {
-    const fx = this.lightState;
-    if (!fx) return;
-    const t = time / 1000;
-    const flick =
-      1 +
-      0.045 * Math.sin(t * 5.3) +
-      0.03 * Math.sin(t * 11.7 + 1.3) +
-      0.02 * Math.sin(t * 23.1 + 0.4);
-    const a = Math.max(0, Math.min(1, fx.level * flick));
-    const s = Math.max(0, fx.level * (1 + (flick - 1) * 0.35));
-    for (const light of [this.wallLight, this.deskLight]) {
-      if (light) light.setAlpha(a).setScale(s);
-    }
-  }
-
-  dipLights(target, out, reduce, D) {
-    const fx = this.lightState;
-    if (!fx) return;
-    this.scene.tweens.killTweensOf(fx);
-    fx.gustUntil = this.scene.time.now + D;
-    if (reduce) {
-      this.scene.tweens.add({ targets: fx, level: target, duration: 600 });
-      return;
-    }
     const from = fx.level;
-    const steps = out
-      ? [
-          [from * 0.55, 90],
-          [from * 0.3, 160],
-          [from * 0.42, 110],
-          [from * 0.12, 180],
-          [0, 350],
-        ]
-      : [
-          [from * 0.55, 90],
-          [from * 0.3, 190],
-          [from * 0.4, 120],
-          [from * 0.22, 150],
-          [target * 0.9, 260],
-          [target * 1.05, 200],
-          [target, 250],
-        ];
+    const steps = this.reducedMotion
+      ? [[target, 0, 600]]
+      : target
+        ? [
+            [from * 0.3, dir * 0.85, 130],
+            [from * 0.45, dir * 0.6, 120],
+            [target * 0.75, -dir * 0.1, 200],
+            [target, 0, 300],
+          ]
+        : [
+            [from * 0.35, dir * 0.9, 120],
+            [from * 0.15, dir * 1.1, 140],
+            [0, dir * 0.6, 160],
+          ];
     const next = (i) => {
-      if (i >= steps.length || this.lightState !== fx) return;
-      const [level, duration] = steps[i];
+      if (i >= steps.length) return;
+      const [level, bend, duration] = steps[i];
       this.scene.tweens.add({
         targets: fx,
         level,
+        bend,
         duration,
         ease: "Sine.easeInOut",
         onComplete: () => next(i + 1),
       });
     };
     next(0);
+    if (!target) {
+      this._later(() => {
+        this.smokeSince = this.scene.time.now;
+      }, 330);
+      this._later(() => this.onExtinguished(), 900);
+    } else
+      this._later(() => {
+        if (button?.isConnected) button.disabled = false;
+      }, 820);
   }
 
-  removeDom() {
-    for (const timer of this._timers) this.scene.clearSceneTimeout(timer);
-    this._timers.clear();
-    this.dom?.getAnimations?.({ subtree: true }).forEach((animation) => animation.cancel());
-    if (this.dom && this.dom.parentNode) {
-      this.dom.parentNode.removeChild(this.dom);
+  update(time) {
+    if (!this.flame || !this.art) return;
+    const fx = this.lightState;
+    const t = this.reducedMotion ? 0 : time / 1000;
+    const dt =
+      this._lastT === null
+        ? 0
+        : Math.min(0.1, Math.max(0, (time - this._lastT) / 1000));
+    this._lastT = time;
+    const flicker =
+      1 + 0.016 * Math.sin(t * 7.1) + 0.009 * Math.sin(t * 19.3 + 1);
+    const level = Phaser.Math.Clamp(fx.level * flicker, 0, 1);
+    this.wallLight?.setAlpha(level);
+    const { wick, scale: k } = this.art;
+    const on = level > 0.005;
+    this.flame.setVisible(on);
+    this.core.setVisible(on);
+    this.halo.setVisible(on);
+    if (on) {
+      // it quivers at a flame's own uneven pace
+      if (!this.reducedMotion)
+        this._frame +=
+          dt * (17 + 7 * Math.sin(t * 1.7) + 4 * Math.sin(t * 4.3));
+      const h = k * (1.05 + 1.95 * level) * flicker; // about 3 cm tall, burning well
+      const w = k * (0.6 + 0.32 * level);
+      const lean =
+        fx.bend * 0.85 +
+        (this.reducedMotion
+          ? 0
+          : 0.03 * Math.sin(t * 3.7) + 0.02 * Math.sin(t * 1.3));
+      this.flame
+        .setFrame(Math.floor(this._frame) % FRAMES)
+        .setScale(w / TEX_W, h / TEX_H)
+        .setRotation(lean)
+        .setAlpha(Math.min(1, level * 5));
+      const up = (f) => ({
+        x: wick.x + Math.sin(lean) * h * f,
+        y: wick.y - Math.cos(lean) * h * f,
+      });
+      const c = up(0.34);
+      this.core
+        .setPosition(c.x, c.y)
+        .setDisplaySize(k * 1.5, k * 2.3 * (0.6 + 0.4 * level))
+        .setRotation(lean)
+        .setAlpha(0.75 * level);
+      const g = up(0.5);
+      this.halo
+        .setPosition(g.x, g.y)
+        .setDisplaySize(k * (9 + 7 * level), k * (11 + 8 * level))
+        .setAlpha(0.55 * level * flicker * flicker);
     }
-    this.dom = null;
+    this._drawSmoke();
+  }
+
+  // After the last breath: the wick's tip glows, flickers and cools; a
+  // thread of smoke rises off it, curling and thinning out
+  _drawSmoke() {
+    const g = this.smoke;
+    g.clear();
+    if (this.smokeSince === null) {
+      this.ember.setAlpha(0);
+      return;
+    }
+    const age = (this.scene.time.now - this.smokeSince) / 1000;
+    if (age > 5) {
+      this.smokeSince = null;
+      this.ember.setAlpha(0);
+      return;
+    }
+    const { wick, scale: k } = this.art;
+    const cool = Math.max(0, 1 - age / 3.4);
+    this.ember
+      .setPosition(wick.x, wick.y)
+      .setDisplaySize(k * 1.5, k * 1.5)
+      .setAlpha(
+        cool * cool * (0.8 + 0.2 * Math.sin(age * 23) * Math.sin(age * 7)),
+      );
+    if (this.reducedMotion) return;
+    const fade = Math.max(0, 1 - age / 5);
+    const top = Math.min(15, age * 9); // how far it has risen, in cm
+    const N = 56;
+    let px = wick.x,
+      py = wick.y;
+    for (let j = 1; j <= N; j++) {
+      const u = j / N;
+      const rise = u * top;
+      const curl =
+        Math.sin(rise * 0.55 - age * 1.8) * rise * 0.16 +
+        Math.sin(rise * 1.3 - age * 0.9 + 1) * rise * 0.07;
+      const x = wick.x + curl * k;
+      const y = wick.y - rise * k;
+      const a = fade * (1 - u) * (1 - 0.45 * u);
+      g.lineStyle(k * (0.3 + u * 1.1), 0xb4b0a8, a * 0.07).lineBetween(
+        px,
+        py,
+        x,
+        y,
+      );
+      g.lineStyle(k * (0.07 + u * 0.22), 0xdcd8d0, a * 0.3).lineBetween(
+        px,
+        py,
+        x,
+        y,
+      );
+      px = x;
+      py = y;
+    }
   }
 
   _later(callback, delay) {
-    const timer = this.scene.setSceneTimeout(() => {
+    const timer = this.scene.time.delayedCall(delay, () => {
       this._timers.delete(timer);
       callback();
-    }, delay);
+    });
     this._timers.add(timer);
     return timer;
+  }
+
+  removeDom() {
+    for (const timer of this._timers) timer.remove(false);
+    this._timers.clear();
+    this.dom?.remove();
+    this.dom = null;
+    for (const obj of [
+      this.flame,
+      this.core,
+      this.halo,
+      this.ember,
+      this.smoke,
+    ])
+      obj?.destroy();
+    this.flame = this.core = this.halo = this.ember = this.smoke = null;
   }
 
   destroy() {
     this.removeDom();
     this.scene.tweens.killTweensOf(this.lightState);
     this.wallLight = null;
-    this.deskLight = null;
   }
+}
+
+// ── the painted flame ───────────────────────────────────────────────────────
+
+function makeTextures(textures) {
+  if (!textures.exists(FLAME)) {
+    const t = textures.addCanvas(FLAME, paintFlames());
+    for (let f = 0; f < FRAMES; f++)
+      t.add(f, 0, (f % COLS) * FW, Math.floor(f / COLS) * FH, FW, FH);
+  }
+  if (!textures.exists(HALO))
+    textures.addCanvas(
+      HALO,
+      radial(128, [
+        [0, "rgba(255,200,120,0.6)"],
+        [0.22, "rgba(255,176,90,0.28)"],
+        [0.55, "rgba(255,140,60,0.08)"],
+        [1, "rgba(255,120,40,0)"],
+      ]),
+    );
+  if (!textures.exists(CORE))
+    textures.addCanvas(
+      CORE,
+      radial(64, [
+        [0, "rgba(255,252,236,0.95)"],
+        [0.4, "rgba(255,238,190,0.5)"],
+        [1, "rgba(255,220,150,0)"],
+      ]),
+    );
+  if (!textures.exists(EMBER))
+    textures.addCanvas(
+      EMBER,
+      radial(32, [
+        [0, "rgba(255,190,110,1)"],
+        [0.2, "rgba(255,110,40,0.9)"],
+        [0.55, "rgba(230,60,15,0.3)"],
+        [1, "rgba(200,40,10,0)"],
+      ]),
+    );
+}
+
+// FRAMES frames of a candle flame, the wick at (FW / 2, BASE) in each
+function paintFlames() {
+  const rows = Math.ceil(FRAMES / COLS);
+  const c = document.createElement("canvas");
+  c.width = FW * COLS;
+  c.height = FH * rows;
+  const g = c.getContext("2d");
+  // how wide the flame is along its height: round at the root, fullest a
+  // third of the way up, drawn out to a point
+  const width = (u) =>
+    Math.pow(Math.sin(Math.PI * Math.min(1, Math.pow(u, 0.7))), 0.85) *
+    (1 - 0.3 * u);
+  for (let f = 0; f < FRAMES; f++) {
+    const ph = (f / FRAMES) * Math.PI * 2;
+    const cx = (f % COLS) * FW;
+    const cy = Math.floor(f / COLS) * FH;
+    const ox = cx + FW / 2;
+    const oy = cy + BASE;
+    const len =
+      TEX_H * (1 + 0.05 * Math.sin(ph) + 0.03 * Math.sin(ph * 2 + 1.3));
+    const half = (TEX_W / 2) * (1 + 0.05 * Math.sin(ph * 3 + 0.7));
+    const sway = 0.05 * Math.sin(ph + 0.4) + 0.025 * Math.sin(ph * 2 - 0.8);
+    const outline = (sw, sh, lift = 0) => {
+      g.beginPath();
+      for (const side of [-1, 1]) {
+        for (let j = 0; j <= 30; j++) {
+          const u = (side < 0 ? j : 30 - j) / 30;
+          const x =
+            ox +
+            sway * len * u * u +
+            Math.sin(u * 5 - ph * 2) * u * u * half * 0.22 +
+            side * half * sw * width(u);
+          const y = oy - lift - len * sh * u;
+          if (side < 0 && j === 0) g.moveTo(x, y);
+          else g.lineTo(x, y);
+        }
+      }
+      g.closePath();
+    };
+    g.save();
+    g.beginPath();
+    g.rect(cx, cy, FW, FH);
+    g.clip();
+    // the faint outer mantle
+    g.save();
+    g.shadowColor = "rgba(255,120,30,0.8)";
+    g.shadowBlur = 9;
+    outline(1.35, 1.06);
+    g.fillStyle = "rgba(255,128,40,0.32)";
+    g.fill();
+    g.restore();
+    // the body: gold, going orange and thin toward the tip
+    const body = g.createLinearGradient(0, oy, 0, oy - len);
+    body.addColorStop(0, "rgba(255,176,76,0.95)");
+    body.addColorStop(0.14, "rgba(255,206,104,1)");
+    body.addColorStop(0.52, "rgba(255,196,88,0.98)");
+    body.addColorStop(0.82, "rgba(255,146,48,0.8)");
+    body.addColorStop(1, "rgba(255,110,30,0)");
+    g.save();
+    g.shadowColor = "rgba(255,170,70,0.9)";
+    g.shadowBlur = 5;
+    outline(1, 1);
+    g.fillStyle = body;
+    g.fill();
+    g.restore();
+    // the white-hot heart
+    const heart = g.createLinearGradient(
+      0,
+      oy - len * 0.05,
+      0,
+      oy - len * 0.78,
+    );
+    heart.addColorStop(0, "rgba(255,255,240,0)");
+    heart.addColorStop(0.16, "rgba(255,253,238,0.96)");
+    heart.addColorStop(0.6, "rgba(255,245,205,0.9)");
+    heart.addColorStop(1, "rgba(255,230,160,0)");
+    g.save();
+    g.shadowColor = "rgba(255,250,220,0.9)";
+    g.shadowBlur = 4;
+    outline(0.58, 0.78, len * 0.04);
+    g.fillStyle = heart;
+    g.fill();
+    g.restore();
+    // the dark, cooler zone round the wick
+    g.save();
+    g.translate(ox, oy - len * 0.08);
+    g.scale(half * 0.34, len * 0.1);
+    const dark = g.createRadialGradient(0, 0, 0, 0, 0, 1);
+    dark.addColorStop(0, "rgba(96,62,110,0.45)");
+    dark.addColorStop(1, "rgba(96,62,110,0)");
+    g.fillStyle = dark;
+    g.fillRect(-1, -1, 2, 2);
+    g.restore();
+    // and the blue at its root
+    g.save();
+    g.shadowColor = "rgba(80,140,255,0.9)";
+    g.shadowBlur = 3;
+    g.strokeStyle = "rgba(120,160,255,0.65)";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.ellipse(
+      ox,
+      oy - len * 0.06,
+      half * 0.56,
+      len * 0.07,
+      0,
+      Math.PI * 0.12,
+      Math.PI * 0.88,
+    );
+    g.stroke();
+    g.restore();
+    g.restore();
+  }
+  return c;
+}
+
+function radial(size, stops) {
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const g = c.getContext("2d");
+  const r = g.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2,
+  );
+  for (const [o, col] of stops) r.addColorStop(o, col);
+  g.fillStyle = r;
+  g.fillRect(0, 0, size, size);
+  return c;
 }
