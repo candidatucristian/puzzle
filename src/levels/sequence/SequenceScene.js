@@ -409,7 +409,8 @@ export default class SequenceScene extends BasePuzzleScene {
       const dot = this.add
         .circle(dx, dy, 0.7 + rnd() * 1, 0xffffff, 0.08 + rnd() * 0.1)
         .setDepth(-2);
-      this.tweens.add({
+      this.ambientObject(dot);
+      this.ambientTween({
         targets: dot,
         x: dx + (rnd() * 44 - 22),
         y: dy + 24 + rnd() * 40,

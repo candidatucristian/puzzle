@@ -1,6 +1,6 @@
 import { Scope } from '../shared/Scope.js';
 
-export function createTransitions({ levels, showGame, onNavigate }) {
+export function createTransitions({ levels, showGame, onNavigate, preferences }) {
   const veil = document.getElementById('level-veil');
   const caption = document.getElementById('veil-caption');
   const numeral = document.getElementById('veil-numeral');
@@ -13,6 +13,11 @@ export function createTransitions({ levels, showGame, onNavigate }) {
       onNavigate();
       const wasBusy = busy;
       scope.dispose(); scope = new Scope(); busy = true;
+      if (preferences?.reducedMotion) {
+        veil.classList.remove('cover', 'titled');
+        showGame(); levels.navigate(index); busy = false;
+        return true;
+      }
       caption.textContent = options.caption || '';
       caption.style.display = options.caption ? '' : 'none';
       numeral.textContent = roman[index] || String(index + 1);

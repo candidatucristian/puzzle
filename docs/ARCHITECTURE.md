@@ -128,6 +128,18 @@ A malformed modern save resets to a valid fresh state rather than reviving stale
 
 `SafeStorage` catches inaccessible storage and failed writes, keeping changes in memory for the session. Persistence remains scoped to the browser origin and profile; it is not an account or cloud save system.
 
+## Player help and comfort
+
+`HintStore` saves the number of revealed hints per stable room ID under `puzzleHints`. `metadata.js` combines the original atmospheric hint with two progressively more concrete hints from `levels/hints.js`. Only requested steps appear in the dialog. Hints never unlock or complete a room.
+
+`ComfortPreferences` persists grain strength, reading size, reduced motion and ambient effects under `puzzleComfort`, respecting live device reduced-motion preferences. Use `ambientTween(config)` for decorative Phaser tweens and `ambientObject(object)` for particles that should disappear when ambient motion is disabled. Frame-based decoration checks `ambientMotion`. Puzzle clocks, encoded signals and essential movement keep running. Reading size affects UI text; scene details can be enlarged with Inspect.
+
+`shared/interaction.js` adds common Phaser hover/press feedback. Objects may provide `setData('interactionLabel', 'Open the letter')` or opt out with `false`. DOM buttons use their accessible label. These cues do not implement or replace puzzle handlers.
+
+`ui/inspection.js` magnifies the stage containing both Phaser and DOM artwork. While inspecting, the stage is inert and scene pointer/keyboard input is disabled; simulation continues. Closing, navigating or opening a dialog restores input. The transformation never changes Phaser's logical viewport size.
+
+`ui/progress.js` presents actual completion, Continue, and storage status. Small previews of visited rooms live separately in `puzzleRoomPreviews`. DOM scenes may expose a canvas as `previewSource`; other rooms use a renderer snapshot. Preview failures do not affect progression. Reset clears progress, revealed hints and previews, preserving sound and comfort preferences.
+
 ## Assets, builds, and verification
 
 Place shipped resources in `public/assets/`; reference them at runtime as `assets/...`. Vite copies this directory into `dist/`. Keep image, sound, and font attribution and license files. `experiments/` stores standalone prototypes that are not imported by the application and do not need to ship.

@@ -52,7 +52,10 @@ test('the production build opens every level through the real UI from a subdirec
       await expect(page.locator('#game-container > canvas')).toBeVisible();
       await page.locator('#btn-info').click();
       await expect(page.locator('#info-modal')).toBeVisible();
-      await expect(page.locator('#info-text')).not.toBeEmpty();
+      await expect(page.locator('#hint-list li')).toHaveCount(1);
+      await expect(page.locator('#hint-list p')).not.toBeEmpty();
+      await page.locator('#btn-next-hint').click();
+      await expect(page.locator('#hint-list li')).toHaveCount(2);
       await page.locator('#btn-close-info').click();
       expect(errors, `Runtime errors after level ${index + 1}`).toEqual([]);
       expect(failedAssets, `Failed resources after level ${index + 1}`).toEqual([]);

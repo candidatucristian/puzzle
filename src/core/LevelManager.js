@@ -20,6 +20,9 @@ export class LevelManager {
   get currentIndex() { return this.#currentIndex; }
   get unlockedIndex() { return this.#progress.unlockedIndex; }
   get completed() { return this.#progress.completed; }
+  get completedCount() { return this.#progress.state.completedLevelIds.length; }
+  get saved() { return this.#progress.persisted; }
+  isCompleted(index) { return this.#progress.state.completedLevelIds.includes(this.definitions[index]?.id); }
 
   get activeScene() {
     const key = this.definitions[this.#currentIndex].key;

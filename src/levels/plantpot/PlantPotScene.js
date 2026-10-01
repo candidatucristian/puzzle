@@ -350,6 +350,10 @@ export default class PlantPotScene extends BasePuzzleScene {
 
   update(time, delta) {
     if (!this._built) return;
+    this._updateStream();
+    for (const f of this._fireflies) f.img.setVisible(this.ambientMotion);
+    this._shootGfx.setVisible(this.ambientMotion);
+    if (!this.ambientMotion) return;
     const t = time / 1000;
     const dt = Math.min(delta || 16, 100);
     const wind = 0.55 * Math.sin(t * 0.63) + 0.3 * Math.sin(t * 1.71 + 1.2) + 0.15 * Math.sin(t * 3.1 + 0.4);
@@ -365,7 +369,6 @@ export default class PlantPotScene extends BasePuzzleScene {
 
     this._updateFireflies(t, dt);
     this._updateShootingStar(dt);
-    this._updateStream();
   }
 
   // fireflies drift and wander, glowing up and dying down, each to its own time

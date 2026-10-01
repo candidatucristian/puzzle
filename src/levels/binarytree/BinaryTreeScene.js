@@ -201,6 +201,8 @@ export default class BinaryTreeScene extends BasePuzzleScene {
 
   update(time, delta) {
     if (!this._built) return;
+    for (const m of this._motes) m.img.setVisible(this.ambientMotion);
+    if (!this.ambientMotion) return;
     const t = time / 1000;
     const dt = Math.min(delta || 16, 100);
     const u = this._L.u;

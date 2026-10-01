@@ -1,7 +1,6 @@
-export function mountStartParticles({ scope, startScreen, disabled }) {
+export function mountStartParticles({ scope, startScreen, disabled, preferences }) {
   const canvas = document.getElementById("start-particles");
   if (!canvas || disabled) return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const ctx = canvas.getContext("2d");
   let w, h;
@@ -36,6 +35,10 @@ export function mountStartParticles({ scope, startScreen, disabled }) {
     if (startScreen.classList.contains("hidden")) return; // start screen gone — stop for good
     t++;
     ctx.clearRect(0, 0, w, h);
+    if (!preferences.ambientMotion) {
+      animation = requestAnimationFrame(frame);
+      return;
+    }
     for (const m of motes) {
       m.y -= m.speed;
       m.x += Math.sin(t * 0.008 + m.sway) * m.swayAmp * 0.35;

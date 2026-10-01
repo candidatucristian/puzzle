@@ -196,7 +196,7 @@ export default class OvertimeScene extends BasePuzzleScene {
       loop: true,
       callback: () => {
         tick++;
-        lit.forEach((img, i) => img.setVisible((tick + i) % 2 === 0));
+        lit.forEach((img, i) => img.setVisible(!this.ambientMotion || (tick + i) % 2 === 0));
       },
     });
   }
@@ -213,7 +213,8 @@ export default class OvertimeScene extends BasePuzzleScene {
         .setDepth(1)
         .setAlpha(0);
       puff.setDisplaySize(size, size);
-      this.tweens.add({
+      this.ambientObject(puff);
+      this.ambientTween({
         targets: puff,
         y: y - k * (9 + rnd() * 4),
         x: puff.x + (rnd() - 0.5) * k * 4,

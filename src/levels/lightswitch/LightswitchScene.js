@@ -120,7 +120,7 @@ const overlay = document.createElement("div");
       </div>
       <div id="blk-switch-wrap"
            style="left:${Math.round(sw.cx)}px;top:${Math.round(sw.cy)}px;">
-        <div id="blk-switch">
+        <div id="blk-switch" role="button" tabindex="0" aria-label="Press the light switch">
           <div class="screw top"></div>
           <div class="rocker">
             <div class="half top"></div>
@@ -142,6 +142,9 @@ const overlay = document.createElement("div");
     };
     this._dom.sw.addEventListener("pointerdown", e => {
       e.preventDefault(); this._pressSwitch();
+    });
+    this._dom.sw.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); this._pressSwitch(); }
     });
     this._applyLight(0, false);
   }
@@ -202,9 +205,11 @@ const overlay = document.createElement("div");
   // End of the letter: quick flicker, spark burst, switch drops to OFF, and the
   // answer advances so the NEXT press shows the NEXT letter.
   _shortCircuit() {
+    if (this.ambientMotion) {
     this.time.delayedCall(0,  () => { this._applyLight(0.0, false); this._setLedLit(false); });
     this.time.delayedCall(20, () => { this._applyLight(0.6, true);  this._setLedLit(true); });
     this.time.delayedCall(40, () => { this._applyLight(0.0, false); this._setLedLit(false); });
+    }
 
     this.time.delayedCall(54, () => {
       this._bigZap(this._geo.sw.cx, this._geo.sw.cy);
@@ -244,6 +249,7 @@ const overlay = document.createElement("div");
   // press-time crackle and (via _bigZap) for the end-of-letter short circuit.
   _addSparks(x, y, count) {
     this._snd("sparkle", 0.85);
+    if (!this.ambientMotion) return;
     for (let i = 0; i < count; i++) {
       const ang = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.4;
       const spd = 1.4 + Math.random() * 4;
@@ -258,6 +264,7 @@ const overlay = document.createElement("div");
 
   // Full short-circuit burst: white flash, crackling arcs, many sparks.
   _bigZap(x, y) {
+    if (!this.ambientMotion) return;
     const flash = this.add.graphics().setDepth(20);
     flash.fillStyle(0xfff2b0, 0.85);
     flash.fillCircle(x, y, this._W * 0.013);

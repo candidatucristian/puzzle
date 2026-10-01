@@ -219,7 +219,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     if (!this.phoneContainer || !this._phoneBase) return;
     const b = this._phoneBase;
     let k = 0;
-    if (!this.isSolved && time < this._buzzUntil) {
+    if (this.ambientMotion && !this.isSolved && time < this._buzzUntil) {
       const span = this._buzzUntil - this._buzzStart || 1;
       k = Math.sin(
         Phaser.Math.Clamp((time - this._buzzStart) / span, 0, 1) * Math.PI,
@@ -239,6 +239,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     }
 
     this._drawBuzzLines(k);
+    if (!this.ambientMotion && this.callerText) this.callerText.setAlpha(1);
     this._updateRipples(Math.min(delta || 16, 100));
 
     if (this.desk.screenGlow && this.callerText) {
@@ -254,7 +255,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     const now = this.game.loop.time;
     this._buzzStart = now;
     this._buzzUntil = now + 750;
-    if (this.desk.mug) this._ripples.push({ age: 0 }, { age: -150 }, { age: -320 });
+    if (this.ambientMotion && this.desk.mug) this._ripples.push({ age: 0 }, { age: -150 }, { age: -320 });
   }
 
   _drawBuzzLines(k) {
@@ -665,7 +666,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
       this.callBlinkTween.stop();
       this.callBlinkTween = null;
     }
-    this.callBlinkTween = this.tweens.add({
+    this.callBlinkTween = this.ambientTween({
       targets: this.callerText,
       alpha: 0.28,
       duration: 650,

@@ -188,7 +188,7 @@ export default class RallyScene extends BasePuzzleScene {
         .setBlendMode("ADD")
         .setDisplaySize(size, size)
         .setAlpha(0.15 * fade);
-      this.tweens.add({
+      this.ambientTween({
         targets: star,
         alpha: (0.45 + rnd() * 0.45) * fade,
         duration: 1300 + rnd() * 2600,
@@ -216,7 +216,7 @@ export default class RallyScene extends BasePuzzleScene {
       const person = { img, x: c.x, y: c.y, frame: c.frame, cheerFrame: c.cheerFrame, h: img.displayHeight * 0.62 };
       // shifting from foot to foot, no two alike
       img.setAngle((rnd() - 0.5) * 1.6);
-      this.tweens.add({
+      this.ambientTween({
         targets: img,
         angle: (rnd() - 0.5) * 1.6 + (rnd() < 0.5 ? 1.4 : -1.4),
         duration: 1600 + rnd() * 2200,
@@ -250,7 +250,7 @@ export default class RallyScene extends BasePuzzleScene {
       delay: 60,
       loop: true,
       callback: () => {
-        if (!this._flagUp) return;
+        if (!this._flagUp || !this.ambientMotion) return;
         tick++;
         if (!this._flagFast && tick % 3) return;
         this._flagFrame = (this._flagFrame + 1) % FLAG_FRAMES;
@@ -263,6 +263,7 @@ export default class RallyScene extends BasePuzzleScene {
   // the crowd jumps and throws its arms up as a car crosses, rippling out
   // from the line
   _cheer() {
+    if (!this.ambientMotion) return;
     const fx = this._finishX;
     const rnd = this._rng(Math.round(this.time.now) + 5);
     for (const p of this._crowd) {
@@ -291,7 +292,7 @@ export default class RallyScene extends BasePuzzleScene {
   _flagSway() {
     if (!this._flag) return;
     this._flag.setAngle(-6);
-    this.tweens.add({
+    this.ambientTween({
       targets: this._flag,
       angle: 6,
       duration: 1500,
@@ -302,6 +303,7 @@ export default class RallyScene extends BasePuzzleScene {
   }
 
   _waveFlag() {
+    if (!this.ambientMotion) return;
     if (!this._flag || !this._flagUp) return;
     this._flagFast = true;
     this.tweens.add({
@@ -589,6 +591,7 @@ export default class RallyScene extends BasePuzzleScene {
   // gravel dust off the rear wheels, left hanging in the light where it was
   // thrown, billowing and settling; and now and then a stone
   _dust(at) {
+    if (!this.ambientMotion) return;
     const L = this._L;
     const ch = Math.cos(at.heading);
     const sh = Math.sin(at.heading);

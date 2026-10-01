@@ -1,0 +1,80 @@
+import { RoomPreviewStore } from '../core/RoomPreviewStore.js';
+
+export function mountProgress(scope, { game, levels, storage, navigate, canNavigate }) {
+  const grid = document.getElementById('levels-grid');
+  const previews = new RoomPreviewStore(storage, levels.definitions);
+  const tiles = [];
+  let captureTimer, captureGeneration = 0;
+  grid.replaceChildren();
+  levels.definitions.forEach((level, index) => {
+    const tile = document.createElement('button');
+    tile.type = 'button'; tile.dataset.levelId = level.id;
+    const preview = document.createElement('img');
+    preview.className = 'level-preview'; preview.alt = ''; preview.hidden = true;
+    const number = document.createElement('span'); number.className = 'level-number'; number.textContent = index + 1;
+    const check = document.createElement('span'); check.className = 'level-check'; check.textContent = '✓'; check.setAttribute('aria-hidden', 'true');
+    tile.append(preview, number, check); grid.append(tile);
+    scope.on(tile, 'click', () => { if (canNavigate()) navigate(index); });
+    tiles.push({ tile, preview, check });
+  });
+
+  function render() {
+    levels.definitions.forEach((level, index) => {
+      const { tile, preview, check } = tiles[index];
+      const allowed = levels.canAccess(index), solved = levels.isCompleted(index), current = index === levels.currentIndex;
+      tile.className = `level-btn ${allowed ? current ? 'current' : 'unlocked' : 'locked'}`;
+      tile.classList.toggle('solved', solved);
+      tile.disabled = !allowed;
+      tile.setAttribute('aria-disabled', String(!allowed));
+      tile.setAttribute('aria-label', `Level ${index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
+      if (current) tile.setAttribute('aria-current', 'step'); else tile.removeAttribute('aria-current');
+      tile.title = allowed ? `${level.name}${solved ? ' · Solved' : ''}` : 'Solve the previous room to unlock';
+      check.hidden = !solved;
+      const source = allowed && previews.get(level.id);
+      if (source && preview.getAttribute('src') !== source) preview.src = source;
+      preview.hidden = !source; tile.classList.toggle('has-preview', Boolean(source));
+    });
+    const done = levels.completedCount, total = levels.definitions.length;
+    document.getElementById('progress-count').textContent = `${done} / ${total} solved`;
+    const meter = document.getElementById('room-progress'); meter.max = total; meter.value = done;
+    const save = document.getElementById('save-status');
+    save.textContent = levels.saved ? 'Saved on this device' : 'Progress kept for this session only';
+    save.dataset.state = levels.saved ? 'saved' : 'temporary';
+    save.title = levels.saved ? 'Progress is saved in this browser. Clearing site data removes it.' : 'Browser storage is unavailable. Progress may be lost when this page closes.';
+    const returning = storage.getItem('hasPlayedBefore') === 'true' || done > 0;
+    document.getElementById('btn-continue').textContent = returning ? `Continue · Level ${levels.currentIndex + 1}` : 'Begin exploration';
+    document.getElementById('start-progress').textContent = returning ? `${done} of ${total} rooms solved · ${levels.definitions[levels.currentIndex].name}` : `${total} rooms. One discovery at a time.`;
+  }
+
+  function scheduleCapture() {
+    scope.cancel(captureTimer);
+    const generation = ++captureGeneration;
+    const index = levels.currentIndex, level = levels.definitions[index];
+    if (!levels.canAccess(index) || previews.get(level.id)) return;
+    let tries = 0;
+    function capture() {
+      if (scope.closed || generation !== captureGeneration) return;
+      const scene = levels.activeScene;
+      if (!scene || scene.scene.key !== level.key) {
+        if (++tries < 12) captureTimer = scope.later(capture, 500);
+        return;
+      }
+      const save = image => {
+        if (scope.closed || generation !== captureGeneration || !(image instanceof HTMLImageElement || image instanceof HTMLCanvasElement)) return;
+        try {
+          const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 104;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+          if (previews.set(level.id, canvas.toDataURL('image/webp', .65))) render();
+        } catch { /* Optional previews must never interrupt play or saving. */ }
+      };
+      if (scene.previewSource) save(scene.previewSource);
+      else game.renderer.snapshot(save);
+    }
+    captureTimer = scope.later(capture, 1800);
+  }
+  scope.add(levels.subscribe(() => { render(); scheduleCapture(); }));
+  scope.add(() => { captureGeneration++; });
+  render();
+  return { render, reset() { previews.reset(); captureGeneration++; scope.cancel(captureTimer); render(); } };
+}

@@ -72,7 +72,7 @@ export default class WiresScene extends BasePuzzleScene {
 
   // everything that moves continuously is driven from here, not from tweens
   update(time, delta) {
-    if (!this._built) return;
+    if (!this._built || !this.ambientMotion) return;
     const dt = Math.min(delta || 16, 100); // no leaps after an inactive tab
     this._updateChair(time);
     this._updateNotes(dt);
@@ -117,7 +117,7 @@ export default class WiresScene extends BasePuzzleScene {
         .setBlendMode("ADD")
         .setDisplaySize(size, size)
         .setAlpha(0.12 * fade);
-      this.tweens.add({
+      this.ambientTween({
         targets: star,
         alpha: (0.45 + rnd() * 0.4) * fade,
         duration: 1400 + rnd() * 2600,
@@ -141,7 +141,8 @@ export default class WiresScene extends BasePuzzleScene {
         .setDepth(-9)
         .setAlpha(0)
         .setDisplaySize(size, size);
-      this.tweens.add({
+      this.ambientObject(puff);
+      this.ambientTween({
         targets: puff,
         y: y - (90 + rnd() * 30) * k,
         x: x + (40 + rnd() * 50) * k,
@@ -269,7 +270,7 @@ export default class WiresScene extends BasePuzzleScene {
       .setBlendMode("ADD")
       .setDisplaySize(r * 5.5, r * 5.5)
       .setAlpha(0.55);
-    this.tweens.add({
+    this.ambientTween({
       targets: glow,
       alpha: 0.72,
       duration: 2400,
@@ -281,8 +282,8 @@ export default class WiresScene extends BasePuzzleScene {
       delay: 7000,
       loop: true,
       callback: () => {
-        if (Math.random() < 0.5) return;
-        this.tweens.add({
+        if (!this.ambientMotion || Math.random() < 0.5) return;
+        this.ambientTween({
           targets: glow,
           alpha: 0.35,
           duration: 60,

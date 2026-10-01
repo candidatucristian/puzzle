@@ -34,9 +34,7 @@ export default class Candle {
   build(art) {
     this.removeDom();
     this.art = art;
-    this.reducedMotion =
-      typeof matchMedia === "function" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.reducedMotion = !this.scene.ambientMotion;
     this.smokeSince = null;
     this._frame = Math.random() * FRAMES;
     this._lastT = null;
@@ -149,6 +147,7 @@ export default class Candle {
 
   update(time) {
     if (!this.flame || !this.art) return;
+    this.reducedMotion = !this.scene.ambientMotion;
     const fx = this.lightState;
     const t = this.reducedMotion ? 0 : time / 1000;
     const dt =

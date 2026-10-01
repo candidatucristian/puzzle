@@ -1,5 +1,7 @@
 // One source for game answers, Info requirements and the reference ledger.
 // Keep IDs stable when renaming or reordering levels; IDs are used in saves.
+import { HINT_DETAILS } from './hints.js';
+
 const metadata = [
   {
     "id": "binarytree",
@@ -341,7 +343,7 @@ const metadata = [
 
 export const LEVEL_METADATA = Object.freeze(metadata.map((level) => Object.freeze({
   ...level,
-  hint: Object.freeze(level.hint),
+  hint: Object.freeze({ ...level.hint, steps: Object.freeze([level.hint.text, ...HINT_DETAILS[level.id]]) }),
   references: Object.freeze(level.references),
 })));
 

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { seededRandom, sketchSegment, drawPath, roundRectPoints } from "../shared/sketch.js";
 import { drawVignette } from "../shared/vignette.js";
+import { attachSceneFeedback } from '../shared/interaction.js';
 
 /** Scene-local resources are released exactly once, including on replay. */
 export default class BasePuzzleScene extends Phaser.Scene {
@@ -12,8 +13,42 @@ export default class BasePuzzleScene extends Phaser.Scene {
     this._sceneCleanups = new Set();
     this._sceneTimeouts = new Set();
     this._sceneOpen = true;
+    this._ambientTweens = new Set();
+    this._ambientObjects = new Set();
     this.events.once("shutdown", this._releaseScene, this);
     this.services.audio.enterScene(this);
+    this._sceneCleanups.add(attachSceneFeedback(this));
+    if (this.services.preferences) {
+      this._sceneCleanups.add(this.services.preferences.subscribe(() => {
+        for (const tween of this._ambientTweens) {
+          if (tween.isDestroyed()) { this._ambientTweens.delete(tween); continue; }
+          if (this.ambientMotion) tween.resume(); else tween.pause();
+        }
+        for (const object of this._ambientObjects) {
+          if (!object.scene) { this._ambientObjects.delete(object); continue; }
+          object.setVisible(this.ambientMotion);
+        }
+      }));
+    }
+  }
+
+  get reducedMotion() { return this.services.preferences?.reducedMotion || false; }
+  get ambientMotion() { return this.services.preferences?.ambientMotion ?? true; }
+  get ambientEffects() { return this.services.preferences?.state.ambientEffects ?? true; }
+
+  ambientTween(config) {
+    for (const old of this._ambientTweens) if (old.isDestroyed()) this._ambientTweens.delete(old);
+    const tween = this.tweens.add({ ...config, paused: !this.ambientMotion });
+    this._ambientTweens.add(tween);
+    const release = () => this._ambientTweens.delete(tween);
+    tween.once('complete', release); tween.once('stop', release);
+    return tween;
+  }
+
+  ambientObject(object) {
+    for (const old of this._ambientObjects) if (!old.scene) this._ambientObjects.delete(old);
+    this._ambientObjects.add(object);
+    return object.setVisible(this.ambientMotion);
   }
 
   listenToResize(callback) {

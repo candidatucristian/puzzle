@@ -1,0 +1,135 @@
+:root {
+  --reading-scale: 1;
+  --grain-opacity: .05;
+}
+
+#film-grain { opacity: var(--grain-opacity); }
+:root[data-ambient-motion="false"] #da-overlay shader-doodle,
+:root[data-ambient-motion="false"] #da-overlay .tv__scan { visibility: hidden; }
+:root[data-ambient-motion="false"] #da-overlay .tv__fallback { display: block; }
+:root[data-reduced-motion="true"] #da-overlay .rot { transition: none; }
+#game-viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+#game-viewport #game-container { position: absolute; inset: 0; height: 100%; transform-origin: 0 0; }
+
+/* Inspection moves the entire room, so HTML and Phaser stay in alignment. */
+#btn-inspect, #inspection-tools {
+  position: absolute; bottom: 16px; z-index: 30;
+  color: var(--bone); background: rgba(17, 19, 23, .94);
+  border: 1px solid var(--pencil-faint); border-radius: 5px;
+  box-shadow: 0 3px 14px #0005;
+}
+#btn-inspect { right: 16px; display: flex; align-items: center; gap: 8px; padding: 10px 13px; font-size: calc(12px * var(--reading-scale)); cursor: zoom-in; }
+#btn-inspect:hover, #btn-inspect:focus-visible { border-color: var(--pencil); background: #24262b; }
+#btn-inspect[aria-pressed="true"] { visibility: hidden; }
+#inspection-glass { position: absolute; inset: 0; z-index: 25; cursor: grab; touch-action: none; }
+#inspection-glass.dragging { cursor: grabbing; }
+#inspection-glass:focus-visible { outline: 1px solid var(--pencil-dim); outline-offset: -5px; }
+#inspection-tools { left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 9px 12px; white-space: nowrap; font-size: calc(12px * var(--reading-scale)); }
+#inspection-tools > span { color: var(--bone-dim); margin-right: 8px; }
+#inspection-tools button { background: transparent; border: 1px solid var(--pencil-faint); color: var(--bone); min-width: 34px; min-height: 34px; cursor: pointer; border-radius: 3px; font-size: inherit; }
+#inspection-tools button:hover { border-color: var(--pencil); }
+#inspection-tools button:disabled { opacity: .35; cursor: default; }
+#inspect-close { padding: 0 12px; }
+#inspection-tools kbd { font: inherit; color: var(--bone-dim); margin-left: 10px; }
+#inspection-tools[hidden], #inspection-glass[hidden], #interaction-cue[hidden] { display: none; }
+.is-inspecting #game-container { pointer-events: none; }
+.is-inspecting #interaction-cue, .is-inspecting #interaction-pulse,
+.has-open-dialog #interaction-cue, .has-open-dialog #interaction-pulse { visibility: hidden; }
+
+#interaction-cue {
+  position: absolute; bottom: 18px; left: 18px; z-index: 22;
+  margin: 0; padding: 7px 10px; max-width: 55%;
+  background: rgba(12, 14, 17, .9); border: 1px solid var(--pencil-faint); border-radius: 3px;
+  color: var(--bone); font-size: calc(12px * var(--reading-scale)); pointer-events: none;
+}
+#interaction-pulse { position: absolute; z-index: 24; width: 18px; height: 18px; border: 1px solid var(--bone); border-radius: 50%; opacity: 0; transform: translate(-50%, -50%); pointer-events: none; }
+#interaction-pulse.visible { animation: interaction-ack 220ms ease-out; }
+@keyframes interaction-ack { from { opacity: .65; transform: translate(-50%, -50%) scale(.6); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
+#game-container .scene-interactive:hover, #game-container [data-interaction]:hover,
+#game-container .scene-interactive:focus-visible, #game-container [data-interaction]:focus-visible {
+  outline: 1px solid rgba(234, 229, 214, .4); outline-offset: 3px;
+}
+#game-container .scene-interactive:active, #game-container [data-interaction]:active { outline-color: var(--bone); }
+
+/* A room keeps its number; a quiet photograph and check mark add memory. */
+.progress-summary { display: grid; gap: 9px; margin: -5px 0 20px; }
+#progress-count { color: var(--bone); font-size: calc(12px * var(--reading-scale)); letter-spacing: 1px; }
+#room-progress { appearance: none; display: block; width: 100%; height: 3px; border: 0; border-radius: 2px; background: #33363a; color: var(--pencil); }
+#room-progress::-webkit-progress-bar { background: #33363a; }
+#room-progress::-webkit-progress-value { background: var(--pencil); }
+#room-progress::-moz-progress-bar { background: var(--pencil); }
+#save-status { font-size: calc(10px * var(--reading-scale)); line-height: 1.5; color: var(--bone-dim); }
+#save-status[data-state="temporary"] { color: #d8ba8b; }
+.level-btn { padding: 0; overflow: hidden; isolation: isolate; }
+.level-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .62; z-index: -2; }
+.level-preview[hidden], .level-check[hidden] { display: none; }
+.level-btn.has-preview::before { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, #07090be6, #07090b00 85%); z-index: -1; }
+.level-btn.has-preview .level-number { position: absolute; bottom: 8px; left: 11px; text-shadow: 0 1px 4px #000; }
+.level-check { position: absolute; top: 5px; right: 6px; color: #d0dac2; font: 12px Georgia, serif; background: #151b16de; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
+.level-btn.solved:not(.current) { border-color: #69756366; }
+.level-btn:disabled { cursor: default; }
+.level-btn.locked .level-number { position: absolute; left: 9px; bottom: 7px; font-size: 13px; }
+.level-btn.locked::after { right: 9px; top: 8px; font-size: 12px; }
+#start-progress { color: var(--bone-dim); margin: 0; font-size: calc(13px * var(--reading-scale)); text-align: center; line-height: 1.7; }
+#btn-continue { padding: 17px 28px; border-color: var(--pencil-dim); font-size: calc(14px * var(--reading-scale)); background: #202228; }
+#start-prompt { font-size: 10px; letter-spacing: 2px; opacity: .65; animation: none; }
+
+/* Reading panels grow and scroll without moving the puzzle geometry. */
+.menu-btn { font-size: calc(14px * var(--reading-scale)); }
+.modal-content { max-height: calc(100dvh - 64px); overflow-y: auto; background: linear-gradient(160deg, #202329, #13161a); }
+.modal-content h2 { font-size: calc(21px * var(--reading-scale)); letter-spacing: 3px; }
+#options-modal .modal-content { width: min(490px, calc(100vw - 70px)); padding: 28px 32px; gap: 20px; }
+#info-modal .modal-content { width: min(600px, calc(100vw - 70px)); padding: 30px 36px; gap: 16px; max-height: calc(100dvh - 64px); overflow: hidden; }
+#info-modal .modal-content > :not(#hint-list) { flex-shrink: 0; }
+#info-modal .modal-content h2 { font-size: calc(20px * var(--reading-scale)); }
+.modal-kicker { color: var(--bone-dim); text-align: center; font-size: calc(11px * var(--reading-scale)); letter-spacing: 1.5px; margin: 0; }
+.hint-intro { margin: 0; text-align: center; color: var(--bone-dim); line-height: 1.6; font-size: calc(12px * var(--reading-scale)); }
+#hint-list { display: grid; gap: 14px; padding: 0; margin: 2px 0; list-style: none; counter-reset: hint; min-height: 0; overflow-y: auto; }
+#hint-list li { padding: 16px 18px; border: 1px solid var(--pencil-faint); border-left: 2px solid var(--pencil-dim); background: #0c0e1240; border-radius: 3px; counter-increment: hint; }
+.hint-step-label { display: block; color: var(--bone-dim); text-transform: uppercase; letter-spacing: 1.5px; font-size: calc(10px * var(--reading-scale)); }
+.hint-step-label::before { content: '0' counter(hint) '  /  '; }
+#hint-list p { margin: 10px 0 0; color: var(--bone); font-size: calc(15px * var(--reading-scale)); line-height: 1.7; white-space: pre-line; }
+#hint-count { margin: 0; color: var(--bone-dim); font-size: calc(11px * var(--reading-scale)); text-align: center; }
+#info-modal .modal-actions { gap: 12px; }
+#btn-next-hint { flex: 1; letter-spacing: 1.5px; font-size: calc(12px * var(--reading-scale)); }
+#btn-next-hint:disabled { opacity: .5; cursor: default; }
+#btn-next-hint:disabled::after { display: none; }
+#btn-close-info { font-size: calc(12px * var(--reading-scale)); letter-spacing: 1.5px; }
+.howto-lead, .howto-row p { font-size: calc(15px * var(--reading-scale)); }
+.howto-section h3 { font-size: calc(13px * var(--reading-scale)); }
+.comfort-settings { border: 0; border-top: 1px solid var(--pencil-faint); padding: 15px 0 0; margin: 0; min-width: 0; display: grid; gap: 17px; }
+.comfort-settings legend { padding: 0 12px 0 0; font-size: calc(12px * var(--reading-scale)); letter-spacing: 2px; color: var(--pencil-bright); }
+.comfort-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 9px 12px; }
+.comfort-row label, .comfort-checkbox { font-size: calc(13px * var(--reading-scale)); color: var(--bone); }
+.comfort-row output { font-size: calc(11px * var(--reading-scale)); color: var(--bone-dim); }
+.comfort-row input[type="range"] { grid-column: 1 / -1; width: 100%; margin: 6px 0; }
+.comfort-row select { background: #101216; color: var(--bone); border: 1px solid var(--pencil-faint); border-radius: 3px; padding: 8px; font: inherit; font-size: calc(12px * var(--reading-scale)); max-width: 180px; }
+.comfort-row p, .comfort-caption { grid-column: 1 / -1; margin: 0; color: var(--bone-dim); font-size: calc(11px * var(--reading-scale)); line-height: 1.65; }
+.comfort-checkbox { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.comfort-checkbox input { width: 17px; height: 17px; accent-color: var(--pencil); }
+.comfort-caption { margin-top: -10px; }
+
+/* Only decorative CSS is stopped: bulb/LED puzzle states still work. */
+[data-ambient-motion="false"] #film-grain,
+[data-ambient-motion="false"] #start-title,
+[data-ambient-motion="false"] #start-bottom,
+[data-ambient-motion="false"] #blk-bulb,
+[data-ambient-motion="false"] .level-btn.current { animation: none; }
+[data-ambient-effects="false"] #start-particles { visibility: hidden; }
+[data-reduced-motion="true"] #start-screen,
+[data-reduced-motion="true"] .mobile-block-card,
+[data-reduced-motion="true"] .completion-card { animation: none; }
+[data-reduced-motion="true"] .menu-btn,
+[data-reduced-motion="true"] #intro-screen,
+[data-reduced-motion="true"] #intro-line,
+[data-reduced-motion="true"] #intro-title,
+[data-reduced-motion="true"] #level-veil,
+[data-reduced-motion="true"] #options-modal,
+[data-reduced-motion="true"] #info-modal,
+[data-reduced-motion="true"] #howto-modal,
+[data-reduced-motion="true"] .level-btn { transition: none; }
+[data-reduced-motion="true"] #interaction-pulse.visible { animation: none; opacity: .5; }
+@media (max-width: 1250px) {
+  #inspection-tools { gap: 8px; }
+  #inspection-tools > span { display: none; }
+}

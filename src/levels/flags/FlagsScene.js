@@ -227,7 +227,7 @@ export default class FlagsScene extends BasePuzzleScene {
   // ── what moves ─────────────────────────────────────────────────────────────
 
   update(time, delta) {
-    if (!this._built) return;
+    if (!this._built || !this.ambientMotion) return;
     const t = time / 1000;
     const dt = Math.min(delta || 16, 100) / 1000;
     const L = this._L;

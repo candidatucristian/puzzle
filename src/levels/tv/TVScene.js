@@ -616,6 +616,9 @@ export default class TVScene extends BasePuzzleScene {
         e.preventDefault();
         this._tune(parseInt(btn.dataset.dir, 10));
       });
+      btn.addEventListener("click", (e) => {
+        if (e.detail === 0) this._tune(parseInt(btn.dataset.dir, 10));
+      });
     });
 
     this._renderChannel();
@@ -629,6 +632,9 @@ export default class TVScene extends BasePuzzleScene {
       if (!ok) this._dom.fallback.classList.add("show");
     });
   }
+
+  // DOM scenes provide their rendered screen for the room's progress thumbnail.
+  get previewSource() { return this._dom?.fallback; }
 
   _removeDOM() {
     if (this._dom) {

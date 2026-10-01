@@ -62,6 +62,8 @@
           <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
         </div>
         <div id="start-bottom">
+          <p id="start-progress"></p>
+          <button id="btn-continue" class="menu-btn start-continue" type="button">Begin exploration</button>
           <p id="start-prompt">Press any key to begin</p>
           <p id="start-footer">&nbsp; HEADPHONES RECOMMENDED</p>
         </div>
@@ -112,7 +114,23 @@
         </div>
       </div>
 
-      <div id="game-container"></div>
+      <div id="game-viewport">
+        <div id="game-container"></div>
+        <p id="interaction-cue" hidden></p>
+        <span id="interaction-pulse" aria-hidden="true"></span>
+        <div id="inspection-glass" tabindex="0" role="group" aria-label="Inspection view. Drag or use arrow keys to look around. Use plus and minus to zoom. Escape returns to play." hidden></div>
+        <div id="inspection-tools" hidden>
+          <span>Drag to look around</span>
+          <button id="inspect-out" type="button" aria-label="Zoom out">−</button>
+          <output id="inspection-zoom" aria-live="polite">2.0×</output>
+          <button id="inspect-in" type="button" aria-label="Zoom in">+</button>
+          <button id="inspect-close" type="button">Back to play <kbd>Esc</kbd></button>
+        </div>
+        <button id="btn-inspect" type="button" aria-pressed="false" aria-controls="inspection-glass" title="Look more closely at the room">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6"/></svg>
+          Inspect
+        </button>
+      </div>
 
       <!-- Control Console -->
       <div id="input-area">
@@ -146,7 +164,7 @@
             </button>
           </div>
         </div>
-        <button id="btn-info" class="menu-btn info-button">INFO</button>
+        <button id="btn-info" class="menu-btn info-button">HINT</button>
       </div>
     </div>
 
@@ -157,6 +175,11 @@
         <div class="sidebar-title">
           <h1>Levels</h1>
           <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
+        </div>
+        <div class="progress-summary">
+          <span id="progress-count">0 / 18 solved</span>
+          <progress id="room-progress" max="18" value="0" aria-label="Rooms solved"></progress>
+          <span id="save-status" role="status" aria-live="polite"></span>
         </div>
         <div id="levels-grid"></div>
       </div>
@@ -183,7 +206,7 @@
         <h2>Options</h2>
         <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
         <div class="slider-group">
-          <label>MUSIC VOLUME</label>
+          <label for="music-slider">MUSIC VOLUME</label>
           <input
             type="range"
             id="music-slider"
@@ -194,7 +217,7 @@
           />
         </div>
         <div class="slider-group">
-          <label>SOUND EFFECTS</label>
+          <label for="sfx-slider">SOUND EFFECTS</label>
           <input
             type="range"
             id="sfx-slider"
@@ -204,6 +227,36 @@
             value="0.8"
           />
         </div>
+        <fieldset class="comfort-settings">
+          <legend>Visual comfort</legend>
+          <div class="comfort-row">
+            <label for="grain-slider">Film grain</label>
+            <output id="grain-value" for="grain-slider">50%</output>
+            <input id="grain-slider" type="range" min="0" max="100" step="5" value="50" />
+          </div>
+          <div class="comfort-row">
+            <label for="reading-size">Reading size</label>
+            <select id="reading-size" aria-describedby="reading-note">
+              <option value="1">Standard</option>
+              <option value="1.15">Larger</option>
+              <option value="1.3">Largest</option>
+            </select>
+            <p id="reading-note">Menus, hints and reading panels. Use Inspect for details inside the room.</p>
+          </div>
+          <div class="comfort-row">
+            <label for="motion-setting">Motion</label>
+            <select id="motion-setting" aria-describedby="motion-note">
+              <option value="system">Follow device</option>
+              <option value="reduced">Reduced</option>
+            </select>
+            <p id="motion-note">Puzzle signals and essential movement remain available.</p>
+          </div>
+          <label class="comfort-checkbox" for="ambient-effects">
+            <input id="ambient-effects" type="checkbox" checked />
+            Decorative atmosphere
+          </label>
+          <p class="comfort-caption">Dust, smoke and ambient motion. Your choices are remembered on this device.</p>
+        </fieldset>
         <div class="modal-actions">
           <button id="btn-mute" class="menu-btn">🔊 MUTE</button>
           <button id="btn-close-options" class="menu-btn">CLOSE</button>
@@ -246,11 +299,15 @@
               <p>Restarts the current level from scratch.</p>
             </div>
             <div class="howto-row">
-              <span class="ui-demo">INFO</span>
+              <span class="ui-demo">HINT</span>
               <p>
-                A short, cryptic hint for the current level. It sets the mood
-                and points a direction — it never spells out the answer.
+                Three hints for each room, revealed one at a time. Start with
+                a direction and ask for more only when you need it.
               </p>
+            </div>
+            <div class="howto-row">
+              <span class="ui-demo">INSPECT</span>
+              <p>Get closer to letters and small objects. Drag to look around, use + and − to zoom, then press Escape to return to play.</p>
             </div>
             <div class="howto-row">
               <span class="ui-demo demo-volume">🔊</span>
@@ -291,18 +348,18 @@
           <div class="howto-section">
             <h3>THE BADGES</h3>
             <p class="howto-lead">
-              Open INFO and you may find badges under the title. They tell you
+              Open HINT and you may find badges under the title. They tell you
               what kind of attention the level wants:
             </p>
             <div class="howto-row">
-              <span class="badge-demo"><i>🔊</i>SOUND</span>
+              <span class="badge-demo">LISTENING</span>
               <p>
                 Audio matters here. Turn the volume up and listen carefully —
                 something is said only in sound.
               </p>
             </div>
             <div class="howto-row">
-              <span class="badge-demo"><i>🔧</i>TOOL</span>
+              <span class="badge-demo">REFERENCE</span>
               <p>
                 The level speaks a language you may need to look up: an
                 alphabet, a cipher, a notation. Decoding it is the puzzle.
@@ -330,11 +387,15 @@
     <!-- Info Modal -->
     <div id="info-modal" class="hidden">
       <div class="modal-content">
-        <h2>Level Info</h2>
+        <p id="hint-room" class="modal-kicker"></p>
+        <h2>A little guidance</h2>
         <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
         <div id="info-requires"></div>
-        <p id="info-text"></p>
+        <p class="hint-intro">Take one hint at a time. There is no penalty for asking.</p>
+        <ol id="hint-list"></ol>
+        <p id="hint-count" role="status" aria-live="polite"></p>
         <div class="modal-actions">
+          <button id="btn-next-hint" class="menu-btn" type="button">Reveal hint 2</button>
           <button id="btn-close-info" class="menu-btn">
             CLOSE
           </button>

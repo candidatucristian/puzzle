@@ -185,7 +185,7 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._roomSketch = sk;
     this._roomArch = drawRoom(this, sk, W, H);
 
-    this._breath = this.tweens.add({
+    this._breath = this.ambientTween({
       targets: sk,
       scale: 1.035,
       duration: 9000,
@@ -259,7 +259,7 @@ export default class TelescopeScene extends BasePuzzleScene {
       delay: 1600,
       duration: 900,
       onComplete: () =>
-        this.tweens.add({
+        this.ambientTween({
           targets: hint,
           alpha: 0.2,
           duration: 1400,
@@ -286,7 +286,7 @@ export default class TelescopeScene extends BasePuzzleScene {
       const dot = this.add.circle(x, y, 0.7 + rnd() * 1.1, 0xffffff, 1);
       dot.setAlpha(0.15 + rnd() * 0.3);
       sk.add(dot);
-      this.tweens.add({
+      this.ambientTween({
         targets: dot,
         alpha: 0.65 + rnd() * 0.3,
         duration: 1200 + rnd() * 2200,
@@ -347,7 +347,7 @@ export default class TelescopeScene extends BasePuzzleScene {
 
     // a breath backward, then a dive INTO the window
     const H = this._H;
-    if (this._roomSketch) {
+    if (this._roomSketch && !this.reducedMotion) {
       this.tweens.add({
         targets: this._roomSketch,
         scale: 0.93,
@@ -367,15 +367,15 @@ export default class TelescopeScene extends BasePuzzleScene {
     this.tweens.add({
       targets: [this._room],
       alpha: 0,
-      delay: 460,
-      duration: 480,
+      delay: this.reducedMotion ? 0 : 460,
+      duration: this.reducedMotion ? 1 : 480,
       ease: "Cubic.easeIn",
       onComplete: () => {
         this._room.destroy(true);
         this._room = null;
         this._roomSketch = null;
         this._buildSky();
-        this.cameras.main.fadeIn(420, 0, 0, 0);
+        if (!this.reducedMotion) this.cameras.main.fadeIn(420, 0, 0, 0);
         this.phase = PHASE.SKY;
       },
     });
@@ -569,13 +569,17 @@ export default class TelescopeScene extends BasePuzzleScene {
   // ── Input ─────────────────────────────────────────────────────────────────
 
   _onDown(p) {
-    if (this.phase === PHASE.ROOM && this._roomScopeHit(p)) this._enterSky();
+    if (this.phase === PHASE.ROOM && this._roomScopeHit(p)) {
+      this.game.events.emit('puzzle:interaction', { label: '', pressed: true, x: p.x, y: p.y });
+      this._enterSky();
+    }
   }
 
   _onMove(p) {
     if (this.phase !== PHASE.ROOM) return;
     // hand cursor only over the telescope — that's the way in
     this.input.setDefaultCursor(this._roomScopeHit(p) ? "pointer" : "default");
+    this.game.events.emit('puzzle:interaction', { label: this._roomScopeHit(p) ? 'Look through the telescope' : '' });
   }
 
   _onUp() {
@@ -590,12 +594,12 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._updateAmbience();
     if (this.phase === PHASE.ROOM || !this._starGfx || !this._stars) return;
     const dt = Math.min(delta / 1000, 0.1);
-    const t = this.time.now / 1000;
+    const t = this.ambientMotion ? this.time.now / 1000 : 0;
     const g = this._starGfx;
     g.clear();
 
     const ptr = this.input.activePointer;
-    const live = ptr && !this._pointerOut && this.phase === PHASE.SKY;
+    const live = ptr && this.input.enabled && !this._pointerOut && this.phase === PHASE.SKY;
     const px = live ? ptr.x : NaN,
       py = live ? ptr.y : NaN;
 

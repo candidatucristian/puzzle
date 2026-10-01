@@ -215,6 +215,9 @@ export default class CryptexScene extends BasePuzzleScene {
     const w = this._art.wheel;
     const { cx, cy, R } = w;
     this._wheel = { cx, cy, R };
+    this.add.zone(cx, cy, R * 2, R * 2).setDepth(8)
+      .setInteractive({ hitArea: new Phaser.Geom.Circle(R, R, R), hitAreaCallback: Phaser.Geom.Circle.Contains, cursor: 'grab' })
+      .setData('interactionLabel', 'Drag to turn the wheel');
     this._step = 360 / 26;
 
     // every letter on both rings; hidden until the candle is out
@@ -421,6 +424,7 @@ export default class CryptexScene extends BasePuzzleScene {
       this._openOverlay();
     });
     this._parchment = p;
+    p.setData('interactionLabel', 'Open the letter');
 
     // ── reading overlay: the letter, unfolded under the candle ──
     const ov = this.add.container(0, 0).setDepth(60).setVisible(false);

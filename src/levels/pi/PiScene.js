@@ -90,7 +90,7 @@ export default class PiScene extends BasePuzzleScene {
         art.skyAt(x, y) &&
         Math.hypot(x - art.moon.x, y - art.moon.y) > art.moon.r * 2.4;
       if (!open) star.setVisible(false);
-      this.tweens.add({
+      this.ambientTween({
         targets: star,
         alpha: 0.55 + rnd() * 0.3,
         duration: 1400 + rnd() * 2600,
@@ -255,7 +255,7 @@ export default class PiScene extends BasePuzzleScene {
       if (win.streak) win.streak.setVisible(true);
       show();
       win.pane.setInteractive({ useHandCursor: true });
-      this.tweens.add({
+      this.ambientTween({
         targets: fx,
         v: a - 0.12,
         duration: 2200 + r() * 2600,
@@ -266,7 +266,7 @@ export default class PiScene extends BasePuzzleScene {
         onUpdate: show,
       });
       if (win.streak) {
-        this.tweens.add({
+        this.ambientTween({
           targets: win.streak,
           scaleX: win.streak.scaleX * 1.35,
           duration: 900 + r() * 700,

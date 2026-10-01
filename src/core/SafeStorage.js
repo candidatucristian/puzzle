@@ -2,6 +2,7 @@
 export class SafeStorage {
   #backend;
   #fallback = new Map();
+  #persisted = new Map();
 
   constructor(storage) {
     try {
@@ -28,16 +29,24 @@ export class SafeStorage {
     key = String(key);
     value = String(value);
     this.#fallback.set(key, value);
+    this.#persisted.set(key, false);
     try {
-      this.#backend?.setItem(key, value);
+      if (this.#backend) {
+        this.#backend.setItem(key, value);
+        this.#persisted.set(key, true);
+      }
     } catch {
       // Keep the session's changes in memory if access or quota is denied.
     }
+    return this.isPersisted(key);
   }
+
+  isPersisted(key) { return this.#persisted.get(String(key)) === true; }
 
   removeItem(key) {
     key = String(key);
     this.#fallback.set(key, null);
+    this.#persisted.delete(key);
     try {
       this.#backend?.removeItem(key);
     } catch {

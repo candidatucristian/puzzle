@@ -1,0 +1,76 @@
+// The existing atmospheric hint remains step one. Each click reveals one
+// additional nudge; the final step explains a method, not just an answer.
+export const HINT_DETAILS = {
+  binarytree: [
+    'The note describes seven journeys. Begin at the top of the tree for each one: L means left and R means right.',
+    'Follow each three-turn path to a letter at the bottom. Write those letters in the same order as the paths on the note. Repeated paths give repeated letters.',
+  ],
+  plantpot: [
+    'Drag the watering can over the pot. Count the new leaves on each branch after every pour, rather than all the leaves together.',
+    'Five pours produce groups of 1, 1, 2, 3 and 5 leaves. After the first two, each group is the sum of the previous two. The code is the name of that sequence.',
+  ],
+  sequence: [
+    'Drag the cards into ascending order. The small example in the corner shows how to turn a pair of digits into something longer.',
+    'Read the first digit of each card as a count and the second as the digit to repeat: 25 means five, twice — 55. Apply that rule to the sorted cards, then join the results into one code.',
+  ],
+  cryptex: [
+    'Put out the candle and count how many breaths it takes. The writing on the wheel becomes visible in the dark. Open the envelope to inspect the letter.',
+    'The three breaths suggest shifting three places. Turn the wheel so each ciphertext letter maps three letters backwards: D becomes A, E becomes B. Decode the letter and look for the machine’s spinning part.',
+  ],
+  chessboard: [
+    'There is one piece on each numbered rank. The coordinate letters along the board matter more than the rules of chess.',
+    'Start with rank 1 and work up to rank 8. For each piece, write down its file letter, from A to H. Those eight letters form the code.',
+  ],
+  mobilephone: [
+    'Read the incoming number in runs of repeated digits. The letters printed on the phone keys are your reference.',
+    'Use old multi-tap typing: one 4 selects G, two 3s select E. Press a key repeatedly to cycle its letters, then wait briefly to commit it. Decode the whole caller number to discover a name.',
+  ],
+  lightswitch: [
+    'Each press of the switch gives one burst of short and long flashes. Write down one burst at a time; the next press moves to the next letter.',
+    'Use Morse code: short flashes are dots and long flashes are dashes. For example, dot–dash–dash–dot is P. Decode five bursts in order; after the fifth, the sequence repeats.',
+  ],
+  tv: [
+    'Read all four broadcasts. Astronomy, law, programming and physics use the same word for what is absent.',
+    'The programming channel describes a function that returns no value. Find the word that also fits an empty region of space and a legally ineffective contract.',
+  ],
+  modem: [
+    'Two lights carry the message, one flash at a time. Treat one as 0 and the other as 1. The five counter lights separate the letters.',
+    'The left of the two transmitting lights represents 0; the right represents 1. Record eight bits per letter and decode them as ASCII. The first byte, 01001000, is H. The full code names a secure web protocol.',
+  ],
+  telescope: [
+    'Look through the telescope. Some stars form suspiciously regular groups: two columns of three possible positions.',
+    'These are Braille cells. Number the left column 1–2–3 and the right 4–5–6, top to bottom. Compare the illuminated positions with a Braille alphabet and read the five groups left to right.',
+  ],
+  wires: [
+    'Five parallel wires can be read like a musical staff. Each bird marks a note, and the birds must be read from left to right.',
+    'Use the letter names of the five wires, bottom to top: D, F, A, C, E. Write the letter of the wire each bird sits on. You do not need to identify the background music.',
+  ],
+  station: [
+    'Only the trains marked BOARDING matter. Their destination names each contain one incorrect letter.',
+    'Order the four boarding trains by departure time, earliest first. Take the letter actually printed in the incorrect position of each city name, rather than the letter that should replace it.',
+  ],
+  pi: [
+    'Focus on the building with illuminated windows on every floor. Count the lights on each floor, starting at the top.',
+    'Window positions can change, but each floor keeps the same number of lights. The first three counts are 3, 1 and 4. Recognise the mathematical constant and enter its name or its familiar decimal approximation.',
+  ],
+  crossing: [
+    'The crossing’s alternating wide and narrow bars resemble a barcode. Read from the near pavement towards the far one.',
+    'Use a Code 39 reference. Account for both the bars and the spaces, and separate the start/stop markers from the two encoded letters. The result is a short instruction to move.',
+  ],
+  flags: [
+    'Identify the five countries represented by the flags, reading from left to right. Each country contributes exactly two letters.',
+    'The countries are Germany, Brazil, Ireland, Finland and Nigeria. Use their ISO two-letter country codes — for example, Germany is DE — and join all five codes in that order.',
+  ],
+  tapcode: [
+    'Each line has two groups of tally marks. Count the first group as a row and the second as a column in a five-by-five alphabet.',
+    'Use the prisoner’s tap-code grid: ABCDE / FGHIJ / LMNOP / QRSTU / VWXYZ, with K sharing C’s square. Count from 1. A pair of 1 and 5 gives E; decode all six lines in order.',
+  ],
+  rally: [
+    'Watch the door numbers as the cars cross the finish line. Their finishing order matters. The result board lets you review it afterwards.',
+    'Convert each number to its alphabet position: 1 is A, 2 is B, and so on through 26. For example, car 19 gives S. Read all six letters in finishing order.',
+  ],
+  overtime: [
+    'The four clocks can be treated as four-digit numbers. Use the calculator to add all four readings, ignoring the colons.',
+    'Add the displayed values as ordinary numbers, rather than hours and minutes. Then imagine turning the calculator upside down: read its seven-segment digits as letters, starting from the right.',
+  ],
+};

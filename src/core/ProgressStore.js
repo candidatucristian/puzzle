@@ -32,6 +32,8 @@ export class ProgressStore {
     return this.#definitions.every(({ id }) => this.#state.completedLevelIds.includes(id));
   }
 
+  get persisted() { return this.#storage.isPersisted(PROGRESS_KEY); }
+
   get unlockedIndex() {
     const firstLocked = this.#definitions.findIndex(
       ({ id }) => !this.#state.unlockedLevelIds.includes(id),

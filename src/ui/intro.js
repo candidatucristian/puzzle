@@ -1,7 +1,7 @@
 import { Scope } from '../shared/Scope.js';
 
 const LINES = ['The room is quiet. Too quiet.', 'Each room opens with a single word.', 'Everything you need is already in front of you.'];
-export function createIntro() {
+export function createIntro(preferences) {
   const scope = new Scope(), screen = document.getElementById('intro-screen');
   const line = document.getElementById('intro-line'), title = document.getElementById('intro-title');
   let active = false, skip = false, started = 0;
@@ -17,10 +17,14 @@ export function createIntro() {
     get active() { return active; },
     async play(onDone) {
       if (active) return;
+      if (preferences?.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        screen.classList.add('hidden');
+        onDone();
+        return;
+      }
       active = true; skip = false; started = Date.now();
       line.textContent = ''; line.classList.remove('show'); title.classList.remove('show');
       screen.classList.remove('fade-out', 'hidden');
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) skip = true;
       for (const text of LINES) {
         if (skip) break;
         line.textContent = text; line.classList.add('show'); await sleep(2700);

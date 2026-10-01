@@ -226,7 +226,7 @@ export default class StationScene extends BasePuzzleScene {
       .setOrigin(0, 0)
       .setDepth(-9)
       .setBlendMode("ADD");
-    this.tweens.add({
+    this.ambientTween({
       targets: this._glow,
       alpha: 0.75,
       duration: 3400,
@@ -238,8 +238,8 @@ export default class StationScene extends BasePuzzleScene {
       delay: 9000,
       loop: true,
       callback: () => {
-        if (Math.random() < 0.5 || !this._glow) return;
-        this.tweens.add({
+        if (!this.ambientMotion || Math.random() < 0.5 || !this._glow) return;
+        this.ambientTween({
           targets: this._glow,
           alpha: 0.5,
           duration: 70,
@@ -326,7 +326,7 @@ export default class StationScene extends BasePuzzleScene {
       .image(cx, cy, hand.key)
       .setOrigin(0.5, hand.originY)
       .setDepth(-2);
-    this.tweens.add({
+    this.ambientTween({
       targets: sec,
       angle: 360,
       duration: 60000,
@@ -389,7 +389,8 @@ export default class StationScene extends BasePuzzleScene {
         .setBlendMode("ADD")
         .setAlpha(0.08 + rnd() * 0.12)
         .setDepth(-8);
-      this.tweens.add({
+      this.ambientObject(dot);
+      this.ambientTween({
         targets: dot,
         y: y - (30 + rnd() * 60),
         x: x + (rnd() * 40 - 20),
@@ -447,6 +448,12 @@ export default class StationScene extends BasePuzzleScene {
 
   _flipCell(cell, cycles, startDelay, onLanded) {
     const txt = cell.txt;
+    if (this.reducedMotion) {
+      txt.setText(cell.finalChar).setScale(1, 1);
+      if (cell.anomalous) this._seatCrooked(cell);
+      onLanded?.();
+      return;
+    }
     const step = (remaining) => {
       this.tweens.add({
         targets: txt,

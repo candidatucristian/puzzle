@@ -275,7 +275,7 @@ export default class TapCodeScene extends BasePuzzleScene {
       const star = this.add
         .circle(oL + ww * sx, oT + wh * sy, 0.5 + starRandom() * 0.8, 0xe5e8f0, 0.55 + starRandom() * 0.3)
         .setDepth(-10);
-      this.tweens.add({
+      this.ambientTween({
         targets: star,
         alpha: 0.15,
         duration: 1600 + sx * 2000,
@@ -410,7 +410,7 @@ export default class TapCodeScene extends BasePuzzleScene {
     }
 
     // the shaft breathes, barely — clouds crossing the moon
-    this.tweens.add({
+    this.ambientTween({
       targets: [g, fg],
       alpha: 0.7,
       duration: 5200,
@@ -784,7 +784,8 @@ export default class TapCodeScene extends BasePuzzleScene {
       const dot = this.add
         .circle(dx, dy, 0.6 + rnd() * 1, TC_LIGHT, 0.12 + rnd() * 0.14)
         .setDepth(-3);
-      this.tweens.add({
+      this.ambientObject(dot);
+      this.ambientTween({
         targets: dot,
         x: dx + 16 + rnd() * 22, // the shaft leans right, so does the dust
         y: dy + 50 + rnd() * 60,
@@ -817,12 +818,12 @@ export default class TapCodeScene extends BasePuzzleScene {
     const drop = this.add.circle(dx, dy, 1.6, TC_LIGHT, 0).setDepth(-5);
     const fall = () => {
       drop.setPosition(dx, dy);
-      this.tweens.add({
+      this.ambientTween({
         targets: drop,
         alpha: { from: 0, to: 0.5 },
         duration: 1600,
         onComplete: () => {
-          this.tweens.add({
+          this.ambientTween({
             targets: drop,
             y: fy,
             duration: 430,
@@ -835,7 +836,7 @@ export default class TapCodeScene extends BasePuzzleScene {
               ring.setPosition(dx, fy + 2);
               ring.lineStyle(1.2, TC_LIGHT, 0.4);
               ring.strokeEllipse(0, 0, 6, 2.2);
-              this.tweens.add({
+              this.ambientTween({
                 targets: ring,
                 scaleX: 4,
                 scaleY: 4,
@@ -878,14 +879,14 @@ export default class TapCodeScene extends BasePuzzleScene {
       rat.setPosition(fromX, y);
       rat.setScale(leftToRight ? 1 : -1, 1);
       rat.setAlpha(0.9);
-      this.tweens.add({
+      this.ambientTween({
         targets: rat,
         x: toX,
         duration: 1500,
         ease: "Sine.easeIn",
         onComplete: () => {
           // it bolts the last stretch and is gone
-          this.tweens.add({
+          this.ambientTween({
             targets: rat,
             x: leftToRight ? W + 40 : -40,
             alpha: 0,

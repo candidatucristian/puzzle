@@ -56,6 +56,7 @@ for (const level of LEVEL_METADATA) {
     expect(await sceneState(page, "scene.events.listenerCount('canvas_resized')")).toBe(1);
     mkdirSync('.artifacts/after', { recursive: true });
     await page.screenshot({ path: `.artifacts/after/${level.key}.png` });
+    await evaluateApp(page, ({ services }) => services.preferences.set({ motion: 'reduced', ambientEffects: false }));
     await page.setViewportSize({ width: 1360, height: 900 });
     await page.waitForTimeout(500);
     await navigate(page, level.key);
@@ -102,11 +103,10 @@ test('final answer, replay and navigation own exactly one completion callback', 
   await expect.poll(() => sceneState(page, 'scene.scene.key')).toBe('BinaryTree');
 });
 
-test('Info follows the catalog and dialogs support keyboard focus and Escape', async ({ page }) => {
+test('Hints follow the catalog and dialogs support keyboard focus and Escape', async ({ page }) => {
   await launch(page); await navigate(page, 'Wires');
   await page.locator('#btn-info').click();
-  await expect(page.locator('#info-requires')).toContainText('TOOL');
-  await expect(page.locator('#info-requires [title]')).toHaveAttribute('title', 'This level requires a measuring tool');
+  await expect(page.locator('#info-requires')).toContainText('Reference may help');
   await page.keyboard.press('Escape');
   await expect(page.locator('#btn-info')).toBeFocused();
   await navigate(page, 'Cryptex'); await page.locator('#btn-info').click();
@@ -120,7 +120,7 @@ test('Info follows the catalog and dialogs support keyboard focus and Escape', a
     };
   });
   expect(overflow).toEqual({ x: false, y: false });
-  await expect(page.locator('#info-text')).toBeInViewport();
+  await expect(page.locator('#hint-list')).toBeInViewport();
   await expect(page.locator('#btn-close-info')).toBeInViewport();
 });
 

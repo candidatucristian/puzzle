@@ -1,13 +1,15 @@
+import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { PENCIL } from "../../shared/theme.js";
+import { paintStreet, releaseStreetArt } from "./street.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CROSSING"  ·  code: GO   ·  read the stripes
 //
-// Drawn in the game's pencil-sketch idiom: standing at the curb at night,
-// about to cross. One tall block on the left, one on the right — a cat-food shop
-// glowing under its awning at the far sidewalk — and open sky between them,
-// moon and stars over a distant skyline. The signals still cycle.
+// A storybook night: standing at the curb, about to cross. One old block on
+// the left — brick, a fire escape, smoke from its chimney — one on the right,
+// stucco, a little cat-food shop glowing under its striped awning on the far
+// sidewalk, and between them the moon over a far skyline. The road is wet
+// and every light lies on it. The signals are green.
 //
 // The crossing runs straight away from you, up the screen: wide at your
 // feet, narrow at the far curb. Its stripes — the rungs of the zebra — are
@@ -18,20 +20,15 @@ import { PENCIL } from "../../shared/theme.js";
 //   G O   →   GO
 //
 // Only ten stripes, so at a glance it is just a slightly worn crossing.
-// Nothing on screen says "barcode." The walk signal's green and a few warm
+// Nothing on screen says "barcode." The walk signal's green and the warm
 // windows are the only living colours; the code is the proof.
 //
-// All jitter is deterministic (seeded), so the sketch holds still across
-// redraws. Canvas-drawn, with lifecycle provided by BasePuzzleScene.
+// The street is painted once per screen size (street.js); the windows,
+// signals, smoke, steam, the shop's sign, the stars and the cat are live.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CR_SKETCH = PENCIL; // the pencil itself
-const CR_PAINT = 0xdcd6c8; // road paint — worn cream
-const CR_GREEN = 0x3ad06a; // the walk signal's living colour
-const CR_WARM = 0xffdf9e; // lit windows and lamplight
 const CR_WORD = "GO";
 const CR_WIDE = 2.6; // wide : narrow stripe ratio (Code 39)
-const CR_PERSP = 0.9; // foreshortening: how hard the far stripes compress
 
 // Code 39 — each glyph is 9 elements (bar,space,bar,…,bar), 3 of them wide
 const CR_CODE39 = {
@@ -74,6 +71,10 @@ const CR_CODE39 = {
   "*": "nwnnwnwnn",
 };
 
+const CR_WARM = 0xffdf9e; // lit windows and lamplight
+const CR_CAT = 0x07080c; // the cat, darker than the night
+const CR_RIM = 0x9fb4e6; // the moon on its edges
+
 export default class CrossingScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Crossing" });
@@ -97,12 +98,6 @@ export default class CrossingScene extends BasePuzzleScene {
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
-  // ── the pencil: jittered hand-drawn primitives (shared idiom) ──────────────
-
-  _pencilCircle(g, rnd, cx, cy, r, width, color, alpha, steps = 16, mag = 1.4) {
-    super._pencilCircle(g, rnd, cx, cy, r, width, color, alpha, steps, mag);
-  }
-
   // ordered element list for a Code 39 string — bare letters, no sentinels,
   // so the crossing keeps a plausible stripe count
   _code39(word) {
@@ -119,50 +114,58 @@ export default class CrossingScene extends BasePuzzleScene {
     return els;
   }
 
+  // the stripes, as fractions of the way from our feet (0) to the far curb (1)
+  _bars() {
+    const els = this._code39(CR_WORD);
+    const total = els.reduce((sum, e) => sum + e.w, 0);
+    const bars = [];
+    let u = 0;
+    for (const e of els) {
+      if (e.bar) bars.push({ t0: u / total, t1: (u + e.w) / total });
+      u += e.w;
+    }
+    return bars;
+  }
+
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
     this._W = W;
     this._H = H;
-    // the far sidewalk: buildings stand on it, the road runs from it to us
-    this._baseY = H * 0.5; // building bases / far sidewalk top
-    this._curbY = H * 0.565; // far curb — the road begins here
+    const art = paintStreet(this, W, H, this._bars());
+    this._art = art;
+    this._baseY = art.baseY;
+    this._curbY = art.curbY;
 
-    this._drawSky(W, H);
-    this._drawMoon(W, H);
-    this._drawFarRooftops(W, H);
-    this._drawBuilding(W, H, "left");
-    this._drawBuilding(W, H, "right");
-    this._drawSidewalkAndRoad(W, H);
-    this._drawBarcodeCrossing(W, H);
-    this._drawStreetlamp(W * 0.06, 1);
-    this._drawStreetlamp(W * 0.94, -1);
-    this._drawTrafficLight(W * 0.315);
-    this._drawPedSignal(W * 0.685);
-    this._drawParkedCar(W, H);
-    this._makeSteam(W * 0.88, H * 0.845);
+    this.add.image(0, 0, art.city).setOrigin(0, 0).setDepth(-20);
+    this._makeStars(W, H, art);
+    this._makeFarWindows(art);
+    this._makeWindows(art);
+    this._makeSmoke(art.smoke.x, art.smoke.y, art.puff);
+    this._makeSteam(art.steam.x, art.steam.y, art.puff);
+    this._makeSign(art);
+    this._makeWalkSignal(art);
     this._drawCat(W, H);
     this._drawTexts(W, H);
-    this._drawVignette(W, H);
   }
 
-  _drawSky(W, H) {
-    const g = this.add.graphics().setDepth(-20);
-    g.fillGradientStyle(0x0b0d12, 0x0d0f15, 0x07080b, 0x090a0d, 1);
-    g.fillRect(0, 0, W, H);
-
-    // twinkling stars, Pi-style
+  // a few stars that twinkle
+  _makeStars(W, H, art) {
     const rnd = this._rng(7551);
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 26; i++) {
       const x = rnd() * W;
       const y = rnd() * H * 0.4;
+      if (Math.abs(x - W * 0.5) < W * 0.08 && y < H * 0.25) continue;
+      const size = 3 + rnd() * 4;
       const dot = this.add
-        .circle(x, y, 0.6 + rnd() * 1, 0xffffff, 1)
-        .setAlpha(0.12 + rnd() * 0.25)
+        .image(x, y, art.star)
+        .setDisplaySize(size, size)
+        .setAlpha(0.15 + rnd() * 0.25)
         .setDepth(-19);
-      this.tweens.add({
+      this.ambientObject(dot);
+      this.ambientTween({
         targets: dot,
-        alpha: 0.55 + rnd() * 0.3,
+        alpha: 0.55 + rnd() * 0.35,
         duration: 1400 + rnd() * 2600,
         delay: rnd() * 2000,
         yoyo: true,
@@ -170,126 +173,17 @@ export default class CrossingScene extends BasePuzzleScene {
         ease: "Sine.easeInOut",
       });
     }
-
-    // two thin drifting cloud strokes
-    const cg = this.add.graphics().setDepth(-18);
-    const rndC = this._rng(919);
-    for (const cy of [H * 0.09, H * 0.2]) {
-      const cx = W * (0.3 + rndC() * 0.35);
-      const cw = W * (0.1 + rndC() * 0.12);
-      this._pencilSeg(
-        cg,
-        rndC,
-        cx,
-        cy,
-        cx + cw,
-        cy + (rndC() - 0.5) * 6,
-        1.2,
-        CR_SKETCH,
-        0.08,
-        2,
-      );
-      this._pencilSeg(
-        cg,
-        rndC,
-        cx + cw * 0.2,
-        cy + 6,
-        cx + cw * 0.85,
-        cy + 5,
-        1,
-        CR_SKETCH,
-        0.05,
-        2,
-      );
-    }
   }
 
-  _drawMoon(W, H) {
-    const g = this.add.graphics().setDepth(-17);
-    const rnd = this._rng(3113);
-    const mx = W * 0.5;
-    const my = H * 0.15;
-    const r = Math.min(W, H) * 0.052;
-
-    g.fillStyle(0xffffff, 0.03);
-    g.fillCircle(mx, my, r * 2.1);
-    g.fillStyle(0xffffff, 0.05);
-    g.fillCircle(mx, my, r * 1.4);
-    g.fillStyle(0xe8e2d2, 0.12);
-    g.fillCircle(mx, my, r);
-    this._pencilCircle(g, rnd, mx, my, r, 1.4, CR_SKETCH, 0.5);
-    this._pencilCircle(
-      g,
-      rnd,
-      mx - r * 0.3,
-      my - r * 0.25,
-      r * 0.22,
-      1,
-      CR_SKETCH,
-      0.3,
-    );
-    this._pencilCircle(
-      g,
-      rnd,
-      mx + r * 0.35,
-      my + r * 0.2,
-      r * 0.16,
-      1,
-      CR_SKETCH,
-      0.25,
-    );
-    this._pencilCircle(
-      g,
-      rnd,
-      mx - r * 0.05,
-      my + r * 0.42,
-      r * 0.12,
-      1,
-      CR_SKETCH,
-      0.22,
-    );
-    for (let i = 0; i < 4; i++) {
-      const a = Math.PI * (0.75 + i * 0.1);
-      this._pencilSeg(
-        g,
-        rnd,
-        mx + Math.cos(a) * r * 0.55,
-        my + Math.sin(a) * r * 0.55,
-        mx + Math.cos(a) * r * 0.92,
-        my + Math.sin(a) * r * 0.92,
-        1,
-        CR_SKETCH,
-        0.12,
-        0.8,
-      );
-    }
-  }
-
-  // the distant skyline across the middle gap — pure silhouette
-  _drawFarRooftops(W, H) {
-    const g = this.add.graphics().setDepth(-13);
-    const rnd = this._rng(6446);
-    const base = this._baseY;
-    let x = -10;
-    g.fillStyle(0x0b0d11, 1);
-    g.beginPath();
-    g.moveTo(-10, base);
-    while (x < W + 10) {
-      const w = Math.max(24, W * (0.05 + rnd() * 0.09));
-      const top = base - H * (0.1 + rnd() * 0.13);
-      g.lineTo(x, top);
-      g.lineTo(x + w, top);
-      x += w;
-    }
-    g.lineTo(W + 10, base);
-    g.closePath();
-    g.fillPath();
-    // a few far windows still awake
-    for (let i = 0; i < 3; i++) {
-      const wx = W * (0.36 + rnd() * 0.28);
-      const wy = base - H * (0.04 + rnd() * 0.11);
-      const dot = this.add.rectangle(wx, wy, 3, 4, CR_WARM, 0.5).setDepth(-12);
-      this.tweens.add({
+  // a few far windows in the skyline, still awake
+  _makeFarWindows(art) {
+    const rnd = this._rng(6447);
+    for (const p of art.far) {
+      const dot = this.add
+        .rectangle(p.x, p.y, 3, 4, CR_WARM, 0.55)
+        .setDepth(-12);
+      this.ambientObject(dot);
+      this.ambientTween({
         targets: dot,
         alpha: 0.2,
         duration: 2000 + rnd() * 2000,
@@ -301,328 +195,105 @@ export default class CrossingScene extends BasePuzzleScene {
     }
   }
 
-  // one tall block per side, in Pi's sleeping-city treatment
-  _drawBuilding(W, H, side) {
-    const left = side === "left";
-    const o = left
-      ? {
-          x0: -0.02,
-          x1: 0.3,
-          top: 0.07,
-          seed: 11,
-          lit: 0.24,
-          cols: 4,
-          chimney: true,
-          fireEscape: true,
-        }
-      : {
-          x0: 0.7,
-          x1: 1.02,
-          top: 0.11,
-          seed: 77,
-          lit: 0.24,
-          cols: 4,
-          cornice: true,
-          cafe: true,
-        };
-
-    const g = this.add.graphics().setDepth(-8);
-    const rnd = this._rng(o.seed * 977 + 5);
-    const base = this._baseY;
-    const bx = W * o.x0;
-    const bw = W * (o.x1 - o.x0);
-    const by = H * o.top;
-    const bh = base - by;
-
-    // body: near-black fill, faint graphite wash, pencil frame
-    g.fillStyle(0x14171d, 0.97);
-    g.fillRect(bx, by, bw, bh);
-    g.fillStyle(CR_SKETCH, 0.03);
-    g.fillRect(bx, by, bw, bh);
-    this._pencilRect(g, rnd, bx, by, bw, bh, 1.6, CR_SKETCH, 0.5, 2);
-
-    // roofline
-    if (o.cornice) {
-      this._pencilSeg(
-        g,
-        rnd,
-        bx - 8,
-        by,
-        bx + bw + 8,
-        by,
-        1.6,
-        CR_SKETCH,
-        0.55,
-        1.6,
-      );
-      this._pencilSeg(
-        g,
-        rnd,
-        bx - 5,
-        by + 6,
-        bx + bw + 5,
-        by + 6,
-        1.1,
-        CR_SKETCH,
-        0.3,
-        1.4,
-      );
-      for (let x = bx + 8; x < bx + bw - 6; x += 14) {
-        g.lineStyle(1, CR_SKETCH, 0.2);
-        g.lineBetween(x, by + 6, x, by + 10);
-      }
-    } else {
-      this._pencilSeg(
-        g,
-        rnd,
-        bx - 6,
-        by,
-        bx + bw + 6,
-        by,
-        1.5,
-        CR_SKETCH,
-        0.5,
-        1.6,
-      );
-    }
-
-    // rooftop props
-    if (o.chimney) {
-      const chx = bx + bw * 0.55;
-      const chw = bw * 0.08;
-      const chh = H * 0.045;
-      g.fillStyle(0x101216, 1);
-      g.fillRect(chx, by - chh, chw, chh + 2);
-      this._pencilRect(g, rnd, chx, by - chh, chw, chh, 1.2, CR_SKETCH, 0.4, 1);
-      this._makeSmoke(chx + chw / 2, by - chh);
-    } else {
-      // a rooftop water tank on the right block
-      const tx = bx + bw * 0.2;
-      const tw = bw * 0.16;
-      const th = H * 0.05;
-      const ty = by - th - 8;
-      g.lineStyle(1.2, CR_SKETCH, 0.4);
-      g.lineBetween(tx + 3, ty + th, tx + 1, by);
-      g.lineBetween(tx + tw - 3, ty + th, tx + tw - 1, by);
-      g.fillStyle(0x101216, 1);
-      g.fillRect(tx, ty, tw, th);
-      this._pencilRect(g, rnd, tx, ty, tw, th, 1.2, CR_SKETCH, 0.45, 1);
-      this._pencilSeg(
-        g,
-        rnd,
-        tx - 2,
-        ty,
-        tx + tw / 2,
-        ty - 8,
-        1.1,
-        CR_SKETCH,
-        0.4,
-        0.8,
-      );
-      this._pencilSeg(
-        g,
-        rnd,
-        tx + tw / 2,
-        ty - 8,
-        tx + tw + 2,
-        ty,
-        1.1,
-        CR_SKETCH,
-        0.4,
-        0.8,
-      );
-    }
-
-    // ground floor: café (right) or a doorway with a lamp (left)
-    const groundH = Math.min(H * 0.075, bh * 0.24);
-    if (o.cafe) {
-      this._drawCafe(g, rnd, bx, bw, groundH);
-    } else {
-      const doorW = bw * 0.12;
-      const doorX = bx + bw * 0.72;
-      this._pencilRect(
-        g,
-        rnd,
-        doorX,
-        base - groundH * 0.85,
-        doorW,
-        groundH * 0.85,
-        1.3,
-        CR_SKETCH,
-        0.4,
-        1,
-      );
-      const lx = doorX + doorW / 2;
-      const ly = base - groundH * 0.85 - 8;
-      this.add.circle(lx, ly, 12, CR_WARM, 0.06).setDepth(-7);
-      this.add.circle(lx, ly, 2.6, CR_WARM, 0.75).setDepth(-7);
-    }
-
-    // upper windows — mostly asleep, a few warm and breathing
-    const floors = Math.max(3, Math.round((bh - groundH) / (H * 0.08)));
-    const cols = o.cols;
-    const mX = bw * 0.12;
-    const winW = (bw - mX * 2) / (cols * 1.6 - 0.6);
-    const areaH = bh - groundH - 16;
-    const floorH = areaH / floors;
-    const winH = Math.min(floorH * 0.52, H * 0.04);
-    const litRng = this._rng(o.seed * 431 + 3);
-    for (let f = 0; f < floors; f++) {
-      const rowY = by + 14 + f * floorH + floorH * 0.2;
-      for (let c = 0; c < cols; c++) {
-        const wx = bx + mX + c * winW * 1.6;
-        const cx = wx + winW / 2;
-        const cy = rowY + winH / 2;
-        if (cx < -winW || cx > W + winW) continue;
-        if (litRng() < o.lit) {
-          const glow = this.add
-            .circle(cx, cy, winW * 1.3, CR_WARM, 0.05)
-            .setDepth(-7);
-          const pane = this.add
-            .rectangle(cx, cy, winW, winH, CR_WARM, 0.75)
-            .setDepth(-6);
-          pane.setAlpha(0.6 + litRng() * 0.2);
-          this.tweens.add({
-            targets: [pane, glow],
-            alpha: { from: pane.alpha, to: pane.alpha - 0.14 },
-            duration: 2200 + litRng() * 2600,
-            delay: litRng() * 1800,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut",
-          });
-        } else {
-          const pane = this.add
-            .rectangle(cx, cy, winW, winH, 0x14171d, 0)
-            .setDepth(-6);
-          pane.setStrokeStyle(1, CR_SKETCH, 0.13);
-          if (litRng() < 0.5) {
-            const mg = this.add.graphics().setDepth(-6);
-            mg.lineStyle(1, CR_SKETCH, 0.08);
-            mg.lineBetween(cx - winW / 2, cy, cx + winW / 2, cy);
-            mg.lineBetween(cx, cy - winH / 2, cx, cy + winH / 2);
-          }
-        }
-      }
-    }
-
-    // fire escape: a narrow ladder of landings down the street-facing edge
-    if (o.fireEscape) {
-      const fg = this.add.graphics().setDepth(-7);
-      const fx0 = bx + bw * 0.84;
-      const fx1 = bx + bw * 0.97;
-      let fy = by + bh * 0.16;
-      const step = (bh * 0.62) / 5;
-      for (let i = 0; i < 5; i++) {
-        // landing with a thin rail above it
-        this._pencilSeg(fg, rnd, fx0, fy, fx1, fy, 1.1, CR_SKETCH, 0.3, 0.8);
-        fg.lineStyle(1, CR_SKETCH, 0.16);
-        fg.lineBetween(fx0, fy - 4, fx1, fy - 4);
-        fg.lineBetween(fx0, fy, fx0, fy - 4);
-        fg.lineBetween(fx1, fy, fx1, fy - 4);
-        // shallow stair diagonal to the next landing
-        const a = i % 2 === 0 ? fx1 : fx0;
-        const b = i % 2 === 0 ? fx0 : fx1;
-        fg.lineStyle(1, CR_SKETCH, 0.2);
-        fg.lineBetween(a, fy, b, fy + step);
-        fy += step;
-      }
+  // the lit rooms, breathing slowly as lamps are turned and curtains move
+  _makeWindows(art) {
+    const rnd = this._rng(4313);
+    for (const w of art.windows) {
+      const glow = this.add
+        .image(w.x, w.y, art.glow)
+        .setDisplaySize(w.w * 3.2, w.h * 3.2)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0.5)
+        .setDepth(-7);
+      const pane = this.add
+        .image(w.x, w.y, w.key)
+        .setDisplaySize(w.w, w.h)
+        .setDepth(-6);
+      pane.setAlpha(0.85 + rnd() * 0.15);
+      this.ambientTween({
+        targets: [pane, glow],
+        alpha: { from: pane.alpha, to: pane.alpha - 0.18 },
+        duration: 2200 + rnd() * 2600,
+        delay: rnd() * 1800,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
     }
   }
 
-  _drawCafe(g, rnd, bx, bw, groundH) {
-    const base = this._baseY;
-    const top = base - groundH;
-
-    // glowing shopfront window with mullions
-    const winX = bx + bw * 0.1;
-    const winW = bw * 0.42;
-    const winY = top + groundH * 0.24;
-    const winH = groundH * 0.6;
-    this.add
-      .rectangle(winX + winW / 2, winY + winH / 2, winW, winH, CR_WARM, 0.35)
-      .setDepth(-7);
-    this.add
-      .circle(winX + winW / 2, winY + winH / 2, winW * 0.6, CR_WARM, 0.05)
-      .setDepth(-7);
-    this._pencilRect(g, rnd, winX, winY, winW, winH, 1.3, CR_SKETCH, 0.5, 1);
-    g.lineStyle(1, CR_SKETCH, 0.3);
-    g.lineBetween(winX + winW / 3, winY, winX + winW / 3, winY + winH);
-    g.lineBetween(
-      winX + (2 * winW) / 3,
-      winY,
-      winX + (2 * winW) / 3,
-      winY + winH,
-    );
-
-    // the door beside it
-    const doorX = bx + bw * 0.58;
-    const doorW = bw * 0.14;
-    this._pencilRect(
-      g,
-      rnd,
-      doorX,
-      winY,
-      doorW,
-      winH + groundH * 0.14,
-      1.3,
-      CR_SKETCH,
-      0.45,
-      1,
-    );
-
-    // scalloped awning over the shopfront
-    const awnY = top + groundH * 0.16;
-    const awnX0 = bx + bw * 0.06;
-    const awnX1 = bx + bw * 0.76;
-    g.fillStyle(0x1a1d24, 1);
-    g.fillTriangle(awnX0, awnY, awnX1, awnY, awnX1, awnY - 11);
-    g.fillTriangle(awnX0, awnY, awnX1, awnY - 11, awnX0, awnY - 11);
-    this._pencilSeg(
-      g,
-      rnd,
-      awnX0 - 2,
-      awnY - 11,
-      awnX1 + 2,
-      awnY - 11,
-      1.3,
-      CR_SKETCH,
-      0.5,
-      1.2,
-    );
-    const scallops = 6;
-    const sw = (awnX1 - awnX0) / scallops;
-    for (let i = 0; i < scallops; i++) {
-      const sx = awnX0 + i * sw;
-      const pts = [];
-      for (let k = 0; k <= 6; k++) {
-        const t = k / 6;
-        pts.push({ x: sx + sw * t, y: awnY + Math.sin(t * Math.PI) * 5 });
-      }
-      this._drawPath(g, pts, 1.2, CR_SKETCH, 0.45);
+  _makeSmoke(x, y, key) {
+    const rnd = this._rng(Math.round(x));
+    const S = Math.min(this._W, this._H);
+    for (let i = 0; i < 4; i++) {
+      const size = S * (0.016 + rnd() * 0.01);
+      const puff = this.add
+        .image(x, y, key)
+        .setDisplaySize(size, size)
+        .setAlpha(0.35)
+        .setDepth(-9);
+      const drift = (rnd() - 0.3) * S * 0.04;
+      const dur = 5200 + rnd() * 2400;
+      this.ambientObject(puff);
+      this.ambientTween({
+        targets: puff,
+        y: y - S * 0.06 - rnd() * S * 0.03,
+        x: x + drift,
+        scaleX: puff.scaleX * 2.6,
+        scaleY: puff.scaleY * 2.6,
+        alpha: 0,
+        duration: dur,
+        delay: i * (dur / 4),
+        repeat: -1,
+        onRepeat: () => {
+          puff.setPosition(x, y);
+          puff.setDisplaySize(size, size);
+          puff.setAlpha(0.35);
+        },
+      });
     }
+  }
 
-    // a small hanging sign that sways
-    const sx = bx + bw * 0.8;
-    const sy = top + groundH * 0.2;
-    const sign = this.add.container(sx, sy).setDepth(-7);
-    const sg = this.add.graphics();
-    sg.lineStyle(1.2, CR_SKETCH, 0.5);
-    sg.lineBetween(0, 0, 0, 9);
-    sg.fillStyle(0x1a1d24, 1);
-    sg.fillRect(-27, 9, 54, 15);
-    sg.lineStyle(1.2, CR_SKETCH, 0.55);
-    sg.strokeRect(-27, 9, 54, 15);
-    sign.add(sg);
-    const txt = this.add
-      .text(0, 16.5, "CAT FOOD", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "9px",
-        color: "#c9bfa4",
-      })
-      .setOrigin(0.5);
-    sign.add(txt);
-    this.tweens.add({
+  // slow steam breathing out of the manhole
+  _makeSteam(x, y, key) {
+    const rnd = this._rng(Math.round(x) * 3 + 7);
+    const S = Math.min(this._W, this._H);
+    for (let i = 0; i < 5; i++) {
+      const size = S * (0.03 + rnd() * 0.02);
+      const puff = this.add
+        .image(x + (rnd() - 0.5) * 10, y, key)
+        .setDisplaySize(size, size)
+        .setAlpha(0.22)
+        .setDepth(-5);
+      const drift = (rnd() - 0.5) * S * 0.05;
+      const dur = 6400 + rnd() * 3000;
+      this.ambientObject(puff);
+      this.ambientTween({
+        targets: puff,
+        y: y - S * 0.1 - rnd() * S * 0.05,
+        x: x + drift,
+        scaleX: puff.scaleX * 2.6,
+        scaleY: puff.scaleY * 2.6,
+        alpha: 0,
+        duration: dur,
+        delay: i * (dur / 5),
+        repeat: -1,
+        onRepeat: () => {
+          puff.setPosition(x + (rnd() - 0.5) * 10, y);
+          puff.setDisplaySize(size, size);
+          puff.setAlpha(0.22);
+        },
+      });
+    }
+  }
+
+  // the shop's sign, swaying a little on its bracket
+  _makeSign(art) {
+    const sign = this.add
+      .image(art.sign.x, art.sign.y, art.sign.key)
+      .setOrigin(0.5, art.sign.oy)
+      .setDepth(-7);
+    this.ambientTween({
       targets: sign,
       angle: 3,
       duration: 2200,
@@ -630,301 +301,17 @@ export default class CrossingScene extends BasePuzzleScene {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
-
-    // lamplight spilling onto the far sidewalk
-    this.add
-      .ellipse(winX + winW / 2, base + 5, winW * 1.3, 12, CR_WARM, 0.05)
-      .setDepth(-7);
   }
 
-  _makeSmoke(x, y) {
-    const rnd = this._rng(Math.round(x));
-    for (let i = 0; i < 3; i++) {
-      const puff = this.add
-        .circle(x, y, 3 + rnd() * 2, CR_SKETCH, 0.1)
-        .setDepth(-9);
-      const drift = (rnd() - 0.3) * 24;
-      const dur = 5200 + rnd() * 2400;
-      this.tweens.add({
-        targets: puff,
-        y: y - 34 - rnd() * 16,
-        x: x + drift,
-        scale: 2.2,
-        alpha: 0,
-        duration: dur,
-        delay: i * (dur / 3),
-        repeat: -1,
-        onRepeat: () => {
-          puff.setPosition(x, y);
-          puff.setScale(1);
-          puff.setAlpha(0.1);
-        },
-      });
-    }
-  }
-
-  // ── far sidewalk, curb, and the road running toward the viewer ─────────────
-
-  _drawSidewalkAndRoad(W, H) {
-    const g = this.add.graphics().setDepth(-10);
-    const rnd = this._rng(2233);
-    const base = this._baseY;
-    const curb = this._curbY;
-
-    // far sidewalk slab
-    g.fillStyle(0x181a1f, 1);
-    g.fillRect(0, base, W, curb - base);
-    this._pencilSeg(g, rnd, 0, base, W, base, 1.4, CR_SKETCH, 0.35, 2);
-    g.lineStyle(1, CR_SKETCH, 0.12);
-    for (let x = 30; x < W; x += 85) {
-      g.lineBetween(x, base + 2, x + 4, curb - 2);
-    }
-    // far curb: doubled edge
-    this._pencilSeg(g, rnd, 0, curb, W, curb, 1.6, CR_SKETCH, 0.4, 1.6);
-    this._pencilSeg(g, rnd, 0, curb + 4, W, curb + 4, 1, CR_SKETCH, 0.2, 1.6);
-
-    // asphalt, all the way down to our feet
-    g.fillStyle(0x121419, 1);
-    g.fillRect(0, curb + 5, W, H - curb - 5);
-    // worn patches, bigger near the viewer
-    for (let i = 0; i < 9; i++) {
-      const t = rnd();
-      const y = curb + 20 + t * (H - curb - 30);
-      g.fillStyle(0x000000, 0.05 + rnd() * 0.05);
-      g.fillCircle(rnd() * W, y, (10 + rnd() * 16) * (0.6 + t));
-    }
-    // a manhole cover off to the right
-    const mhX = W * 0.88;
-    const mhY = H * 0.86;
-    this._pencilCircle(g, rnd, mhX, mhY, 15, 1.2, CR_SKETCH, 0.3, 14, 1);
-    this._pencilCircle(g, rnd, mhX, mhY, 10, 1, CR_SKETCH, 0.2, 12, 0.8);
-    g.lineStyle(1, CR_SKETCH, 0.15);
-    for (let i = -1; i <= 1; i++)
-      g.lineBetween(mhX - 7, mhY + i * 5, mhX + 7, mhY + i * 5);
-  }
-
-  // the crossing: runs from our feet to the far curb, wide → narrow,
-  // its stacked rungs spelling *WALK* in Code 39, read bottom to top
-  _drawBarcodeCrossing(W, H) {
-    const g = this.add.graphics().setDepth(-6);
-    const rnd = this._rng(4848);
-    const cx = W / 2;
-    const yBot = H * 1.0; // at our feet, off the frame's edge
-    const yTop = this._curbY + 5; // the far curb
-    const halfBot = W * 0.17; // wide where we stand
-    const halfTop = W * 0.062; // narrow at the far side
-
-    // projective foreshortening: world t ∈ [0,1] (near → far) to screen s
-    const p = CR_PERSP;
-    const s = (t) => ((1 + p) * t) / (1 + p * t);
-
-    const els = this._code39(CR_WORD);
-    const totalW = els.reduce((sum, e) => sum + e.w, 0);
-
-    let u = 0;
-    for (const e of els) {
-      const t0 = u / totalW;
-      const t1 = (u + e.w) / totalW;
-      u += e.w;
-      if (!e.bar) continue;
-      const s0 = s(t0);
-      const s1 = s(t1);
-      const y0 = yBot + (yTop - yBot) * s0;
-      const y1 = yBot + (yTop - yBot) * s1;
-      const hw0 = halfBot + (halfTop - halfBot) * s0;
-      const hw1 = halfBot + (halfTop - halfBot) * s1;
-      g.fillStyle(CR_PAINT, 0.85);
-      g.beginPath();
-      g.moveTo(cx - hw0, y0);
-      g.lineTo(cx + hw0, y0);
-      g.lineTo(cx + hw1, y1);
-      g.lineTo(cx - hw1, y1);
-      g.closePath();
-      g.fillPath();
-      // a worn scuff across the rung
-      g.fillStyle(0x000000, 0.05);
-      g.fillRect(
-        cx - hw0 * 0.4 + rnd() * hw0 * 0.5,
-        Math.min(y0, y1),
-        hw0 * 0.3,
-        Math.abs(y1 - y0) * 0.5,
-      );
-    }
-
-  }
-
-  _drawStreetlamp(px, dir) {
-    const H = this._H;
-    const g = this.add.graphics().setDepth(-4);
-    const rnd = this._rng(Math.round(px) * 7 + 1);
-    const base = this._curbY + 2;
-    const top = H * 0.24;
-
-    this._pencilSeg(g, rnd, px, base, px, top + 14, 1.8, CR_SKETCH, 0.45, 1.2);
-    this._pencilSeg(
-      g,
-      rnd,
-      px,
-      top + 14,
-      px + 10 * dir,
-      top + 4,
-      1.5,
-      CR_SKETCH,
-      0.45,
-      0.8,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      px + 10 * dir,
-      top + 4,
-      px + 22 * dir,
-      top,
-      1.5,
-      CR_SKETCH,
-      0.45,
-      0.8,
-    );
-
-    const lx = px + 24 * dir;
-    const ly = top + 2;
-    g.fillStyle(CR_WARM, 0.05);
-    g.fillCircle(lx, ly, 26);
-    g.fillStyle(CR_WARM, 0.1);
-    g.fillCircle(lx, ly, 13);
-    g.fillStyle(CR_WARM, 0.85);
-    g.fillCircle(lx, ly, 4.5);
-    this._pencilSeg(
-      g,
-      rnd,
-      lx - 7,
-      ly - 5,
-      lx + 7,
-      ly - 5,
-      1.3,
-      CR_SKETCH,
-      0.5,
-      0.6,
-    );
-
-    g.fillStyle(CR_WARM, 0.028);
-    g.fillTriangle(lx, ly, lx - 34, base + 12, lx + 34, base + 12);
-    g.fillStyle(CR_WARM, 0.05);
-    g.fillEllipse(lx, base + 10, 74, 14);
-
-    this._pencilSeg(
-      g,
-      rnd,
-      px - 5,
-      base,
-      px + 5,
-      base,
-      1.5,
-      CR_SKETCH,
-      0.4,
-      0.6,
-    );
-  }
-
-  _drawTrafficLight(px) {
-    const H = this._H;
-    const g = this.add.graphics().setDepth(-4);
-    const rnd = this._rng(5252);
-    const base = this._curbY + 2;
-    const top = H * 0.33;
-
-    this._pencilSeg(g, rnd, px, base, px, top, 1.5, CR_SKETCH, 0.42, 1);
-    this._pencilSeg(
-      g,
-      rnd,
-      px - 4,
-      base,
-      px + 4,
-      base,
-      1.4,
-      CR_SKETCH,
-      0.4,
-      0.5,
-    );
-
-    const hw = 22;
-    const hh = 56;
-    const hx = px - hw / 2;
-    const hy = top - hh;
-    g.fillStyle(0x0c0e12, 0.97);
-    g.fillRoundedRect(hx, hy, hw, hh, 5);
-    this._pencilRect(g, rnd, hx, hy, hw, hh, 1.3, CR_SKETCH, 0.45, 1);
-    const lamps = [0xd0483a, 0xe0a63a, CR_GREEN];
-    for (let i = 0; i < 3; i++) {
-      const cyL = hy + 11 + i * 17;
-      const live = i === 2;
-      this._pencilSeg(
-        g,
-        rnd,
-        hx + 2,
-        cyL - 7,
-        hx + hw - 2,
-        cyL - 7,
-        1,
-        CR_SKETCH,
-        0.25,
-        0.5,
-      );
-      if (live) {
-        g.fillStyle(lamps[i], 0.16);
-        g.fillCircle(px, cyL, 12);
-      }
-      g.fillStyle(lamps[i], live ? 0.9 : 0.16);
-      g.fillCircle(px, cyL, 5.5);
-      this._pencilCircle(g, rnd, px, cyL, 5.5, 1, CR_SKETCH, 0.25, 10, 0.5);
-    }
-  }
-
-  _drawPedSignal(px) {
-    const H = this._H;
-    const g = this.add.graphics().setDepth(-4);
-    const rnd = this._rng(6363);
-    const base = this._curbY + 2;
-    const top = H * 0.37;
-
-    this._pencilSeg(g, rnd, px, base, px, top, 1.5, CR_SKETCH, 0.42, 1);
-    this._pencilSeg(
-      g,
-      rnd,
-      px - 4,
-      base,
-      px + 4,
-      base,
-      1.4,
-      CR_SKETCH,
-      0.4,
-      0.5,
-    );
-
-    const bw = 30;
-    const bh = 36;
-    const bx = px - bw / 2;
-    const by = top - bh;
-    g.fillStyle(0x0c0e12, 0.97);
-    g.fillRoundedRect(bx, by, bw, bh, 5);
-    this._pencilRect(g, rnd, bx, by, bw, bh, 1.3, CR_SKETCH, 0.45, 1);
-    g.fillStyle(CR_GREEN, 0.15);
-    g.fillCircle(px, by + bh / 2, 19);
-
-    const wg = this.add.graphics().setDepth(-3);
-    const fx = px;
-    const fy = by + bh / 2;
-    wg.lineStyle(2.2, CR_GREEN, 0.95);
-    wg.fillStyle(CR_GREEN, 0.95);
-    wg.fillCircle(fx + 1, fy - 9, 2.3);
-    wg.lineBetween(fx + 1, fy - 7, fx - 1, fy + 2);
-    wg.lineBetween(fx - 1, fy + 2, fx - 6, fy + 9);
-    wg.lineBetween(fx - 1, fy + 2, fx + 6, fy + 8);
-    wg.lineBetween(fx, fy - 4, fx - 5, fy - 1);
-    wg.lineBetween(fx, fy - 4, fx + 6, fy - 7);
-    this.tweens.add({
-      targets: wg,
-      alpha: 0.5,
+  // the walking figure, its green breathing
+  _makeWalkSignal(art) {
+    const w = this.add
+      .image(art.walk.x, art.walk.y, art.walk.key)
+      .setDisplaySize(art.walk.size * 2, art.walk.size * 2)
+      .setDepth(-3);
+    this.ambientTween({
+      targets: w,
+      alpha: 0.55,
       duration: 900,
       yoyo: true,
       repeat: -1,
@@ -932,108 +319,19 @@ export default class CrossingScene extends BasePuzzleScene {
     });
   }
 
-  _drawParkedCar(W, H) {
-    const g = this.add.graphics().setDepth(-5);
-    const rnd = this._rng(5885);
-    const cw = W * 0.085;
-    const ch = H * 0.042;
-    const cxx = W * 0.115;
-    const y0 = this._curbY + 12;
-    const x0 = cxx - cw / 2;
-
-    g.fillStyle(0x101216, 1);
-    g.fillRoundedRect(x0, y0, cw, ch, ch * 0.35);
-    g.fillRoundedRect(
-      x0 + cw * 0.22,
-      y0 - ch * 0.5,
-      cw * 0.5,
-      ch * 0.6,
-      ch * 0.25,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      x0 + 2,
-      y0,
-      x0 + cw - 2,
-      y0,
-      1.2,
-      CR_SKETCH,
-      0.4,
-      1,
-    );
-    this._pencilSeg(
-      g,
-      rnd,
-      x0 + cw * 0.22,
-      y0 - ch * 0.5 + 2,
-      x0 + cw * 0.72,
-      y0 - ch * 0.5 + 2,
-      1.1,
-      CR_SKETCH,
-      0.4,
-      0.8,
-    );
-    g.lineStyle(1, CR_SKETCH, 0.3);
-    g.strokeRect(x0 + cw * 0.28, y0 - ch * 0.38, cw * 0.38, ch * 0.38);
-    const wy = y0 + ch * 0.92;
-    for (const wx of [x0 + cw * 0.22, x0 + cw * 0.78]) {
-      g.fillStyle(0x0a0b0e, 1);
-      g.fillCircle(wx, wy, ch * 0.28);
-      this._pencilCircle(
-        g,
-        rnd,
-        wx,
-        wy,
-        ch * 0.28,
-        1.1,
-        CR_SKETCH,
-        0.4,
-        10,
-        0.6,
-      );
-    }
-    g.fillStyle(0x000000, 0.3);
-    g.fillEllipse(cxx, wy + ch * 0.3, cw * 1.05, ch * 0.3);
-  }
-
-  // slow steam breathing out of the manhole grate
-  _makeSteam(x, y) {
-    const rnd = this._rng(Math.round(x) * 3 + 7);
-    for (let i = 0; i < 4; i++) {
-      const puff = this.add
-        .circle(x + (rnd() - 0.5) * 10, y, 5 + rnd() * 4, CR_SKETCH, 0.06)
-        .setDepth(-5);
-      const drift = (rnd() - 0.5) * 30;
-      const dur = 6400 + rnd() * 3000;
-      this.tweens.add({
-        targets: puff,
-        y: y - 60 - rnd() * 30,
-        x: x + drift,
-        scale: 2.6,
-        alpha: 0,
-        duration: dur,
-        delay: i * (dur / 4),
-        repeat: -1,
-        onRepeat: () => {
-          puff.setPosition(x + (rnd() - 0.5) * 10, y);
-          puff.setScale(1);
-          puff.setAlpha(0.06);
-        },
-      });
-    }
-  }
-
   // The cat alternates a seated pause with a short walk along the far sidewalk.
   _drawCat(W, H) {
     const cx = W * 0.62;
     const cy = this._curbY - 2; // sitting on the far sidewalk, at the curb
     const s = H * 0.03; // body height scale
-    const cont = this.add.container(cx, cy).setDepth(-9);
+    const cont = this.add.container(cx, cy).setDepth(-4);
     const g = this.add.graphics();
 
+    // its shadow, from the shop's light behind it
+    g.fillStyle(0x000000, 0.35);
+    g.fillEllipse(s * 0.1, 0, s * 1.8, s * 0.22);
     // seated silhouette: haunches, chest, head, ears
-    g.fillStyle(0x0a0b0e, 1);
+    g.fillStyle(CR_CAT, 1);
     g.fillEllipse(0, -s * 0.5, s * 1.3, s * 1.05); // haunches
     g.fillEllipse(s * 0.42, -s * 0.85, s * 0.75, s * 1.25); // upright chest
     g.fillCircle(s * 0.5, -s * 1.62, s * 0.42); // head
@@ -1053,20 +351,24 @@ export default class CrossingScene extends BasePuzzleScene {
       s * 0.76,
       -s * 1.78,
     ); // ear
-    // faint pencil rim so it reads against the dark slab
-    g.lineStyle(1, CR_SKETCH, 0.22);
-    g.strokeCircle(s * 0.5, -s * 1.62, s * 0.42);
+    // the moon on its back and its head, so it reads against the night
+    g.lineStyle(1.2, CR_RIM, 0.45);
+    g.beginPath();
+    g.arc(s * 0.5, -s * 1.62, s * 0.42, Math.PI * 1.05, Math.PI * 1.75, false);
+    g.strokePath();
+    g.beginPath();
+    g.arc(0, -s * 0.5, s * 0.6, Math.PI * 1.1, Math.PI * 1.55, false);
+    g.strokePath();
     cont.add(g);
 
     // the tail: its own graphics so it can sway
     const tail = this.add.graphics();
-    tail.lineStyle(2.2, 0x0a0b0e, 1);
+    tail.lineStyle(2.4, CR_CAT, 1);
     tail.beginPath();
     tail.arc(-s * 1.1, -s * 0.16, s * 0.62, -0.3, Math.PI * 0.8, false);
     tail.strokePath();
-    tail.setPosition(s * 0.0, 0);
     cont.add(tail);
-    this.tweens.add({
+    this.ambientTween({
       targets: tail,
       angle: 14,
       duration: 1900,
@@ -1078,11 +380,11 @@ export default class CrossingScene extends BasePuzzleScene {
     // two warm eyes that blink shut now and then
     const eyes = this.add.container(0, -s * 1.64);
     for (const ex of [s * 0.38, s * 0.6]) {
-      eyes.add(this.add.rectangle(ex, 0, s * 0.11, s * 0.09, CR_WARM, 0.9));
+      eyes.add(this.add.ellipse(ex, 0, s * 0.12, s * 0.1, CR_WARM, 0.95));
     }
     cont.add(eyes);
     const blink = () => {
-      this.tweens.add({
+      this.ambientTween({
         targets: eyes,
         scaleY: 0.08,
         duration: 90,
@@ -1100,7 +402,9 @@ export default class CrossingScene extends BasePuzzleScene {
     const drawWalk = (phase) => {
       walking.clear();
       const bob = Math.sin(phase * 2) * s * 0.035;
-      walking.fillStyle(0x0a0b0e, 1);
+      walking.fillStyle(0x000000, 0.35);
+      walking.fillEllipse(0, 0, s * 2, s * 0.22);
+      walking.fillStyle(CR_CAT, 1);
       walking.fillEllipse(0, -s * 0.7 + bob, s * 1.7, s * 0.72);
       walking.fillCircle(s * 0.8, -s * 1.02 + bob, s * 0.34);
       walking.fillTriangle(
@@ -1119,30 +423,35 @@ export default class CrossingScene extends BasePuzzleScene {
         s * 1.08,
         -s * 1.07 + bob,
       );
-      walking.lineStyle(0.75, CR_SKETCH, 0.24);
-      walking.strokeEllipse(0, -s * 0.7 + bob, s * 1.7, s * 0.72);
-      walking.strokeCircle(s * 0.8, -s * 1.02 + bob, s * 0.34);
+      walking.lineStyle(1, CR_RIM, 0.4);
+      walking.beginPath();
+      walking.arc(
+        0,
+        -s * 0.7 + bob,
+        s * 0.85,
+        Math.PI * 1.15,
+        Math.PI * 1.85,
+        false,
+      );
+      walking.strokePath();
       // Diagonal pairs of paws take turns supporting the body.
       for (let i = 0; i < 4; i++) {
         const hip = (i < 2 ? -0.5 : 0.5) * s + (i % 2) * s * 0.08;
         const step = phase + (i === 0 || i === 3 ? 0 : Math.PI);
         const foot = hip + Math.sin(step) * s * 0.22;
         const lift = Math.max(0, Math.cos(step)) * s * 0.12;
-        walking.lineStyle(s * 0.13, 0x0a0b0e, 1);
+        walking.lineStyle(s * 0.13, CR_CAT, 1);
         walking.lineBetween(hip, -s * 0.55 + bob, foot, -lift);
-        walking.lineStyle(0.6, CR_SKETCH, i % 2 ? 0.12 : 0.24);
-        walking.lineBetween(hip, -s * 0.5 + bob, foot, -lift);
-        walking.lineBetween(foot, -lift, foot + s * 0.14, -lift);
       }
       const sway = Math.sin(phase * 0.5) * s * 0.12;
-      walking.lineStyle(2, 0x0a0b0e, 1);
+      walking.lineStyle(2.2, CR_CAT, 1);
       walking.beginPath();
       walking.moveTo(-s * 0.7, -s * 0.65 + bob);
       walking.lineTo(-s * 1.1, -s * 0.95 + sway);
       walking.lineTo(-s * 1.3, -s * 1.45 + sway);
       walking.lineTo(-s * 1.14, -s * 1.62 + sway);
       walking.strokePath();
-      walking.fillStyle(CR_WARM, 0.75);
+      walking.fillStyle(CR_WARM, 0.85);
       walking.fillEllipse(s * 0.97, -s * 1.06 + bob, s * 0.1, s * 0.07);
     };
     let headLeft = true;
@@ -1156,7 +465,7 @@ export default class CrossingScene extends BasePuzzleScene {
       const duration = (Math.abs(destination - cont.x) / (W * 0.035)) * 1000;
       const startX = cont.x;
       drawWalk(0);
-      this.tweens.add({
+      this.ambientTween({
         targets: cont,
         x: destination,
         duration,
@@ -1180,10 +489,11 @@ export default class CrossingScene extends BasePuzzleScene {
       .text(W / 2, 40, "Go fetch her a bag of cat food.", {
         fontFamily: '"Special Elite", monospace',
         fontSize: "20px",
-        color: "#e8dcc0",
+        color: "#f0e6cc",
         letterSpacing: 1,
       })
       .setOrigin(0.5)
+      .setShadow(0, 2, "rgba(4,6,14,0.9)", 8, false, true)
       .setDepth(20);
 
     this.levelText = this.add
@@ -1191,17 +501,22 @@ export default class CrossingScene extends BasePuzzleScene {
         W - 30,
         28,
         "Level " +
-          (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1),
+          (this.services.levels.definitions.findIndex(
+            (l) => l.key === this.scene.key,
+          ) +
+            1),
         {
           fontFamily: '"Special Elite", monospace',
           fontSize: "28px",
-          color: "#e8dcc0",
+          color: "#f0e6cc",
         },
       )
       .setOrigin(1, 0)
+      .setShadow(0, 2, "rgba(4,6,14,0.9)", 8, false, true)
       .setAlpha(0)
       .setDepth(20);
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
+    void H;
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
@@ -1209,11 +524,14 @@ export default class CrossingScene extends BasePuzzleScene {
   _teardown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
-    this.children.removeAll(true);
+    // destroy rather than just detach, then free the painted street
+    for (const obj of this.children.list.slice()) obj.destroy();
+    releaseStreetArt(this.textures);
   }
 
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
+    releaseStreetArt(this.textures);
   }
 }
