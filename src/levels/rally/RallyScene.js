@@ -8,6 +8,7 @@ import {
   RALLY_NUMBERS as RY_NUMBERS,
   RALLY_START_DELAY_MS,
   RALLY_SOUND_LEAD_MS,
+  RALLY_BOARD_HOLD_MS,
   rallyLetters,
   rallyWord,
   measureWhooshLead,
@@ -144,6 +145,7 @@ export default class RallyScene extends BasePuzzleScene {
       this.add.image(b.x, b.y, K.glow).setDepth(-14).setBlendMode("ADD").setDisplaySize(s, s).setAlpha(0.7);
     }
     this._makePeople();
+    this._makeBoard();
     this._dim.push(this.add.image(0, art.frontY, K.front).setOrigin(0, 0).setDepth(5));
     this._light(this.add.image(0, 0, K.haze).setOrigin(0, 0).setDisplaySize(W, H).setDepth(8).setBlendMode("ADD"));
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
@@ -161,7 +163,7 @@ export default class RallyScene extends BasePuzzleScene {
       numbers: RY_NUMBERS,
       carLenPx: L.carLenPx,
       pitchDeg: pitch,
-      res: Math.min(2, 280 / L.carLenPx),
+      res: Math.min(2, 200 / L.carLenPx),
     });
     // a beat of quiet before the first car
     this.time.delayedCall(RALLY_START_DELAY_MS, () => this._runRace());
@@ -259,6 +261,86 @@ export default class RallyScene extends BasePuzzleScene {
       },
     });
     this._flagSway();
+  }
+
+  // ── the timing board ───────────────────────────────────────────────────────
+
+  // An LED display on a scaffold beside the flying-finish sign, over the
+  // cars' heads. It idles on two dashes; each car's number comes up on it
+  // the moment the car crosses the line and stays while the car drives off.
+  // It is the one thing the player can read at leisure, and the one thing
+  // that is drawn no smaller than its digits need — the board is powered,
+  // so it stays lit after the floodlights go out.
+  _makeBoard() {
+    const B = this._L.board;
+    if (!B) return;
+    const { x, y, w, h, footY } = B;
+    const depth = -11.5; // over the props and the crowd, under the cars
+    const g = this.add.graphics().setDepth(depth);
+    const post = Math.max(1.5, h * 0.06);
+    // the scaffold: two posts and a cross-brace down to the ground
+    g.lineStyle(post, 0x1b1c1f, 1);
+    g.lineBetween(x - w * 0.36, y + h / 2, x - w * 0.36, footY);
+    g.lineBetween(x + w * 0.36, y + h / 2, x + w * 0.36, footY);
+    g.lineStyle(Math.max(1, post * 0.5), 0x25272c, 1);
+    g.lineBetween(x - w * 0.36, y + h / 2 + (footY - y - h / 2) * 0.35, x + w * 0.36, footY - (footY - y - h / 2) * 0.1);
+    // the housing, and the dark glass of the display behind a thin frame
+    const r = Math.max(1.5, h * 0.08);
+    g.fillStyle(0x15161a, 1);
+    g.fillRoundedRect(x - w / 2, y - h / 2, w, h, r);
+    g.lineStyle(Math.max(1, h * 0.04), 0x34373d, 1);
+    g.strokeRoundedRect(x - w / 2, y - h / 2, w, h, r);
+    const inset = Math.max(2, h * 0.11);
+    g.fillStyle(0x080a0c, 1);
+    g.fillRoundedRect(x - w / 2 + inset, y - h / 2 + inset, w - inset * 2, h - inset * 2, r * 0.5);
+    // the LEDs' glow on the glass, and the digits
+    const glow = this.add
+      .image(x, y, this._art.keys.glow)
+      .setDepth(depth + 1e-4)
+      .setBlendMode("ADD")
+      .setDisplaySize(w * 1.1, h * 1.6)
+      .setTint(0xff9a3c)
+      .setAlpha(0);
+    const size = Math.round((h - inset * 2) * 0.86);
+    const text = this.add
+      .text(x, y + size * 0.04, "--", {
+        fontFamily: '"Arial Black", "Helvetica Neue", Arial, sans-serif',
+        fontStyle: "900",
+        fontSize: `${size}px`,
+        color: "#ffb347",
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(depth + 2e-4)
+      .setAlpha(0.28);
+    text.setShadow(0, 0, "#ff8a1f", Math.max(2, size * 0.18), false, true);
+    this._board = { text, glow, size, timer: null };
+  }
+
+  // a car has crossed: its number comes up, bright, and holds
+  _flashBoard(number) {
+    const B = this._board;
+    if (!B || !B.text.active) return;
+    if (B.timer) B.timer.remove(false);
+    B.timer = null;
+    this.tweens.killTweensOf([B.text, B.glow]);
+    B.text.setText(String(number)).setAlpha(1).setScale(1.12);
+    B.glow.setAlpha(0.9);
+    this.tweens.add({ targets: B.text, scale: 1, duration: 160, ease: "Back.easeOut" });
+    this.tweens.add({ targets: B.glow, alpha: 0.55, duration: 400, ease: "Quad.easeOut" });
+    // the board holds the number while the car is still in view, then
+    // settles back to its dashes
+    B.timer = this.time.delayedCall(RALLY_BOARD_HOLD_MS * (this._pace || 1), () => {
+      B.timer = null;
+      if (!B.text.active) return;
+      this.tweens.add({
+        targets: B.glow,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => {
+          if (B.text.active) B.text.setText("--").setAlpha(0.28);
+        },
+      });
+    });
   }
 
   // the crowd jumps and throws its arms up as a car crosses, rippling out
@@ -532,7 +614,8 @@ export default class RallyScene extends BasePuzzleScene {
     if (this._carJob) this._pumpCars(Infinity);
     if (!this._carArt) return;
     const race = (this._round = (this._round || 0) + 1);
-    const { plan, base, lightsOut, podiumAt } = this._planRound();
+    const { plan, base, lightsOut, podiumAt, pace } = this._planRound();
+    this._pace = pace;
     const at = (ms, fn) =>
       this.time.delayedCall(ms + base, () => {
         if (this._round === race) fn();
@@ -540,6 +623,7 @@ export default class RallyScene extends BasePuzzleScene {
     for (const p of plan) {
       at(p.launch, () => this._launchCar(p.i, p.speed));
       at(p.whoosh, () => this._whoosh());
+      at(p.cross, () => this._flashBoard(RY_NUMBERS[p.i]));
     }
     at(lightsOut, () => this._lightsOut());
     at(podiumAt, () => this._showPodium());
@@ -707,6 +791,7 @@ export default class RallyScene extends BasePuzzleScene {
     this._lights = [];
     this._dim = [];
     this._flag = null;
+    this._board = null;
     this._podium = null;
   }
 

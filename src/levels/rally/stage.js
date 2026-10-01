@@ -53,7 +53,10 @@ export function layoutStage(W, H) {
   const T = track.tune;
   const horizonY = track.horizonY;
   const camH = (T.B * H) / W; // the eye's height, in track units
-  const carLenPx = Math.min(W * 0.075, H * 0.13);
+  // the car at the line: as long as the screen allows, since its door
+  // number is the puzzle. The metre follows from it, so the rest of the
+  // stage — the hut, the masts, the people — grows with the cars.
+  const carLenPx = Math.min(W * 0.11, H * 0.2);
   const wzFinish = T.ZC - T.RZ;
   const m = (carLenPx * wzFinish) / W / CAR_LENGTH_M; // one metre, in units
   const S = Math.min(W, H);
@@ -101,11 +104,14 @@ export function layoutStage(W, H) {
 
   // the masts: two in the infield framing the line, two across the oval in
   // front of the trees; their lamp banks, and two more banks behind us
+  // (on a wide, low screen a mast is kept short enough for its lamp bank
+  // to stay in view: the glare of the lamps is most of the floodlit look)
+  const mastH = (metres, z) => Math.min(metres * m, camH - ((H * 0.08 - horizonY) * z) / W);
   const masts = [
-    { x: -3.2, z: 8.45, h: 22 * m, side: -1, big: true, aim: [-0.75, 6.2] },
-    { x: 3.2, z: 8.45, h: 22 * m, side: 1, big: true, aim: [0.75, 6.2] },
-    { x: -2.9, z: 14.4, h: 16 * m, side: -1, big: false, aim: [-1.5, 11.8] },
-    { x: 2.3, z: 14.2, h: 16 * m, side: 1, big: false, aim: [1.1, 11.8] },
+    { x: -3.2, z: 8.45, h: mastH(22, 8.45), side: -1, big: true, aim: [-0.75, 6.2] },
+    { x: 3.2, z: 8.45, h: mastH(22, 8.45), side: 1, big: true, aim: [0.75, 6.2] },
+    { x: -2.9, z: 14.4, h: mastH(16, 14.4), side: -1, big: false, aim: [-1.5, 11.8] },
+    { x: 2.3, z: 14.2, h: mastH(16, 14.2), side: 1, big: false, aim: [1.1, 11.8] },
   ];
   const lamps = [
     ...masts.map((q) => lamp(q.x, q.h, q.z, q.aim[0], q.aim[1], q.big ? 34 : 36, q.big ? 14 : 18, q.big ? 1 : 0.3)),
@@ -156,6 +162,21 @@ export function layoutStage(W, H) {
   L.cellFar = { x: -0.02, z: T.ZC - T.RZ + T.TW + 0.07 };
   L.cellNear = { x: 0.02, z: T.ZC - T.RZ - T.TW - 0.1 };
   L.marshal = { x: 0.3, z: T.ZC - T.RZ + T.TW + 0.24 };
+  // the timing board: an LED display on a scaffold beside the sign, over the
+  // heads of the cars, that shows each car's number as it crosses. On a
+  // small screen it is drawn no smaller than its digits need to be read.
+  {
+    const z = L.sign.z;
+    const k = px(z) * m;
+    const wm = 5.0;
+    const hm = 2.3;
+    const h = Math.max(hm * k, Math.min(36, H * 0.115));
+    const w = h * (wm / hm);
+    const sign = P(L.sign.x, 0, z);
+    const x = sign.x + 0.8 * k + w / 2; // clear of the sign, whatever its size
+    const bottom = P(L.sign.x, 2.1 * m, z).y;
+    L.board = { x, footY: sign.y, y: bottom - h / 2, w, h, k };
+  }
 
   // the tape the crowd stands behind: right of the line, and a short run on
   // the left past the hut

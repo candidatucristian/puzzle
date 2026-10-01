@@ -22,11 +22,11 @@ export const CAR_LENGTH_M = 4.12;
 
 // The views rendered, as the angle between the car's heading and the
 // direction it is seen from: entering on the left a car is seen well from the
-// front (about −33°), side-on at the line (−90°, the middle view, exactly),
-// well from the rear as it leaves (about −147°).
-export const YAW_FIRST = -150;
+// front (about −27°), side-on at the line (−90°, the middle view, exactly),
+// well from the rear as it leaves (about −153°).
+export const YAW_FIRST = -157.5;
 export const YAW_STEP = 7.5;
-export const FRAME_COUNT = 17;
+export const FRAME_COUNT = 19;
 
 const RAD = Math.PI / 180;
 
@@ -58,7 +58,8 @@ const ARCH_R = 0.418;
 
 // the number panel on the front door (and its mirror on the other side),
 // in metres along the car and up from the ground
-export const NUMBER_PANEL = { x0: -0.33, x1: 0.8, y0: 0.29, y1: 0.87 };
+// — the whole front door, shut line to shut line, sill to belt
+export const NUMBER_PANEL = { x0: -0.35, x1: 0.86, y0: 0.285, y1: 0.88 };
 const PANEL = NUMBER_PANEL;
 
 function monotone(points) {
@@ -1496,8 +1497,8 @@ function paintPanel(number) {
   const h = Math.round((w * (PANEL.y1 - PANEL.y0)) / (PANEL.x1 - PANEL.x0));
   const c = makeCanvas(w, h);
   const g = c.getContext("2d");
-  const r = h * 0.12;
-  const edge = h * 0.045;
+  const r = h * 0.1;
+  const edge = h * 0.035;
   g.fillStyle = "#101010";
   roundRect(g, 0, 0, w, h, r);
   g.fill();
@@ -1513,7 +1514,7 @@ function paintPanel(number) {
   const asc = m.actualBoundingBoxAscent || size * 0.72;
   const desc = m.actualBoundingBoxDescent || 0;
   const glyphH = asc + desc;
-  const fit = Math.min(1, ((w - edge * 2) * 0.86) / m.width, ((h - edge * 2) * 0.84) / glyphH);
+  const fit = Math.min(1, ((w - edge * 2) * 0.92) / m.width, ((h - edge * 2) * 0.9) / glyphH);
   g.save();
   g.translate(w / 2, h / 2 + ((asc - desc) / 2) * fit);
   g.scale(fit, fit);

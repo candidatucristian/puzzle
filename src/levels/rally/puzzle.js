@@ -8,6 +8,7 @@ export const RALLY_LIGHTS_OUT_DELAY_MS = 350;
 export const RALLY_PODIUM_MS = 1800;
 export const RALLY_SOUND_LEAD_MS = 600;
 export const RALLY_SOUND_WINDOW_MS = 50;
+export const RALLY_BOARD_HOLD_MS = 1500; // a crossing car's number stays up on the timing board
 
 export function rallyLetters() {
   return RALLY_NUMBERS.map((number) => String.fromCharCode(64 + number));
@@ -34,15 +35,24 @@ export function measureWhooshLead(samples, sampleRate) {
   return bestAt < 0 ? RALLY_SOUND_LEAD_MS : ((bestAt + win / 2) / sampleRate) * 1000;
 }
 
+/** A small stage — a phone — runs the whole race slower, so a door number a
+ *  few pixels tall can still be read as it passes. The bunches keep their
+ *  shape: every time in the plan stretches by the same factor. */
+export const RALLY_SLOW_PACE = 1.35;
+export const RALLY_SMALL_CAR_PX = 70;
+export function rallyPace(carLength) {
+  return carLength < RALLY_SMALL_CAR_PX ? RALLY_SLOW_PACE : 1;
+}
+
 /** Plan one race. Times remain relative to the first crossing; base makes timers nonnegative. */
-export function planRallyRound({ width, carLength, finishX, soundLead = RALLY_SOUND_LEAD_MS }) {
+export function planRallyRound({ width, carLength, finishX, soundLead = RALLY_SOUND_LEAD_MS, pace = rallyPace(carLength) }) {
   const x0 = -carLength * 0.7;
   const x1 = width + carLength * 0.7;
-  const velocity = (x1 - x0) / RALLY_CAR_MS;
+  const velocity = (x1 - x0) / (RALLY_CAR_MS * pace);
   const plan = RALLY_NUMBERS.map((_, i) => {
     const speed = velocity * RALLY_SPEED[i];
     const reach = (finishX - x0) / speed;
-    const cross = RALLY_CROSS_MS[i];
+    const cross = RALLY_CROSS_MS[i] * pace;
     return {
       i,
       speed,
@@ -54,5 +64,5 @@ export function planRallyRound({ width, carLength, finishX, soundLead = RALLY_SO
   });
   const base = -Math.min(0, ...plan.map((car) => Math.min(car.launch, car.whoosh)));
   const lightsOut = Math.max(...plan.map((car) => car.cross)) + RALLY_LIGHTS_OUT_DELAY_MS;
-  return { plan, base, lightsOut, podiumAt: lightsOut + RALLY_PODIUM_MS };
+  return { plan, base, lightsOut, podiumAt: lightsOut + RALLY_PODIUM_MS, pace };
 }

@@ -10,6 +10,8 @@ import {
   rallyWord,
   measureWhooshLead,
   planRallyRound,
+  rallyPace,
+  RALLY_SLOW_PACE,
 } from "../../src/levels/rally/puzzle.js";
 import { makeTrack, checkPerspective } from "../../src/levels/rally/track.js";
 
@@ -32,11 +34,11 @@ test("Rally preserves the exact bunch spacing and never ties cars at the line", 
 
 test("resizing changes speed but preserves crossing order, readable durations and sound alignment", () => {
   for (const [width, height] of [[640, 480], [1100, 720], [1920, 1080]]) {
-    const carLength = Math.min(width * 0.075, height * 0.13);
+    const carLength = Math.min(width * 0.11, height * 0.2);
     const finishX = width * 0.6;
     const x0 = -carLength * 0.7;
     for (const soundLead of [0, 625, 1800]) {
-      const { plan, base, lightsOut, podiumAt } = planRallyRound({ width, carLength, finishX, soundLead });
+      const { plan, base, lightsOut, podiumAt } = planRallyRound({ width, carLength, finishX, soundLead, pace: 1 });
       assert.deepEqual(plan.map((car) => car.cross), [...RALLY_CROSS_MS]);
       for (const car of plan) {
         const reach = (finishX - x0) / car.speed;
@@ -53,21 +55,44 @@ test("resizing changes speed but preserves crossing order, readable durations an
 });
 
 test("Rally's close pairs remain visibly separated throughout the screen crossing", () => {
-  const width = 1100;
-  const carLength = Math.min(width * 0.075, 720 * 0.13);
-  const x0 = -carLength * 0.7;
-  const x1 = width + carLength * 0.7;
-  const { plan } = planRallyRound({ width, carLength, finishX: 660, soundLead: 625 });
-  for (const [lead, follow] of [[1, 2], [4, 5]]) {
-    const first = plan[lead];
-    const second = plan[follow];
-    for (let time = first.launch; time <= second.gone; time += 5) {
-      const xa = x0 + first.speed * (time - first.launch);
-      const xb = x0 + second.speed * (time - second.launch);
-      if (xb < x0 || xa > x1) continue;
-      assert.ok(xa - xb > carLength * 1.05, `pair ${lead}-${follow} at ${time} ms`);
+  // on a desk and on a phone, where the race runs slower
+  for (const [width, height] of [[1100, 720], [863, 262]]) {
+    const carLength = Math.min(width * 0.11, height * 0.2);
+    const x0 = -carLength * 0.7;
+    const x1 = width + carLength * 0.7;
+    const { plan } = planRallyRound({ width, carLength, finishX: width / 2, soundLead: 625 });
+    for (const [lead, follow] of [[1, 2], [4, 5]]) {
+      const first = plan[lead];
+      const second = plan[follow];
+      for (let time = first.launch; time <= second.gone; time += 5) {
+        const xa = x0 + first.speed * (time - first.launch);
+        const xb = x0 + second.speed * (time - second.launch);
+        if (xb < x0 || xa > x1) continue;
+        assert.ok(xa - xb > carLength * 1.05, `pair ${lead}-${follow} at ${time} ms (${width}×${height})`);
+      }
     }
   }
+});
+
+test("a small stage runs the whole race slower, with the bunches kept in shape", () => {
+  assert.equal(rallyPace(110), 1);
+  assert.equal(rallyPace(52), RALLY_SLOW_PACE);
+  const desk = planRallyRound({ width: 1004, carLength: 110, finishX: 502, soundLead: 600 });
+  const phone = planRallyRound({ width: 863, carLength: 52, finishX: 431, soundLead: 600 });
+  assert.equal(desk.pace, 1);
+  assert.equal(phone.pace, RALLY_SLOW_PACE);
+  assert.deepEqual(desk.plan.map((car) => car.cross), [...RALLY_CROSS_MS]);
+  assert.deepEqual(phone.plan.map((car) => car.cross), RALLY_CROSS_MS.map((ms) => ms * RALLY_SLOW_PACE));
+  for (const car of phone.plan) {
+    // every car takes longer to cross the screen, by the same factor
+    const visible = car.gone - car.launch;
+    const deskVisible = desk.plan[car.i].gone - desk.plan[car.i].launch;
+    assert.ok(Math.abs(visible / deskVisible - RALLY_SLOW_PACE) < 1e-9);
+    assert.equal(car.whoosh + 600, car.cross);
+  }
+  // the order at the line is the puzzle, and it does not change
+  const order = (round) => round.plan.slice().sort((a, b) => a.cross - b.cross).map((car) => car.i);
+  assert.deepEqual(order(phone), order(desk));
 });
 
 test("the measured loudest recording window lands on every car's crossing", () => {

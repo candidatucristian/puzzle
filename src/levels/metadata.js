@@ -313,6 +313,8 @@ const metadata = [
       "cars.js — one 3D rally car rendered in software at every angle the drive needs (FRAME_COUNT views; side-on, exactly, at the line); paintPanel() puts the number on the white door panel",
       "stage.js — the floodlit stage, its ground lit pixel by pixel by the real lamps; CAR_LANES keeps each car on its own line, the close pairs one near and one far",
       "_planRound() / _runRace() — work out launches and whooshes from RALLY_CROSS_MS, then lights out, then the podium (RALLY_PODIUM_MS later); the race runs once",
+      "rallyPace() — on a small stage (a phone) every time in the plan stretches by RALLY_SLOW_PACE, so the numbers can be read; the order at the line is unchanged",
+      "_makeBoard() / _flashBoard() — the LED timing board beside the sign shows each car's number as it crosses, for RALLY_BOARD_HOLD_MS; drawn no smaller than its digits need",
       "_soundLead() — measures the loudest moment of wroom.mp3 so it lands on the line",
       "podium.js: RY_WINNERS — the top three and their cups; drawPodium() paints the board"
     ]
