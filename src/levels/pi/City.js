@@ -103,10 +103,13 @@ function layout(W, H, floors, cols) {
   const groundY = H * 0.72;
   const waterY = H * 0.8;
   const moon = { x: W * 0.79, y: H * 0.14, r: S * 0.048 };
-  // the counting building: never so narrow its windows can't be counted
-  const bw = Math.min(W * 0.6, Math.max(W * 0.23, H * 0.3));
+  // the counting building: never so narrow its windows can't be counted;
+  // on a short canvas (a phone held sideways) it is wider and its floors
+  // taller, so the windows can still be counted
+  const small = H < 400;
+  const bw = Math.min(W * 0.6, Math.max(W * (small ? 0.3 : 0.23), H * 0.3));
   const bx = W * 0.435 - bw / 2;
-  const floorH = H * 0.056;
+  const floorH = H * (small ? 0.074 : 0.056);
   const bh = floors * floorH + H * 0.02;
   const hero = { x: bx, y: groundY - bh, w: bw, h: bh, floorH };
   const winW = bw / (cols + 2.6);

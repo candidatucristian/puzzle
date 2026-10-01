@@ -304,7 +304,9 @@ export const SHAPES = {
 
 function camera(W, H) {
   const S = Math.min(W, H);
-  const F = 3.2 * S;
+  // on a short canvas (a phone held sideways) the eye comes closer, so the
+  // board and its coordinates fill the height instead of half of it
+  const F = 3.2 * S * (H < 400 ? 1.6 : 1);
   const hc = 204; // the eye, in cm above the table
   const zc = 258; // the board's centre, in cm in front of it
   const hy = H * 0.5 - (F * (hc - BH)) / zc; // puts the board's centre half way down

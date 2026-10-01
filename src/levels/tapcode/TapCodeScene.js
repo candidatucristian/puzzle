@@ -427,13 +427,16 @@ export default class TapCodeScene extends BasePuzzleScene {
     const rnd = this._rng(5115);
     const n = TC_WORD.length;
 
-    const markGap = Math.min(W * 0.014, 17);
+    // (on a short canvas — a phone held sideways — the marks sit further
+    // apart and the slab takes more of the wall, so the marks can be counted)
+    const small = H < 400;
+    const markGap = Math.min(W * (small ? 0.02 : 0.014), 17);
     const clusterGap = markGap * 3.4;
     const cx = W * 0.66; // slab centre, clear of the window
     const slabW = 8 * markGap + clusterGap + W * 0.075;
-    const slabH = H * 0.5;
+    const slabH = H * (small ? 0.62 : 0.5);
     const slabX = cx - slabW / 2;
-    const slabY = H * 0.16;
+    const slabY = H * (small ? 0.1 : 0.16);
     const lineH = slabH / (n + 0.6);
     const markH = Math.min(lineH * 0.5, 30);
 

@@ -135,8 +135,11 @@ export default class StationScene extends BasePuzzleScene {
 
   // where everything on the board goes (as it always has)
   _layout(W, H) {
-    // cell size: fit 8 rows vertically and 24 columns horizontally
-    let ch = Math.min(H * 0.056, 44) * 0.8;
+    // cell size: fit 8 rows vertically and 24 columns horizontally. On a
+    // short canvas (a phone held sideways) the board takes the whole height
+    // and the clock hangs beside it instead of over it
+    const small = H < 400;
+    let ch = small ? Math.min((H * 0.9 - 42) / 11.1, 44 * 0.8) : Math.min(H * 0.056, 44) * 0.8;
     let cw = ch * 0.78;
     const cellGap = 2;
     const groupGap = () => cw * 0.7;
@@ -156,7 +159,7 @@ export default class StationScene extends BasePuzzleScene {
     const bw = gW + pad * 2;
     const bh = gH + pad * 1.6;
     const bx = W / 2 - bw / 2;
-    const by = H * 0.55 - bh / 2;
+    const by = (small ? H * 0.5 : H * 0.55) - bh / 2;
     const x0 = bx + pad;
     const headY = by + pad * 0.55;
     const colHeadY = headY + headH + colHeadH * 0.4 + colHeadH * 0.25;
@@ -195,12 +198,14 @@ export default class StationScene extends BasePuzzleScene {
     };
 
     // the clock hangs above the board's left corner, clear of it
-    const rad = Math.min(Math.min(W, H) * 0.05, (by - 30) / 2.6);
-    const clock = {
-      cx: bx + rad + 10,
-      cy: Math.max(rad + 18, by - rad - 26),
-      rad,
-    };
+    const rad = small ? Math.min(H * 0.08, 30) : Math.min(Math.min(W, H) * 0.05, (by - 30) / 2.6);
+    const clock = small
+      ? { cx: bx - rad - 22, cy: by + rad + 12, rad }
+      : {
+          cx: bx + rad + 10,
+          cy: Math.max(rad + 18, by - rad - 26),
+          rad,
+        };
 
     return {
       W,
