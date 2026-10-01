@@ -40,16 +40,9 @@
     max-height: 0;
     border-bottom-width: 0;
   }
-  .ui-bottom-collapsed #input-area {
-    max-height: 0;
-    min-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    border-top-width: 0;
-  }
 
-  /* the handles the bars slide on: a pill riding on each bar's inner edge,
-     left at the screen's edge when the bar is away */
+  /* the handle the top bar slides on: a pill riding on the bar's lower
+     edge, left at the screen's top edge when the bar is away */
   .ui-handle {
     display: flex;
     position: fixed;
@@ -88,15 +81,7 @@
   .ui-top-collapsed #handle-top {
     top: 0;
   }
-  #handle-bottom {
-    bottom: calc(var(--console-h, 58px) - 6px);
-    transition: bottom 0.28s ease;
-  }
-  .ui-bottom-collapsed #handle-bottom {
-    bottom: 0;
-  }
   [data-reduced-motion="true"] #compact-bar,
-  [data-reduced-motion="true"] #input-area,
   [data-reduced-motion="true"] .ui-handle {
     transition: none;
   }
@@ -123,19 +108,8 @@
   #ui-toast[hidden] {
     display: none;
   }
-  #compact-bar h1 {
+  .compact-spacer {
     flex: 1;
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    text-align: center;
-    color: var(--pencil-bright);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .compact-btn {
     min-width: 44px;
@@ -168,14 +142,15 @@
     top: 0;
     bottom: 0;
     z-index: 130;
-    width: min(320px, 86vw);
+    width: min(250px, 70vw);
     transform: translateX(-102%);
     transition: transform 0.28s ease;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
   }
   #sidebar {
     left: 0;
-    padding: 22px 18px 18px;
+    padding: 14px 14px 12px;
+    gap: 8px;
     overflow-y: auto;
   }
   #right-sidebar-wrapper {
@@ -185,7 +160,42 @@
   #right-sidebar {
     width: 100%;
     height: 100%;
-    padding: 22px 18px 18px;
+    padding: 14px 14px 12px;
+  }
+  /* the drawers' lettering, cut down for a small screen */
+  #sidebar .sidebar-title,
+  #right-sidebar .sidebar-title {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  #sidebar h1,
+  #right-sidebar h1 {
+    font-size: 12px;
+    letter-spacing: 3px;
+  }
+  #sidebar .menu-btn,
+  #btn-fullscreen {
+    padding: 9px 8px;
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  .sidebar-footer {
+    padding: 8px 6px 4px;
+    gap: 5px;
+  }
+  .sidebar-footer span {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+  .progress-summary {
+    gap: 6px;
+    margin: -2px 0 12px;
+  }
+  #progress-count {
+    font-size: 11px;
+  }
+  #save-status {
+    font-size: 9px;
   }
   #sidebar.drawer-open,
   #right-sidebar-wrapper.drawer-open {
@@ -210,10 +220,10 @@
   }
   #levels-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    gap: 6px;
   }
   .level-btn {
-    font-size: 15px;
+    font-size: 13px;
   }
 
   #game-wrapper {
@@ -221,17 +231,14 @@
     min-height: 0;
   }
 
-  /* the console on one row; the labels go, the controls stay. It slides
-     down out of the way on its handle */
+  /* the console on one row; the labels go, the controls stay. It never
+     moves: the code box is always at hand */
   #input-area {
     height: auto;
     min-height: 58px;
-    max-height: 160px;
     padding: 7px max(8px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     gap: 8px;
     justify-content: stretch;
-    overflow: hidden;
-    transition: max-height 0.28s ease, min-height 0.28s ease, padding 0.28s ease;
   }
   #input-area .console-label,
   #input-area .panel-label {

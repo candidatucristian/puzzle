@@ -46,8 +46,10 @@ export function paintStudy(scene, W, H, deskY) {
   const cam = camera(W, H, deskY);
   const candle = candleLayout(cam, W, H, deskY);
   const { flame } = candle;
-  const R = Math.max(108, Math.min(185, W * .235, H * .222));
-  const wheel = { cx: W * .41, cy: H * .36, R, diskR: R * .745 };
+  // the wheel hangs on the wall above the desk: on a short canvas (a phone)
+  // it shrinks with the height so the desk never cuts into its plaque
+  const R = Math.min(185, W * .235, Math.max(60, H * .26));
+  const wheel = { cx: W * .41, cy: Math.min(H * .36, deskY - R * 1.22), R, diskR: R * .745 };
   const env = envelopeGeom(cam, W, H, deskY);
 
   const room = makeCanvas(W, H);

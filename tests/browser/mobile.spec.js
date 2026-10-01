@@ -35,6 +35,7 @@ test('a phone is not blocked: the compact bar, a tap to begin, and the room fill
   await open(page, { unlocked: false });
   await expect(page.locator('#rotate-prompt')).toBeHidden();
   await expect(page.locator('#compact-bar')).toBeVisible();
+  await expect(page.locator('#compact-bar h1')).toHaveCount(0);
   await expect(page.locator('#start-prompt')).toHaveText('Tap to begin');
   await expect(page.locator('html')).toHaveAttribute('data-compact', 'true');
   await page.locator('#btn-continue').tap();
@@ -113,30 +114,27 @@ test('taps operate the rooms: the code box, the telescope, a board row and the T
   expect(errors).toEqual([]);
 });
 
-test('the full-screen button slides both bars away, and the handles bring each back', async ({ page }) => {
+test('the full-screen button slides the top bar away, the console stays, and the handle brings the bar back', async ({ page }) => {
   await open(page);
   await page.locator('#btn-continue').tap();
   await navigate(page, 'Telescope');
   const canvas = page.locator('#game-container > canvas');
   const before = await canvas.boundingBox();
-  const viewport = page.viewportSize();
-  // one button: the top bar and the console go, the room takes the whole screen
+  const consoleBox = await page.locator('#input-area').boundingBox();
+  // one button: the top bar goes, the room grows into its place, the code box stays put
   await page.locator('#compact-fullscreen').tap();
   await expect(page.locator('html')).toHaveClass(/ui-top-collapsed/);
-  await expect(page.locator('html')).toHaveClass(/ui-bottom-collapsed/);
   await expect(page.locator('#ui-toast')).toBeVisible();
   await expect(page.locator('#compact-levels')).not.toBeInViewport();
-  await expect(page.locator('#btn-submit')).not.toBeInViewport();
-  await expect.poll(async () => (await canvas.boundingBox()).height, { timeout: 5000 }).toBeGreaterThan(viewport.height - 2);
+  await expect(page.locator('#btn-submit')).toBeInViewport();
+  await expect.poll(async () => (await canvas.boundingBox()).height, { timeout: 5000 }).toBeGreaterThan(before.height + 30);
+  expect((await page.locator('#input-area').boundingBox()).height).toBeCloseTo(consoleBox.height, 0);
   expect(await sceneState(page, "scene.events.listenerCount('canvas_resized')")).toBe(1);
   await screenshot(page, 'immersive');
-  // the handles stay at the edges: a tap on the bottom one brings the console back
-  const bottom = await page.locator('#handle-bottom').boundingBox();
-  expect(bottom.y + bottom.height).toBeGreaterThan(viewport.height - 4);
-  await page.locator('#handle-bottom').tap();
-  await expect(page.locator('html')).not.toHaveClass(/ui-bottom-collapsed/);
-  await expect(page.locator('#btn-submit')).toBeInViewport();
-  // a pull down on the top handle brings the top bar back; a pull up hides it again
+  // the handle stays at the top edge
+  const pill = await page.locator('#handle-top').boundingBox();
+  expect(pill.y).toBeLessThan(4);
+  // a pull down on the handle brings the top bar back; a pull up hides it again
   const top = page.locator('#handle-top');
   let box = await top.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
