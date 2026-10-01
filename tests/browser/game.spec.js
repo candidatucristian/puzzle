@@ -132,7 +132,9 @@ test('candle stays extinguished through resize and resets on replay', async ({ p
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(0);
   await sceneState(page, 'scene._closeOverlay()');
   await expect.poll(() => sceneState(page, 'scene._overlayOpen')).toBe(false);
-  for (let i = 0; i < 3; i++) { await expect(candle).toBeEnabled(); await candle.click(); }
+  // the button comes back 820 ms after each breath on the game's clock; under
+  // a loaded machine the frames that carry that clock can arrive slowly
+  for (let i = 0; i < 3; i++) { await expect(candle).toBeEnabled({ timeout: 20000 }); await candle.click(); }
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(3);
   await expect.poll(() => sceneState(page, 'scene._lettersShown')).toBe(true);
   await expect.poll(() => sceneState(page, 'scene.candle.lightState.level')).toBe(0);
@@ -186,9 +188,14 @@ test('Telescope remains interactive when either transition is interrupted by res
 });
 
 test('Rally runs once, keeps its dark podium on resize, and starts fresh on replay', async ({ page }) => {
+  // The six cars are painted frame by frame before the first one leaves; on
+  // a slow machine (CI's two cores, software rendering) that alone can take
+  // longer than the race, so the stage gets as long as it needs.
+  test.setTimeout(150000);
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await launch(page); await navigate(page, 'Rally');
-  await expect.poll(() => sceneState(page, 'scene._finished && !!scene._podium?.active'), { timeout: 16000 }).toBe(true);
+  await expect.poll(() => sceneState(page, '!scene._carJob'), { timeout: 90000 }).toBe(true);
+  await expect.poll(() => sceneState(page, 'scene._finished && !!scene._podium?.active'), { timeout: 30000 }).toBe(true);
   const round = await sceneState(page, 'scene._round');
   await page.waitForTimeout(2500);
   expect(await sceneState(page, 'scene._round')).toBe(round);
@@ -298,8 +305,11 @@ test('Overtime: the calculator adds the wall clocks by real clicks, survives a r
   for (const key of '2344') await press(key);
   await press('=');
   await expect.poll(shown).toBe('7105');
-  // a resize redraws everything from the same state
-  await page.setViewportSize({ width: 1360, height: 900 }); await page.waitForTimeout(500);
+  // a resize redraws everything from the same state (the rebuild follows the
+  // 350 ms debounce, so wait for the new size, not for a fixed time)
+  await page.setViewportSize({ width: 1360, height: 900 });
+  await expect.poll(() => sceneState(page, 'scene.scale.width'), { timeout: 10000 }).toBeLessThan(1440);
+  await expect.poll(() => sceneState(page, 'scene._W')).toBeLessThan(1440);
   expect(await shown()).toBe('7105');
   await press('C');
   await expect.poll(shown).toBe('0');
@@ -319,27 +329,40 @@ test('MobilePhone input commits, survives resize, reveals the caller, and resets
   page.on('pageerror', error => errors.push(error.message));
   await launch(page);
   await navigate(page, 'MobilePhone');
-  const press = async key => {
-    const centre = await evaluateApp(page, ({ services }, key) => {
+  // Two presses of one key must land within the 800 ms commit window, so the
+  // key positions are read once per layout and each press is a single click.
+  let centres = {}, canvas;
+  const measure = async () => {
+    centres = await evaluateApp(page, ({ services }) => {
       const scene = services.levels.activeScene;
-      const button = key === 'ANSWER' ? scene.navContainer : scene.keypadContainer.list
-        .find(item => item.list?.some(child => child.type === 'Text' && child.text === key));
-      return button.getWorldTransformMatrix().transformPoint(0, 0);
-    }, key);
-    const canvas = await page.locator('#game-container canvas').boundingBox();
+      const out = {};
+      for (const item of scene.keypadContainer.list) {
+        const label = item.list?.find(child => child.type === 'Text');
+        if (label) out[label.text] = item.getWorldTransformMatrix().transformPoint(0, 0);
+      }
+      out.ANSWER = scene.navContainer.getWorldTransformMatrix().transformPoint(0, 0);
+      return out;
+    });
+    canvas = await page.locator('#game-container canvas').boundingBox();
+  };
+  const press = async key => {
+    const centre = centres[key];
     await page.mouse.click(canvas.x + centre.x, canvas.y + centre.y);
   };
+  await measure();
   await press('2');
   await expect.poll(() => sceneState(page, 'scene.phoneInput.text')).toBe('A');
   await press('2');
   expect(await sceneState(page, 'scene.screenInput.text')).toBe('AA');
   await page.setViewportSize({ width: 1360, height: 900 });
   await expect.poll(() => sceneState(page, 'scene.scale.width')).toBeLessThan(1440);
-  await page.waitForTimeout(500);
+  await expect.poll(() => sceneState(page, 'scene.keypadContainer?.active')).toBe(true);
+  await page.waitForTimeout(300);
   expect(await sceneState(page, 'scene.screenInput.text')).toBe('AA');
+  await measure();
   await press('#'); await press('#');
   for (const key of '433666777433') await press(key);
-  expect(await sceneState(page, 'scene.menuText.text')).toBe('ANSWER');
+  await expect.poll(() => sceneState(page, 'scene.menuText.text')).toBe('ANSWER');
   await press('ANSWER');
   expect(await sceneState(page, 'scene.callerNumber.text')).toBe('GEORGE');
   expect(await sceneState(page, 'scene.isSolved')).toBe(true);

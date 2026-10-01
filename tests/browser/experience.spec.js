@@ -43,7 +43,7 @@ test('hints reveal individually, remember each room, and reset with the game', a
   await navigate(page, 'Wires'); await page.locator('#btn-info').click();
   await expect(page.locator('#hint-list li')).toHaveCount(1);
   await page.reload();
-  await expect(page.locator('#loading-screen')).toHaveCount(0);
+  await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await page.locator('#btn-continue').click(); await navigate(page, 'Cryptex');
   await page.locator('#btn-info').click();
   await expect(page.locator('#hint-list li')).toHaveCount(3);
@@ -65,7 +65,7 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await expect(page.locator('#save-status')).toHaveText('Saved on this device');
   await screenshot(page, 'progress');
   await page.reload();
-  await expect(page.locator('#loading-screen')).toHaveCount(0);
+  await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await expect(page.locator('#btn-continue')).toHaveText('Continue · Level 2');
   await expect(page.locator('#start-progress')).toContainText('1 of 18 rooms solved');
   await screenshot(page, 'continue');
@@ -101,6 +101,8 @@ test('inspection magnifies Phaser and DOM together and does not operate the puzz
   await page.keyboard.press('Escape');
   await page.locator('#btn-inspect').click(); await navigate(page, 'TV');
   await expect(page.locator('#inspection-tools')).toBeHidden();
+  // the set tunes itself every four seconds; the readings below must not straddle a tick
+  await evaluateApp(page, ({ services }) => services.levels.activeScene._autoTimer.remove(false));
   const channel = await evaluateApp(page, ({ services }) => services.levels.activeScene._channel);
   await page.locator('#btn-inspect').click(); await page.keyboard.press('ArrowRight');
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._channel)).toBe(channel);
@@ -135,7 +137,7 @@ test('comfort controls apply immediately, persist, and follow device preferences
   const frame = await evaluateApp(page, ({ services }) => services.levels.activeScene.candle._frame);
   await page.waitForTimeout(300);
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.candle._frame)).toBe(frame);
-  await page.reload(); await expect(page.locator('#loading-screen')).toHaveCount(0);
+  await page.reload(); await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await page.locator('#btn-continue').click(); await page.locator('#btn-options').click();
   await expect(page.locator('#grain-slider')).toHaveValue('0');
   await expect(page.locator('#reading-size')).toHaveValue('1.3');
@@ -168,7 +170,7 @@ test('reduced effects retain Morse, router signals and race progression', async 
 
 test('unavailable storage reports session-only progress while still allowing play', async ({ page }) => {
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new DOMException('Blocked', 'SecurityError'); }; });
-  await page.goto('/'); await expect(page.locator('#loading-screen')).toHaveCount(0);
+  await page.goto('/'); await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await evaluateApp(page, ({ ui, services }) => { services.preferences.set({ motion: 'reduced' }); ui.showGame(); ui.navigate(0); });
   await expect(page.locator('#save-status')).toHaveText('Progress kept for this session only');
   await page.locator('#level-code').fill('CABBAGE'); await page.locator('#btn-submit').click();

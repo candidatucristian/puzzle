@@ -39,11 +39,11 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     document.getElementById('inspect-close').textContent = 'Back to play';
   }
 
-  function say(text) {
+  function say(text, ms = 2600) {
     if (!toast) return;
     scope.cancel(toastTimer);
     toast.textContent = text; toast.hidden = false;
-    toastTimer = scope.later(() => { toast.hidden = true; }, 2600);
+    toastTimer = scope.later(() => { toast.hidden = true; }, ms);
   }
 
   // ── the drawers ───────────────────────────────────────────────────────────
@@ -88,18 +88,20 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   const barsAway = () => collapsed.top && collapsed.bottom;
 
   // the full-screen button: the whole interface slides away, and the
-  // browser is asked for full screen where it offers it (not on iPhones)
+  // browser is asked for full screen where it offers it. Safari on iPhone
+  // offers none, so there the way to lose the browser's own bars is the
+  // home-screen icon, and the toast says so.
   async function immersive() {
     if (barsAway()) { restore(); return; }
     setBar('top', true); setBar('bottom', true);
-    say('Pull a handle at the top or the bottom edge to bring the bars back');
-    if (document.fullscreenEnabled && !document.fullscreenElement) {
-      try { await document.documentElement.requestFullscreen(); await lockLandscape(); } catch { /* the bars are away either way */ }
-    }
+    const went = await enterFullscreen();
+    if (went || isStandalone()) say('Pull a handle at the top or the bottom edge to bring the bars back');
+    else if (isIOS()) say('Safari on iPhone has no full screen. To play without the browser bars, tap Share, then "Add to Home Screen", and open the game from that icon.', 7000);
+    else say('This browser offers no full screen. Pull a handle at the top or the bottom edge to bring the bars back.', 4000);
   }
   function restore() {
     setBar('top', false); setBar('bottom', false);
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    exitFullscreen();
     unlockOrientation();
   }
 
@@ -138,7 +140,9 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   scope.on(scrim, 'click', close);
   scope.on(document, 'keydown', e => { if (e.key === 'Escape' && open) { e.preventDefault(); close(); } });
   // leaving full screen by the system's own gesture brings the bars back
-  scope.on(document, 'fullscreenchange', () => { if (!document.fullscreenElement && barsAway()) { setBar('top', false); setBar('bottom', false); } });
+  const left = () => { if (!fullscreenElement() && barsAway()) { setBar('top', false); setBar('bottom', false); } };
+  scope.on(document, 'fullscreenchange', left);
+  scope.on(document, 'webkitfullscreenchange', left);
   scope.on(compact, 'change', render);
   scope.on(window, 'resize', render);
   render();
@@ -148,6 +152,41 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     get compact() { return compact.matches; },
     get collapsed() { return { ...collapsed }; },
   };
+}
+
+// ── full screen, wherever the browser keeps it ───────────────────────────────
+
+export const isIOS = () =>
+  /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/** Opened from a home-screen icon: the browser's own bars are already gone. */
+export const isStandalone = () =>
+  navigator.standalone === true || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+
+export const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+
+/** Ask for full screen with whichever API the browser has, hiding its
+ *  navigation where it lets us, and lock landscape once granted. Resolves
+ *  true when the page is full screen afterwards. Must run from a user
+ *  gesture; never throws. */
+export async function enterFullscreen() {
+  if (fullscreenElement()) return true;
+  const el = document.documentElement;
+  try {
+    if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } catch { /* refused: not from a gesture, or not offered at all */ }
+  const went = Boolean(fullscreenElement());
+  if (went) await lockLandscape();
+  return went;
+}
+
+export function exitFullscreen() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (document.webkitFullscreenElement) document.webkitExitFullscreen?.();
+  } catch { /* nothing to leave */ }
 }
 
 /** Full screen on a phone is a landscape affair: once the browser grants
