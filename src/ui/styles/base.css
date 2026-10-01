@@ -87,9 +87,28 @@ body {
   margin: 0;
   display: flex;
   height: 100vh;
+  height: 100dvh;
   background-color: var(--obsidian);
   font-family: var(--font-display);
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* the room takes every touch itself: no page scroll, no double-tap zoom,
+   no long-press selection over a puzzle */
+#game-container {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* only the mouse hovers; on a touch screen nothing is "hovered" after a tap */
+@media (hover: none) {
+  .menu-btn:hover::after {
+    transform: scaleX(0);
+  }
 }
 
 button {

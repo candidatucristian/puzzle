@@ -34,7 +34,8 @@
 #inspection-tools[hidden], #inspection-glass[hidden], #interaction-cue[hidden] { display: none; }
 .is-inspecting #game-container { pointer-events: none; }
 .is-inspecting #interaction-cue, .is-inspecting #interaction-pulse,
-.has-open-dialog #interaction-cue, .has-open-dialog #interaction-pulse { visibility: hidden; }
+.has-open-dialog #interaction-cue, .has-open-dialog #interaction-pulse,
+.has-open-drawer #interaction-cue, .has-open-drawer #interaction-pulse { visibility: hidden; }
 
 #interaction-cue {
   position: absolute; bottom: 18px; left: 18px; z-index: 22;
@@ -117,8 +118,9 @@
 [data-ambient-motion="false"] .level-btn.current { animation: none; }
 [data-ambient-effects="false"] #start-particles { visibility: hidden; }
 [data-reduced-motion="true"] #start-screen,
-[data-reduced-motion="true"] .mobile-block-card,
 [data-reduced-motion="true"] .completion-card { animation: none; }
+/* the touch row in How to Play only matters where there is a finger */
+:root:not([data-touch="true"]) .howto-touch { display: none; }
 [data-reduced-motion="true"] .menu-btn,
 [data-reduced-motion="true"] #intro-screen,
 [data-reduced-motion="true"] #intro-line,

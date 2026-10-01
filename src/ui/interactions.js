@@ -2,10 +2,19 @@ export function mountInteractionFeedback(scope, game) {
   const stage = document.getElementById('game-container');
   const cue = document.getElementById('interaction-cue');
   const pulse = document.getElementById('interaction-pulse');
-  let timer, hoveredDom;
+  let timer, cueTimer, hoveredDom;
+  // A finger has no hover: on a touch screen a cue appears at the tap and
+  // goes away on its own a moment later, instead of waiting for pointerout.
+  const coarse = matchMedia('(pointer: coarse)');
   function feedback({ label, pressed, x, y }) {
-    cue.textContent = label;
-    cue.hidden = !label;
+    scope.cancel(cueTimer);
+    if (!label && coarse.matches && !cue.hidden && !pressed) {
+      cueTimer = scope.later(() => { cue.hidden = true; }, 1400);
+    } else {
+      cue.textContent = label;
+      cue.hidden = !label;
+      if (label && coarse.matches) cueTimer = scope.later(() => { cue.hidden = true; }, 2200);
+    }
     if (pressed) {
       pulse.style.left = `${x}px`; pulse.style.top = `${y}px`;
       pulse.classList.remove('visible');

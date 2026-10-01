@@ -1,3 +1,5 @@
+import { lockLandscape, unlockOrientation } from './mobile.js';
+
 export function mountFullscreenControl(scope, button) {
   function sync() {
     const active = Boolean(document.fullscreenElement);
@@ -13,14 +15,14 @@ export function mountFullscreenControl(scope, button) {
   scope.on(button, 'click', async () => {
     button.disabled = true;
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await document.documentElement.requestFullscreen();
+      if (document.fullscreenElement) { await document.exitFullscreen(); unlockOrientation(); }
+      else { await document.documentElement.requestFullscreen(); await lockLandscape(); }
       sync();
     } catch {
       sync();
       button.title = 'Full screen could not be changed. Try again.';
     }
   });
-  scope.on(document, 'fullscreenchange', sync);
+  scope.on(document, 'fullscreenchange', () => { if (!document.fullscreenElement) unlockOrientation(); sync(); });
   sync();
 }

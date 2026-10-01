@@ -1,84 +1,413 @@
-/* ── Mobile / Tablet Block ──
-   Same dark-paper theme as the start screen. Shown by ui.js on phones
-   and tablets, and by the media query below when the window is simply
-   too small for the layout. */
-#mobile-block {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: radial-gradient(
-    120% 100% at 50% 45%,
-    #0c0d11 0%,
-    #050608 70%,
-    #000000 100%
-  );
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
+/* ── Phones and tablets ──
+   Below 1100px (or under 560px tall) the three columns become one: a
+   compact bar on top, the room filling the middle, the console on one
+   row at the bottom, and the two sidebars as drawers that slide in over
+   the room. The rooms themselves are untouched; they get a smaller
+   canvas. */
 
-#mobile-block.hidden {
+#compact-bar,
+#drawer-scrim,
+#rotate-prompt,
+.ui-handle,
+#ui-toast {
   display: none;
 }
 
-.mobile-block-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
-  width: min(440px, 86%);
-  animation: start-fade-in 1.2s ease both;
-}
-
-.mobile-block-card h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(24px, 7vw, 40px);
-  letter-spacing: 8px;
-  text-transform: uppercase;
-  text-align: center;
-  padding-left: 8px; /* optical centring vs. letter-spacing */
-  color: var(--pencil-bright);
-  text-shadow:
-    0.8px 0.8px 0 var(--pencil-faint),
-    -0.6px 0.5px 0 var(--pencil-faint);
-}
-
-.mobile-block-msg {
-  margin: 8px 0 0 0;
-  font-family: var(--font-body);
-  font-style: italic;
-  font-weight: 500;
-  font-size: 21px;
-  line-height: 1.6;
-  letter-spacing: 0.5px;
-  color: #ddd6c5;
-  text-align: center;
-}
-
-.mobile-block-sub {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  line-height: 2;
-  text-align: center;
-  color: var(--bone-dim);
-  opacity: 0.75;
-}
-
-/* window too small for the three-column layout — show the block screen
-   (kept AFTER the .hidden rule so it wins at equal specificity) */
-@media (max-width: 1100px), (max-height: 520px) {
-  #mobile-block,
-  #mobile-block.hidden {
-    display: flex;
+@media (max-width: 1100px), (max-height: 560px) {
+  body {
+    flex-direction: column;
+    height: 100dvh;
   }
+
+  /* the compact bar: menu · title · full screen · levels. It slides up out
+     of the way on its handle (max-height, so the room grows into its place) */
+  #compact-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    max-height: 44px;
+    padding: 0 max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
+    flex-shrink: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, #1a1c21, #121418);
+    border-bottom: 1px solid var(--line-dark);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    z-index: 15;
+    transition: max-height 0.28s ease, border-width 0.28s ease;
+  }
+  .ui-top-collapsed #compact-bar {
+    max-height: 0;
+    border-bottom-width: 0;
+  }
+  .ui-bottom-collapsed #input-area {
+    max-height: 0;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+  }
+
+  /* the handles the bars slide on: a pill riding on each bar's inner edge,
+     left at the screen's edge when the bar is away */
+  .ui-handle {
+    display: flex;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 72px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 140;
+    touch-action: none;
+    cursor: grab;
+  }
+  .ui-handle::before {
+    content: "";
+    width: 42px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--pencil);
+    opacity: 0.75;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  }
+  .ui-handle:active::before,
+  .ui-handle:focus-visible::before {
+    opacity: 1;
+    background: var(--pencil-bright);
+  }
+  #handle-top {
+    top: calc(44px - 6px);
+    transition: top 0.28s ease;
+  }
+  .ui-top-collapsed #handle-top {
+    top: 0;
+  }
+  #handle-bottom {
+    bottom: calc(var(--console-h, 58px) - 6px);
+    transition: bottom 0.28s ease;
+  }
+  .ui-bottom-collapsed #handle-bottom {
+    bottom: 0;
+  }
+  [data-reduced-motion="true"] #compact-bar,
+  [data-reduced-motion="true"] #input-area,
+  [data-reduced-motion="true"] .ui-handle {
+    transition: none;
+  }
+
+  /* a short word from the interface, over the room */
+  #ui-toast {
+    display: block;
+    position: fixed;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 141;
+    margin: 0;
+    padding: 8px 12px;
+    max-width: min(420px, 86vw);
+    background: rgba(12, 14, 17, 0.92);
+    border: 1px solid var(--pencil-faint);
+    border-radius: 3px;
+    color: var(--bone);
+    font-size: 12px;
+    text-align: center;
+    pointer-events: none;
+  }
+  #ui-toast[hidden] {
+    display: none;
+  }
+  #compact-bar h1 {
+    flex: 1;
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--pencil-bright);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .compact-btn {
+    min-width: 44px;
+    height: 36px;
+    padding: 0 10px;
+    background: #17191e;
+    border: 1.5px solid var(--pencil-faint);
+    border-radius: 3px 6px 4px 7px;
+    color: var(--bone);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .compact-btn[aria-expanded="true"] {
+    border-color: var(--pencil);
+    color: var(--pencil-bright);
+  }
+  #compact-menu {
+    font-size: 18px;
+    letter-spacing: 0;
+  }
+
+  /* the sidebars become drawers */
+  #sidebar,
+  #right-sidebar-wrapper {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 130;
+    width: min(320px, 86vw);
+    transform: translateX(-102%);
+    transition: transform 0.28s ease;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+  }
+  #sidebar {
+    left: 0;
+    padding: 22px 18px 18px;
+    overflow-y: auto;
+  }
+  #right-sidebar-wrapper {
+    right: 0;
+    transform: translateX(102%);
+  }
+  #right-sidebar {
+    width: 100%;
+    height: 100%;
+    padding: 22px 18px 18px;
+  }
+  #sidebar.drawer-open,
+  #right-sidebar-wrapper.drawer-open {
+    transform: none;
+  }
+  [data-reduced-motion="true"] #sidebar,
+  [data-reduced-motion="true"] #right-sidebar-wrapper {
+    transition: none;
+  }
+  #drawer-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 125;
+    background: rgba(4, 5, 8, 0.6);
+  }
+  #drawer-scrim[hidden] {
+    display: none;
+  }
+  .sidebar-footer {
+    padding-top: 12px;
+  }
+  #levels-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .level-btn {
+    font-size: 15px;
+  }
+
+  #game-wrapper {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* the console on one row; the labels go, the controls stay. It slides
+     down out of the way on its handle */
+  #input-area {
+    height: auto;
+    min-height: 58px;
+    max-height: 160px;
+    padding: 7px max(8px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    gap: 8px;
+    justify-content: stretch;
+    overflow: hidden;
+    transition: max-height 0.28s ease, min-height 0.28s ease, padding 0.28s ease;
+  }
+  #input-area .console-label,
+  #input-area .panel-label {
+    display: none;
+  }
+  .mute-button,
+  .info-button {
+    position: static;
+  }
+  .console-controls {
+    padding: 7px 9px;
+    gap: 8px;
+  }
+  #vol-slider-ui {
+    width: 56px;
+  }
+  .input-container {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+  }
+  .input-wrapper {
+    width: 100%;
+    gap: 6px;
+  }
+  #level-code {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    padding: 8px 10px;
+    font-size: 17px;
+    letter-spacing: 3px;
+  }
+  #level-code::placeholder {
+    letter-spacing: 3px;
+    font-size: 11px;
+  }
+  #btn-submit {
+    padding: 8px 12px;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+  #btn-replay {
+    width: 40px;
+    font-size: 19px;
+  }
+  .info-button {
+    padding: 10px 12px;
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  /* the room's own controls */
+  #btn-inspect {
+    right: 10px;
+    bottom: 10px;
+    padding: 8px 10px;
+  }
+  #interaction-cue {
+    left: 10px;
+    bottom: 10px;
+    max-width: 60%;
+  }
+  #inspection-tools {
+    bottom: 10px;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  #inspection-tools > span {
+    display: none;
+  }
+
+  /* the title cards and the reading panels */
+  #intro-title h1,
+  #start-title h1 {
+    font-size: clamp(26px, 7vw, 48px);
+    letter-spacing: 10px;
+    padding-left: 10px;
+  }
+  #start-bottom {
+    padding-bottom: 18px;
+    gap: 10px;
+  }
+  #start-prompt {
+    font-size: 13px;
+    letter-spacing: 5px;
+  }
+  #intro-line {
+    font-size: clamp(18px, 4vw, 26px);
+  }
+  #veil-numeral {
+    font-size: 44px;
+  }
+  .modal-content,
+  #options-modal .modal-content,
+  #info-modal .modal-content {
+    width: min(560px, calc(100vw - 20px));
+    max-height: calc(100dvh - 20px);
+    padding: 20px 18px;
+    gap: 14px;
+  }
+  .modal-content.howto-content {
+    max-width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 20px 16px;
+  }
+  .howto-row {
+    gap: 12px;
+  }
+  .ui-demo,
+  .lvl-demo,
+  .badge-demo {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .ui-demo {
+    flex-basis: 96px;
+  }
+  .completion-card {
+    padding: 26px 20px 22px;
+    gap: 14px;
+  }
+  #completion-screen {
+    padding: 12px;
+  }
+}
+
+/* a phone held upright: the rooms are drawn wide, so ask for a turn */
+@media (orientation: portrait) and (max-width: 700px) {
+  #rotate-prompt {
+    position: fixed;
+    inset: 0;
+    z-index: 590; /* under the loading screen, over everything else */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    padding: 32px;
+    text-align: center;
+    background: radial-gradient(120% 100% at 50% 45%, #0c0d11 0%, #050608 70%, #000 100%);
+  }
+  #rotate-prompt .rotate-icon {
+    width: 34px;
+    height: 58px;
+    border: 2px solid var(--pencil);
+    border-radius: 7px;
+    box-shadow: inset 0 -6px 0 -4px var(--pencil-dim);
+    animation: rotate-hint 2.2s ease-in-out infinite;
+  }
+  #rotate-prompt h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--pencil-bright);
+  }
+  #rotate-prompt p {
+    margin: 0;
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.6;
+    color: #ddd6c5;
+  }
+  [data-reduced-motion="true"] #rotate-prompt .rotate-icon {
+    animation: none;
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes rotate-hint {
+  0%, 25% { transform: rotate(0deg); }
+  55%, 100% { transform: rotate(90deg); }
 }
 
 /* respect users who prefer less motion */

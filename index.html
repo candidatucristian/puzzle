@@ -3,12 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <title>The Descipher</title>
+    <!-- Phones: real device width, no pinch zoom over the puzzles, the
+         on-screen keyboard shrinks the page instead of covering the code box -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <meta name="theme-color" content="#0a0b0e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Descipher" />
 
     <link
       rel="icon"
       href="assets/images/favicon/favicon-32x32.png"
       type="image/x-icon"
     />
+    <link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/images/favicon/site.webmanifest" />
 
     <!-- CRT shader web-component used by the TV level -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,6 +48,21 @@
 
     <!-- Cinematic film grain over the whole app -->
     <div id="film-grain"></div>
+
+    <!-- Compact bar: shown on phones and tablets instead of the two sidebars,
+         which become drawers (ui/mobile.js) -->
+    <div id="compact-bar">
+      <button id="compact-menu" class="compact-btn" type="button" aria-label="Menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <h1>The Descipher</h1>
+      <button id="compact-fullscreen" class="compact-btn" type="button" aria-label="Full screen: hide the bars" title="Full screen: hide the bars">⛶</button>
+      <button id="compact-levels" class="compact-btn" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false">Levels</button>
+    </div>
+    <div id="drawer-scrim" hidden></div>
+    <!-- the handles the top bar and the console slide on: tap to toggle,
+         pull toward the edge to hide, pull away from it to show -->
+    <button id="handle-top" class="ui-handle" type="button" aria-controls="compact-bar" aria-expanded="true" aria-label="Hide the top bar"></button>
+    <button id="handle-bottom" class="ui-handle" type="button" aria-controls="input-area" aria-expanded="true" aria-label="Hide the console"></button>
+    <p id="ui-toast" role="status" hidden></p>
 
     <!-- Left Sidebar -->
     <div id="sidebar">
@@ -185,19 +213,12 @@
       </div>
     </div>
 
-    <!-- Mobile / Tablet Block Overlay -->
-    <div id="mobile-block" class="hidden">
-      <div class="mobile-block-card">
-        <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-        <h1>The Descipher</h1>
-        <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-        <p class="mobile-block-msg">
-          This experience was drawn for a large canvas.
-        </p>
-        <p class="mobile-block-sub">
-          NOT AVAILABLE ON MOBILE OR TABLET &mdash; PLEASE RETURN ON A DESKTOP
-        </p>
-      </div>
+    <!-- A phone held upright: the rooms are drawn wide (CSS shows this only
+         in portrait on small screens) -->
+    <div id="rotate-prompt" role="status">
+      <div class="rotate-icon" aria-hidden="true"></div>
+      <h2>Turn your phone</h2>
+      <p>The rooms were drawn wide. Hold your phone sideways to step in.</p>
     </div>
 
     <!-- Options Modal -->
@@ -307,7 +328,15 @@
             </div>
             <div class="howto-row">
               <span class="ui-demo">INSPECT</span>
-              <p>Get closer to letters and small objects. Drag to look around, use + and − to zoom, then press Escape to return to play.</p>
+              <p>Get closer to letters and small objects. Drag to look around, use + and − to zoom, then press Escape (or Back to play) to return.</p>
+            </div>
+            <div class="howto-row howto-touch">
+              <span class="ui-demo">☰ · LEVELS</span>
+              <p>On a phone or tablet the menu and the levels panel slide in from the sides. Tap what you would click; drag what you would drag. The rooms want the phone held sideways.</p>
+            </div>
+            <div class="howto-row howto-touch">
+              <span class="ui-demo">⛶</span>
+              <p>Hides the top bar and the console together, so the room fills the screen. Each bar also has a small handle on its edge: tap it, or pull it up or down, to slide that bar away or back on its own.</p>
             </div>
             <div class="howto-row">
               <span class="ui-demo demo-volume">🔊</span>
@@ -355,7 +384,8 @@
               <span class="badge-demo">LISTENING</span>
               <p>
                 Audio matters here. Turn the volume up and listen carefully —
-                something is said only in sound.
+                something is said only in sound. On an iPhone, the ring/silent
+                switch must be set to ring for the game to be heard.
               </p>
             </div>
             <div class="howto-row">

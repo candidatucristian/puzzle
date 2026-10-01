@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintStreet, releaseStreetArt } from "./street.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -485,27 +486,10 @@ export default class CrossingScene extends BasePuzzleScene {
   }
 
   _drawTexts(W, H) {
-    this.levelText = this.add
-      .text(
-        W - 30,
-        28,
-        "Level " +
-          (this.services.levels.definitions.findIndex(
-            (l) => l.key === this.scene.key,
-          ) +
-            1),
-        {
-          fontFamily: '"Special Elite", monospace',
-          fontSize: "28px",
-          color: "#f0e6cc",
-        },
-      )
-      .setOrigin(1, 0)
-      .setShadow(0, 2, "rgba(4,6,14,0.9)", 8, false, true)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
-    void H;
+    this.levelText = drawLevelLabel(this, W, H, {
+      color: "#f0e6cc",
+      shadow: "rgba(4,6,14,0.9)",
+    });
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

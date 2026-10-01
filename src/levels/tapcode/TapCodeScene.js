@@ -1,4 +1,5 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { PENCIL } from "../../shared/theme.js";
 import { TAP_WORD as TC_WORD, tapPair } from "./puzzle.js";
 
@@ -903,16 +904,7 @@ export default class TapCodeScene extends BasePuzzleScene {
   }
 
   _drawTexts(W, H) {
-    this.levelText = this.add
-      .text(W - 30, 28, "Level " + (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
-      .setOrigin(1, 0)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
+    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

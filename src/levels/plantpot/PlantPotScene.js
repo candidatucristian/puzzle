@@ -1,4 +1,5 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { makeMoonTexture } from "../../shared/moon.js";
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
@@ -195,7 +196,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     this._makeLantern(L);
     this._makeTufts(L);
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
-    this._drawTexts(W);
+    this._drawTexts(W, H);
     this._built = true;
   }
 
@@ -686,17 +687,8 @@ export default class PlantPotScene extends BasePuzzleScene {
     if (!this._shoot) this._launchShootingStar();
   }
 
-  _drawTexts(W) {
-    this.levelText = this.add
-      .text(W - 30, 30, "Level " + this._levelNumber(), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
-      .setOrigin(1, 0)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000, ease: "Power2" });
+  _drawTexts(W, H) {
+    this.levelText = drawLevelLabel(this, W, H, { y: 30, ease: "Power2" });
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

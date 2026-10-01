@@ -13,19 +13,18 @@ import { mountHints } from './hints.js';
 import { mountProgress } from './progress.js';
 import { mountInspection } from './inspection.js';
 import { mountInteractionFeedback } from './interactions.js';
+import { mountMobile, isTouchDevice } from './mobile.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
   const start = byId('start-screen');
   const input = byId('level-code');
-  let inspection;
+  let inspection, mobile;
   const intro = createIntro(preferences);
-  const dialogs = createDialogs(scope, { onOpen: () => inspection?.close() });
+  const dialogs = createDialogs(scope, { onOpen: () => { inspection?.close(); mobile?.close(); } });
   let started = false;
   let sessionStart = null;
-  const mobile = /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent) ||
-    (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1) || matchMedia('(pointer: coarse)').matches;
-  if (mobile) byId('mobile-block').classList.remove('hidden');
+  const touch = isTouchDevice();
 
   function showGame() {
     start.classList.add('hidden'); storage.setItem('hasPlayedBefore', 'true');
@@ -40,7 +39,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     onReplay: () => navigate(levels.currentIndex, { quick: true }),
     onFirst: () => { sessionStart = Date.now(); navigate(0); },
   });
-  const transitions = createTransitions({ levels, showGame, preferences, onNavigate() { completion.hide(); inspection?.close(); } });
+  const transitions = createTransitions({ levels, showGame, preferences, onNavigate() { completion.hide(); inspection?.close(); mobile?.close(); } });
   const navigate = (index, options) => transitions.go(index, options);
   const progressUI = mountProgress(scope, {
     game, levels, storage, navigate,
@@ -53,16 +52,21 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     canOpen: () => !intro.active && !transitions.busy && !dialogs.isOpen && start.classList.contains('hidden'),
   });
   mountInteractionFeedback(scope, game);
+  mobile = mountMobile(scope, {
+    canOpenDrawer: () => !intro.active && !dialogs.isOpen,
+    onDrawer: () => inspection?.close(),
+  });
   function begin(event) {
     if (event?.type === 'keydown' && ['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) return;
     if (event?.type === 'keydown' && event.target !== document.body && !start.contains(event.target)) return;
-    if (mobile || started || dialogs.isOpen || start.classList.contains('hidden')) return;
+    if (started || dialogs.isOpen || start.classList.contains('hidden')) return;
     started = true; sessionStart = Date.now();
     if (!storage.getItem('hasPlayedBefore')) intro.play(() => navigate(levels.currentIndex));
     else navigate(levels.currentIndex);
   }
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
-  mountStartParticles({ scope, startScreen: start, disabled: mobile, preferences });
+  // the graphite dust on the start screen costs a phone more than it gives
+  mountStartParticles({ scope, startScreen: start, disabled: touch && mobile.compact, preferences });
   mountFullscreenControl(scope, byId('btn-fullscreen'));
 
   scope.on(byId('btn-submit'), 'click', () => {
@@ -102,7 +106,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   scope.on(byId('btn-close-howto'), 'click', () => dialogs.close());
   scope.on(byId('btn-options'), 'click', () => { reset.disarm(); dialogs.open('options-modal'); });
   scope.on(byId('btn-close-options'), 'click', () => { reset.disarm(); dialogs.close(); });
-  mountAudioControls(audio, scope); observeViewport(game, scope);
+  mountAudioControls(audio, scope);
+  // while the code box has the on-screen keyboard up, the room waits to be repainted
+  observeViewport(game, scope, { defer: () => touch && document.activeElement === input });
   return { navigate, showGame, get busy() { return transitions.busy || intro.active; },
     dispose() { transitions.dispose(); intro.dispose(); dialogs.close(); scope.dispose(); } };
 }

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { CALCULATOR_DIGITS, createCalculator, pressKey } from "./puzzle.js";
 import { paintOffice, releaseOfficeArt, glyph } from "./office.js";
 
@@ -91,7 +92,7 @@ export default class OvertimeScene extends BasePuzzleScene {
 
     this._startColons(art.colons);
     this._startSteam(art);
-    this._drawTexts(W);
+    this._drawTexts(W, H);
   }
 
   // A key is painted into the room; what lives here is its hit area (the
@@ -230,21 +231,8 @@ export default class OvertimeScene extends BasePuzzleScene {
 
   // ── on top of everything ───────────────────────────────────────────────────
 
-  _drawTexts(W) {
-    const levelNumber =
-      this.services.levels.definitions.findIndex(
-        (l) => l.key === this.scene.key,
-      ) + 1;
-    const levelText = this.add
-      .text(W - 30, 28, "Level " + levelNumber, {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
-      .setOrigin(1, 0)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: levelText, alpha: 1, duration: 2000 });
+  _drawTexts(W, H) {
+    drawLevelLabel(this, W, H);
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

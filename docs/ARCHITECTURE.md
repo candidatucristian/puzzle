@@ -136,6 +136,8 @@ A malformed modern save resets to a valid fresh state rather than reviving stale
 
 `ComfortPreferences` persists grain strength, reading size, reduced motion and ambient effects under `puzzleComfort`, respecting live device reduced-motion preferences. Use `ambientTween(config)` for decorative Phaser tweens and `ambientObject(object)` for particles that should disappear when ambient motion is disabled. Frame-based decoration checks `ambientMotion`. Puzzle clocks, encoded signals and essential movement keep running. Reading size affects UI text; scene details can be enlarged with Inspect.
 
+`ui/mobile.js` owns the compact layout: below the breakpoint in `ui/styles/responsive.css` it turns the two sidebars into drawers behind the compact bar, rewords the start screen and the intro for touch, and locks landscape on entering full screen where the API allows. `shared/viewport.js` defers the Phaser resize while the code box has focus on a touch device, so the on-screen keyboard clips the room instead of repainting it twice.
+
 `shared/interaction.js` adds common Phaser hover/press feedback. Objects may provide `setData('interactionLabel', 'Open the letter')` or opt out with `false`. DOM buttons use their accessible label. These cues do not implement or replace puzzle handlers.
 
 `ui/inspection.js` magnifies the stage containing both Phaser and DOM artwork. While inspecting, the stage is inert and scene pointer/keyboard input is disabled; simulation continues. Closing, navigating or opening a dialog restores input. The transformation never changes Phaser's logical viewport size.

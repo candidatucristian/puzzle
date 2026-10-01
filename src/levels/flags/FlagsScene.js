@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintHarbour, releaseHarbourArt, FLAG_FRAMES } from "./harbour.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,7 +124,7 @@ export default class FlagsScene extends BasePuzzleScene {
       .setOrigin(0, 0)
       .setDisplaySize(W, H)
       .setDepth(18);
-    this._drawTexts(W);
+    this._drawTexts(W, H);
     this._built = true;
   }
 
@@ -190,27 +191,11 @@ export default class FlagsScene extends BasePuzzleScene {
     }));
   }
 
-  _drawTexts(W) {
-    this.levelText = this.add
-      .text(
-        W - 30,
-        28,
-        "Level " +
-          (this.services.levels.definitions.findIndex(
-            (l) => l.key === this.scene.key,
-          ) +
-            1),
-        {
-          fontFamily: '"Special Elite", monospace',
-          fontSize: "28px",
-          color: "#fff1dc",
-        },
-      )
-      .setOrigin(1, 0)
-      .setShadow(0, 2, "rgba(20,12,48,0.95)", 8, false, true)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
+  _drawTexts(W, H) {
+    this.levelText = drawLevelLabel(this, W, H, {
+      color: "#fff1dc",
+      shadow: "rgba(20,12,48,0.95)",
+    });
   }
 
   // ── what moves ─────────────────────────────────────────────────────────────
