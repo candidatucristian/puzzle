@@ -53,15 +53,14 @@
          which become drawers (ui/mobile.js) -->
     <div id="compact-bar">
       <button id="compact-menu" class="compact-btn" type="button" aria-label="Menu" aria-controls="sidebar" aria-expanded="false">☰</button>
-      <h1>The Descipher</h1>
-      <button id="compact-fullscreen" class="compact-btn" type="button" aria-label="Full screen: hide the bars" title="Full screen: hide the bars">⛶</button>
+      <span class="compact-spacer"></span>
+      <button id="compact-fullscreen" class="compact-btn" type="button" aria-label="Full screen: hide the bar" title="Full screen: hide the bar">⛶</button>
       <button id="compact-levels" class="compact-btn" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false">Levels</button>
     </div>
     <div id="drawer-scrim" hidden></div>
-    <!-- the handles the top bar and the console slide on: tap to toggle,
-         pull toward the edge to hide, pull away from it to show -->
+    <!-- the handle the top bar slides on: tap to toggle, pull up to hide,
+         pull down to show -->
     <button id="handle-top" class="ui-handle" type="button" aria-controls="compact-bar" aria-expanded="true" aria-label="Hide the top bar"></button>
-    <button id="handle-bottom" class="ui-handle" type="button" aria-controls="input-area" aria-expanded="true" aria-label="Hide the console"></button>
     <p id="ui-toast" role="status" hidden></p>
 
     <!-- Left Sidebar -->
@@ -336,7 +335,7 @@
             </div>
             <div class="howto-row howto-touch">
               <span class="ui-demo">⛶</span>
-              <p>Hides the top bar and the console together, so the room fills the screen. Each bar also has a small handle on its edge: tap it, or pull it up or down, to slide that bar away or back on its own.</p>
+              <p>Slides the top bar away and asks the browser for full screen, so the room fills the phone; the code box stays. The bar also has a small handle on its edge: tap it, or pull it up or down, to slide the bar away or back. Safari on iPhone has no full screen at all: to lose its bars, tap Share, choose <b>Add to Home Screen</b>, and open the game from that icon.</p>
             </div>
             <div class="howto-row">
               <span class="ui-demo demo-volume">🔊</span>

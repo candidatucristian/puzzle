@@ -33,8 +33,9 @@ const WI_BIRDS = [
   { note: "D", pos: 0 },
   { note: "E", pos: 4 },
 ];
-// where along the wires they sit, clear of the pole where the wires close up
-const BIRD_XS = [0.16, 0.27, 0.36, 0.62, 0.73, 0.85];
+// where along the wires they sit, well clear of the pole where the wires
+// close up, so each bird's wire can be told from its neighbours
+const BIRD_XS = [0.12, 0.23, 0.34, 0.68, 0.79, 0.9];
 
 const DEG = Math.PI / 180;
 

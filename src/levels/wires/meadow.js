@@ -82,15 +82,17 @@ export function layoutMeadow(W, H) {
   };
 
   // the five wires, bottom (0) to top (4): close together on the pole,
-  // spreading as they run out toward the edges, sagging a little
+  // spreading as they run out toward the edges, sagging a little. They are
+  // never closer than a bird is tall, so a bird reads on its own wire even
+  // on a short canvas
   const pole = {
     x: W * 0.52,
     top: H * 0.13,
     yTop: H * 0.155,
-    sp: H * 0.009,
+    sp: Math.max(H * 0.014, 7 * k),
     leftTop: H * 0.125,
     rightTop: H * 0.17,
-    spEdge: H * 0.03,
+    spEdge: Math.max(H * 0.04, 24 * k),
   };
   pole.bottom = hillY(pole.x) + 2;
   const wireY = (w, x) => {

@@ -5,7 +5,11 @@ const localChrome = process.platform === 'win32' && existsSync('C:/Program Files
 const channel = !process.env.CI && localChrome ? 'chrome' : undefined;
 export default defineConfig({
   testDir: './tests/browser', timeout: 45000, fullyParallel: false, workers: 1,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  // on CI the GitHub reporter turns each failure into a check annotation, so
+  // the failing test and its error are readable without downloading the log
+  reporter: process.env.CI
+    ? [['list'], ['github'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:5174',
     trace: 'retain-on-failure', screenshot: 'only-on-failure',

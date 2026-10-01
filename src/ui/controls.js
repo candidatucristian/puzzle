@@ -13,7 +13,7 @@ import { mountHints } from './hints.js';
 import { mountProgress } from './progress.js';
 import { mountInspection } from './inspection.js';
 import { mountInteractionFeedback } from './interactions.js';
-import { mountMobile, isTouchDevice } from './mobile.js';
+import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -61,6 +61,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (event?.type === 'keydown' && event.target !== document.body && !start.contains(event.target)) return;
     if (started || dialogs.isOpen || start.classList.contains('hidden')) return;
     started = true; sessionStart = Date.now();
+    // a phone's first tap is the one gesture that may take the whole screen
+    if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
     if (!storage.getItem('hasPlayedBefore')) intro.play(() => navigate(levels.currentIndex));
     else navigate(levels.currentIndex);
   }
