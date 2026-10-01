@@ -82,6 +82,8 @@ The larger scenes also use these boundaries:
 
 The common vignette is in `shared/vignette.js`; short paper/chime synthesizers are in `shared/puzzleSounds.js`. `BasePuzzleScene` delegates drawing helpers and lets scenes retain their original circle sampling/jitter parameters. Shared audio effects still route through the scene's master destination and SFX setting.
 
+The painted night rooms (Telescope, TV, Wires, Station) share `shared/moon.js` and `shared/glints.js`: a four-point sparkle texture, a soft glow texture, `twinkle()` for lights that come and go through the scene's ambient tweens, and `flicker()` for a flame or an old tube. Each scene paints its own room once per screen size onto canvas textures (`room.js`, `parlour.js`, `meadow.js`, `hall.js`) and keeps only what moves live, so it releases those textures on resize and shutdown.
+
 ## Audio
 
 Create one `AudioManager(storage)` for the application, then `attach(game)`. Its `state` exposes `masterVol`, `musicVol`, `sfxVol`, `muted`, and `bgmInstance`. Read this state for presentation; change settings through the service methods so persistence and live sound updates happen together.
