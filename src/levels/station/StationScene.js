@@ -1,4 +1,5 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintHall, releaseHallArt } from "./hall.js";
 import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
 
@@ -379,26 +380,8 @@ export default class StationScene extends BasePuzzleScene {
     });
   }
 
-  _drawTexts(W) {
-    this.levelText = this.add
-      .text(
-        W - 30,
-        28,
-        "Level " +
-          (this.services.levels.definitions.findIndex(
-            (l) => l.key === this.scene.key,
-          ) +
-            1),
-        {
-          fontFamily: '"Special Elite", monospace',
-          fontSize: "28px",
-          color: "#e8dcc0",
-        },
-      )
-      .setOrigin(1, 0)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
+  _drawTexts(W, H) {
+    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // slow dust motes drifting through the lamp's light, a few of them

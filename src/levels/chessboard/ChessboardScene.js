@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintParlour, releaseParlourArt, releasePieceArt } from "./parlour.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -166,27 +167,13 @@ export default class ChessboardScene extends BasePuzzleScene {
     }
   }
 
-  _drawTexts(W) {
-    this.levelText = this.add
-      .text(
-        W - 30,
-        30,
-        "Level " +
-          (this.services.levels.definitions.findIndex(
-            (l) => l.key === this.scene.key,
-          ) +
-            1),
-        {
-          fontFamily: CH_FONT,
-          fontSize: "28px",
-          color: "#f0e2c4",
-        },
-      )
-      .setOrigin(1, 0)
-      .setShadow(0, 2, "rgba(10,4,2,0.9)", 8, false, true)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
+  _drawTexts(W, H) {
+    this.levelText = drawLevelLabel(this, W, H, {
+      y: 30,
+      font: CH_FONT,
+      color: "#f0e2c4",
+      shadow: "rgba(10,4,2,0.9)",
+    });
   }
 
   // soft wooden knock — a piece lifted (higher) or set down (lower)

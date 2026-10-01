@@ -2,6 +2,7 @@ import { CALLER_NUMBER, CALLER_NAME, PHONE_COMMIT_MS, createPhoneInput, pressPho
 import DeskView from "./DeskView.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { PENCIL } from "../../shared/theme.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,26 +75,9 @@ export default class MobilePhoneScene extends BasePuzzleScene {
 
     this.desk.build(width, height, this._phoneLayout(width, height));
 
-    this.levelText = this.add
-      .text(
-        width - 30,
-        30,
-        "Level " +
-          (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1),
-        {
-          fontFamily: MP_FONT,
-          fontSize: "28px",
-          color: "#e8dcc0",
-        },
-      )
-      .setOrigin(1, 0)
-      .setAlpha(0)
-      .setDepth(20);
-
-    this.tweens.add({
-      targets: this.levelText,
-      alpha: 1,
-      duration: 2000,
+    this.levelText = drawLevelLabel(this, width, height, {
+      y: 30,
+      font: MP_FONT,
       ease: "Power2",
     });
 

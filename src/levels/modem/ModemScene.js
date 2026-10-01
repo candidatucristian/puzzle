@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { planTransmission } from "./puzzle.js";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintRoom, releaseRoomArt } from "./room.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,7 +67,7 @@ export default class ModemScene extends BasePuzzleScene {
     this.add.image(0, 0, art.keys.room).setOrigin(0, 0).setDepth(0);
     this._makeLeds(art);
     this._makeMotes(art);
-    this._drawTexts(W);
+    this._drawTexts(W, H);
     this._built = true;
   }
 
@@ -118,17 +119,8 @@ export default class ModemScene extends BasePuzzleScene {
     m.img.setDisplaySize(s, s);
   }
 
-  _drawTexts(W) {
-    const lvl = this.add
-      .text(W - 30, 28, "Level " + (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "28px",
-        color: "#e8dcc0",
-      })
-      .setOrigin(1, 0)
-      .setAlpha(0)
-      .setDepth(20);
-    this.tweens.add({ targets: lvl, alpha: 1, duration: 2000 });
+  _drawTexts(W, H) {
+    drawLevelLabel(this, W, H);
   }
 
   update(time, delta) {

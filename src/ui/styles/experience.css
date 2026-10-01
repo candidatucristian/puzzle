@@ -117,8 +117,9 @@
 [data-ambient-motion="false"] .level-btn.current { animation: none; }
 [data-ambient-effects="false"] #start-particles { visibility: hidden; }
 [data-reduced-motion="true"] #start-screen,
-[data-reduced-motion="true"] .mobile-block-card,
 [data-reduced-motion="true"] .completion-card { animation: none; }
+/* the touch row in How to Play only matters where there is a finger */
+:root:not([data-touch="true"]) .howto-touch { display: none; }
 [data-reduced-motion="true"] .menu-btn,
 [data-reduced-motion="true"] #intro-screen,
 [data-reduced-motion="true"] #intro-line,

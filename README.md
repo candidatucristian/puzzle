@@ -1,6 +1,6 @@
 # The Descipher
 
-A desktop browser puzzle game with hand-drawn environments, independent Phaser scenes, and an HTML/CSS interface. Phaser remains at **3.60.0**; the project uses JavaScript ES modules and Vite for development and production builds.
+A browser puzzle game with hand-drawn environments, independent Phaser scenes, and an HTML/CSS interface, playable on desktops and on phones and tablets held sideways. Phaser remains at **3.60.0**; the project uses JavaScript ES modules and Vite for development and production builds.
 
 ## Run locally
 
@@ -67,6 +67,12 @@ Level-specific CSS and complex components live beside their scenes. Larger level
 Read [the architecture guide](docs/ARCHITECTURE.md) for ownership and dependencies, or [Adding a level](docs/ADDING_LEVEL.md) before creating a new scene.
 
 While the development server is running, the reference ledger is available at `http://127.0.0.1:5173/tools/levels/`. It imports the shared metadata directly, includes solutions for development reference, and is excluded from the production build.
+
+## Phones and tablets
+
+Below 1100px of width (or 560px of height) the interface switches to one column: a compact bar on top, the room in the middle, the console on one row at the bottom. The two sidebars become drawers behind the bar's menu and Levels buttons (`src/ui/mobile.js`, `src/ui/styles/responsive.css`). A phone held upright is asked to turn; the rooms are drawn wide. Full Screen locks the orientation to landscape where the browser allows it (Android); iPhones have no full-screen API, so the page can be added to the home screen instead, through the linked web manifest.
+
+The rooms receive a smaller canvas and keep working: taps replace clicks, drags stay drags, and Phaser raises hover events at a tap, so rooms that light up on hover light up under a finger. The "Level N" label scales with the canvas through `shared/levelLabel.js`. While the on-screen keyboard is up for the code box, the room is clipped rather than repainted. The browser suite runs its desktop checks at 1440×1000 and `tests/browser/mobile.spec.js` on an emulated Pixel 7 in landscape.
 
 ## Saves and audio
 
