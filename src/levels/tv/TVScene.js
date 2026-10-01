@@ -22,6 +22,16 @@ import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
 
 // where the set stands: its centre, as a fraction of the screen's height
 const TV_CENTRE_Y = 0.46;
+// under this canvas height (a phone held sideways) the set is laid out
+// round its screen instead of standing in the room
+const TV_SMALL_H = 400;
+// in the set's own pixels (a 600-wide wrapper): where the screen starts, and
+// where the knobs end — what has to fit on a small canvas
+const TV_SCREEN_TOP = 57.6;
+const TV_SCREEN_W = 456;
+const TV_SCREEN_H = 307;
+const TV_KNOB_BOTTOM = 455;
+const TV_WRAPPER_HALF_H = 240;
 const SPARKLE = "tv_sparkle";
 
 // Channel images — sampled by the CRT shader as the broadcast picture.
@@ -239,12 +249,33 @@ export default class TVScene extends BasePuzzleScene {
 
   // how big the set is, and where it stands, for this screen
   _tvBox(W, H) {
+    if (H < TV_SMALL_H) {
+      // a phone: the screen fills the height, with the knobs just under it
+      // and in reach; the cabinet's top and its legs run off the canvas
+      const s = Phaser.Math.Clamp(Math.min((W * 0.9) / 616, (H - 8) / (TV_KNOB_BOTTOM - TV_SCREEN_TOP)), 0.3, 1.1);
+      return { cx: W / 2, cy: 4 + (TV_WRAPPER_HALF_H - TV_SCREEN_TOP) * s, s, small: true };
+    }
     const s = Phaser.Math.Clamp(
       Math.min((W * 0.72) / 616, (H * 0.72) / 600),
       0.35,
       1.1,
     );
-    return { cx: W / 2, cy: H * TV_CENTRE_Y, s };
+    return { cx: W / 2, cy: H * TV_CENTRE_Y, s, small: false };
+  }
+
+  // the captions on a small screen: as large as the screen can hold every
+  // channel's lines, in CSS pixels on the screen
+  _captionPx(s) {
+    const lines = Math.max(...this._CHANNELS.map((c) => c.lines.filter(Boolean).length));
+    const blanks = Math.max(...this._CHANNELS.map((c) => c.lines.filter((l) => !l).length));
+    const chars = Math.max(...this._CHANNELS.map((c) => Math.max(...c.lines.map((l) => l.length), (c.station || "").length)));
+    const screenW = TV_SCREEN_W * s;
+    const screenH = TV_SCREEN_H * s;
+    // the title's band and the body's padding, then every line at 1.2, every
+    // blank at 0.55, the title itself a tenth larger
+    const heightFit = (screenH * 0.92 - 20) / (lines * 1.2 + blanks * 0.55 + 1.1 * 1.2);
+    const widthFit = (screenW - 20) / (chars * 0.602);
+    return Phaser.Math.Clamp(Math.min(heightFit, widthFit), 8, 13);
   }
 
   // the room is painted again from scratch for every size; everything that
@@ -441,9 +472,20 @@ export default class TVScene extends BasePuzzleScene {
   _layoutTV() {
     if (!this._dom) return;
     // the set stands exactly where the painted room expects it
-    const { s } = this._tvBox(this._W, this._H);
-    this._dom.wrapper.style.setProperty("--da-s", s.toFixed(3));
-    this._dom.wrapper.style.setProperty("--da-y", `${TV_CENTRE_Y * 100}%`);
+    const { cy, s, small } = this._tvBox(this._W, this._H);
+    const w = this._dom.wrapper;
+    w.style.setProperty("--da-s", s.toFixed(3));
+    w.style.setProperty("--da-y", `${((cy / this._H) * 100).toFixed(2)}%`);
+    w.classList.toggle("tv-wrapper--small", small);
+    if (small) {
+      // the captions are set in the wrapper's pixels, which the scale divides
+      const px = this._captionPx(s);
+      w.style.setProperty("--da-bd", `${(px / s).toFixed(2)}px`);
+      w.style.setProperty("--da-st", `${((px * 1.1) / s).toFixed(2)}px`);
+    } else {
+      w.style.removeProperty("--da-bd");
+      w.style.removeProperty("--da-st");
+    }
   }
 
   // ── Channel images → CRT buffer ───────────────────────────────────────────────
@@ -487,7 +529,15 @@ export default class TVScene extends BasePuzzleScene {
     } else {
       this._dom.st.style.display = "none";
     }
-    this._dom.bd.textContent = ch.lines.join("\n");
+    // a line each, so a blank line can be a shorter gap on a small screen
+    this._dom.bd.replaceChildren(
+      ...ch.lines.map((line) => {
+        const ln = document.createElement("div");
+        ln.className = line ? "ln" : "ln ln--gap";
+        ln.textContent = line;
+        return ln;
+      }),
+    );
     // the dial's needle swings to the current channel
     if (this._dom.needle) {
       this._dom.needle.style.transform = `rotate(${-54 + this._channel * 36}deg)`;
