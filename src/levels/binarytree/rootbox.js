@@ -41,7 +41,9 @@ export function layoutRootBox(W, H) {
   // middle 80 % of the width, as the old diagram's nodes were
   const x = (d, i) => W * 0.1 + (W * 0.8 * (i + 0.5)) / 2 ** d;
   const ys = [0.09, 0.23, 0.37, 0.505].map((k) => soilY + H * k);
-  const forks = [0, 1, 2].map((d) => Array.from({ length: 2 ** d }, (_, i) => ({ x: x(d, i), y: ys[d] })));
+  const forks = [0, 1, 2].map((d) =>
+    Array.from({ length: 2 ** d }, (_, i) => ({ x: x(d, i), y: ys[d] })),
+  );
   const tips = Array.from({ length: 8 }, (_, i) => ({ x: x(3, i), y: ys[3] }));
   return {
     W,
@@ -60,7 +62,12 @@ export function layoutRootBox(W, H) {
     start: { x: W / 2, y: soilY },
     letterY: ys[3] + H * 0.045,
     hand: Math.max(13, S * 0.03), // the height of the gardener's writing
-    tape: { x: W / 2, y: (base + shelf) / 2, w: Math.min(W * 0.72, 760 * u), h: (shelf - base) * 0.56 },
+    tape: {
+      x: W / 2,
+      y: (base + shelf) / 2,
+      w: Math.min(W * 0.72, 760 * u),
+      h: (shelf - base) * 0.56,
+    },
     // the seedling's scale, about 1 px to its unit (it stands about 82 of
     // them tall), kept clear of the line of text at the top of the screen
     seedling: Math.min(S / 620, (soilY - 62) / 82),
@@ -79,7 +86,16 @@ export function layoutRootBox(W, H) {
  *  the first fork, then each fork's left and right. `w0`/`w1` its thickness
  *  at either end, as a share of the smaller screen side. */
 export function rootSegments(L) {
-  const segs = [{ a: L.start, b: L.forks[0][0], w0: 0.0105, w1: 0.009, depth: 0, bend: L.W * 0.004 }];
+  const segs = [
+    {
+      a: L.start,
+      b: L.forks[0][0],
+      w0: 0.0105,
+      w1: 0.009,
+      depth: 0,
+      bend: L.W * 0.004,
+    },
+  ];
   const widths = [
     [0.0078, 0.0058],
     [0.0052, 0.0038],
@@ -89,7 +105,14 @@ export function rootSegments(L) {
   for (let d = 0; d < 3; d++) {
     levels[d].forEach((p, i) => {
       for (const c of [2 * i, 2 * i + 1]) {
-        segs.push({ a: p, b: levels[d + 1][c], w0: widths[d][0], w1: widths[d][1], depth: d + 1, bend: 0 });
+        segs.push({
+          a: p,
+          b: levels[d + 1][c],
+          w0: widths[d][0],
+          w1: widths[d][1],
+          depth: d + 1,
+          bend: 0,
+        });
       }
     });
   }
@@ -107,8 +130,16 @@ export function rootPoint(s, t) {
   const c2y = s.b.y - dy * 0.45;
   const m = 1 - t;
   return {
-    x: m * m * m * s.a.x + 3 * m * m * t * c1x + 3 * m * t * t * c2x + t * t * t * s.b.x,
-    y: m * m * m * s.a.y + 3 * m * m * t * c1y + 3 * m * t * t * c2y + t * t * t * s.b.y,
+    x:
+      m * m * m * s.a.x +
+      3 * m * m * t * c1x +
+      3 * m * t * t * c2x +
+      t * t * t * s.b.x,
+    y:
+      m * m * m * s.a.y +
+      3 * m * m * t * c1y +
+      3 * m * t * t * c2y +
+      t * t * t * s.b.y,
   };
 }
 
@@ -136,7 +167,8 @@ export function paintRootBox(scene, W, H) {
 }
 
 export function releaseRootBoxArt(textures) {
-  for (const key of Object.values(K)) if (textures.exists(key)) textures.remove(key);
+  for (const key of Object.values(K))
+    if (textures.exists(key)) textures.remove(key);
 }
 
 function paintWallLayer(L) {
@@ -178,10 +210,27 @@ function paintWall(ctx, L) {
   ctx.fillRect(0, 0, W, H);
   const rnd = lcg(1717);
   for (let i = 0; i < 220; i++) {
-    softEllipse(ctx, rnd() * W, rnd() * H, 20 + rnd() * 60, 10 + rnd() * 30, rnd() < 0.5 ? "0,0,0" : "255,240,220", 0.035);
+    softEllipse(
+      ctx,
+      rnd() * W,
+      rnd() * H,
+      20 + rnd() * 60,
+      10 + rnd() * 30,
+      rnd() < 0.5 ? "0,0,0" : "255,240,220",
+      0.035,
+    );
   }
   // light thrown back off the patch onto the wall round it
-  softEllipse(ctx, W * 0.1, H * 0.12, W * 0.42, H * 0.34, "255,206,150", 0.13, "lighter");
+  softEllipse(
+    ctx,
+    W * 0.1,
+    H * 0.12,
+    W * 0.42,
+    H * 0.34,
+    "255,206,150",
+    0.13,
+    "lighter",
+  );
   // the patch, painted small and drawn up so that its edges come out soft,
   // as the sun's edges are
   const R = 0.25;
@@ -244,7 +293,8 @@ function paintShelf(ctx, L) {
   ctx.lineWidth = 1;
   for (let i = 0; i < 16; i++) {
     const y = shelf + rnd() * (lip - shelf);
-    ctx.strokeStyle = rnd() < 0.6 ? "rgba(40,26,14,0.25)" : "rgba(255,225,180,0.1)";
+    ctx.strokeStyle =
+      rnd() < 0.6 ? "rgba(40,26,14,0.25)" : "rgba(255,225,180,0.1)";
     ctx.beginPath();
     ctx.moveTo(0, y);
     for (let x = 0; x <= W; x += W / 12) ctx.lineTo(x, y + (rnd() - 0.5) * 2);
@@ -266,7 +316,15 @@ function paintShelf(ctx, L) {
     ctx.stroke();
   }
   // the box's shadow: dark where it stands, and thrown to the right
-  softEllipse(ctx, (frame.x0 + frame.x1) / 2 + W * 0.03, shelf + 2 * u, (frame.x1 - frame.x0) * 0.54, (lip - shelf) * 0.5, "0,0,0", 0.55);
+  softEllipse(
+    ctx,
+    (frame.x0 + frame.x1) / 2 + W * 0.03,
+    shelf + 2 * u,
+    (frame.x1 - frame.x0) * 0.54,
+    (lip - shelf) * 0.5,
+    "0,0,0",
+    0.55,
+  );
   ctx.fillStyle = "rgba(0,0,0,0.5)";
   ctx.fillRect(frame.x0, shelf - 1, frame.x1 - frame.x0, Math.max(2, 3 * u));
 }
@@ -291,7 +349,8 @@ function paintSoil(ctx, L) {
   const rnd = lcg(2020);
   const clip = new Path2D();
   clip.moveTo(x0, soilY + 2);
-  for (let x = x0; x <= x1; x += 6) clip.lineTo(x, soilY + (rnd() - 0.5) * 3 + Math.sin(x * 0.02) * 1.5);
+  for (let x = x0; x <= x1; x += 6)
+    clip.lineTo(x, soilY + (rnd() - 0.5) * 3 + Math.sin(x * 0.02) * 1.5);
   clip.lineTo(x1, y1);
   clip.lineTo(x0, y1);
   clip.closePath();
@@ -300,7 +359,13 @@ function paintSoil(ctx, L) {
   // the body of it: crumbs and clods lit through the glass from the window,
   // painted at half size and drawn up
   const y0 = soilY - 4;
-  ctx.drawImage(soilTexture((x1 - x0) / 2, (y1 - y0) / 2, u, rnd), x0, y0, x1 - x0, y1 - y0);
+  ctx.drawImage(
+    soilTexture((x1 - x0) / 2, (y1 - y0) / 2, u, rnd),
+    x0,
+    y0,
+    x1 - x0,
+    y1 - y0,
+  );
   // drier and paler at the top, darker and damper further down
   const g = ctx.createLinearGradient(0, soilY, 0, y1);
   g.addColorStop(0, "rgba(150,112,74,0.3)");
@@ -338,7 +403,12 @@ function paintSoil(ctx, L) {
     ctx.lineWidth = 0.6 + rnd() * 0.5;
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(x + Math.cos(a + 0.5) * len * 0.5, y + Math.sin(a + 0.5) * len * 0.5, x + Math.cos(a) * len, y + Math.sin(a) * len);
+    ctx.quadraticCurveTo(
+      x + Math.cos(a + 0.5) * len * 0.5,
+      y + Math.sin(a + 0.5) * len * 0.5,
+      x + Math.cos(a) * len,
+      y + Math.sin(a) * len,
+    );
     ctx.stroke();
   }
   for (let i = 0, n = area / 16000; i < n; i++) {
@@ -351,7 +421,15 @@ function paintSoil(ctx, L) {
     ctx.fillStyle = "rgba(222,218,206,0.7)";
     for (let j = 0; j < 3; j++) {
       ctx.beginPath();
-      ctx.ellipse(x + (rnd() - 0.5) * r, y + (rnd() - 0.5) * r, r * (0.5 + rnd() * 0.4), r * (0.4 + rnd() * 0.3), rnd() * 3, 0, Math.PI * 2);
+      ctx.ellipse(
+        x + (rnd() - 0.5) * r,
+        y + (rnd() - 0.5) * r,
+        r * (0.5 + rnd() * 0.4),
+        r * (0.4 + rnd() * 0.3),
+        rnd() * 3,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
     }
   }
@@ -365,7 +443,8 @@ function paintSoil(ctx, L) {
       }
     }
     if (Math.abs(y - L.letterY) < L.hand * 1.3) return false;
-    if (Math.abs(x - (L.start.x - S * 0.12)) < S * 0.1 && y < soilY + S * 0.07) return false;
+    if (Math.abs(x - (L.start.x - S * 0.12)) < S * 0.1 && y < soilY + S * 0.07)
+      return false;
     return y > soilY + H * 0.02;
   };
   for (let i = 0; i < 16; i++) {
@@ -377,7 +456,8 @@ function paintSoil(ctx, L) {
   ctx.restore();
   // the surface: a crust of dry crumbs, lit from the window
   ctx.fillStyle = "rgba(160,122,82,0.4)";
-  for (let x = x0; x < x1; x += 3) ctx.fillRect(x, soilY - 1 + (rnd() - 0.5) * 2.5, 2.2, 1.6);
+  for (let x = x0; x < x1; x += 3)
+    ctx.fillRect(x, soilY - 1 + (rnd() - 0.5) * 2.5, 2.2, 1.6);
 }
 
 // Loam, w × h: a height-field of crumbs and clods at several sizes, shaded
@@ -390,16 +470,26 @@ function soilTexture(w, h, u, rnd) {
   const ch = c.height;
   const g = c.getContext("2d");
   const img = g.createImageData(cw, ch);
-  const hgt = fractalNoise(cw, ch, [
-    [22 * u, 0.4],
-    [8 * u, 0.3],
-    [3.2, 0.19],
-    [1.5, 0.11],
-  ], rnd);
-  const tone = fractalNoise(cw, ch, [
-    [70 * u, 0.65],
-    [20 * u, 0.35],
-  ], rnd);
+  const hgt = fractalNoise(
+    cw,
+    ch,
+    [
+      [22 * u, 0.4],
+      [8 * u, 0.3],
+      [3.2, 0.19],
+      [1.5, 0.11],
+    ],
+    rnd,
+  );
+  const tone = fractalNoise(
+    cw,
+    ch,
+    [
+      [70 * u, 0.65],
+      [20 * u, 0.35],
+    ],
+    rnd,
+  );
   const lx = -0.5;
   const ly = -0.62;
   const lz = 0.6;
@@ -410,9 +500,16 @@ function soilTexture(w, h, u, rnd) {
     const dn = Math.min(ch - 1, y + 1) * cw;
     for (let x = 0; x < cw; x++) {
       const i = y * cw + x;
-      const nx = -(hgt[y * cw + Math.min(cw - 1, x + 1)] - hgt[y * cw + Math.max(0, x - 1)]) * 7;
+      const nx =
+        -(
+          hgt[y * cw + Math.min(cw - 1, x + 1)] -
+          hgt[y * cw + Math.max(0, x - 1)]
+        ) * 7;
       const ny = -(hgt[dn + x] - hgt[up + x]) * 7;
-      const diff = Math.max(0, (nx * lx + ny * ly + lz) / (Math.hypot(nx, ny, 1) * ll));
+      const diff = Math.max(
+        0,
+        (nx * lx + ny * ly + lz) / (Math.hypot(nx, ny, 1) * ll),
+      );
       const ao = smoothstep(0.3, 0.68, hgt[i]);
       const t = smoothstep(0.3, 0.7, tone[i]);
       const shade = (0.22 + 0.95 * diff) * (0.3 + 0.7 * ao);
@@ -438,7 +535,10 @@ function stone(ctx, x, y, r, rnd) {
     const rr = r * (0.82 + rnd() * 0.3);
     const px = Math.cos(a) * rr;
     const py = Math.sin(a) * rr * flat;
-    pts.push([x + px * Math.cos(rot) - py * Math.sin(rot), y + px * Math.sin(rot) + py * Math.cos(rot)]);
+    pts.push([
+      x + px * Math.cos(rot) - py * Math.sin(rot),
+      y + px * Math.sin(rot) + py * Math.cos(rot),
+    ]);
   }
   const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   const path = new Path2D();
@@ -451,9 +551,18 @@ function stone(ctx, x, y, r, rnd) {
   path.closePath();
   softEllipse(ctx, x + r * 0.25, y + r * 0.3, r * 1.4, r * 1.2, "0,0,0", 0.6);
   const tone = rnd();
-  const base = tone < 0.45 ? [88, 80, 70] : tone < 0.8 ? [100, 80, 60] : [72, 68, 66];
-  const col = (k, add = 0) => `rgb(${base.map((v) => Math.round(Math.min(255, v * k + add))).join(",")})`;
-  const g = ctx.createRadialGradient(x - r * 0.4, y - r * 0.45, r * 0.1, x, y, r * 1.15);
+  const base =
+    tone < 0.45 ? [88, 80, 70] : tone < 0.8 ? [100, 80, 60] : [72, 68, 66];
+  const col = (k, add = 0) =>
+    `rgb(${base.map((v) => Math.round(Math.min(255, v * k + add))).join(",")})`;
+  const g = ctx.createRadialGradient(
+    x - r * 0.4,
+    y - r * 0.45,
+    r * 0.1,
+    x,
+    y,
+    r * 1.15,
+  );
   g.addColorStop(0, col(1, 20));
   g.addColorStop(0.55, col(0.85));
   g.addColorStop(1, col(0.35));
@@ -503,7 +612,8 @@ function paintRoot(ctx, L) {
     }
     const path = new Path2D();
     left.forEach(([x, y], i) => (i ? path.lineTo(x, y) : path.moveTo(x, y)));
-    for (let i = right.length - 1; i >= 0; i--) path.lineTo(right[i][0], right[i][1]);
+    for (let i = right.length - 1; i >= 0; i--)
+      path.lineTo(right[i][0], right[i][1]);
     path.closePath();
     return path;
   };
@@ -533,11 +643,17 @@ function paintRoot(ctx, L) {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.beginPath();
-      pts.forEach((q, k) => (k ? ctx.lineTo(q.x + dx, q.y) : ctx.moveTo(q.x + dx, q.y)));
+      pts.forEach((q, k) =>
+        k ? ctx.lineTo(q.x + dx, q.y) : ctx.moveTo(q.x + dx, q.y),
+      );
       ctx.stroke();
     };
     run(S * s.w0 * 0.3, S * s.w0 * 0.5, "rgba(90,66,40,0.35)");
-    run(-S * s.w0 * 0.12, Math.max(0.8, S * s.w0 * 0.18), "rgba(255,252,240,0.55)");
+    run(
+      -S * s.w0 * 0.12,
+      Math.max(0.8, S * s.w0 * 0.18),
+      "rgba(255,252,240,0.55)",
+    );
     // faint rings where it has grown
     ctx.strokeStyle = "rgba(120,96,64,0.25)";
     ctx.lineWidth = 0.8;
@@ -564,7 +680,9 @@ function paintRoot(ctx, L) {
       const t = 0.45 + rnd() * 0.47;
       const p = rootPoint(s, t);
       const q = rootPoint(s, Math.min(1, t + 0.02));
-      const ang = Math.atan2(q.y - p.y, q.x - p.x) + (rnd() < 0.5 ? 1 : -1) * (1.1 + rnd() * 0.8);
+      const ang =
+        Math.atan2(q.y - p.y, q.x - p.x) +
+        (rnd() < 0.5 ? 1 : -1) * (1.1 + rnd() * 0.8);
       const len = S * (0.0025 + rnd() * 0.0065) * (1.2 - (t - 0.45) * 1.4);
       ctx.strokeStyle = `rgba(238,230,210,${0.1 + rnd() * 0.16})`;
       ctx.beginPath();
@@ -611,13 +729,31 @@ function paintSeedling(ctx, L) {
   offset(1.5, 1.4, "rgba(30,50,24,0.45)");
   offset(-1.2, 1.1, "rgba(240,252,225,0.65)");
   // the second true leaf, just showing, behind the rest
-  trueLeaf(ctx, { x: 0, y: -56 }, { x: -1.5, y: -62 }, -Math.PI / 2 - 0.55, 0.55, ["#6f9888", "#3e6456"]);
+  trueLeaf(
+    ctx,
+    { x: 0, y: -56 },
+    { x: -1.5, y: -62 },
+    -Math.PI / 2 - 0.55,
+    0.55,
+    ["#6f9888", "#3e6456"],
+  );
   // the seed leaves on their stalks, the one toward the window a touch
   // brighter
-  cotyledon(ctx, { x: 0, y: -56 }, { x: -9, y: -63 }, Math.PI + 0.24, 1.25, ["#aed477", "#72a242", "#4a7a2a"]);
-  cotyledon(ctx, { x: 0, y: -56 }, { x: 10, y: -62.5 }, -0.2, 1.25, ["#9cc668", "#62923a", "#3e6a22"]);
+  cotyledon(ctx, { x: 0, y: -56 }, { x: -9, y: -63 }, Math.PI + 0.24, 1.25, [
+    "#aed477",
+    "#72a242",
+    "#4a7a2a",
+  ]);
+  cotyledon(ctx, { x: 0, y: -56 }, { x: 10, y: -62.5 }, -0.2, 1.25, [
+    "#9cc668",
+    "#62923a",
+    "#3e6a22",
+  ]);
   // the first true leaf, opening upright between them
-  trueLeaf(ctx, { x: 0, y: -56 }, { x: 0.8, y: -64 }, -Math.PI / 2 + 0.14, 1, ["#7ea596", "#46705f"]);
+  trueLeaf(ctx, { x: 0, y: -56 }, { x: 0.8, y: -64 }, -Math.PI / 2 + 0.14, 1, [
+    "#7ea596",
+    "#46705f",
+  ]);
   ctx.restore();
 }
 
@@ -683,7 +819,11 @@ function trueLeaf(ctx, from, to, angle, size, [body, rim]) {
   for (let i = 0; i <= 40; i++) {
     const a = (i / 40) * Math.PI * 2;
     const x = 8.5 - Math.cos(a) * 8.5;
-    const y = 7.2 * Math.sin(a) * (0.72 + 0.28 * (x / 17)) * (1 + 0.07 * Math.sin(a * 9));
+    const y =
+      7.2 *
+      Math.sin(a) *
+      (0.72 + 0.28 * (x / 17)) *
+      (1 + 0.07 * Math.sin(a * 9));
     if (i) p.lineTo(x, y);
     else p.moveTo(x, y);
   }
@@ -764,7 +904,16 @@ function paintGlass(ctx, L) {
     ctx.fill();
   }
   // where a thumb has held it
-  softEllipse(ctx, x0 + (x1 - x0) * 0.86, y1 - H * 0.07, S * 0.04, S * 0.03, "255,250,240", 0.05, "screen");
+  softEllipse(
+    ctx,
+    x0 + (x1 - x0) * 0.86,
+    y1 - H * 0.07,
+    S * 0.04,
+    S * 0.03,
+    "255,250,240",
+    0.05,
+    "screen",
+  );
   ctx.restore();
   // the top edge of the pane, ground smooth, catching the light
   ctx.fillStyle = "rgba(150,190,170,0.55)";
@@ -786,18 +935,130 @@ const arc = (cx, cy, rx, ry, a0, a1, n = 12) => {
   return pts;
 };
 const GLYPHS = {
-  A: { w: 0.86, s: [[[0, 1], [0.43, 0], [0.86, 1]], [[0.18, 0.62], [0.68, 0.62]]] },
-  B: { w: 0.72, s: [[[0, 1], [0, 0], ...arc(0.4, 0.24, 0.3, 0.24, 90, -90, 10), [0, 0.48]], [[0.4, 0.48], ...arc(0.4, 0.74, 0.32, 0.26, 90, -90, 10), [0, 1]]] },
+  A: {
+    w: 0.86,
+    s: [
+      [
+        [0, 1],
+        [0.43, 0],
+        [0.86, 1],
+      ],
+      [
+        [0.18, 0.62],
+        [0.68, 0.62],
+      ],
+    ],
+  },
+  B: {
+    w: 0.72,
+    s: [
+      [[0, 1], [0, 0], ...arc(0.4, 0.24, 0.3, 0.24, 90, -90, 10), [0, 0.48]],
+      [[0.4, 0.48], ...arc(0.4, 0.74, 0.32, 0.26, 90, -90, 10), [0, 1]],
+    ],
+  },
   C: { w: 0.8, s: [arc(0.5, 0.5, 0.48, 0.5, 45, 315, 16)] },
-  D: { w: 0.78, s: [[[0, 0], [0, 1]], [[0, 0], [0.3, 0], ...arc(0.3, 0.5, 0.46, 0.5, 90, -90, 14), [0, 1]]] },
-  E: { w: 0.66, s: [[[0.66, 0], [0, 0], [0, 1], [0.66, 1]], [[0, 0.5], [0.5, 0.5]]] },
-  F: { w: 0.62, s: [[[0.62, 0], [0, 0], [0, 1]], [[0, 0.48], [0.48, 0.48]]] },
-  G: { w: 0.84, s: [[...arc(0.48, 0.5, 0.48, 0.5, 40, 330, 16), [0.9, 0.56], [0.52, 0.56]]] },
-  H: { w: 0.76, s: [[[0, 0], [0, 1]], [[0.76, 0], [0.76, 1]], [[0, 0.5], [0.76, 0.5]]] },
-  L: { w: 0.6, s: [[[0, 0], [0, 1], [0.6, 1]]] },
-  R: { w: 0.74, s: [[[0, 1], [0, 0], ...arc(0.36, 0.25, 0.34, 0.25, 90, -90, 10), [0, 0.5]], [[0.34, 0.5], [0.74, 1]]] },
-  S: { w: 0.7, s: [[...arc(0.36, 0.26, 0.33, 0.25, 20, 270, 12), ...arc(0.34, 0.74, 0.35, 0.26, 90, -160, 12)]] },
-  T: { w: 0.78, s: [[[0, 0], [0.78, 0]], [[0.39, 0], [0.39, 1]]] },
+  D: {
+    w: 0.78,
+    s: [
+      [
+        [0, 0],
+        [0, 1],
+      ],
+      [[0, 0], [0.3, 0], ...arc(0.3, 0.5, 0.46, 0.5, 90, -90, 14), [0, 1]],
+    ],
+  },
+  E: {
+    w: 0.66,
+    s: [
+      [
+        [0.66, 0],
+        [0, 0],
+        [0, 1],
+        [0.66, 1],
+      ],
+      [
+        [0, 0.5],
+        [0.5, 0.5],
+      ],
+    ],
+  },
+  F: {
+    w: 0.62,
+    s: [
+      [
+        [0.62, 0],
+        [0, 0],
+        [0, 1],
+      ],
+      [
+        [0, 0.48],
+        [0.48, 0.48],
+      ],
+    ],
+  },
+  G: {
+    w: 0.84,
+    s: [[...arc(0.48, 0.5, 0.48, 0.5, 40, 330, 16), [0.9, 0.56], [0.52, 0.56]]],
+  },
+  H: {
+    w: 0.76,
+    s: [
+      [
+        [0, 0],
+        [0, 1],
+      ],
+      [
+        [0.76, 0],
+        [0.76, 1],
+      ],
+      [
+        [0, 0.5],
+        [0.76, 0.5],
+      ],
+    ],
+  },
+  L: {
+    w: 0.6,
+    s: [
+      [
+        [0, 0],
+        [0, 1],
+        [0.6, 1],
+      ],
+    ],
+  },
+  R: {
+    w: 0.74,
+    s: [
+      [[0, 1], [0, 0], ...arc(0.36, 0.25, 0.34, 0.25, 90, -90, 10), [0, 0.5]],
+      [
+        [0.34, 0.5],
+        [0.74, 1],
+      ],
+    ],
+  },
+  S: {
+    w: 0.7,
+    s: [
+      [
+        ...arc(0.36, 0.26, 0.33, 0.25, 20, 270, 12),
+        ...arc(0.34, 0.74, 0.35, 0.26, 90, -160, 12),
+      ],
+    ],
+  },
+  T: {
+    w: 0.78,
+    s: [
+      [
+        [0, 0],
+        [0.78, 0],
+      ],
+      [
+        [0.39, 0],
+        [0.39, 1],
+      ],
+    ],
+  },
 };
 
 // a word written by hand, centred on (x, y), its capitals `h` tall: `pen` is
@@ -814,14 +1075,19 @@ function writeWord(ctx, word, x, y, h, pen, rnd, gap = 0.28) {
     if (gl) {
       const jit = () => (rnd() - 0.5) * h * 0.03;
       for (const stroke of gl.s) {
-        const pts = stroke.map(([px, py]) => [cx + px * h + (1 - py) * h * slant + jit(), top + py * h + jit()]);
+        const pts = stroke.map(([px, py]) => [
+          cx + px * h + (1 - py) * h * slant + jit(),
+          top + py * h + jit(),
+        ]);
         const draw = (w, style, dx = 0, dy = 0) => {
           ctx.strokeStyle = style;
           ctx.lineWidth = w;
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
           ctx.beginPath();
-          pts.forEach(([qx, qy], k) => (k ? ctx.lineTo(qx + dx, qy + dy) : ctx.moveTo(qx + dx, qy + dy)));
+          pts.forEach(([qx, qy], k) =>
+            k ? ctx.lineTo(qx + dx, qy + dy) : ctx.moveTo(qx + dx, qy + dy),
+          );
           ctx.stroke();
         };
         if (pen === "grease") {
@@ -845,7 +1111,16 @@ function writeWord(ctx, word, x, y, h, pen, rnd, gap = 0.28) {
 function paintWriting(ctx, L) {
   const { S, start, tips, letterY, hand } = L;
   const rnd = lcg(5151);
-  writeWord(ctx, "START", start.x - S * 0.12, start.y + S * 0.035, hand * 0.8, "grease", rnd, 0.3);
+  writeWord(
+    ctx,
+    "",
+    start.x - S * 0.12,
+    start.y + S * 0.035,
+    hand * 0.8,
+    "grease",
+    rnd,
+    0.3,
+  );
   ctx.lineCap = "round";
   ctx.strokeStyle = "rgba(240,236,224,0.7)";
   ctx.lineWidth = hand * 0.09;
@@ -860,7 +1135,9 @@ function paintWriting(ctx, L) {
   ctx.lineTo(bx, by);
   ctx.lineTo(bx - hand * 0.12, by + hand * 0.3);
   ctx.stroke();
-  tips.forEach((p, i) => writeWord(ctx, BINARY_LEAVES[i], p.x, letterY, hand * 1.25, "grease", rnd));
+  tips.forEach((p, i) =>
+    writeWord(ctx, BINARY_LEAVES[i], p.x, letterY, hand * 1.25, "grease", rnd),
+  );
 }
 
 // ── the frame ───────────────────────────────────────────────────────────────
@@ -884,7 +1161,16 @@ function paintFrame(ctx, L) {
   shadow(glass.x1, -post * 0.35);
   board(ctx, rnd, frame.x0, top, post, shelf - top, true, 1);
   board(ctx, rnd, frame.x1 - post, top, post, shelf - top, true, 0.35);
-  board(ctx, rnd, glass.x0, base, glass.x1 - glass.x0, shelf - base, false, 0.8);
+  board(
+    ctx,
+    rnd,
+    glass.x0,
+    base,
+    glass.x1 - glass.x0,
+    shelf - base,
+    false,
+    0.8,
+  );
   // the posts' ends: a worn, lighter arris along the top
   ctx.fillStyle = "rgba(255,228,186,0.45)";
   ctx.fillRect(frame.x0, top, post, 1.2);
@@ -917,8 +1203,11 @@ function paintFrame(ctx, L) {
 // a length of oak, its grain along it; `light` 0..1, from the shaded side to
 // the one the sun is on
 function board(ctx, rnd, x, y, w, h, vertical, light) {
-  const mix = (a, b) => `rgb(${a.map((v, i) => Math.round(b[i] + (v - b[i]) * light)).join(",")})`;
-  const g = vertical ? ctx.createLinearGradient(x, 0, x + w, 0) : ctx.createLinearGradient(0, y, 0, y + h);
+  const mix = (a, b) =>
+    `rgb(${a.map((v, i) => Math.round(b[i] + (v - b[i]) * light)).join(",")})`;
+  const g = vertical
+    ? ctx.createLinearGradient(x, 0, x + w, 0)
+    : ctx.createLinearGradient(0, y, 0, y + h);
   g.addColorStop(0, mix([206, 160, 108], [118, 86, 56]));
   g.addColorStop(0.2, mix([164, 118, 74], [94, 66, 42]));
   g.addColorStop(0.8, mix([118, 82, 48], [70, 48, 28]));
@@ -932,16 +1221,31 @@ function board(ctx, rnd, x, y, w, h, vertical, light) {
   ctx.lineWidth = 0.9;
   const n = Math.round((vertical ? w : h) / 2.2);
   for (let i = 0; i < n; i++) {
-    ctx.strokeStyle = rnd() < 0.55 ? "rgba(40,24,10,0.28)" : "rgba(255,220,170,0.08)";
+    ctx.strokeStyle =
+      rnd() < 0.55 ? "rgba(40,24,10,0.28)" : "rgba(255,220,170,0.08)";
     ctx.beginPath();
     if (vertical) {
       const gx = x + ((i + 0.5) * w) / n;
       ctx.moveTo(gx, y);
-      ctx.bezierCurveTo(gx + (rnd() - 0.5) * 4, y + h * 0.3, gx + (rnd() - 0.5) * 4, y + h * 0.7, gx, y + h);
+      ctx.bezierCurveTo(
+        gx + (rnd() - 0.5) * 4,
+        y + h * 0.3,
+        gx + (rnd() - 0.5) * 4,
+        y + h * 0.7,
+        gx,
+        y + h,
+      );
     } else {
       const gy = y + ((i + 0.5) * h) / n;
       ctx.moveTo(x, gy);
-      ctx.bezierCurveTo(x + w * 0.3, gy + (rnd() - 0.5) * 3, x + w * 0.7, gy + (rnd() - 0.5) * 3, x + w, gy);
+      ctx.bezierCurveTo(
+        x + w * 0.3,
+        gy + (rnd() - 0.5) * 3,
+        x + w * 0.7,
+        gy + (rnd() - 0.5) * 3,
+        x + w,
+        gy,
+      );
     }
     ctx.stroke();
   }
@@ -951,7 +1255,8 @@ function board(ctx, rnd, x, y, w, h, vertical, light) {
     const at = rnd() * along;
     const len = along * (0.08 + rnd() * 0.15);
     const across = (0.2 + rnd() * 0.6) * (vertical ? w : h);
-    if (vertical) softEllipse(ctx, x + across, y + at, 1.5, len, "40,22,8", 0.25);
+    if (vertical)
+      softEllipse(ctx, x + across, y + at, 1.5, len, "40,22,8", 0.25);
     else softEllipse(ctx, x + at, y + across, len, 1.5, "40,22,8", 0.25);
   }
   ctx.restore();
@@ -987,14 +1292,16 @@ function paintTape(ctx, L) {
   const y1 = tape.y + tape.h / 2;
   const torn = (x, dir) => {
     const pts = [];
-    for (let i = 0; i <= 8; i++) pts.push([x + dir * (rnd() * 4 - 1), y0 + ((y1 - y0) * i) / 8]);
+    for (let i = 0; i <= 8; i++)
+      pts.push([x + dir * (rnd() * 4 - 1), y0 + ((y1 - y0) * i) / 8]);
     return pts;
   };
   const left = torn(x0, 1);
   const right = torn(x1, -1);
   const p = new Path2D();
   left.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
-  for (let i = right.length - 1; i >= 0; i--) p.lineTo(right[i][0], right[i][1]);
+  for (let i = right.length - 1; i >= 0; i--)
+    p.lineTo(right[i][0], right[i][1]);
   p.closePath();
   // its shadow on the wood, then the tape, a touch translucent
   ctx.save();
@@ -1020,12 +1327,30 @@ function paintTape(ctx, L) {
     ctx.lineTo(x + 1, y1);
     ctx.stroke();
   }
-  softEllipse(ctx, x0 + tape.w * 0.25, y0, tape.w * 0.3, tape.h * 0.6, "255,250,235", 0.25, "screen");
+  softEllipse(
+    ctx,
+    x0 + tape.w * 0.25,
+    y0,
+    tape.w * 0.3,
+    tape.h * 0.6,
+    "255,250,235",
+    0.25,
+    "screen",
+  );
   // the routes, in marker
   const h = Math.min(tape.h * 0.52, S * 0.028);
   const cell = (tape.w * 0.94) / BINARY_PATHS.length;
   BINARY_PATHS.forEach((code, i) => {
-    writeWord(ctx, code, x0 + tape.w * 0.03 + cell * (i + 0.5), tape.y + h * 0.04, h, "marker", rnd, 0.22);
+    writeWord(
+      ctx,
+      code,
+      x0 + tape.w * 0.03 + cell * (i + 0.5),
+      tape.y + h * 0.04,
+      h,
+      "marker",
+      rnd,
+      0.22,
+    );
   });
   ctx.restore();
 }
@@ -1073,7 +1398,17 @@ function paintDapple(L) {
       const a = rnd() * Math.PI * 2;
       const d = rnd() * 34 * u;
       const len = (7 + rnd() * 8) * u;
-      softEllipse(ctx, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, len, len * 0.45, "34,24,14", 0.34 + rnd() * 0.22, "source-over", rnd() * Math.PI);
+      softEllipse(
+        ctx,
+        cx + Math.cos(a) * d,
+        cy + Math.sin(a) * d * 0.7,
+        len,
+        len * 0.45,
+        "34,24,14",
+        0.34 + rnd() * 0.22,
+        "source-over",
+        rnd() * Math.PI,
+      );
     }
   }
   return { canvas: c, at: { x: x0, y: y0, scale: 1 / R } };
@@ -1126,7 +1461,14 @@ function paintVeil(L) {
   const c = makeCanvas(W / 4, H / 4);
   const ctx = c.getContext("2d");
   ctx.scale(c.width / W, c.height / H);
-  const v = ctx.createRadialGradient(W * 0.42, H * 0.42, S * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
+  const v = ctx.createRadialGradient(
+    W * 0.42,
+    H * 0.42,
+    S * 0.35,
+    W / 2,
+    H / 2,
+    Math.hypot(W, H) * 0.62,
+  );
   v.addColorStop(0, "rgba(10,6,2,0)");
   v.addColorStop(1, "rgba(10,6,2,0.45)");
   ctx.fillStyle = v;
@@ -1181,7 +1523,9 @@ function fractalNoise(w, h, octaves, rnd) {
         const b = grid[r0 + ix + 1];
         const c = grid[r1 + ix];
         const d = grid[r1 + ix + 1];
-        out[y * w + x] += weight * (a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy);
+        out[y * w + x] +=
+          weight *
+          (a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy);
       }
     }
   }
@@ -1213,7 +1557,14 @@ function grain(ctx, W, H, alpha, op = "source-over") {
 function radial(size, rgb, stops) {
   const c = makeCanvas(size, size);
   const g = c.getContext("2d");
-  const r = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  const r = g.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2,
+  );
   for (const [o, a] of stops) r.addColorStop(o, `rgba(${rgb},${a})`);
   g.fillStyle = r;
   g.fillRect(0, 0, size, size);

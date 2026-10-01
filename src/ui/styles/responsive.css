@@ -1,3 +1,64 @@
+/* ── The console on a computer ──
+   Volume on the left, the code plate in the middle, HINT on the right:
+   three grid columns, so they can never ride over one another however
+   narrow the room gets (with the two ends pinned absolutely, a 1280- or
+   1366-wide laptop had the code box over the volume and HINT over the
+   restart key). */
+@media (min-width: 1101px) and (min-height: 561px) {
+  #input-area {
+    display: grid;
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    column-gap: 14px;
+    padding: 0 clamp(16px, 2.2vw, 40px);
+  }
+  .mute-button,
+  .info-button {
+    position: static;
+  }
+  .mute-button {
+    justify-self: start;
+  }
+  .info-button {
+    justify-self: end;
+  }
+}
+
+/* a laptop's narrower room: the plate and its keys draw in */
+@media (min-width: 1101px) and (max-width: 1500px) and (min-height: 561px) {
+  .input-container {
+    padding: 12px 10px 14px;
+  }
+  .input-wrapper {
+    gap: 8px;
+  }
+  #level-code {
+    width: clamp(110px, calc(100vw - 1080px), 300px);
+    font-size: 19px;
+    letter-spacing: 5px;
+  }
+  #btn-submit {
+    padding: 10px 16px;
+    letter-spacing: 3px;
+  }
+  #btn-replay {
+    width: 42px;
+  }
+  .info-button {
+    padding: 13px 18px;
+  }
+  .console-controls {
+    padding: 9px 11px;
+  }
+}
+
+/* narrower still: the volume keeps only its speaker (a tap mutes); the
+   sliders are in Options */
+@media (min-width: 1101px) and (max-width: 1350px) and (min-height: 561px) {
+  #vol-slider-ui {
+    display: none;
+  }
+}
+
 /* ── Phones and tablets ──
    Below 1100px (or under 560px tall) the three columns become one: a
    compact bar on top, the room filling the middle, the console on one

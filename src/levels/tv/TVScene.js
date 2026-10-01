@@ -411,7 +411,7 @@ export default class TVScene extends BasePuzzleScene {
       <div class="tv-wrapper">
         <div class="tv">
           ${cabinetSVG(8080)}
-          <canvas id="da-buffer" width="640" height="480" hidden></canvas>
+          <canvas id="da-buffer" width="1024" height="512" hidden></canvas>
           <div class="tv__screen">
             <canvas class="tv__fallback" id="da-fallback" width="640" height="480"></canvas>
             <shader-doodle shadertoy>
@@ -532,6 +532,10 @@ export default class TVScene extends BasePuzzleScene {
     });
   }
 
+  // The channel's picture, stretched over each canvas. The shader's buffer is
+  // 1024×512: WebGL 1 shrinks a texture whose sides are not powers of two
+  // (640×480 came out at 512×256, half its height gone), and the shader
+  // samples it 0..1 whatever its shape; the plain fallback stays 4:3.
   _drawBuffer() {
     if (!this._dom) return;
     const ch = this._CHANNELS[this._channel];

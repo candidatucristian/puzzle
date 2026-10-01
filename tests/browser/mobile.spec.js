@@ -5,8 +5,12 @@ import { evaluateApp } from './app.js';
 // Runs under the "phone" project only: an emulated Pixel 7 held sideways,
 // with touch, a coarse pointer and an 863×360 viewport.
 
+// In a phone's browser the game is not loaded at all (see the last test):
+// these checks run the compact layout as the store app will, inside a
+// native shell that says so through window.Capacitor (ui/platform.js).
 async function open(page, { unlocked = true } = {}) {
   await page.addInitScript(unlocked => {
+    window.Capacitor = { isNativePlatform: () => true };
     if (!localStorage.getItem('puzzleComfort')) localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced' }));
     if (unlocked && !localStorage.getItem('puzzleProgress')) {
       localStorage.setItem('puzzleProgressSchema', '2');
@@ -40,7 +44,7 @@ async function resizePhone(page, width, height) {
   }).toBeLessThan(1);
 }
 
-test('a phone is not blocked: the compact bar, a tap to begin, and the room filling the screen', async ({ page }) => {
+test('in the app a phone gets the compact bar, a tap to begin, and the room filling the screen', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, { unlocked: false });
   await expect(page.locator('#rotate-prompt')).toBeHidden();
@@ -301,4 +305,19 @@ test('the moon clue stays after a tap and resize, toggles off, and resets on rep
   await tapMoon();
   await navigate(page, 'Pi');
   expect(await sceneState(page, 'scene._secantGraphics.visible')).toBe(false);
+});
+
+test('a phone browser is shown the desktop-only page, and the game is never loaded', async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await expect(page.locator('#desktop-only')).toBeVisible();
+  await expect(page.locator('#desktop-only')).toContainText('PLEASE RETURN ON A DESKTOP');
+  await expect(page.locator('#loading-screen')).toHaveCount(0);
+  await expect(page.locator('#start-screen')).toBeHidden();
+  await expect(page.locator('#game-container canvas')).toHaveCount(0);
+  expect(await page.evaluate(async () => {
+    const entry = [...document.querySelectorAll('script[type="module"][src]')].find(script => new URL(script.src).pathname === '/src/entry.js');
+    return (await import(entry.src)).ready;
+  })).toBeNull();
+  expect(errors).toEqual([]);
 });

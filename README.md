@@ -1,6 +1,6 @@
 # The Descipher
 
-A browser puzzle game with hand-drawn environments, independent Phaser scenes, and an HTML/CSS interface, playable on desktops and on phones and tablets held sideways. Phaser remains at **3.60.0**; the project uses JavaScript ES modules and Vite for development and production builds.
+A browser puzzle game with hand-drawn environments, independent Phaser scenes, and an HTML/CSS interface, played in desktop browsers (phones and tablets are shown a desktop-only page; the compact phone layout is kept for a future store app). Phaser remains at **3.60.0**; the project uses JavaScript ES modules and Vite for development and production builds.
 
 ## Run locally
 
@@ -70,9 +70,11 @@ While the development server is running, the reference ledger is available at `h
 
 ## Phones and tablets
 
+In a browser the game is for computers. `src/ui/platform.js` recognises a phone or a tablet (by its user agent, an iPad asking for the desktop site by its touch points, or a device with only a finger and nothing that can hover; a touch-screen laptop still counts as a computer) and `src/entry.js` then shows the desktop-only page instead of loading the game. Inside a store app built with a native shell such as Capacitor, `window.Capacitor.isNativePlatform()` is true and the game runs on the phone in the compact layout below.
+
 Below 1100px of width (or 560px of height) the interface switches to one column: a compact bar on top, the room in the middle, the console on one row at the bottom. The two sidebars become drawers behind the bar's menu and Levels buttons (`src/ui/mobile.js`, `src/ui/styles/responsive.css`). The bar's full-screen button slides the top bar away and asks the browser for full screen where available; the code console stays visible. The top bar also has a handle to tap or pull up and down. A phone held upright is asked to turn; the rooms are drawn wide. The first tap on the start screen and the bar's full-screen button both request full screen and landscape orientation where the browser supports them. On iPhone, if full screen is unavailable, the button explains how to add the game to the Home Screen (Share → Add to Home Screen) and open it from that icon.
 
-The rooms receive a smaller canvas: taps replace clicks and cards can still be dragged. In level 13, tapping the moon keeps its clue visible until another tap. In level 18, tapping the calculator opens a larger keypad with the same display and calculation; closing it or resizing the screen keeps the result. Hints have a scrollable reading area on short screens, including with the largest text setting, and level 3 keeps its note clear of Inspect. The "Level N" label scales with the canvas through `shared/levelLabel.js`. While the on-screen keyboard is up for the code box, the room is clipped rather than repainted. The browser suite runs its desktop checks at 1440×1000 and `tests/browser/mobile.spec.js` with touch emulation, including phone viewports down to 568×320.
+The rooms receive a smaller canvas: taps replace clicks and cards can still be dragged. In level 13, tapping the moon keeps its clue visible until another tap. In level 18, tapping the calculator opens a larger keypad with the same display and calculation; closing it or resizing the screen keeps the result. Hints have a scrollable reading area on short screens, including with the largest text setting, and level 3 keeps its note clear of Inspect. The "Level N" label scales with the canvas through `shared/levelLabel.js`. While the on-screen keyboard is up for the code box, the room is clipped rather than repainted. The browser suite runs its desktop checks at 1440×1000 and `tests/browser/mobile.spec.js` with touch emulation, as the store app (a stubbed `window.Capacitor`), plus one check that a phone browser gets the desktop-only page, including phone viewports down to 568×320.
 
 ## Saves and audio
 

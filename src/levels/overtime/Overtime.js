@@ -127,9 +127,7 @@ export default class OvertimeScene extends BasePuzzleScene {
     zone.on("pointerdown", (pointer) => {
       if (!pointer.wasTouch) this._press(key);
     });
-    zone.on("pointerup", (pointer) => {
-      if (pointer.wasTouch) this._calculatorView.open();
-    });
+    this._openOnTap(zone);
     zone.on("pointerover", () => hover.setAlpha(1));
     zone.on("pointerout", () => hover.setAlpha(0));
     this._keys[key] = { zone, flash, hover, x: k.center.x, y: k.center.y };
@@ -147,7 +145,27 @@ export default class OvertimeScene extends BasePuzzleScene {
       .setDepth(9)
       .setInteractive({ useHandCursor: true })
       .setData('interactionLabel', 'Use calculator');
-    this._calculatorTarget.on('pointerup', () => this._calculatorView.open());
+    this._openOnTap(this._calculatorTarget);
+  }
+
+  // A finger that comes down on the calculator and lifts again opens the
+  // larger keypad. A mouse presses the keys themselves, and a lift that began
+  // elsewhere — a click or a tap on a dialog lying over the calculator, which
+  // the game still hears — opens nothing (it used to open the keypad behind
+  // the hints dialog, where it caught every click on Close).
+  _openOnTap(target) {
+    let down = null;
+    target.on("pointerdown", (pointer) => {
+      down = pointer.wasTouch ? pointer.id : null;
+    });
+    target.on("pointerout", () => {
+      down = null;
+    });
+    target.on("pointerup", (pointer) => {
+      const tapped = pointer.wasTouch && down === pointer.id;
+      down = null;
+      if (tapped) this._calculatorView.open();
+    });
   }
 
   _press(key) {

@@ -1,10 +1,19 @@
 import { Scope } from '../shared/Scope.js';
 
+/** A level's number as the veil writes it: 1 → I, 49 → XLIX, any number. */
+export function toRoman(n) {
+  let out = '';
+  for (const [value, mark] of [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],
+    [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]) {
+    while (n >= value) { out += mark; n -= value; }
+  }
+  return out;
+}
+
 export function createTransitions({ levels, showGame, onNavigate, preferences }) {
   const veil = document.getElementById('level-veil');
   const caption = document.getElementById('veil-caption');
   const numeral = document.getElementById('veil-numeral');
-  const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
   let scope = new Scope(), busy = false;
   return {
     get busy() { return busy; },
@@ -20,7 +29,7 @@ export function createTransitions({ levels, showGame, onNavigate, preferences })
       }
       caption.textContent = options.caption || '';
       caption.style.display = options.caption ? '' : 'none';
-      numeral.textContent = roman[index] || String(index + 1);
+      numeral.textContent = toRoman(index + 1);
       veil.classList.remove('titled'); veil.classList.add('cover');
       scope.later(() => {
         showGame(); levels.navigate(index);

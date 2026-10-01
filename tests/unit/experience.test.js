@@ -105,3 +105,9 @@ test('room previews accept only small embedded images for known rooms and reset 
   previews.reset();
   assert.equal(new RoomPreviewStore(storage, LEVEL_METADATA).get('tv'), undefined);
 });
+
+test('the level veil numbers every level in Roman numerals, well past twenty-one', async () => {
+  const { toRoman } = await import('../../src/ui/transitions.js');
+  assert.deepEqual([1, 4, 9, 14, 18, 21, 22, 40, 44, 49, 50].map(toRoman),
+    ['I', 'IV', 'IX', 'XIV', 'XVIII', 'XXI', 'XXII', 'XL', 'XLIV', 'XLIX', 'L']);
+});

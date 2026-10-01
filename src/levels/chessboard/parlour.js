@@ -1363,10 +1363,13 @@ function _hash(n) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
+// painted on the CPU: drawn once and handed to WebGL as a plain copy, where
+// a GPU canvas would stall to sync (and pixel reads would crawl)
 function makeCanvas(w, h) {
   const c = document.createElement("canvas");
   c.width = Math.max(1, Math.ceil(w));
   c.height = Math.max(1, Math.ceil(h));
+  c.getContext("2d", { willReadFrequently: true });
   return c;
 }
 

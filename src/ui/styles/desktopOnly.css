@@ -1,0 +1,76 @@
+/* ── Desktop only ──
+   In a browser the game is for computers. A phone or a tablet is shown this
+   page, in the start screen's dark-paper theme, and nothing else of the
+   interface (ui/platform.js); the game itself is never loaded there. */
+#desktop-only {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: radial-gradient(120% 100% at 50% 45%, #0c0d11 0%, #050608 70%, #000000 100%);
+}
+
+#desktop-only[hidden] {
+  display: none;
+}
+
+:root[data-desktop-only="true"] body > :not(#desktop-only):not(#film-grain) {
+  display: none !important;
+}
+
+.desktop-only-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: min(440px, 86%);
+  animation: start-fade-in 1.2s ease both;
+}
+
+.desktop-only-card h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 7vw, 40px);
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  text-align: center;
+  padding-left: 8px; /* optical centring vs. letter-spacing */
+  color: var(--pencil-bright);
+  text-shadow:
+    0.8px 0.8px 0 var(--pencil-faint),
+    -0.6px 0.5px 0 var(--pencil-faint);
+}
+
+.desktop-only-msg {
+  margin: 8px 0 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 21px;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+  color: #ddd6c5;
+  text-align: center;
+}
+
+.desktop-only-sub {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  line-height: 2;
+  text-align: center;
+  color: var(--bone-dim);
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desktop-only-card {
+    animation: none;
+  }
+}
