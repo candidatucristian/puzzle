@@ -106,9 +106,17 @@ export function glyph(ch, x, y, w, h, t, slant = 0) {
 
 // ── the camera and the room's layout ────────────────────────────────────────
 
+// On a short canvas (a phone held sideways) the room is looked at from
+// closer, and the things on the wall come down toward the desk, so all four
+// clocks and the calculator still fit between the top and the bottom.
+const SMALL_H = 400;
+
 function camera(W, H) {
-  const F = Math.min(H * 0.8, W * 1.25);
-  const hy = H * 0.34;
+  const small = H < SMALL_H;
+  // the span, in focal lengths: from the lowered wall clock's top to the
+  // calculator's front edge
+  const F = small ? Math.min(W * 1.25, (H - 8) / 0.9) : Math.min(H * 0.8, W * 1.25);
+  const hy = small ? 0.13 * F + 4 : H * 0.34;
   const cx = W / 2;
   return {
     W,
@@ -116,6 +124,7 @@ function camera(W, H) {
     F,
     hy,
     cx,
+    small,
     eye: { x: 0, y: EYE_H, z: 0 },
     P: (x, y, z) => ({ x: cx + (F * x) / z, y: hy + (F * (EYE_H - y)) / z }),
     Pv: (p) => ({ x: cx + (F * p.x) / p.z, y: hy + (F * (EYE_H - p.y)) / p.z }),
@@ -141,10 +150,12 @@ function layout(cam) {
     yaw: (7 * Math.PI) / 180,
   };
 
+  // (on a short canvas the clock and the shelf hang lower on the wall)
+  const low = cam.small ? 14 : 0;
   const clock = {
     x: fit(-52 * spread, 116.5, 16),
-    y0: 60,
-    y1: 71,
+    y0: 60 - low,
+    y1: 71 - low,
     w: 32,
     z0: 116.5,
   };
@@ -153,11 +164,11 @@ function layout(cam) {
   const shelf = {
     x0: shelfX - shelfW / 2,
     x1: shelfX + shelfW / 2,
-    y0: 49.5,
-    y1: 52,
+    y0: 49.5 - low,
+    y1: 52 - low,
     z0: 101,
   };
-  const radio = { x0: shelf.x0 + 2.5, w: 24, y0: 52, h: 8.5, z0: 104, d: 11 };
+  const radio = { x0: shelf.x0 + 2.5, w: 24, y0: shelf.y1, h: 8.5, z0: 104, d: 11 };
   // the window fills the wall between the clock and the shelf
   const onWall = (x, z) => (x * ZW) / z;
   const left = onWall(clock.x + clock.w / 2, clock.z0) + 7;
@@ -166,7 +177,7 @@ function layout(cam) {
   const mid = (left + right) / 2;
   const win =
     ww >= 12
-      ? { x0: mid - ww / 2, x1: mid + ww / 2, y0: 48, y1: 100, depth: 11 }
+      ? { x0: mid - ww / 2, x1: mid + ww / 2, y0: 48 - low, y1: 100, depth: 11 }
       : null;
 
   const alarm = { x: fit(-40 * spread, 96, 8), z0: 96, w: 14, h: 8.5, d: 7.5 };
@@ -655,7 +666,7 @@ function paintShelf(ctx, cam, lay, rnd) {
     books.push({
       x0: bx,
       x1: bx + bw,
-      h: 15 + rnd() * 8,
+      h: (15 + rnd() * 8) * (cam.small ? 0.6 : 1), // (shorter books under a low top edge)
       d: 13 + rnd() * 3,
       tone: TONES[(rnd() * TONES.length) | 0],
     });
