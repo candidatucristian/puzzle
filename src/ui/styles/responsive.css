@@ -291,11 +291,26 @@
     letter-spacing: 2px;
   }
 
-  /* the room's own controls */
-  #btn-inspect {
-    right: 10px;
-    bottom: 10px;
-    padding: 8px 10px;
+  /* the room's own controls. Inspect leaves the room's corner, where it hid
+     the room's own words, and sits in the console row as a glass */
+  #input-area #btn-inspect {
+    position: static;
+    flex-shrink: 0;
+    width: 40px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+    box-shadow: none;
+    background: transparent;
+    border: 1.5px solid var(--pencil-faint);
+    border-radius: 3px;
+  }
+  #btn-inspect svg {
+    width: 19px;
+    height: 19px;
+  }
+  #btn-inspect .inspect-word {
+    display: none;
   }
   #interaction-cue {
     left: 10px;

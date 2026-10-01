@@ -24,6 +24,11 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   };
   // the one bar that slides away, up, on its handle
   const handle = document.getElementById('handle-top');
+  // the Inspect button: in the room's corner on a desk, where it would hide
+  // the room's own words on a phone; so there it joins the console row
+  const inspect = document.getElementById('btn-inspect');
+  const inspectHome = { parent: inspect?.parentNode, next: inspect?.nextSibling };
+  const consoleRow = document.getElementById('input-area');
   let open = null, topAway = false, toastTimer;
   const touch = isTouchDevice();
   root.dataset.touch = String(touch);
@@ -45,6 +50,10 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   // ── the drawers ───────────────────────────────────────────────────────────
   function render() {
     root.dataset.compact = String(compact.matches);
+    if (inspect && consoleRow) {
+      if (compact.matches && inspect.parentNode !== consoleRow) consoleRow.insertBefore(inspect, document.getElementById('btn-info'));
+      else if (!compact.matches && inspect.parentNode === consoleRow) inspectHome.parent.insertBefore(inspect, inspectHome.next);
+    }
     for (const [name, { panel, button }] of Object.entries(drawers)) {
       const shown = compact.matches && open === name;
       panel.classList.toggle('drawer-open', shown);
