@@ -3,6 +3,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { CALCULATOR_DIGITS, createCalculator, pressKey } from "./puzzle.js";
 import { paintOffice, releaseOfficeArt, glyph } from "./office.js";
+import { createCalculatorView } from "./calculatorView.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "OVERTIME"  ·  code: SOIL  ·  add up the hours
@@ -43,6 +44,7 @@ export default class OvertimeScene extends BasePuzzleScene {
 
     // a fresh visit: nothing typed yet. A resize redraws from this same state.
     this.calc = createCalculator();
+    this._calculatorView = createCalculatorView(this, OvertimeScene.KEYPAD);
     this._build(this.cameras.main.width, this.cameras.main.height);
 
     this.listenToResize(({ width, height }) => {
@@ -89,6 +91,7 @@ export default class OvertimeScene extends BasePuzzleScene {
     this._keys = {};
     for (const spec of OvertimeScene.KEYPAD)
       this._makeKey(spec.key, art.calc.keys[spec.key]);
+    this._makeCalculatorTarget(art.calc);
 
     this._startColons(art.colons);
     this._startSteam(art);
@@ -121,10 +124,30 @@ export default class OvertimeScene extends BasePuzzleScene {
       hitAreaCallback: Phaser.Geom.Polygon.Contains,
       useHandCursor: true,
     });
-    zone.on("pointerdown", () => this._press(key));
+    zone.on("pointerdown", (pointer) => {
+      if (!pointer.wasTouch) this._press(key);
+    });
+    zone.on("pointerup", (pointer) => {
+      if (pointer.wasTouch) this._calculatorView.open();
+    });
     zone.on("pointerover", () => hover.setAlpha(1));
     zone.on("pointerout", () => hover.setAlpha(0));
     this._keys[key] = { zone, flash, hover, x: k.center.x, y: k.center.y };
+  }
+
+  _makeCalculatorTarget(calc) {
+    const L = calc.lcd;
+    const points = Object.values(calc.keys).flatMap(key => key.quad);
+    points.push(L.map(L.u0, L.v1), L.map(L.u1, L.v1));
+    const xs = points.map(p => p.x), ys = points.map(p => p.y);
+    const left = Math.min(...xs), right = Math.max(...xs);
+    const top = Math.min(...ys), bottom = Math.max(...ys);
+    this._calculatorTarget = this.add
+      .zone((left + right) / 2, (top + bottom) / 2, Math.max(64, right - left + 16), Math.max(64, bottom - top + 20))
+      .setDepth(9)
+      .setInteractive({ useHandCursor: true })
+      .setData('interactionLabel', 'Use calculator');
+    this._calculatorTarget.on('pointerup', () => this._calculatorView.open());
   }
 
   _press(key) {
@@ -148,6 +171,7 @@ export default class OvertimeScene extends BasePuzzleScene {
   // the display: eight digits, right-aligned, drawn onto the sloping glass,
   // the unlit segments faintly there as on any LCD
   _drawLcd() {
+    this._calculatorView?.render(this.calc.display);
     if (!this._lcd || !this._lcdBox) return;
     const L = this._lcdBox;
     const g = this._lcd;
@@ -250,6 +274,8 @@ export default class OvertimeScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    this._calculatorView?.destroy();
+    this._calculatorView = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseOfficeArt(this.textures);

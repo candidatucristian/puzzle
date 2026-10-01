@@ -30,6 +30,16 @@ async function screenshot(page, name) {
   await page.screenshot({ path: `.artifacts/after/phone-${name}.png` });
 }
 
+async function resizePhone(page, width, height) {
+  await page.setViewportSize({ width, height });
+  await expect.poll(() => sceneState(page, 'scene.scale.width')).toBe(width);
+  await expect.poll(async () => {
+    const canvas = await page.locator('#game-container > canvas').boundingBox();
+    const room = await page.locator('#game-viewport').boundingBox();
+    return Math.abs(canvas.height - room.height);
+  }).toBeLessThan(1);
+}
+
 test('a phone is not blocked: the compact bar, a tap to begin, and the room filling the screen', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, { unlocked: false });
@@ -165,4 +175,130 @@ test('a portrait phone is asked to turn, and the rooms survive the turn', async 
   await page.waitForTimeout(600); // the responsive scene rebuild uses a 350 ms debounce
   expect(await sceneState(page, 'scene._built')).toBe(true);
   expect(await sceneState(page, "scene.events.listenerCount('canvas_resized')")).toBe(1);
+});
+
+test('phone hints remain readable and scroll to the last hint with badges and large text', async ({ page }) => {
+  await open(page); await navigate(page, 'Modem');
+  for (const [width, height] of [[863, 360], [667, 375], [568, 320]]) {
+    await resizePhone(page, width, height);
+    await evaluateApp(page, ({ services }) => services.preferences.set({ textScale: 1.3 }));
+    await page.locator('#btn-info').tap();
+    await expect(page.locator('#handle-top')).toBeHidden();
+    const list = page.locator('#hint-list');
+    expect(await list.evaluate(el => el.clientHeight)).toBeGreaterThan(65);
+    while (await page.locator('#btn-next-hint').isEnabled()) await page.locator('#btn-next-hint').tap();
+    await expect(list.locator('li')).toHaveCount(3);
+    await list.evaluate(el => { el.scrollTop = el.scrollHeight; });
+    const last = await list.locator('li p').last().boundingBox();
+    const area = await list.boundingBox();
+    expect(last.y + last.height).toBeLessThanOrEqual(area.y + area.height + 1);
+    await expect(page.locator('#btn-close-info')).toBeInViewport({ ratio: 1 });
+    await screenshot(page, `hint-fixed-${width}`);
+    await page.locator('#btn-close-info').tap();
+  }
+});
+
+test('the Sequence clue fits small phones, clears Inspect, and cards still drag by touch', async ({ page }) => {
+  await open(page); await navigate(page, 'Sequence');
+  for (const [width, height] of [[863, 360], [667, 375], [568, 320]]) {
+    await resizePhone(page, width, height);
+    const canvas = await page.locator('#game-container > canvas').boundingBox();
+    const inspect = await page.locator('#btn-inspect').boundingBox();
+    const texts = await evaluateApp(page, ({ services }) => services.levels.activeScene.children.list
+      .filter(o => o.text === '25 → 55' || o.text === 'how many, then what')
+      .map(o => o.getBounds()));
+    expect(texts).toHaveLength(2);
+    for (const text of texts) {
+      expect(text.x).toBeGreaterThanOrEqual(0);
+      expect(text.y).toBeGreaterThanOrEqual(0);
+      expect(text.x + text.width).toBeLessThanOrEqual(canvas.width);
+      expect(text.y + text.height).toBeLessThanOrEqual(canvas.height);
+      const overlaps = canvas.x + text.x < inspect.x + inspect.width && canvas.x + text.x + text.width > inspect.x
+        && canvas.y + text.y < inspect.y + inspect.height && canvas.y + text.y + text.height > inspect.y;
+      expect(overlaps).toBe(false);
+    }
+    await screenshot(page, `sequence-fixed-${width}`);
+  }
+  const slots = await sceneState(page, 'scene._slots');
+  const before = await sceneState(page, 'scene._order');
+  const canvas = await page.locator('#game-container > canvas').boundingBox();
+  const cdp = await page.context().newCDPSession(page);
+  const from = { x: canvas.x + slots[0].x, y: canvas.y + slots[0].y };
+  const to = { x: canvas.x + slots[1].x, y: canvas.y + slots[1].y };
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...from, id: 1 }] });
+  for (let i = 1; i <= 8; i++) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x + (to.x - from.x) * i / 8, y: from.y, id: 1 }] });
+    await page.waitForTimeout(20);
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect.poll(() => sceneState(page, 'scene._order')).toEqual([before[1], before[0], ...before.slice(2)]);
+  await cdp.detach();
+});
+
+test('a touch opens usable calculator keys and keeps the result through close, resize and replay', async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await open(page);
+  await page.locator('#btn-continue').tap();
+  await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
+  await navigate(page, 'Overtime');
+  const dialog = page.getByRole('dialog', { name: 'Calculator', exact: true });
+  const useCalculator = async () => {
+    const target = await sceneState(page, '({ x: scene._calculatorTarget.x, y: scene._calculatorTarget.y })');
+    const canvas = await page.locator('#game-container > canvas').boundingBox();
+    await page.touchscreen.tap(canvas.x + target.x, canvas.y + target.y);
+    await expect(dialog).toBeVisible();
+  };
+  await useCalculator();
+  await expect(dialog.locator('output')).toHaveText('0');
+  for (const key of '2203+1411+1147+2344=') await dialog.getByRole('button', { name: key, exact: true }).tap();
+  await expect(dialog.locator('output')).toHaveText('7105');
+  await page.evaluate(() => document.fullscreenElement && document.exitFullscreen());
+  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+  await resizePhone(page, 568, 320);
+  await expect(dialog.locator('output')).toHaveText('7105');
+  for (const button of await dialog.locator('.calculator-keypad button').all()) {
+    const box = await button.boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    await expect(button).toBeInViewport({ ratio: 1 });
+  }
+  await screenshot(page, 'calculator-fixed');
+  await dialog.getByRole('button', { name: 'Back to room' }).tap();
+  await expect(dialog).toBeHidden();
+  expect(await sceneState(page, 'scene.calc.display')).toBe('7105');
+  await useCalculator();
+  await expect(dialog.locator('output')).toHaveText('7105');
+  await dialog.getByRole('button', { name: 'C', exact: true }).tap();
+  await dialog.getByRole('button', { name: '9', exact: true }).tap();
+  await page.keyboard.press('Escape');
+  expect(await sceneState(page, 'scene.calc.display')).toBe('9');
+  await navigate(page, 'Overtime');
+  await expect(page.locator('.calculator-detail')).toHaveCount(1);
+  await useCalculator();
+  await expect(dialog.locator('output')).toHaveText('0');
+  await navigate(page, 'Pi');
+  await expect(page.locator('.calculator-detail')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('the moon clue stays after a tap and resize, toggles off, and resets on replay', async ({ page }) => {
+  await open(page); await navigate(page, 'Pi');
+  const tapMoon = async () => {
+    const moon = await sceneState(page, '({ x: scene._moonHitArea.x, y: scene._moonHitArea.y })');
+    const canvas = await page.locator('#game-container > canvas').boundingBox();
+    await page.touchscreen.tap(canvas.x + moon.x, canvas.y + moon.y);
+  };
+  await tapMoon();
+  await expect.poll(() => sceneState(page, 'scene._secantGraphics.visible')).toBe(true);
+  await expect.poll(() => sceneState(page, 'scene._secantTween?.isPlaying() ?? false')).toBe(false);
+  expect(await sceneState(page, 'scene._secantGraphics.visible')).toBe(true);
+  await resizePhone(page, 667, 375);
+  await expect.poll(() => sceneState(page, 'scene._secantTween?.isPlaying() ?? false')).toBe(false);
+  expect(await sceneState(page, 'scene._secantGraphics.visible')).toBe(true);
+  await screenshot(page, 'moon-fixed');
+  await tapMoon();
+  expect(await sceneState(page, 'scene._secantGraphics.visible')).toBe(false);
+  await tapMoon();
+  await navigate(page, 'Pi');
+  expect(await sceneState(page, 'scene._secantGraphics.visible')).toBe(false);
 });

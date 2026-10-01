@@ -1,57 +1,257 @@
-#da-overlay{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:5;}
-#da-overlay *{box-sizing:border-box;}
+#da-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+#da-overlay * {
+  box-sizing: border-box;
+}
 
-/* the set stands where the painted parlour expects it (TVScene sets --da-y) */
-#da-overlay .tv-wrapper{position:absolute;top:var(--da-y,46%);left:50%;width:600px;
-  transform:translate(-50%,-50%) scale(var(--da-s,1));}
+/* the set stands where the painted parlour expects it (TVScene sets --da-x,
+   --da-y and --da-s for each screen size) */
+#da-overlay .tv-wrapper {
+  position: absolute;
+  top: var(--da-y, 46%);
+  left: var(--da-x, 50%);
+  width: 600px;
+  transform: translate(-50%, -50%) scale(var(--da-s, 1));
+}
 
 /* the cabinet is the painted SVG behind the screen; its legs reach below the box */
-#da-overlay .tv{position:relative;padding-top:80%;}
-#da-overlay .tv__sketch{position:absolute;left:-12px;top:-12px;width:624px;height:600px;
-  z-index:0;pointer-events:none;overflow:visible;}
+#da-overlay .tv {
+  position: relative;
+  padding-top: 80%;
+}
+#da-overlay .tv__sketch {
+  position: absolute;
+  left: -12px;
+  top: -12px;
+  width: 624px;
+  height: 600px;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+}
 
-#da-overlay .tv__screen{position:absolute;top:12%;left:12%;right:12%;bottom:24%;
-  border-radius:16%;overflow:hidden;z-index:2;background:#050205;
-  box-shadow:inset 0 0 28px 6px rgba(0,0,0,.85);}
-/* the glass: a soft gleam across its upper left, the room's lamp in its corner */
-#da-overlay .tv__screen::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+#da-overlay .tv__screen {
+  position: absolute;
+  top: 12%;
+  left: 12%;
+  right: 12%;
+  bottom: 24%;
+  border-radius: 16%;
+  overflow: hidden;
+  z-index: 2;
+  background: #050205;
+  box-shadow: inset 0 0 28px 6px rgba(0, 0, 0, 0.9);
+}
+/* the glass: a soft gleam across its upper left, the lamp in its corner */
+#da-overlay .tv__screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
   background:
-    radial-gradient(ellipse at 18% 12%,rgba(255,255,255,.14) 0,rgba(255,255,255,.05) 22%,rgba(255,255,255,0) 48%),
-    radial-gradient(ellipse at 96% 92%,rgba(255,190,110,.12) 0,rgba(255,190,110,0) 30%),
-    linear-gradient(160deg,rgba(255,255,255,.06) 0,rgba(255,255,255,0) 35%);}
-#da-overlay .tv__screen shader-doodle{position:absolute;top:50%;left:50%;
-  width:480px;height:320px;transform:translate(-50%,-50%);z-index:2;}
+    radial-gradient(
+      ellipse at 18% 12%,
+      rgba(255, 255, 255, 0.12) 0,
+      rgba(255, 255, 255, 0.04) 22%,
+      rgba(255, 255, 255, 0) 48%
+    ),
+    radial-gradient(
+      ellipse at 96% 92%,
+      rgba(255, 180, 100, 0.1) 0,
+      rgba(255, 180, 100, 0) 30%
+    ),
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.05) 0,
+      rgba(255, 255, 255, 0) 35%
+    );
+}
+#da-overlay .tv__screen shader-doodle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 480px;
+  height: 320px;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
 
-#da-overlay .tv__fallback{position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;z-index:1;display:none;filter:contrast(1.08) brightness(.85);}
-#da-overlay .tv__fallback.show{display:block;}
+#da-overlay .tv__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  display: none;
+  filter: contrast(1.08) brightness(0.85);
+}
+#da-overlay .tv__fallback.show {
+  display: block;
+}
 
-#da-overlay .tv__scan{position:absolute;inset:0;z-index:3;pointer-events:none;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
-  mix-blend-mode:multiply;opacity:.5;}
+#da-overlay .tv__scan {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.16) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
 
 /* Caption container is transparent; ONLY the title carries a dark band.
    Pushed down a bit so the title clears the screen's rounded top edge. */
-#da-overlay .tv__caption{position:absolute;top:11%;left:0;right:0;z-index:4;
-  font-family:"Courier New",monospace;text-align:left;overflow:hidden;max-height:70%;}
+#da-overlay .tv__caption {
+  position: absolute;
+  top: 11%;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  font-family: "Courier New", monospace;
+  text-align: left;
+  overflow: hidden;
+  max-height: 70%;
+}
 /* News title — full-width dark band, 50% faded */
-#da-overlay .tv__caption .st{display:block;background:rgba(0,0,0,.5);
-  color:#fff;font-weight:bold;font-size:13px;letter-spacing:1px;
-  padding:9px 16px;text-shadow:0 1px 3px #000;}
+#da-overlay .tv__caption .st {
+  display: block;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-weight: bold;
+  font-size: 13px;
+  letter-spacing: 1px;
+  padding: 9px 16px;
+  text-shadow: 0 1px 3px #000;
+}
 /* Body reads directly over the picture (no band) */
-#da-overlay .tv__caption .bd{white-space:pre-wrap;color:#f2f2f2;
-  font-size:11px;line-height:1.3;padding:8px 16px;
-  text-shadow:0 1px 2px #000,0 0 5px rgba(0,0,0,.95);}
+#da-overlay .tv__caption .bd {
+  white-space: pre-wrap;
+  color: #f2f2f2;
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 8px 16px;
+  text-shadow:
+    0 1px 2px #000,
+    0 0 5px rgba(0, 0, 0, 0.95);
+}
 
-/* the knobs and the channel dial: ivory and brass */
-#da-overlay .da-knob,#da-overlay .da-dial{position:absolute;top:411px;width:44px;height:44px;
-  margin:0;padding:0;border:0;background:none;z-index:3;}
-#da-overlay .da-knob{pointer-events:auto;cursor:pointer;border-radius:50%;
-  transition:transform .08s ease,filter .15s ease;}
-#da-overlay .da-knob svg,#da-overlay .da-dial svg{display:block;width:100%;height:100%;overflow:visible;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));}
-#da-overlay .da-knob:hover svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.6)) brightness(1.18);}
-#da-overlay .da-knob:active{transform:translateY(1px);}
-#da-overlay .da-knob:focus-visible{outline:1px dashed #d6ba78;outline-offset:3px;}
-#da-overlay .rot{transition:transform .28s cubic-bezier(.3,1.5,.5,1);}
-#da-overlay .da-dial{pointer-events:none;}
+/* the knobs and the channel dial: dark wood and brass */
+#da-overlay .da-knob,
+#da-overlay .da-dial {
+  position: absolute;
+  top: 411px;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  z-index: 3;
+}
+#da-overlay .da-knob {
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 50%;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.08s ease,
+    filter 0.15s ease;
+}
+/* a bigger, invisible target round each knob, for fingers */
+#da-overlay .da-knob::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  border-radius: 50%;
+}
+#da-overlay .da-knob svg,
+#da-overlay .da-dial svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+#da-overlay .da-knob:hover svg {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7)) brightness(1.25);
+}
+#da-overlay .da-knob:active {
+  transform: translateY(1px);
+}
+#da-overlay .da-knob:focus-visible {
+  outline: 1px dashed #d6ba78;
+  outline-offset: 3px;
+}
+#da-overlay .rot {
+  transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+#da-overlay .da-dial {
+  pointer-events: none;
+}
+
+/* ── small screens ────────────────────────────────────────────────────────
+   When the set is drawn small (phones), the captions inside the tube would
+   be a few pixels high. They move out of the screen into a card of their
+   own — under the set on a phone held upright, beside it on one held on its
+   side — at a size that can be read. TVScene places the card. */
+#da-overlay .da-subs {
+  display: none;
+  position: absolute;
+  overflow-y: auto;
+  pointer-events: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background: linear-gradient(
+    180deg,
+    rgba(18, 10, 5, 0.88),
+    rgba(8, 4, 2, 0.92)
+  );
+  border: 1px solid rgba(200, 160, 80, 0.45);
+  border-radius: 10px;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 220, 160, 0.08);
+  font-family: "Courier New", monospace;
+  color: #efe6d2;
+}
+#da-overlay .da-subs .st {
+  display: block;
+  position: sticky;
+  top: 0;
+  background: rgba(30, 18, 8, 0.96);
+  border-bottom: 1px solid rgba(200, 160, 80, 0.3);
+  color: #f3d58e;
+  font-weight: bold;
+  font-size: 13px;
+  letter-spacing: 1px;
+  padding: 9px 14px;
+}
+#da-overlay .da-subs .bd {
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 10px 14px 14px;
+}
+#da-overlay.da-compact .da-subs {
+  display: block;
+}
+#da-overlay.da-compact .tv__caption {
+  display: none;
+}
+/* the knobs are small on a phone: give the finger even more room */
+#da-overlay.da-compact .da-knob::before {
+  inset: -80%;
+}

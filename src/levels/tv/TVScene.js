@@ -12,16 +12,18 @@ import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
 // broadcast is shown as white-on-black subtitles over the screen. All four channels
 // describe VOID without ever naming it. Code: VOID / NULL.
 //
-// The set stands in a dark parlour at night, painted the way the telescope's
-// nursery is (parlour.js): a walnut cabinet on splayed legs (cabinet.js, an
-// SVG in the DOM overlay so it scales together with the screen), the screen's
-// cold light flickering on the wall and the floor, a lamp lit on the side
-// table, and dust glinting in the light. The screen itself — shader, images,
-// scanlines, captions — is unchanged. The knobs turn when you use them, and
-// the middle dial points at the channel.
+// The set stands in a dark parlour at night (parlour.js): walls of deep walnut,
+// tall windows on a moonlit valley with their sheer curtains tied open, a
+// walnut cabinet on splayed legs (cabinet.js, an SVG in the DOM overlay so it
+// scales together with the screen), the screen's cold light flickering on the
+// wall and the floor, a lamp lit on the side table, dust glinting in the light.
+// The screen itself — shader, images, scanlines, captions — is unchanged. The
+// knobs turn when you use them, and the middle dial points at the channel.
+//
+// On a phone the set would be too small to read the captions in it, so they
+// move into a card of their own: under the set when the phone is upright,
+// beside it when it is on its side (see _tvBox).
 
-// where the set stands: its centre, as a fraction of the screen's height
-const TV_CENTRE_Y = 0.46;
 const SPARKLE = "tv_sparkle";
 
 // Channel images — sampled by the CRT shader as the broadcast picture.
@@ -217,15 +219,18 @@ export default class TVScene extends BasePuzzleScene {
 
     // Keyboard tuning as well as the knobs. It listens for the key's "down"
     // event instead of polling JustDown() in update(): a quick tap that is
-    // released within the same frame would otherwise be missed.
-    this._keyLeft = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.LEFT,
-    );
-    this._keyRight = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.RIGHT,
-    );
-    this._keyLeft.on("down", () => this._tune(-1));
-    this._keyRight.on("down", () => this._tune(1));
+    // released within the same frame would otherwise be missed. (Phones have
+    // no keyboard manager.)
+    if (this.input.keyboard) {
+      this._keyLeft = this.input.keyboard.addKey(
+        Phaser.Input.Keyboard.KeyCodes.LEFT,
+      );
+      this._keyRight = this.input.keyboard.addKey(
+        Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      );
+      this._keyLeft.on("down", () => this._tune(-1));
+      this._keyRight.on("down", () => this._tune(1));
+    }
 
     this.listenToResize(({ width, height }) => {
       this._W = width;
@@ -237,21 +242,62 @@ export default class TVScene extends BasePuzzleScene {
 
   // ── The parlour ───────────────────────────────────────────────────────────────
 
-  // how big the set is, and where it stands, for this screen
+  // How big the set is, and where it stands, for this screen. On a screen
+  // big enough to read the captions inside the tube it stands in the middle
+  // ("wide"). Otherwise the captions get a card of their own: a phone held
+  // upright ("tall") has the set near the top and the card under it; one on
+  // its side ("low") has the set on the left and the card on the right.
   _tvBox(W, H) {
-    const s = Phaser.Math.Clamp(
+    const wide = Phaser.Math.Clamp(
       Math.min((W * 0.72) / 616, (H * 0.72) / 600),
       0.35,
       1.1,
     );
-    return { cx: W / 2, cy: H * TV_CENTRE_Y, s };
+    if (wide >= 0.77) return { mode: "wide", cx: W / 2, cy: H * 0.46, s: wide };
+    if (H >= W) {
+      const s = Phaser.Math.Clamp(
+        Math.min((W * 0.92) / 616, (H * 0.44) / 600),
+        0.3,
+        1.1,
+      );
+      const cy = Math.max(H * 0.28, 56 + 252 * s);
+      const top = cy + 330 * s + 10;
+      return {
+        mode: "tall",
+        cx: W / 2,
+        cy,
+        s,
+        subs: {
+          x: W * 0.05,
+          y: top,
+          w: W * 0.9,
+          h: Math.max(80, H - top - 14),
+        },
+      };
+    }
+    const s = Phaser.Math.Clamp(
+      Math.min((W * 0.5) / 616, (H * 0.78) / 600),
+      0.3,
+      1.1,
+    );
+    const cx = Math.max(300 * s + 12, W * 0.28);
+    const x = cx + 312 * s + W * 0.03;
+    return {
+      mode: "low",
+      cx,
+      cy: H * 0.48,
+      s,
+      subs: { x, y: H * 0.1, w: W - x - W * 0.03, h: H * 0.8 },
+    };
   }
 
   // the room is painted again from scratch for every size; everything that
   // lives in it (the lights, the dust) is made again on top
   _buildRoom(W, H) {
     this._clearRoom();
-    const L = layoutParlour(W, H, this._tvBox(W, H));
+    const box = this._tvBox(W, H);
+    this._box = box;
+    const L = layoutParlour(W, H, box);
     const art = paintParlour(this, L);
     makeSparkleTexture(this.textures, SPARKLE, "214,228,255");
     const { cx, cy, s, feet, lamp } = L;
@@ -266,35 +312,35 @@ export default class TVScene extends BasePuzzleScene {
       .setDisplaySize(1100 * s, 820 * s)
       .setBlendMode("ADD")
       .setDepth(1)
-      .setAlpha(0.5);
+      .setAlpha(0.45);
     const pool = this.add
       .image(cx, feet + 24 * s, art.pool)
       .setDisplaySize(760 * s, 190 * s)
       .setBlendMode("ADD")
       .setDepth(2)
-      .setAlpha(0.5);
+      .setAlpha(0.45);
     made.push(light, pool);
     this._screenLight = [light, pool];
-    this._stopFlicker = this.ambientMotion
-      ? this._flickerScreen()
-      : null;
+    this._stopFlicker = this.ambientMotion ? this._flickerScreen() : null;
 
-    // the lamp on the side table, breathing a little
-    const glow = this.add
-      .image(lamp.x, lamp.y + 10 * s, art.glow)
-      .setDisplaySize(300 * s, 300 * s)
-      .setBlendMode("ADD")
-      .setDepth(1)
-      .setAlpha(0.55);
-    made.push(glow);
-    this.ambientTween({
-      targets: glow,
-      alpha: 0.7,
-      duration: 2600,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
+    // the lamp on the side table, breathing a little (when there's room for it)
+    if (lamp) {
+      const glow = this.add
+        .image(lamp.x, lamp.y + 10 * s, art.glow)
+        .setDisplaySize(300 * s, 300 * s)
+        .setBlendMode("ADD")
+        .setDepth(1)
+        .setAlpha(0.5);
+      made.push(glow);
+      this.ambientTween({
+        targets: glow,
+        alpha: 0.65,
+        duration: 2600,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
 
     // dust glinting in the screen's light, in front of and beside the set
     const rnd = this._rng(8080);
@@ -309,14 +355,14 @@ export default class TVScene extends BasePuzzleScene {
         size: (6 + rnd() * 10) * s,
       });
     }
-    made.push(...twinkle(this, SPARKLE, pts, rnd, { depth: 3, alpha: 0.8 }));
+    made.push(...twinkle(this, SPARKLE, pts, rnd, { depth: 3, alpha: 0.7 }));
 
     this._room = { made, L };
   }
 
   _flickerScreen() {
     const stops = this._screenLight.map((img) =>
-      flicker(this, img, 0.34, 0.6, 0.8),
+      flicker(this, img, 0.3, 0.55, 0.8),
     );
     return () => stops.forEach((stop) => stop());
   }
@@ -328,7 +374,7 @@ export default class TVScene extends BasePuzzleScene {
       if (!img.active) continue;
       this.tweens.add({
         targets: img,
-        alpha: 0.9,
+        alpha: 0.85,
         duration: 60,
         yoyo: true,
         ease: "Quad.easeOut",
@@ -383,6 +429,10 @@ export default class TVScene extends BasePuzzleScene {
           <button type="button" class="da-knob da-btn" data-dir="1" aria-label="Next channel" style="left:328px">${knobSVG("&#8250;")}</button>
         </div>
       </div>
+      <div class="da-subs" aria-live="polite">
+        <span class="st"></span>
+        <div class="bd"></div>
+      </div>
     `;
     document.getElementById("game-container").appendChild(overlay);
     this.ownDom(overlay);
@@ -392,8 +442,11 @@ export default class TVScene extends BasePuzzleScene {
       wrapper: overlay.querySelector(".tv-wrapper"),
       buffer: overlay.querySelector("#da-buffer"),
       fallback: overlay.querySelector("#da-fallback"),
-      st: overlay.querySelector(".tv__caption .st"),
-      bd: overlay.querySelector(".tv__caption .bd"),
+      // the captions are written in two places: inside the tube, and in the
+      // card a phone shows instead (CSS shows one or the other)
+      st: overlay.querySelectorAll(".tv__caption .st, .da-subs .st"),
+      bd: overlay.querySelectorAll(".tv__caption .bd, .da-subs .bd"),
+      subs: overlay.querySelector(".da-subs"),
       needle: overlay.querySelector(".da-dial .needle"),
       knobs: {
         "-1": overlay.querySelector('.da-knob[data-dir="-1"] .rot'),
@@ -425,7 +478,9 @@ export default class TVScene extends BasePuzzleScene {
   }
 
   // DOM scenes provide their rendered screen for the room's progress thumbnail.
-  get previewSource() { return this._dom?.fallback; }
+  get previewSource() {
+    return this._dom?.fallback;
+  }
 
   _removeDOM() {
     if (this._dom) {
@@ -441,9 +496,21 @@ export default class TVScene extends BasePuzzleScene {
   _layoutTV() {
     if (!this._dom) return;
     // the set stands exactly where the painted room expects it
-    const { s } = this._tvBox(this._W, this._H);
-    this._dom.wrapper.style.setProperty("--da-s", s.toFixed(3));
-    this._dom.wrapper.style.setProperty("--da-y", `${TV_CENTRE_Y * 100}%`);
+    const box = this._box || this._tvBox(this._W, this._H);
+    const { cx, cy, s, mode, subs } = box;
+    const st = this._dom.wrapper.style;
+    st.setProperty("--da-s", s.toFixed(3));
+    st.setProperty("--da-x", `${((cx / this._W) * 100).toFixed(3)}%`);
+    st.setProperty("--da-y", `${((cy / this._H) * 100).toFixed(3)}%`);
+    const compact = mode !== "wide";
+    this._dom.overlay.classList.toggle("da-compact", compact);
+    if (compact && subs) {
+      const card = this._dom.subs.style;
+      card.left = `${((subs.x / this._W) * 100).toFixed(3)}%`;
+      card.top = `${((subs.y / this._H) * 100).toFixed(3)}%`;
+      card.width = `${((subs.w / this._W) * 100).toFixed(3)}%`;
+      card.maxHeight = `${((subs.h / this._H) * 100).toFixed(3)}%`;
+    }
   }
 
   // ── Channel images → CRT buffer ───────────────────────────────────────────────
@@ -481,13 +548,13 @@ export default class TVScene extends BasePuzzleScene {
   _renderChannel() {
     if (!this._dom) return;
     const ch = this._CHANNELS[this._channel];
-    if (ch.station) {
-      this._dom.st.style.display = "block";
-      this._dom.st.textContent = ch.station;
-    } else {
-      this._dom.st.style.display = "none";
+    for (const el of this._dom.st) {
+      el.style.display = ch.station ? "block" : "none";
+      el.textContent = ch.station || "";
     }
-    this._dom.bd.textContent = ch.lines.join("\n");
+    const body = ch.lines.join("\n");
+    for (const el of this._dom.bd) el.textContent = body;
+    if (this._dom.subs) this._dom.subs.scrollTop = 0;
     // the dial's needle swings to the current channel
     if (this._dom.needle) {
       this._dom.needle.style.transform = `rotate(${-54 + this._channel * 36}deg)`;
@@ -509,11 +576,14 @@ export default class TVScene extends BasePuzzleScene {
     this._flashScreen();
   }
 
-  // Auto-advance to the next image (and its text) every few seconds
+  // Auto-advance to the next image (and its text) every few seconds. On a
+  // phone the captions are read in their card at a slower pace, so it waits
+  // longer there.
   _startAutoCycle() {
     if (this._autoTimer) this._autoTimer.remove(false);
+    const compact = this._box && this._box.mode !== "wide";
     this._autoTimer = this.time.addEvent({
-      delay: 4000,
+      delay: compact ? 7000 : 4000,
       loop: true,
       callback: () => this._changeChannel(1),
     });

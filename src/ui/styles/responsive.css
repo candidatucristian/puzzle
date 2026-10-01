@@ -345,6 +345,34 @@
     max-height: calc(100dvh - 20px);
     padding: 20px 16px;
   }
+  /* Keep the actual hint scrollable, even with badges and large reading text. */
+  #info-modal .modal-content {
+    height: min(460px, calc(100dvh - 20px));
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  #info-modal .ornate-rule,
+  #info-modal .hint-intro {
+    display: none;
+  }
+  #info-modal #hint-list {
+    flex: 1;
+    align-content: start;
+    overscroll-behavior: contain;
+  }
+  #hint-list li {
+    padding: 12px 14px;
+  }
+  #info-modal .modal-actions {
+    margin-top: 0;
+    gap: 8px;
+  }
+  #info-modal .modal-actions button {
+    min-height: 44px;
+  }
+  .has-open-dialog .ui-handle {
+    visibility: hidden;
+  }
   .howto-row {
     gap: 12px;
   }

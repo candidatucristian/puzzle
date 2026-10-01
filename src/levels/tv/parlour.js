@@ -1,19 +1,24 @@
-/** The parlour for TV, painted the way the telescope's nursery is: a dark
- *  storybook room at night. Night-blue wallpaper sprigged with little gold
- *  stars under a shadowed ceiling and a picture rail, boards running back to
- *  the wall, a deep red rug with a gold border laid where the set stands.
- *  A tall plant in a terracotta pot to the left of it; to the right a small
- *  round table with a lamp still lit under its shade, a cup beside it, and
- *  two framed pictures on the wall above each. The set itself is the DOM
- *  cabinet (TVScene) standing on its splayed legs on the rug; its screen
- *  lights the wall behind and the floor in front, and the lamp warms the
- *  right-hand side.
+/** The parlour for TV, painted dark as a storybook night: walls of deep
+ *  walnut boards with a panelled wainscot under a moulded rail, the boards
+ *  of the floor running back to them, a deep red rug laid where the set
+ *  stands. Tall windows look out on a moonlit valley; their sheer curtains
+ *  hang open from brass rods, swept aside and tied back with gold, glowing
+ *  where the moon comes through them, and the moon lays its light on the
+ *  floor. A tall plant to the left of the set, a small round table with a
+ *  lamp still lit to the right, framed pictures over them — whichever of
+ *  those the screen has room for.
  *
- *  Painted once per screen size onto one canvas. What lives stays out of
- *  the painting: the scene breathes the lamp's `glow`, flickers the screen's
- *  `light` on the wall and its `pool` on the floor, and drifts the `motes`
- *  through that light. `tv` is the set's box in canvas coordinates: centre,
- *  scale, and the edges and feet derived from it. */
+ *  The set itself is the DOM cabinet (TVScene) standing on the rug; its
+ *  screen lights the wall behind and the floor in front, and the lamp warms
+ *  its side. What lives stays out of the painting: the scene breathes the
+ *  lamp's `glow`, flickers the screen's `light` and `pool`, and drifts the
+ *  dust through them.
+ *
+ *  `tv` is the set's box from TVScene: centre, scale and the layout mode —
+ *  "wide" (a window on each side of the set), "tall" (a phone held upright:
+ *  one big window behind the set, the captions under it) or "low" (a phone
+ *  on its side: the set to the left, one window behind the captions on the
+ *  right). */
 
 const ROOM = "tv_room";
 const LIGHT = "tv_light";
@@ -21,17 +26,87 @@ const POOL = "tv_pool";
 const GLOW = "tv_lamp";
 
 export function layoutParlour(W, H, tv) {
-  const { cx, cy, s } = tv;
+  const { cx, cy, s, mode } = tv;
   const S = Math.min(W, H);
   const left = cx - 300 * s;
   const right = cx + 300 * s;
   const top = cy - 240 * s;
   const bottom = cy + 240 * s;
   const feet = cy + 316 * s;
-  const floorY = H * 0.63;
+  const floorY = mode === "wide" ? H * 0.63 : Math.min(H * 0.8, cy + 150 * s);
   const side = 54 * s; // how far the plant and the table stand off the set
-  const table = { x: right + side, top: feet - 150 * s, r: 46 * s, h: 150 * s };
-  const lamp = { x: table.x, y: table.top - 118 * s, shadeW: 64 * s };
+  const fits = (x, half) => x - half > 4 && x + half < W - 4;
+
+  // the windows
+  const windows = [];
+  if (mode === "wide") {
+    const gap = left;
+    const ww = Math.min(gap * 0.62, 230 * s);
+    const wx = gap * 0.42;
+    for (const x of [wx, W - wx]) {
+      windows.push({
+        x0: x - ww / 2,
+        x1: x + ww / 2,
+        top: H * 0.15,
+        sill: floorY - H * 0.1,
+      });
+    }
+    windows[0].moon = true;
+  } else if (mode === "tall") {
+    windows.push({
+      x0: W * 0.06,
+      x1: W * 0.94,
+      top: Math.max(H * 0.05, top - H * 0.13),
+      sill: floorY - 26 * s,
+      moon: true,
+    });
+  } else {
+    const x0 = tv.subs.x - W * 0.01;
+    windows.push({
+      x0,
+      x1: W - W * 0.03,
+      top: H * 0.1,
+      sill: floorY - H * 0.06,
+      moon: true,
+    });
+  }
+
+  // what stands beside the set, if there is room for it
+  const plantX = left - side;
+  const plant =
+    mode !== "tall" && fits(plantX, 40 * s)
+      ? { x: plantX, base: feet + 2 * s, h: 250 * s }
+      : null;
+  const tableX = right + side;
+  const hasTable = mode === "wide" && fits(tableX, 60 * s);
+  const table = hasTable
+    ? { x: tableX, top: feet - 150 * s, r: 46 * s, h: 150 * s }
+    : null;
+  const lamp = table
+    ? { x: table.x, y: table.top - 118 * s, shadeW: 64 * s }
+    : null;
+  const clearOfWindows = (x, w) =>
+    windows.every((wn) => x + w / 2 < wn.x0 - 8 || x - w / 2 > wn.x1 + 8);
+  const frames = [];
+  if (plant && clearOfWindows(plantX, 78 * s))
+    frames.push({
+      x: plantX,
+      y: H * 0.27,
+      w: 78 * s,
+      h: 96 * s,
+      tilt: -0.03,
+      seed: 5,
+    });
+  if (table && clearOfWindows(tableX, 90 * s))
+    frames.push({
+      x: tableX,
+      y: H * 0.26,
+      w: 90 * s,
+      h: 72 * s,
+      tilt: 0.025,
+      seed: 11,
+    });
+
   return {
     W,
     H,
@@ -45,14 +120,13 @@ export function layoutParlour(W, H, tv) {
     bottom,
     feet,
     floorY,
-    rug: { cx, cy: feet + 12 * s, rx: 400 * s, ry: 74 * s },
-    plant: { x: left - side, base: feet + 2 * s, h: 250 * s },
+    mode,
+    rug: { cx, cy: feet + 12 * s, rx: Math.min(400 * s, W * 0.49), ry: 74 * s },
+    windows,
+    plant,
     table,
     lamp,
-    frames: [
-      { x: left - side, y: H * 0.27, w: 78 * s, h: 96 * s, tilt: -0.03, seed: 5 },
-      { x: right + side, y: H * 0.26, w: 90 * s, h: 72 * s, tilt: 0.025, seed: 11 },
-    ],
+    frames,
   };
 }
 
@@ -61,11 +135,12 @@ export function paintParlour(scene, L) {
   const cv = makeCanvas(W, H);
   const ctx = cv.getContext("2d");
   paintWall(ctx, L);
+  for (const w of L.windows) paintWindow(ctx, L, w);
   paintFloor(ctx, L);
   paintRug(ctx, L);
   paintFrames(ctx, L);
-  paintPlant(ctx, L);
-  paintTable(ctx, L);
+  if (L.plant) paintPlant(ctx, L);
+  if (L.table) paintTable(ctx, L);
   finish(ctx, L);
 
   const t = scene.textures;
@@ -108,64 +183,432 @@ export function releaseParlourArt(textures) {
   }
 }
 
-// ── the room ────────────────────────────────────────────────────────────────
+// ── the walls ───────────────────────────────────────────────────────────────
 
-// night-blue wallpaper sprigged with gold stars, the screen's cold light on
-// it behind the set and the lamp's warm light to the right
+// deep walnut boards, a moulded rail, raised panels under it; the screen's
+// cold light behind the set, the lamp's warmth by the table
 function paintWall(ctx, L) {
   const { W, H, S, floorY, cx, cy, s, lamp } = L;
   const g = ctx.createLinearGradient(0, 0, 0, floorY);
-  g.addColorStop(0, "#0b0f21");
-  g.addColorStop(0.55, "#141b34");
-  g.addColorStop(1, "#10162a");
+  g.addColorStop(0, "#0a0604");
+  g.addColorStop(0.5, "#140c07");
+  g.addColorStop(1, "#110a06");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, floorY);
-  const step = Math.max(14, S * 0.045);
-  ctx.fillStyle = "rgba(255,255,255,0.016)";
-  for (let x = step / 2; x < W; x += step * 2)
-    ctx.fillRect(x, 0, step * 0.9, floorY);
-  for (let row = 0, y = step * 0.5; y < floorY; y += step, row++) {
-    for (let x = (row % 2) * step * 0.5; x < W; x += step) {
-      if ((row + Math.round(x / step)) % 3 === 0)
-        star(ctx, x, y, step * 0.1, "rgba(214,186,120,0.14)");
-      else {
-        ctx.fillStyle = "rgba(214,186,120,0.09)";
-        ctx.beginPath();
-        ctx.arc(x, y, Math.max(0.6, step * 0.025), 0, Math.PI * 2);
-        ctx.fill();
+  const rnd = lcg(4401);
+  const railY = floorY - (floorY - H * 0.08) * 0.36;
+  // the boards above the rail
+  const bw = Math.max(26, S * 0.06);
+  for (let x = 0; x < W; x += bw) {
+    const tone = 0.7 + 0.5 * rnd();
+    ctx.fillStyle = `rgba(${Math.round(70 * tone)},${Math.round(42 * tone)},${Math.round(24 * tone)},0.22)`;
+    ctx.fillRect(x, 0, bw, railY);
+    for (let k = 0; k < 5; k++) {
+      const gx = x + rnd() * bw;
+      const ph = rnd() * 6.28;
+      ctx.beginPath();
+      for (let y = 0; y <= railY; y += 14) {
+        const px = gx + Math.sin(y * 0.012 + ph) * 2.2;
+        if (y) ctx.lineTo(px, y);
+        else ctx.moveTo(px, y);
       }
+      ctx.strokeStyle =
+        rnd() < 0.75 ? "rgba(0,0,0,0.3)" : "rgba(255,190,140,0.035)";
+      ctx.lineWidth = 0.8 + rnd();
+      ctx.stroke();
     }
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(x, 0, 1.5, railY);
+    ctx.fillStyle = "rgba(255,190,140,0.04)";
+    ctx.fillRect(x + 1.5, 0, 1, railY);
   }
-  // the screen's cold light, spread on the wall behind the set
-  soft(ctx, cx, cy - 20 * s, 520 * s, 380 * s, "110,140,210", 0.22, "lighter");
-  // the lamp's warmth on the wall beside it
-  soft(ctx, lamp.x, lamp.y + 10 * s, S * 0.22, S * 0.2, "255,170,90", 0.2, "lighter");
-  // the ceiling's shadow and the picture rail
-  const ceil = ctx.createLinearGradient(0, 0, 0, H * 0.13);
-  ceil.addColorStop(0, "rgba(0,0,0,0.6)");
+  // the wainscot: raised panels under the rail
+  const pw = Math.max(70, S * 0.16);
+  const ph = floorY - railY;
+  for (let x = -pw * 0.3; x < W; x += pw) {
+    const px = x + pw * 0.1;
+    const py = railY + ph * 0.16;
+    const pww = pw * 0.8;
+    const phh = ph * 0.62;
+    ctx.fillStyle = "rgba(60,36,20,0.22)";
+    ctx.fillRect(px, py, pww, phh);
+    ctx.fillStyle = "rgba(255,190,140,0.06)";
+    ctx.fillRect(px, py, pww, 1.2);
+    ctx.fillRect(px, py, 1.2, phh);
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(px, py + phh - 1.2, pww, 1.2);
+    ctx.fillRect(px + pww - 1.2, py, 1.2, phh);
+  }
+  // the rail
+  const rh = Math.max(4, S * 0.012);
+  const rg = ctx.createLinearGradient(0, railY - rh, 0, railY + rh);
+  rg.addColorStop(0, "#3a2414");
+  rg.addColorStop(0.4, "#24150c");
+  rg.addColorStop(1, "#0c0704");
+  ctx.fillStyle = rg;
+  ctx.fillRect(0, railY - rh, W, rh * 2);
+  ctx.fillStyle = "rgba(255,200,150,0.12)";
+  ctx.fillRect(0, railY - rh, W, 1);
+  // the ceiling's dark and the picture rail
+  const ceil = ctx.createLinearGradient(0, 0, 0, H * 0.14);
+  ceil.addColorStop(0, "rgba(0,0,0,0.75)");
   ceil.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = ceil;
-  ctx.fillRect(0, 0, W, H * 0.13);
-  ctx.fillStyle = "#1b1712";
-  ctx.fillRect(0, H * 0.075, W, Math.max(2, S * 0.006));
-  ctx.fillStyle = "rgba(170,190,240,0.18)";
-  ctx.fillRect(0, H * 0.075, W, 1);
+  ctx.fillRect(0, 0, W, H * 0.14);
+  ctx.fillStyle = "#0e0905";
+  ctx.fillRect(0, H * 0.06, W, Math.max(3, S * 0.008));
+  ctx.fillStyle = "rgba(255,200,150,0.08)";
+  ctx.fillRect(0, H * 0.06, W, 1);
+  // the screen's cold light behind the set, the lamp's warmth beside it
+  soft(ctx, cx, cy - 20 * s, 480 * s, 340 * s, "100,130,200", 0.16, "lighter");
+  if (lamp)
+    soft(
+      ctx,
+      lamp.x,
+      lamp.y + 10 * s,
+      S * 0.2,
+      S * 0.18,
+      "255,160,80",
+      0.16,
+      "lighter",
+    );
 }
 
-// the boards, running back to the wall, and the skirting along it
+// a tall window: the moonlit valley beyond, a sash of dark wood, a sill,
+// and the sheer curtains open on either side
+function paintWindow(ctx, L, w) {
+  const { S, W } = L;
+  const { x0, x1, top, sill } = w;
+  const ww = x1 - x0;
+  const wh = sill - top;
+  const fw = Math.max(6, S * 0.014); // the casing
+  // the moon's light on the wall round it
+  soft(
+    ctx,
+    (x0 + x1) / 2,
+    (top + sill) / 2,
+    ww * 0.9,
+    wh * 0.75,
+    "90,120,190",
+    0.1,
+    "lighter",
+  );
+  // the casing
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.7)";
+  ctx.shadowBlur = S * 0.02;
+  ctx.fillStyle = "#1c110a";
+  ctx.fillRect(x0 - fw, top - fw, ww + fw * 2, wh + fw * 2);
+  ctx.restore();
+  ctx.fillStyle = "rgba(160,180,230,0.14)";
+  ctx.fillRect(x0 - fw, top - fw, ww + fw * 2, 1);
+  // the night outside
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x0, top, ww, wh);
+  ctx.clip();
+  const sky = ctx.createLinearGradient(0, top, 0, sill);
+  sky.addColorStop(0, "#040817");
+  sky.addColorStop(0.65, "#0e1a3a");
+  sky.addColorStop(1, "#1a2a50");
+  ctx.fillStyle = sky;
+  ctx.fillRect(x0, top, ww, wh);
+  const rnd = lcg(Math.round(x0 * 13 + top));
+  for (let i = 0; i < (ww * wh) / 700; i++) {
+    ctx.fillStyle = `rgba(230,236,255,${(0.25 + rnd() * 0.6).toFixed(2)})`;
+    ctx.beginPath();
+    ctx.arc(
+      x0 + rnd() * ww,
+      top + rnd() * wh * 0.7,
+      0.4 + rnd() * 0.8,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  if (w.moon) {
+    const mr = Math.max(6, Math.min(ww, wh) * 0.07);
+    const mx = x0 + ww * 0.7;
+    const my = top + wh * 0.2;
+    soft(ctx, mx, my, mr * 5, mr * 5, "160,180,235", 0.22, "lighter");
+    const mg = ctx.createRadialGradient(
+      mx - mr * 0.3,
+      my - mr * 0.3,
+      mr * 0.1,
+      mx,
+      my,
+      mr,
+    );
+    mg.addColorStop(0, "#f6f2e6");
+    mg.addColorStop(0.75, "#ddd6c4");
+    mg.addColorStop(1, "#a8a090");
+    ctx.fillStyle = mg;
+    ctx.beginPath();
+    ctx.arc(mx, my, mr, 0, Math.PI * 2);
+    ctx.fill();
+    soft(
+      ctx,
+      mx - mr * 0.3,
+      my - mr * 0.15,
+      mr * 0.3,
+      mr * 0.22,
+      "100,100,110",
+      0.25,
+    );
+    soft(
+      ctx,
+      mx + mr * 0.28,
+      my + mr * 0.2,
+      mr * 0.26,
+      mr * 0.2,
+      "100,100,110",
+      0.2,
+    );
+  }
+  // the valley: a far ridge in the moonlight, a nearer dark one, a few lights
+  const ridge = (base, amp, f, ph, col) => {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(x0, sill);
+    for (let x = x0; x <= x1 + 4; x += 4) {
+      const u = x / W;
+      ctx.lineTo(
+        x,
+        base -
+          amp *
+            (0.6 +
+              0.4 * Math.sin(u * f + ph) +
+              0.2 * Math.sin(u * f * 2.7 + ph)),
+      );
+    }
+    ctx.lineTo(x1, sill);
+    ctx.closePath();
+    ctx.fill();
+  };
+  ridge(top + wh * 0.8, wh * 0.08, 9, 1.3, "#14203e");
+  ridge(top + wh * 0.9, wh * 0.06, 14, 0.4, "#070b18");
+  for (let i = 0; i < 4; i++) {
+    soft(
+      ctx,
+      x0 + ww * (0.15 + rnd() * 0.7),
+      top + wh * (0.85 + rnd() * 0.06),
+      3,
+      2,
+      "255,200,120",
+      0.8,
+    );
+  }
+  ctx.restore();
+  // the sashes: a meeting rail, a mullion, glazing bars; the moon on their edges
+  const bar = Math.max(2, S * 0.005);
+  const rail = Math.max(3, S * 0.009);
+  const wood = "#160d07";
+  ctx.fillStyle = wood;
+  ctx.fillRect(x0, top + wh * 0.52 - rail / 2, ww, rail);
+  ctx.fillRect((x0 + x1) / 2 - rail / 2, top, rail, wh);
+  for (const f of [0.26, 0.76])
+    ctx.fillRect(x0, top + wh * f - bar / 2, ww, bar);
+  for (const f of [0.25, 0.75])
+    ctx.fillRect(x0 + ww * f - bar / 2, top, bar, wh);
+  ctx.fillStyle = "rgba(170,190,240,0.25)";
+  ctx.fillRect(x0, top + wh * 0.52 - rail / 2, ww, 1);
+  ctx.fillRect((x0 + x1) / 2 - rail / 2, top, 1, wh);
+  // the glass, a cold sheen across it
+  const gl = ctx.createLinearGradient(x0, top, x1, sill);
+  gl.addColorStop(0, "rgba(200,220,255,0.06)");
+  gl.addColorStop(0.4, "rgba(200,220,255,0)");
+  gl.addColorStop(0.6, "rgba(200,220,255,0.03)");
+  gl.addColorStop(1, "rgba(200,220,255,0)");
+  ctx.fillStyle = gl;
+  ctx.fillRect(x0, top, ww, wh);
+  // the sill
+  const sh = Math.max(4, S * 0.012);
+  const sg = ctx.createLinearGradient(0, sill, 0, sill + sh * 2);
+  sg.addColorStop(0, "#3a2414");
+  sg.addColorStop(1, "#0e0805");
+  ctx.fillStyle = sg;
+  ctx.fillRect(x0 - fw * 1.8, sill, ww + fw * 3.6, sh * 2);
+  ctx.fillStyle = "rgba(170,190,240,0.28)";
+  ctx.fillRect(x0 - fw * 1.8, sill, ww + fw * 3.6, 1);
+  paintCurtains(ctx, L, w);
+}
+
+// Sheer voile hanging from a brass rod, swept to either side of the window
+// and tied back with gold: dim against the wall, glowing where the moon is
+// behind it, its folds gathering at the tie and opening again below
+function paintCurtains(ctx, L, w) {
+  const { S } = L;
+  const { x0, x1, top, sill } = w;
+  const ww = x1 - x0;
+  const wh = sill - top;
+  const rodY = top - Math.max(10, S * 0.03);
+  const mid = (x0 + x1) / 2;
+  // the rod, its finials
+  const ext = ww * 0.1;
+  const rg = ctx.createLinearGradient(0, rodY - 3, 0, rodY + 3);
+  rg.addColorStop(0, "#f6dc9a");
+  rg.addColorStop(0.5, "#a8823e");
+  rg.addColorStop(1, "#4a3418");
+  ctx.fillStyle = rg;
+  ctx.fillRect(
+    x0 - ext,
+    rodY - Math.max(1.5, S * 0.003),
+    ww + ext * 2,
+    Math.max(3, S * 0.006),
+  );
+  for (const fx of [x0 - ext, x1 + ext]) {
+    const fg = ctx.createRadialGradient(
+      fx - 1,
+      rodY - 1,
+      0.5,
+      fx,
+      rodY,
+      Math.max(3, S * 0.008),
+    );
+    fg.addColorStop(0, "#fbe3a0");
+    fg.addColorStop(1, "#5a3e18");
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.arc(fx, rodY, Math.max(3, S * 0.008), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const hem = sill + wh * 0.03;
+  const tieY = top + wh * 0.6;
+  for (const sideSign of [-1, 1]) {
+    ctx.save();
+    // draw the left panel; mirror it for the right
+    if (sideSign > 0) {
+      ctx.translate(mid * 2, 0);
+      ctx.scale(-1, 1);
+    }
+    const outer = x0 - ww * 0.07;
+    const innerTop = mid - ww * 0.03;
+    const tieX = x0 + ww * 0.11;
+    const hemIn = x0 + ww * 0.17;
+    const shape = () => {
+      ctx.beginPath();
+      ctx.moveTo(outer, rodY);
+      ctx.lineTo(innerTop, rodY);
+      ctx.quadraticCurveTo(mid - ww * 0.08, top + wh * 0.32, tieX, tieY);
+      ctx.quadraticCurveTo(tieX + ww * 0.01, tieY + wh * 0.2, hemIn, hem);
+      ctx.lineTo(outer - ww * 0.01, hem);
+      ctx.closePath();
+    };
+    shape();
+    ctx.fillStyle = "rgba(200,212,240,0.09)";
+    ctx.fill();
+    // where the moon is behind it, it glows
+    ctx.save();
+    shape();
+    ctx.clip();
+    ctx.beginPath();
+    ctx.rect(x0, top, ww, wh);
+    ctx.clip();
+    ctx.fillStyle = "rgba(190,210,255,0.14)";
+    ctx.fillRect(x0, top, ww, wh);
+    ctx.restore();
+    // the folds: open at the rod, gathered at the tie, open again at the hem
+    const n = 11;
+    for (let i = 1; i < n; i++) {
+      const u = i / n;
+      const a = { x: outer + (innerTop - outer) * u, y: rodY };
+      const b = { x: outer + (tieX - outer) * u, y: tieY };
+      const c = {
+        x: outer - ww * 0.01 + (hemIn - outer + ww * 0.01) * u,
+        y: hem,
+      };
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(a.x + (b.x - a.x) * 0.25, top + wh * 0.32, b.x, b.y);
+      ctx.quadraticCurveTo(b.x, b.y + wh * 0.2, c.x, c.y);
+      ctx.strokeStyle = i % 2 ? "rgba(230,238,255,0.2)" : "rgba(0,0,0,0.18)";
+      ctx.lineWidth = Math.max(1, S * (i % 2 ? 0.0018 : 0.0026));
+      ctx.stroke();
+    }
+    // its free edge, bright
+    ctx.beginPath();
+    ctx.moveTo(innerTop, rodY);
+    ctx.quadraticCurveTo(mid - ww * 0.08, top + wh * 0.32, tieX, tieY);
+    ctx.quadraticCurveTo(tieX + ww * 0.01, tieY + wh * 0.2, hemIn, hem);
+    ctx.strokeStyle = "rgba(235,242,255,0.45)";
+    ctx.lineWidth = Math.max(1.2, S * 0.0026);
+    ctx.stroke();
+    // the hem
+    ctx.beginPath();
+    ctx.moveTo(outer - ww * 0.01, hem);
+    ctx.lineTo(hemIn, hem);
+    ctx.strokeStyle = "rgba(225,232,255,0.3)";
+    ctx.lineWidth = Math.max(1.5, S * 0.004);
+    ctx.stroke();
+    // the gold tie-back, a little bow
+    const tb = Math.max(2.5, S * 0.006);
+    const tg = ctx.createLinearGradient(0, tieY - tb, 0, tieY + tb);
+    tg.addColorStop(0, "#fbe3a0");
+    tg.addColorStop(0.5, "#c8a050");
+    tg.addColorStop(1, "#5a3e18");
+    ctx.fillStyle = tg;
+    ctx.beginPath();
+    ctx.ellipse(
+      (outer + tieX) / 2,
+      tieY,
+      (tieX - outer) / 2 + tb,
+      tb,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    const bx = tieX;
+    ctx.beginPath();
+    ctx.ellipse(
+      bx + tb * 1.6,
+      tieY - tb * 0.8,
+      tb * 1.8,
+      tb * 1.1,
+      -0.5,
+      0,
+      Math.PI * 2,
+    );
+    ctx.ellipse(
+      bx + tb * 1.6,
+      tieY + tb * 0.8,
+      tb * 1.8,
+      tb * 1.1,
+      0.5,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.strokeStyle = "#c8a050";
+    ctx.lineWidth = Math.max(1, tb * 0.6);
+    ctx.beginPath();
+    ctx.moveTo(bx + tb * 0.5, tieY);
+    ctx.quadraticCurveTo(
+      bx + tb * 2,
+      tieY + tb * 4,
+      bx + tb * 1.2,
+      tieY + tb * 7,
+    );
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ── the floor ───────────────────────────────────────────────────────────────
+
 function paintFloor(ctx, L) {
   const { W, H, S, floorY, cx, feet, s } = L;
   const g = ctx.createLinearGradient(0, floorY, 0, H);
-  g.addColorStop(0, "#1d1812");
-  g.addColorStop(0.5, "#271d15");
-  g.addColorStop(1, "#1a120c");
+  g.addColorStop(0, "#110b07");
+  g.addColorStop(0.5, "#1a120c");
+  g.addColorStop(1, "#0e0805");
   ctx.fillStyle = g;
   ctx.fillRect(0, floorY, W, H - floorY);
-  const vp = { x: W / 2, y: H * 0.3 };
-  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+  const vp = { x: W / 2, y: floorY - (H - floorY) * 1.2 };
+  ctx.strokeStyle = "rgba(0,0,0,0.5)";
   ctx.lineWidth = 1;
-  for (let i = -18; i <= 18; i++) {
-    const bx = W / 2 + i * W * 0.07;
+  for (let i = -24; i <= 24; i++) {
+    const bx = W / 2 + i * Math.max(30, W * 0.06);
     const t = (floorY - vp.y) / (H - vp.y);
     ctx.beginPath();
     ctx.moveTo(vp.x + (bx - vp.x) * t, floorY);
@@ -173,20 +616,34 @@ function paintFloor(ctx, L) {
     ctx.stroke();
   }
   const rnd = lcg(515);
-  for (let i = 0; i < 240; i++) {
+  for (let i = 0; i < 260; i++) {
     const y = floorY + rnd() * (H - floorY);
     ctx.fillStyle =
-      rnd() < 0.6 ? "rgba(0,0,0,0.12)" : "rgba(255,210,160,0.035)";
+      rnd() < 0.65 ? "rgba(0,0,0,0.16)" : "rgba(255,200,150,0.03)";
     ctx.fillRect(rnd() * W, y, 4 + rnd() * 24, 1);
   }
-  // the screen's light lying on the floor in front of the set
-  soft(ctx, cx, feet + 20 * s, 380 * s, 70 * s, "150,176,240", 0.14, "lighter");
-  // skirting
-  ctx.fillStyle = "#17110c";
+  // the moon through each window, lying on the boards
+  for (const w of L.windows) {
+    const wx = (w.x0 + w.x1) / 2;
+    soft(
+      ctx,
+      wx + (w.x1 - w.x0) * 0.1,
+      floorY + (H - floorY) * 0.28,
+      (w.x1 - w.x0) * 0.55,
+      (H - floorY) * 0.16,
+      "120,150,220",
+      0.09,
+      "lighter",
+    );
+  }
+  // the screen's light on the floor in front of the set
+  soft(ctx, cx, feet + 20 * s, 360 * s, 64 * s, "150,176,240", 0.1, "lighter");
+  // the skirting
+  ctx.fillStyle = "#0c0805";
   ctx.fillRect(0, floorY - S * 0.022, W, S * 0.022);
-  ctx.fillStyle = "rgba(160,180,230,0.16)";
+  ctx.fillStyle = "rgba(160,180,230,0.1)";
   ctx.fillRect(0, floorY - S * 0.022, W, 1);
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.fillRect(0, floorY, W, 2);
 }
 
@@ -195,17 +652,17 @@ function paintRug(ctx, L) {
   const { rug, S } = L;
   const { cx, cy, rx, ry } = rug;
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.5)";
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = S * 0.012;
-  ctx.fillStyle = "#58201c";
+  ctx.fillStyle = "#3e1512";
   ctx.beginPath();
   ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
   for (const [k, col, w] of [
-    [0.95, "#b88a3e", 2.2],
-    [0.88, "#1d2a4a", 4],
-    [0.82, "#b88a3e", 1.4],
+    [0.95, "#8a6630", 2.2],
+    [0.88, "#131c34", 4],
+    [0.82, "#8a6630", 1.4],
   ]) {
     ctx.beginPath();
     ctx.ellipse(cx, cy, rx * k, ry * k, 0, 0, Math.PI * 2);
@@ -213,17 +670,16 @@ function paintRug(ctx, L) {
     ctx.lineWidth = Math.max(1, (w * S) / 900);
     ctx.stroke();
   }
-  ctx.fillStyle = "rgba(184,138,62,0.5)";
+  ctx.fillStyle = "rgba(138,102,48,0.45)";
   ctx.beginPath();
   ctx.ellipse(cx, cy, rx * 0.2, ry * 0.3, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#58201c";
+  ctx.fillStyle = "#3e1512";
   ctx.beginPath();
   ctx.ellipse(cx, cy, rx * 0.14, ry * 0.2, 0, 0, Math.PI * 2);
   ctx.fill();
-  star(ctx, cx, cy, ry * 0.16, "rgba(214,176,98,0.8)");
-  // the fringe on the two ends
-  ctx.strokeStyle = "rgba(220,200,160,0.35)";
+  star(ctx, cx, cy, ry * 0.16, "rgba(184,146,74,0.7)");
+  ctx.strokeStyle = "rgba(200,180,140,0.25)";
   ctx.lineWidth = 1;
   for (const side of [-1, 1]) {
     for (let i = -6; i <= 6; i++) {
@@ -238,7 +694,7 @@ function paintRug(ctx, L) {
   }
 }
 
-// two framed pictures: a little night landscape under a moon, a sailing boat
+// framed pictures: a little night landscape under a moon
 function paintFrames(ctx, L) {
   const { S } = L;
   for (const f of L.frames) {
@@ -246,43 +702,30 @@ function paintFrames(ctx, L) {
     ctx.translate(f.x, f.y);
     ctx.rotate(f.tilt);
     const { w, h } = f;
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(-w / 2 + 3, -h / 2 + 4, w, h);
     const fg = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
-    fg.addColorStop(0, "#c9a35a");
-    fg.addColorStop(0.5, "#7a5a28");
-    fg.addColorStop(1, "#b8924a");
+    fg.addColorStop(0, "#a8823e");
+    fg.addColorStop(0.5, "#5a4018");
+    fg.addColorStop(1, "#8a6a32");
     ctx.fillStyle = fg;
     ctx.fillRect(-w / 2, -h / 2, w, h);
     const b = Math.max(3, S * 0.008);
     const pg = ctx.createLinearGradient(0, -h / 2, 0, h / 2);
-    pg.addColorStop(0, "#0a1024");
-    pg.addColorStop(0.7, "#1b2a4e");
-    pg.addColorStop(1, "#0e1628");
+    pg.addColorStop(0, "#060a18");
+    pg.addColorStop(0.7, "#142040");
+    pg.addColorStop(1, "#0a1020");
     ctx.fillStyle = pg;
     ctx.fillRect(-w / 2 + b, -h / 2 + b, w - b * 2, h - b * 2);
     const rnd = lcg(f.seed * 131);
-    // a small moon and its stars, hills under them
     const mx = -w * 0.2 + rnd() * w * 0.4;
     const my = -h * 0.25;
-    soft(ctx, mx, my, w * 0.2, w * 0.2, "200,215,255", 0.4, "lighter");
-    ctx.fillStyle = "#f2eedf";
+    soft(ctx, mx, my, w * 0.2, w * 0.2, "200,215,255", 0.3, "lighter");
+    ctx.fillStyle = "#e8e4d6";
     ctx.beginPath();
     ctx.arc(mx, my, Math.max(1.5, w * 0.045), 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#e8eeff";
-    for (let i = 0; i < 7; i++) {
-      ctx.beginPath();
-      ctx.arc(
-        -w / 2 + b + rnd() * (w - b * 2),
-        -h / 2 + b + rnd() * h * 0.45,
-        Math.max(0.5, S * 0.0012),
-        0,
-        Math.PI * 2,
-      );
-      ctx.fill();
-    }
-    ctx.fillStyle = "#0a1020";
+    ctx.fillStyle = "#070b16";
     ctx.beginPath();
     ctx.moveTo(-w / 2 + b, h / 2 - b);
     for (let x = -w / 2 + b; x <= w / 2 - b; x += 3) {
@@ -292,9 +735,8 @@ function paintFrames(ctx, L) {
     ctx.lineTo(w / 2 - b, h / 2 - b);
     ctx.closePath();
     ctx.fill();
-    // the glass
     const gl = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
-    gl.addColorStop(0, "rgba(255,255,255,0.1)");
+    gl.addColorStop(0, "rgba(255,255,255,0.08)");
     gl.addColorStop(0.5, "rgba(255,255,255,0)");
     ctx.fillStyle = gl;
     ctx.fillRect(-w / 2 + b, -h / 2 + b, w - b * 2, h - b * 2);
@@ -308,32 +750,29 @@ function paintPlant(ctx, L) {
   const { x, base, h } = plant;
   const pw = 58 * s;
   const ph = 54 * s;
-  soft(ctx, x + pw, base, pw * 1.6, ph * 0.3, "0,0,0", 0.5);
-  ctx.fillStyle = "#8a4a2a";
-  ctx.beginPath();
-  ctx.moveTo(x - pw / 2, base - ph);
-  ctx.lineTo(x + pw / 2, base - ph);
-  ctx.lineTo(x + pw * 0.38, base);
-  ctx.lineTo(x - pw * 0.38, base);
-  ctx.closePath();
+  soft(ctx, x + pw, base, pw * 1.6, ph * 0.3, "0,0,0", 0.6);
+  const pot = () => {
+    ctx.beginPath();
+    ctx.moveTo(x - pw / 2, base - ph);
+    ctx.lineTo(x + pw / 2, base - ph);
+    ctx.lineTo(x + pw * 0.38, base);
+    ctx.lineTo(x - pw * 0.38, base);
+    ctx.closePath();
+  };
+  pot();
+  ctx.fillStyle = "#5a2e1a";
   ctx.fill();
   const pg = ctx.createLinearGradient(x - pw / 2, 0, x + pw / 2, 0);
-  pg.addColorStop(0, "rgba(0,0,0,0.35)");
-  pg.addColorStop(0.55, "rgba(255,200,160,0.12)");
-  pg.addColorStop(1, "rgba(0,0,0,0.3)");
+  pg.addColorStop(0, "rgba(0,0,0,0.45)");
+  pg.addColorStop(0.6, "rgba(160,180,240,0.1)");
+  pg.addColorStop(1, "rgba(0,0,0,0.4)");
+  pot();
   ctx.fillStyle = pg;
-  ctx.beginPath();
-  ctx.moveTo(x - pw / 2, base - ph);
-  ctx.lineTo(x + pw / 2, base - ph);
-  ctx.lineTo(x + pw * 0.38, base);
-  ctx.lineTo(x - pw * 0.38, base);
-  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = "#a45a34";
+  ctx.fillStyle = "#6a3820";
   ctx.fillRect(x - pw * 0.56, base - ph, pw * 1.12, ph * 0.2);
-  ctx.fillStyle = "rgba(255,210,170,0.22)";
+  ctx.fillStyle = "rgba(170,190,240,0.15)";
   ctx.fillRect(x - pw * 0.56, base - ph, pw * 1.12, Math.max(1, S * 0.002));
-  // stems fanning up, each with a long leaf
   const rnd = lcg(77);
   const top = base - ph;
   for (let i = 0; i < 11; i++) {
@@ -342,13 +781,12 @@ function paintPlant(ctx, L) {
     const ex = x + Math.cos(a) * len;
     const ey = top + Math.sin(a) * len;
     const bend = (rnd() - 0.5) * len * 0.5;
-    ctx.strokeStyle = "#2a4a30";
+    ctx.strokeStyle = "#1a2e1e";
     ctx.lineWidth = Math.max(1, s * 2.2);
     ctx.beginPath();
     ctx.moveTo(x, top);
     ctx.quadraticCurveTo(x + bend, top + (ey - top) * 0.5, ex, ey);
     ctx.stroke();
-    // the leaf: a long pointed blade, lit along its left edge by the screen
     const lw = h * (0.07 + rnd() * 0.05);
     const ll = h * (0.22 + rnd() * 0.14);
     const la = a + (rnd() - 0.5) * 0.6;
@@ -356,16 +794,16 @@ function paintPlant(ctx, L) {
     ctx.translate(ex, ey);
     ctx.rotate(la + Math.PI / 2);
     const lg = ctx.createLinearGradient(-lw, 0, lw, 0);
-    lg.addColorStop(0, "#5a8a5a");
-    lg.addColorStop(0.45, "#2e5e3a");
-    lg.addColorStop(1, "#1b3a26");
+    lg.addColorStop(0, "#3e6a4a");
+    lg.addColorStop(0.45, "#1e3e28");
+    lg.addColorStop(1, "#0e2216");
     ctx.fillStyle = lg;
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.quadraticCurveTo(-lw, -ll * 0.45, 0, -ll);
     ctx.quadraticCurveTo(lw, -ll * 0.45, 0, 0);
     ctx.fill();
-    ctx.strokeStyle = "rgba(200,240,210,0.25)";
+    ctx.strokeStyle = "rgba(180,220,200,0.18)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -379,9 +817,8 @@ function paintPlant(ctx, L) {
 function paintTable(ctx, L) {
   const { table, lamp, S, s, feet } = L;
   const { x, top, r, h } = table;
-  soft(ctx, x, feet + 6 * s, r * 1.6, r * 0.3, "0,0,0", 0.5);
-  // the pedestal and its three feet
-  ctx.fillStyle = "#2a1c12";
+  soft(ctx, x, feet + 6 * s, r * 1.6, r * 0.3, "0,0,0", 0.6);
+  ctx.fillStyle = "#140c07";
   for (const dx of [-0.55, 0, 0.55]) {
     ctx.beginPath();
     ctx.moveTo(x, top + h * 0.55);
@@ -392,40 +829,37 @@ function paintTable(ctx, L) {
     ctx.fill();
   }
   const sg = ctx.createLinearGradient(x - 6 * s, 0, x + 6 * s, 0);
-  sg.addColorStop(0, "#5a3e28");
-  sg.addColorStop(0.5, "#8a6440");
-  sg.addColorStop(1, "#2a1c12");
+  sg.addColorStop(0, "#3a2414");
+  sg.addColorStop(0.5, "#6a4428");
+  sg.addColorStop(1, "#140c07");
   ctx.fillStyle = sg;
   ctx.fillRect(x - 6 * s, top + r * 0.2, 12 * s, h * 0.5);
-  // the top, an ellipse with a lit rim toward the lamp
-  ctx.fillStyle = "#2a1c12";
+  ctx.fillStyle = "#140c07";
   ctx.beginPath();
   ctx.ellipse(x, top + r * 0.22, r, r * 0.3, 0, 0, Math.PI);
   ctx.lineTo(x - r, top + r * 0.1);
   ctx.fill();
   const tg = ctx.createRadialGradient(x, top + r * 0.1, 0, x, top + r * 0.1, r);
-  tg.addColorStop(0, "#8a6440");
-  tg.addColorStop(1, "#4a3220");
+  tg.addColorStop(0, "#6a4428");
+  tg.addColorStop(1, "#2a1a0e");
   ctx.fillStyle = tg;
   ctx.beginPath();
   ctx.ellipse(x, top + r * 0.1, r, r * 0.3, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,200,140,0.35)";
+  ctx.strokeStyle = "rgba(255,190,130,0.3)";
   ctx.lineWidth = Math.max(1, S * 0.002);
   ctx.stroke();
-  // the cup, with a curl of steam
   const cx = x + r * 0.55;
   const cy = top + r * 0.12;
-  ctx.fillStyle = "#e8dcc0";
+  ctx.fillStyle = "#cfc2a6";
   ctx.fillRect(cx - 7 * s, cy - 16 * s, 14 * s, 16 * s);
-  ctx.strokeStyle = "#e8dcc0";
+  ctx.strokeStyle = "#cfc2a6";
   ctx.lineWidth = 2 * s;
   ctx.beginPath();
   ctx.arc(cx + 9 * s, cy - 9 * s, 4 * s, -Math.PI / 2, Math.PI / 2);
   ctx.stroke();
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
   ctx.fillRect(cx - 7 * s, cy - 16 * s, 14 * s, 2 * s);
-  // the lamp: a brass stem and base, a cream shade lit from inside
   const { shadeW } = lamp;
   const ly = lamp.y;
   const bg = ctx.createLinearGradient(x - 12 * s, 0, x + 12 * s, 0);
@@ -437,12 +871,21 @@ function paintTable(ctx, L) {
   ctx.ellipse(x, top + r * 0.1, 14 * s, 5 * s, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillRect(x - 2.5 * s, ly + 30 * s, 5 * s, top + r * 0.1 - ly - 30 * s);
-  soft(ctx, x, ly + 8 * s, shadeW * 1.3, shadeW * 1.1, "255,190,110", 0.5, "lighter");
+  soft(
+    ctx,
+    x,
+    ly + 8 * s,
+    shadeW * 1.3,
+    shadeW * 1.1,
+    "255,180,100",
+    0.45,
+    "lighter",
+  );
   const shade = ctx.createLinearGradient(x - shadeW / 2, 0, x + shadeW / 2, 0);
-  shade.addColorStop(0, "#c8905a");
-  shade.addColorStop(0.35, "#ffd9a0");
-  shade.addColorStop(0.7, "#ffcf8a");
-  shade.addColorStop(1, "#a86a38");
+  shade.addColorStop(0, "#a8703a");
+  shade.addColorStop(0.35, "#ffd090");
+  shade.addColorStop(0.7, "#f0bc78");
+  shade.addColorStop(1, "#7a4a22");
   ctx.fillStyle = shade;
   ctx.beginPath();
   ctx.moveTo(x - shadeW * 0.3, ly - 30 * s);
@@ -451,12 +894,20 @@ function paintTable(ctx, L) {
   ctx.lineTo(x - shadeW * 0.5, ly + 30 * s);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = "rgba(255,240,200,0.5)";
+  ctx.fillStyle = "rgba(255,240,200,0.45)";
   ctx.fillRect(x - shadeW * 0.3, ly - 30 * s, shadeW * 0.6, Math.max(1, s));
-  ctx.fillStyle = "rgba(90,50,20,0.5)";
+  ctx.fillStyle = "rgba(70,40,16,0.6)";
   ctx.fillRect(x - shadeW * 0.5, ly + 29 * s, shadeW, Math.max(1, s * 1.5));
-  // the bulb's light under the shade's rim
-  soft(ctx, x, ly + 34 * s, shadeW * 0.5, 10 * s, "255,230,170", 0.6, "lighter");
+  soft(
+    ctx,
+    x,
+    ly + 34 * s,
+    shadeW * 0.5,
+    10 * s,
+    "255,220,160",
+    0.55,
+    "lighter",
+  );
 }
 
 function finish(ctx, L) {
@@ -465,13 +916,13 @@ function finish(ctx, L) {
   const v = ctx.createRadialGradient(
     W / 2,
     H * 0.46,
-    R * 0.36,
+    R * 0.3,
     W / 2,
     H * 0.46,
     R * 1.05,
   );
-  v.addColorStop(0, "rgba(4,5,12,0)");
-  v.addColorStop(1, "rgba(4,5,12,0.6)");
+  v.addColorStop(0, "rgba(2,2,6,0)");
+  v.addColorStop(1, "rgba(2,2,6,0.72)");
   ctx.fillStyle = v;
   ctx.fillRect(0, 0, W, H);
   grain(ctx, W, H, 0.03);

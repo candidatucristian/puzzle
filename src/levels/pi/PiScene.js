@@ -42,6 +42,7 @@ export default class PiScene extends BasePuzzleScene {
 
   create() {
     this.beginScene();
+    this._moonPinned = false;
 
     this._build(this.cameras.main.width, this.cameras.main.height);
 
@@ -105,9 +106,8 @@ export default class PiScene extends BasePuzzleScene {
 
   // ═══════════════════════════════════════════════════════════════════════════
   //  THE LINE ACROSS THE MOON, ON HOVER
-  //  One animation per hover: a line through the centre, drawn once from left
-  //  to right, then it stays. Move away and it goes; hover again and it
-  //  starts over.
+  //  Mouse hover draws the line until the pointer leaves. A touch pins it
+  //  until the next tap, so a finger never has to cover the clue to see it.
   // ═══════════════════════════════════════════════════════════════════════════
   _makeMoon({ x: mx, y: my, r }) {
     this._secantGraphics = this.add.graphics().setDepth(-13);
@@ -119,7 +119,7 @@ export default class PiScene extends BasePuzzleScene {
       .setDepth(-12);
     this._moonHitArea.setInteractive({ useHandCursor: true });
 
-    this._moonHitArea.on("pointerover", () => {
+    const show = () => {
       if (this._secantTween && this._secantTween.isPlaying()) return;
 
       this._secantGraphics.setVisible(true);
@@ -159,9 +159,9 @@ export default class PiScene extends BasePuzzleScene {
           g.fillCircle(x1, my, Math.max(1.6, r * 0.045));
         },
       });
-    });
+    };
 
-    this._moonHitArea.on("pointerout", () => {
+    const hide = () => {
       if (this._secantTween) {
         this._secantTween.stop();
         this._secantTween = null;
@@ -170,7 +170,19 @@ export default class PiScene extends BasePuzzleScene {
         this._secantGraphics.clear();
         this._secantGraphics.setVisible(false);
       }
+    };
+    this._moonHitArea.on("pointerover", (pointer) => {
+      if (!pointer.wasTouch && !this._moonPinned) show();
     });
+    this._moonHitArea.on("pointerout", () => {
+      if (!this._moonPinned) hide();
+    });
+    this._moonHitArea.on("pointerdown", (pointer) => {
+      if (!pointer.wasTouch) return;
+      this._moonPinned = !this._moonPinned;
+      if (this._moonPinned) show(); else hide();
+    });
+    if (this._moonPinned) show();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

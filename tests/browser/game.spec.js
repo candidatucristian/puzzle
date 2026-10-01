@@ -283,6 +283,16 @@ test('TV channels and the resized DOM remain interactive', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('the moon still draws on mouse hover and clears when the pointer leaves', async ({ page }) => {
+  await launch(page); await navigate(page, 'Pi');
+  const moon = await sceneState(page, '({ x: scene._moonHitArea.x, y: scene._moonHitArea.y })');
+  const canvas = await page.locator('#game-container > canvas').boundingBox();
+  await page.mouse.move(canvas.x + moon.x, canvas.y + moon.y);
+  await expect.poll(() => sceneState(page, 'scene._secantGraphics.visible')).toBe(true);
+  await page.mouse.move(canvas.x + 10, canvas.y + canvas.height - 10);
+  await expect.poll(() => sceneState(page, 'scene._secantGraphics.visible')).toBe(false);
+});
+
 test('Overtime: the calculator adds the wall clocks by real clicks, survives a resize, and starts fresh on replay', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await launch(page); await navigate(page, 'Overtime');
@@ -355,9 +365,10 @@ test('MobilePhone input commits, survives resize, reveals the caller, and resets
   await press('2');
   expect(await sceneState(page, 'scene.screenInput.text')).toBe('AA');
   await page.setViewportSize({ width: 1360, height: 900 });
-  await expect.poll(() => sceneState(page, 'scene.scale.width')).toBeLessThan(1440);
+  const resizedRoom = await page.locator('#game-container').boundingBox();
+  await expect.poll(() => sceneState(page, 'scene.scale.width')).toBe(Math.round(resizedRoom.width));
+  await expect.poll(() => sceneState(page, 'scene.scale.height')).toBe(Math.round(resizedRoom.height));
   await expect.poll(() => sceneState(page, 'scene.keypadContainer?.active')).toBe(true);
-  await page.waitForTimeout(300);
   expect(await sceneState(page, 'scene.screenInput.text')).toBe('AA');
   await measure();
   await press('#'); await press('#');

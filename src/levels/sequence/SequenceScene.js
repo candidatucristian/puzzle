@@ -1,18 +1,19 @@
 import { playPaperTick, playPuzzleChime } from "../../shared/puzzleSounds.js";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
-import { PENCIL } from "../../shared/theme.js";
+import { paintStudy, releaseStudyArt } from "./board.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "SEQUENCE"  ·  code: 19334488111   ·  sort, then read
 //
-// Drawn in the game's pencil-sketch idiom: six numbered cards pinned out
-// of order over six dashed slots. Drag a card onto another and they swap.
+// A storybook study in the evening: on the wooden wall, an oak-framed cork
+// board with six slots ruled in pencil, and six index cards pinned over them
+// out of order. Drag a card onto another and they swap.
 //
 // Sorted smallest-first —  11 19 23 24 28 31  — they fuse into one long
-// number, written live beneath the row:  111923242831.
+// number, written live on the paper strip beneath the row:  111923242831.
 //
-// The cipher is look-and-say, taught by the sketched note in the corner
+// The cipher is look-and-say, taught by the note lying on the desk
 // ( 25 → 55 · "how many, then what" ): read the long number in pairs,
 // each pair saying HOW MANY times to write WHICH digit:
 //
@@ -20,15 +21,17 @@ import { PENCIL } from "../../shared/theme.js";
 //
 // …which spells the access code:  19334488111
 //
-// All jitter is deterministic (seeded), so the sketch holds still across
-// redraws. Canvas-drawn, with lifecycle provided by BasePuzzleScene.
+// The study is painted once per screen size (board.js); the cards, their
+// numbers, the note's words and the dust in the lamplight are live.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SEQ_SORTED = [11, 19, 23, 24, 28, 31];
 // starting arrangement — no card begins in its correct slot
 const SEQ_START = [23, 31, 11, 28, 19, 24];
 
-const SEQ_SKETCH = PENCIL; // the pencil itself
+const SEQ_INK = "#2b2118"; // pencil-and-ink on paper
+const SEQ_RED = "#8e2a1c"; // the answer, written in red
+const SEQ_FONT = '"Special Elite", monospace';
 
 export default class SequenceScene extends BasePuzzleScene {
   constructor() {
@@ -42,7 +45,8 @@ export default class SequenceScene extends BasePuzzleScene {
 
   create() {
     this.beginScene();
-    this.input.mouse.disableContextMenu();
+    // touch-only devices have no mouse manager
+    this.input.mouse?.disableContextMenu();
 
     // slot order + solved state survive resizes
     this._order = SEQ_START.slice();
@@ -58,160 +62,106 @@ export default class SequenceScene extends BasePuzzleScene {
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
-  // ── the pencil: jittered hand-drawn primitives ─────────────────────────────
-
-  _dashedRect(g, x, y, w, h, color, alpha) {
-    g.lineStyle(1, color, alpha);
-    const step = 10;
-    for (let dx = x; dx < x + w - 4; dx += step) {
-      g.lineBetween(dx, y, dx + 5, y);
-      g.lineBetween(dx, y + h, dx + 5, y + h);
-    }
-    for (let dy = y; dy < y + h - 4; dy += step) {
-      g.lineBetween(x, dy, x, dy + 5);
-      g.lineBetween(x + w, dy, x + w, dy + 5);
-    }
-  }
-
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
     this._W = W;
     this._H = H;
 
-    const deskY = H * 0.74;
+    const compact = H < 450;
+    const deskY = H * (compact ? 0.68 : 0.74);
     // the row of slots
-    const cw = Math.min(W * 0.09, 124);
+    const cw = Math.min(W * 0.09, 124, compact ? H * 0.22 : Infinity);
     const chh = cw * 0.72;
     const gap = cw * 0.26;
     const total = 6 * cw + 5 * gap;
     this._slots = [];
     const x0 = W / 2 - total / 2;
-    const sy = H * 0.32;
+    const sy = H * (compact ? 0.28 : 0.32);
+    const fusedY = sy + chh / 2 + (compact ? 42 : 74);
     for (let i = 0; i < 6; i++) {
-      this._slots.push({ x: x0 + i * (cw + gap) + cw / 2, y: sy, w: cw, h: chh });
+      this._slots.push({
+        x: x0 + i * (cw + gap) + cw / 2,
+        y: sy,
+        w: cw,
+        h: chh,
+      });
     }
     this._slotRow = { x: x0, y: sy - chh / 2, w: total, h: chh };
 
-    this._drawRoom(W, H, deskY);
-    this._drawSlots();
-    this._drawNote(W, H, deskY);
+    // the note on the desk — kept on screen however narrow it is
+    const nw = Math.min(240, W * 0.42);
+    const nh = Math.round(Math.min(nw * 0.38, compact ? H * 0.28 : Infinity));
+    // Reserve the bottom-right corner for Inspect, including larger text.
+    const edge = Math.max(12, W * 0.04);
+    const nx = Math.max(edge, Math.min(W * 0.79, W - nw - edge - (compact ? 160 : 0)));
+    const ny = Math.min(deskY + (H - deskY) / 2 - nh / 2, H - nh - 12);
+    this._note = { x: nx, y: ny, w: nw, h: nh, angle: -0.035 };
+
+    const art = paintStudy(this, W, H, {
+      W,
+      H,
+      compact,
+      deskY,
+      slots: this._slots,
+      slotRow: this._slotRow,
+      fused: { y: fusedY },
+      note: this._note,
+    });
+    this._art = art;
+    this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-14);
+
+    this._drawNote();
     this._drawTexts(W, H);
 
-    // the fused number, written live beneath the row
+    // the fused number, written live on the paper strip beneath the row
     this._fusedText = this.add
-      .text(W / 2, sy + chh / 2 + 74, "", {
-        fontFamily: '"Special Elite", monospace',
+      .text(W / 2, fusedY, "", {
+        fontFamily: SEQ_FONT,
         fontSize: Math.round(cw * 0.42) + "px",
-        color: "#c9bfa4",
-        letterSpacing: 6,
+        color: SEQ_INK,
+        letterSpacing: Math.max(2, Math.round(cw * 0.05)),
       })
       .setOrigin(0.5)
       .setDepth(8);
-    const und = this.add.graphics().setDepth(7);
-    const rndU = this._rng(9911);
-    this._pencilSeg(
-      und,
-      rndU,
-      W / 2 - total * 0.36,
-      sy + chh / 2 + 100,
-      W / 2 + total * 0.36,
-      sy + chh / 2 + 100,
-      1.2,
-      SEQ_SKETCH,
-      0.25,
-      2,
-    );
 
     this._makeCards();
-    this._drawVignette(W, H);
     this._spawnDust(W, H);
 
     this._refreshFused();
     if (this._solved) this._applySolved(true);
   }
 
-  // the sketched room: wireframe pencil box, like the old plans
-  _drawRoom(W, H, deskY) {
-    const g = this.add.graphics().setDepth(-14);
-    g.fillGradientStyle(0x0e1014, 0x101318, 0x07080b, 0x090a0d, 1);
-    g.fillRect(0, 0, W, H);
-
-    const rnd = this._rng(6161);
-    const cwx1 = W * 0.09;
-    const cwx2 = W * 0.91;
-    this._pencilSeg(g, rnd, cwx1, H * 0.06, cwx1, deskY, 1, SEQ_SKETCH, 0.1, 2.4);
-    this._pencilSeg(g, rnd, cwx2, H * 0.06, cwx2, deskY, 1, SEQ_SKETCH, 0.1, 2.4);
-    this._pencilSeg(g, rnd, 0, H * 0.035, cwx1, H * 0.06, 1, SEQ_SKETCH, 0.08, 2);
-    this._pencilSeg(g, rnd, W, H * 0.035, cwx2, H * 0.06, 1, SEQ_SKETCH, 0.08, 2);
-    this._pencilSeg(g, rnd, 0, H * 0.995, cwx1 * 1.6, deskY, 1, SEQ_SKETCH, 0.09, 2);
-    this._pencilSeg(g, rnd, W, H * 0.995, W - cwx1 * 1.6, deskY, 1, SEQ_SKETCH, 0.09, 2);
-    this._pencilSeg(g, rnd, 0, deskY, W, deskY, 1.4, SEQ_SKETCH, 0.22, 2);
-    this._pencilSeg(g, rnd, 0, deskY + 5, W, deskY + 5, 1, SEQ_SKETCH, 0.1, 2);
-    for (let i = 0; i < 4; i++) {
-      const y = deskY + 26 + i * ((H - deskY) / 4.6);
-      this._pencilSeg(g, rnd, W * 0.04, y, W * 0.96, y + (rnd() - 0.5) * 6, 1, SEQ_SKETCH, 0.05, 2.4);
-    }
-    for (let i = 0; i < 5; i++) {
-      const x = rnd() * W;
-      const y = rnd() * deskY * 0.4;
-      this._pencilSeg(g, rnd, x, y, x + 14 + rnd() * 30, y + (rnd() - 0.5) * 10, 1, SEQ_SKETCH, 0.05, 1.6);
-    }
-  }
-
-  _drawSlots() {
-    const g = this.add.graphics().setDepth(-6);
-    for (const s of this._slots) {
-      this._dashedRect(g, s.x - s.w / 2, s.y - s.h / 2, s.w, s.h, SEQ_SKETCH, 0.3);
-    }
-    // a small ascending arrow under the row: smallest first
-    const rnd = this._rng(4477);
-    const r = this._slotRow;
-    const ay = r.y + r.h + 22;
-    this._pencilSeg(g, rnd, r.x + 6, ay, r.x + 74, ay, 1.2, SEQ_SKETCH, 0.4, 1.4);
-    this._pencilSeg(g, rnd, r.x + 74, ay, r.x + 64, ay - 5, 1.2, SEQ_SKETCH, 0.4, 1);
-    this._pencilSeg(g, rnd, r.x + 74, ay, r.x + 64, ay + 5, 1.2, SEQ_SKETCH, 0.4, 1);
+  // the note that teaches the cipher: 25 → 55
+  _drawNote() {
+    const n = this._note;
+    const cx = n.x + n.w / 2;
+    const cy = n.y + n.h / 2;
+    const deg = (n.angle * 180) / Math.PI;
+    const at = (dy) => ({
+      x: cx - Math.sin(n.angle) * dy,
+      y: cy + Math.cos(n.angle) * dy,
+    });
+    const a = at(-n.h * 0.12);
     this.add
-      .text(r.x + 84, ay, "small → large", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "12px",
-        color: "#8f8974",
-      })
-      .setOrigin(0, 0.5)
-      .setAlpha(0.75)
-      .setDepth(-5);
-  }
-
-  // the sketched corner note that teaches the cipher: 25 → 55
-  _drawNote(W, H, deskY) {
-    const nw = 240;
-    const nh = 92;
-    const nx = W * 0.79;
-    const ny = deskY + (H - deskY) / 2 - nh / 2;
-    const g = this.add.graphics().setDepth(-6);
-    const rnd = this._rng(3939);
-
-    this._pencilRect(g, rnd, nx, ny, nw, nh, 1.3, SEQ_SKETCH, 0.4, 2);
-    // pinned corner
-    g.fillStyle(SEQ_SKETCH, 0.5);
-    g.fillCircle(nx + 9, ny + 9, 1.8);
-
-    this.add
-      .text(nx + nw / 2, ny + nh * 0.36, "25 → 55", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "24px",
-        color: "#c9bfa4",
+      .text(a.x, a.y, "25 → 55", {
+        fontFamily: SEQ_FONT,
+        fontSize: Math.round(n.h * 0.28) + "px",
+        color: SEQ_INK,
       })
       .setOrigin(0.5)
+      .setAngle(deg)
       .setDepth(-5);
+    const b = at(n.h * 0.26);
     this.add
-      .text(nx + nw / 2, ny + nh * 0.72, "how many, then what", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "13px",
-        color: "#8f8974",
+      .text(b.x, b.y, "how many, then what", {
+        fontFamily: SEQ_FONT,
+        fontSize: Math.max(10, Math.round(n.h * 0.15)) + "px",
+        color: "#4a3a2a",
       })
       .setOrigin(0.5)
-      .setAlpha(0.85)
+      .setAngle(deg)
+      .setAlpha(0.9)
       .setDepth(-5);
   }
 
@@ -219,6 +169,7 @@ export default class SequenceScene extends BasePuzzleScene {
 
   _makeCards() {
     this._cards = [];
+    const art = this._art;
     const rndA = this._rng(5151);
     for (let slot = 0; slot < this._order.length; slot++) {
       const value = this._order[slot];
@@ -229,22 +180,22 @@ export default class SequenceScene extends BasePuzzleScene {
       cont.slotIndex = slot;
       cont.homeAngle = cont.angle;
 
-      const g = this.add.graphics();
-      const rnd = this._rng(2000 + value * 37); // stable per card
-      g.fillStyle(0x14171c, 0.9);
-      g.fillRect(-s.w / 2 + 3, -s.h / 2 + 3, s.w - 6, s.h - 6);
-      g.fillStyle(SEQ_SKETCH, 0.03);
-      g.fillRect(-s.w / 2 + 3, -s.h / 2 + 3, s.w - 6, s.h - 6);
-      this._pencilRect(g, rnd, -s.w / 2, -s.h / 2, s.w, s.h, 1.5, SEQ_SKETCH, 0.6, 1.8);
-      // corner glint
-      this._pencilSeg(g, rnd, -s.w / 2 + 7, -s.h / 2 + 14, -s.w / 2 + 17, -s.h / 2 + 5, 1, SEQ_SKETCH, 0.4, 1);
-      cont.add(g);
+      // its shadow on the cork, then the card itself
+      const lift = Math.max(2, s.w * 0.03);
+      const shadow = this.add
+        .image(lift, lift * 1.4, art.shadow)
+        .setDisplaySize(s.w * 1.5, s.h + s.w * 0.5)
+        .setAlpha(0.7);
+      const card = this.add.image(0, 0, art.card).setDisplaySize(s.w, s.h);
+      cont.add([shadow, card]);
+      cont.shadow = shadow;
+      cont.lift = lift;
 
       const txt = this.add
-        .text(0, 1, String(value), {
-          fontFamily: '"Special Elite", monospace',
+        .text(0, s.h * 0.1, String(value), {
+          fontFamily: SEQ_FONT,
           fontSize: Math.round(s.h * 0.5) + "px",
-          color: "#e8dcc0",
+          color: SEQ_INK,
         })
         .setOrigin(0.5);
       cont.add(txt);
@@ -263,6 +214,7 @@ export default class SequenceScene extends BasePuzzleScene {
         cont.setDepth(16);
         cont.setScale(1.07);
         cont.setAngle(0);
+        shadow.setPosition(lift * 3, lift * 4.5).setAlpha(0.5); // lifted off the cork
         cont.dragOffX = cont.x - p.worldX;
         cont.dragOffY = cont.y - p.worldY;
         playPaperTick(this, 0.1);
@@ -276,6 +228,7 @@ export default class SequenceScene extends BasePuzzleScene {
         if (this._solved) return;
         cont.setDepth(10);
         cont.setScale(1);
+        shadow.setPosition(lift, lift * 1.4).setAlpha(0.7);
         const target = this._slotAt(p.x, p.y);
         if (target !== -1 && target !== cont.slotIndex) {
           this._swap(cont.slotIndex, target);
@@ -347,13 +300,13 @@ export default class SequenceScene extends BasePuzzleScene {
   }
 
   _applySolved(instant) {
-    // cards straighten, the fused number catches the light
+    // cards straighten, and the long number is gone over in red ink
     for (const c of this._cards) {
       if (instant) c.setAngle(0);
       else this.tweens.add({ targets: c, angle: 0, duration: 260 });
-      c.numText.setColor("#d9c9a0");
+      c.numText.setColor(SEQ_RED);
     }
-    this._fusedText.setColor("#d9c9a0");
+    this._fusedText.setColor(SEQ_RED);
     if (!instant) {
       this.tweens.add({
         targets: this._fusedText,
@@ -369,14 +322,20 @@ export default class SequenceScene extends BasePuzzleScene {
     this.levelText = drawLevelLabel(this, W, H);
   }
 
+  // dust turning slowly in the lamplight
   _spawnDust(W, H) {
     const rnd = this._rng(8484);
     const r = this._slotRow;
+    const S = Math.min(W, H);
     for (let i = 0; i < 12; i++) {
       const dx = r.x - 40 + rnd() * (r.w + 80);
       const dy = H * 0.08 + rnd() * H * 0.5;
+      const size = S * (0.006 + rnd() * 0.006);
       const dot = this.add
-        .circle(dx, dy, 0.7 + rnd() * 1, 0xffffff, 0.08 + rnd() * 0.1)
+        .image(dx, dy, this._art.mote)
+        .setDisplaySize(size, size)
+        .setBlendMode("ADD")
+        .setAlpha(0.15 + rnd() * 0.2)
         .setDepth(-2);
       this.ambientObject(dot);
       this.ambientTween({
@@ -390,22 +349,21 @@ export default class SequenceScene extends BasePuzzleScene {
         onRepeat: () => {
           dot.x = r.x - 40 + rnd() * (r.w + 80);
           dot.y = H * 0.08 + rnd() * H * 0.4;
-          dot.setAlpha(0.08 + rnd() * 0.1);
+          dot.setAlpha(0.15 + rnd() * 0.2);
         },
       });
     }
   }
-
-  // ── sounds ─────────────────────────────────────────────────────────────────
-
-
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
-    this.children.removeAll(true);
+    // destroy rather than just detach: removeAll(true) left the old cards'
+    // drag zones alive after a resize
+    for (const obj of this.children.list.slice()) obj.destroy();
+    releaseStudyArt(this.textures);
     this._cards = [];
     this._fusedText = null;
   }
@@ -413,5 +371,6 @@ export default class SequenceScene extends BasePuzzleScene {
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
+    releaseStudyArt(this.textures);
   }
 }
