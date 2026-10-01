@@ -74,7 +74,7 @@ test('the menu and the levels panel slide in as drawers and close again', async 
   // a dialog from the drawer: open, readable, closable
   await page.locator('#compact-menu').tap(); await page.locator('#btn-howto').tap();
   await expect(page.locator('#howto-modal')).not.toHaveClass(/hidden/);
-  await expect(page.locator('.howto-touch')).toBeVisible();
+  await expect(page.locator('.howto-touch').first()).toBeVisible();
   await expect(page.locator('#btn-close-howto')).toBeInViewport();
   await page.locator('#btn-close-howto').tap();
   await expect(page.locator('#howto-modal')).toHaveClass(/hidden/);
@@ -111,6 +111,45 @@ test('taps operate the rooms: the code box, the telescope, a board row and the T
   expect(await sceneState(page, 'scene._channel')).toBe((channel + 1) % 4);
   await screenshot(page, 'tv');
   expect(errors).toEqual([]);
+});
+
+test('the full-screen button slides both bars away, and the handles bring each back', async ({ page }) => {
+  await open(page);
+  await page.locator('#btn-continue').tap();
+  await navigate(page, 'Telescope');
+  const canvas = page.locator('#game-container > canvas');
+  const before = await canvas.boundingBox();
+  const viewport = page.viewportSize();
+  // one button: the top bar and the console go, the room takes the whole screen
+  await page.locator('#compact-fullscreen').tap();
+  await expect(page.locator('html')).toHaveClass(/ui-top-collapsed/);
+  await expect(page.locator('html')).toHaveClass(/ui-bottom-collapsed/);
+  await expect(page.locator('#ui-toast')).toBeVisible();
+  await expect(page.locator('#compact-levels')).not.toBeInViewport();
+  await expect(page.locator('#btn-submit')).not.toBeInViewport();
+  await expect.poll(async () => (await canvas.boundingBox()).height, { timeout: 5000 }).toBeGreaterThan(viewport.height - 2);
+  expect(await sceneState(page, "scene.events.listenerCount('canvas_resized')")).toBe(1);
+  await screenshot(page, 'immersive');
+  // the handles stay at the edges: a tap on the bottom one brings the console back
+  const bottom = await page.locator('#handle-bottom').boundingBox();
+  expect(bottom.y + bottom.height).toBeGreaterThan(viewport.height - 4);
+  await page.locator('#handle-bottom').tap();
+  await expect(page.locator('html')).not.toHaveClass(/ui-bottom-collapsed/);
+  await expect(page.locator('#btn-submit')).toBeInViewport();
+  // a pull down on the top handle brings the top bar back; a pull up hides it again
+  const top = page.locator('#handle-top');
+  let box = await top.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down(); await page.mouse.move(box.x + box.width / 2, box.y + 60, { steps: 6 }); await page.mouse.up();
+  await expect(page.locator('html')).not.toHaveClass(/ui-top-collapsed/);
+  await expect(page.locator('#compact-levels')).toBeInViewport();
+  box = await top.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down(); await page.mouse.move(box.x + box.width / 2, box.y - 60, { steps: 6 }); await page.mouse.up();
+  await expect(page.locator('html')).toHaveClass(/ui-top-collapsed/);
+  await page.locator('#handle-top').tap();
+  await expect(page.locator('html')).not.toHaveClass(/ui-top-collapsed/);
+  await expect.poll(async () => (await canvas.boundingBox()).height, { timeout: 5000 }).toBeLessThan(before.height + 2);
 });
 
 test('a portrait phone is asked to turn, and the rooms survive the turn', async ({ page }) => {

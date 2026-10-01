@@ -67,7 +67,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
   // the graphite dust on the start screen costs a phone more than it gives
   mountStartParticles({ scope, startScreen: start, disabled: touch && mobile.compact, preferences });
-  mountFullscreenControl(scope, [byId('btn-fullscreen'), byId('compact-fullscreen')]);
+  mountFullscreenControl(scope, byId('btn-fullscreen'));
 
   scope.on(byId('btn-submit'), 'click', () => {
     if (transitions.busy || intro.active || dialogs.isOpen) return;

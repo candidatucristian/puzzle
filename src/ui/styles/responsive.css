@@ -7,7 +7,9 @@
 
 #compact-bar,
 #drawer-scrim,
-#rotate-prompt {
+#rotate-prompt,
+.ui-handle,
+#ui-toast {
   display: none;
 }
 
@@ -17,18 +19,109 @@
     height: 100dvh;
   }
 
-  /* the compact bar: menu · title · levels */
+  /* the compact bar: menu · title · full screen · levels. It slides up out
+     of the way on its handle (max-height, so the room grows into its place) */
   #compact-bar {
     display: flex;
     align-items: center;
     gap: 8px;
     height: 44px;
-    padding: 0 8px;
+    max-height: 44px;
+    padding: 0 max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
     flex-shrink: 0;
+    overflow: hidden;
     background: linear-gradient(180deg, #1a1c21, #121418);
     border-bottom: 1px solid var(--line-dark);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
     z-index: 15;
+    transition: max-height 0.28s ease, border-width 0.28s ease;
+  }
+  .ui-top-collapsed #compact-bar {
+    max-height: 0;
+    border-bottom-width: 0;
+  }
+  .ui-bottom-collapsed #input-area {
+    max-height: 0;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+  }
+
+  /* the handles the bars slide on: a pill riding on each bar's inner edge,
+     left at the screen's edge when the bar is away */
+  .ui-handle {
+    display: flex;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 72px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 140;
+    touch-action: none;
+    cursor: grab;
+  }
+  .ui-handle::before {
+    content: "";
+    width: 42px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--pencil);
+    opacity: 0.75;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  }
+  .ui-handle:active::before,
+  .ui-handle:focus-visible::before {
+    opacity: 1;
+    background: var(--pencil-bright);
+  }
+  #handle-top {
+    top: calc(44px - 6px);
+    transition: top 0.28s ease;
+  }
+  .ui-top-collapsed #handle-top {
+    top: 0;
+  }
+  #handle-bottom {
+    bottom: calc(var(--console-h, 58px) - 6px);
+    transition: bottom 0.28s ease;
+  }
+  .ui-bottom-collapsed #handle-bottom {
+    bottom: 0;
+  }
+  [data-reduced-motion="true"] #compact-bar,
+  [data-reduced-motion="true"] #input-area,
+  [data-reduced-motion="true"] .ui-handle {
+    transition: none;
+  }
+
+  /* a short word from the interface, over the room */
+  #ui-toast {
+    display: block;
+    position: fixed;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 141;
+    margin: 0;
+    padding: 8px 12px;
+    max-width: min(420px, 86vw);
+    background: rgba(12, 14, 17, 0.92);
+    border: 1px solid var(--pencil-faint);
+    border-radius: 3px;
+    color: var(--bone);
+    font-size: 12px;
+    text-align: center;
+    pointer-events: none;
+  }
+  #ui-toast[hidden] {
+    display: none;
   }
   #compact-bar h1 {
     flex: 1;
@@ -128,13 +221,17 @@
     min-height: 0;
   }
 
-  /* the console on one row; the labels go, the controls stay */
+  /* the console on one row; the labels go, the controls stay. It slides
+     down out of the way on its handle */
   #input-area {
     height: auto;
     min-height: 58px;
-    padding: 7px 8px;
+    max-height: 160px;
+    padding: 7px max(8px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     gap: 8px;
     justify-content: stretch;
+    overflow: hidden;
+    transition: max-height 0.28s ease, min-height 0.28s ease, padding 0.28s ease;
   }
   #input-area .console-label,
   #input-area .panel-label {
@@ -278,10 +375,11 @@
     background: radial-gradient(120% 100% at 50% 45%, #0c0d11 0%, #050608 70%, #000 100%);
   }
   #rotate-prompt .rotate-icon {
-    width: 54px;
-    height: 54px;
+    width: 34px;
+    height: 58px;
     border: 2px solid var(--pencil);
-    border-radius: 6px;
+    border-radius: 7px;
+    box-shadow: inset 0 -6px 0 -4px var(--pencil-dim);
     animation: rotate-hint 2.2s ease-in-out infinite;
   }
   #rotate-prompt h2 {
