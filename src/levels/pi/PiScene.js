@@ -331,16 +331,6 @@ export default class PiScene extends BasePuzzleScene {
   }
 
   _drawTexts(W) {
-    this.statusText = this.add
-      .text(W / 2, 40, "The whole city sleeps. One building counts.", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#e8dcc0",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(
         W - 30,

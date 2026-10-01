@@ -157,24 +157,6 @@ export default class CryptexScene extends BasePuzzleScene {
   }
 
   _buildTexts(W, H) {
-    this.statusText = this.add
-      .text(W / 2, 46, "Put out the light!", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#e8dcc0",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-    this.subText = this.add
-      .text(W / 2, 74, "turn the wheel · read the letter", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "13px",
-        color: "#a8905f",
-      })
-      .setOrigin(0.5)
-      .setAlpha(0.85)
-      .setDepth(20);
     this.levelText = this.add
       .text(
         W - 30,
@@ -327,8 +309,7 @@ export default class CryptexScene extends BasePuzzleScene {
     }
   }
 
-  // while the candle burns the disk is locked: it only trembles a little,
-  // and the instruction pulses to point at the candle
+  // While the candle burns the disk is locked: it only trembles a little.
   _jiggleLockedWheel() {
     if (!this._disk || this._jiggling) return;
     this._jiggling = true;
@@ -344,15 +325,6 @@ export default class CryptexScene extends BasePuzzleScene {
         this._jiggling = false;
       },
     });
-    if (this.statusText) {
-      this.tweens.add({
-        targets: this.statusText,
-        scale: 1.1,
-        duration: 130,
-        yoyo: true,
-        ease: "Sine.easeOut",
-      });
-    }
   }
 
   _setWheelAngle(deg) {

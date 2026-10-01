@@ -626,7 +626,7 @@ function paintShop(ctx, cam, bx, bw, groundH, lay) {
 // ── the ground ──────────────────────────────────────────────────────────────
 
 function paintSidewalk(ctx, cam, rnd) {
-  const { W, H, S, baseY, curbY } = cam;
+  const { W, S, baseY, curbY } = cam;
   const g = ctx.createLinearGradient(0, baseY, 0, curbY);
   g.addColorStop(0, "#2a2a34");
   g.addColorStop(1, "#33323c");

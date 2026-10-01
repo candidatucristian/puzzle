@@ -119,16 +119,6 @@ export default class ModemScene extends BasePuzzleScene {
   }
 
   _drawTexts(W) {
-    this.add
-      .text(W / 2, 40, "It never stopped transmitting.", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#e8dcc0",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-
     const lvl = this.add
       .text(W - 30, 28, "Level " + (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1), {
         fontFamily: '"Special Elite", monospace',

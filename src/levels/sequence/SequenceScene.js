@@ -362,32 +362,9 @@ export default class SequenceScene extends BasePuzzleScene {
         ease: "Quad.easeOut",
       });
     }
-    this.statusText.setText("One number. Now read it aloud.");
-    this.statusText.setColor("#d9c9a0");
-    this.subText.setAlpha(0);
   }
 
   _drawTexts(W, H) {
-    this.statusText = this.add
-      .text(W / 2, 40, "Six numbers, out of order.", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#e8dcc0",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-
-    this.subText = this.add
-      .text(W / 2, 68, "drag a card onto another to swap them", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "13px",
-        color: "#a8905f",
-      })
-      .setOrigin(0.5)
-      .setAlpha(0.85)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(W - 30, 28, "Level " + (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) + 1), {
         fontFamily: '"Special Elite", monospace',

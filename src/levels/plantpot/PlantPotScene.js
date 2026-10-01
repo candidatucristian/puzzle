@@ -682,27 +682,11 @@ export default class PlantPotScene extends BasePuzzleScene {
     this.isSolved = true;
     this.isAnimating = false;
     this.bucket.disableInteractive();
-    this._setSolvedText();
     // a small reward: a star falls
     if (!this._shoot) this._launchShootingStar();
   }
 
-  _setSolvedText() {
-    this.statusText.setText("Nature's sequence is complete. Whose name does it bear?");
-    this.statusText.setColor("#1aaf7a");
-  }
-
   _drawTexts(W) {
-    this.statusText = this.add
-      .text(W / 2, 50, "Who am I? ...", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "22px",
-        color: "#e8dcc0",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-    if (this.isSolved) this._setSolvedText();
     this.levelText = this.add
       .text(W - 30, 30, "Level " + this._levelNumber(), {
         fontFamily: '"Special Elite", monospace',

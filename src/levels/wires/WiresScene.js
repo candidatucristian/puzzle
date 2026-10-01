@@ -369,16 +369,6 @@ export default class WiresScene extends BasePuzzleScene {
   }
 
   _drawTexts(W) {
-    this.statusText = this.add
-      .text(W / 2, 40, "The star-Spangled Banner", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#e8dcc0",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(
         W - 30,

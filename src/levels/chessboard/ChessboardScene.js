@@ -167,17 +167,6 @@ export default class ChessboardScene extends BasePuzzleScene {
   }
 
   _drawTexts(W) {
-    this.statusText = this.add
-      .text(W / 2, 42, "An abandoned game.", {
-        fontFamily: CH_FONT,
-        fontSize: "20px",
-        color: "#f0e2c4",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setShadow(0, 2, "rgba(10,4,2,0.9)", 8, false, true)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(
         W - 30,

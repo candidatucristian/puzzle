@@ -53,8 +53,7 @@ const metadata = [
     "references": [
       "SEQ_START = [23,31,11,28,19,24] / SEQ_SORTED = [11,19,23,24,28,31]",
       "_refreshFused() — builds the live fused number under the sorted cards",
-      "corner note \"25 → 55\" — teaches the look-and-say (count, then digit) reading",
-      "statusText after solve: \"One number. Now read it aloud.\""
+      "corner note \"25 → 55\" — teaches the look-and-say (count, then digit) reading"
     ]
   },
   {

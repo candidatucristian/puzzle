@@ -335,26 +335,6 @@ export default class StationScene extends BasePuzzleScene {
   }
 
   _drawTexts(W) {
-    this.statusText = this.add
-      .text(W / 2, 40, "The last board still turns.", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#e8dcc0",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-
-    this.subText = this.add
-      .text(W / 2, 68, "click a row to flip it again", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "13px",
-        color: "#a8905f",
-      })
-      .setOrigin(0.5)
-      .setAlpha(0.85)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(
         W - 30,

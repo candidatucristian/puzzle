@@ -33,9 +33,10 @@ export function drawWindow(scene, W, H) {
   return { geo, backdrop, frame };
 }
 
-/** Frees the two painted canvases — call once their images are destroyed. */
+/** Frees the painted canvases (the room's too) — call once their images
+ *  are destroyed. */
 export function releaseWindowArt(textures) {
-  for (const key of [SKY_KEY, FRONT_KEY]) {
+  for (const key of [SKY_KEY, FRONT_KEY, "tele_room", "tele_room_glow"]) {
     if (textures.exists(key)) textures.remove(key);
   }
 }
@@ -49,23 +50,57 @@ function addCanvas(textures, key, canvas) {
 
 function layoutWindow(W, H) {
   const S = Math.min(W, H);
-  const lw = Math.max(1, S / 800);
-
   // the arch: as wide as the screen allows but never flatter than about
   // 0.42 : 1, and at most a true semicircle (portrait screens)
   const archRX = Math.min(W * 0.455, (H * 0.4) / 0.42);
   const archRY = Math.min(H * 0.4, archRX);
-  const archCX = W / 2;
-  const archCY = H * 0.045 + archRY;
+  return archGeo({
+    W,
+    H,
+    S,
+    V: H,
+    Wv: W,
+    archCX: W / 2,
+    archCY: H * 0.045 + archRY,
+    archRX,
+    archRY,
+    sillY: H * 0.885,
+    eye: { x: W / 2, y: H * 0.52 },
+    moon: { x: W * 0.63, y: H * 0.19, r: S * 0.062 },
+    horizonY: H * 0.8,
+  });
+}
+
+/** The window's whole geometry, from its arch. The close-up fills the
+ *  screen with it; the room (room.js) hangs the very same window, smaller,
+ *  in its wall. S scales the trim, the cloth and the stone; V is the
+ *  vertical unit and Wv the width the valley's hills are drawn across (for
+ *  the close-up, the screen's height and width). */
+export function archGeo(o) {
+  const {
+    W,
+    H,
+    S,
+    V,
+    Wv,
+    archCX,
+    archCY,
+    archRX,
+    archRY,
+    sillY,
+    eye,
+    moon,
+    horizonY,
+  } = o;
+  const lw = Math.max(1, S / 800);
   const wl = archCX - archRX;
   const wr = archCX + archRX;
-  const sillY = H * 0.885;
   const trim = Math.max(10, S * 0.028);
+  const ox = archCX - Wv / 2; // where the valley's hills start, on the left
 
   // the reveal — the thickness of the wall, seen in perspective: the far
   // edge of the opening is the near one pulled toward the eye by K
-  const eye = { x: W / 2, y: H * 0.52 };
-  const K = 0.95;
+  const K = o.K || 0.95;
   const toHole = (p) => ({
     x: eye.x + (p.x - eye.x) * K,
     y: eye.y + (p.y - eye.y) * K,
@@ -89,18 +124,15 @@ function layoutWindow(W, H) {
   };
 
   // the inner sill board, jutting into the room under the opening
-  const stool = { depth: H * 0.016, face: H * 0.022, ear: trim + S * 0.022 };
+  const stool = { depth: V * 0.016, face: V * 0.022, ear: trim + S * 0.022 };
 
-  // where the moon hangs — the scene puts its moon image here
-  const moon = { x: W * 0.63, y: H * 0.19, r: S * 0.062 };
-
-  // the valley beyond: a far ridge and a nearer, darker one
-  const horizonY = H * 0.8;
+  // the valley beyond: a far ridge and a nearer, darker one (the moon hangs
+  // where o.moon says — in the close-up the scene puts its moon image there)
   const far = (x) => {
-    const u = x / W;
+    const u = (x - ox) / Wv;
     return (
       horizonY -
-      H *
+      V *
         (0.03 +
           0.014 * Math.sin(u * 7.1 + 1.3) +
           0.009 * Math.sin(u * 15.7 + 0.4) +
@@ -108,10 +140,10 @@ function layoutWindow(W, H) {
     );
   };
   const near = (x) => {
-    const u = x / W;
+    const u = (x - ox) / Wv;
     return (
       horizonY +
-      H *
+      V *
         (0.016 -
           0.011 * Math.sin(u * 4.3 + 2.6) -
           0.005 * Math.sin(u * 11.9 + 1.1))
@@ -162,22 +194,24 @@ function layoutWindow(W, H) {
   let x0 = hole.wl + gap;
   for (let pass = 0; pass < 3; pass++) {
     x0 = Math.max(hole.wl + gap, edgeMax(y0, y1) + gap);
-    y1 = ridgeTop(x0, W - x0) - gap;
+    y1 = ridgeTop(x0, 2 * archCX - x0) - gap;
     while (y0 < y1 - S * 0.2 && !inHole(x0, y0, gap)) y0 += 2;
   }
-  const content = { x0, x1: W - x0, y0, y1 };
+  const content = { x0, x1: 2 * archCX - x0, y0, y1 };
 
   // open sky: in the opening, above the far ridge and clear of the curtains
   const inSky = (x, y, m = S * 0.012) => {
     if (!inHole(x, y, m) || y > far(x) - m) return false;
     const e = edgeAt(y);
-    return e === null || (x > e + m && x < W - e - m);
+    return e === null || (x > e + m && x < 2 * archCX - e - m);
   };
 
   return {
     W,
     H,
     S,
+    V,
+    Wv,
     lw,
     archCX,
     archCY,
@@ -207,9 +241,15 @@ function layoutWindow(W, H) {
 // ── behind the sky ──────────────────────────────────────────────────────────
 
 function paintSky(geo) {
-  const { W, H, S, lw, hole, moon, horizonY, content } = geo;
+  const { W, H } = geo;
   const cv = makeCanvas(W, H);
-  const ctx = cv.getContext("2d");
+  paintSkyOn(cv.getContext("2d"), geo);
+  return cv;
+}
+
+/** The night sky behind the opening, onto any canvas (the room clips it). */
+export function paintSkyOn(ctx, geo) {
+  const { W, H, S, V, Wv, lw, hole, moon, horizonY, content } = geo;
   const rnd = lcg(7919);
 
   // night: near-black at the crown, deep blue down by the hills
@@ -222,7 +262,7 @@ function paintSky(geo) {
   ctx.fillRect(0, 0, W, H);
 
   // the last of the light low over the hills, and the moon's own wash
-  softEllipse(ctx, W / 2, horizonY, W * 0.62, H * 0.2, "64,88,142", 0.3);
+  softEllipse(ctx, geo.archCX, horizonY, Wv * 0.62, V * 0.2, "64,88,142", 0.3);
   softEllipse(ctx, moon.x, moon.y, moon.r * 8, moon.r * 8, "150,172,232", 0.13);
   softEllipse(
     ctx,
@@ -284,7 +324,6 @@ function paintSky(geo) {
   }
 
   grain(ctx, W, H, 0.028, "source-over");
-  return cv;
 }
 
 // ── in front of the sky ─────────────────────────────────────────────────────
@@ -341,12 +380,37 @@ function paintFront(geo) {
   return cv;
 }
 
+/** The window itself — valley, reveal, trim, sill, rod and curtains — onto
+ *  a canvas that already has its own wall (the room's). */
+export function paintWindowOn(ctx, geo) {
+  const { hole } = geo;
+  const rnd = lcg(4471);
+  ctx.save();
+  ctx.beginPath();
+  opening(ctx, hole, hole.bottom + 1);
+  ctx.clip();
+  paintValley(ctx, geo, rnd);
+  ctx.restore();
+  paintReveal(ctx, geo);
+  paintTrim(ctx, geo);
+  paintStool(ctx, geo);
+  paintRod(ctx, geo);
+  paintCurtain(ctx, geo, false);
+  paintCurtain(ctx, geo, true);
+}
+
+/** The opening's outline, for clipping the sky into it. */
+export function openingPath(ctx, geo) {
+  ctx.beginPath();
+  opening(ctx, geo.hole, geo.hole.bottom + 1);
+}
+
 function paintValley(ctx, geo, rnd) {
-  const { W, H, S, lw, hole, far, near, horizonY, content } = geo;
+  const { S, V, Wv, lw, hole, far, near, horizonY, content } = geo;
   const xa = hole.wl - 4;
   const xb = hole.wr + 4;
   const yb = hole.bottom + 4;
-  const step = Math.max(2, W / 480);
+  const step = Math.max(2, Wv / 480);
   const ridge = (f, dy) => {
     ctx.beginPath();
     ctx.moveTo(xa, f(xa) + dy);
@@ -364,9 +428,9 @@ function paintValley(ctx, geo, rnd) {
   // the far ridge, its crest touched by the moon — more so on the moon's side
   const fg = ctx.createLinearGradient(
     0,
-    horizonY - H * 0.06,
+    horizonY - V * 0.06,
     0,
-    horizonY + H * 0.03,
+    horizonY + V * 0.03,
   );
   fg.addColorStop(0, "#121d37");
   fg.addColorStop(1, "#0b1326");
@@ -398,15 +462,15 @@ function paintValley(ctx, geo, rnd) {
   // mist lying along the valley floor
   const mist = ctx.createLinearGradient(
     0,
-    horizonY - H * 0.035,
+    horizonY - V * 0.035,
     0,
-    horizonY + H * 0.035,
+    horizonY + V * 0.035,
   );
   mist.addColorStop(0, "rgba(96,118,172,0)");
   mist.addColorStop(0.55, "rgba(96,118,172,0.14)");
   mist.addColorStop(1, "rgba(96,118,172,0)");
   ctx.fillStyle = mist;
-  ctx.fillRect(xa, horizonY - H * 0.035, xb - xa, H * 0.07);
+  ctx.fillRect(xa, horizonY - V * 0.035, xb - xa, V * 0.07);
 
   // the near ridge, almost black, and its trees
   land(near, "#070b16");
@@ -574,17 +638,17 @@ function paintTrim(ctx, geo) {
 
 // the inner sill board, lit where the moonlight falls across it
 function paintStool(ctx, geo) {
-  const { H, S, lw, wl, wr, sillY, stool, archCX, archRX, hole } = geo;
+  const { V, S, lw, wl, wr, sillY, stool, archCX, archRX, hole } = geo;
   const x0 = wl - stool.ear;
   const x1 = wr + stool.ear;
   const yF = sillY + stool.depth;
   const yB = yF + stool.face;
 
-  const sh = ctx.createLinearGradient(0, yB, 0, yB + H * 0.04);
+  const sh = ctx.createLinearGradient(0, yB, 0, yB + V * 0.04);
   sh.addColorStop(0, "rgba(0,0,0,0.55)");
   sh.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = sh;
-  ctx.fillRect(x0 + S * 0.01, yB, x1 - x0 - S * 0.02, H * 0.04);
+  ctx.fillRect(x0 + S * 0.01, yB, x1 - x0 - S * 0.02, V * 0.04);
 
   // the top: the same moonlit stone as the opening's floor — one sill
   ctx.fillStyle = mix(SHADOW, LIT, shadeOf(0, -1));

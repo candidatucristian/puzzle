@@ -74,15 +74,6 @@ export default class MobilePhoneScene extends BasePuzzleScene {
 
     this.desk.build(width, height, this._phoneLayout(width, height));
 
-    this.statusText = this.add
-      .text(width / 2, 50, "", {
-        fontFamily: MP_FONT,
-        fontSize: "22px",
-        color: "#e8dcc0",
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(
         width - 30,
@@ -172,7 +163,6 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     // kept as a reference so shutdown() can remove it (otherwise every
     // restart of the level would add one more listener)
     this._onResize = (size) => {
-      this.statusText.setPosition(size.width / 2, 50);
       this.levelText.setPosition(size.width - 30, 30);
       this.setPhoneScale();
       this.desk.build(size.width, size.height, this._phoneLayout(size.width, size.height));
@@ -1102,8 +1092,6 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     this.callerNumber.setText(CALLER_NAME);
     this.screenInput.setText("");
     this.drawSignalBars(5);
-    this.statusText.setText("You have revealed the name. Execute it.");
-    this.statusText.setColor("#1aaf7a");
     this.keypadContainer.list.forEach((keyObj) => {
       if (keyObj.disableInteractive) {
         keyObj.disableInteractive();

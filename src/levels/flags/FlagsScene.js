@@ -191,17 +191,6 @@ export default class FlagsScene extends BasePuzzleScene {
   }
 
   _drawTexts(W) {
-    this.statusText = this.add
-      .text(W / 2, 40, "A new alliance has been formed.", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#fff1dc",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setShadow(0, 2, "rgba(20,12,48,0.95)", 8, false, true)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(
         W - 30,

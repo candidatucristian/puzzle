@@ -485,17 +485,6 @@ export default class CrossingScene extends BasePuzzleScene {
   }
 
   _drawTexts(W, H) {
-    this.statusText = this.add
-      .text(W / 2, 40, "Go fetch her a bag of cat food.", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "20px",
-        color: "#f0e6cc",
-        letterSpacing: 1,
-      })
-      .setOrigin(0.5)
-      .setShadow(0, 2, "rgba(4,6,14,0.9)", 8, false, true)
-      .setDepth(20);
-
     this.levelText = this.add
       .text(
         W - 30,

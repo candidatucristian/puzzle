@@ -245,7 +245,7 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._room.add(vg);
 
     const hint = this.add
-      .text(W / 2, H * 0.92, "Close your eyes and dream", {
+      .text(W / 2, H * 0.92, "", {
         fontFamily: '"Courier New", monospace',
         fontSize: Math.max(14, Math.round(Math.min(W, H) * 0.024)) + "px",
         color: "#cfd8ea",
@@ -570,7 +570,12 @@ export default class TelescopeScene extends BasePuzzleScene {
 
   _onDown(p) {
     if (this.phase === PHASE.ROOM && this._roomScopeHit(p)) {
-      this.game.events.emit('puzzle:interaction', { label: '', pressed: true, x: p.x, y: p.y });
+      this.game.events.emit("puzzle:interaction", {
+        label: "",
+        pressed: true,
+        x: p.x,
+        y: p.y,
+      });
       this._enterSky();
     }
   }
@@ -579,7 +584,9 @@ export default class TelescopeScene extends BasePuzzleScene {
     if (this.phase !== PHASE.ROOM) return;
     // hand cursor only over the telescope — that's the way in
     this.input.setDefaultCursor(this._roomScopeHit(p) ? "pointer" : "default");
-    this.game.events.emit('puzzle:interaction', { label: this._roomScopeHit(p) ? 'Look through the telescope' : '' });
+    this.game.events.emit("puzzle:interaction", {
+      label: this._roomScopeHit(p) ? "Look through the telescope" : "",
+    });
   }
 
   _onUp() {
@@ -599,7 +606,11 @@ export default class TelescopeScene extends BasePuzzleScene {
     g.clear();
 
     const ptr = this.input.activePointer;
-    const live = ptr && this.input.enabled && !this._pointerOut && this.phase === PHASE.SKY;
+    const live =
+      ptr &&
+      this.input.enabled &&
+      !this._pointerOut &&
+      this.phase === PHASE.SKY;
     const px = live ? ptr.x : NaN,
       py = live ? ptr.y : NaN;
 
