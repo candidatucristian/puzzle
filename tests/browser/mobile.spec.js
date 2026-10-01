@@ -156,6 +156,9 @@ test('a portrait phone is asked to turn, and the rooms survive the turn', async 
   await open(page);
   await page.locator('#btn-continue').tap();
   await navigate(page, 'Wires');
+  // the first tap asked for full screen; a full-screen window cannot be resized
+  await page.evaluate(() => document.fullscreenElement && document.exitFullscreen());
+  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
   await page.setViewportSize({ width: 412, height: 915 });
   await expect(page.locator('#rotate-prompt')).toBeVisible();
   await screenshot(page, 'portrait');
