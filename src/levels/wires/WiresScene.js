@@ -1,5 +1,8 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { paintMeadow, releaseMeadowArt, ROCK_R } from "./meadow.js";
+import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
+
+const SPARKLE = "wi_sparkle";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "WIRES"  ·  code: FACADE  ·  the morning choir
@@ -88,6 +91,7 @@ export default class WiresScene extends BasePuzzleScene {
     this._noteTimer = 500;
 
     const art = (this._art = paintMeadow(this, W, H));
+    makeSparkleTexture(this.textures, SPARKLE, "232,238,255");
     this.add.image(0, 0, art.sky).setOrigin(0, 0).setDepth(-20);
     this._makeStars(art);
     this.add.image(0, 0, art.land).setOrigin(0, 0).setDepth(-10);
@@ -95,20 +99,23 @@ export default class WiresScene extends BasePuzzleScene {
     this._makeBirds(art);
     this._makeChair(art);
     this._makeLantern(art);
+    this._makeFireflies(art);
     this.add.image(0, 0, art.veil).setOrigin(0, 0).setDepth(18);
     this._drawTexts(W, H);
 
     this._built = true;
   }
 
-  // the last stars, high up, going out from the horizon upward
+  // the last stars, thick in the deep blue overhead and going out toward
+  // the dawn; the brightest of them glint
   _makeStars(art) {
     const { W, H, k, moon } = art.L;
     const rnd = this._rng(8123);
-    for (let i = 0; i < 26; i++) {
+    const glints = [];
+    for (let i = 0; i < 70; i++) {
       const x = W * (0.03 + rnd() * 0.94);
-      const y = H * (0.012 + rnd() * 0.1);
-      const fade = Math.max(0, 1 - y / (H * 0.13));
+      const y = H * (0.012 + rnd() * rnd() * 0.3);
+      const fade = Math.max(0, 1 - y / (H * 0.34));
       const size = (3 + rnd() * 4) * k;
       if (Math.hypot(x - moon.x, y - moon.y) < moon.r * 4) continue;
       const star = this.add
@@ -124,6 +131,55 @@ export default class WiresScene extends BasePuzzleScene {
         delay: rnd() * 2000,
         yoyo: true,
         repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+      if (fade > 0.6 && rnd() < 0.2)
+        glints.push({ x, y, size: (14 + rnd() * 12) * k });
+    }
+    twinkle(this, SPARKLE, glints, rnd, {
+      depth: -19,
+      alpha: 0.85,
+      period: [1800, 3600],
+    });
+  }
+
+  // fireflies out over the meadow and along the fence, each wandering a
+  // little and lighting up now and then
+  _makeFireflies(art) {
+    const { W, H, hillY, k } = art.L;
+    const rnd = this._rng(6161);
+    for (let i = 0; i < 16; i++) {
+      // the right-hand half of the hill and the grass in front of it — never
+      // up among the wires, never over the house
+      const x = W * (0.42 + rnd() * 0.55);
+      const yTop = hillY(x) + H * 0.02;
+      const y = yTop + rnd() * (H * 0.96 - yTop);
+      const size = (12 + rnd() * 10) * k;
+      const fly = this.add
+        .image(x, y, art.glow)
+        .setDepth(-4)
+        .setBlendMode("ADD")
+        .setDisplaySize(size, size)
+        .setAlpha(0);
+      this.ambientObject(fly);
+      this.ambientTween({
+        targets: fly,
+        x: x + (rnd() - 0.5) * 60 * k,
+        y: y - (10 + rnd() * 30) * k,
+        duration: 5000 + rnd() * 5000,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+      this.ambientTween({
+        targets: fly,
+        alpha: 0.7 + rnd() * 0.3,
+        duration: 500 + rnd() * 700,
+        delay: rnd() * 6000,
+        hold: 200 + rnd() * 500,
+        yoyo: true,
+        repeat: -1,
+        repeatDelay: 2500 + rnd() * 5000,
         ease: "Sine.easeInOut",
       });
     }
@@ -260,15 +316,15 @@ export default class WiresScene extends BasePuzzleScene {
     k.g.y = k.baseY + (cy - cy * Math.cos(th)) * k.scale;
   }
 
-  // the lantern on the porch, still burning, its light breathing with the
-  // flame and now and then catching
+  // the lantern on the porch, still burning: a wide, slow breath of light
+  // and, close round the flame, the quick flicker of it
   _makeLantern(art) {
     const { x, y, r } = art.L.lantern;
     const glow = this.add
       .image(x, y, art.glow)
       .setDepth(-2)
       .setBlendMode("ADD")
-      .setDisplaySize(r * 5.5, r * 5.5)
+      .setDisplaySize(r * 6, r * 6)
       .setAlpha(0.55);
     this.ambientTween({
       targets: glow,
@@ -278,20 +334,13 @@ export default class WiresScene extends BasePuzzleScene {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
-    this.time.addEvent({
-      delay: 7000,
-      loop: true,
-      callback: () => {
-        if (!this.ambientMotion || Math.random() < 0.5) return;
-        this.ambientTween({
-          targets: glow,
-          alpha: 0.35,
-          duration: 60,
-          yoyo: true,
-          repeat: 1,
-        });
-      },
-    });
+    const flame = this.add
+      .image(x, y, art.glow)
+      .setDepth(-2)
+      .setBlendMode("ADD")
+      .setDisplaySize(r * 2.2, r * 2.2)
+      .setAlpha(0.6);
+    if (this.ambientMotion) this._stopFlame = flicker(this, flame, 0.4, 0.8);
   }
 
   // ── the notes off the harmonica ────────────────────────────────────────────
@@ -395,10 +444,13 @@ export default class WiresScene extends BasePuzzleScene {
   // a resize: everything is painted again from scratch
   _teardown() {
     this._built = false;
+    this._stopFlame?.();
+    this._stopFlame = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
     releaseMeadowArt(this.textures);
+    if (this.textures.exists(SPARKLE)) this.textures.remove(SPARKLE);
     this._birds = [];
     this._notes = [];
     this._rock = null;
@@ -407,9 +459,12 @@ export default class WiresScene extends BasePuzzleScene {
   shutdown() {
     this._built = false;
     this._music = null;
+    this._stopFlame?.();
+    this._stopFlame = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseMeadowArt(this.textures);
+    if (this.textures.exists(SPARKLE)) this.textures.remove(SPARKLE);
     this._birds = [];
     this._notes = [];
     this._rock = null;

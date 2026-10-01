@@ -138,7 +138,7 @@ export function layoutMeadow(W, H) {
     chimney: { ...inHouse(211, 20), k: s },
     horizonY,
     sun: { x: W * 0.74, y: horizonY + H * 0.02 },
-    moon: { x: W * 0.78, y: H * 0.085, r: S * 0.014 },
+    moon: { x: W * 0.78, y: H * 0.085, r: S * 0.017 },
     birdScale: Math.max(0.9, Math.min(1.35, S / 800)),
   };
 }
@@ -239,28 +239,30 @@ function paintSky(L) {
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
 
-  // from the last of the night overhead down to the gold behind the hills;
-  // already a clear mid-blue where the wires run, so they read against it
+  // the night still deep overhead — indigo going to violet — and only low
+  // down the rose and the gold behind the hills; a clear blue where the
+  // wires run, so they read against it
   const g = ctx.createLinearGradient(0, 0, 0, horizonY);
   for (const [o, col] of [
-    [0, "#0e1735"],
-    [0.1, "#1c2a56"],
-    [0.26, "#3a4f87"],
-    [0.45, "#6e79a6"],
-    [0.62, "#b18a9b"],
-    [0.78, "#e2a07f"],
-    [0.92, "#f5c48e"],
-    [1, "#fbe0a8"],
+    [0, "#070b1f"],
+    [0.12, "#111a44"],
+    [0.3, "#2b3573"],
+    [0.48, "#5a5390"],
+    [0.64, "#9c6a88"],
+    [0.78, "#d88d70"],
+    [0.92, "#f3bb82"],
+    [1, "#fcdca0"],
   ])
     g.addColorStop(o, col);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
 
   // the sun, still below the hills, lighting the sky from underneath; the
-  // far side of the sky stays cooler
-  softEllipse(ctx, sun.x, sun.y, W * 0.6, H * 0.44, "255,196,140", 0.45, "screen");
-  softEllipse(ctx, sun.x, sun.y, W * 0.24, H * 0.12, "255,238,196", 0.8, "screen");
-  softEllipse(ctx, 0, horizonY, W * 0.5, H * 0.32, "80,84,150", 0.22);
+  // far side of the sky stays cooler and darker
+  softEllipse(ctx, sun.x, sun.y, W * 0.56, H * 0.4, "255,190,130", 0.42, "screen");
+  softEllipse(ctx, sun.x, sun.y, W * 0.22, H * 0.11, "255,236,190", 0.8, "screen");
+  softEllipse(ctx, 0, horizonY, W * 0.5, H * 0.34, "60,60,130", 0.28);
+  softEllipse(ctx, W * 0.3, 0, W * 0.6, H * 0.3, "10,14,40", 0.35);
 
   paintClouds(ctx, L, lcg(3101));
   paintMoon(ctx, L);
@@ -324,7 +326,8 @@ function paintMoon(ctx, L) {
   lg.arc(c - Math.cos(ang) * r * 0.42, c - Math.sin(ang) * r * 0.42, r * 0.98, 0, Math.PI * 2);
   lg.fill();
   g.drawImage(lit, 0, 0);
-  softEllipse(ctx, moon.x, moon.y, r * 4, r * 4, "220,226,255", 0.16, "screen");
+  softEllipse(ctx, moon.x, moon.y, r * 7, r * 7, "200,210,255", 0.14, "screen");
+  softEllipse(ctx, moon.x, moon.y, r * 3, r * 3, "230,236,255", 0.22, "screen");
   ctx.drawImage(m, moon.x - c, moon.y - c);
 }
 
@@ -385,9 +388,9 @@ function paintHill(ctx, L, rnd) {
   ctx.lineTo(-12, H + 12);
   ctx.closePath();
   const g = ctx.createLinearGradient(0, H * 0.59, 0, H);
-  g.addColorStop(0, "#243330");
-  g.addColorStop(0.35, "#172320");
-  g.addColorStop(1, "#0a100f");
+  g.addColorStop(0, "#1f3034");
+  g.addColorStop(0.35, "#132021");
+  g.addColorStop(1, "#070c0e");
   ctx.fillStyle = g;
   ctx.fill();
 
@@ -572,9 +575,10 @@ function paintPole(ctx, L) {
 function paintWires(ctx, L) {
   const { W, pole: P, wireY, k } = L;
   for (let w = 0; w < 5; w++) {
+    // a brighter hair of sunrise under each wire now the sky above is dark
     for (const [style, width, dy] of [
-      ["rgba(255,196,150,0.16)", 0.8, 0.9],
-      ["rgba(11,13,21,0.95)", 1.3, 0],
+      ["rgba(255,200,150,0.4)", 0.9, 1.1],
+      ["rgba(8,10,18,0.97)", 1.4, 0],
     ]) {
       ctx.beginPath();
       for (let x = 0; x <= W; x += 4) {
@@ -1304,9 +1308,9 @@ function paintVeil(L) {
   const { W, H, S } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  const v = ctx.createRadialGradient(W / 2, H * 0.45, S * 0.35, W / 2, H * 0.45, Math.hypot(W, H) * 0.62);
-  v.addColorStop(0, "rgba(4,5,10,0)");
-  v.addColorStop(1, "rgba(4,5,10,0.55)");
+  const v = ctx.createRadialGradient(W / 2, H * 0.45, S * 0.34, W / 2, H * 0.45, Math.hypot(W, H) * 0.6);
+  v.addColorStop(0, "rgba(4,5,12,0)");
+  v.addColorStop(1, "rgba(4,5,12,0.66)");
   ctx.fillStyle = v;
   ctx.fillRect(0, 0, W, H);
   return c;

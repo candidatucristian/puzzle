@@ -1,5 +1,8 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { paintHall, releaseHallArt } from "./hall.js";
+import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
+
+const SPARKLE = "st_sparkle";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "STATION"  ·  code: EXIT  ·  observation + ordering
@@ -111,8 +114,11 @@ export default class StationScene extends BasePuzzleScene {
 
     const L = this._layout(W, H);
     const art = paintHall(this, L);
+    makeSparkleTexture(this.textures, SPARKLE, "226,234,255");
     this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-14);
     this._makeLight(art);
+    this._makeSconces(art);
+    this._makeStars(art);
     this._makeRows(L);
     // the split across each flap lies over its letter
     this.add.image(0, 0, art.splits).setOrigin(0, 0).setDepth(3);
@@ -250,6 +256,45 @@ export default class StationScene extends BasePuzzleScene {
     });
   }
 
+  // the sconces on the piers: a wide warm glow, and the flame itself, never
+  // quite still
+  _makeSconces(art) {
+    this._stopFlames = [];
+    for (const sc of art.sconces) {
+      const halo = this.add
+        .image(sc.x, sc.y + sc.r * 0.5, art.flame)
+        .setDisplaySize(sc.r * 16, sc.r * 16)
+        .setBlendMode("ADD")
+        .setDepth(-12)
+        .setAlpha(0.3);
+      this.ambientTween({
+        targets: halo,
+        alpha: 0.42,
+        duration: 2200 + Math.random() * 800,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+      const flame = this.add
+        .image(sc.x, sc.y, art.flame)
+        .setDisplaySize(sc.r * 5, sc.r * 5)
+        .setBlendMode("ADD")
+        .setDepth(-12)
+        .setAlpha(0.6);
+      if (this.ambientMotion)
+        this._stopFlames.push(flicker(this, flame, 0.4, 0.85));
+    }
+  }
+
+  // the brightest stars in the windows glint
+  _makeStars(art) {
+    twinkle(this, SPARKLE, art.stars, this._rng(2727), {
+      depth: -13,
+      alpha: 0.8,
+      period: [1600, 3400],
+    });
+  }
+
   _makeRows(L) {
     const { ch, cw, x0, gW } = L;
     for (let r = 0; r < STATION_ROWS.length; r++) {
@@ -356,13 +401,19 @@ export default class StationScene extends BasePuzzleScene {
     this.tweens.add({ targets: this.levelText, alpha: 1, duration: 2000 });
   }
 
-  // slow dust motes drifting through the lamp's light
+  // slow dust motes drifting through the lamp's light, a few of them
+  // catching it and glinting
   _spawnDust(W, H, mote) {
     const rnd = this._rng(4242);
-    for (let i = 0; i < 14; i++) {
-      const x = W * 0.3 + rnd() * W * 0.4;
-      const y = H * 0.12 + rnd() * H * 0.5;
+    const glints = [];
+    for (let i = 0; i < 22; i++) {
+      const x = W * 0.25 + rnd() * W * 0.5;
+      const y = H * 0.12 + rnd() * H * 0.55;
       const r = 0.8 + rnd() * 1.1;
+      if (i % 4 === 3) {
+        glints.push({ x, y, size: (8 + rnd() * 8) * r });
+        continue;
+      }
       const dot = this.add
         .image(x, y, mote)
         .setDisplaySize(r * 5, r * 5)
@@ -385,6 +436,11 @@ export default class StationScene extends BasePuzzleScene {
         },
       });
     }
+    twinkle(this, SPARKLE, glints, rnd, {
+      depth: -8,
+      alpha: 0.55,
+      period: [1200, 2600],
+    });
   }
 
   // ── flap animation ─────────────────────────────────────────────────────────
@@ -529,20 +585,29 @@ export default class StationScene extends BasePuzzleScene {
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
+  _stopSconces() {
+    for (const stop of this._stopFlames || []) stop();
+    this._stopFlames = [];
+  }
+
   _teardown() {
+    this._stopSconces();
     this.tweens.killAll();
     this.time.removeAllEvents();
     // destroy rather than just detach: removeAll(true) only took objects off
     // the display list, and the old rows went on catching clicks after a resize
     for (const obj of this.children.list.slice()) obj.destroy();
     releaseHallArt(this.textures);
+    if (this.textures.exists(SPARKLE)) this.textures.remove(SPARKLE);
     this._cells = [];
     this._glow = null;
   }
 
   shutdown() {
+    this._stopSconces();
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseHallArt(this.textures);
+    if (this.textures.exists(SPARKLE)) this.textures.remove(SPARKLE);
   }
 }

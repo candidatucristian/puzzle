@@ -1,21 +1,30 @@
-/** The hall for STATION, painted as a real night rather than a sketch: an
- *  empty station concourse under an iron roof, tall arched windows gone dark,
- *  a bench and a suitcase nobody came back for — and, hanging from the
- *  girder on two chains, a split-flap departures board still lit by the tube
- *  in its hood.
+/** The hall for STATION, painted as a storybook night: an empty concourse
+ *  under an iron roof, its walls the deep blue of the small hours, tall
+ *  arched windows with the moon and the stars in them laying their cold
+ *  light on the floor, two brass sconces still burning on the piers, a
+ *  bench and a suitcase nobody came back for — and, hanging from the girder
+ *  on two chains, a split-flap departures board lit warm by the tube in its
+ *  hood.
  *
  *  Painted once per screen size. What lives stays out of the painting: the
  *  scene writes the letters onto the empty flaps, lays `splits` (the gap
  *  between each flap's two halves) over them, breathes the lamp's `glow`,
- *  turns the clock's red second `hand` and drifts the dust `mote`s. Every
- *  position comes from the scene's own layout (L), so the painted flaps sit
- *  exactly under the live letters. */
+ *  flickers the `sconces`, turns the clock's red second `hand`, twinkles the
+ *  brightest `stars` and drifts the dust `mote`s. Every position comes from
+ *  the scene's own layout (L), so the painted flaps sit exactly under the
+ *  live letters. */
 
 const ROOM = "st_room";
 const GLOW = "st_glow";
 const SPLITS = "st_splits";
 const HAND = "st_hand";
 const MOTE = "st_mote";
+const FLAME = "st_flame";
+
+// the four windows, by the centre of each as a fraction of the width; the
+// moon hangs in the third
+const WINDOWS = [0.12, 0.37, 0.63, 0.88];
+const MOON_WINDOW = 2;
 
 // the lettering on the board's own headings, as on the flaps
 const FLAP_FONT =
@@ -26,9 +35,11 @@ export function paintHall(scene, L) {
   const room = makeCanvas(L.W, L.H);
   const ctx = room.getContext("2d");
   paintWall(ctx, L, G);
-  paintWindows(ctx, L, G);
+  const stars = paintWindows(ctx, L, G, lcg(3301));
+  paintMoonlight(ctx, L, G);
   paintTruss(ctx, L, G, lcg(4402));
   paintFloor(ctx, L, G, lcg(5503));
+  paintSconces(ctx, L, G);
   paintChains(ctx, L, G);
   paintBoard(ctx, L, G);
   paintClock(ctx, L, G);
@@ -51,6 +62,16 @@ export function paintHall(scene, L) {
       [1, 0],
     ]),
   );
+  addCanvas(
+    t,
+    FLAME,
+    radial(128, "255,190,110", [
+      [0, 0.85],
+      [0.25, 0.4],
+      [0.6, 0.1],
+      [1, 0],
+    ]),
+  );
 
   return {
     room: ROOM,
@@ -58,11 +79,14 @@ export function paintHall(scene, L) {
     splits: SPLITS,
     hand: { key: HAND, originY: hand.originY },
     mote: MOTE,
+    flame: FLAME,
+    sconces: G.sconces,
+    stars,
   };
 }
 
 export function releaseHallArt(textures) {
-  for (const key of [ROOM, GLOW, SPLITS, HAND, MOTE]) {
+  for (const key of [ROOM, GLOW, SPLITS, HAND, MOTE, FLAME]) {
     if (textures.exists(key)) textures.remove(key);
   }
 }
@@ -75,6 +99,11 @@ function geometry(L) {
   const girderBot = H * 0.052;
   const hoodH = Math.max(8, ch * 0.36);
   const hoodOver = cw * 0.35;
+  // the windows: their tops, their sills and their width
+  const win = { top: H * 0.13, bottom: H * 0.62, w: W * 0.15 };
+  // the sconces burn on the piers between the outer windows and the inner
+  // ones, above the board's hood
+  const sconceY = Math.min(H * 0.2, board.y - hoodH - S * 0.06);
   return {
     girderTop,
     girderBot,
@@ -84,6 +113,11 @@ function geometry(L) {
       w: board.w + hoodOver * 2,
       h: hoodH,
     },
+    win,
+    sconces: [
+      { x: W * 0.27, y: sconceY, r: S * 0.016 },
+      { x: W * 0.73, y: sconceY, r: S * 0.016 },
+    ],
     // the inset the flap panel sits in, inside the case
     rim: Math.max(4, cw * 0.2),
     corner: Math.max(4, cw * 0.28),
@@ -96,46 +130,61 @@ function geometry(L) {
 // ── the hall ────────────────────────────────────────────────────────────────
 
 function paintWall(ctx, L, G) {
-  const { W, H, floorY } = L;
+  const { W, H, S, floorY } = L;
   const wall = ctx.createLinearGradient(0, 0, 0, floorY);
-  wall.addColorStop(0, "#06080c");
-  wall.addColorStop(0.4, "#0d1119");
-  wall.addColorStop(1, "#131824");
+  wall.addColorStop(0, "#060815");
+  wall.addColorStop(0.4, "#0d1330");
+  wall.addColorStop(1, "#151c3c");
   ctx.fillStyle = wall;
   ctx.fillRect(0, 0, W, floorY);
+  // the stone's courses, faint, and the moon lifting the wall round the
+  // windows
+  const course = Math.max(10, H * 0.03);
+  ctx.strokeStyle = "rgba(0,0,0,0.16)";
+  ctx.lineWidth = G.lw;
+  for (let y = course; y < H * 0.66; y += course) line(ctx, 0, y, W, y);
+  for (const fx of WINDOWS)
+    soft(ctx, W * fx, H * 0.36, W * 0.14, H * 0.42, "80,110,190", 0.16, "lighter");
 
   // a glazed-tile dado along the bottom of the wall, and its rail
   const dado = H * 0.66;
-  ctx.fillStyle = "#0f131b";
+  const tile = ctx.createLinearGradient(0, dado, 0, floorY);
+  tile.addColorStop(0, "#111a36");
+  tile.addColorStop(1, "#0b1226");
+  ctx.fillStyle = tile;
   ctx.fillRect(0, dado, W, floorY - dado);
-  const course = Math.max(8, H * 0.021);
+  const tc = Math.max(8, H * 0.021);
   ctx.lineWidth = G.lw;
-  for (let y = dado + course, row = 0; y < floorY; y += course, row++) {
-    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+  for (let y = dado + tc, row = 0; y < floorY; y += tc, row++) {
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
     line(ctx, 0, y, W, y);
-    const brick = course * 2.6;
+    ctx.strokeStyle = "rgba(140,170,230,0.07)";
+    line(ctx, 0, y - tc + G.lw, W, y - tc + G.lw);
+    const brick = tc * 2.6;
     for (let x = (row % 2) * brick * 0.5; x < W; x += brick) {
-      line(ctx, x, y - course, x, y);
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      line(ctx, x, y - tc, x, y);
     }
   }
   const rail = ctx.createLinearGradient(0, dado - H * 0.012, 0, dado);
-  rail.addColorStop(0, "#1c2230");
-  rail.addColorStop(1, "#0d1016");
+  rail.addColorStop(0, "#2a3356");
+  rail.addColorStop(1, "#0f1428");
   ctx.fillStyle = rail;
   ctx.fillRect(0, dado - H * 0.012, W, H * 0.012);
-  ctx.fillStyle = "rgba(170,185,215,0.08)";
+  ctx.fillStyle = "rgba(170,190,240,0.14)";
   ctx.fillRect(0, dado - H * 0.012, W, Math.max(1, G.lw));
+  void S;
 }
 
-// four tall arched windows, dark with the night — only their tops show above
-// the board, and the outer two at its sides
-function paintWindows(ctx, L, G) {
+// four tall arched windows with the night in them — stars, and the moon in
+// one — only their tops show above the board, and the outer two at its
+// sides. Returns the brightest stars, for the scene to twinkle.
+function paintWindows(ctx, L, G, rnd) {
   const { W, H, S } = L;
-  const top = H * 0.13;
-  const bottom = H * 0.62;
-  const w = W * 0.15;
+  const { top, bottom, w } = G.win;
   const frame = Math.max(3, S * 0.007);
-  for (const fx of [0.12, 0.37, 0.63, 0.88]) {
+  const bright = [];
+  WINDOWS.forEach((fx, wi) => {
     const x = W * fx - w / 2;
     const r = w / 2;
     const arch = (inset) => {
@@ -148,21 +197,66 @@ function paintWindows(ctx, L, G) {
     };
     // the reveal around the opening, then the night through the glass
     arch(-frame * 1.6);
-    ctx.fillStyle = "#090b10";
+    ctx.fillStyle = "#070a16";
     ctx.fill();
     arch(0);
     const glass = ctx.createLinearGradient(0, top, 0, bottom);
-    glass.addColorStop(0, "#0a1323");
-    glass.addColorStop(0.6, "#0f1c33");
-    glass.addColorStop(1, "#15243d");
+    glass.addColorStop(0, "#050a1c");
+    glass.addColorStop(0.55, "#0c1838");
+    glass.addColorStop(1, "#1a2c58");
     ctx.fillStyle = glass;
     ctx.fill();
 
-    // glazing bars: two mullions, transoms, and spokes in the arch
     ctx.save();
     arch(0);
     ctx.clip();
-    ctx.strokeStyle = "#07090d";
+    // the stars, thickest up in the arch
+    for (let i = 0; i < 26; i++) {
+      const sx = x + rnd() * w;
+      const sy = top + rnd() * rnd() * (bottom - top) * 0.7;
+      const a = 0.25 + rnd() * 0.6;
+      ctx.fillStyle = `rgba(226,234,255,${a.toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, (0.4 + rnd() * 0.8) * G.lw, 0, Math.PI * 2);
+      ctx.fill();
+      if (a > 0.7 && bright.length < 10 && sy < H * 0.3)
+        bright.push({ x: sx, y: sy, size: S * (0.012 + rnd() * 0.01) });
+    }
+    // the moon, high in its window, and its halo on the glass
+    if (wi === MOON_WINDOW) {
+      const m = { x: x + w * 0.62, y: top + r * 0.75, r: w * 0.11 };
+      soft(ctx, m.x, m.y, m.r * 5, m.r * 5, "180,200,250", 0.3, "lighter");
+      const body = ctx.createRadialGradient(
+        m.x - m.r * 0.3,
+        m.y - m.r * 0.3,
+        m.r * 0.1,
+        m.x,
+        m.y,
+        m.r,
+      );
+      body.addColorStop(0, "#f6f2e6");
+      body.addColorStop(0.75, "#ded8c6");
+      body.addColorStop(1, "#aaa492");
+      ctx.fillStyle = body;
+      circle(ctx, m.x, m.y, m.r);
+      ctx.fill();
+      soft(ctx, m.x - m.r * 0.3, m.y - m.r * 0.1, m.r * 0.3, m.r * 0.22, "110,110,120", 0.25);
+      soft(ctx, m.x + m.r * 0.25, m.y + m.r * 0.25, m.r * 0.26, m.r * 0.2, "110,110,120", 0.2);
+    }
+    // a far skyline of roofs, low in the glass
+    ctx.fillStyle = "#04060f";
+    ctx.beginPath();
+    ctx.moveTo(x, bottom);
+    for (let px = x; px <= x + w; px += w / 9) {
+      ctx.lineTo(px, bottom - (bottom - top) * (0.1 + rnd() * 0.08));
+      ctx.lineTo(px + w / 9, bottom - (bottom - top) * (0.1 + rnd() * 0.08));
+    }
+    ctx.lineTo(x + w, bottom);
+    ctx.closePath();
+    ctx.fill();
+
+    // glazing bars: two mullions, transoms, and spokes in the arch
+    ctx.strokeStyle = "#06080f";
     ctx.lineWidth = frame * 0.55;
     for (const k of [1 / 3, 2 / 3]) line(ctx, x + w * k, top, x + w * k, bottom);
     for (let y = top + r; y < bottom; y += (bottom - top - r) / 5) {
@@ -178,15 +272,98 @@ function paintWindows(ctx, L, G) {
         top + r + Math.sin(ang) * r,
       );
     }
-    // the faintest cold light on the panes
-    ctx.fillStyle = "rgba(120,150,210,0.05)";
+    // the moon's cold light on the panes
+    ctx.fillStyle = "rgba(140,170,230,0.06)";
     ctx.fillRect(x, top, w * 0.45, bottom - top);
     ctx.restore();
 
     arch(0);
-    ctx.strokeStyle = "#1b2130";
+    ctx.strokeStyle = "#232a48";
     ctx.lineWidth = frame;
     ctx.stroke();
+    arch(-frame * 0.5);
+    ctx.strokeStyle = "rgba(170,190,240,0.18)";
+    ctx.lineWidth = G.lw;
+    ctx.stroke();
+  });
+  return bright;
+}
+
+// the moon through the windows: its light laid down the wall below each
+// and pooled on the floor in front of the outer two (the board hides the
+// rest)
+function paintMoonlight(ctx, L, G) {
+  const { W, H, floorY } = L;
+  const { bottom, w } = G.win;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (const fx of WINDOWS) {
+    const cx = W * fx;
+    const sh = ctx.createLinearGradient(0, bottom, 0, floorY);
+    sh.addColorStop(0, "rgba(120,150,220,0.1)");
+    sh.addColorStop(1, "rgba(120,150,220,0.02)");
+    ctx.fillStyle = sh;
+    ctx.fillRect(cx - w / 2, bottom, w, floorY - bottom);
+  }
+  for (const fx of [WINDOWS[0], WINDOWS[3]]) {
+    const cx = W * fx + (fx < 0.5 ? w * 0.4 : -w * 0.4);
+    ctx.beginPath();
+    ctx.moveTo(cx - w * 0.5, floorY);
+    ctx.lineTo(cx + w * 0.5, floorY);
+    ctx.lineTo(cx + w * 0.9, H);
+    ctx.lineTo(cx - w * 0.9, H);
+    ctx.closePath();
+    const pool = ctx.createLinearGradient(0, floorY, 0, H);
+    pool.addColorStop(0, "rgba(130,160,230,0.14)");
+    pool.addColorStop(1, "rgba(130,160,230,0.03)");
+    ctx.fillStyle = pool;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// two brass sconces on the piers, their glass shades lit; the scene breathes
+// the flame on top
+function paintSconces(ctx, L, G) {
+  const { S } = L;
+  for (const sc of G.sconces) {
+    const { x, y, r } = sc;
+    soft(ctx, x, y, r * 9, r * 8, "255,180,100", 0.3, "lighter");
+    // the bracket
+    ctx.strokeStyle = "#6a4a1e";
+    ctx.lineWidth = Math.max(1.5, S * 0.004);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y + r * 2.4);
+    ctx.quadraticCurveTo(x + r * 1.6, y + r * 2.6, x + r * 1.4, y + r * 0.9);
+    ctx.stroke();
+    ctx.fillStyle = "#4a3414";
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * 2.4, r * 0.9, r * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // the shade: frosted glass, bright with the flame inside it
+    const g = ctx.createRadialGradient(x, y + r * 0.2, 0, x, y, r * 1.2);
+    g.addColorStop(0, "#fff0c8");
+    g.addColorStop(0.5, "#ffc878");
+    g.addColorStop(1, "#b8783a");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.6, y - r);
+    ctx.lineTo(x + r * 0.6, y - r);
+    ctx.lineTo(x + r * 1.1, y + r * 0.9);
+    ctx.quadraticCurveTo(x, y + r * 1.4, x - r * 1.1, y + r * 0.9);
+    ctx.closePath();
+    ctx.fill();
+    // its brass collar and finial
+    ctx.fillStyle = "#c8a050";
+    ctx.fillRect(x - r * 0.75, y - r * 1.2, r * 1.5, r * 0.3);
+    ctx.fillStyle = "#fbe3a0";
+    ctx.fillRect(x - r * 0.75, y - r * 1.2, r * 1.5, Math.max(1, G.lw));
+    circle(ctx, x, y - r * 1.45, r * 0.25);
+    ctx.fillStyle = "#c8a050";
+    ctx.fill();
+    // the warmth it throws on the pier
+    soft(ctx, x, y + r * 3, r * 3.5, r * 5, "255,170,90", 0.16, "lighter");
   }
 }
 
@@ -195,32 +372,32 @@ function paintTruss(ctx, L, G, rnd) {
   const { W, S } = L;
   const { girderTop: y0, girderBot: y1 } = G;
   const iron = ctx.createLinearGradient(0, 0, 0, y1);
-  iron.addColorStop(0, "#050608");
-  iron.addColorStop(1, "#0b0d11");
+  iron.addColorStop(0, "#03040a");
+  iron.addColorStop(1, "#090c18");
   ctx.fillStyle = iron;
   ctx.fillRect(0, 0, W, y0);
 
   // a Warren truss: two chords and the zigzag between them
   const bar = Math.max(3, S * 0.006);
-  ctx.strokeStyle = "#181c23";
+  ctx.strokeStyle = "#161b2c";
   ctx.lineWidth = bar;
   const step = Math.max(40, W * 0.065);
   for (let x = -step; x < W + step; x += step) {
     line(ctx, x, y1, x + step / 2, y0);
     line(ctx, x + step / 2, y0, x + step, y1);
   }
-  ctx.fillStyle = "#1a1e26";
+  ctx.fillStyle = "#181d2e";
   ctx.fillRect(0, y0 - bar / 2, W, bar);
   // the bottom chord is the girder proper: deeper, riveted, catching light
   const gh = Math.max(6, S * 0.012);
   const girder = ctx.createLinearGradient(0, y1 - gh / 2, 0, y1 + gh / 2);
-  girder.addColorStop(0, "#2a303b");
-  girder.addColorStop(0.45, "#1a1e26");
-  girder.addColorStop(1, "#0c0e12");
+  girder.addColorStop(0, "#2c3450");
+  girder.addColorStop(0.45, "#1a1f32");
+  girder.addColorStop(1, "#0b0e18");
   ctx.fillStyle = girder;
   ctx.fillRect(0, y1 - gh / 2, W, gh);
   for (let x = 6 + rnd() * 6; x < W; x += Math.max(12, S * 0.022)) {
-    ctx.fillStyle = "rgba(210,220,240,0.12)";
+    ctx.fillStyle = "rgba(220,215,200,0.14)";
     ctx.beginPath();
     ctx.arc(x, y1, Math.max(0.9, gh * 0.13), 0, Math.PI * 2);
     ctx.fill();
@@ -230,13 +407,15 @@ function paintTruss(ctx, L, G, rnd) {
 function paintFloor(ctx, L, G, rnd) {
   const { W, H, floorY } = L;
   const floor = ctx.createLinearGradient(0, floorY, 0, H);
-  floor.addColorStop(0, "#12161d");
-  floor.addColorStop(1, "#08090c");
+  floor.addColorStop(0, "#161b2e");
+  floor.addColorStop(1, "#080a14");
   ctx.fillStyle = floor;
   ctx.fillRect(0, floorY, W, H - floorY);
   // the skirting where the wall meets the floor
-  ctx.fillStyle = "#07080b";
+  ctx.fillStyle = "#06070f";
   ctx.fillRect(0, floorY - H * 0.006, W, H * 0.006);
+  ctx.fillStyle = "rgba(170,190,240,0.1)";
+  ctx.fillRect(0, floorY - H * 0.006, W, Math.max(1, G.lw));
 
   // flagstone joints, running away from us to one vanishing point
   const vx = W / 2;
@@ -255,7 +434,7 @@ function paintFloor(ctx, L, G, rnd) {
   const lh = Math.max(2, (H - floorY) * 0.1);
   for (let x = 0; x < W; ) {
     const run = 20 + rnd() * 90;
-    ctx.fillStyle = `rgba(176,146,70,${0.18 + rnd() * 0.14})`;
+    ctx.fillStyle = `rgba(214,170,70,${0.22 + rnd() * 0.16})`;
     ctx.fillRect(x, ly, run, lh);
     x += run + rnd() * 10;
   }
@@ -404,18 +583,28 @@ function paintClock(ctx, L, G) {
   ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = rad * 0.3;
   ctx.shadowOffsetY = rad * 0.08;
-  const caseG = ctx.createLinearGradient(0, cy - caseR, 0, cy + caseR);
-  caseG.addColorStop(0, "#3a404b");
-  caseG.addColorStop(1, "#171a1f");
+  // a brass case, lit from the upper left
+  const caseG = ctx.createRadialGradient(
+    cx - caseR * 0.4,
+    cy - caseR * 0.5,
+    caseR * 0.1,
+    cx,
+    cy,
+    caseR,
+  );
+  caseG.addColorStop(0, "#f0d590");
+  caseG.addColorStop(0.5, "#a8823e");
+  caseG.addColorStop(1, "#3a2810");
   ctx.fillStyle = caseG;
   circle(ctx, cx, cy, caseR);
   ctx.fill();
   ctx.restore();
+  soft(ctx, cx, cy, caseR * 2.6, caseR * 2.6, "255,230,180", 0.1, "lighter");
 
   // the dial, lit from within as they are at night
   const dial = ctx.createRadialGradient(cx, cy - rad * 0.2, rad * 0.1, cx, cy, rad);
-  dial.addColorStop(0, "#efe9da");
-  dial.addColorStop(1, "#c7c0ad");
+  dial.addColorStop(0, "#fbf4e2");
+  dial.addColorStop(1, "#cfc5ab");
   ctx.fillStyle = dial;
   circle(ctx, cx, cy, rad);
   ctx.fill();
@@ -518,8 +707,8 @@ function finish(ctx, L, rnd) {
     H * 0.5,
     Math.hypot(W, H) * 0.62,
   );
-  v.addColorStop(0, "rgba(0,0,0,0)");
-  v.addColorStop(1, "rgba(0,0,0,0.6)");
+  v.addColorStop(0, "rgba(4,5,12,0)");
+  v.addColorStop(1, "rgba(4,5,12,0.62)");
   ctx.fillStyle = v;
   ctx.fillRect(0, 0, W, H);
   const n = Math.floor((W * H) / 70);
@@ -527,6 +716,21 @@ function finish(ctx, L, rnd) {
     ctx.fillStyle = `rgba(255,255,255,${rnd() * 0.035})`;
     ctx.fillRect(rnd() * W, rnd() * H, 1, 1);
   }
+}
+
+function soft(ctx, cx, cy, rx, ry, rgbs, a, op = "source-over") {
+  if (rx <= 0 || ry <= 0) return;
+  ctx.save();
+  ctx.globalCompositeOperation = op;
+  ctx.translate(cx, cy);
+  ctx.scale(rx, ry);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  g.addColorStop(0, `rgba(${rgbs},${a})`);
+  g.addColorStop(0.45, `rgba(${rgbs},${a * 0.4})`);
+  g.addColorStop(1, `rgba(${rgbs},0)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(-1, -1, 2, 2);
+  ctx.restore();
 }
 
 // ── live layers ─────────────────────────────────────────────────────────────
@@ -540,27 +744,34 @@ function paintGlow(L, G) {
 
   // down the face of the board, fading row by row
   const face = ctx.createLinearGradient(0, y, 0, y + h);
-  face.addColorStop(0, "rgba(255,240,214,0.2)");
-  face.addColorStop(0.35, "rgba(255,240,214,0.08)");
-  face.addColorStop(1, "rgba(255,240,214,0.02)");
+  face.addColorStop(0, "rgba(255,232,190,0.26)");
+  face.addColorStop(0.35, "rgba(255,232,190,0.1)");
+  face.addColorStop(1, "rgba(255,232,190,0.02)");
   ctx.fillStyle = face;
   roundRect(ctx, x, y, w, h, G.corner);
   ctx.fill();
 
-  // spilling up the wall around the hood
+  // spilling up the wall around the hood, and out to the sides
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, W, y);
   ctx.clip();
-  const up = ctx.createRadialGradient(x + w / 2, y, 0, x + w / 2, y, w * 0.6);
-  up.addColorStop(0, "rgba(255,238,208,0.14)");
-  up.addColorStop(1, "rgba(255,238,208,0)");
+  const up = ctx.createRadialGradient(x + w / 2, y, 0, x + w / 2, y, w * 0.7);
+  up.addColorStop(0, "rgba(255,226,180,0.2)");
+  up.addColorStop(1, "rgba(255,226,180,0)");
   ctx.fillStyle = up;
   ctx.fillRect(0, 0, W, y);
   ctx.restore();
+  for (const sx of [x, x + w]) {
+    const side = ctx.createRadialGradient(sx, y + h * 0.3, 0, sx, y + h * 0.3, w * 0.25);
+    side.addColorStop(0, "rgba(255,226,180,0.08)");
+    side.addColorStop(1, "rgba(255,226,180,0)");
+    ctx.fillStyle = side;
+    ctx.fillRect(sx - w * 0.25, y, w * 0.5, h);
+  }
 
   // the tube itself
-  ctx.fillStyle = "rgba(255,250,236,0.9)";
+  ctx.fillStyle = "rgba(255,248,226,0.95)";
   ctx.fillRect(x + G.corner, y - G.lw, w - G.corner * 2, G.lw * 2);
 
   // and a little on the floor below
@@ -570,10 +781,10 @@ function paintGlow(L, G) {
     0,
     x + w / 2,
     floorY,
-    w * 0.55,
+    w * 0.6,
   );
-  pool.addColorStop(0, "rgba(255,236,204,0.06)");
-  pool.addColorStop(1, "rgba(255,236,204,0)");
+  pool.addColorStop(0, "rgba(255,226,180,0.1)");
+  pool.addColorStop(1, "rgba(255,226,180,0)");
   ctx.fillStyle = pool;
   ctx.fillRect(0, floorY, W, H - floorY);
   return c;
