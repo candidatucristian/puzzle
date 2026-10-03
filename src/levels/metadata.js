@@ -434,6 +434,46 @@ const metadata = [
       "letter() / readPockets() — A1Z26: 2 12 9 14 4 → BLIND",
       "billiards/pub.js paintBall() — a ball seen from above; sunk in a pocket it shows no number"
     ]
+  },
+  {
+    "id": "metro",
+    "key": "Metro",
+    "name": "Metro",
+    "code": "TRAIN",
+    "altCode": null,
+    "hint": {
+      "text": "ONE LINE IS RUNNING TONIGHT.\nThe stations along it were named by someone who spells things out loud.",
+      "sound": false,
+      "tool": true
+    },
+    "description": "A metro platform at night: a tiled wall, a bench, a tannoy horn that now and then crackles with static, and in a steel frame the network map, lit from behind. Five lines cross it, all dimmed but one. The lit line runs through five stations, in order: Tango Square, Romeo Boulevard, Alpha Park, India Docks, November Street. Their first words are the NATO phonetic alphabet — Tango T, Romeo R, Alpha A, India I, November N — so in the line’s order they spell TRAIN. A small light runs the line end to end, lighting each station as it passes; a click on a station rings its name out; a click on the horn brings an announcement that is nothing but static.",
+    "references": [
+      "METRO_STATIONS (metro/puzzle.js) — the five stations of the lit line, in the line's order",
+      "NATO / natoLetter() — the phonetic alphabet, A to Z (ALPHA and ALFA both read A); readLine() spells TRAIN",
+      "metro/map.js layoutStation() — the map, the lit line's route and stations, the other lines' ordinary names",
+      "metro/map.js paintLitLine() — the lit line on a layer of its own, which the scene breathes",
+      "MetroScene _startRun() — the light that runs the line, lighting each station in order"
+    ]
+  },
+  {
+    "id": "resistors",
+    "key": "Resistors",
+    "name": "Resistors",
+    "code": "1024",
+    "altCode": null,
+    "hint": {
+      "text": "FOUR PARTS, FOUR BANDS EACH.\nThe card on the bench says what every colour is worth. Start where each one starts.",
+      "sound": false,
+      "tool": true
+    },
+    "description": "A workshop at night: a bench under a magnifier lamp, and in its ring of light a green circuit board with four big resistors soldered in a row, R1 to R4, four colour bands on each — R1 brown black red gold, R2 black brown black gold, R3 red red orange gold, R4 yellow violet red gold. Pinned to the bench is the resistor colour code: ten swatches, black to white, a digit under each (black 0, brown 1, red 2, orange 3, yellow 4, green 5, blue 6, violet 7, grey 8, white 9), gold and silver apart as tolerances. The first band of each resistor, R1 to R4, is brown, black, red, yellow: 1 0 2 4. The code is 1024. A click on a resistor holds a loupe over it, its bands big and clear.",
+    "references": [
+      "RESISTORS (resistors/puzzle.js) — the four resistors' bands, R1 to R4, read from the end away from the tolerance band",
+      "BAND_DIGITS / bandDigit() — the colour code, black 0 to white 9; readFirstBands() gives 1024",
+      "resistorOhms() / ohmsLabel() — the values the bands actually mean (1 kΩ, 1 Ω, 22 kΩ, 4.7 kΩ)",
+      "resistors/bench.js paintResistor() — a resistor and its bands; paintCard() — the colour code pinned to the bench",
+      "resistors/bench.js paintLoupe() — a resistor seen big through a loupe, which ResistorsScene holds up on a tap"
+    ]
   }
 ];
 
