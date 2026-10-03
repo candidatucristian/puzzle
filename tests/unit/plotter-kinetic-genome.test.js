@@ -106,5 +106,8 @@ test('a completed 27-level save retains its answers and unlocks only the next ne
   assert.equal(newGame.canAccess(28), false);
   assert.equal(newGame.canAccess(29), false);
   newGame.complete(27); newGame.complete(28); newGame.complete(29);
-  assert.equal(newGame.completed, true);
+  assert.equal(newGame.state.completedLevelIds.length, 30);
+  assert.equal(newGame.canAccess(30), true);
+  assert.equal(newGame.canAccess(31), false);
+  assert.equal(newGame.completed, false);
 });

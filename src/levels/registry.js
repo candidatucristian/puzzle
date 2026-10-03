@@ -28,6 +28,9 @@ import VertexScene from "./vertex/VertexScene.js";
 import PlotterScene from "./plotter/PlotterScene.js";
 import KineticScene from "./kinetic/KineticScene.js";
 import GenomeScene from "./genome/GenomeScene.js";
+import CurtainScene from "./curtain/CurtainScene.js";
+import TheSillScene from "./thesill/TheSillScene.js";
+import VenetianScene from "./venetian/VenetianScene.js";
 import { LEVEL_METADATA } from "./metadata.js";
 
 const scenes = {
@@ -61,6 +64,9 @@ const scenes = {
   Plotter: PlotterScene,
   Kinetic: KineticScene,
   Genome: GenomeScene,
+  Curtain: CurtainScene,
+  TheSill: TheSillScene,
+  Venetian: VenetianScene,
 };
 
 export const LEVEL_DEFINITIONS = Object.freeze(LEVEL_METADATA.map((level) => Object.freeze({

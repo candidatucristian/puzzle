@@ -1,116 +1,248 @@
-import BasePuzzleScene from '../../core/BasePuzzleScene.js';
-import { drawLevelLabel, uiScale } from '../../shared/levelLabel.js';
-import { makeCanvas, addCanvasTexture, releaseTextures, soft, grain, vignette } from '../../shared/paint.js';
-import { kineticLayout, kineticPose, polygonVertices } from './puzzle.js';
+import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel, uiScale } from "../../shared/levelLabel.js";
 
-const ART = ['ki_gallery'];
+import { kineticPose, kineticLayout, readKinetic } from "./puzzle.js";
+import { paintRoom, releaseRoomArt } from "./room.js";
+import { paintMobileAssets, releaseMobileArt } from "./mobile.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Level — "KINETIC"  ·  code: CAGE  ·  count the unbroken curves
+//
+// A study of boundaries in a deep night nursery. A baby's crib sits in
+// silhouette against a gothic window. Moonlight pours through, catching the
+// brass and wood of a kinetic mobile hanging from the ceiling.
+//
+// The mobile physically sways in the night draft using Forward Kinematics,
+// its shapes gently twisting on their strings. The puzzle remains: count the
+// unbroken rims from top to bottom.
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default class KineticScene extends BasePuzzleScene {
-  constructor() { super({ key: 'Kinetic' }); }
+  constructor() {
+    super({ key: "Kinetic" });
+  }
+
+  init(data) {
+    this.skipFadeIn =
+      data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+  }
 
   create() {
     this.beginScene();
+
     this._elapsed = 0;
     this._build(this.cameras.main.width, this.cameras.main.height);
-    this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
+
+    this._resize = ({ width, height }) => {
+      this._teardown();
+      this._build(width, height);
+    };
+    this.listenToResize(this._resize);
+
+    if (!this.skipFadeIn) this.cameras.main.fadeIn(800, 0, 0, 0);
   }
 
-  _build(W, H) {
-    const L = (this._L = kineticLayout(W, H)), k = uiScale(W, H);
-    const canvas = makeCanvas(W * 1.5, H * 1.5), ctx = canvas.getContext('2d');
-    ctx.scale(1.5, 1.5);
-    const wall = ctx.createLinearGradient(0, 0, W, H);
-    wall.addColorStop(0, '#bab5aa'); wall.addColorStop(0.45, '#d4cec2'); wall.addColorStop(1, '#a7a397');
-    ctx.fillStyle = wall; ctx.fillRect(0, 0, W, H);
-    soft(ctx, W * 0.34, H * 0.25, W * 0.53, H * 0.85, '255,247,221', 0.36, 'screen');
-    soft(ctx, W * 0.58, H * 0.93, L.size * 0.26, L.size * 0.035, '49,42,34', 0.13);
-    grain(ctx, W, H, 0.045); vignette(ctx, W, H, 0.12);
-    addCanvasTexture(this.textures, ART[0], canvas);
-    this.add.image(0, 0, ART[0]).setOrigin(0).setDisplaySize(W, H).setDepth(-10);
-    this._shadows = this.add.graphics().setDepth(-5);
-    this._rods = this.add.graphics().setDepth(-2);
-    this._faces = this.add.graphics();
-    const label = this.add.graphics();
-    const labelH = Math.max(30, H * 0.085);
-    const x = Math.min(W * 0.05, 36), y = H - labelH - 8 * k;
-    const labelW = Math.min(W * 0.69, 395 * k);
-    label.fillStyle(0xede7d9, 0.63); label.fillRect(x, y, labelW, labelH);
-    label.lineStyle(0.8, 0x6c6456, 0.34); label.lineBetween(x, y, x + labelW, y);
-    this._clue = this.add.text(x + 8 * k, y + 5 * k, 'ONE UNBROKEN CURVE COUNTS AS ONE', {
-      fontFamily: '"Courier New", monospace', fontSize: Math.min(12, labelW / 21, labelH * 0.34) + 'px', color: '#403c35',
-    }).setResolution(2);
-    this.add.text(x + 8 * k, y + labelH * 0.56, 'A study of boundaries. Read from above.', {
-      fontFamily: 'Georgia, serif', fontSize: Math.min(12, labelW / 22, labelH * 0.30) + 'px', color: '#625b4e',
-    }).setResolution(2);
-    this.levelText = drawLevelLabel(this, W, H, { color: '#5b554b' });
-    this._render();
+  // ── what the level means (read by the tests) ───────────────────────────────
+
+  static code() {
+    return readKinetic();
   }
+
+  // ── construction ───────────────────────────────────────────────────────────
+
+  _build(W, H) {
+    this._W = W;
+    this._H = H;
+
+    // 1. Math layout
+    this._L = kineticLayout(W, H);
+    const k = uiScale(W, H);
+
+    // 2. Paint Procedural Assets (Room & Mobile)
+    const room = paintRoom(this.textures, W, H);
+    const mobile = paintMobileAssets(this.textures, this._L.size);
+    const R_KEYS = room.keys;
+    const M_KEYS = mobile.keys;
+
+    // 3. Construct the Room Diorama (Back to Front)
+    this.add.image(0, 0, R_KEYS.sky).setOrigin(0).setDepth(-30);
+
+    const stars = this.add
+      .image(0, 0, R_KEYS.stars)
+      .setOrigin(0)
+      .setDepth(-29)
+      .setBlendMode("ADD");
+    // Twinkle the stars smoothly
+    this.ambientTween({
+      targets: stars,
+      alpha: { from: 0.4, to: 1 },
+      duration: 3500,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.add.image(0, 0, R_KEYS.wall).setOrigin(0).setDepth(-20);
+    this.add
+      .image(0, 0, R_KEYS.rays)
+      .setOrigin(0)
+      .setDepth(-10)
+      .setBlendMode("ADD");
+    this.add.image(0, 0, R_KEYS.crib).setOrigin(0).setDepth(20);
+
+    // 4. Construct the Mobile (Dynamic)
+    this._mobileShadows = this.add.graphics().setDepth(-5);
+    this._mobileStrings = this.add.graphics().setDepth(5);
+
+    this._forms = [];
+    const pose = kineticPose(0, this._L.x, this._L.y);
+
+    // Create the Sprites for the hanging forms
+    for (const fDef of pose.forms) {
+      const key = M_KEYS[fDef.kind];
+      const img = this.add.image(0, 0, key).setDepth(10);
+      const rivet = this.add.image(0, 0, mobile.rivetKey).setDepth(11);
+
+      this._forms.push({ img, rivet, id: fDef.id });
+    }
+
+    // 5. Clue & UI
+    const labelH = Math.max(30, H * 0.085);
+    const labelW = Math.min(W * 0.69, 395 * k);
+    const lx = Math.min(W * 0.05, 36);
+    const ly = H - labelH - 8 * k;
+
+    // Subtle dark translucent plaque for the clue
+    const plaque = this.add.graphics().setDepth(30);
+    plaque.fillStyle(0x0a0710, 0.75);
+    plaque.fillRoundedRect(lx, ly, labelW, labelH, 4 * k);
+    plaque.lineStyle(1, 0x3a3b58, 0.4);
+    plaque.strokeRoundedRect(lx, ly, labelW, labelH, 4 * k);
+
+    this.add
+      .text(lx + 10 * k, ly + 6 * k, "ONE UNBROKEN CURVE COUNTS AS ONE", {
+        fontFamily: '"Courier New", monospace',
+        fontSize: Math.min(12, labelW / 21, labelH * 0.34) + "px",
+        color: "#a9b4c2", // Silver moonlight text
+        letterSpacing: 1.5,
+      })
+      .setResolution(2)
+      .setDepth(31);
+
+    this.add
+      .text(
+        lx + 10 * k,
+        ly + labelH * 0.52,
+        "A study of boundaries. Read from above.",
+        {
+          fontFamily: "Georgia, serif",
+          fontSize: Math.min(12, labelW / 22, labelH * 0.3) + "px",
+          color: "#686a8a",
+          fontStyle: "italic",
+        },
+      )
+      .setResolution(2)
+      .setDepth(31);
+
+    this.levelText = drawLevelLabel(this, W, H, { color: "#8a8eaf" });
+    this.levelText.setDepth(31);
+
+    // Initial render
+    this._renderDynamicMobile();
+  }
+
+  // ── update loop ────────────────────────────────────────────────────────────
 
   update(_time, delta) {
     if (!this._L) return;
-    if (this.ambientMotion) this._elapsed += Math.min(delta || 16, 100);
-    this._render();
+    // Advance the physics simulation if not paused
+    if (this.ambientMotion) {
+      this._elapsed += Math.min(delta || 16, 50);
+    }
+    this._renderDynamicMobile();
   }
 
-  _render() {
-    const L = this._L, S = L.size, k = uiScale(L.width, L.height);
-    const pose = kineticPose(this._elapsed);
-    this._forms = pose.map(form => {
-      const x = L.x + form.x * S, y = L.y + form.y * S, r = form.radius * S;
-      const points = polygonVertices(form.sides, r, form.angle).map(p => ({ x: x + p.x, y: y + p.y }));
-      const top = form.sides ? points.reduce((a, p) => p.y < a.y ? p : a) : { x, y: y - r };
-      return { ...form, x, y, r, points, top };
-    });
-    const [triangle, circle, heptagon, pentagon] = this._forms;
-    const shift = Math.sin(this._elapsed * 0.00009) * S * 0.008;
-    const a = { x: triangle.top.x, y: L.y + S * 0.10 };
-    const b = { x: L.x + S * 0.11 + shift, y: L.y + S * 0.12 };
-    const c = { x: L.x - S * 0.13 + shift, y: L.y + S * 0.32 };
-    const d = { x: circle.top.x, y: L.y + S * 0.30 };
-    const e = { x: heptagon.top.x, y: L.y + S * 0.51 };
-    const f = { x: pentagon.top.x, y: L.y + S * 0.53 };
-    const onBar = (x, p, q) => ({ x, y: p.y + (q.y - p.y) * (x - p.x) / (q.x - p.x) });
-    const root = onBar(L.x - S * 0.025, a, b), second = onBar(b.x, c, d), third = onBar(c.x, e, f);
-    const rods = this._rods; rods.clear();
-    const segment = (p, q, width, alpha) => {
-      rods.lineStyle(width, 0x393b38, alpha); rods.lineBetween(p.x, p.y, q.x, q.y);
-    };
-    segment({ x: root.x, y: 0 }, root, Math.max(0.8, k), 0.8);
-    for (const [p, q] of [[a, b], [c, d], [e, f]]) segment(p, q, Math.max(1.5, S * 0.003), 0.95);
-    for (const [p, q] of [[b, second], [c, third], [a, triangle.top], [d, circle.top], [e, heptagon.top], [f, pentagon.top]]) segment(p, q, Math.max(0.6, k * 0.85), 0.78);
-    for (const p of [root, second, third]) {
-      rods.lineStyle(1, 0x343932, 0.9); rods.strokeCircle(p.x, p.y, 2.2 * k);
+  _renderDynamicMobile() {
+    // 1. Get the current physics state of the tree
+    // Roots start at top center
+    const pose = kineticPose(this._elapsed, this._L.x, this._L.y);
+    const S = this._L.size;
+    const k = uiScale(this._W, this._H);
+
+    const strings = this._mobileStrings;
+    const shadows = this._mobileShadows;
+
+    strings.clear();
+    shadows.clear();
+
+    // 2. Draw Strings & Rods
+    // Rods (Wooden / Brass bars)
+    strings.lineStyle(Math.max(2, k * 2.5), 0x1a161e, 1);
+    for (const r of pose.rods) {
+      strings.lineBetween(r.x1, r.y1, r.x2, r.y2);
+      // Center pivot ring
+      strings.strokeCircle(r.cx, r.cy, 3 * k);
+
+      // Draw soft ambient shadows for the rods against the window haze
+      shadows.lineStyle(Math.max(4, k * 4), 0x000000, 0.4);
+      shadows.lineBetween(r.x1 + 4, r.y1 + 10, r.x2 + 4, r.y2 + 10);
     }
-    const shadows = this._shadows, faces = this._faces; shadows.clear(); faces.clear();
-    for (const form of this._forms) {
-      shadows.fillStyle(0x413b30, 0.075);
-      if (form.sides) shadows.fillPoints(form.points.map(p => ({ x: p.x + S * 0.07, y: p.y + S * 0.035 })), true);
-      else shadows.fillCircle(form.x + S * 0.07, form.y + S * 0.035, form.r);
-      faces.fillStyle(form.color, 1);
-      faces.lineStyle(Math.max(0.8, k), 0x39392e, 0.8);
-      if (form.sides) { faces.fillPoints(form.points, true); faces.strokePoints(form.points, true); }
-      else { faces.fillCircle(form.x, form.y, form.r); faces.strokeCircle(form.x, form.y, form.r); }
-      // A rim glint leaves each sheet flat and its silhouette unambiguous.
-      faces.lineStyle(Math.max(0.8, k), form.light, 0.8);
-      if (form.sides) {
-        for (const [i, p] of form.points.entries()) {
-          const q = form.points[(i + 1) % form.points.length];
-          if ((p.y + q.y) / 2 < form.y - form.r * 0.2) faces.lineBetween(p.x, p.y, q.x, q.y);
-        }
-      } else {
-        faces.beginPath(); faces.arc(form.x, form.y, form.r - 0.6, Math.PI * 1.08, Math.PI * 1.8); faces.strokePath();
-      }
-      // A tiny rivet attaches each suspended sheet to its actual upper rim.
-      faces.fillStyle(0xd8d0b8, 0.85); faces.fillCircle(form.top.x, form.top.y + 2 * k, 1.25 * k);
+
+    // Strings (Thin threads)
+    strings.lineStyle(Math.max(0.8, k), 0x3a3245, 0.6);
+    for (const s of pose.strings) {
+      strings.lineBetween(s.x1, s.y1, s.x2, s.y2);
+    }
+
+    // 3. Update the Forms (Sprites)
+    for (const fDef of pose.forms) {
+      // Find the corresponding sprite object
+      const formObj = this._forms.find((f) => f.id === fDef.id);
+      if (!formObj) continue;
+
+      const { img, rivet } = formObj;
+      const rPx = fDef.radius * S;
+
+      img.setPosition(fDef.x, fDef.y);
+      // The FK angle translates to 2D rotation
+      img.setRotation(fDef.angle + Math.PI / 2);
+
+      // The yaw creates a fake 3D spinning effect by scaling X
+      // We keep a minimum scale to never let it go completely invisible (edge-on)
+      const fake3D = Math.max(0.2, Math.abs(Math.cos(fDef.yaw)));
+      img.setScale(fake3D, 1);
+
+      // The rivet attaches at the top vertex, which rotates with the body
+      // We calculate its position based on the sprite's rotation
+      const attachRadius = rPx * 0.85;
+      const rx = fDef.x - Math.sin(img.rotation) * attachRadius;
+      const ry = fDef.y - Math.cos(img.rotation) * attachRadius;
+
+      rivet.setPosition(rx, ry);
+
+      // Form shadows
+      shadows.fillStyle(0x000000, 0.3);
+      shadows.fillCircle(fDef.x + 8 * fake3D, fDef.y + 15, rPx * 0.9 * fake3D);
     }
   }
+
+  // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
     this.tweens.killAll();
+    this.time.removeAllEvents();
     for (const child of this.children.list.slice()) child.destroy();
-    releaseTextures(this.textures, ART);
-    this._L = null; this._forms = []; this._faces = null; this._shadows = null; this._rods = null;
+
+    releaseRoomArt(this.textures);
+    releaseMobileArt(this.textures);
+
+    this._L = null;
+    this._forms = [];
+    this._mobileStrings = null;
+    this._mobileShadows = null;
   }
 
-  shutdown() { this._teardown(); }
+  shutdown() {
+    this._teardown();
+  }
 }

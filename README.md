@@ -68,6 +68,8 @@ Read [the architecture guide](docs/ARCHITECTURE.md) for ownership and dependenci
 
 While the development server is running, the reference ledger is available at `http://127.0.0.1:5173/tools/levels/`. It imports the shared metadata directly, includes solutions for development reference, and is excluded from the production build.
 
+Levels 31–33 explore moonlight and shadow: The Curtain uses a draggable torn curtain, The Sill is a static negative-space composition, and Venetian uses the blind's cord to filter city lights. The curtain also accepts left/right arrow keys; the blind accepts up/down. Hold Shift for larger adjustments. These controls preserve their position on resize and reset on replay. A completed 30-level save automatically opens level 31.
+
 ## Phones and tablets
 
 In a browser the game is for computers. `src/ui/platform.js` recognises a phone or a tablet (by its user agent, an iPad asking for the desktop site by its touch points, or a device with only a finger and nothing that can hover; a touch-screen laptop still counts as a computer) and `src/entry.js` then shows the desktop-only page instead of loading the game. Inside a store app built with a native shell such as Capacitor, `window.Capacitor.isNativePlatform()` is true and the game runs on the phone in the compact layout below.

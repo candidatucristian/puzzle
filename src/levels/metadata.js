@@ -568,6 +568,62 @@ const metadata = [
       "GenomeScene — highlighted coding strand, direction, streaming sequences and procedural double helix",
       "NCBI standard genetic code: https://www.ncbi.nlm.nih.gov/datasets/docs/v2/data-processing/taxonomy-processing/genetic-codes/#1-the-standard-code-transl_table1"
     ]
+  },
+  {
+    "id": "curtain",
+    "key": "Curtain",
+    "name": "The Curtain",
+    "code": "MOTH",
+    "altCode": null,
+    "hint": {
+      "text": "Let the shadows guide your eyes.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A full moon shines through a tall Gothic window in an abandoned room. A square of moonlight falls on fifty fixed letters engraved in the floorboards. Drag the moth-eaten velvet curtain along its rail: its four irregular tears project moving pools of light, physically masking the same unchanged floor texture. At the correct position the cloth covers the rest of the square and only M, O, T and H remain lit, read from left to right. This is a translating Cardan grille; there is no rotation step or automatic answer reveal. Left/right arrows allow fine adjustment, Shift makes larger steps. Resize preserves the curtain position; replay opens it again.",
+    "references": [
+      "curtain/puzzle.js CURTAIN_LETTERS / CURTAIN_HOLES / tearOutline — fifty engravings and four matching physical tears",
+      "curtainLightAt() / curtainShift() — one projected aperture geometry for the whole floor",
+      "CurtainScene — draggable cloth and a GeometryMask over the single illuminated floor texture",
+      "curtain/room.js — Gothic window, velvet folds, engraved boards and projected moonlight"
+    ]
+  },
+  {
+    "id": "thesill",
+    "key": "TheSill",
+    "name": "The Sill",
+    "code": "WAKE",
+    "altCode": null,
+    "hint": {
+      "text": "Read the light, not the dark.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A low view of an old window: leaning books, a wine bottle, an unlit candlestick, a vase and a mantel clock stand in silhouette against diffuse moonlight. Their long overlapping shadows reach towards the viewer across the floorboards. Read the light left between those dark shapes: four polygonal gaps spell W A K E from left to right, with the triangular counter of A remaining shadow. The composition is a single static painting; no object needs moving and no word is overlaid or revealed on click. The puzzle is the figure/ground reversal itself, including with ambient effects disabled.",
+    "references": [
+      "thesill/puzzle.js SILL_APERTURES / aperturePoints — actual light outlines and the dark counter of A",
+      "thesill/sill.js paintSill — overlapping cast silhouettes with the apertures cut from the shadow field",
+      "TheSillScene — one static room texture, resizing and the negative-space clue"
+    ]
+  },
+  {
+    "id": "venetian",
+    "key": "Venetian",
+    "name": "Venetian",
+    "code": "CITY",
+    "altCode": null,
+    "hint": {
+      "text": "Focus through the noise.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A high-rise window overlooks thousands of cold and amber city lights through lowered Venetian blinds. Drag the cord up or down to tilt the horizontal slats. The city is one immutable image: narrow rows of lights forming CITY are interleaved with four rows of distracting lights per band. The cord changes only the openings of the opaque barrier. Near the correct angle, the slits pass the letter rows and cover the interference; at other angles the same word falls back into visual noise. Nothing swaps or fades in a separate answer image. Up/down arrows make fine adjustments, Shift makes larger steps. Resize retains the tilt; replay restores the noisy starting view.",
+    "references": [
+      "venetian/puzzle.js cityLights() / cityLetterAt() — deterministic interlaced city and actual letter strokes",
+      "blindSlits() / lightPassesBlind() — the moving barrier apertures, independent of the image",
+      "venetian/city.js paintVenetian — static skyline, thousands of lights and the window frame",
+      "VenetianScene — draggable cord, horizontal slats and a GeometryMask over the unchanged city texture"
+    ]
   }
 ];
 

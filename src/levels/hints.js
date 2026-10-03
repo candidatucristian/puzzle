@@ -121,4 +121,16 @@ export const HINT_DETAILS = {
     'Read the five highlighted triplets from left to right in a standard DNA codon table. If your table uses RNA, replace T with U. This is the coding strand: do not reverse or complement it.',
     'Each codon specifies an amino acid. Use the amino acid’s standard ONE-letter symbol, not its three-letter abbreviation or the first letter of its name. TCT gives serine, whose symbol is S. Repeat for CCT, GCT, TGT and GAA.',
   ],
+  curtain: [
+    'Draw the heavy curtain across the window. The tears in its fabric move small pools of moonlight over the letters on the floor. You can use the left and right arrow keys for fine adjustments.',
+    'Use the curtain like a stencil: find the position where the rest of the square is in shadow and each of the four holes surrounds one whole letter. Read those four lit letters from left to right.',
+  ],
+  thesill: [
+    'Nothing on the sill needs moving. Let your attention settle on the pale spaces between the long black shadows on the floor.',
+    'Treat the moonlit gaps as the solid shapes and the shadows as their background. Four large capital letters sit side by side; read them from left to right.',
+  ],
+  venetian: [
+    'Drag the small cord on the right up and down. It tilts the slats instead of raising the blind. The up and down arrow keys let you adjust it more slowly.',
+    'Move slowly through the narrow openings. One angle blocks the distracting rows of city lights while leaving four large letters visible. Hold that angle and read across the window.',
+  ],
 };

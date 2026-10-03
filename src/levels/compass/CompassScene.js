@@ -7,19 +7,20 @@ import { COMPASS_BEARINGS } from "./puzzle.js";
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "COMPASS"  ·  code: LOST  ·  compass bearings → a walk → letters
 //
-// A pirate ship at night, the captain's cabin, the ship's timbers creaking.
-// On the chart table stands a brass compass in its box, its card ruled to
-// the degree, and its needle has gone mad: it spins, stops dead on a
-// bearing, jumps to the next, spins again. Beside it lies a map folded and
-// sealed; opened, it shows the island and the X over the treasure — and four
-// lines of bearings in the captain's hand:
+// A pirate ship at night, the captain's cabin seen from its door, dark and
+// picked out in gold, its timbers creaking. Over the chart table hangs the
+// ship's compass in its gilded gimbal ring, upright, its face to us, and its
+// needle has gone mad: it spins, stops dead on a bearing, jumps to the next,
+// spins again. On the table lies the map, folded and sealed; opened, it
+// shows four lines of bearings in the captain's hand:
 //
 //   180 180 90 · 270 180 180 90 90 0 0 270 · 270 270 180 90 90 180 270 270
 //   · 90 90 270 180 180
 //
-// North is 0, east 90, south 180, west 270, as on the card. Each bearing is
-// one step that way, each line one letter: down, down, right is L. The four
-// walks draw L O S T.
+// North is 0, east 90, south 180, west 270 — and since the compass hangs
+// facing us, that is up, right, down, left on its card. Each bearing is one
+// step that way, each line one letter: down, down, right is L. The four walks
+// draw L O S T.
 //
 // The needle points out the very same bearings, line by line: a spin between
 // two letters, then one bearing after another, each held — and where a line
@@ -39,7 +40,8 @@ export default class CompassScene extends BasePuzzleScene {
   }
 
   init(data) {
-    this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+    this.skipFadeIn =
+      data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
 
   preload() {
@@ -68,13 +70,27 @@ export default class CompassScene extends BasePuzzleScene {
     this._L = L;
     this._art = art;
 
-    // the night through the window, behind the cabin (the window is left
-    // open in it); it rolls with the ship
-    const win = L.win;
-    this._view = this.add.image(win.x, win.cy, k.view).setDepth(-12);
-    this._glitter = this.add.image(win.x, win.cy, k.glitter).setBlendMode(Phaser.BlendModes.ADD).setDepth(-11);
+    // the night through the stern window, behind the cabin (the window is
+    // left open in it); it rolls with the ship
+    this._view = this.add.image(L.win.x, L.win.cy, k.view).setDepth(-12);
+    this._glitter = this.add
+      .image(L.win.x, L.win.cy, k.glitter)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(-11);
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
-    this._folded = this.add.image(L.map.x, L.map.y, k.folded).setScale(inv).setDepth(-9);
+    // the map lies in the dark, just catching the moon
+    this._folded = this.add
+      .image(L.map.x, L.map.y, k.folded)
+      .setScale(inv)
+      .setTint(0x9aa2b8)
+      .setDepth(-9);
+    // the moon's light through the window, and the dust turning in it
+    this._beams = this.add
+      .image(0, 0, k.beams)
+      .setOrigin(0, 0)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(-3);
+    this._makeDust(L, k.glow);
 
     // the candle's flame and its light
     const cd = L.candle;
@@ -89,75 +105,142 @@ export default class CompassScene extends BasePuzzleScene {
       .setDisplaySize(cd.size * 4, cd.size * 4)
       .setTint(0xffb860)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.55)
+      .setAlpha(0.35)
       .setDepth(-8);
     this._flameH = cd.size;
 
+    // the compass, hanging from the beam: everything on it swings together
+    const c = L.compass;
+    const drop = c.y - L.pivot.y;
+    this._compass = this.add.container(L.pivot.x, L.pivot.y).setDepth(-7);
+    // the compass is in the night too: its gold dimmed, the needle still clear
+    const body = this.add
+      .image(0, drop, k.body)
+      .setOrigin(0.5, art.body.oy)
+      .setScale(inv)
+      .setTint(0x8a847c);
+    this._lockGlow = this.add
+      .image(0, drop, k.glow)
+      .setDisplaySize(c.r * 0.32, c.r * 0.32)
+      .setTint(0xffd27a)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0);
+    this._shade = this.add
+      .image(c.r * 0.03, drop + c.r * 0.05, k.shade)
+      .setOrigin(0.5, art.needle.oy)
+      .setScale(inv);
+    this._needleImg = this.add
+      .image(0, drop, k.needle)
+      .setOrigin(0.5, art.needle.oy)
+      .setScale(inv)
+      .setTint(0xd8d4d0);
+    const glass = this.add.image(0, drop, k.glass).setScale(inv).setAlpha(0.7);
+    this._compass.add([
+      body,
+      this._lockGlow,
+      this._shade,
+      this._needleImg,
+      glass,
+    ]);
+    this._drop = drop;
+
     // the lantern and its light, which swing together
     const lan = L.lantern;
-    this._lantern = this.add.image(lan.x, lan.y, k.lantern).setOrigin(0.5, 0).setScale(inv).setDepth(-5);
+    this._lantern = this.add
+      .image(lan.x, lan.y, k.lantern)
+      .setOrigin(0.5, 0)
+      .setScale(inv)
+      .setDepth(-5);
     this._roomGlow = this.add
       .image(0, 0, k.glow)
       .setDisplaySize(W * 0.7, H * 0.85)
       .setTint(0xffa050)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.09)
+      .setAlpha(0.025)
       .setDepth(-6);
     this._flameGlow = this.add
       .image(0, 0, k.glow)
-      .setDisplaySize(lan.s * 130, lan.s * 130)
+      .setDisplaySize(lan.s * 110, lan.s * 110)
       .setTint(0xffc070)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.6)
+      .setAlpha(0.4)
       .setDepth(-4);
 
-    // the needle and its shadow lie on the card, so they turn in its
-    // perspective: each sits in a frame squashed as the card is
-    const c = L.compass;
-    const flat = c.rh / c.rw;
-    this._lockGlow = this.add
-      .image(c.x, c.y, k.glow)
-      .setDisplaySize(c.rw * 0.3, c.rw * 0.3 * flat)
-      .setTint(0xffd27a)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0)
-      .setDepth(-8);
-    this._shade = this.add.image(0, 0, k.shade).setOrigin(0.5, art.needle.oy).setScale(inv);
-    this.add
-      .container(c.x + c.rw * 0.02, c.y + c.rh * 0.07, [this._shade])
-      .setScale(1, flat)
-      .setDepth(-7);
-    this._needleImg = this.add.image(0, 0, k.needle).setOrigin(0.5, art.needle.oy).setScale(inv);
-    this.add.container(c.x, c.y, [this._needleImg]).setScale(1, flat).setDepth(-7);
-    this.add.image(L.glassEl.x, L.glassEl.y, k.glass).setScale(inv).setDepth(-6);
-
     // a tap on the glass, and the map on the table
-    const rx = c.rw * 1.2;
-    const ry = c.rh * 1.3;
-    const glass = this.add
-      .zone(c.x, c.y, rx * 2, ry * 2)
+    const glassZone = this.add
+      .zone(c.x, c.y, c.r * 2.2, c.r * 2.2)
       .setInteractive({
-        hitArea: new Phaser.Geom.Ellipse(rx, ry, rx * 2, ry * 2),
-        hitAreaCallback: Phaser.Geom.Ellipse.Contains,
+        hitArea: new Phaser.Geom.Circle(c.r * 1.1, c.r * 1.1, c.r * 1.1),
+        hitAreaCallback: Phaser.Geom.Circle.Contains,
         useHandCursor: true,
       })
       .setData("interactionLabel", "Tap the glass")
       .setDepth(5)
       .on("pointerdown", () => this._tapGlass());
     const m = L.map;
-    const map = this.add
-      .zone(m.x, m.y, m.w * 1.05, m.h * 1.1)
+    const mapZone = this.add
+      .zone(m.x, m.y, m.w * 1.1, m.h * 1.4)
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Open the map")
       .setDepth(5)
       .on("pointerdown", () => this._openMap());
-    this._zones = [glass, map];
+    this._zones = [glassZone, mapZone];
 
     this.levelText = drawLevelLabel(this, W, H);
 
     this._steps = program();
-    this._needle = this._needle || { a: 0, w: 0, step: 0, t: 0, locked: false, shove: 0 };
+    this._needle = this._needle || {
+      a: 0,
+      w: 0,
+      step: 0,
+      t: 0,
+      locked: false,
+      shove: 0,
+    };
     this._sheet = null;
+  }
+
+  // motes of dust drifting slowly through the moonbeams, catching the light
+  _makeDust(L, glow) {
+    const b = L.beam;
+    const rnd = this._rng(4040);
+    const inBeam = (k, f) => {
+      const y = b.top.y + (b.bottom.y - b.top.y) * f;
+      const x0 = b.top.x0 + (b.bottom.x0 - b.top.x0) * f;
+      const x1 = b.top.x1 + (b.bottom.x1 - b.top.x1) * f;
+      return { x: x0 + (x1 - x0) * k, y };
+    };
+    for (let i = 0; i < 46; i++) {
+      const p = inBeam(rnd(), 0.08 + rnd() * 0.8);
+      const size = L.S * (0.004 + rnd() * 0.006);
+      const mote = this.add
+        .image(p.x, p.y, glow)
+        .setDisplaySize(size, size)
+        .setTint(0xdce6ff)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0)
+        .setDepth(-2);
+      if (!this.ambientMotion) {
+        mote.setAlpha(0.3 + rnd() * 0.3);
+        continue;
+      }
+      const drift = () => {
+        const q = inBeam(rnd(), 0.08 + rnd() * 0.8);
+        mote.setPosition(q.x, q.y);
+        this.tweens.add({
+          targets: mote,
+          x: q.x + (rnd() - 0.5) * L.S * 0.06,
+          y: q.y + L.S * (0.01 + rnd() * 0.04),
+          duration: 6000 + rnd() * 8000,
+          onUpdate: (tw) =>
+            mote.setAlpha(
+              Math.sin(Math.PI * tw.progress) * (0.35 + 0.3 * rnd()),
+            ),
+          onComplete: drift,
+        });
+      };
+      this.time.delayedCall(rnd() * 6000, drift);
+    }
   }
 
   // ── the needle ─────────────────────────────────────────────────────────────
@@ -210,13 +293,18 @@ export default class CompassScene extends BasePuzzleScene {
 
   // the needle comes to rest: a click in the bowl, the degree lit on the card
   _lock(bearing) {
-    const c = this._L.compass;
+    const r = this._L.compass.r;
     const a = ((bearing - 90) * Math.PI) / 180;
     this.tweens.killTweensOf(this._lockGlow);
     this._lockGlow
-      .setPosition(c.x + Math.cos(a) * c.rw * 0.92, c.y + Math.sin(a) * c.rh * 0.92)
-      .setAlpha(0.75);
-    this.tweens.add({ targets: this._lockGlow, alpha: 0, duration: 1100, ease: "Quad.easeIn" });
+      .setPosition(Math.cos(a) * r * 0.92, this._drop + Math.sin(a) * r * 0.92)
+      .setAlpha(0.8);
+    this.tweens.add({
+      targets: this._lockGlow,
+      alpha: 0,
+      duration: 1100,
+      ease: "Quad.easeIn",
+    });
     this._tick();
   }
 
@@ -229,25 +317,40 @@ export default class CompassScene extends BasePuzzleScene {
     this._clink();
   }
 
-  // the ship's roll: the sea tilting in the window, its moon road
-  // glittering, the lantern swinging on its chain and its light swinging
-  // with it; the candle flame never quite still
+  // the ship's roll: the sea tilting in the window and its moon road
+  // glittering, the compass swaying a little on its hook, the lantern
+  // swinging on its chain and its light swinging with it
   _roll(t) {
     const L = this._L;
     const on = this.ambientMotion && !this.reducedMotion ? 1 : 0;
     const roll = on * (Math.sin(t * 0.9) * 1.8 + Math.sin(t * 0.37 + 1) * 0.8);
     this._view.setAngle(roll);
-    this._glitter.setAngle(roll).setAlpha(0.75 + on * 0.25 * Math.sin(t * 3.1) * Math.sin(t * 1.7));
+    this._glitter
+      .setAngle(roll)
+      .setAlpha(0.75 + on * 0.25 * Math.sin(t * 3.1) * Math.sin(t * 1.7));
+    this._compass.setAngle(-roll * 0.5);
     const flick = on * (Math.sin(t * 13) * 0.5 + Math.sin(t * 7.3) * 0.5);
-    this._flame.setDisplaySize(this._flameH * (0.45 - flick * 0.03), this._flameH * (1 + flick * 0.08)).setAngle(flick * 4);
-    this._candleGlow.setAlpha(0.5 + flick * 0.06);
-    const swing = on * (Math.sin(t * 0.9 - 0.4) * 6 + Math.sin(t * 0.37 + 0.6) * 2);
+    this._flame
+      .setDisplaySize(
+        this._flameH * (0.45 - flick * 0.03),
+        this._flameH * (1 + flick * 0.08),
+      )
+      .setAngle(flick * 4);
+    this._candleGlow.setAlpha(0.32 + flick * 0.05);
+    // the moonlight breathes as clouds pass and the ship rolls
+    this._beams.setAlpha(
+      0.9 + on * (0.07 * Math.sin(t * 0.5) + 0.03 * Math.sin(t * 1.7)),
+    );
+    const swing =
+      on * (Math.sin(t * 0.9 - 0.4) * 6 + Math.sin(t * 0.37 + 0.6) * 2);
     this._lantern.setAngle(swing);
     const a = (swing * Math.PI) / 180;
     const drop = this._art.lantern.flameDrop;
     const fx = L.lantern.x - Math.sin(a) * drop;
     const fy = L.lantern.y + Math.cos(a) * drop;
-    this._flameGlow.setPosition(fx, fy).setAlpha(0.55 + on * Math.random() * 0.1);
+    this._flameGlow
+      .setPosition(fx, fy)
+      .setAlpha(0.36 + on * Math.random() * 0.08);
     this._roomGlow.setPosition(fx + (fx - L.lantern.x) * 6, fy + L.H * 0.18);
   }
 
@@ -271,17 +374,28 @@ export default class CompassScene extends BasePuzzleScene {
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Fold the map");
     const cont = this.add.container(L.W / 2, L.H * 0.47).setDepth(31);
-    cont.add(this.add.image(L.S * 0.008, L.S * 0.014, art.keys.sheet).setScale(inv).setTint(0x000000).setAlpha(0.5));
+    cont.add(
+      this.add
+        .image(L.S * 0.008, L.S * 0.014, art.keys.sheet)
+        .setScale(inv)
+        .setTint(0x000000)
+        .setAlpha(0.5),
+    );
     cont.add(this.add.image(0, 0, art.keys.sheet).setScale(inv));
 
     // the bearings, a line for each letter, in the captain's hand
     const lines = COMPASS_BEARINGS.map((line, i) =>
       this.add
-        .text(-sh.w / 2 + sh.textX, -sh.h / 2 + sh.lines[i].y, line.map((b) => `${b}°`).join("  ·  "), {
-          fontFamily: MAP_FONT,
-          fontSize: Math.round(sh.w * 0.05) + "px",
-          color: "#3a2210",
-        })
+        .text(
+          -sh.w / 2 + sh.textX,
+          -sh.h / 2 + sh.lines[i].y,
+          line.map((b) => `${b}°`).join("  ·  "),
+          {
+            fontFamily: MAP_FONT,
+            fontSize: Math.round(sh.w * 0.05) + "px",
+            color: "#3a2210",
+          },
+        )
         .setOrigin(0, 0.5)
         .setAngle(i % 2 ? 0.6 : -0.8),
     );
@@ -295,10 +409,29 @@ export default class CompassScene extends BasePuzzleScene {
     // it comes up off the table and unfolds
     const from = { x: L.map.x, y: L.map.y };
     this._folded.setVisible(false);
-    cont.setPosition(from.x, from.y).setScale(0.28, 0.12).setAngle(-7).setAlpha(0.4);
+    cont
+      .setPosition(from.x, from.y)
+      .setScale(0.28, 0.12)
+      .setAngle(-7)
+      .setAlpha(0.4);
     this.tweens.add({ targets: veil, alpha: 1, duration: 360 });
-    this.tweens.add({ targets: cont, x: L.W / 2, y: L.H * 0.47, angle: -1.2, scaleX: 1, alpha: 1, duration: 420, ease: "Cubic.easeOut" });
-    this.tweens.add({ targets: cont, scaleY: 1, duration: 560, delay: 80, ease: "Back.easeOut" });
+    this.tweens.add({
+      targets: cont,
+      x: L.W / 2,
+      y: L.H * 0.47,
+      angle: -1.2,
+      scaleX: 1,
+      alpha: 1,
+      duration: 420,
+      ease: "Cubic.easeOut",
+    });
+    this.tweens.add({
+      targets: cont,
+      scaleY: 1,
+      duration: 560,
+      delay: 80,
+      ease: "Back.easeOut",
+    });
 
     veil.on("pointerdown", () => this._closeMap());
     this._sheet = { veil, cont, from, closing: false };
@@ -335,7 +468,8 @@ export default class CompassScene extends BasePuzzleScene {
 
   _ac() {
     const ac = this.sound && this.sound.context;
-    const st = this.services && this.services.audio && this.services.audio.state;
+    const st =
+      this.services && this.services.audio && this.services.audio.state;
     if (!ac || (st && st.muted)) return null;
     return { ac, vol: st ? st.sfxVol : 0.8 };
   }
@@ -346,9 +480,14 @@ export default class CompassScene extends BasePuzzleScene {
     if (!a) return;
     try {
       const { ac, vol } = a;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+      const buf = ac.createBuffer(
+        1,
+        Math.floor(ac.sampleRate * dur),
+        ac.sampleRate,
+      );
       const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * env(i / d.length);
+      for (let i = 0; i < d.length; i++)
+        d[i] = (Math.random() * 2 - 1) * env(i / d.length);
       const src = ac.createBufferSource();
       src.buffer = buf;
       const f = ac.createBiquadFilter();
@@ -368,7 +507,9 @@ export default class CompassScene extends BasePuzzleScene {
   _startCreaking() {
     try {
       if (!this.cache.audio.exists("creakingwood")) return;
-      this.services.audio.addSceneSound(this, "creakingwood", { loop: true, gain: 0.3 })?.play();
+      this.services.audio
+        .addSceneSound(this, "creakingwood", { loop: true, gain: 0.3 })
+        ?.play();
     } catch (e) {}
   }
 
@@ -379,7 +520,15 @@ export default class CompassScene extends BasePuzzleScene {
 
   // old paper, unfolded or folded
   _rustle() {
-    this._noise(0.42, "highpass", 1800, 0.7, 0.16, (k) => (0.35 + 0.65 * Math.random() * Math.random()) * Math.sin(k * Math.PI));
+    this._noise(
+      0.42,
+      "highpass",
+      1800,
+      0.7,
+      0.16,
+      (k) =>
+        (0.35 + 0.65 * Math.random() * Math.random()) * Math.sin(k * Math.PI),
+    );
   }
 
   // a fingernail on the compass glass
@@ -415,6 +564,7 @@ export default class CompassScene extends BasePuzzleScene {
     releaseCabinArt(this.textures);
     this._sheet = null;
     this._zones = [];
+    this._view = this._glitter = this._beams = null;
     this._L = null;
   }
 
@@ -435,7 +585,11 @@ function program() {
   COMPASS_BEARINGS.forEach((line) => {
     steps.push({ spin: SPIN });
     line.forEach((to, i) =>
-      steps.push({ to, hold: HOLD + (i ? 0 : ARRIVE), kick: i > 0 && line[i - 1] === to }),
+      steps.push({
+        to,
+        hold: HOLD + (i ? 0 : ARRIVE),
+        kick: i > 0 && line[i - 1] === to,
+      }),
     );
   });
   steps.push({ spin: SPIN_END });

@@ -1,0 +1,35 @@
+The Descipher - niveluri, coduri și rezolvări pe scurt
+
+01. Binary Tree | Cod: CABBAGE | Urmează traseele de pe bilet (L=stânga, R=dreapta) și citește literele frunzelor în ordinea traseelor.
+02. Plant Pot | Cod: FIBO / FIBONACCI | Udă planta de 5 ori; frunzele apar în grupuri de 1, 1, 2, 3, 5: șirul Fibonacci.
+03. Sequence | Cod: 19334488111 | Sortează cartonașele crescător; citește fiecare ca repetări + cifră (23 -> 33) și unește: 1 9 33 44 88 111.
+04. Cryptex | Cod: ROTOR | Cele 3 clicuri care sting lumânarea indică deplasarea Caesar: mută literele mesajului cu 3 poziții înapoi.
+05. Chessboard | Cod: HEADACHE | Citește coloanele pieselor în ordinea rândurilor 1-8: h, e, a, d, a, c, h, e.
+06. Mobile Phone | Cod: GEORGE | Decodifică 4 / 33 / 666 / 777 / 4 / 33 prin apăsări repetate pe tastele telefonului: G E O R G E.
+07. Lightswitch | Cod: POWER | Apasă întrerupătorul pentru fiecare literă; descifrează clipirile în Morse: .--. / --- / .-- / . / .-.
+08. TV | Cod: VOID / NULL | Citește cele 4 canale: toate sugerează absența sau golul, adică VOID; jocul acceptă și NULL.
+09. Modem | Cod: HTTPS | Notează clipirile celor două LED-uri ca 0 și 1; transformă fiecare grup de biți în litera ASCII corespunzătoare.
+10. Telescope | Cod: ORION | Deschide telescopul; cele 5 grupuri de stele sunt litere Braille, citite de la stânga la dreapta.
+11. Wires | Cod: FACADE | Firele sunt D, F, A, C, E de jos în sus; citește firul fiecărei păsări de la stânga la dreapta.
+12. Station | Cod: EXIT | Ia doar trenurile BOARDING, ordonează-le după oră și citește literele greșite: P(E)RIS, MO(X)COW, L(I)NDON, GENE(T)A.
+13. Pi | Cod: PI / 3.14 | Numără ferestrele aprinse pe fiecare etaj, de sus în jos: 3, 1, 4, 1, 5, 9, 2, 6, 5 sunt cifrele lui pi.
+14. Crossing | Cod: GO | Descifrează dungile late/înguste ale trecerii ca un cod de bare Code 39, de la bordura apropiată spre cea îndepărtată.
+15. Flags | Cod: DEBRIEFING | Unește codurile țărilor steagurilor, de la stânga: Germania DE, Brazilia BR, Irlanda IE, Finlanda FI, Nigeria NG.
+16. Tap Code | Cod: ESCAPE | Numără perechile de crestături ca rând/coloană într-o grilă Tap Code 5x5 (C/K împreună): 15, 43, 13, 11, 35, 15.
+17. Rally | Cod: SILVER | Ia numerele mașinilor în ordinea sosirii: 19, 9, 12, 22, 5, 18; transformă-le în litere cu A=1, ..., Z=26.
+18. Overtime | Cod: SOIL | Adună orele fără două puncte: 2203+1411+1147+2344=7105; imaginează afișajul rotit la 180°: SOIL.
+19. Fireworks | Cod: NIGHT | Ia componenta roșie (primele 2 cifre hex) a artificiilor, în ordine: 4E, 49, 47, 48, 54; convertește din hex în ASCII.
+20. Compass | Cod: LOST | Deschide harta și trasează câte un pas pentru fiecare unghi: 0=sus, 90=dreapta, 180=jos, 270=stânga; fiecare rând desenează o literă.
+21. Bookshelf | Cod: SIGHT | Ia litera indicată de semnul de carte: SHADOW[1], MIRROR[2], MAGIC[3], HOUND[1], WATER[3].
+22. Chemistry | Cod: FOCUS | Caută în tabelul periodic numerele 9, 8, 6, 92, 16 de pe sticle; simbolurile elementelor sunt F, O, C, U, S.
+23. Billiards | Cod: BLIND | Identifică bilele din buzunarele I-V după culoare și dungă: 2, 12, 9, 14, 4; convertește cu A=1, ..., Z=26.
+24. Metro | Cod: TRAIN | Urmează linia luminată; Tango, Romeo, Alpha, India, November dau literele T, R, A, I, N în alfabetul NATO.
+25. Resistors | Cod: 1024 | Citește prima bandă a rezistoarelor R1-R4 folosind tabelul: maro=1, negru=0, roșu=2, galben=4.
+26. Ripples | Cod: DROP | Observă pietrele pe care se întâlnesc simultan toate cele 3 unde; citește literele lor de sus în jos.
+27. Vertex | Cod: FACE | Numără muchiile care se termină în cele 4 puncte marcate, de la stânga: 6, 1, 3, 5; transformă cu A=1, ..., Z=26.
+28. Plotter | Cod: PING | Unește coordonatele succesive din fiecare bloc (X spre dreapta, Y în sus), separat; cele 4 desene formează literele P I N G.
+29. Kinetic | Cod: CAGE | De sus în jos, numără laturile formelor; cercul contează ca 1 contur conform etichetei: 3, 1, 7, 5 -> litere cu A=1.
+30. Genome | Cod: SPACE | Tradu codonii ADN TCT, CCT, GCT, TGT, GAA cu tabelul genetic standard; simbolurile de o literă ale aminoacizilor dau S P A C E.
+31. The Curtain | Cod: MOTH | Trage perdeaua până când cele 4 găuri luminează câte o literă; citește-le de la stânga la dreapta. Săgețile stânga/dreapta reglează fin.
+32. The Sill | Cod: WAKE | Privește spațiile luminoase dintre umbrele obiectelor de pe pervaz; formează literele W A K E, de la stânga la dreapta.
+33. Venetian | Cod: CITY | Trage șnurul până când jaluzelele ascund luminile haotice și lasă vizibile literele CITY. Săgețile sus/jos reglează fin.

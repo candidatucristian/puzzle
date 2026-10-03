@@ -23,7 +23,7 @@ async function navigate(page, key) {
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
 }
 
-test('PING and CAGE unlock the new rooms; Genome requests a reference and SPACE completes all 30', async ({ page }) => {
+test('PING and CAGE unlock the next rooms; Genome requests a reference and SPACE unlocks The Curtain', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await open(page); await navigate(page, 'Plotter');
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._codeTexts.map(t => t.text.replace(/\s/g, ''))))
@@ -42,8 +42,8 @@ test('PING and CAGE unlock the new rooms; Genome requests a reference and SPACE 
   await expect(page.locator('#hint-list')).toContainText('codon table');
   await page.keyboard.press('Escape');
   await page.locator('#level-code').fill('space'); await page.locator('#btn-submit').click();
-  await expect(page.locator('#completion-screen')).toBeVisible();
-  await expect(page.locator('#completion-chambers')).toHaveText(`${LEVEL_METADATA.length} / ${LEVEL_METADATA.length}`);
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Curtain');
+  await expect(page.locator('#completion-screen')).toBeHidden();
   await page.reload();
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(30);
