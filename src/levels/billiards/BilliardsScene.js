@@ -1,11 +1,5 @@
-import Phaser from "phaser";
-import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
-import { noiseBurst, chime } from "../../shared/paint.js";
-import { layoutPub, paintPub, releasePubArt } from "./pub.js";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Level — "BILLIARDS"  ·  code: BLIND  ·  missing balls → pockets → A1Z26
+// ═══════════════════════════════════════════════════════════════════════════
+// BilliardsScene.js — Level "BILLIARDS"  ·  code: BLIND
 //
 // An abandoned pub at night, a pool table seen from above under its lamp.
 // The balls stand racked for the break, but five places in the triangle are
@@ -21,7 +15,13 @@ import { layoutPub, paintPub, releasePubArt } from "./pub.js";
 // the pockets' order, 2 12 9 14 4 as letters of the alphabet: B L I N D.
 //
 // A click on a pocket rattles the ball in it; the cue ball can be nudged.
-// ─────────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+import Phaser from "phaser";
+import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { noiseBurst, chime } from "../../shared/paint.js";
+import { layoutPub, paintPub, releasePubArt } from "./pub.js";
 
 export default class BilliardsScene extends BasePuzzleScene {
   constructor() {
@@ -29,7 +29,8 @@ export default class BilliardsScene extends BasePuzzleScene {
   }
 
   init(data) {
-    this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+    this.skipFadeIn =
+      data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
 
   create() {
@@ -40,7 +41,7 @@ export default class BilliardsScene extends BasePuzzleScene {
       this._build(width, height);
     };
     this.listenToResize(this._onResize);
-    if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
+    if (!this.skipFadeIn) this.cameras.main.fadeIn(900, 0, 0, 0);
   }
 
   _build(W, H) {
@@ -66,36 +67,42 @@ export default class BilliardsScene extends BasePuzzleScene {
     }
 
     // the cue ball, to be nudged
-    const cue = this.add.image(L.cue.x, L.cue.y, k.cue).setScale(0.5).setDepth(-6);
+    const cue = this.add
+      .image(L.cue.x, L.cue.y, k.cue)
+      .setScale(0.5)
+      .setDepth(-6);
     cue
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Nudge the cue ball")
       .on("pointerdown", () => this._nudge(cue, L));
 
-    // the lamp's light, now and then faltering; dust in it
+    // the lamp's light — a warm cone in the noir dark
     this._lamp = this.add
       .image(L.vp.x, (L.pockets[0].y + L.pockets[3].y) / 2, k.glow)
-      .setDisplaySize(L.hw * 2.6, L.hw * 1.5)
-      .setTint(0xffd8a0)
+      .setDisplaySize(L.hw * 2.8, L.hw * 1.6)
+      .setTint(0xffb666)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.12)
       .setDepth(-5);
+
     this._flicker = 0;
+
+    // motes of dust drifting through the beam
     for (let i = 0; i < 18; i++) {
       const x0 = L.vp.x + (Math.random() - 0.5) * L.hw * 2;
       const y0 = this._lamp.y + (Math.random() - 0.5) * L.hw;
       const m = this.add
         .image(x0, y0, k.glow)
         .setDisplaySize(4 * L.u, 4 * L.u)
-        .setTint(0xfff0d0)
+        .setTint(0xffe0b0)
         .setBlendMode(Phaser.BlendModes.ADD)
         .setAlpha(0)
         .setDepth(-4);
       this.ambientObject(m);
       this.ambientTween({
         targets: m,
-        x: x0 + (Math.random() - 0.5) * 50 * L.u,
-        y: y0 + (Math.random() - 0.5) * 30 * L.u,
+        x: x0 + (Math.random() - 0.5) * 60 * L.u,
+        y: y0 - (20 + Math.random() * 40) * L.u,
         alpha: { from: 0, to: 0.35 + Math.random() * 0.4 },
         duration: 4000 + Math.random() * 4000,
         delay: Math.random() * 4000,
@@ -104,18 +111,22 @@ export default class BilliardsScene extends BasePuzzleScene {
         ease: "Sine.easeInOut",
       });
     }
+
     this.levelText = drawLevelLabel(this, W, H);
   }
 
   update(time, delta) {
     if (!this._L) return;
-    // an old lamp: steady, but every so often it dips and buzzes back
     if (this.ambientMotion && !this.reducedMotion) {
+      // the old lamp — steady, but now and then it dips and buzzes back
       if (this._flicker <= 0 && Math.random() < 0.0025) this._flicker = 420;
       if (this._flicker > 0) {
         this._flicker -= delta || 16;
         this._lamp.setAlpha(Math.random() < 0.5 ? 0.02 : 0.1);
         if (this._flicker <= 0) this._lamp.setAlpha(0.12);
+      } else {
+        // slow breathing of the lamp, the noir heartbeat of the room
+        this._lamp.setAlpha(0.12 + Math.sin(time * 0.0006) * 0.012);
       }
     }
   }
@@ -167,10 +178,14 @@ export default class BilliardsScene extends BasePuzzleScene {
 
   // two balls touching: a short hard click
   _clack(k = 1) {
-    chime(this, [
-      [2600, 0.05 * k],
-      [4100, 0.025 * k],
-    ], 0.08);
+    chime(
+      this,
+      [
+        [2600, 0.05 * k],
+        [4100, 0.025 * k],
+      ],
+      0.08,
+    );
     noiseBurst(this, {
       dur: 0.03,
       type: "highpass",

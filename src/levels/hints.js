@@ -101,4 +101,12 @@ export const HINT_DETAILS = {
     'Read the resistors in order, R1 to R4, and only their first band — the one nearest the end, away from the lone gold band. Click a resistor to see its bands through the loupe.',
     'The card gives each colour a digit: black 0, brown 1, red 2, orange 3, yellow 4, and so on to white 9. R1’s first band is brown, so its digit is 1. Write the four first-band digits in order as one number.',
   ],
+  ripples: [
+    'The drops always land in the same three places. Two circles cross often; look for a stone touched by all three fronts at once. The wet letter catches the light for a moment.',
+    'Follow several rounds and note the four stones where three rings meet. Read their engraved letters from the highest stone to the lowest. The other letters are distractions; the show repeats.',
+  ],
+  vertex: [
+    'Inspect the four pulsing points from left to right. Count only lines that begin or end at the point you are examining; a line crossing elsewhere adds no connection to it.',
+    'A point’s degree is its number of connected edges. The four degrees are 6, 1, 3 and 5. Turn each into a letter using A=1, B=2, and so on, then read left to right.',
+  ],
 };

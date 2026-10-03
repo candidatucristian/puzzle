@@ -474,6 +474,44 @@ const metadata = [
       "resistors/bench.js paintResistor() — a resistor and its bands; paintCard() — the colour code pinned to the bench",
       "resistors/bench.js paintLoupe() — a resistor seen big through a loupe, which ResistorsScene holds up on a tap"
     ]
+  },
+  {
+    "id": "ripples",
+    "key": "Ripples",
+    "name": "Ripples",
+    "code": "DROP",
+    "altCode": null,
+    "hint": {
+      "text": "THE RAIN RETURNS TO THREE PLACES.\nWatch where all three circles agree. Read the stones from the top down.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A wet cobbled street seen from directly above at night, washed by a distorted red neon reflection. Three fixed drip points send out circular wavefronts. Their emission delays are calculated from the distances to four engraved stones, so all three fronts really coincide on D, R, O and P during successive rounds. Other stones carry decoy letters. A brief wet gleam makes a three-way agreement readable; it is computed from the same wave geometry for every engraving. Read the four converging stones from top to bottom: DROP. The sequence repeats, including with decorative rain disabled.",
+    "references": [
+      "ripples/puzzle.js RIPPLE_SOURCES / RIPPLE_STONES / RIPPLE_TARGETS — the three fixed sources and the engraved paving",
+      "dropTimes() / rippleFrame() — distance-based emission delays and expanding circular fronts",
+      "convergence() / readConvergences() — compare three arrival times at every stone; only four stones agree",
+      "ripples/street.js — wet stone, engraved letters and the reflected neon; RipplesScene animates refraction, drops and waves"
+    ]
+  },
+  {
+    "id": "vertex",
+    "key": "Vertex",
+    "name": "Vertex",
+    "code": "FACE",
+    "altCode": null,
+    "hint": {
+      "text": "DEGREE OF CONNECTION.\nFour points keep drawing your eye. Follow them from left to right.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "An asymmetric crystal drawn only in white wireframe on blue-black drafting paper. Four actual graph vertices pulse subtly from left to right among dozens of crossing struts. Count the edges that end at each marked vertex: 6, 1, 3, 5. The second is a genuine blind branch with a single connection. Convert the degrees using A=1 through Z=26: F A C E. The inscription Degree of connection hints at graph degree. Unrelated edges stay clear of the marked points so Inspect can distinguish true connections from projected crossings.",
+    "references": [
+      "vertex/puzzle.js VERTEX_NODES / VERTEX_EDGES / VERTEX_MARKED — the actual displayed graph",
+      "degree() / readVertex() — count incident edges, then read 6, 1, 3, 5 as FACE",
+      "segmentDistance() — keeps unrelated struts clear of the marked vertices",
+      "VertexScene — technical white line drawing, sequential node pulses and the Degree of connection inscription"
+    ]
   }
 ];
 

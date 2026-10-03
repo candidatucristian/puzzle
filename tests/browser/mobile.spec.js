@@ -307,6 +307,38 @@ test('the moon clue stays after a tap and resize, toggles off, and resets on rep
   expect(await sceneState(page, 'scene._secantGraphics.visible')).toBe(false);
 });
 
+test('Ripples and Vertex keep their clues in view on small phones and support touch Inspect', async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    localStorage.setItem('puzzleProgressSchema', '2');
+    localStorage.setItem('puzzleUnlockedLevel', '26');
+  });
+  await open(page, { unlocked: false });
+  for (const key of ['Ripples', 'Vertex']) {
+    await navigate(page, key);
+    for (const [width, height] of [[863, 360], [568, 320]]) {
+      await resizePhone(page, width, height);
+      await expect.poll(() => sceneState(page, 'scene._L.height === scene.cameras.main.height')).toBe(true);
+      const fits = await evaluateApp(page, ({ services }) => {
+        const scene = services.levels.activeScene, L = scene._L;
+        const points = scene._letters?.map(entry => entry.text) ?? scene._points;
+        return points.every(p => p.x > 8 && p.x < L.width - 8 && p.y > 8 && p.y < L.height - 8);
+      });
+      expect(fits).toBe(true);
+      await screenshot(page, `${key}-${width}`);
+    }
+    await page.locator('#btn-inspect').tap();
+    await expect(page.locator('#inspection-tools')).toBeVisible();
+    await page.locator('#inspection-glass').tap({ position: { x: 260, y: 90 } });
+    await page.locator('#inspect-in').tap();
+    expect(await page.locator('#game-container').evaluate(el => el.style.transform)).toContain('scale(2.5)');
+    await screenshot(page, `${key}-inspect`);
+    await page.locator('#inspect-close').tap();
+    await expect(page.locator('#inspection-tools')).toBeHidden();
+  }
+  expect(errors).toEqual([]);
+});
+
 test('a phone browser is shown the desktop-only page, and the game is never loaded', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
