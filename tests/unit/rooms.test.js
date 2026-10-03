@@ -11,6 +11,17 @@ import {
   ballColour,
   isStripe,
 } from "../../src/levels/billiards/puzzle.js";
+import { METRO_STATIONS, METRO_WORD, NATO, natoLetter, stationWord, readLine } from "../../src/levels/metro/puzzle.js";
+import {
+  RESISTORS,
+  RESISTORS_CODE,
+  BAND_DIGITS,
+  BAND_PAINT,
+  bandDigit,
+  resistorOhms,
+  ohmsLabel,
+  readFirstBands,
+} from "../../src/levels/resistors/puzzle.js";
 import { LEVEL_METADATA } from "../../src/levels/metadata.js";
 
 const code = (key) => LEVEL_METADATA.find((l) => l.key === key).code;
@@ -46,4 +57,33 @@ test("the missing balls lie in the pockets, I to V: BLIND", () => {
   assert.equal(new Set(looks).size, POCKETS.length);
   assert.equal(ballColour(9), ballColour(1));
   assert.equal(ballColour(8), "#141414");
+});
+
+test("the lit line's stations are the phonetic alphabet: TRAIN", () => {
+  assert.deepEqual([...METRO_STATIONS], ["Tango Square", "Romeo Boulevard", "Alpha Park", "India Docks", "November Street"]);
+  assert.equal(NATO.length, 26);
+  assert.equal(readLine(), METRO_WORD);
+  assert.equal(code("Metro"), METRO_WORD);
+  assert.deepEqual(METRO_STATIONS.map(stationWord), ["Tango", "Romeo", "Alpha", "India", "November"]);
+  // both spellings of the first letter, and the official ones, read the same
+  assert.equal(natoLetter("Alpha"), "A");
+  assert.equal(natoLetter("alfa"), "A");
+  assert.equal(natoLetter("X-ray"), "X");
+  assert.equal(natoLetter("Zulu"), "Z");
+  assert.throws(() => natoLetter("Square"), RangeError);
+  // no station on the lit line can be read two ways
+  assert.equal(new Set(METRO_STATIONS.map((s) => natoLetter(stationWord(s)))).size, 5);
+});
+
+test("the first bands of the four resistors read 1024", () => {
+  assert.equal(Object.keys(BAND_DIGITS).length, 10);
+  assert.deepEqual(Object.values(BAND_DIGITS), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  assert.deepEqual(RESISTORS.map((bands) => bands[0]), ["brown", "black", "red", "yellow"]);
+  assert.equal(readFirstBands(), RESISTORS_CODE);
+  assert.equal(code("Resistors"), RESISTORS_CODE);
+  assert.equal(bandDigit("Orange"), 3);
+  assert.throws(() => bandDigit("gold"), RangeError);
+  // every band has a paint, and the resistors are real values
+  for (const bands of RESISTORS) for (const colour of bands) assert.ok(BAND_PAINT[colour], colour);
+  assert.deepEqual(RESISTORS.map((bands) => ohmsLabel(resistorOhms(bands))), ["1 kΩ", "1 Ω", "22 kΩ", "4.7 kΩ"]);
 });

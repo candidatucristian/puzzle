@@ -93,4 +93,12 @@ export const HINT_DETAILS = {
     'Five balls are missing from the rack. Each lies in a pocket marked I to V; down there you see only its colour, and whether it is striped. Balls 1 to 7 are solid, 9 to 15 striped in the same colours.',
     'Read the pockets from I to V and turn each ball’s number into a letter of the alphabet: 1 is A, 2 is B, and so on. Pocket I holds the blue solid, ball 2: B.',
   ],
+  metro: [
+    'Follow the lit line only, in the direction the light runs: Tango Square first, November Street last. Say the first word of each station’s name out loud.',
+    'Tango, Romeo, Alpha, India, November are the NATO phonetic alphabet, each word standing for its first letter: Tango is T. Take one letter from each station, in the line’s order.',
+  ],
+  resistors: [
+    'Read the resistors in order, R1 to R4, and only their first band — the one nearest the end, away from the lone gold band. Click a resistor to see its bands through the loupe.',
+    'The card gives each colour a digit: black 0, brown 1, red 2, orange 3, yellow 4, and so on to white 9. R1’s first band is brown, so its digit is 1. Write the four first-band digits in order as one number.',
+  ],
 };
