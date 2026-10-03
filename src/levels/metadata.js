@@ -512,6 +512,62 @@ const metadata = [
       "segmentDistance() — keeps unrelated struts clear of the marked vertices",
       "VertexScene — technical white line drawing, sequential node pulses and the Degree of connection inscription"
     ]
+  },
+  {
+    "id": "plotter",
+    "key": "Plotter",
+    "name": "Plotter",
+    "code": "PING",
+    "altCode": null,
+    "hint": {
+      "text": "BECOME THE MACHINE. TRACE THE PATH.\nFour blocks, four drawings. The coordinates tell the pen where to go.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A green monochrome vector terminal displays four numbered blocks of Cartesian coordinates. Join consecutive points with straight lines, with X increasing right and Y increasing up; lift the pen and start a fresh drawing for each block. The blocks are deliberately ordered P, I, N, G: P has a vertical stem and an upper loop; I has two horizontal bars and a central stem; N has two verticals joined diagonally; G is an open square with an inward stroke. Read the four drawings in block order: PING. The display keeps all instructions visible; it never automatically draws the answer for the player.",
+    "references": [
+      "plotter/puzzle.js PLOTTER_BLOCKS — the four coordinate paths, in P-I-N-G order",
+      "formatPath() / pathSegments() — the printed instructions and their actual line segments",
+      "PlotterScene — monochrome CRT glass, four numbered blocks, coordinate orientation and tracing instruction"
+    ]
+  },
+  {
+    "id": "kinetic",
+    "key": "Kinetic",
+    "name": "Kinetic",
+    "code": "CAGE",
+    "altCode": null,
+    "hint": {
+      "text": "A STUDY OF BOUNDARIES.\nRead the four hanging forms from highest to lowest. The gallery label defines how to count a curve.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A restrained gallery mobile hangs on thin metal rods against a warm grey wall. From top to bottom its four flat forms are a brass triangle, a black circle, a red heptagon and a pale pentagon. Count the straight sides of each polygon; for the circle, the label explicitly defines this artwork's convention that one unbroken curved rim counts as one. This is a puzzle convention, not a claim that a circle has a straight side. The counts 3, 1, 7, 5 map through A=1 to C A G E. Gentle sway preserves the vertical order and readable silhouettes; reduced motion leaves all four forms visible.",
+    "references": [
+      "kinetic/puzzle.js KINETIC_FORMS — triangle, circle, heptagon and pentagon with explicit rim counts",
+      "polygonVertices() / kineticPose() — genuine polygon outlines and slow movement that keeps their order",
+      "readKinetic() — read 3, 1, 7, 5 as CAGE",
+      "KineticScene — rods, suspended material sheets and the continuous-curve convention on the gallery label"
+    ]
+  },
+  {
+    "id": "genome",
+    "key": "Genome",
+    "name": "Genome",
+    "code": "SPACE",
+    "altCode": null,
+    "hint": {
+      "text": "THE BUILDING BLOCKS OF LIFE SPELL THE ANSWER.\nThe highlighted DNA fragment uses the standard genetic code. A codon table may help.",
+      "sound": false,
+      "tool": true
+    },
+    "description": "A laboratory monitor streams DNA sequences around a clearly framed fragment: TCT - CCT - GCT - TGT - GAA. The display specifies the DNA coding strand read 5 prime to 3 prime and the standard genetic code (translation table 1). The codons encode serine, proline, alanine, cysteine and glutamic acid; their standard one-letter amino-acid symbols spell S P A C E. An RNA codon table also works after replacing T with U, without complementing or reversing the coding strand. Decorative sequence flow and a double helix surround the stable clue. Reference may help is enabled for the codon table.",
+    "references": [
+      "genome/puzzle.js GENOME_FRAGMENT / STANDARD_CODE — the five DNA codons and the complete 64-codon standard table",
+      "aminoAcid() / translateFragment() — standard one-letter translation, accepting DNA or corresponding RNA triplets",
+      "GenomeScene — highlighted coding strand, direction, streaming sequences and procedural double helix",
+      "NCBI standard genetic code: https://www.ncbi.nlm.nih.gov/datasets/docs/v2/data-processing/taxonomy-processing/genetic-codes/#1-the-standard-code-transl_table1"
+    ]
   }
 ];
 

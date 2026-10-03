@@ -53,7 +53,7 @@ test('Ripples exposes only the actual three-wave meetings, preserves phase on re
   expect(errors).toEqual([]);
 });
 
-test('DROP unlocks Vertex, Inspect magnifies its connections, and FACE completes the game', async ({ page }) => {
+test('DROP unlocks Vertex, Inspect magnifies its connections, and FACE unlocks Plotter', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await openRipples(page);
   await page.locator('#level-code').fill('drop');
@@ -71,7 +71,7 @@ test('DROP unlocks Vertex, Inspect magnifies its connections, and FACE completes
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.input.enabled)).toBe(true);
   await page.locator('#level-code').fill('face');
   await page.locator('#btn-submit').click();
-  await expect(page.locator('#completion-screen')).toBeVisible();
-  await expect(page.locator('#completion-chambers')).toHaveText('27 / 27');
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Plotter');
+  await expect(page.locator('#completion-screen')).toBeHidden();
   expect(errors).toEqual([]);
 });

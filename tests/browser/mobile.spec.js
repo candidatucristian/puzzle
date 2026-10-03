@@ -339,6 +339,41 @@ test('Ripples and Vertex keep their clues in view on small phones and support to
   expect(errors).toEqual([]);
 });
 
+test('Plotter, Kinetic and Genome keep readable clues inside a small phone and magnify by touch', async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    localStorage.setItem('puzzleProgressSchema', '2');
+    localStorage.setItem('puzzleUnlockedLevel', '29');
+  });
+  await open(page, { unlocked: false });
+  for (const key of ['Plotter', 'Kinetic', 'Genome']) {
+    await navigate(page, key);
+    for (const [width, height] of [[863, 360], [568, 320]]) {
+      await resizePhone(page, width, height);
+      await expect.poll(() => sceneState(page, 'scene._L.height === scene.cameras.main.height')).toBe(true);
+      const fits = await evaluateApp(page, ({ services }) => {
+        const scene = services.levels.activeScene, L = scene._L;
+        const clues = [...(scene._codeTexts ?? []), ...(scene._fragmentText ? [scene._fragmentText] : []), scene._clue];
+        return clues.flatMap(text => {
+          const b = text.getBounds();
+          const font = Number.parseFloat(text.style.fontSize);
+          const fits = b.x >= 0 && b.y >= 0 && b.right <= L.width && b.bottom <= L.height && font >= 9;
+          return fits ? [] : [{ text: text.text, font, x: b.x, y: b.y, right: b.right, bottom: b.bottom, screen: L }];
+        });
+      });
+      expect(fits).toEqual([]);
+      await screenshot(page, `${key}-${width}`);
+    }
+    await page.locator('#btn-inspect').tap();
+    await expect(page.locator('#inspection-tools')).toBeVisible();
+    await page.locator('#inspect-in').tap();
+    expect(await page.locator('#game-container').evaluate(el => el.style.transform)).toContain('scale(2.5)');
+    await screenshot(page, `${key}-inspect`);
+    await page.locator('#inspect-close').tap();
+  }
+  expect(errors).toEqual([]);
+});
+
 test('a phone browser is shown the desktop-only page, and the game is never loaded', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');

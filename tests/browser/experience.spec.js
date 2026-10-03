@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { evaluateApp } from './app.js';
+import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 
 async function open(page, { unlocked = false, start = true } = {}) {
   await page.addInitScript(unlocked => {
@@ -49,7 +50,7 @@ test('hints reveal individually, remember each room, and reset with the game', a
   await expect(page.locator('#hint-list li')).toHaveCount(3);
   await page.keyboard.press('Escape'); await page.locator('#btn-options').click();
   await page.locator('#btn-new').click(); await page.locator('#btn-new').click();
-  await expect(page.locator('#progress-count')).toHaveText('0 / 27 solved');
+  await expect(page.locator('#progress-count')).toHaveText(`0 / ${LEVEL_METADATA.length} solved`);
   expect(await evaluateApp(page, ({ services }) => services.hints.count('cryptex'))).toBe(0);
   expect(await evaluateApp(page, ({ services }) => services.preferences.reducedMotion)).toBe(true);
 });
@@ -58,7 +59,7 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await open(page);
   await expect(page.locator('.level-btn').nth(1)).toBeDisabled();
   await page.locator('#level-code').fill('CABBAGE'); await page.locator('#btn-submit').click();
-  await expect(page.locator('#progress-count')).toHaveText('1 / 27 solved');
+  await expect(page.locator('#progress-count')).toHaveText(`1 / ${LEVEL_METADATA.length} solved`);
   await expect(page.locator('.level-btn.solved')).toHaveCount(1);
   await expect(page.locator('.level-btn').nth(1)).toHaveAttribute('aria-current', 'step');
   await expect(page.locator('.level-btn').nth(1).locator('img')).toBeVisible({ timeout: 12000 });
@@ -67,7 +68,7 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await page.reload();
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await expect(page.locator('#btn-continue')).toHaveText('Continue · Level 2');
-  await expect(page.locator('#start-progress')).toContainText('1 of 27 rooms solved');
+  await expect(page.locator('#start-progress')).toContainText(`1 of ${LEVEL_METADATA.length} rooms solved`);
   await screenshot(page, 'continue');
   await page.locator('#btn-continue').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('PlantPot');
@@ -174,5 +175,5 @@ test('unavailable storage reports session-only progress while still allowing pla
   await evaluateApp(page, ({ ui, services }) => { services.preferences.set({ motion: 'reduced' }); ui.showGame(); ui.navigate(0); });
   await expect(page.locator('#save-status')).toHaveText('Progress kept for this session only');
   await page.locator('#level-code').fill('CABBAGE'); await page.locator('#btn-submit').click();
-  await expect(page.locator('#progress-count')).toHaveText('1 / 27 solved');
+  await expect(page.locator('#progress-count')).toHaveText(`1 / ${LEVEL_METADATA.length} solved`);
 });

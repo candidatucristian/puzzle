@@ -25,6 +25,9 @@ import MetroScene from "./metro/MetroScene.js";
 import ResistorsScene from "./resistors/ResistorsScene.js";
 import RipplesScene from "./ripples/RipplesScene.js";
 import VertexScene from "./vertex/VertexScene.js";
+import PlotterScene from "./plotter/PlotterScene.js";
+import KineticScene from "./kinetic/KineticScene.js";
+import GenomeScene from "./genome/GenomeScene.js";
 import { LEVEL_METADATA } from "./metadata.js";
 
 const scenes = {
@@ -55,6 +58,9 @@ const scenes = {
   Resistors: ResistorsScene,
   Ripples: RipplesScene,
   Vertex: VertexScene,
+  Plotter: PlotterScene,
+  Kinetic: KineticScene,
+  Genome: GenomeScene,
 };
 
 export const LEVEL_DEFINITIONS = Object.freeze(LEVEL_METADATA.map((level) => Object.freeze({

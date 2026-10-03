@@ -109,4 +109,16 @@ export const HINT_DETAILS = {
     'Inspect the four pulsing points from left to right. Count only lines that begin or end at the point you are examining; a line crossing elsewhere adds no connection to it.',
     'A point’s degree is its number of connected edges. The four degrees are 6, 1, 3 and 5. Turn each into a letter using A=1, B=2, and so on, then read left to right.',
   ],
+  plotter: [
+    'Treat each pair as (X,Y) on a grid: X goes right, Y goes up. Place the pen at the first point and join each following point with a straight line. Start a separate drawing for every block.',
+    'Each block draws one capital letter. Block 1 goes up, right, halfway down, then left to form P. Trace the other three and read the drawings in block-number order.',
+  ],
+  kinetic: [
+    'Count the straight sides of each polygon, from top to bottom. For the circle, use the rule on the gallery label: its single unbroken curved rim counts as one.',
+    'The four counts are 3, 1, 7 and 5. Convert each to its position in the alphabet: A=1, B=2, C=3, and so on. Read from the highest hanging form to the lowest.',
+  ],
+  genome: [
+    'Read the five highlighted triplets from left to right in a standard DNA codon table. If your table uses RNA, replace T with U. This is the coding strand: do not reverse or complement it.',
+    'Each codon specifies an amino acid. Use the amino acid’s standard ONE-letter symbol, not its three-letter abbreviation or the first letter of its name. TCT gives serine, whose symbol is S. Repeat for CCT, GCT, TGT and GAA.',
+  ],
 };
