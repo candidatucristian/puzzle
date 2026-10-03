@@ -91,12 +91,13 @@ test('master and channel settings reach real music and scene effects', async ({ 
 });
 
 test('final answer, replay and navigation own exactly one completion callback', async ({ page }) => {
-  await launch(page); await navigate(page, 'Overtime'); // the last level in the catalog
-  await page.locator('#level-code').fill('soil'); await page.locator('#btn-submit').click();
+  const last = LEVEL_METADATA.at(-1); // whichever level closes the catalog
+  await launch(page); await navigate(page, last.key);
+  await page.locator('#level-code').fill(last.code.toLowerCase()); await page.locator('#btn-submit').click();
   await expect(page.locator('#completion-screen')).toBeVisible();
   await expect(page.locator('#completion-chambers')).toHaveText(`${LEVEL_METADATA.length} / ${LEVEL_METADATA.length}`);
   await page.locator('#btn-completion-close').click();
-  await page.locator('#level-code').fill('SOIL'); await page.locator('#btn-submit').click();
+  await page.locator('#level-code').fill(last.code); await page.locator('#btn-submit').click();
   await page.locator('.level-btn').first().click();
   await page.waitForTimeout(800);
   await expect(page.locator('#completion-screen')).toBeHidden();

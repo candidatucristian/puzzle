@@ -16,7 +16,7 @@ import { CAR_LENGTH_M } from "./cars.js";
  *  haze the beams cut through is a third layer, ray-marched from the camera
  *  through each lamp's cone.
  *
- *  Everything is sized in metres through the car: a car is CAR_LENGTH_M
+ *  The scenery is sized in metres through a reference car, CAR_LENGTH_M
  *  long, so a person, a hay bale or a 22 m mast stands at its true size for
  *  where it is. What moves — cars, people, the marshal's flag, the glare of
  *  the lamps, the stars — is the scene's; this module paints the rest once
@@ -44,6 +44,7 @@ export const CAR_LANES = [0, -1, 1, -0.5, 0.8, -0.8].map((k) => k * 0.46);
 const WARM = [1.0, 0.84, 0.64];
 const MOON = [0.6, 0.72, 1.0];
 const FINISH_LIGHT = 0.85; // the gravel at the line, in linear light
+const CAR_SIZE_SCALE = 1.44; // enlarge the moving cars and their effects for readability
 const DEG = Math.PI / 180;
 
 // ── where everything is ─────────────────────────────────────────────────────
@@ -53,9 +54,11 @@ export function layoutStage(W, H) {
   const T = track.tune;
   const horizonY = track.horizonY;
   const camH = (T.B * H) / W; // the eye's height, in track units
-  const carLenPx = Math.min(W * 0.075, H * 0.13);
+  const baseCarLenPx = Math.min(W * 0.075, H * 0.13);
+  const carLenPx = baseCarLenPx * CAR_SIZE_SCALE;
   const wzFinish = T.ZC - T.RZ;
-  const m = (carLenPx * wzFinish) / W / CAR_LENGTH_M; // one metre, in units
+  const m = (baseCarLenPx * wzFinish) / W / CAR_LENGTH_M; // one metre of scenery, in units
+  const carM = m * CAR_SIZE_SCALE; // one metre of the enlarged car, in units
   const S = Math.min(W, H);
 
   // a point h units above the ground at (wx, wz), on screen
@@ -127,6 +130,7 @@ export function layoutStage(W, H) {
     horizonY,
     camH,
     m,
+    carM,
     carLenPx,
     wzFinish,
     finishX: W / 2,

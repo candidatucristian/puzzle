@@ -16,6 +16,11 @@ import FlagsScene from "./flags/FlagsScene.js";
 import TapCodeScene from "./tapcode/TapCodeScene.js";
 import RallyScene from "./rally/RallyScene.js";
 import OvertimeScene from "./overtime/Overtime.js";
+import FireworksScene from "./colors/Fireworksscene.js";
+import CompassScene from "./compass/CompassScene.js";
+import BookshelfScene from "./bookshelf/BookshelfScene.js";
+import ChemistryScene from "./chemistry/ChemistryScene.js";
+import BilliardsScene from "./billiards/BilliardsScene.js";
 import { LEVEL_METADATA } from "./metadata.js";
 
 const scenes = {
@@ -37,6 +42,11 @@ const scenes = {
   TapCode: TapCodeScene,
   Rally: RallyScene,
   Overtime: OvertimeScene,
+  Fireworks: FireworksScene,
+  Compass: CompassScene,
+  Bookshelf: BookshelfScene,
+  Chemistry: ChemistryScene,
+  Billiards: BilliardsScene,
 };
 
 export const LEVEL_DEFINITIONS = Object.freeze(LEVEL_METADATA.map((level) => Object.freeze({

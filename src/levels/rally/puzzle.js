@@ -1,8 +1,10 @@
 // The puzzle is the order at the finish line, independently of rendering speed.
+// Slow the driving and crossing schedule together so numbers stay readable and cars keep their spacing.
+const RALLY_PACE = 0.77;
 export const RALLY_NUMBERS = Object.freeze([19, 9, 12, 22, 5, 18]);
-export const RALLY_CROSS_MS = Object.freeze([0, 3000, 3420, 6420, 7170, 7590]);
+export const RALLY_CROSS_MS = Object.freeze([0, 3000, 3420, 6420, 7170, 7590].map((ms) => ms / RALLY_PACE));
 export const RALLY_SPEED = Object.freeze([1, 0.99, 1.01, 1.02, 0.98, 1.0]);
-export const RALLY_CAR_MS = 3600;
+export const RALLY_CAR_MS = 3600 / RALLY_PACE;
 export const RALLY_START_DELAY_MS = 900;
 export const RALLY_LIGHTS_OUT_DELAY_MS = 350;
 export const RALLY_PODIUM_MS = 1800;

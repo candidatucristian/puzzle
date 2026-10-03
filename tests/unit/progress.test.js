@@ -53,11 +53,15 @@ test("schema 2 saves preserve highest unlocked without completing that level", (
   assert.equal(progress.unlockedIndex, 16);
   assert.equal(progress.state.completedLevelIds.length, 16);
   assert.equal(progress.completed, false);
-  // finishing Rally unlocks the level after it, Overtime; only then is the game complete
-  assert.equal(progress.complete(16), true);
-  assert.equal(progress.completed, false);
-  assert.equal(progress.unlockedIndex, 17);
-  assert.equal(progress.complete(17), true);
+  // finishing Rally unlocks the level after it, Overtime, and so on to the
+  // last one; only then is the game complete
+  const last = LEVEL_METADATA.length - 1;
+  for (let i = 16; i < last; i++) {
+    assert.equal(progress.complete(i), true);
+    assert.equal(progress.completed, false);
+    assert.equal(progress.unlockedIndex, i + 1);
+  }
+  assert.equal(progress.complete(last), true);
   assert.equal(progress.completed, true);
 });
 

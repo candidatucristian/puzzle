@@ -73,4 +73,24 @@ export const HINT_DETAILS = {
     'The four clocks can be treated as four-digit numbers. Use the calculator to add all four readings, ignoring the colons.',
     'Add the displayed values as ordinary numbers, rather than hours and minutes. Then imagine turning the calculator upside down: read its seven-segment digits as letters, starting from the right.',
   ],
+  fireworks: [
+    'Each firework hangs out a tag with its number and the exact code of its colour. Take the five in order. The plate on the clock says which part of every code matters.',
+    'A colour written #RRGGBB begins with its red: the first two characters. Take those two from each tag, one to five, and read each pair as a hexadecimal ASCII code. 4E, for example, is N.',
+  ],
+  compass: [
+    'Open the map on the table. Its numbers are bearings, the same degrees as on the compass card, and each line of them belongs to one letter.',
+    'Take every bearing as one step: 0 is up, 90 right, 180 down, 270 left. Follow a line with a pencil and it draws a letter: 180, 180, 90 is down, down, right, an L. Draw all four lines in order.',
+  ],
+  bookshelf: [
+    'Look only at the five books pulled out of the third shelf, left to right. Each has a one-word title on its spine and a bookmark with a number.',
+    'The bookmark’s number is the place of a letter in its own book’s title, counting from the first. SHADOW with bookmark 1 gives S. Take one letter from each of the five, in order.',
+  ],
+  chemistry: [
+    'The faded chart on the wall is the periodic table. Every element on it has a number of its own: its atomic number.',
+    'Find the element for each bottle’s number, left to right, and write down its chemical symbol. Number 9 is fluorine, F. The five symbols together make the word.',
+  ],
+  billiards: [
+    'Five balls are missing from the rack. Each lies in a pocket marked I to V; down there you see only its colour, and whether it is striped. Balls 1 to 7 are solid, 9 to 15 striped in the same colours.',
+    'Read the pockets from I to V and turn each ball’s number into a letter of the alphabet: 1 is A, 2 is B, and so on. Pocket I holds the blue solid, ball 2: B.',
+  ],
 };

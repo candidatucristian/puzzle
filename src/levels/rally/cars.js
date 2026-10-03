@@ -22,11 +22,11 @@ export const CAR_LENGTH_M = 4.12;
 
 // The views rendered, as the angle between the car's heading and the
 // direction it is seen from: entering on the left a car is seen well from the
-// front (about −33°), side-on at the line (−90°, the middle view, exactly),
-// well from the rear as it leaves (about −147°).
-export const YAW_FIRST = -150;
+// front, side-on at the line (−90°, the middle view, exactly), then from the
+// rear. Extra end views cover the enlarged cars entering and leaving the screen.
+export const YAW_FIRST = -157.5;
 export const YAW_STEP = 7.5;
-export const FRAME_COUNT = 17;
+export const FRAME_COUNT = 19;
 
 const RAD = Math.PI / 180;
 
@@ -1438,7 +1438,7 @@ const GLARE = "ry_glare";
 const COLS = 6;
 
 /** Paints each car's number panel, renders the set, and registers one sheet
- *  texture per car with a frame per view ("0" … "16"). */
+ *  texture per car with a frame per view ("0" … "18"). */
 export function paintCars(textures, opts) {
   const job = paintCarsSteps(textures, opts);
   let step = job.next();

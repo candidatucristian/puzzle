@@ -307,7 +307,7 @@ const metadata = [
     "description": "Six numbered rally cars come round a floodlit gravel oval at night and cross the finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the floodlights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level.",
     "references": [
       "RALLY_NUMBERS = [19, 9, 12, 22, 5, 18] (puzzle.js) — the door numbers, in order of crossing",
-      "RALLY_CROSS_MS = [0, 3000, 3420, 6420, 7170, 7590] — when each car's centre crosses the line; the bunches, 3 s apart (the tight pairs are 420 ms apart)",
+      "RALLY_CROSS_MS — original crossing times [0, 3000, 3420, 6420, 7170, 7590] and RALLY_CAR_MS are divided by RALLY_PACE (0.77), running at 77% of base pace while preserving their spacing; tight pairs cross about 545 ms apart",
       "RALLY_SPEED — each car runs a touch faster or slower; the crossing times stay exact",
       "track.js — the oval as one projection: a car's size follows from its height below the horizon, and it is never tilted",
       "cars.js — one 3D rally car rendered in software at every angle the drive needs (FRAME_COUNT views; side-on, exactly, at the line); paintPanel() puts the number on the white door panel",
@@ -336,6 +336,103 @@ const metadata = [
       "SEGMENTS / turnSegments() — the seven-segment digit shapes; turned through 180° they are the letters",
       "createCalculator() / pressKey() — the adding calculator: digits, 00, +, =, C; eight digits, then E until C",
       "OvertimeScene — draws the wall, the four clocks, the desk, the lamp and the working calculator"
+    ]
+  },
+  {
+    "id": "fireworks",
+    "key": "Fireworks",
+    "name": "Fireworks",
+    "code": "NIGHT",
+    "altCode": null,
+    "hint": {
+      "text": "MIDNIGHT IN PARIS.\nFive fireworks, and every one burns in a colour that has a code of its own.",
+      "sound": false,
+      "tool": true
+    },
+    "description": "New Year’s Eve on a terrace above the Seine: five fireworks go up over Paris one after another, each bursting in its own colour and hanging out a tag with its number and that colour’s hex code — #4E2233, #492244, #472255, #482266, #542277. The brass plate on the carriage clock says READ THE RED: in #RRGGBB the red is the first two digits — 4E 49 47 48 54 — and read as ASCII those spell N I G H T. The show runs round and round; a click on the clock starts it again from the first firework.",
+    "references": [
+      "FW_CODES = [\"#4E2233\", \"#492244\", \"#472255\", \"#482266\", \"#542277\"] (colors/Fireworksscene.js) — the five tags, in the order the fireworks go up",
+      "_hangTag() — the tag under each burst: its number and its colour’s hex code",
+      "colors/paris.js paintClock() — the brass plate engraved READ THE RED",
+      "burnColour() — each firework burns in its hex raised to full brightness, the same hue as its code"
+    ]
+  },
+  {
+    "id": "compass",
+    "key": "Compass",
+    "name": "Compass",
+    "code": "LOST",
+    "altCode": null,
+    "hint": {
+      "text": "THE NEEDLE WILL NOT SETTLE.\nIt keeps pointing somewhere new — but never at random.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A pirate ship at night, the captain’s cabin seen whole: the hull’s ribs, the deck beams, a cannon at its port, barrels and rope, the ship’s colours, a swinging lantern, the timbers creaking, and at the far end the stern window open on the moonlit sea. On the chart table stands a brass compass in its box, its card ruled to the degree (0 to 330 numbered, N E S W lettered), and its needle has gone mad: it spins, then stops on one bearing after another. Beside it lies a folded map sealed in red wax; clicked, it unfolds to show an island with a dotted way to an X and a treasure chest, and four lines of bearings: 180 180 90 / 270 180 180 90 90 0 0 270 / 270 270 180 90 90 180 270 270 / 90 90 270 180 180. North is 0, east 90, south 180, west 270; each bearing is one step that way and each line draws one letter — down, down, right is L — so the four walks write L O S T. The needle points out the same bearings line by line, a spin between letters, a kick off and back where a bearing repeats; a tap on the glass starts it again from the first letter.",
+    "references": [
+      "COMPASS_BEARINGS (compass/puzzle.js) — the four lines of the map, one letter each",
+      "walk() / drawBearings() — one unit step per bearing (0 up, 90 right, 180 down, 270 left); drawBearings shows the letter as # marks",
+      "compass/cabin.js paintCard() — the compass card: every degree ruled, every 30 numbered, the four winds lettered; paintCompassBox() lays it in its box on the table",
+      "compass/cabin.js paintSheet() — the unfolded map: the island, the dotted way, the X and the chest",
+      "CompassScene program() / _dance() — the needle: a spin before each letter, then each bearing held; a kick marks a repeated bearing"
+    ]
+  },
+  {
+    "id": "bookshelf",
+    "key": "Bookshelf",
+    "name": "Bookshelf",
+    "code": "SIGHT",
+    "altCode": null,
+    "hint": {
+      "text": "THE INDEX IS THE KEY.\nFive books stand out from the rest, and each one keeps its place with a number.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "A library at night: a tall mahogany bookcase lit by a table lamp, a cup of tea steaming beside it, the moon in the window, a ginger cat asleep on top of the case. On the third shelf five books stand pulled a little out, each with a one-word title in gold on its spine and a paper bookmark in it with a number: SHADOW 1, MIRROR 2, MAGIC 3, HOUND 1, WATER 3, left to right. The bookmark is the index into the title (a book cipher): the 1st letter of SHADOW, the 2nd of MIRROR, the 3rd of MAGIC, the 1st of HOUND, the 3rd of WATER — S I G H T. A click on one of the five draws it a little further out, and back.",
+    "references": [
+      "BOOKS (bookshelf/puzzle.js) — the five titles and their bookmarks, left to right",
+      "readBook() / readShelf() — the bookmark's number is the letter's place in the title, counting from 1",
+      "bookshelf/library.js paintSpecial() — one of the five, pulled out: its spine and title, the bookmark standing out of its pages",
+      "bookshelf/library.js placeBooks() — every book on the shelves; the five stand on the third"
+    ]
+  },
+  {
+    "id": "chemistry",
+    "key": "Chemistry",
+    "name": "Chemistry",
+    "code": "FOCUS",
+    "altCode": null,
+    "hint": {
+      "text": "THE LABELS ARE TORN.\nBut the number left on each one still names something.",
+      "sound": false,
+      "tool": true
+    },
+    "description": "An old laboratory at night, lit by a Bunsen burner’s blue flame and an oil lamp: stone walls, a shelf of apothecary jars, a faded periodic table pinned to the wall, a test-tube rack and a retort at the back of the bench, a flask boiling on a tripod. Across the bench stand five bottles of coloured liquid, their labels torn, a big number left on each, left to right: 9, 8, 6, 92, 16. They are atomic numbers: fluorine F, oxygen O, carbon C, uranium U, sulfur S — F O C U S. Each liquid has its element’s colour (pale yellow, pale blue, black, a glowing uranium green, sulfur yellow). The poster has every element in its place, faded but readable close up. A click on a bottle swirls it; a click on the burner turns up the gas.",
+    "references": [
+      "BOTTLES (chemistry/puzzle.js) — the five numbers on the labels, left to right",
+      "ELEMENTS / symbolOf() — every element's symbol by atomic number; readBottles() spells FOCUS",
+      "cellOf() / familyOf() — each element's place and family on the poster",
+      "chemistry/lab.js paintBottle() — a bottle, its liquid and its torn label; paintPoster() — the faded periodic table"
+    ]
+  },
+  {
+    "id": "billiards",
+    "key": "Billiards",
+    "name": "Billiards",
+    "code": "BLIND",
+    "altCode": null,
+    "hint": {
+      "text": "A SET HAS FIFTEEN BALLS.\nThe rack is short of a few, and the pockets know where they went.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "An abandoned pub at night: a pool table seen from above under its lamp, dust on the cloth and the floor, a stool knocked over, the moon laying a window across the boards. The balls stand racked for the break, but five places in the triangle are empty — 2, 4, 9, 12 and 14 are gone. They lie in the pockets, five of which are marked I to V on little brass plates; down in a pocket a ball shows only its colour and whether it is striped, which with the rack and the set’s colours (1–7 solid, 9–15 striped in the same colours, 8 black) tells its number: I blue solid 2, II purple stripe 12, III yellow stripe 9, IV green stripe 14, V purple solid 4. A chalk slate on the floor says “What is missing defines the answer”. In the pockets’ order, 2 12 9 14 4 as letters of the alphabet (A1Z26): B L I N D. A click on a pocket rattles its ball; the cue ball can be nudged.",
+    "references": [
+      "RACK (billiards/puzzle.js) — the triangle, column by column from its apex; null where a ball is missing",
+      "POCKETS / POCKET_MARKS — the ball in each marked pocket, I to V: 2, 12, 9, 14, 4",
+      "missing() / ballColour() / isStripe() — which balls are gone, and how each looks",
+      "letter() / readPockets() — A1Z26: 2 12 9 14 4 → BLIND",
+      "billiards/pub.js paintBall() — a ball seen from above; sunk in a pocket it shows no number"
     ]
   }
 ];

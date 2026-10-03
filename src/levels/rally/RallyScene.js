@@ -156,7 +156,7 @@ export default class RallyScene extends BasePuzzleScene {
     }
     // the cars are modelled for exactly this camera: how far down it looks
     // at them, and how big they are at the line
-    const pitch = Math.atan2(L.camH - 0.7 * L.m, L.wzFinish) / DEG;
+    const pitch = Math.atan2(L.camH - 0.7 * L.carM, L.wzFinish) / DEG;
     this._carJob = paintCarsSteps(this.textures, {
       numbers: RY_NUMBERS,
       carLenPx: L.carLenPx,
@@ -481,11 +481,11 @@ export default class RallyScene extends BasePuzzleScene {
     // by the angle we see the ground at
     const ch = Math.cos(at.heading);
     const sh = Math.sin(at.heading);
-    const ahead = 8 * L.m;
+    const ahead = 8 * L.carM;
     const pw = at.wx + ch * ahead;
     const pz = at.wz + sh * ahead;
     const pp = L.P(pw, 0, pz);
-    const k = L.px(pz) * L.m;
+    const k = L.px(pz) * L.carM;
     const along = 11;
     const across = 4.5;
     car.pool
@@ -596,13 +596,13 @@ export default class RallyScene extends BasePuzzleScene {
     const L = this._L;
     const ch = Math.cos(at.heading);
     const sh = Math.sin(at.heading);
-    const back = -1.55 * L.m;
+    const back = -1.55 * L.carM;
     for (const side of [-1, 1]) {
-      const lat = side * 0.77 * L.m;
+      const lat = side * 0.77 * L.carM;
       const wx = at.wx + ch * back - sh * lat;
       const wz = at.wz + sh * back + ch * lat;
       const p = L.P(wx, 0, wz);
-      const mpx = L.px(wz) * L.m; // pixels per metre there
+      const mpx = L.px(wz) * L.carM; // pixels per metre of the car there
       const scale = L.track.scaleAtY(p.y);
       const lit = groundLight(L, wx, wz);
       const size = mpx * (0.7 + Math.random() * 0.5);
