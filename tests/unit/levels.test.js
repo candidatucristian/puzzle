@@ -4,13 +4,14 @@ import { LevelManager } from "../../src/core/LevelManager.js";
 import { ProgressStore } from "../../src/core/ProgressStore.js";
 import { LEVEL_METADATA } from "../../src/levels/metadata.js";
 
-function setup() {
+function setup(saved) {
   const definitions = [
     { id: "one", key: "One", code: "FIRST", altCode: "1" },
     { id: "two", key: "Two", code: "SECOND", altCode: null },
     { id: "three", key: "Three", code: "THIRD", altCode: null },
   ];
-  const progress = new ProgressStore(null, definitions);
+  const storage = saved ? { getItem: key => key === 'puzzleProgress' ? JSON.stringify(saved) : null } : null;
+  const progress = new ProgressStore(storage, definitions);
   const manager = new LevelManager(definitions, progress);
   const calls = [];
   const active = new Set(["Boot"]);
@@ -68,6 +69,20 @@ test("the last accepted answer completes the game and replay cannot duplicate co
   manager.navigate(0);
   manager.submit("FIRST");
   assert.deepEqual(progress.state.completedLevelIds, ["one", "two", "three"]);
+});
+
+test("a completed old catalog routes back to an inserted room before celebrating completion", () => {
+  const { manager } = setup({ version: 3, completedLevelIds: ['one', 'three'], lastPlayedLevelId: 'three' });
+  manager.navigate(2);
+  assert.equal(manager.completed, false);
+  assert.deepEqual(manager.submit('THIRD'), { correct: true, isLast: true, nextIndex: 1 });
+  assert.equal(manager.completed, false);
+  manager.navigate(1);
+  assert.deepEqual(manager.submit('SECOND'), { correct: true, isLast: false, nextIndex: null });
+  assert.equal(manager.completed, true);
+  // Replaying a solved early room still advances through the catalog normally.
+  manager.navigate(0);
+  assert.deepEqual(manager.submit('FIRST'), { correct: true, isLast: false, nextIndex: 1 });
 });
 
 test("subscriptions report changes, unsubscribe detaches and reset removes unlocks", () => {

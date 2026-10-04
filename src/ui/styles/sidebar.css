@@ -1,11 +1,11 @@
 /* ── Left Sidebar ── */
 #sidebar {
-  width: 250px;
+  width: 280px;
   padding: 34px 22px 26px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   flex-shrink: 0;
+  overflow-y: auto;
   border-right: 1px solid var(--line-dark);
   box-shadow:
     inset -1px 0 0 var(--line-light),
@@ -22,7 +22,7 @@
 }
 
 #sidebar h1,
-#right-sidebar h1 {
+#current-level-name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 700;
@@ -36,32 +36,9 @@
     -0.5px 0.4px 0 var(--pencil-faint);
 }
 
-.sidebar-footer {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-  padding: 18px 14px 12px;
-}
-
-.sidebar-footer .ornate-rule {
-  margin-bottom: 6px;
-}
-
-.sidebar-footer span {
-  font-family: var(--font-display);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  line-height: 1.7;
-  text-align: center;
-  color: var(--bone-dim);
-  opacity: 0.55;
-}
-
 /* ── Hand-drawn buttons ── */
 .menu-btn {
+  position: relative;
   background: var(--grad-panel);
   color: var(--bone);
   border: 1.5px solid var(--pencil-faint);
@@ -78,11 +55,6 @@
     color 0.25s ease,
     border-color 0.25s ease,
     transform 0.1s ease;
-}
-
-/* .info-button is position:absolute — don't override it */
-.menu-btn:not(.info-button) {
-  position: relative;
 }
 
 /* hand-drawn underline that grows in on hover, instead of a metal sheen */
@@ -340,13 +312,6 @@
   transform: translateY(1px);
 }
 
-.info-button {
-  position: absolute;
-  right: 40px;
-  padding: 13px 30px;
-  font-size: 13px;
-}
-
 .mute-button {
   position: absolute;
   left: 40px;
@@ -453,7 +418,7 @@ input[type="range"]::-moz-range-track {
 }
 
 #right-sidebar {
-  width: 280px;
+  width: 250px;
   padding: 34px 22px 26px;
   display: flex;
   flex-direction: column;
@@ -466,23 +431,84 @@ input[type="range"]::-moz-range-track {
 }
 
 #right-sidebar .sidebar-title {
-  margin-bottom: 22px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
-#right-sidebar h1 {
-  white-space: nowrap; /* prevent text wrapping during animation */
+#current-level-name {
+  font-size: calc(18px * var(--reading-scale, 1));
+  line-height: 1.45;
+  letter-spacing: 2px;
+  overflow-wrap: anywhere;
 }
 
+#right-sidebar > *,
+#sidebar > * {
+  flex-shrink: 0;
+}
+
+.level-kicker,
+.level-state,
+#current-hint-count {
+  margin: 0;
+  color: var(--bone-dim);
+  text-align: center;
+  font-size: calc(11px * var(--reading-scale, 1));
+  line-height: 1.7;
+}
+
+.level-kicker {
+  font-family: "Special Elite", monospace;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+#current-level-summary {
+  margin: 0 0 16px;
+  color: var(--bone);
+  font-family: var(--font-body);
+  font-size: calc(18px * var(--reading-scale, 1));
+  line-height: 1.6;
+  text-align: center;
+}
+
+.level-state {
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.level-state.solved {
+  color: var(--pencil-bright);
+}
+
+.level-help {
+  display: grid;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.sidebar-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--pencil-faint);
+}
+
+#sidebar::-webkit-scrollbar,
 #right-sidebar::-webkit-scrollbar {
   width: 8px;
 }
+#sidebar::-webkit-scrollbar-track,
 #right-sidebar::-webkit-scrollbar-track {
   background: var(--steel-900);
 }
+#sidebar::-webkit-scrollbar-thumb,
 #right-sidebar::-webkit-scrollbar-thumb {
   background: var(--steel-500);
   border-radius: 4px;
 }
+#sidebar::-webkit-scrollbar-thumb:hover,
 #right-sidebar::-webkit-scrollbar-thumb:hover {
   background: var(--pencil-deep);
 }

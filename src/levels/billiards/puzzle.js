@@ -22,16 +22,6 @@ const COLOURS = [
   "#7a1f24", // 7 / 15 — maroon
   "#141414", // 8      — black
 ];
-export const COLOUR_NAMES = [
-  "yellow",
-  "blue",
-  "red",
-  "purple",
-  "orange",
-  "green",
-  "maroon",
-  "black",
-];
 
 /** The hex colour of a numbered ball. 8 is black; 9–15 reuse 1–7's colours. */
 export function ballColour(n) {
@@ -72,7 +62,7 @@ export function missing(rack = RACK) {
 }
 
 /** A number as a letter of the alphabet: 1 is A, 26 is Z. */
-export function letter(n) {
+function letter(n) {
   if (!Number.isInteger(n) || n < 1 || n > 26)
     throw new RangeError(`No letter ${n}`);
   return String.fromCharCode(64 + n);

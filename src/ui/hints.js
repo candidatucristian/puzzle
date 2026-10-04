@@ -7,6 +7,14 @@ export function mountHints(scope, { levels, hints, dialogs }) {
   function render() {
     const level = levels.definitions[levels.currentIndex];
     const revealed = hints.count(level.id);
+    const solved = levels.isCompleted(levels.currentIndex);
+    document.getElementById('current-level-number').textContent = `Level ${levels.currentIndex + 1}`;
+    document.getElementById('current-level-name').textContent = level.name;
+    document.getElementById('current-level-summary').textContent = level.summary;
+    const state = document.getElementById('current-level-state');
+    state.textContent = solved ? 'Solved' : 'Unsolved';
+    state.classList.toggle('solved', solved);
+    document.getElementById('current-hint-count').textContent = `${revealed} of ${level.hint.steps.length} hints revealed`;
     const existing = roomId === level.id ? list.children.length : 0;
     if (roomId !== level.id) list.replaceChildren();
     roomId = level.id;
@@ -48,5 +56,7 @@ export function mountHints(scope, { levels, hints, dialogs }) {
     if (next.disabled) document.getElementById('btn-close-info').focus();
   });
   scope.on(document.getElementById('btn-close-info'), 'click', () => dialogs.close());
-  return { reset() { roomId = undefined; list.replaceChildren(); hints.reset(); } };
+  scope.add(levels.subscribe(render));
+  render();
+  return { reset() { roomId = undefined; list.replaceChildren(); hints.reset(); render(); } };
 }

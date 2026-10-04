@@ -77,7 +77,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (result.correct) {
       input.classList.add('success-flash'); scope.later(() => input.classList.remove('success-flash'), 1200);
       audio.playSuccess();
-      if (result.isLast) completion.show();
+      if (result.nextIndex === null) completion.show();
       else navigate(result.nextIndex, { caption: 'Code Accepted' });
       input.value = '';
     } else if (input.value.trim()) {
@@ -92,7 +92,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     isBlocked: () => intro.active,
     onConfirm() {
       completion.hide();
-      dialogs.close();
+      dialogs.closeAll();
       transitions.dispose();
       inspection.close();
       hintUI.reset();
@@ -104,7 +104,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       intro.play(() => navigate(0));
     },
   });
-  scope.on(byId('btn-howto'), 'click', () => dialogs.open('howto-modal'));
+  scope.on(byId('btn-howto'), 'click', () => dialogs.open('howto-modal', undefined, { nested: true }));
   scope.on(byId('btn-close-howto'), 'click', () => dialogs.close());
   scope.on(byId('btn-options'), 'click', () => { reset.disarm(); dialogs.open('options-modal'); });
   scope.on(byId('btn-close-options'), 'click', () => { reset.disarm(); dialogs.close(); });
@@ -112,5 +112,5 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   // while the code box has the on-screen keyboard up, the room waits to be repainted
   observeViewport(game, scope, { defer: () => touch && document.activeElement === input });
   return { navigate, showGame, get busy() { return transitions.busy || intro.active; },
-    dispose() { transitions.dispose(); intro.dispose(); dialogs.close(); scope.dispose(); } };
+    dispose() { transitions.dispose(); intro.dispose(); dialogs.closeAll(); scope.dispose(); } };
 }

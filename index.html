@@ -69,10 +69,10 @@
     <!-- Compact bar: shown on phones and tablets instead of the two sidebars,
          which become drawers (ui/mobile.js) -->
     <div id="compact-bar">
-      <button id="compact-menu" class="compact-btn" type="button" aria-label="Menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <button id="compact-levels" class="compact-btn" type="button" aria-controls="sidebar" aria-expanded="false">Levels</button>
       <span class="compact-spacer"></span>
       <button id="compact-fullscreen" class="compact-btn" type="button" aria-label="Full screen: hide the bar" title="Full screen: hide the bar">⛶</button>
-      <button id="compact-levels" class="compact-btn" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false">Levels</button>
+      <button id="compact-menu" class="compact-btn" type="button" aria-label="Current level information" aria-controls="right-sidebar-wrapper" aria-expanded="false">Level Info</button>
     </div>
     <div id="drawer-scrim" hidden></div>
     <!-- the handle the top bar slides on: tap to toggle, pull up to hide,
@@ -80,20 +80,19 @@
     <button id="handle-top" class="ui-handle" type="button" aria-controls="compact-bar" aria-expanded="true" aria-label="Hide the top bar"></button>
     <p id="ui-toast" role="status" hidden></p>
 
-    <!-- Left Sidebar -->
-    <div id="sidebar">
+    <!-- Level navigation -->
+    <aside id="sidebar" aria-label="Levels">
       <div class="sidebar-title">
-        <h1>The Descipher</h1>
+        <h1>Levels</h1>
         <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
       </div>
-      <button class="menu-btn" id="btn-howto">How to Play</button>
-      <button class="menu-btn" id="btn-options">Options</button>
-      <button class="menu-btn" id="btn-fullscreen" type="button" aria-pressed="false">Full Screen</button>
-      <div class="sidebar-footer">
-        <div class="ornate-rule faint"><span></span><i>◆</i><span></span></div>
-        <span>HEADPHONES RECOMMENDED</span>
+      <div class="progress-summary">
+        <span id="progress-count"></span>
+        <progress id="room-progress" value="0" aria-label="Rooms solved"></progress>
+        <span id="save-status" role="status" aria-live="polite"></span>
       </div>
-    </div>
+      <div id="levels-grid"></div>
+    </aside>
 
     <!-- Game Area -->
     <div id="game-wrapper">
@@ -208,26 +207,31 @@
             </button>
           </div>
         </div>
-        <button id="btn-info" class="menu-btn info-button">HINT</button>
       </div>
     </div>
 
-    <!-- Right Sidebar Wrapper (toggle button + sliding panel) -->
-    <div id="right-sidebar-wrapper">
-      <!-- Sliding levels panel -->
+    <!-- Current level and settings -->
+    <aside id="right-sidebar-wrapper" aria-label="Current level">
       <div id="right-sidebar">
-        <div class="sidebar-title">
-          <h1>Levels</h1>
-          <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
+        <section id="current-level-info" aria-labelledby="current-level-name">
+          <div class="sidebar-title">
+            <p id="current-level-number" class="level-kicker"></p>
+            <h2 id="current-level-name"></h2>
+            <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
+          </div>
+          <p id="current-level-summary"></p>
+          <p id="current-level-state" class="level-state"></p>
+        </section>
+        <div class="level-help">
+          <button id="btn-info" class="menu-btn" type="button">Hints</button>
+          <p id="current-hint-count"></p>
         </div>
-        <div class="progress-summary">
-          <span id="progress-count">0 / 18 solved</span>
-          <progress id="room-progress" max="18" value="0" aria-label="Rooms solved"></progress>
-          <span id="save-status" role="status" aria-live="polite"></span>
+        <div class="sidebar-actions">
+          <button id="btn-options" class="menu-btn" type="button">Options</button>
+          <button id="btn-fullscreen" class="menu-btn" type="button" aria-pressed="false">Full Screen</button>
         </div>
-        <div id="levels-grid"></div>
       </div>
-    </div>
+    </aside>
 
     <!-- A phone held upright: the rooms are drawn wide (CSS shows this only
          in portrait on small screens) -->
@@ -240,7 +244,10 @@
     <!-- Options Modal -->
     <div id="options-modal" class="hidden">
       <div class="modal-content">
-        <h2>Options</h2>
+        <div class="options-heading">
+          <h2>Options</h2>
+          <button id="btn-howto" class="menu-btn" type="button">How to Play</button>
+        </div>
         <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
         <div class="slider-group">
           <label for="music-slider">MUSIC VOLUME</label>
@@ -336,10 +343,10 @@
               <p>Restarts the current level from scratch.</p>
             </div>
             <div class="howto-row">
-              <span class="ui-demo">HINT</span>
+              <span class="ui-demo">HINTS</span>
               <p>
-                Three hints for each room, revealed one at a time. Start with
-                a direction and ask for more only when you need it.
+                Open Hints in the right panel for three clues, revealed one at
+                a time. Start with a direction and ask for more when you need it.
               </p>
             </div>
             <div class="howto-row">
@@ -347,8 +354,8 @@
               <p>Get closer to letters and small objects. Drag to look around, use + and − to zoom, then press Escape (or Back to play) to return.</p>
             </div>
             <div class="howto-row howto-touch">
-              <span class="ui-demo">☰ · LEVELS</span>
-              <p>On a phone or tablet the menu and the levels panel slide in from the sides. Tap what you would click; drag what you would drag. The rooms want the phone held sideways.</p>
+              <span class="ui-demo">LEVELS · INFO</span>
+              <p>On a phone or tablet, Levels opens the left panel. Level Info opens the right panel with hints and options. Tap what you would click; drag what you would drag. Hold your phone sideways to play.</p>
             </div>
             <div class="howto-row howto-touch">
               <span class="ui-demo">⛶</span>
@@ -393,7 +400,7 @@
           <div class="howto-section">
             <h3>THE BADGES</h3>
             <p class="howto-lead">
-              Open HINT and you may find badges under the title. They tell you
+              Open Hints and you may find badges under the title. They tell you
               what kind of attention the level wants:
             </p>
             <div class="howto-row">
@@ -424,7 +431,7 @@
         </div>
         <div class="modal-actions">
           <button id="btn-close-howto" class="menu-btn" style="width: 100%">
-            CLOSE
+            BACK TO OPTIONS
           </button>
         </div>
       </div>

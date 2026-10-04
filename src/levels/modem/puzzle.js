@@ -1,5 +1,5 @@
 export const MODEM_WORD = 'HTTPS';
-export const MODEM_TIMING = Object.freeze({
+const MODEM_TIMING = Object.freeze({
   start: 500, bit: 600, bitGap: 330, afterLetter: 500, letterHold: 850, loopPause: 3500,
 });
 

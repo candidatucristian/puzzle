@@ -39,7 +39,7 @@ Scenes access services through `this.services`, provided by `BasePuzzleScene`. U
 | `ui/` | DOM controls, presentation, dialogs, loading state, transitions, focus, and input binding. |
 | `shared/` | Reusable drawing, theme values, resource scopes, and viewport observation. |
 
-`LevelManager.submit(answer)` returns `{ correct, isLast, nextIndex }`; the UI decides how to present that result and when to transition. `subscribe(callback)` returns an unsubscribe function. Navigation uses `navigate(index)` and validates access. Its `{ force: true }` option is intended for development previews and does not unlock progress.
+`LevelManager.submit(answer)` returns `{ correct, isLast, nextIndex }`; the UI decides how to present that result and when to transition. For a correct answer, `nextIndex: null` means completion can be shown. `isLast` identifies the catalog position only: old saves may still have inserted rooms to solve. Solving the last catalog entry returns to an accessible unfinished room when needed; solving the final unfinished room celebrates completion even if that room is earlier in the catalog. Replaying other completed rooms still advances normally. `subscribe(callback)` returns an unsubscribe function. Navigation uses `navigate(index)` and validates access. Its `{ force: true }` option is intended for development previews and does not unlock progress.
 
 ## Scene lifetime and resize
 
@@ -71,7 +71,7 @@ The default unit of organization is one folder and one scene per level. Extract 
 
 The larger scenes also use these boundaries:
 
-- `telescope/room.js` draws the room in ordered sections and returns its window geometry; `textures.js` creates cached moon and cloud textures. The scene retains navigation, sky interaction, and transition state.
+- `telescope/room.js` draws the room in ordered sections and returns its window geometry; `shared/moon.js` creates the cached moon texture. `telescope/windowFrame.js` supplies curtain geometry to the painted close-up in `window.js`. The scene retains navigation, sky interaction, and transition state.
 - `rally/cars.js` creates cars from explicit length and ground coordinates. `podium.js` draws the result board and returns its Phaser container. Race scheduling stays in the scene and the existing pure puzzle module.
 - `mobilephone/DeskView.js` owns desk objects and graphics for vibration effects. Its `build()` replaces the previous view; `destroy()` releases it. Input state lives in `mobilephone/puzzle.js`, independently of resize and drawing.
 - `lightswitch/puzzle.js` produces Morse steps, and `modem/puzzle.js` produces an absolute LED schedule. Scenes own the timers that render these sequences.
@@ -82,7 +82,7 @@ The larger scenes also use these boundaries:
 
 The common vignette is in `shared/vignette.js`; short paper/chime synthesizers are in `shared/puzzleSounds.js`. `BasePuzzleScene` delegates drawing helpers and lets scenes retain their original circle sampling/jitter parameters. Shared audio effects still route through the scene's master destination and SFX setting.
 
-The painted night rooms (Telescope, TV, Wires, Station) share `shared/moon.js` and `shared/glints.js`: a four-point sparkle texture, a soft glow texture, `twinkle()` for lights that come and go through the scene's ambient tweens, and `flicker()` for a flame or an old tube. Each scene paints its own room once per screen size onto canvas textures (`room.js`, `parlour.js`, `meadow.js`, `hall.js`) and keeps only what moves live, so it releases those textures on resize and shutdown.
+The painted night rooms (Telescope, TV, Wires, Station) share `shared/moon.js` and `shared/glints.js`: a moon texture, a four-point sparkle texture, `twinkle()` for lights that come and go through the scene's ambient tweens, and `flicker()` for a flame or an old tube. Each scene paints its own room once per screen size onto canvas textures (`room.js`, `parlour.js`, `meadow.js`, `hall.js`) and keeps only what moves live, so it releases those textures on resize and shutdown. The Kinetic nursery uses deterministic surface grain from `shared/materialNoise.js`.
 
 ## Audio
 
@@ -132,23 +132,25 @@ A malformed modern save resets to a valid fresh state rather than reviving stale
 
 ## Player help and comfort
 
+The left sidebar owns level navigation and saved progress. The right sidebar shows the current level, its spoiler-free `summary`, solved status, hint count and actions. `ui/hints.js` subscribes to level changes to keep this information current without revealing hints. The developer-only `description` contains the solution and must not be used for this panel. Options contains How to Play; `ui/dialogs.js` preserves the parent dialog and restores its focus when help closes, including with Escape.
+
 `HintStore` saves the number of revealed hints per stable room ID under `puzzleHints`. `metadata.js` combines the original atmospheric hint with two progressively more concrete hints from `levels/hints.js`. Only requested steps appear in the dialog. Hints never unlock or complete a room.
 
 `ComfortPreferences` persists grain strength, reading size, reduced motion and ambient effects under `puzzleComfort`, respecting live device reduced-motion preferences. Use `ambientTween(config)` for decorative Phaser tweens and `ambientObject(object)` for particles that should disappear when ambient motion is disabled. Frame-based decoration checks `ambientMotion`. Puzzle clocks, encoded signals and essential movement keep running. Reading size affects UI text; scene details can be enlarged with Inspect.
 
 `ui/platform.js` decides where the game may run: `entry.js` shows the desktop-only page on a phone or tablet browser and never loads the game there; inside a store app (`window.Capacitor.isNativePlatform()`) the phone gets the game.
 
-`ui/mobile.js` owns the compact layout (for the store app, and for small desktop windows): below the breakpoint in `ui/styles/responsive.css` it turns the two sidebars into drawers behind the compact bar, rewords the start screen and the intro for touch, and locks landscape on entering full screen where the API allows. `shared/viewport.js` defers the Phaser resize while the code box has focus on a touch device, so the on-screen keyboard clips the room instead of repainting it twice.
+`ui/mobile.js` owns the compact layout (for the store app, and for small desktop windows): below the breakpoint in `ui/styles/responsive.css` it turns the two sidebars into drawers behind the compact bar, rewords the start screen and the intro for touch, and locks landscape on entering full screen where the API allows. Closed drawers are inert; an open drawer keeps Tab inside its controls and restores focus to its visible trigger when closed. Leaving the compact layout restores the sidebars and clears drawer state. `shared/viewport.js` defers the Phaser resize while the code box has focus on a touch device, so the on-screen keyboard clips the room instead of repainting it twice.
 
 `shared/interaction.js` adds common Phaser hover/press feedback. Objects may provide `setData('interactionLabel', 'Open the letter')` or opt out with `false`. DOM buttons use their accessible label. These cues do not implement or replace puzzle handlers.
 
-`ui/inspection.js` magnifies the stage containing both Phaser and DOM artwork. While inspecting, the stage is inert and scene pointer/keyboard input is disabled; simulation continues. Closing, navigating or opening a dialog restores input. The transformation never changes Phaser's logical viewport size.
+`ui/inspection.js` magnifies the stage containing both Phaser and DOM artwork. While inspecting, the stage is inert and scene pointer/keyboard input is disabled; simulation continues. Closing, navigating or opening a dialog refreshes the canvas bounds before restoring input, so the next click or drag uses the normal coordinates. The transformation never changes Phaser's logical viewport size.
 
 `ui/progress.js` presents actual completion, Continue, and storage status. Small previews of visited rooms live separately in `puzzleRoomPreviews`. DOM scenes may expose a canvas as `previewSource`; other rooms use a renderer snapshot. Preview failures do not affect progression. Reset clears progress, revealed hints and previews, preserving sound and comfort preferences.
 
 ## Assets, builds, and verification
 
-Place shipped resources in `public/assets/`; reference them at runtime as `assets/...`. Vite copies this directory into `dist/`. Keep image, sound, and font attribution and license files. `experiments/` stores standalone prototypes that are not imported by the application and do not need to ship.
+Place shipped resources in `public/assets/`; reference them at runtime as `assets/...`. Vite copies this directory into `dist/`. Keep image, sound, and font attribution and license files with retained resources; remove unused media instead of shipping it automatically. The prototype pages and duplicated text catalogs have been retired; use the reference ledger below for current level data.
 
 `tools/levels/index.html` is a developer reference ledger, accessible at `/tools/levels/` through the development server. It imports `metadata.js` directly instead of maintaining another answer/description list. It is not a production HTML entry and is excluded from `dist/`.
 

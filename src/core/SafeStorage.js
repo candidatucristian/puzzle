@@ -54,5 +54,3 @@ export class SafeStorage {
     }
   }
 }
-
-export default SafeStorage;

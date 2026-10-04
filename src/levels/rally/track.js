@@ -23,7 +23,7 @@
  *  makes the track read as a loop rather than a strip.
  */
 
-export const TRACK_TUNE = {
+const TRACK_TUNE = {
   HORIZON: 0.545, // the horizon, as a fraction of H
   A: 5.6, // f·Rx / W — how far the oval reaches across
   B: 1.53, // f·camH / H — how fast things shrink with depth

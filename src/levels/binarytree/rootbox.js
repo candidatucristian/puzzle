@@ -27,7 +27,7 @@ const K = {
 
 // ── where everything is ─────────────────────────────────────────────────────
 
-export function layoutRootBox(W, H) {
+function layoutRootBox(W, H) {
   const S = Math.min(W, H);
   const u = Math.min(W / 1000, H / 700);
   const post = Math.max(14, S * 0.035); // the box's corner posts
@@ -85,7 +85,7 @@ export function layoutRootBox(W, H) {
 /** Every stretch of root, parent to child: the taproot from START down to
  *  the first fork, then each fork's left and right. `w0`/`w1` its thickness
  *  at either end, as a share of the smaller screen side. */
-export function rootSegments(L) {
+function rootSegments(L) {
   const segs = [
     {
       a: L.start,
@@ -121,7 +121,7 @@ export function rootSegments(L) {
 
 /** A point on a stretch of root: it leaves its fork at a slant and turns
  *  down toward its end, as roots do. */
-export function rootPoint(s, t) {
+function rootPoint(s, t) {
   const dx = s.b.x - s.a.x;
   const dy = s.b.y - s.a.y;
   const c1x = s.a.x + dx * 0.2 + s.bend;

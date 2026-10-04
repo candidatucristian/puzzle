@@ -60,40 +60,64 @@ test('in the app a phone gets the compact bar, a tap to begin, and the room fill
   expect(canvas.height).toBeGreaterThan(viewport.height * 0.6);
   // the console sits on one row at the bottom, inside the screen
   const submit = await page.locator('#btn-submit').boundingBox();
-  const hint = await page.locator('#btn-info').boundingBox();
+  const replay = await page.locator('#btn-replay').boundingBox();
   const volume = await page.locator('#vol-icon-ui').boundingBox();
-  expect(Math.abs(submit.y - hint.y)).toBeLessThan(12);
+  expect(Math.abs(submit.y - replay.y)).toBeLessThan(1);
   expect(Math.abs(submit.y - volume.y)).toBeLessThan(16);
-  expect(hint.x + hint.width).toBeLessThanOrEqual(viewport.width);
+  expect(replay.x + replay.width).toBeLessThanOrEqual(viewport.width);
+  await expect(page.locator('#btn-info')).not.toBeInViewport();
   await screenshot(page, 'room');
   expect(errors).toEqual([]);
 });
 
-test('the menu and the levels panel slide in as drawers and close again', async ({ page }) => {
+test('levels open on the left, level info on the right, and settings return from help', async ({ page }) => {
   await open(page);
   await page.locator('#btn-continue').tap();
   await expect(page.locator('#sidebar')).not.toBeInViewport();
+  await expect(page.locator('#sidebar')).toHaveJSProperty('inert', true);
+  await expect(page.locator('#right-sidebar-wrapper')).toHaveJSProperty('inert', true);
   await page.locator('#compact-menu').tap();
-  await expect(page.locator('#sidebar')).toBeInViewport();
-  await expect(page.locator('#btn-howto')).toBeVisible();
+  await expect(page.locator('#right-sidebar-wrapper')).toBeInViewport();
+  await expect(page.locator('#right-sidebar-wrapper')).toHaveJSProperty('inert', false);
+  await expect(page.locator('#btn-info')).toBeFocused();
+  await expect(page.locator('#btn-howto')).toBeHidden();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.locator('#btn-fullscreen')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#btn-info')).toBeFocused();
   await screenshot(page, 'menu');
-  await page.locator('#drawer-scrim').tap({ position: { x: page.viewportSize().width - 30, y: 200 } });
-  await expect(page.locator('#sidebar')).not.toBeInViewport();
+  await page.locator('#drawer-scrim').tap({ position: { x: 30, y: 200 } });
+  await expect(page.locator('#right-sidebar-wrapper')).not.toBeInViewport();
   await page.locator('#compact-levels').tap();
-  await expect(page.locator('#right-sidebar')).toBeInViewport();
+  await expect(page.locator('#sidebar')).toBeInViewport();
   await screenshot(page, 'levels');
   // choosing a room closes the drawer and opens the room
   await page.locator('.level-btn').nth(9).tap();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Telescope');
-  await expect(page.locator('#right-sidebar')).not.toBeInViewport();
+  await expect(page.locator('#sidebar')).not.toBeInViewport();
   // a dialog from the drawer: open, readable, closable
-  await page.locator('#compact-menu').tap(); await page.locator('#btn-howto').tap();
+  await page.locator('#compact-menu').tap();
+  await expect(page.locator('#current-level-name')).toHaveText('Telescope');
+  await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
+  await page.locator('#btn-options').tap();
+  await page.locator('#btn-howto').tap();
   await expect(page.locator('#howto-modal')).not.toHaveClass(/hidden/);
   await expect(page.locator('.howto-touch').first()).toBeVisible();
   await expect(page.locator('#btn-close-howto')).toBeInViewport();
   await page.locator('#btn-close-howto').tap();
   await expect(page.locator('#howto-modal')).toHaveClass(/hidden/);
-  await expect(page.locator('#sidebar')).not.toBeInViewport();
+  await expect(page.locator('#options-modal')).toBeVisible();
+  await expect(page.locator('#btn-howto')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#right-sidebar-wrapper')).not.toBeInViewport();
+  await expect(page.locator('#compact-menu')).toBeFocused();
+  await page.locator('#compact-levels').tap();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#compact-levels')).toBeFocused();
+  await expect(page.locator('#sidebar')).toHaveJSProperty('inert', true);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.locator('#sidebar')).toHaveJSProperty('inert', false);
+  await expect(page.locator('#right-sidebar-wrapper')).toHaveJSProperty('inert', false);
 });
 
 test('taps operate the rooms: the code box, the telescope, a board row and the TV knob', async ({ page }) => {
@@ -186,6 +210,7 @@ test('phone hints remain readable and scroll to the last hint with badges and la
   for (const [width, height] of [[863, 360], [667, 375], [568, 320]]) {
     await resizePhone(page, width, height);
     await evaluateApp(page, ({ services }) => services.preferences.set({ textScale: 1.3 }));
+    await page.locator('#compact-menu').tap();
     await page.locator('#btn-info').tap();
     await expect(page.locator('#handle-top')).toBeHidden();
     const list = page.locator('#hint-list');

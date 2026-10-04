@@ -21,6 +21,7 @@
 #options-modal.hidden,
 #info-modal.hidden,
 #howto-modal.hidden {
+  visibility: hidden;
   opacity: 0;
   pointer-events: none;
 }
@@ -93,6 +94,20 @@
 .modal-content > .ornate-rule {
   margin: -8px auto 0;
   max-width: 260px;
+}
+
+.options-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.options-heading #btn-howto {
+  padding: 10px 12px;
+  font-size: calc(11px * var(--reading-scale, 1));
+  letter-spacing: 1px;
 }
 
 .slider-group {
@@ -252,19 +267,6 @@
 
 #btn-close-info::after {
   content: none;
-}
-
-#info-text {
-  margin: 0;
-  text-align: center;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: 0.15px;
-  color: #d9d3c4;
-  white-space: pre-line;
-  overflow-wrap: anywhere;
 }
 
 /* ── How to Play ── */
@@ -435,4 +437,3 @@
 .howto-body::-webkit-scrollbar-thumb:hover {
   background: var(--pencil-deep);
 }
-

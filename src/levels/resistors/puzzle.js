@@ -20,9 +20,6 @@ export const BAND_DIGITS = Object.freeze({
 });
 export const BAND_COLOURS = Object.freeze(Object.keys(BAND_DIGITS));
 
-// the tolerance bands, which carry no digit
-export const TOLERANCE = Object.freeze({ gold: 5, silver: 10 });
-
 // what each colour is painted as
 export const BAND_PAINT = Object.freeze({
   black: "#141414",

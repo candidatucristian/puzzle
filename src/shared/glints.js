@@ -1,5 +1,5 @@
-/** The small lights the night rooms share: a four-point sparkle, a soft
- *  round glow, and the twinkle that keeps them alive. Painted once per key
+/** The small lights the night rooms share: a four-point sparkle and the
+ *  twinkle that keeps it alive. Painted once per key
  *  onto a canvas texture; a scene removes the key when it releases its art. */
 
 // a sharp four-point star with a soft core — the glint on a lens, a mote
@@ -26,27 +26,6 @@ export function makeSparkleTexture(textures, key, rgb = "255,255,255") {
   }
   ctx.closePath();
   ctx.fill();
-  textures.addCanvas(key, c);
-  return key;
-}
-
-// a round glow, bright in the middle and gone at the edge
-export function makeGlowTexture(textures, key, rgb, stops, size = 128) {
-  if (textures.exists(key)) textures.remove(key);
-  const c = document.createElement("canvas");
-  c.width = c.height = size;
-  const g = c.getContext("2d");
-  const r = g.createRadialGradient(
-    size / 2,
-    size / 2,
-    0,
-    size / 2,
-    size / 2,
-    size / 2,
-  );
-  for (const [o, a] of stops) r.addColorStop(o, `rgba(${rgb},${a})`);
-  g.fillStyle = r;
-  g.fillRect(0, 0, size, size);
   textures.addCanvas(key, c);
   return key;
 }

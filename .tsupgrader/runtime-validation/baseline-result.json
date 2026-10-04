@@ -1,0 +1,138 @@
+{
+  "planHash": "797e49e4d0a384f886549c62cea35020f1cbe8887823df3c6bd5ee882baddc7b",
+  "phase": "baseline",
+  "recordedAtUtc": "2026-10-04T19:59:46.6099479Z",
+  "retryCount": 0,
+  "resetBaseline": true,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 7210,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "lint",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E the-descipher@1.0.0 lint\r\n\u003E eslint .\r\n\r\n",
+        "durationMs": 3578
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E the-descipher@1.0.0 test\r\n\u003E node --test --experimental-test-isolation=none tests/unit/*.test.js\r\n\r\nTAP version 13\r\n# Subtest: stored channel levels are validated without replacing intentional zeroes\r\nok 1 - stored channel levels are validated without replacing intentional zeroes\r\n  ---\r\n  duration_ms: 1.6727\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: master scales all music and SFX once while channel sliders retain their balance\r\nok 2 - master scales all music and SFX once while channel sliders retain their balance\r\n  ---\r\n  duration_ms: 0.5179\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: mute and a zero master can be restored from either volume control\r\nok 3 - mute and a zero master can be restored from either volume control\r\n  ---\r\n  duration_ms: 0.1307\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: global click routing preserves Options and Execute\u0027s distinct sound\r\nok 4 - global click routing preserves Options and Execute\u0027s distinct sound\r\n  ---\r\n  duration_ms: 0.1477\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: exclusive level music pauses one global score and restores it after scene shutdown\r\nok 5 - exclusive level music pauses one global score and restores it after scene shutdown\r\n  ---\r\n  duration_ms: 0.2408\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: scene sounds are disposed on navigation without interrupting the success chime\r\nok 6 - scene sounds are disposed on navigation without interrupting the success chime\r\n  ---\r\n  duration_ms: 0.1708\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: missing optional level audio retains the global score\r\nok 7 - missing optional level audio retains the global score\r\n  ---\r\n  duration_ms: 0.1177\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: locked audio queues only the current music and never duplicates background instances\r\nok 8 - locked audio queues only the current music and never duplicates background instances\r\n  ---\r\n  duration_ms: 0.135\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: leaving a scene before audio unlock prevents its music from starting later\r\nok 9 - leaving a scene before audio unlock prevents its music from starting later\r\n  ---\r\n  duration_ms: 0.2344\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: preloading reuses cached global resources\r\nok 10 - preloading reuses cached global resources\r\n  ---\r\n  duration_ms: 0.6613\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: unavailable storage degrades to defaults and reports repeated failures once\r\nok 11 - unavailable storage degrades to defaults and reports repeated failures once\r\n  ---\r\n  duration_ms: 0.1852\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: each line of bearings on the map draws one letter of LOST\r\nok 12 - each line of bearings on the map draws one letter of LOST\r\n  ---\r\n  duration_ms: 0.4446\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: each room has three distinct, progressively available hints\r\nok 13 - each room has three distinct, progressively available hints\r\n  ---\r\n  duration_ms: 0.6785\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: damaged optional hint and preference saves do not prevent loading\r\nok 14 - damaged optional hint and preference saves do not prevent loading\r\n  ---\r\n  duration_ms: 0.194\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: comfort persists independently and respects live device reduced motion\r\nok 15 - comfort persists independently and respects live device reduced motion\r\n  ---\r\n  duration_ms: 0.1462\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: storage failures are reported per key without losing the current session\r\nok 16 - storage failures are reported per key without losing the current session\r\n  ---\r\n  duration_ms: 0.2651\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: room previews accept only small embedded images for known rooms and reset cleanly\r\nok 17 - room previews accept only small embedded images for known rooms and reset cleanly\r\n  ---\r\n  duration_ms: 0.1458\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: the level veil numbers every level in Roman numerals, well past twenty-one\r\nok 18 - the level veil numbers every level in Roman numerals, well past twenty-one\r\n  ---\r\n  duration_ms: 0.8959\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: navigation rejects invalid/locked levels and replaces active scenes on replay\r\nok 19 - navigation rejects invalid\n\u2026[truncated]",
+        "durationMs": 1083,
+        "testResults": {
+          "testFramework": "unknown",
+          "runnerDetectedFrom": "none",
+          "testsTotal": 0,
+          "testsPassed": 0,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": true
+        }
+      },
+      {
+        "name": "production-build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E the-descipher@1.0.0 build\r\n\u003E vite build\r\n\r\n\u001B[36mvite v8.3.0 \u001B[32mbuilding client environment for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u2713 154 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\ndist/index.html                              20.75 kB \u2502 gzip:   5.79 kB\r\ndist/assets/main-B3Y7aUeL.css                 8.90 kB \u2502 gzip:   2.71 kB\r\ndist/assets/index-DGUFgUpl.css               44.75 kB \u2502 gzip:   9.57 kB\r\ndist/assets/rolldown-runtime-CbXtAM7H.js      0.58 kB \u2502 gzip:   0.36 kB\r\ndist/assets/index-D-itF_QJ.js                 4.46 kB \u2502 gzip:   2.11 kB\r\ndist/assets/main-C68yYUrb.js                903.65 kB \u2502 gzip: 309.34 kB\r\ndist/assets/phaser-BO4t1pPV.js            1,159.75 kB \u2502 gzip: 308.58 kB\r\n\r\n\u001B[32m\u2713 built in 651ms\u001B[39m\r\n\u001B[33m[plugin builtin:vite-reporter] \r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001B[39m\r\n",
+        "durationMs": 1235
+      },
+      {
+        "name": "dev-server-serves-home",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\r\n\u003Chtml lang=\u0022en\u0022\u003E\r\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\r\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\r\n    \u003Ctitle\u003EThe Descipher\u003C/title\u003E\r\n    \u003C!-- Phones: real device width, no pinch zoom over the puzzles, the\r\n         on-screen keyboard shrinks the page instead of covering the code box --\u003E\r\n    \u003Cmeta\r\n      name=\u0022viewport\u0022\r\n      content=\u0022width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content\u0022\r\n    /\u003E\r\n    \u003Cmeta name=\u0022theme-color\u0022 content=\u0022#0a0b0e\u0022 /\u003E\r\n    \u003Cmeta name=\u0022mobile-web-app-capable\u0022 content=\u0022yes\u0022 /\u003E\r\n    \u003Cmeta name=\u0022apple-mobile-web-app-capable\u0022 content=\u0022yes\u0022 /\u003E\r\n    \u003Cmeta name=\u0022apple-mobile-web-app-status-bar-style\u0022 content=\u0022black-translucent\u0022 /\u003E\r\n    \u003Cmeta name=\u0022apple-mobile-web-app-title\u0022 content=\u0022Descipher\u0022 /\u003E\r\n\r\n    \u003Clink\r\n      rel=\u0022icon\u0022\r\n      href=\u0022assets/images/favicon/favicon-32x32.png\u0022\r\n      type=\u0022image/x-icon\u0022\r\n    /\u003E\r\n    \u003Clink rel=\u0022apple-touch-icon\u0022 href=\u0022assets/images/favicon/apple-touch-icon.png\u0022 /\u003E\r\n    \u003Clink rel=\u0022manifest\u0022 href=\u0022assets/images/favicon/site.webmanifest\u0022 /\u003E\r\n\r\n    \u003C!-- CRT shader web-component used by the TV level --\u003E\r\n    \u003Clink rel=\u0022preconnect\u0022 href=\u0022https://fonts.googleapis.com\u0022 /\u003E\r\n    \u003Clink rel=\u0022preconnect\u0022 href=\u0022https://fonts.gstatic.com\u0022 crossorigin /\u003E\r\n    \u003C!-- Architects Daughter: UI display font (hand-lettered) \u00B7 Cormorant Garamond: body text \u00B7 Special Elite: in-level canvas text --\u003E\r\n    \u003Clink\r\n      href=\u0022https://fonts.googleapis.com/css2?family=Architects\u002BDaughter\u0026family=Cormorant\u002BGaramond:ital,wght@0,500;0,600;1,500;1,600\u0026family=Special\u002BElite\u0026display=swap\u0022\r\n      rel=\u0022stylesheet\u0022\r\n    /\u003E\r\n  \u003C/head\u003E\r\n  \u003Cbody\u003E\r\n    \u003C!-- Desktop only: in a browser the game is for computers. A phone or a\r\n         tablet is shown this page instead, and the game is never loaded\r\n         (src/ui/platform.js). The store app runs the game on phones. --\u003E\r\n    \u003Cdiv id=\u0022desktop-only\u0022 hidden\u003E\r\n      \u003Cdiv class=\u0022desktop-only-card\u0022\u003E\r\n        \u003Cdiv class=\u0022ornate-rule wide\u0022\u003E\u003Cspan\u003E\u003C/span\u003E\u003Ci\u003E\u25C6\u003C/i\u003E\u003Cspan\u003E\u003C/span\u003E\u003C/div\u003E\r\n        \u003Ch1\u003EThe Descipher\u003C/h1\u003E\r\n        \u003Cdiv class=\u0022ornate-rule wide\u0022\u003E\u003Cspan\u003E\u003C/span\u003E\u003Ci\u003E\u25C6\u003C/i\u003E\u003Cspan\u003E\u003C/span\u003E\u003C/div\u003E\r\n        \u003Cp class=\u0022desktop-only-msg\u0022\u003E\r\n          This experience was drawn for a large canvas.\r\n        \u003C/p\u003E\r\n        \u003Cp class=\u0022desktop-only-sub\u0022\u003E\r\n          NOT AVAILABLE ON MOBILE OR TABLET \u0026mdash; PLEASE RETURN ON A DESKTOP\r\n        \u003C/p\u003E\r\n      \u003C/div\u003E\r\n    \u003C/div\u003E\r\n\r\n    \u003C!-- Loading screen: rendered before the heavy scripts download.\r\n         An inline script right below drives it; the Phaser BootScene\r\n         reports audio progress and removes it when the game is ready. --\u003E\r\n    \u003Cdiv id=\u0022loading-screen\u0022\u003E\r\n      \u003Cdiv class=\u0022loading-card\u0022\u003E\r\n        \u003Ch1\u003EThe Descipher\u003C/h1\u003E\r\n        \u003Cdiv class=\u0022loading-bar\u0022\u003E\u003Cdiv id=\u0022loading-fill\u0022\u003E\u003C/div\u003E\u003C/div\u003E\r\n        \u003Cp id=\u0022loading-label\u0022\u003E\r\n          sharpening the pencils\u0026nbsp;\u003Cspan id=\u0022loading-pct\u0022\u003E0%\u003C/span\u003E\r\n        \u003C/p\u003E\r\n      \u003C/div\u003E\r\n    \u003C/div\u003E\r\n\r\n    \u003C!-- Cinematic film grain over the whole app --\u003E\r\n    \u003Cdiv id=\u0022film-grain\u0022\u003E\u003C/div\u003E\r\n\r\n    \u003C!-- Compact bar: shown on phones and tablets instead of the two sidebars,\r\n         which become drawers (ui/mobile.js) --\u003E\r\n    \u003Cdiv id=\u0022compact-bar\u0022\u003E\r\n      \u003Cbutton id=\u0022compact-levels\u0022 class=\u0022compact-btn\u0022 type=\u0022button\u0022 aria-controls=\u0022sidebar\u0022 aria-expanded=\u0022false\u0022\u003ELevels\u003C/button\u003E\n      \u003Cspan class=\u0022compact-spacer\u0022\u003E\u003C/span\u003E\r\n      \u003Cbutton id=\u0022compact-fullscreen\u0022 class=\u0022compact-btn\u0022 type=\u0022button\u0022 aria-label=\u0022Full screen: hide the bar\u0022 title=\u0022Full screen: hide the bar\u0022\u003E\u26F6\u003C/button\u003E\r\n      \u003Cbutton id=\u0022compact-menu\u0022 class=\u0022compact-btn\u0022 type=\u0022button\u0022 aria-label=\u0022Current level information\u0022 aria-controls=\u0022right-sidebar-wrapper\u0022 aria-expanded=\u0022false\u0022\u003ELevel Info\u003C/button\u003E\n    \u003C/div\u003E\r\n    \u003Cdiv id=\u0022drawer-scrim\u0022 hidden\u003E\u003C/div\u003E\r\n    \u003C!-- the handle the top bar slides on: tap to toggle, pull up to hide,\r\n         pull down to show --\u003E\r\n    \u003Cbutton id=\u0022handle-top\u0022 class=\u0022ui-handle\u0022 type=\u0022button\u0022 aria-controls=\u0022compact-bar\u0022 aria-expanded=\u0022true\u0022 aria-label=\u0022Hide the top bar\u0022\u003E\u003C/button\u003E\r\n    \u003Cp id=\u0022ui-toast\u0022 role=\u0022status\u0022 hidden\u003E\u003C/p\u003E\r\n\r\n    \u003C!-- Lev\n\u2026[truncated]",
+        "durationMs": 589
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "ci"
+        ],
+        "cwd": "C:\\Users\\crist\\Desktop\\PUZZLE",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "lint",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "lint"
+        ],
+        "cwd": "C:\\Users\\crist\\Desktop\\PUZZLE",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\crist\\Desktop\\PUZZLE",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "production-build",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\crist\\Desktop\\PUZZLE",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "dev-server-serves-home",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev",
+          "--",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "5173",
+          "--strictPort"
+        ],
+        "cwd": "C:\\Users\\crist\\Desktop\\PUZZLE",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

@@ -63,7 +63,7 @@ const LANTERN = { x: 298, y: 136 };
 
 // ── layout: where everything is, shared with the scene ──────────────────────
 
-export function layoutMeadow(W, H) {
+function layoutMeadow(W, H) {
   const S = Math.min(W, H);
   const k = Math.max(0.8, Math.min(1.4, S / 800));
 

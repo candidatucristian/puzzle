@@ -4,7 +4,7 @@
  *  painted (lacquered black, a fine gold line; the cups turned in metal that
  *  catches the last of the light); the names are the game's own type. */
 
-export const RY_WINNERS = [
+const RY_WINNERS = [
   { place: 1, name: "Alan Brown", cup: "gold" },
   { place: 2, name: "Chad Dawson", cup: "silver" },
   { place: 3, name: "Eugene Fontaine", cup: "bronze" },
@@ -305,7 +305,7 @@ export function drawPodium(scene, W, H, animate) {
           .setDisplaySize(r * s, r * s)
           .setAlpha(0.1);
         row.add(sp);
-        scene.tweens.add({
+        scene.ambientTween({
           targets: sp,
           alpha: 0.95,
           duration: 700 + r * 60,

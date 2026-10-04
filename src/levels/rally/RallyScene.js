@@ -3,13 +3,11 @@ import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintStage, releaseStageArt, groundLight, CAR_LANES } from "./stage.js";
 import { paintCarsSteps, releaseCarArt, relativeYaw, frameAt, FRAME_COUNT } from "./cars.js";
 import { paintPeople, releasePeopleArt, FLAG_FRAMES } from "./people.js";
-import { drawPodium, releasePodiumArt, RY_WINNERS } from "./podium.js";
+import { drawPodium, releasePodiumArt } from "./podium.js";
 import {
   RALLY_NUMBERS as RY_NUMBERS,
   RALLY_START_DELAY_MS,
   RALLY_SOUND_LEAD_MS,
-  rallyLetters,
-  rallyWord,
   measureWhooshLead,
   planRallyRound,
 } from "./puzzle.js";
@@ -72,24 +70,6 @@ export default class RallyScene extends BasePuzzleScene {
     this.listenToResize(this._resize);
 
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
-  }
-
-  // ── what the level means (read by the tests, never shown to the player) ────
-
-  static numbers() {
-    return RY_NUMBERS.slice();
-  }
-
-  static letters() {
-    return rallyLetters();
-  }
-
-  static word() {
-    return rallyWord();
-  }
-
-  static winners() {
-    return RY_WINNERS.map((w) => ({ ...w }));
   }
 
   update(time, delta) {

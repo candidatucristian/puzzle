@@ -8,8 +8,8 @@ import { layoutLab, paintLab, releaseLabArt } from "./lab.js";
 // Level — "CHEMISTRY"  ·  code: FOCUS  ·  atomic numbers → symbols
 //
 // An old laboratory at night, lit by a Bunsen burner and an oil lamp. On the
-// bench stand five bottles of coloured liquid, their labels torn, only a big
-// number left on each, left to right:
+// bench stand five graduated bottles of coloured liquid. Each meniscus meets
+// its etched atomic-number mark, left to right:
 //
 //   9 · 8 · 6 · 92 · 16
 //

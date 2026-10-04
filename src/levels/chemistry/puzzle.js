@@ -1,10 +1,10 @@
-/** CHEMISTRY: five bottles in an old laboratory, their labels torn, only a
- *  big number left on each: 9, 8, 6, 92, 16. They are atomic numbers; the
- *  elements' symbols, in order, are F O C U S. */
+/** CHEMISTRY: five graduated bottles in an old laboratory, filled to the
+ *  etched numbers 9, 8, 6, 92, 16. They are atomic numbers; the elements'
+ *  symbols, in order, are F O C U S. */
 
 export const CHEMISTRY_WORD = "FOCUS";
 
-// the numbers left on the five labels, left to right
+// the atomic numbers etched beside the five menisci, left to right
 export const BOTTLES = Object.freeze([9, 8, 6, 92, 16]);
 
 // every element's symbol, by atomic number (index 0 is hydrogen, 1)
@@ -19,7 +19,7 @@ export const ELEMENTS = Object.freeze(
 );
 
 /** An element's symbol from its atomic number. */
-export function symbolOf(z) {
+function symbolOf(z) {
   const symbol = ELEMENTS[z - 1];
   if (!Number.isInteger(z) || !symbol) throw new RangeError(`No element ${z}`);
   return symbol;

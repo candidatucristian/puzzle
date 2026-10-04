@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 import { ProgressStore } from '../../src/core/ProgressStore.js';
 import { PLOTTER_BLOCKS, pathSegments, formatPath, plotterLayout } from '../../src/levels/plotter/puzzle.js';
-import { KINETIC_FORMS, polygonVertices, kineticPose, kineticLayout, readKinetic } from '../../src/levels/kinetic/puzzle.js';
+import { KINETIC_FORMS, polygonVertices, kineticPose, kineticRig, kineticLayout, readKinetic } from '../../src/levels/kinetic/puzzle.js';
+import { nurseryLayout } from '../../src/levels/kinetic/nurseryGeometry.js';
 import { STANDARD_CODE, GENOME_FRAGMENT, FRAGMENT_TEXT, aminoAcid, translateFragment, genomeLayout } from '../../src/levels/genome/puzzle.js';
 
 // Sample the actual line geometry onto a small bitmap, with positive Y up.
@@ -70,6 +71,35 @@ test('the standard genetic code translates the displayed coding DNA and correspo
   assert.equal(translateFragment(['TCT', '???']), null);
   assert.equal(LEVEL_METADATA[29].code, translateFragment());
   assert.equal(LEVEL_METADATA[29].hint.tool, true);
+});
+
+test('the nursery mobile stays connected, readable and inside the room throughout its sway', () => {
+  for (const [W, H] of [[910, 876], [1440, 900], [568, 220], [360, 640]]) {
+    const L = kineticLayout(W, H), room = nurseryLayout(W, H);
+    const head = room.crib(-35, 87, 5);
+    assert.ok(head.x > 0 && head.x < W && head.y > 0 && head.y < H);
+    for (let time = 0; time < 180000; time += 1337) {
+      const rig = kineticRig(time);
+      assert.deepEqual(rig.forms.map(form => form.rimCount), [3, 1, 7, 5], 'wind must never reorder the answer');
+      assert.equal(rig.rods.length, 3);
+      for (const [index, form] of rig.forms.entries()) {
+        const r = form.radius * L.size;
+        const x = L.x + form.x * L.size, y = L.y + form.y * L.size;
+        assert.ok(x - r > 0 && x + r < W && y - r > 0 && y + r < H);
+        assert.ok(y + r < head.y, 'the mobile must hang above the sleeping baby');
+        assert.ok(Math.cos(form.yaw) > 0.95, 'no polygon turns edge-on and loses countable sides');
+        if (index) {
+          const prior = rig.forms[index - 1];
+          assert.ok(prior.y + prior.radius < form.y - form.radius, 'silhouettes remain vertically separate');
+        }
+        const holeX = form.x + Math.sin(form.rotation) * form.radius * 0.85;
+        const holeY = form.y - Math.cos(form.rotation) * form.radius * 0.85;
+        assert.ok(Math.hypot(holeX - form.attachment.x, holeY - form.attachment.y) < 1e-12);
+        assert.ok(rig.strings.some(string => Math.hypot(string.x2 - holeX, string.y2 - holeY) < 1e-12),
+          'every toy is tied at its painted attachment hole');
+      }
+    }
+  }
 });
 
 test('new clues fit desktop, small landscape phones and portrait layouts', () => {

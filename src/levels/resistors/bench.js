@@ -14,7 +14,7 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
 
 const K = { room: "rs_room", glow: "rs_glow" };
 const loupeKey = (i) => `rs_loupe_${i}`;
-export const LABEL_FONT = '"Courier New", Courier, monospace';
+const LABEL_FONT = '"Courier New", Courier, monospace';
 const LAMP = "255,236,200";
 
 // ── where everything is ─────────────────────────────────────────────────────
@@ -278,7 +278,7 @@ function pad(ctx, u, x, y) {
 
 // a resistor lying on the board: its leads to the pads, the body with its
 // bands. `k` scales it (the loupe paints it big).
-export function paintResistor(ctx, L, r, k, cx = r.x, cy = r.y) {
+function paintResistor(ctx, L, r, k, cx = r.x, cy = r.y) {
   const len = r.len * k;
   const rad = r.r * k;
   const u = L.u * k;

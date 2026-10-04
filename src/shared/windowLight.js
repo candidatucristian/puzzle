@@ -51,7 +51,7 @@ export function paintBoards(ctx, W, H, horizon, lit = false) {
   }
 }
 
-export function windowPath(ctx, b, pointed = true) {
+function windowPath(ctx, b, pointed = true) {
   const { x, y, w, h } = b;
   ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + h * 0.3);
   if (pointed) {

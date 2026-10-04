@@ -323,7 +323,7 @@ export default class PiScene extends BasePuzzleScene {
     cont.add([mirror, hull]);
 
     // the long, slow crossing — then it comes back around
-    this.tweens.add({
+    this.ambientTween({
       targets: cont,
       x: -W * 0.08,
       duration: 75000,
@@ -333,7 +333,7 @@ export default class PiScene extends BasePuzzleScene {
       },
     });
     // a gentle bob
-    this.tweens.add({
+    this.ambientTween({
       targets: cont,
       y: cont.y - 2.5,
       duration: 2400,

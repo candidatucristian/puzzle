@@ -5,7 +5,7 @@
  *  in the compact layout of ui/mobile.js. */
 
 /** Whether the page is running inside the store app's native shell. */
-export function isNativeApp(win = globalThis) {
+function isNativeApp(win = globalThis) {
   return Boolean(win.Capacitor?.isNativePlatform?.());
 }
 

@@ -104,6 +104,25 @@ test('final answer, replay and navigation own exactly one completion callback', 
   await expect.poll(() => sceneState(page, 'scene.scene.key')).toBe('BinaryTree');
 });
 
+test('an inserted unsolved room prevents premature completion and completes the game when solved', async ({ page }) => {
+  const missing = LEVEL_METADATA.find(level => level.key === 'Kinetic');
+  const last = LEVEL_METADATA.at(-1);
+  await page.addInitScript(({ ids, missing, last }) => {
+    localStorage.setItem('puzzleProgress', JSON.stringify({
+      version: 3, completedLevelIds: ids.filter(id => id !== missing), lastPlayedLevelId: last,
+    }));
+    localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced' }));
+  }, { ids: LEVEL_METADATA.map(level => level.id), missing: missing.id, last: last.id });
+  await launch(page); await navigate(page, last.key);
+  await page.locator('#level-code').fill(last.code); await page.locator('#btn-submit').click();
+  await expect.poll(() => sceneState(page, 'scene.scene.key')).toBe(missing.key);
+  await expect(page.locator('#completion-screen')).toBeHidden();
+  await expect(page.locator('#progress-count')).toHaveText(`${LEVEL_METADATA.length - 1} / ${LEVEL_METADATA.length} solved`);
+  await page.locator('#level-code').fill(missing.code); await page.locator('#btn-submit').click();
+  await expect(page.locator('#completion-screen')).toBeVisible();
+  await expect(page.locator('#completion-chambers')).toHaveText(`${LEVEL_METADATA.length} / ${LEVEL_METADATA.length}`);
+});
+
 test('Hints follow the catalog and dialogs support keyboard focus and Escape', async ({ page }) => {
   await launch(page); await navigate(page, 'Wires');
   await page.locator('#btn-info').click();
@@ -207,17 +226,18 @@ test('Rally runs once, keeps its dark podium on resize, and starts fresh on repl
   expect(errors).toEqual([]);
 });
 
-test('only Options and Execute use mouseclick, including keyboard activation', async ({ page }) => {
+test('Options controls and Execute use mouseclick, including keyboard activation', async ({ page }) => {
   await launch(page); await navigate(page, 'BinaryTree');
   await evaluateApp(page, ({ services }) => {
     const original = services.audio.playSfx.bind(services.audio);
     services.audio.testClicks = [];
     services.audio.playSfx = (key, ...args) => { services.audio.testClicks.push(key); return original(key, ...args); };
   });
+  await page.locator('#btn-options').click();
   await page.locator('#btn-howto').click(); await page.locator('#btn-close-howto').click();
-  await page.locator('#btn-options').click(); await page.locator('#btn-close-options').click();
+  await page.locator('#btn-close-options').click();
   await page.locator('#btn-submit').focus(); await page.keyboard.press('Enter');
-  expect(await sceneState(page, 'services.audio.testClicks')).toEqual(['click', 'click', 'ui_click', 'ui_click', 'ui_click']);
+  expect(await sceneState(page, 'services.audio.testClicks')).toEqual(['ui_click', 'ui_click', 'click', 'ui_click', 'ui_click']);
 });
 
 test('confirmed reset cancels pending navigation and preserves sound preferences', async ({ page }) => {

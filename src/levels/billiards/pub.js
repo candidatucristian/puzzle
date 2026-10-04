@@ -33,7 +33,7 @@ const RAIN = "110,140,180"; // rainy-window blue
 const RAIN_COLD = "70,100,150"; // its deepest shade
 const SMOKE = "210,205,190"; // haze in the beam
 
-export const CHALK_FONT = '"Architects Daughter", "Special Elite", cursive';
+const CHALK_FONT = '"Architects Daughter", "Special Elite", cursive';
 const PLATE_FONT = 'Georgia, "Times New Roman", serif';
 
 // ── layout ─────────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ export function layoutPub(W, H) {
   return L;
 }
 
-export function at(L, X, D, Z) {
+function at(L, X, D, Z) {
   const s = L.sMid + D * L.ds;
   return { x: L.vp.x + X * s, y: L.vp.y + (L.yt - Z) * s, s };
 }
@@ -1064,7 +1064,7 @@ function paintNoirGrade(ctx, L) {
 //
 // n = 0 is the cue ball. Painted at 2× size; the caller draws at half.
 
-export function paintBall(r, n, { sunk = false } = {}) {
+function paintBall(r, n, { sunk = false } = {}) {
   const R = 2;
   const size = Math.ceil(r * 2.2 * R);
   const c = makeCanvas(size, size);

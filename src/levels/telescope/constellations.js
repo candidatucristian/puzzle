@@ -46,7 +46,7 @@ const smooth = (v) => v * v * (3 - 2 * v);
  *  the lowest-numbered one. An edge running straight across an EMPTY dot
  *  place costs triple, so no line ever seems to pass through a star that
  *  isn't there (O is drawn 1–5–3, never 1–3 down the empty 2). */
-export function spanningTree(pts) {
+function spanningTree(pts) {
   const n = pts.length;
   const edges = [];
   const depth = pts.map((_, i) => (i === 0 ? 0 : -1));

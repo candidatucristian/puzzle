@@ -37,7 +37,7 @@ export const BUCKET_X = 36;
 
 // ── where everything is ─────────────────────────────────────────────────────
 
-export function layoutGarden(W, H) {
+function layoutGarden(W, H) {
   const S = Math.min(W, H);
   const u = Math.min(W / 1000, H / 650); // the garden's unit
   const s = Math.min(1.3, H / 640) * 0.85; // the bench's scale

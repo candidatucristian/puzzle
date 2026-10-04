@@ -28,12 +28,17 @@ async function screenshot(page, name) {
 
 test('hints reveal individually, remember each room, and reset with the game', async ({ page }) => {
   await open(page, { unlocked: true }); await navigate(page, 'Cryptex');
+  await expect(page.locator('#current-level-number')).toHaveText('Level 4');
+  await expect(page.locator('#current-level-name')).toHaveText('Cryptex');
+  await expect(page.locator('#current-level-summary')).toHaveText(LEVEL_METADATA[3].summary);
+  await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
   await page.locator('#btn-info').click();
   await expect(page.locator('#hint-list li')).toHaveCount(1);
   await expect(page.locator('#hint-list')).not.toContainText('three breaths');
   await page.locator('#btn-next-hint').click();
   await expect(page.locator('#hint-list li')).toHaveCount(2);
   await page.keyboard.press('Escape');
+  await expect(page.locator('#current-hint-count')).toHaveText('2 of 3 hints revealed');
   await page.locator('#btn-info').click();
   await expect(page.locator('#hint-list li')).toHaveCount(2);
   await page.locator('#btn-next-hint').click();
@@ -51,12 +56,16 @@ test('hints reveal individually, remember each room, and reset with the game', a
   await page.keyboard.press('Escape'); await page.locator('#btn-options').click();
   await page.locator('#btn-new').click(); await page.locator('#btn-new').click();
   await expect(page.locator('#progress-count')).toHaveText(`0 / ${LEVEL_METADATA.length} solved`);
+  await expect(page.locator('#current-level-name')).toHaveText('Binary Tree');
+  await expect(page.locator('#current-level-state')).toHaveText('Unsolved');
+  await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
   expect(await evaluateApp(page, ({ services }) => services.hints.count('cryptex'))).toBe(0);
   expect(await evaluateApp(page, ({ services }) => services.preferences.reducedMotion)).toBe(true);
 });
 
 test('progress, solved rooms, thumbnails and Continue survive reload', async ({ page }) => {
   await open(page);
+  await expect(page.locator('#current-level-state')).toHaveText('Unsolved');
   await expect(page.locator('.level-btn').nth(1)).toBeDisabled();
   await page.locator('#level-code').fill('CABBAGE'); await page.locator('#btn-submit').click();
   await expect(page.locator('#progress-count')).toHaveText(`1 / ${LEVEL_METADATA.length} solved`);
@@ -73,6 +82,10 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await page.locator('#btn-continue').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('PlantPot');
   await expect(page.locator('.level-btn').nth(1).locator('img')).toBeVisible();
+  await expect(page.locator('#current-level-name')).toHaveText('Plant Pot');
+  await page.locator('.level-btn').first().click();
+  await expect(page.locator('#current-level-name')).toHaveText('Binary Tree');
+  await expect(page.locator('#current-level-state')).toHaveText('Solved');
 });
 
 test('inspection magnifies Phaser and DOM together and does not operate the puzzle', async ({ page }) => {
@@ -124,6 +137,11 @@ test('comfort controls apply immediately, persist, and follow device preferences
   await expect(page.locator('#film-grain')).toHaveCSS('opacity', '0');
   await page.setViewportSize({ width: 1366, height: 768 });
   await expect(page.locator('#btn-close-options')).toBeInViewport();
+  await page.locator('#btn-howto').click();
+  await expect(page.locator('#options-modal')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#btn-howto')).toBeFocused();
+  await expect(page.locator('#reading-size')).toHaveValue('1.3');
   await screenshot(page, 'comfort');
   await page.locator('#btn-close-options').click();
   await page.waitForTimeout(500); // the responsive scene rebuild uses a 350 ms debounce
@@ -176,4 +194,40 @@ test('unavailable storage reports session-only progress while still allowing pla
   await expect(page.locator('#save-status')).toHaveText('Progress kept for this session only');
   await page.locator('#level-code').fill('CABBAGE'); await page.locator('#btn-submit').click();
   await expect(page.locator('#progress-count')).toHaveText(`1 / ${LEVEL_METADATA.length} solved`);
+});
+
+test('decorative loops pause and resume with comfort settings in every affected room', async ({ page }) => {
+  await open(page, { unlocked: true });
+  for (const key of ['PlantPot', 'Pi', 'MobilePhone', 'Rally']) {
+    await navigate(page, key);
+    await evaluateApp(page, ({ services }, key) => {
+      const scene = services.levels.activeScene;
+      if (key === 'MobilePhone') scene.showAnswerButton();
+      if (key === 'Rally') scene._showPodium();
+    }, key);
+    const loops = () => evaluateApp(page, ({ services }) => {
+      const tweens = services.levels.activeScene.tweens.getTweens().filter(tween =>
+        tween.data.some(data => data.repeat === -1));
+      return { count: tweens.length, running: tweens.filter(tween => !tween.paused).length };
+    });
+    await expect.poll(async () => (await loops()).count).toBeGreaterThan(0);
+    expect((await loops()).running, `${key}: reduced motion`).toBe(0);
+    await evaluateApp(page, ({ services }) => services.preferences.set({ motion: 'system', ambientEffects: true }));
+    await expect.poll(async () => (await loops()).running).toBeGreaterThan(0);
+    await evaluateApp(page, ({ services }) => services.preferences.set({ ambientEffects: false }));
+    expect((await loops()).running, `${key}: ambient effects disabled`).toBe(0);
+    await evaluateApp(page, ({ services }) => services.preferences.set({ motion: 'reduced', ambientEffects: true }));
+  }
+});
+
+test('a refused fullscreen request leaves actionable feedback and allows retry', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(document, 'fullscreenEnabled', { value: true });
+    Element.prototype.requestFullscreen = async () => { throw new Error('Request refused'); };
+  });
+  await open(page, { start: false });
+  await page.locator('#btn-fullscreen').click();
+  await expect(page.locator('#btn-fullscreen')).toBeEnabled();
+  await expect(page.locator('#btn-fullscreen')).toHaveAttribute('title', 'Full screen could not be changed. Try again.');
+  await expect(page.locator('#start-screen')).toBeVisible();
 });

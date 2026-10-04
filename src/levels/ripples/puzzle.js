@@ -3,10 +3,10 @@
 export const RIPPLE_SOURCES = Object.freeze([
   { x: 0.125, y: 0.09 }, { x: 0.875, y: 0.09 }, { x: 0.5, y: 0.94 },
 ].map(Object.freeze));
-export const RIPPLE_SPEED = 0.00027;
+const RIPPLE_SPEED = 0.00027;
 export const RIPPLE_MEET_MS = 3200;
 export const RIPPLE_ROUND_MS = 5600;
-export const RIPPLE_BAND = 0.007;
+const RIPPLE_BAND = 0.007;
 
 const letters = ["SNTAVHE", "LQBDKMF", "WURGXIZ", "EFYSAJB", "TKHCOQN", "VMSPLAU", "BCENRFX"];
 export const RIPPLE_STONES = Object.freeze(letters.flatMap((row, r) => [...row].map((letter, c) => Object.freeze({

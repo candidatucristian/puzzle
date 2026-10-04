@@ -13,12 +13,16 @@ export function mountFullscreenControl(scope, button) {
   }
 
   // Activating this control with the keyboard must not start the game.
-  scope.on(button, 'keydown', event => event.stopPropagation());
+  scope.on(button, 'keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
+  });
   scope.on(button, 'click', async () => {
     button.disabled = true;
+    let failed = false;
     if (fullscreenElement()) { exitFullscreen(); unlockOrientation(); }
-    else if (!(await enterFullscreen())) button.title = 'Full screen could not be changed. Try again.';
+    else failed = !(await enterFullscreen());
     sync();
+    if (failed) button.title = 'Full screen could not be changed. Try again.';
   });
   scope.on(document, 'fullscreenchange', () => { if (!fullscreenElement()) unlockOrientation(); sync(); });
   scope.on(document, 'webkitfullscreenchange', sync);

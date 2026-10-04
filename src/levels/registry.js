@@ -73,6 +73,3 @@ export const LEVEL_DEFINITIONS = Object.freeze(LEVEL_METADATA.map((level) => Obj
   ...level,
   scene: scenes[level.key],
 })));
-
-export default LEVEL_DEFINITIONS;
-

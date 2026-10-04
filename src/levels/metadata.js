@@ -7,6 +7,7 @@ const metadata = [
     "id": "binarytree",
     "key": "BinaryTree",
     "name": "Binary Tree",
+    "summary": "An old tree stands over a locked box, with a note left among its roots.",
     "code": "CABBAGE",
     "altCode": null,
     "hint": {
@@ -24,6 +25,7 @@ const metadata = [
     "id": "plantpot",
     "key": "PlantPot",
     "name": "Plant Pot",
+    "summary": "A lantern lights a quiet potting bench in the moonlit garden.",
     "code": "FIBO",
     "altCode": "FIBONACCI",
     "hint": {
@@ -42,6 +44,7 @@ const metadata = [
     "id": "sequence",
     "key": "Sequence",
     "name": "Sequence",
+    "summary": "Six cards and a handwritten note wait to be examined.",
     "code": "19334488111",
     "altCode": "1 9 33 44 88 111",
     "hint": {
@@ -60,6 +63,7 @@ const metadata = [
     "id": "cryptex",
     "key": "Cryptex",
     "name": "Cryptex",
+    "summary": "Candlelight catches the engraved letters of a brass mechanism.",
     "code": "ROTOR",
     "altCode": null,
     "hint": {
@@ -78,6 +82,7 @@ const metadata = [
     "id": "chessboard",
     "key": "Chessboard",
     "name": "Chessboard",
+    "summary": "An unfinished game rests on the table in a silent parlour.",
     "code": "HEADACHE",
     "altCode": null,
     "hint": {
@@ -96,6 +101,7 @@ const metadata = [
     "id": "mobilephone",
     "key": "MobilePhone",
     "name": "Mobile Phone",
+    "summary": "An old mobile phone lights up with an incoming call.",
     "code": "GEORGE",
     "altCode": null,
     "hint": {
@@ -115,6 +121,7 @@ const metadata = [
     "id": "lightswitch",
     "key": "Lightswitch",
     "name": "Lightswitch",
+    "summary": "A single bulb and a wall switch interrupt the darkness.",
     "code": "POWER",
     "altCode": null,
     "hint": {
@@ -134,6 +141,7 @@ const metadata = [
     "id": "tv",
     "key": "TV",
     "name": "TV",
+    "summary": "An old television keeps broadcasting into an empty room.",
     "code": "VOID",
     "altCode": "NULL",
     "hint": {
@@ -152,6 +160,7 @@ const metadata = [
     "id": "modem",
     "key": "Modem",
     "name": "Modem",
+    "summary": "Small lights blink on a router beneath the desk lamp.",
     "code": "HTTPS",
     "altCode": null,
     "hint": {
@@ -170,6 +179,7 @@ const metadata = [
     "id": "telescope",
     "key": "Telescope",
     "name": "Telescope",
+    "summary": "A telescope waits beside a window open to the stars.",
     "code": "ORION",
     "altCode": null,
     "hint": {
@@ -183,13 +193,14 @@ const metadata = [
       "BRAILLE_DOT_POS — dot number → 2×3 grid position; every cell shares one exact grid, with no jitter",
       "TUNE.CELL_W / CELL_H — the cell grid every letter is laid out on",
       "TUNE.HOVER_IN (0.95s) / LINE_ALPHA — the slow, faded light-up on hover",
-      "windowFrame.js drawWindowFrame() — the one arch-and-shutters drawing, used by both the room sketch and this close-up"
+      "windowFrame.js — curtain geometry for the painted arched-window close-up in window.js"
     ]
   },
   {
     "id": "wires",
     "key": "Wires",
     "name": "Wires",
+    "summary": "Birds settle on the wires above a farmhouse at dawn.",
     "code": "FACADE",
     "altCode": null,
     "hint": {
@@ -208,6 +219,7 @@ const metadata = [
     "id": "station",
     "key": "Station",
     "name": "Station",
+    "summary": "The departures board is still lit in a nearly empty station.",
     "code": "EXIT",
     "altCode": null,
     "hint": {
@@ -226,6 +238,7 @@ const metadata = [
     "id": "pi",
     "key": "Pi",
     "name": "Pi",
+    "summary": "Across the water, a few windows remain lit in the sleeping skyline.",
     "code": "PI",
     "altCode": "3.14",
     "hint": {
@@ -244,6 +257,7 @@ const metadata = [
     "id": "crossing",
     "key": "Crossing",
     "name": "Crossing",
+    "summary": "A quiet street, a wandering cat and a worn pedestrian crossing.",
     "code": "GO",
     "altCode": null,
     "hint": {
@@ -262,6 +276,7 @@ const metadata = [
     "id": "flags",
     "key": "Flags",
     "name": "Flags",
+    "summary": "Colourful flags stir in the breeze along a sunlit harbour.",
     "code": "DEBRIEFING",
     "altCode": null,
     "hint": {
@@ -279,6 +294,7 @@ const metadata = [
     "id": "tapcode",
     "key": "TapCode",
     "name": "Tap Code",
+    "summary": "Someone has carved small marks into an old stone slab.",
     "code": "ESCAPE",
     "altCode": null,
     "hint": {
@@ -297,6 +313,7 @@ const metadata = [
     "id": "rally",
     "key": "Rally",
     "name": "Rally",
+    "summary": "Engines cut through the night as cars approach the finish line.",
     "code": "SILVER",
     "altCode": null,
     "hint": {
@@ -321,6 +338,7 @@ const metadata = [
     "id": "overtime",
     "key": "Overtime",
     "name": "Overtime",
+    "summary": "The office is empty, but the clocks and desk lamp are still working.",
     "code": "SOIL",
     "altCode": null,
     "hint": {
@@ -342,6 +360,7 @@ const metadata = [
     "id": "fireworks",
     "key": "Fireworks",
     "name": "Fireworks",
+    "summary": "Fireworks scatter colour over the rooftops of Paris.",
     "code": "NIGHT",
     "altCode": null,
     "hint": {
@@ -361,6 +380,7 @@ const metadata = [
     "id": "compass",
     "key": "Compass",
     "name": "Compass",
+    "summary": "A lantern swings above the chart table in a creaking ship's cabin.",
     "code": "LOST",
     "altCode": null,
     "hint": {
@@ -381,6 +401,7 @@ const metadata = [
     "id": "bookshelf",
     "key": "Bookshelf",
     "name": "Bookshelf",
+    "summary": "Lamplight falls on old books while a cat sleeps above the shelves.",
     "code": "SIGHT",
     "altCode": null,
     "hint": {
@@ -400,25 +421,27 @@ const metadata = [
     "id": "chemistry",
     "key": "Chemistry",
     "name": "Chemistry",
+    "summary": "Graduated glass bottles crowd an abandoned laboratory bench.",
     "code": "FOCUS",
     "altCode": null,
     "hint": {
-      "text": "THE LABELS ARE TORN.\nBut the number left on each one still names something.",
+      "text": "READ THE GRADUATIONS.\nEach meniscus meets a number that names an element.",
       "sound": false,
       "tool": true
     },
-    "description": "An old laboratory at night, lit by a Bunsen burner’s blue flame and an oil lamp: stone walls, a shelf of apothecary jars, a faded periodic table pinned to the wall, a test-tube rack and a retort at the back of the bench, a flask boiling on a tripod. Across the bench stand five bottles of coloured liquid, their labels torn, a big number left on each, left to right: 9, 8, 6, 92, 16. They are atomic numbers: fluorine F, oxygen O, carbon C, uranium U, sulfur S — F O C U S. Each liquid has its element’s colour (pale yellow, pale blue, black, a glowing uranium green, sulfur yellow). The poster has every element in its place, faded but readable close up. A click on a bottle swirls it; a click on the burner turns up the gas.",
+    "description": "An old laboratory at night, lit by a Bunsen burner’s blue flame and an oil lamp: stone walls, a shelf of apothecary jars, a faded periodic table pinned to the wall, a test-tube rack and a retort at the back of the bench, a flask boiling on a tripod. Across the bench stand five graduated bottles of coloured liquid. Each is filled exactly to an etched mark: 9, 8, 6, 92, 16. They are atomic numbers: fluorine F, oxygen O, carbon C, uranium U, sulfur S — F O C U S. Each liquid has its element’s colour (pale yellow, pale blue, black, a glowing uranium green, sulfur yellow). The poster has every element in its place, faded but readable close up. A click on a bottle swirls it; a click on the burner turns up the gas.",
     "references": [
-      "BOTTLES (chemistry/puzzle.js) — the five numbers on the labels, left to right",
+      "BOTTLES (chemistry/puzzle.js) — the five atomic numbers marked at the menisci, left to right",
       "ELEMENTS / symbolOf() — every element's symbol by atomic number; readBottles() spells FOCUS",
       "cellOf() / familyOf() — each element's place and family on the poster",
-      "chemistry/lab.js paintBottle() — a bottle, its liquid and its torn label; paintPoster() — the faded periodic table"
+      "chemistry/lab.js paintBottle() — dimensional glass, calibrated graduations and liquid; paintPoster() — the faded periodic table"
     ]
   },
   {
     "id": "billiards",
     "key": "Billiards",
     "name": "Billiards",
+    "summary": "A pool table waits beneath the lights in a quiet pub.",
     "code": "BLIND",
     "altCode": null,
     "hint": {
@@ -439,6 +462,7 @@ const metadata = [
     "id": "metro",
     "key": "Metro",
     "name": "Metro",
+    "summary": "A glowing network map lights an otherwise deserted platform.",
     "code": "TRAIN",
     "altCode": null,
     "hint": {
@@ -459,6 +483,7 @@ const metadata = [
     "id": "resistors",
     "key": "Resistors",
     "name": "Resistors",
+    "summary": "A magnifier lamp illuminates a circuit board on the workbench.",
     "code": "1024",
     "altCode": null,
     "hint": {
@@ -479,6 +504,7 @@ const metadata = [
     "id": "ripples",
     "key": "Ripples",
     "name": "Ripples",
+    "summary": "Rain disturbs a shallow puddle among the engraved paving stones.",
     "code": "DROP",
     "altCode": null,
     "hint": {
@@ -498,6 +524,7 @@ const metadata = [
     "id": "vertex",
     "key": "Vertex",
     "name": "Vertex",
+    "summary": "A delicate wireframe structure hangs against dark drafting paper.",
     "code": "FACE",
     "altCode": null,
     "hint": {
@@ -517,6 +544,7 @@ const metadata = [
     "id": "plotter",
     "key": "Plotter",
     "name": "Plotter",
+    "summary": "A green terminal glows with the instructions of a silent machine.",
     "code": "PING",
     "altCode": null,
     "hint": {
@@ -535,25 +563,27 @@ const metadata = [
     "id": "kinetic",
     "key": "Kinetic",
     "name": "Kinetic",
+    "summary": "A baby sleeps beneath a gently swaying mobile in a moonlit purple nursery.",
     "code": "CAGE",
     "altCode": null,
     "hint": {
-      "text": "A STUDY OF BOUNDARIES.\nRead the four hanging forms from highest to lowest. The gallery label defines how to count a curve.",
+      "text": "A STUDY OF BOUNDARIES.\nRead the four wooden forms above the sleeping baby from highest to lowest. The label defines how to count a curve.",
       "sound": false,
       "tool": false
     },
-    "description": "A restrained gallery mobile hangs on thin metal rods against a warm grey wall. From top to bottom its four flat forms are a brass triangle, a black circle, a red heptagon and a pale pentagon. Count the straight sides of each polygon; for the circle, the label explicitly defines this artwork's convention that one unbroken curved rim counts as one. This is a puzzle convention, not a claim that a circle has a straight side. The counts 3, 1, 7, 5 map through A=1 to C A G E. Gentle sway preserves the vertical order and readable silhouettes; reduced motion leaves all four forms visible.",
+    "description": "A baby sleeps in a wooden crib seen in perspective, in a deeply shadowed purple nursery. Moonlight enters through a large window, catching the crib rails, a sheer curtain and toys on the floor. A draft gently moves a wooden mobile above the baby. From highest to lowest, its forms are a triangle, a circle, a heptagon and a pentagon. Count the straight sides of each polygon; the label defines the circle's single unbroken curved rim as one for this puzzle. The counts 3, 1, 7, 5 map through A=1 to C A G E. Connected threads, gentle sway and restrained rotation preserve readable shapes and their vertical order. Reduced motion freezes the nursery while leaving every clue visible.",
     "references": [
       "kinetic/puzzle.js KINETIC_FORMS — triangle, circle, heptagon and pentagon with explicit rim counts",
       "polygonVertices() / kineticPose() — genuine polygon outlines and slow movement that keeps their order",
       "readKinetic() — read 3, 1, 7, 5 as CAGE",
-      "KineticScene — rods, suspended material sheets and the continuous-curve convention on the gallery label"
+      "KineticScene / room.js / baby.js — a moonlit nursery, a sleeping baby and a connected wooden mobile above the crib"
     ]
   },
   {
     "id": "genome",
     "key": "Genome",
     "name": "Genome",
+    "summary": "A laboratory display flickers with fragments of a genetic sequence.",
     "code": "SPACE",
     "altCode": null,
     "hint": {
@@ -573,6 +603,7 @@ const metadata = [
     "id": "curtain",
     "key": "Curtain",
     "name": "The Curtain",
+    "summary": "Moonlight enters an abandoned room through a worn velvet curtain.",
     "code": "MOTH",
     "altCode": null,
     "hint": {
@@ -592,6 +623,7 @@ const metadata = [
     "id": "thesill",
     "key": "TheSill",
     "name": "The Sill",
+    "summary": "Everyday objects rest in silhouette along an old moonlit window.",
     "code": "WAKE",
     "altCode": null,
     "hint": {
@@ -610,6 +642,7 @@ const metadata = [
     "id": "venetian",
     "key": "Venetian",
     "name": "Venetian",
+    "summary": "Beyond the lowered blinds, a thousand distant windows shine.",
     "code": "CITY",
     "altCode": null,
     "hint": {
@@ -632,5 +665,3 @@ export const LEVEL_METADATA = Object.freeze(metadata.map((level) => Object.freez
   hint: Object.freeze({ ...level.hint, steps: Object.freeze([level.hint.text, ...HINT_DETAILS[level.id]]) }),
   references: Object.freeze(level.references),
 })));
-
-export default LEVEL_METADATA;

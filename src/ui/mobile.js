@@ -19,8 +19,8 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   const scrim = document.getElementById('drawer-scrim');
   const toast = document.getElementById('ui-toast');
   const drawers = {
-    menu: { panel: document.getElementById('sidebar'), button: document.getElementById('compact-menu') },
-    levels: { panel: document.getElementById('right-sidebar-wrapper'), button: document.getElementById('compact-levels') },
+    menu: { panel: document.getElementById('right-sidebar-wrapper'), button: document.getElementById('compact-menu') },
+    levels: { panel: document.getElementById('sidebar'), button: document.getElementById('compact-levels') },
   };
   // the one bar that slides away, up, on its handle
   const handle = document.getElementById('handle-top');
@@ -48,6 +48,7 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     for (const [name, { panel, button }] of Object.entries(drawers)) {
       const shown = compact.matches && open === name;
       panel.classList.toggle('drawer-open', shown);
+      panel.inert = compact.matches && !shown;
       button.setAttribute('aria-expanded', String(shown));
     }
     scrim.hidden = !(compact.matches && open);
@@ -57,7 +58,12 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     handle.setAttribute('aria-expanded', String(!away));
     handle.setAttribute('aria-label', `${away ? 'Show' : 'Hide'} the top bar`);
   }
-  function close() { if (!open) return; open = null; render(); onDrawer?.(null); }
+  function close() {
+    if (!open) return;
+    const trigger = drawers[open].button;
+    open = null; render(); onDrawer?.(null);
+    if (compact.matches) trigger.focus({ preventScroll: true });
+  }
   function toggle(name) {
     if (!compact.matches) return;
     if (open === name) { close(); return; }
@@ -120,12 +126,26 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   for (const [name, { button }] of Object.entries(drawers)) scope.on(button, 'click', () => toggle(name));
   scope.on(document.getElementById('compact-fullscreen'), 'click', immersive);
   scope.on(scrim, 'click', close);
-  scope.on(document, 'keydown', e => { if (e.key === 'Escape' && open) { e.preventDefault(); close(); } });
+  scope.on(document, 'keydown', e => {
+    if (!compact.matches || !open) return;
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key !== 'Tab') return;
+    const nodes = [...drawers[open].panel.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')]
+      .filter(node => !node.disabled && node.getClientRects().length);
+    const index = nodes.indexOf(document.activeElement);
+    if (!nodes.length) e.preventDefault();
+    else if (e.shiftKey && index <= 0) { e.preventDefault(); nodes.at(-1).focus(); }
+    else if (!e.shiftKey && (index < 0 || index === nodes.length - 1)) { e.preventDefault(); nodes[0].focus(); }
+  });
   // leaving full screen by the system's own gesture brings the bar back
   const left = () => { if (!fullscreenElement() && topAway) setTop(false); };
   scope.on(document, 'fullscreenchange', left);
   scope.on(document, 'webkitfullscreenchange', left);
-  scope.on(compact, 'change', render);
+  scope.on(compact, 'change', () => {
+    if (!compact.matches) { open = null; topAway = false; onDrawer?.(null); }
+    render();
+  });
+  scope.add(() => { for (const { panel } of Object.values(drawers)) panel.inert = false; });
   render();
   return {
     close, toggle, setTop, immersive, restore,
@@ -142,7 +162,7 @@ export const isIOS = () =>
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 /** Opened from a home-screen icon: the browser's own bars are already gone. */
-export const isStandalone = () =>
+const isStandalone = () =>
   navigator.standalone === true || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
 
 export const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
@@ -173,7 +193,7 @@ export function exitFullscreen() {
 /** Full screen on a phone is a landscape affair: once the browser grants
  *  it, the orientation is locked where the API allows (Android), and the
  *  lock is released with full screen. Best effort, never an error. */
-export async function lockLandscape() {
+async function lockLandscape() {
   try { await screen.orientation?.lock?.('landscape'); } catch { /* iOS and desktops refuse; the rotate prompt covers portrait */ }
 }
 export function unlockOrientation() {

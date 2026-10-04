@@ -29,11 +29,14 @@ export function mountInspection(scope, { levels, canOpen }) {
     viewport.classList.remove('is-inspecting');
     glass.hidden = true; tools.hidden = true;
     stage.inert = false;
+    toggle.setAttribute('aria-pressed', 'false');
+    render();
+    // Phaser caches the transformed canvas bounds while inspecting. Restore
+    // pointer coordinates immediately, before the next click or drag arrives.
+    scene?.scale.refresh();
     if (scene?.input) scene.input.enabled = inputEnabled;
     if (scene?.input?.keyboard) scene.input.keyboard.enabled = keyboardEnabled;
     scene = null;
-    toggle.setAttribute('aria-pressed', 'false');
-    render();
     if (restoreFocus) toggle.focus();
   }
 

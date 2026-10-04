@@ -93,7 +93,12 @@ test('curtain and blind preserve adjustment on resize, isolate keyboard input an
     await page.locator('#btn-inspect').click();
     await expect(page.locator('#inspection-tools')).toBeVisible();
     await page.keyboard.press(arrow); expect(await read()).toBeCloseTo(position + 0.002, 5);
+    // Let Phaser observe the magnified canvas before restoring normal pointer input.
+    const magnified = await page.locator('#game-container > canvas').boundingBox();
+    await expect.poll(() => evaluateApp(page, ({ game }) => game.scale.canvasBounds.width)).toBeCloseTo(magnified.width, 1);
     await page.keyboard.press('Escape');
+    const restored = await page.locator('#game-container > canvas').boundingBox();
+    expect(await evaluateApp(page, ({ game }) => game.scale.canvasBounds.width)).toBeCloseTo(restored.width, 1);
     await navigate(page, key);
     expect(await read()).toBe(i ? VENETIAN_START : CURTAIN_START);
     expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.events.listenerCount('canvas_resized'))).toBe(1);

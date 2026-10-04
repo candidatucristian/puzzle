@@ -1,248 +1,134 @@
-import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel, uiScale } from "../../shared/levelLabel.js";
+import BasePuzzleScene from '../../core/BasePuzzleScene.js';
+import { drawLevelLabel, uiScale } from '../../shared/levelLabel.js';
+import { lcg } from '../../shared/paint.js';
+import { kineticRig, kineticLayout, polygonVertices, nurseryBreeze, readKinetic } from './puzzle.js';
+import { paintRoom, releaseRoomArt } from './room.js';
+import { paintMobileAssets, releaseMobileArt } from './mobile.js';
 
-import { kineticPose, kineticLayout, readKinetic } from "./puzzle.js";
-import { paintRoom, releaseRoomArt } from "./room.js";
-import { paintMobileAssets, releaseMobileArt } from "./mobile.js";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Level — "KINETIC"  ·  code: CAGE  ·  count the unbroken curves
-//
-// A study of boundaries in a deep night nursery. A baby's crib sits in
-// silhouette against a gothic window. Moonlight pours through, catching the
-// brass and wood of a kinetic mobile hanging from the ceiling.
-//
-// The mobile physically sways in the night draft using Forward Kinematics,
-// its shapes gently twisting on their strings. The puzzle remains: count the
-// unbroken rims from top to bottom.
-// ─────────────────────────────────────────────────────────────────────────────
-
+/** Kinetic — a sleeping nursery, a draft through the casement and four
+ * wooden shapes. The clue remains 3, 1, 7, 5, read from the ceiling down. */
 export default class KineticScene extends BasePuzzleScene {
-  constructor() {
-    super({ key: "Kinetic" });
-  }
+  constructor() { super({ key: 'Kinetic' }); }
 
-  init(data) {
-    this.skipFadeIn =
-      data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
-  }
+  init(data) { this.skipFadeIn = data?.skipFade ?? true; }
 
   create() {
     this.beginScene();
-
     this._elapsed = 0;
     this._build(this.cameras.main.width, this.cameras.main.height);
-
-    this._resize = ({ width, height }) => {
-      this._teardown();
-      this._build(width, height);
-    };
-    this.listenToResize(this._resize);
-
+    this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
     if (!this.skipFadeIn) this.cameras.main.fadeIn(800, 0, 0, 0);
   }
 
-  // ── what the level means (read by the tests) ───────────────────────────────
-
-  static code() {
-    return readKinetic();
-  }
-
-  // ── construction ───────────────────────────────────────────────────────────
+  static code() { return readKinetic(); }
 
   _build(W, H) {
-    this._W = W;
-    this._H = H;
-
-    // 1. Math layout
     this._L = kineticLayout(W, H);
-    const k = uiScale(W, H);
-
-    // 2. Paint Procedural Assets (Room & Mobile)
-    const room = paintRoom(this.textures, W, H);
-    const mobile = paintMobileAssets(this.textures, this._L.size);
-    const R_KEYS = room.keys;
-    const M_KEYS = mobile.keys;
-
-    // 3. Construct the Room Diorama (Back to Front)
-    this.add.image(0, 0, R_KEYS.sky).setOrigin(0).setDepth(-30);
-
-    const stars = this.add
-      .image(0, 0, R_KEYS.stars)
-      .setOrigin(0)
-      .setDepth(-29)
-      .setBlendMode("ADD");
-    // Twinkle the stars smoothly
-    this.ambientTween({
-      targets: stars,
-      alpha: { from: 0.4, to: 1 },
-      duration: 3500,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
+    const room = paintRoom(this.textures, W, H), mobile = paintMobileAssets(this.textures, this._L.size);
+    this._roomArt = room;
+    this.add.image(0, 0, room.keys.room).setOrigin(0).setDepth(0);
+    this._stars = this.add.graphics().setDepth(1);
+    this.add.image(0, 0, room.keys.rays).setOrigin(0).setDepth(2);
+    this.add.image(0, 0, room.keys.back).setOrigin(0).setDepth(3);
+    const baby = room.baby;
+    this._baby = this.add.image(baby.x, baby.y, room.keys.baby).setOrigin(0).setScale(baby.scale).setRotation(baby.rotation).setDepth(4);
+    this._blanket = this.add.image(baby.x, baby.y, room.keys.blanket).setOrigin(0).setScale(baby.scale).setRotation(baby.rotation).setDepth(5);
+    this.add.image(0, 0, room.keys.front).setOrigin(0).setDepth(6);
+    this.add.image(0, 0, room.keys.rays).setOrigin(0).setDepth(7).setAlpha(0.22);
+    const curtain = room.curtain;
+    this._curtain = this.add.image(curtain.x, curtain.y, room.keys.curtain).setOrigin(0.5, 0).setDepth(2.5).setAlpha(0.72);
+    this._mobileStrings = this.add.graphics().setDepth(9);
+    this._forms = kineticRig(this._elapsed).forms.map(form => {
+      const size = mobile.displaySizes[form.kind];
+      const img = this.add.image(0, 0, mobile.keys[form.kind]).setDepth(10).setDisplaySize(size.width, size.height);
+      return { id: form.id, img, size, points: polygonVertices(form.sides, form.radius) };
     });
-
-    this.add.image(0, 0, R_KEYS.wall).setOrigin(0).setDepth(-20);
-    this.add
-      .image(0, 0, R_KEYS.rays)
-      .setOrigin(0)
-      .setDepth(-10)
-      .setBlendMode("ADD");
-    this.add.image(0, 0, R_KEYS.crib).setOrigin(0).setDepth(20);
-
-    // 4. Construct the Mobile (Dynamic)
-    this._mobileShadows = this.add.graphics().setDepth(-5);
-    this._mobileStrings = this.add.graphics().setDepth(5);
-
-    this._forms = [];
-    const pose = kineticPose(0, this._L.x, this._L.y);
-
-    // Create the Sprites for the hanging forms
-    for (const fDef of pose.forms) {
-      const key = M_KEYS[fDef.kind];
-      const img = this.add.image(0, 0, key).setDepth(10);
-      const rivet = this.add.image(0, 0, mobile.rivetKey).setDepth(11);
-
-      this._forms.push({ img, rivet, id: fDef.id });
-    }
-
-    // 5. Clue & UI
-    const labelH = Math.max(30, H * 0.085);
-    const labelW = Math.min(W * 0.69, 395 * k);
-    const lx = Math.min(W * 0.05, 36);
-    const ly = H - labelH - 8 * k;
-
-    // Subtle dark translucent plaque for the clue
-    const plaque = this.add.graphics().setDepth(30);
-    plaque.fillStyle(0x0a0710, 0.75);
-    plaque.fillRoundedRect(lx, ly, labelW, labelH, 4 * k);
-    plaque.lineStyle(1, 0x3a3b58, 0.4);
-    plaque.strokeRoundedRect(lx, ly, labelW, labelH, 4 * k);
-
-    this.add
-      .text(lx + 10 * k, ly + 6 * k, "ONE UNBROKEN CURVE COUNTS AS ONE", {
-        fontFamily: '"Courier New", monospace',
-        fontSize: Math.min(12, labelW / 21, labelH * 0.34) + "px",
-        color: "#a9b4c2", // Silver moonlight text
-        letterSpacing: 1.5,
-      })
-      .setResolution(2)
-      .setDepth(31);
-
-    this.add
-      .text(
-        lx + 10 * k,
-        ly + labelH * 0.52,
-        "A study of boundaries. Read from above.",
-        {
-          fontFamily: "Georgia, serif",
-          fontSize: Math.min(12, labelW / 22, labelH * 0.3) + "px",
-          color: "#686a8a",
-          fontStyle: "italic",
-        },
-      )
-      .setResolution(2)
-      .setDepth(31);
-
-    this.levelText = drawLevelLabel(this, W, H, { color: "#8a8eaf" });
-    this.levelText.setDepth(31);
-
-    // Initial render
-    this._renderDynamicMobile();
+    const rnd = lcg(29811);
+    this._motes = Array.from({ length: 24 }, () => ({ x: rnd(), y: rnd(), phase: rnd() * Math.PI * 2, speed: 0.5 + rnd() * 0.5 }));
+    this._dust = this.add.graphics().setDepth(12);
+    this.add.image(0, 0, room.keys.shade).setOrigin(0).setDepth(20);
+    this._drawClue(W, H);
+    this.levelText = drawLevelLabel(this, W, H, { color: '#afa0bc' }).setDepth(31);
+    this._render();
   }
 
-  // ── update loop ────────────────────────────────────────────────────────────
+  _drawClue(W, H) {
+    const k = uiScale(W, H), x = Math.min(30, W * 0.033), font = Math.max(9, Math.min(11, W / 55));
+    const y = H - Math.max(43, 52 * k);
+    const width = Math.min(W * 0.74, 368), height = Math.max(33, 39 * k);
+    const label = this.add.graphics().setDepth(30);
+    label.fillStyle(0x0c0813, 0.76); label.fillRoundedRect(x - 8, y - 7, width, height, 3);
+    label.lineStyle(0.7, 0x665170, 0.25); label.lineBetween(x - 8, y - 8, x + width - 8, y - 8);
+    this._clue = this.add.text(x, y, 'ONE UNBROKEN CURVE COUNTS AS ONE', {
+      fontFamily: '"Courier New", monospace', fontSize: font + 'px', color: '#b4a7be',
+    }).setResolution(2).setDepth(31);
+    this.add.text(x, y + font + 5, 'From the highest, down to the lowest.', {
+      fontFamily: 'Georgia, serif', fontSize: Math.max(9, font) + 'px', fontStyle: 'italic', color: '#82728f',
+    }).setResolution(2).setDepth(31);
+  }
 
   update(_time, delta) {
+    if (this._L && this._lastEffects !== this.ambientEffects) this._renderAtmosphere();
+    if (!this._L || !this.ambientMotion) return;
+    this._elapsed += Math.min(delta || 16, 50);
+    this._render();
+  }
+
+  _render() {
     if (!this._L) return;
-    // Advance the physics simulation if not paused
-    if (this.ambientMotion) {
-      this._elapsed += Math.min(delta || 16, 50);
+    const { size: S, x: X, y: Y } = this._L;
+    const rig = kineticRig(this._elapsed), g = this._mobileStrings, k = Math.max(0.65, S / 520);
+    const px = x => X + x * S, py = y => Y + y * S;
+    g.clear();
+    // A fine cord continues up into the ceiling, with a small bronze eye.
+    g.lineStyle(Math.max(0.6, k * 0.8), 0x948499, 0.48); g.lineBetween(X, 0, X, Y);
+    g.lineStyle(1.1 * k, 0x756078, 1); g.strokeEllipse(X, Y, 5 * k, 8 * k);
+    for (const rod of rig.rods) {
+      g.lineStyle(3 * k, 0x322338, 1); g.lineBetween(px(rod.x1), py(rod.y1) + k, px(rod.x2), py(rod.y2) + k);
+      g.lineStyle(1.4 * k, 0x9a829c, 0.82); g.lineBetween(px(rod.x1), py(rod.y1), px(rod.x2), py(rod.y2));
+      g.fillStyle(0xb19aad, 0.9); g.fillCircle(px(rod.cx), py(rod.cy), 1.6 * k);
     }
-    this._renderDynamicMobile();
+    g.lineStyle(Math.max(0.6, 0.7 * k), 0xb0a3bd, 0.53);
+    for (const string of rig.strings) g.lineBetween(px(string.x1), py(string.y1), px(string.x2), py(string.y2));
+    for (const form of rig.forms) {
+      const obj = this._forms.find(item => item.id === form.id);
+      obj.img.setPosition(px(form.x), py(form.y)).setRotation(form.rotation);
+      obj.img.setDisplaySize(obj.size.width * Math.cos(form.yaw), obj.size.height);
+    }
+    const breeze = nurseryBreeze(this._elapsed), baby = this._roomArt.baby;
+    this._curtain.setRotation(-0.012 + breeze * 0.017).setScale(1 + breeze * 0.022, 1);
+    // Subpixel breathing stays contained inside the near rail.
+    const breath = Math.sin(this._elapsed * Math.PI * 2 / 4700);
+    this._blanket.setScale(baby.scale, baby.scale * (1 + breath * 0.006));
+    this._blanket.setY(baby.y - breath * baby.scale * 0.20);
+    this._renderAtmosphere();
   }
 
-  _renderDynamicMobile() {
-    // 1. Get the current physics state of the tree
-    // Roots start at top center
-    const pose = kineticPose(this._elapsed, this._L.x, this._L.y);
-    const S = this._L.size;
-    const k = uiScale(this._W, this._H);
-
-    const strings = this._mobileStrings;
-    const shadows = this._mobileShadows;
-
-    strings.clear();
-    shadows.clear();
-
-    // 2. Draw Strings & Rods
-    // Rods (Wooden / Brass bars)
-    strings.lineStyle(Math.max(2, k * 2.5), 0x1a161e, 1);
-    for (const r of pose.rods) {
-      strings.lineBetween(r.x1, r.y1, r.x2, r.y2);
-      // Center pivot ring
-      strings.strokeCircle(r.cx, r.cy, 3 * k);
-
-      // Draw soft ambient shadows for the rods against the window haze
-      shadows.lineStyle(Math.max(4, k * 4), 0x000000, 0.4);
-      shadows.lineBetween(r.x1 + 4, r.y1 + 10, r.x2 + 4, r.y2 + 10);
+  _renderAtmosphere() {
+    this._lastEffects = this.ambientEffects;
+    const { width: W, height: H } = this._L, w = this._roomArt.layout.win;
+    this._stars.clear(); this._dust.clear();
+    if (!this.ambientEffects) return;
+    for (const star of this._roomArt.stars) {
+      const alpha = 0.15 + (1 + Math.sin(this._elapsed * 0.0006 + star.phase)) * 0.16;
+      this._stars.fillStyle(0xc6badc, alpha); this._stars.fillCircle(star.x, star.y, 0.7);
     }
-
-    // Strings (Thin threads)
-    strings.lineStyle(Math.max(0.8, k), 0x3a3245, 0.6);
-    for (const s of pose.strings) {
-      strings.lineBetween(s.x1, s.y1, s.x2, s.y2);
-    }
-
-    // 3. Update the Forms (Sprites)
-    for (const fDef of pose.forms) {
-      // Find the corresponding sprite object
-      const formObj = this._forms.find((f) => f.id === fDef.id);
-      if (!formObj) continue;
-
-      const { img, rivet } = formObj;
-      const rPx = fDef.radius * S;
-
-      img.setPosition(fDef.x, fDef.y);
-      // The FK angle translates to 2D rotation
-      img.setRotation(fDef.angle + Math.PI / 2);
-
-      // The yaw creates a fake 3D spinning effect by scaling X
-      // We keep a minimum scale to never let it go completely invisible (edge-on)
-      const fake3D = Math.max(0.2, Math.abs(Math.cos(fDef.yaw)));
-      img.setScale(fake3D, 1);
-
-      // The rivet attaches at the top vertex, which rotates with the body
-      // We calculate its position based on the sprite's rotation
-      const attachRadius = rPx * 0.85;
-      const rx = fDef.x - Math.sin(img.rotation) * attachRadius;
-      const ry = fDef.y - Math.cos(img.rotation) * attachRadius;
-
-      rivet.setPosition(rx, ry);
-
-      // Form shadows
-      shadows.fillStyle(0x000000, 0.3);
-      shadows.fillCircle(fDef.x + 8 * fake3D, fDef.y + 15, rPx * 0.9 * fake3D);
+    for (const mote of this._motes) {
+      const progress = (mote.y + this._elapsed * mote.speed * 0.000008) % 1;
+      const x = w.x + w.w * mote.x - progress * W * 0.39 + Math.sin(this._elapsed * 0.00035 + mote.phase) * 5;
+      const y = w.y + w.h * 0.45 + progress * H * 0.56;
+      const alpha = Math.sin(progress * Math.PI) * 0.15;
+      this._dust.fillStyle(0xc1afd4, alpha); this._dust.fillCircle(x, y, 0.5 + mote.speed * 0.45);
     }
   }
-
-  // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
-    this.tweens.killAll();
-    this.time.removeAllEvents();
+    this.tweens.killAll(); this.time.removeAllEvents();
     for (const child of this.children.list.slice()) child.destroy();
-
-    releaseRoomArt(this.textures);
-    releaseMobileArt(this.textures);
-
-    this._L = null;
-    this._forms = [];
-    this._mobileStrings = null;
-    this._mobileShadows = null;
+    releaseRoomArt(this.textures); releaseMobileArt(this.textures);
+    this._L = null; this._roomArt = null; this._forms = [];
+    this._baby = this._blanket = this._curtain = this._mobileStrings = this._stars = this._dust = null;
   }
 
-  shutdown() {
-    this._teardown();
-  }
+  shutdown() { this._teardown(); }
 }

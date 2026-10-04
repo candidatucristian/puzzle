@@ -29,7 +29,7 @@ function reject(response, status, message) {
 }
 
 /** A deliberately strict static host: missing assets never fall back to HTML. */
-export async function createBuildServer(directory = BUILD_DIRECTORY) {
+async function createBuildServer(directory = BUILD_DIRECTORY) {
   const root = await realpath(directory);
   return createServer(async (request, response) => {
     if (request.method !== 'GET' && request.method !== 'HEAD') {

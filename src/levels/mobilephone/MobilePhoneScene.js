@@ -1023,7 +1023,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     );
 
     // it breathes, so the player notices it
-    this._answerPulse = this.tweens.add({
+    this._answerPulse = this.ambientTween({
       targets: this.navContainer,
       scale: 1.07,
       duration: 520,

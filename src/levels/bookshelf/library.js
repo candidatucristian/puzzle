@@ -29,8 +29,8 @@ const bookKey = (i) => `bk_book_${i}`;
 const WARM = "255,196,120";
 const MOON = "150,180,235";
 const GOLD = "#e8c46a";
-export const BOOK_FONT = 'Georgia, "Times New Roman", serif';
-export const MARK_FONT = '"Architects Daughter", Georgia, cursive';
+const BOOK_FONT = 'Georgia, "Times New Roman", serif';
+const MARK_FONT = '"Architects Daughter", Georgia, cursive';
 
 // the colours of old cloth and leather bindings
 const BINDINGS = [

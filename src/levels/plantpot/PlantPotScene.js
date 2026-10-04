@@ -233,7 +233,7 @@ export default class PlantPotScene extends BasePuzzleScene {
         .setBlendMode("ADD")
         .setDisplaySize(size, size)
         .setAlpha(0.25);
-      this.tweens.add({
+      this.ambientTween({
         targets: star,
         alpha: glint ? 0.75 + rnd() * 0.25 : 0.45 + rnd() * 0.45,
         duration: 1200 + rnd() * 2600,

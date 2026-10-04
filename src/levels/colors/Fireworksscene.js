@@ -43,12 +43,12 @@ import {
 // painted ones flare again, one after another, in their order. Set it to false
 // for a picture with an empty sky (and the clock): then the scene sends the
 // fireworks up itself and hangs a tag with its code under each.
-export const FW_BG = {
+const FW_BG = {
   key: "fw_bg",
   url: "assets/images/fireworks/paris.png",
   baked: true,
 };
-export const FW_SPOTS = {
+const FW_SPOTS = {
   bursts: [
     { x: 0.2, y: 0.122 },
     { x: 0.335, y: 0.273 },
@@ -69,7 +69,7 @@ export const FW_SPOTS = {
   horizon: 0.45,
 };
 
-export const FW_CODES = ["#4E2233", "#492244", "#472255", "#482266", "#542277"];
+const FW_CODES = ["#4E2233", "#492244", "#472255", "#482266", "#542277"];
 const FW_EVERY = 2600; // ms between two fireworks going up
 const FW_PAUSE = 2600; // ms of quiet after the fifth, before the show repeats
 const FW_RISE = 900; // ms the rocket climbs

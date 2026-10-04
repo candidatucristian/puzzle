@@ -55,8 +55,14 @@ export class LevelManager {
     const correct = this.canAccess(this.#currentIndex) && value !== "" &&
       [level.code, level.altCode].some((code) => typeof code === "string" && value === code.toUpperCase());
     if (!correct) return { correct: false, isLast, nextIndex: null };
+    const wasCompleted = this.completed;
     this.#progress.complete(this.#currentIndex);
-    const nextIndex = isLast ? null : this.#currentIndex + 1;
+    let nextIndex = this.#currentIndex + 1;
+    // Stable-ID saves can leave newly inserted rooms unfinished before the last
+    // catalog entry. Finish those rooms before offering the completion screen.
+    if (this.completed && (!wasCompleted || isLast)) nextIndex = null;
+    else if (isLast) nextIndex = this.definitions.findIndex((_, index) =>
+      this.canAccess(index) && !this.isCompleted(index));
     this.#notify();
     return { correct: true, isLast, nextIndex };
   }
@@ -81,5 +87,3 @@ export class LevelManager {
     for (const callback of this.#subscribers) callback(state);
   }
 }
-
-export default LevelManager;

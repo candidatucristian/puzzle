@@ -495,25 +495,6 @@ function paintStern(ctx, L) {
   paintCurtains(ctx, L, fw);
 }
 
-function windowPath(ctx, win, grow) {
-  const x0 = win.x - win.hw - grow;
-  const x1 = win.x + win.hw + grow;
-  ctx.beginPath();
-  ctx.moveTo(x0, win.sill + Math.max(0, grow) * 0.2);
-  ctx.lineTo(x0, win.spring);
-  ctx.ellipse(
-    win.x,
-    win.spring,
-    win.hw + grow,
-    win.spring - win.top + grow,
-    0,
-    Math.PI,
-    Math.PI * 2,
-  );
-  ctx.lineTo(x1, win.sill + Math.max(0, grow) * 0.2);
-  ctx.closePath();
-}
-
 // deep crimson velvet on a gilded rod, a gold fringe at the hem, gathered
 // and tied back with gold cord and tassel
 function paintCurtains(ctx, L, fw) {

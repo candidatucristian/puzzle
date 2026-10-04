@@ -114,7 +114,7 @@ export const HINT_DETAILS = {
     'Each block draws one capital letter. Block 1 goes up, right, halfway down, then left to form P. Trace the other three and read the drawings in block-number order.',
   ],
   kinetic: [
-    'Count the straight sides of each polygon, from top to bottom. For the circle, use the rule on the gallery label: its single unbroken curved rim counts as one.',
+    'Count the straight sides of each wooden shape, from top to bottom. For the circle, use the rule on the label: its single unbroken curved rim counts as one.',
     'The four counts are 3, 1, 7 and 5. Convert each to its position in the alphabet: A=1, B=2, C=3, and so on. Read from the highest hanging form to the lowest.',
   ],
   genome: [

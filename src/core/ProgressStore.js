@@ -145,5 +145,3 @@ export class ProgressStore {
     this.#storage.setItem(PROGRESS_KEY, JSON.stringify(this.#state));
   }
 }
-
-export default ProgressStore;

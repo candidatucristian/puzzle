@@ -1,5 +1,7 @@
 **Verificare comercială — The Descipher**
 
+Notă de întreținere, 4 octombrie 2026: raportul și inventarul CSV de mai jos rămân evidența verificării din 30 septembrie. Curățarea proiectului a eliminat ulterior resurse nefolosite, inclusiv familia KG Ten Thousand Reasons, Children Sans, specimenul PDF și unele imagini și sunete. Inventarul istoric nu descrie conținutul distribuției curente; documentele de licență și atribuire ale resurselor păstrate rămân în proiect.
+
 Verificat la 30 septembrie 2026, pe copia locală a proiectului, commit `9353856`. Scop: drepturile resurselor, informațiile pentru cumpărători și pregătirea facturării. Utilizatorul a declarat că resursele sunt descărcate gratuit de pe Pixabay; această declarație nu identifică separat fiecare fișier. Țara și forma juridică a vânzătorului, regimul TVA și piețele de vânzare nu au fost confirmate.
 
 **Rezultat: există condiții de îndeplinit și licențe de documentat înainte de vânzare.** Etude Noire are o licență comercială permisivă identificabilă. Celelalte fonturi locale, frunza din ghiveci și proveniența individuală a resurselor audio/imagine necesită atenție. În aplicație nu există încă un flux de cumpărare, pagini comerciale sau integrare de facturare.

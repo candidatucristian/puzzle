@@ -30,7 +30,7 @@ export function tearOutline(hole, shift = 0) {
   });
 }
 
-export function insidePolygon(point, points) {
+function insidePolygon(point, points) {
   let inside = false;
   for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
     const a = points[i], b = points[j];

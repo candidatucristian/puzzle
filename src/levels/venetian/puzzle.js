@@ -9,7 +9,7 @@ const GLYPHS = [
 ];
 export const clampTilt = value => Math.max(0, Math.min(1, Number.isFinite(value) ? value : VENETIAN_START));
 
-export function cityLetterAt(x, y) {
+function cityLetterAt(x, y) {
   const col = Math.floor((x - 0.105) / 0.79 * 23), row = Math.floor((y - 0.29) / 0.43 * 7);
   if (col < 0 || col >= 23 || row < 0 || row >= 7) return false;
   return GLYPHS[Math.floor(col / 6)][row][col % 6] === '1';

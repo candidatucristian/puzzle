@@ -55,6 +55,7 @@ Add one entry to the ordered data in `src/levels/metadata.js`:
   id: "observatory",
   key: "Observatory",
   name: "Observatory",
+  summary: "A telescope waits under the quiet dome of an old observatory.",
   code: "ORBIT",
   altCode: null,
   hint: {
@@ -68,6 +69,8 @@ Add one entry to the ordered data in `src/levels/metadata.js`:
 ```
 
 Import the class in `src/levels/registry.js`, then add `Observatory: ObservatoryScene` to its scene map. No new global variable or HTML script tag is needed. The interface, final level count, and reference ledger derive their data from the catalog.
+
+The right sidebar displays `summary` automatically. Keep it to a short description of the setting, without hints or the answer. Reserve the solution explanation for the developer-only `description`.
 
 Review the development-only reference ledger at `http://127.0.0.1:5173/tools/levels/`. Its source is `tools/levels/index.html`; it imports the catalog directly and is not included in the shipped build.
 

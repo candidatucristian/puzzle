@@ -31,7 +31,7 @@ const CP = Math.cos(PHI);
 
 // Hand-drawn piece silhouettes, in a 100-unit box: base at y = 0, up is -y.
 // polys and circles are the turned body; lines are cut details.
-export const SHAPES = {
+const SHAPES = {
   P: {
     polys: [
       [

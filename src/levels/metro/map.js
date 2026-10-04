@@ -12,7 +12,7 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
  *  layer of its own (so the scene can breathe light along it), and a glow. */
 
 const K = { room: "mt_room", line: "mt_line", glow: "mt_glow" };
-export const MAP_FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const MAP_FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const AMBER = "255,176,64";
 
 // the other lines: colour, a route across the map (in map units, 0–1), and

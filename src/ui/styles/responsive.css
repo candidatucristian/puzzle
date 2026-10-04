@@ -1,25 +1,19 @@
-/* ── The console on a computer ──
-   Volume on the left, the code plate in the middle, HINT on the right:
-   three grid columns, so they can never ride over one another however
-   narrow the room gets (with the two ends pinned absolutely, a 1280- or
-   1366-wide laptop had the code box over the volume and HINT over the
-   restart key). */
+/* ── The console on a computer: volume beside the code plate ── */
 @media (min-width: 1101px) and (min-height: 561px) {
   #input-area {
     display: grid;
-    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    grid-template-columns: max-content minmax(0, 1fr);
     column-gap: 14px;
     padding: 0 clamp(16px, 2.2vw, 40px);
   }
-  .mute-button,
-  .info-button {
+  .mute-button {
     position: static;
   }
   .mute-button {
     justify-self: start;
   }
-  .info-button {
-    justify-self: end;
+  .input-container {
+    justify-self: center;
   }
 }
 
@@ -42,9 +36,6 @@
   }
   #btn-replay {
     width: 42px;
-  }
-  .info-button {
-    padding: 13px 18px;
   }
   .console-controls {
     padding: 9px 11px;
@@ -80,7 +71,7 @@
     height: 100dvh;
   }
 
-  /* the compact bar: menu · title · full screen · levels. It slides up out
+  /* the compact bar: levels · full screen · level info. It slides up out
      of the way on its handle (max-height, so the room grows into its place) */
   #compact-bar {
     display: flex;
@@ -191,11 +182,6 @@
     border-color: var(--pencil);
     color: var(--pencil-bright);
   }
-  #compact-menu {
-    font-size: 18px;
-    letter-spacing: 0;
-  }
-
   /* the sidebars become drawers */
   #sidebar,
   #right-sidebar-wrapper {
@@ -211,7 +197,6 @@
   #sidebar {
     left: 0;
     padding: 14px 14px 12px;
-    gap: 8px;
     overflow-y: auto;
   }
   #right-sidebar-wrapper {
@@ -229,24 +214,32 @@
     gap: 8px;
     margin-bottom: 10px;
   }
-  #sidebar h1,
-  #right-sidebar h1 {
+  #sidebar h1 {
     font-size: 12px;
     letter-spacing: 3px;
   }
-  #sidebar .menu-btn,
-  #btn-fullscreen {
+  #right-sidebar .menu-btn {
+    min-height: 40px;
     padding: 9px 8px;
     font-size: 11px;
     letter-spacing: 2px;
   }
-  .sidebar-footer {
-    padding: 8px 6px 4px;
-    gap: 5px;
-  }
-  .sidebar-footer span {
-    font-size: 7px;
+  #current-level-name {
+    font-size: calc(16px * var(--reading-scale, 1));
     letter-spacing: 2px;
+  }
+  #current-level-summary {
+    font-size: calc(16px * var(--reading-scale, 1));
+    margin-bottom: 10px;
+  }
+  .level-help {
+    margin-top: 16px;
+    gap: 6px;
+  }
+  .sidebar-actions {
+    margin-top: 16px;
+    padding-top: 16px;
+    gap: 8px;
   }
   .progress-summary {
     gap: 6px;
@@ -276,9 +269,6 @@
   #drawer-scrim[hidden] {
     display: none;
   }
-  .sidebar-footer {
-    padding-top: 12px;
-  }
   #levels-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
@@ -305,8 +295,7 @@
   #input-area .panel-label {
     display: none;
   }
-  .mute-button,
-  .info-button {
+  .mute-button {
     position: static;
   }
   .console-controls {
@@ -346,12 +335,6 @@
     width: 40px;
     font-size: 19px;
   }
-  .info-button {
-    padding: 10px 12px;
-    font-size: 11px;
-    letter-spacing: 2px;
-  }
-
   /* the room's own controls */
   #btn-inspect {
     right: 10px;

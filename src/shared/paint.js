@@ -56,7 +56,7 @@ export function vignette(ctx, W, H, a = 0.6) {
 }
 
 /** A square of radial gradient, for glows. */
-export function radial(size, rgbs, stops) {
+function radial(size, rgbs, stops) {
   const c = makeCanvas(size, size);
   const g = c.getContext("2d");
   const r = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);

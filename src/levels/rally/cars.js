@@ -209,7 +209,7 @@ const tab = (arr, x) => {
 
 // ── the mesh ────────────────────────────────────────────────────────────────
 
-export const PART = {
+const PART = {
   BODY: 1,
   TREAD: 2,
   WALL: 3,
@@ -452,7 +452,7 @@ const RIM_PROFILE = [
 
 // the pod's four lamps and the headlights, for the glare the scene lays over
 // them; the tail lamps for the red glow as a car leaves
-export const LAMPS = [
+const LAMPS = [
   { kind: "pod", p: [2.1, 0.82, -0.48], n: [1, 0, 0] },
   { kind: "pod", p: [2.1, 0.82, -0.17], n: [1, 0, 0] },
   { kind: "pod", p: [2.1, 0.82, 0.17], n: [1, 0, 0] },
@@ -466,7 +466,7 @@ const POD_LAMPS = LAMPS.filter((l) => l.kind === "pod");
 
 let MESH = null;
 /** The car, as one mesh: positions, normals, a part id per vertex, triangles. */
-export function carMesh() {
+function carMesh() {
   if (MESH) return MESH;
   const mb = meshBuilder();
   buildBody(mb);
@@ -579,7 +579,7 @@ const norm3 = (x, y, z) => {
   return [x / l, y / l, z / l];
 };
 const WARM = [1.0, 0.84, 0.64];
-export const STAGE_LIGHTS = [
+const STAGE_LIGHTS = [
   { dir: norm3(-0.68, 0.52, 0.52), col: WARM, I: 2.3, shadow: true },
   { dir: norm3(0.68, 0.52, 0.52), col: WARM, I: 2.3, shadow: true },
   { dir: norm3(-0.3, 0.42, -0.86), col: [1.0, 0.88, 0.74], I: 1.25 },
@@ -1340,7 +1340,7 @@ export function renderCars(opts) {
 
 /** The same, one view at a time: yields after each, returns the set — so a
  *  scene can spread the work over its first frames. */
-export function* renderCarsSteps({ carLenPx, pitchDeg, res = 2, liveries = LIVERIES, panels: rawPanels = [] }) {
+function* renderCarsSteps({ carLenPx, pitchDeg, res = 2, liveries = LIVERIES, panels: rawPanels = [] }) {
   const mesh = carMesh();
   const panels = liveries.map((_, c) => linearPanel(rawPanels[c]));
   yield -1;
@@ -1437,17 +1437,8 @@ const SHEET = "ry_car_";
 const GLARE = "ry_glare";
 const COLS = 6;
 
-/** Paints each car's number panel, renders the set, and registers one sheet
- *  texture per car with a frame per view ("0" … "18"). */
-export function paintCars(textures, opts) {
-  const job = paintCarsSteps(textures, opts);
-  let step = job.next();
-  while (!step.done) step = job.next();
-  return step.value;
-}
-
-/** The same as a job the scene runs a slice at a time (see renderCarsSteps);
- *  nothing is registered until the last step. */
+/** Paint each number panel and render the cars a slice at a time. Registers
+ *  one texture per car, with a frame per view, only on the last step. */
 export function* paintCarsSteps(textures, { numbers, carLenPx, pitchDeg, res = 2 }) {
   const panels = numbers.map((n) => paintPanel(n));
   yield -1;

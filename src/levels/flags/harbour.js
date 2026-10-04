@@ -50,7 +50,7 @@ const C = {
 
 // ── where everything is ─────────────────────────────────────────────────────
 
-export function layoutHarbour(W, H, count) {
+function layoutHarbour(W, H, count) {
   const S = Math.min(W, H);
   const u = Math.min(W / 1000, H / 700);
   const horizon = H * 0.6;
