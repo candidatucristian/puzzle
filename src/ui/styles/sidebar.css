@@ -1,4 +1,4 @@
-/* ── Left Sidebar ── */
+/* ── Level navigation (right on desktop) ── */
 #sidebar {
   width: 280px;
   padding: 34px 22px 26px;
@@ -6,11 +6,12 @@
   flex-direction: column;
   flex-shrink: 0;
   overflow-y: auto;
-  border-right: 1px solid var(--line-dark);
+  order: 1;
+  border-left: 1px solid var(--line-dark);
   box-shadow:
-    inset -1px 0 0 var(--line-light),
-    inset -3px 0 0 var(--pencil-faint),
-    6px 0 24px rgba(0, 0, 0, 0.6);
+    inset 1px 0 0 var(--line-light),
+    inset 3px 0 0 var(--pencil-faint),
+    -6px 0 24px rgba(0, 0, 0, 0.6);
   z-index: 10;
 }
 
@@ -414,6 +415,7 @@ input[type="range"]::-moz-range-track {
   position: relative;
   display: flex;
   flex-shrink: 0;
+  order: -1;
   z-index: 10;
 }
 
@@ -422,11 +424,11 @@ input[type="range"]::-moz-range-track {
   padding: 34px 22px 26px;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--line-dark);
+  border-right: 1px solid var(--line-dark);
   box-shadow:
-    inset 1px 0 0 var(--line-light),
-    inset 3px 0 0 var(--pencil-faint),
-    -6px 0 24px rgba(0, 0, 0, 0.6);
+    inset -1px 0 0 var(--line-light),
+    inset -3px 0 0 var(--pencil-faint),
+    6px 0 24px rgba(0, 0, 0, 0.6);
   overflow-y: auto;
 }
 

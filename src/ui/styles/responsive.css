@@ -182,7 +182,7 @@
     border-color: var(--pencil);
     color: var(--pencil-bright);
   }
-  /* the sidebars become drawers */
+  /* the sidebars become drawers: level info on the left, levels on the right */
   #sidebar,
   #right-sidebar-wrapper {
     position: fixed;
@@ -190,18 +190,18 @@
     bottom: 0;
     z-index: 130;
     width: min(250px, 70vw);
-    transform: translateX(-102%);
     transition: transform 0.28s ease;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
   }
   #sidebar {
-    left: 0;
+    right: 0;
     padding: 14px 14px 12px;
     overflow-y: auto;
+    transform: translateX(102%);
   }
   #right-sidebar-wrapper {
-    right: 0;
-    transform: translateX(102%);
+    left: 0;
+    transform: translateX(-102%);
   }
   #right-sidebar {
     width: 100%;

@@ -829,13 +829,13 @@ function paintBottle(L, b) {
   g.restore();
   // Millilitre-style divisions are etched into the glass; the emphasized
   // graduation is the same height as the liquid surface.
-  const markFont = Math.max(5, Math.min(11, w * 0.12));
+  const markFont = Math.max(6.5, Math.min(11.5, w * 0.17));
   g.save();
   outline();
   g.clip();
   g.textAlign = "right";
   g.textBaseline = "middle";
-  g.font = `600 ${markFont}px ${LABEL_FONT}`;
+  g.font = `700 ${markFont}px ${LABEL_FONT}`;
   g.lineCap = "round";
   const divisions = Array.from({ length: 21 }, (_, i) => ({
     value: (b.capacity * i) / 20,
@@ -850,9 +850,9 @@ function paintBottle(L, b) {
     const isTarget = Math.abs(value - b.n) < 0.001;
     const major = isTarget || divisions.some((mark) => mark.value === value && mark.major);
     const edge = halfWidthAt(y) * 0.78;
-    const length = w * (major ? 0.13 : 0.075);
-    g.strokeStyle = isTarget ? "rgba(255,255,235,0.96)" : "rgba(221,246,250,0.62)";
-    g.lineWidth = isTarget ? Math.max(1.2, w * 0.018) : Math.max(0.65, w * 0.009);
+    const length = w * (major ? 0.16 : 0.09);
+    g.strokeStyle = isTarget ? "rgba(255,255,235,0.98)" : major ? "rgba(221,246,250,0.78)" : "rgba(221,246,250,0.56)";
+    g.lineWidth = isTarget ? Math.max(1.4, w * 0.024) : major ? Math.max(0.9, w * 0.012) : Math.max(0.7, w * 0.009);
     g.beginPath();
     g.moveTo(edge - length, y);
     g.lineTo(edge, y);

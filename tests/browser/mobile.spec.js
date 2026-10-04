@@ -3,14 +3,10 @@ import { mkdirSync } from 'node:fs';
 import { evaluateApp } from './app.js';
 
 // Runs under the "phone" project only: an emulated Pixel 7 held sideways,
-// with touch, a coarse pointer and an 863×360 viewport.
-
-// In a phone's browser the game is not loaded at all (see the last test):
-// these checks run the compact layout as the store app will, inside a
-// native shell that says so through window.Capacitor (ui/platform.js).
+// with touch, a coarse pointer and an 863×360 viewport. These checks use
+// the regular browser entry path, without a native-shell stub.
 async function open(page, { unlocked = true } = {}) {
   await page.addInitScript(unlocked => {
-    window.Capacitor = { isNativePlatform: () => true };
     if (!localStorage.getItem('puzzleComfort')) localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced' }));
     if (unlocked && !localStorage.getItem('puzzleProgress')) {
       localStorage.setItem('puzzleProgressSchema', '2');
@@ -44,7 +40,7 @@ async function resizePhone(page, width, height) {
   }).toBeLessThan(1);
 }
 
-test('in the app a phone gets the compact bar, a tap to begin, and the room filling the screen', async ({ page }) => {
+test('a phone browser can play without a native shell and fills the screen', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, { unlocked: false });
   await expect(page.locator('#rotate-prompt')).toBeHidden();
@@ -70,9 +66,13 @@ test('in the app a phone gets the compact bar, a tap to begin, and the room fill
   expect(errors).toEqual([]);
 });
 
-test('levels open on the left, level info on the right, and settings return from help', async ({ page }) => {
+test('level info opens on the left, levels on the right, and settings return from help', async ({ page }) => {
   await open(page);
   await page.locator('#btn-continue').tap();
+  const infoBox = await page.locator('#right-sidebar-wrapper').boundingBox();
+  const levelsBox = await page.locator('#sidebar').boundingBox();
+  expect(infoBox.x).toBeLessThan(page.viewportSize().width / 2);
+  expect(levelsBox.x).toBeGreaterThan(page.viewportSize().width / 2);
   await expect(page.locator('#sidebar')).not.toBeInViewport();
   await expect(page.locator('#sidebar')).toHaveJSProperty('inert', true);
   await expect(page.locator('#right-sidebar-wrapper')).toHaveJSProperty('inert', true);
@@ -86,7 +86,7 @@ test('levels open on the left, level info on the right, and settings return from
   await page.keyboard.press('Tab');
   await expect(page.locator('#btn-info')).toBeFocused();
   await screenshot(page, 'menu');
-  await page.locator('#drawer-scrim').tap({ position: { x: 30, y: 200 } });
+  await page.locator('#drawer-scrim').tap({ position: { x: page.viewportSize().width - 30, y: 200 } });
   await expect(page.locator('#right-sidebar-wrapper')).not.toBeInViewport();
   await page.locator('#compact-levels').tap();
   await expect(page.locator('#sidebar')).toBeInViewport();
@@ -396,20 +396,5 @@ test('Plotter, Kinetic and Genome keep readable clues inside a small phone and m
     await screenshot(page, `${key}-inspect`);
     await page.locator('#inspect-close').tap();
   }
-  expect(errors).toEqual([]);
-});
-
-test('a phone browser is shown the desktop-only page, and the game is never loaded', async ({ page }) => {
-  const errors = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
-  await expect(page.locator('#desktop-only')).toBeVisible();
-  await expect(page.locator('#desktop-only')).toContainText('PLEASE RETURN ON A DESKTOP');
-  await expect(page.locator('#loading-screen')).toHaveCount(0);
-  await expect(page.locator('#start-screen')).toBeHidden();
-  await expect(page.locator('#game-container canvas')).toHaveCount(0);
-  expect(await page.evaluate(async () => {
-    const entry = [...document.querySelectorAll('script[type="module"][src]')].find(script => new URL(script.src).pathname === '/src/entry.js');
-    return (await import(entry.src)).ready;
-  })).toBeNull();
   expect(errors).toEqual([]);
 });

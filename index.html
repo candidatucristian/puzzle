@@ -33,23 +33,6 @@
     />
   </head>
   <body>
-    <!-- Desktop only: in a browser the game is for computers. A phone or a
-         tablet is shown this page instead, and the game is never loaded
-         (src/ui/platform.js). The store app runs the game on phones. -->
-    <div id="desktop-only" hidden>
-      <div class="desktop-only-card">
-        <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-        <h1>The Descipher</h1>
-        <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-        <p class="desktop-only-msg">
-          This experience was drawn for a large canvas.
-        </p>
-        <p class="desktop-only-sub">
-          NOT AVAILABLE ON MOBILE OR TABLET &mdash; PLEASE RETURN ON A DESKTOP
-        </p>
-      </div>
-    </div>
-
     <!-- Loading screen: rendered before the heavy scripts download.
          An inline script right below drives it; the Phaser BootScene
          reports audio progress and removes it when the game is ready. -->
@@ -69,10 +52,10 @@
     <!-- Compact bar: shown on phones and tablets instead of the two sidebars,
          which become drawers (ui/mobile.js) -->
     <div id="compact-bar">
-      <button id="compact-levels" class="compact-btn" type="button" aria-controls="sidebar" aria-expanded="false">Levels</button>
+      <button id="compact-menu" class="compact-btn" type="button" aria-label="Current level information" aria-controls="right-sidebar-wrapper" aria-expanded="false">Level Info</button>
       <span class="compact-spacer"></span>
       <button id="compact-fullscreen" class="compact-btn" type="button" aria-label="Full screen: hide the bar" title="Full screen: hide the bar">⛶</button>
-      <button id="compact-menu" class="compact-btn" type="button" aria-label="Current level information" aria-controls="right-sidebar-wrapper" aria-expanded="false">Level Info</button>
+      <button id="compact-levels" class="compact-btn" type="button" aria-controls="sidebar" aria-expanded="false">Levels</button>
     </div>
     <div id="drawer-scrim" hidden></div>
     <!-- the handle the top bar slides on: tap to toggle, pull up to hide,

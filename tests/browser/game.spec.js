@@ -28,6 +28,14 @@ async function sceneState(page, expression) {
   }, expression);
 }
 
+test('desktop sidebars place level information on the left and navigation on the right', async ({ page }) => {
+  await launch(page);
+  const info = await page.locator('#right-sidebar-wrapper').boundingBox();
+  const levels = await page.locator('#sidebar').boundingBox();
+  expect(info.x + info.width).toBeLessThan(levels.x);
+  expect(levels.x).toBeGreaterThan(page.viewportSize().width / 2);
+});
+
 test('test access reuses the entry module when its URL has a Vite timestamp', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

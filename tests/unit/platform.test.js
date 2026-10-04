@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isHandheld, desktopOnly } from '../../src/ui/platform.js';
+import { isHandheld } from '../../src/ui/platform.js';
 
 const CHROME_WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36';
 const SAFARI_MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
@@ -25,15 +25,4 @@ test('phones and tablets are known by their user agent, or by having only a fing
   assert.equal(isHandheld({ userAgent: SAFARI_MAC, maxTouchPoints: 5, media: FINGER }), true);
   // an Android phone asking for the desktop site calls itself Linux, but has only a finger
   assert.equal(isHandheld({ userAgent: CHROME_LINUX, maxTouchPoints: 5, media: FINGER }), true);
-});
-
-test('the store app is never turned away, a phone browser is', () => {
-  const phone = (extra = {}) => ({
-    navigator: { userAgent: PIXEL, maxTouchPoints: 5 },
-    matchMedia: (query) => ({ matches: FINGER(query) }),
-    ...extra,
-  });
-  assert.equal(desktopOnly(phone()), true);
-  assert.equal(desktopOnly(phone({ Capacitor: { isNativePlatform: () => true } })), false);
-  assert.equal(desktopOnly({ navigator: { userAgent: CHROME_WINDOWS, maxTouchPoints: 0 }, matchMedia: (query) => ({ matches: MOUSE(query) }) }), false);
 });

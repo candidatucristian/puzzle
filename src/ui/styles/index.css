@@ -6,6 +6,5 @@
 @import './completion.css';
 @import './experience.css';
 @import './responsive.css';
-@import './desktopOnly.css';
 
 .level-btn:focus-visible, #vol-icon-ui:focus-visible { outline: 1px dashed var(--pencil-bright); outline-offset: 3px; }
