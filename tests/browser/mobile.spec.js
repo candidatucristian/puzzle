@@ -32,7 +32,11 @@ async function screenshot(page, name) {
 
 async function resizePhone(page, width, height) {
   await page.setViewportSize({ width, height });
-  await expect.poll(() => sceneState(page, 'scene.scale.width')).toBe(width);
+  await expect.poll(async () => {
+    const box = await page.locator('#game-viewport').boundingBox();
+    const sceneWidth = await sceneState(page, 'scene.scale.width');
+    return Math.abs(box.width - sceneWidth);
+  }).toBeLessThan(1);
   await expect.poll(async () => {
     const canvas = await page.locator('#game-container > canvas').boundingBox();
     const room = await page.locator('#game-viewport').boundingBox();
@@ -52,53 +56,55 @@ test('a phone browser can play without a native shell and fills the screen', asy
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('BinaryTree');
   const canvas = await page.locator('#game-container > canvas').boundingBox();
   const viewport = page.viewportSize();
-  expect(canvas.width).toBeGreaterThan(viewport.width * 0.95);
+  const index = await page.locator('#sidebar').boundingBox();
+  const room = await page.locator('#game-viewport').boundingBox();
+  expect(index.x).toBeGreaterThan(viewport.width / 2);
+  expect(room.x + room.width).toBeLessThan(index.x);
+  expect(room.width).toBeLessThan(viewport.width - index.width);
+  expect(canvas.width).toBeGreaterThan(room.width * 0.95);
   expect(canvas.height).toBeGreaterThan(viewport.height * 0.6);
   // the console sits on one row at the bottom, inside the screen
   const submit = await page.locator('#btn-submit').boundingBox();
-  const replay = await page.locator('#btn-replay').boundingBox();
-  const volume = await page.locator('#vol-icon-ui').boundingBox();
-  expect(Math.abs(submit.y - replay.y)).toBeLessThan(1);
-  expect(Math.abs(submit.y - volume.y)).toBeLessThan(16);
-  expect(replay.x + replay.width).toBeLessThanOrEqual(viewport.width);
-  await expect(page.locator('#btn-info')).not.toBeInViewport();
+  expect(submit.x + submit.width).toBeLessThanOrEqual(viewport.width);
+  await expect(page.locator('#btn-replay')).toBeHidden();
+  await expect(page.locator('#btn-info')).toBeInViewport();
   await screenshot(page, 'room');
   expect(errors).toEqual([]);
 });
 
-test('level info opens on the left, levels on the right, and settings return from help', async ({ page }) => {
+test('the room index stays open while room notes and settings open normally', async ({ page }) => {
   await open(page);
   await page.locator('#btn-continue').tap();
   const infoBox = await page.locator('#right-sidebar-wrapper').boundingBox();
   const levelsBox = await page.locator('#sidebar').boundingBox();
   expect(infoBox.x).toBeLessThan(page.viewportSize().width / 2);
   expect(levelsBox.x).toBeGreaterThan(page.viewportSize().width / 2);
-  await expect(page.locator('#sidebar')).not.toBeInViewport();
-  await expect(page.locator('#sidebar')).toHaveJSProperty('inert', true);
+  await expect(page.locator('#sidebar')).toBeInViewport();
+  await expect(page.locator('#sidebar')).toHaveJSProperty('inert', false);
   await expect(page.locator('#right-sidebar-wrapper')).toHaveJSProperty('inert', true);
   await page.locator('#compact-menu').tap();
   await expect(page.locator('#right-sidebar-wrapper')).toBeInViewport();
   await expect(page.locator('#right-sidebar-wrapper')).toHaveJSProperty('inert', false);
-  await expect(page.locator('#btn-info')).toBeFocused();
+  await expect(page.locator('#right-sidebar-wrapper [data-close-drawer]')).toBeFocused();
   await expect(page.locator('#btn-howto')).toBeHidden();
   await page.keyboard.press('Shift+Tab');
-  await expect(page.locator('#btn-fullscreen')).toBeFocused();
+  await expect(page.locator('#btn-brief-hints')).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.locator('#btn-info')).toBeFocused();
+  await expect(page.locator('#right-sidebar-wrapper [data-close-drawer]')).toBeFocused();
   await screenshot(page, 'menu');
   await page.locator('#drawer-scrim').tap({ position: { x: page.viewportSize().width - 30, y: 200 } });
   await expect(page.locator('#right-sidebar-wrapper')).not.toBeInViewport();
-  await page.locator('#compact-levels').tap();
-  await expect(page.locator('#sidebar')).toBeInViewport();
   await screenshot(page, 'levels');
-  // choosing a room closes the drawer and opens the room
+  // choosing a room updates the game while the index remains in the frame
   await page.locator('.level-btn').nth(9).tap();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Telescope');
-  await expect(page.locator('#sidebar')).not.toBeInViewport();
+  await expect(page.locator('#sidebar')).toBeInViewport();
   // a dialog from the drawer: open, readable, closable
   await page.locator('#compact-menu').tap();
-  await expect(page.locator('#current-level-name')).toHaveText('Telescope');
+  await expect(page.locator('#current-level-number')).toHaveText('ROOM 10');
   await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
+  await page.locator('#right-sidebar-wrapper [data-close-drawer]').tap();
+  await expect(page.locator('#right-sidebar-wrapper')).not.toBeInViewport();
   await page.locator('#btn-options').tap();
   await page.locator('#btn-howto').tap();
   await expect(page.locator('#howto-modal')).not.toHaveClass(/hidden/);
@@ -110,11 +116,8 @@ test('level info opens on the left, levels on the right, and settings return fro
   await expect(page.locator('#btn-howto')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#right-sidebar-wrapper')).not.toBeInViewport();
-  await expect(page.locator('#compact-menu')).toBeFocused();
-  await page.locator('#compact-levels').tap();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#compact-levels')).toBeFocused();
-  await expect(page.locator('#sidebar')).toHaveJSProperty('inert', true);
+  await expect(page.locator('#btn-options')).toBeFocused();
+  await expect(page.locator('#sidebar')).toHaveJSProperty('inert', false);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(page.locator('#sidebar')).toHaveJSProperty('inert', false);
   await expect(page.locator('#right-sidebar-wrapper')).toHaveJSProperty('inert', false);

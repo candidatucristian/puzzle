@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutLab, paintLab, releaseLabArt } from "./lab.js";
 
@@ -42,6 +43,7 @@ export default class ChemistryScene extends BasePuzzleScene {
   }
 
   _build(W, H) {
+    this._movableSparkleCleanups = [];
     const L = layoutLab(W, H);
     const art = paintLab(this, L);
     const k = art.keys;
@@ -57,6 +59,7 @@ export default class ChemistryScene extends BasePuzzleScene {
         .setDepth(-6)
         .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 10 })
         .setData("interactionLabel", "Swirl the bottle");
+      this._movableSparkleCleanups.push(attachMovableSparkles(this, img, { padding: 3 }));
       img.on("pointerdown", () => this._swirl(img, b));
       if (b.glow) {
         const glow = this.add
@@ -222,6 +225,8 @@ export default class ChemistryScene extends BasePuzzleScene {
   }
 
   _teardown() {
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
@@ -232,6 +237,8 @@ export default class ChemistryScene extends BasePuzzleScene {
 
   shutdown() {
     this._onResize = null;
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseLabArt(this.textures);

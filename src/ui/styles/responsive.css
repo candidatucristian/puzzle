@@ -224,10 +224,6 @@
     font-size: 11px;
     letter-spacing: 2px;
   }
-  #current-level-name {
-    font-size: calc(16px * var(--reading-scale, 1));
-    letter-spacing: 2px;
-  }
   #current-level-summary {
     font-size: calc(16px * var(--reading-scale, 1));
     margin-bottom: 10px;

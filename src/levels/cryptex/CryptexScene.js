@@ -2,6 +2,7 @@ import Candle from "./Candle.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { paintStudy, paintLetter, releaseStudyArt } from "./study.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,6 +136,7 @@ export default class CryptexScene extends BasePuzzleScene {
   // ── scene construction ─────────────────────────────────────────────────────
 
   _build(W, H) {
+    this._movableSparkleCleanups = [];
     this._W = W;
     this._H = H;
     const deskY = H * 0.67;
@@ -142,6 +144,7 @@ export default class CryptexScene extends BasePuzzleScene {
 
     const art = paintStudy(this, W, H, deskY);
     this.candle.build(art.candle);
+    this._movableSparkleCleanups.push(attachMovableSparkles(this, this.candle.flame, { padding: 4 }));
     const level = this.candle.lightState.level;
     this._art = art;
     // the room as it is with no candle at all...
@@ -180,7 +183,7 @@ export default class CryptexScene extends BasePuzzleScene {
     const w = this._art.wheel;
     const { cx, cy, R } = w;
     this._wheel = { cx, cy, R };
-    this.add.zone(cx, cy, R * 2, R * 2).setDepth(8)
+    this._wheelZone = this.add.zone(cx, cy, R * 2, R * 2).setDepth(8)
       .setInteractive({ hitArea: new Phaser.Geom.Circle(R, R, R), hitAreaCallback: Phaser.Geom.Circle.Contains, cursor: 'grab' })
       .setData('interactionLabel', 'Drag to turn the wheel');
     this._step = 360 / 26;
@@ -380,6 +383,11 @@ export default class CryptexScene extends BasePuzzleScene {
     });
     this._parchment = p;
     p.setData('interactionLabel', 'Open the letter');
+    this._movableSparkleCleanups.push(attachMovableSparkles(this, p, {
+      bounds: () => ({ x: x0, y: y0, width: Math.max(...xs) - x0, height: Math.max(...ys) - y0 }),
+      enabled: () => !this._overlayOpen && !this.isSolved,
+      padding: 5,
+    }));
 
     // ── reading overlay: the letter, unfolded under the candle ──
     const ov = this.add.container(0, 0).setDepth(60).setVisible(false);
@@ -447,6 +455,8 @@ export default class CryptexScene extends BasePuzzleScene {
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     // destroy rather than just detach: removeAll(true) only took objects off
     // the display list, and a detached interactive object (the envelope, the
@@ -471,6 +481,8 @@ export default class CryptexScene extends BasePuzzleScene {
 
   shutdown() {
     this._onResize = null;
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.candle.removeDom();
     this.tweens.killAll();
     this.time.removeAllEvents();

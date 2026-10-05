@@ -83,3 +83,54 @@ test('answer feedback is readable and clears as soon as the player edits or chan
   await expect(page.locator('#answer-feedback')).toHaveText('Follow the clues in the room. Press Enter to submit.');
   await expect(page.locator('#level-code')).toHaveAttribute('aria-invalid', 'false');
 });
+
+test('interface text cannot be selected and clicking the answer field adds no focus frame', async ({ page }) => {
+  await open(page);
+  const selectionStyles = await page.locator('#current-level-number').evaluate(element => ({
+    body: getComputedStyle(document.body).userSelect,
+    text: getComputedStyle(element).userSelect,
+    input: getComputedStyle(document.querySelector('#level-code')).userSelect,
+  }));
+  expect(selectionStyles).toEqual({ body: 'none', text: 'none', input: 'none' });
+
+  const answer = page.locator('#level-code');
+  const unfocusedStyles = await answer.evaluate(element => {
+    const style = getComputedStyle(element);
+    return { borderColor: style.borderLeftColor, backgroundColor: style.backgroundColor };
+  });
+  await answer.click();
+  const focusedStyles = await answer.evaluate(element => {
+    const style = getComputedStyle(element);
+    return { borderColor: style.borderLeftColor, backgroundColor: style.backgroundColor, outlineStyle: style.outlineStyle };
+  });
+  expect(focusedStyles).toEqual({ ...unfocusedStyles, outlineStyle: 'none' });
+  await answer.fill('CABBAGE');
+  await expect(answer).toHaveValue('CABBAGE');
+});
+
+test('comfort dropdowns have no focus frame and still change their settings', async ({ page }) => {
+  await open(page);
+  await page.locator('#btn-options').click();
+
+  for (const [selector, value] of [['#reading-size', '1.15'], ['#motion-setting', 'reduced']]) {
+    const dropdown = page.locator(selector);
+    const unfocused = await dropdown.evaluate(element => {
+      const style = getComputedStyle(element);
+      return { borderColor: style.borderTopColor, backgroundColor: style.backgroundColor };
+    });
+    await dropdown.click();
+    await expect(dropdown).toBeFocused();
+    const focused = await dropdown.evaluate(element => {
+      const style = getComputedStyle(element);
+      return {
+        borderColor: style.borderTopColor,
+        backgroundColor: style.backgroundColor,
+        outlineStyle: style.outlineStyle,
+        boxShadow: style.boxShadow,
+      };
+    });
+    expect(focused).toEqual({ ...unfocused, outlineStyle: 'none', boxShadow: 'none' });
+    await dropdown.selectOption(value);
+    await expect(dropdown).toHaveValue(value);
+  }
+});

@@ -1,5 +1,6 @@
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
 import { drawLevelLabel } from '../../shared/levelLabel.js';
+import { attachMovableSparkles } from '../../shared/movableSparkles.js';
 import { releaseTextures } from '../../shared/paint.js';
 import { adjustmentKeys } from '../../shared/windowLight.js';
 import { CURTAIN_START, CURTAIN_WIDTH, CURTAIN_TRAVEL, CURTAIN_HOLES, clampCurtain, curtainLayout, curtainLeft, curtainShift, tearOutline } from './puzzle.js';
@@ -28,6 +29,15 @@ export default class CurtainScene extends BasePuzzleScene {
     this._rings = this.add.graphics().setDepth(1);
     this._dragZone = this.add.zone(0, w.y, this._art.clothWidth, this._art.clothHeight).setOrigin(0)
       .setInteractive({ draggable: true, cursor: 'ew-resize' }).setData('interactionLabel', 'Draw the curtain · drag left or right');
+    this._movableSparklesCleanup = attachMovableSparkles(this, this._dragZone, {
+      bounds: () => ({
+        x: this._cloth.x + this._art.clothWidth - 3,
+        y: this._cloth.y,
+        width: 6,
+        height: this._art.clothHeight,
+      }),
+      padding: 4,
+    });
     this._dragZone.on('dragstart', pointer => { this._dragStart = { x: pointer.x, position: this.position }; });
     this._dragZone.on('drag', pointer => {
       if (this._dragStart) this._setPosition(this._dragStart.position + (pointer.x - this._dragStart.x) / (w.w * CURTAIN_TRAVEL));
@@ -78,6 +88,8 @@ export default class CurtainScene extends BasePuzzleScene {
   }
 
   _teardown() {
+    this._movableSparklesCleanup?.();
+    this._movableSparklesCleanup = null;
     this._dragStart = null;
     this._light?.clearMask(); this._lightMask?.destroy(); this._maskShape?.destroy();
     this.tweens.killAll();

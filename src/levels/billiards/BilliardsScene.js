@@ -20,6 +20,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutPub, paintPub, releasePubArt } from "./pub.js";
 
@@ -45,6 +46,7 @@ export default class BilliardsScene extends BasePuzzleScene {
   }
 
   _build(W, H) {
+    this._movableSparkleCleanups = [];
     const L = layoutPub(W, H);
     const art = paintPub(this, L);
     const k = art.keys;
@@ -54,6 +56,7 @@ export default class BilliardsScene extends BasePuzzleScene {
     // the balls down in the marked pockets
     for (const p of art.pockets) {
       const img = this.add.image(p.x, p.y, p.key).setScale(0.5).setDepth(-6);
+      this._movableSparkleCleanups.push(attachMovableSparkles(this, img, { padding: 3 }));
       this.add
         .zone(p.x, p.y, p.r * 2.6, p.r * 2.6)
         .setInteractive({
@@ -71,6 +74,7 @@ export default class BilliardsScene extends BasePuzzleScene {
       .image(L.cue.x, L.cue.y, k.cue)
       .setScale(0.5)
       .setDepth(-6);
+    this._movableSparkleCleanups.push(attachMovableSparkles(this, cue, { padding: 3 }));
     cue
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Nudge the cue ball")
@@ -197,6 +201,8 @@ export default class BilliardsScene extends BasePuzzleScene {
   }
 
   _teardown() {
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
@@ -206,6 +212,8 @@ export default class BilliardsScene extends BasePuzzleScene {
 
   shutdown() {
     this._onResize = null;
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     releasePubArt(this.textures);

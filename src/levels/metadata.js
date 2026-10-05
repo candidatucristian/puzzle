@@ -6,7 +6,7 @@ const metadata = [
   {
     "id": "binarytree",
     "key": "BinaryTree",
-    "name": "Binary Tree",
+    "name": "The Old Tree",
     "summary": "An old tree stands over a locked box, with a note left among its roots.",
     "code": "CABBAGE",
     "altCode": null,
@@ -24,7 +24,7 @@ const metadata = [
   {
     "id": "plantpot",
     "key": "PlantPot",
-    "name": "Plant Pot",
+    "name": "The Moonlit Garden",
     "summary": "A lantern lights a quiet potting bench in the moonlit garden.",
     "code": "FIBO",
     "altCode": "FIBONACCI",
@@ -43,7 +43,7 @@ const metadata = [
   {
     "id": "sequence",
     "key": "Sequence",
-    "name": "Sequence",
+    "name": "The Table of Cards",
     "summary": "Six cards and a handwritten note wait to be examined.",
     "code": "19334488111",
     "altCode": "1 9 33 44 88 111",
@@ -62,7 +62,7 @@ const metadata = [
   {
     "id": "cryptex",
     "key": "Cryptex",
-    "name": "Cryptex",
+    "name": "Candlelight and Brass",
     "summary": "Candlelight catches the engraved letters of a brass mechanism.",
     "code": "ROTOR",
     "altCode": null,
@@ -81,7 +81,7 @@ const metadata = [
   {
     "id": "chessboard",
     "key": "Chessboard",
-    "name": "Chessboard",
+    "name": "The Unfinished Game",
     "summary": "An unfinished game rests on the table in a silent parlour.",
     "code": "HEADACHE",
     "altCode": null,
@@ -100,7 +100,7 @@ const metadata = [
   {
     "id": "mobilephone",
     "key": "MobilePhone",
-    "name": "Mobile Phone",
+    "name": "An Unexpected Call",
     "summary": "An old mobile phone lights up with an incoming call.",
     "code": "GEORGE",
     "altCode": null,
@@ -120,7 +120,7 @@ const metadata = [
   {
     "id": "lightswitch",
     "key": "Lightswitch",
-    "name": "Lightswitch",
+    "name": "A Flicker in the Dark",
     "summary": "A single bulb and a wall switch interrupt the darkness.",
     "code": "POWER",
     "altCode": null,
@@ -140,7 +140,7 @@ const metadata = [
   {
     "id": "tv",
     "key": "TV",
-    "name": "TV",
+    "name": "The Empty Broadcast",
     "summary": "An old television keeps broadcasting into an empty room.",
     "code": "VOID",
     "altCode": "NULL",
@@ -159,7 +159,7 @@ const metadata = [
   {
     "id": "modem",
     "key": "Modem",
-    "name": "Modem",
+    "name": "The Room Beneath the Desk",
     "summary": "Small lights blink on a router beneath the desk lamp.",
     "code": "HTTPS",
     "altCode": null,
@@ -178,7 +178,7 @@ const metadata = [
   {
     "id": "telescope",
     "key": "Telescope",
-    "name": "Telescope",
+    "name": "The Open Window",
     "summary": "A telescope waits beside a window open to the stars.",
     "code": "ORION",
     "altCode": null,
@@ -199,7 +199,7 @@ const metadata = [
   {
     "id": "wires",
     "key": "Wires",
-    "name": "Wires",
+    "name": "Before Sunrise",
     "summary": "Birds settle on the wires above a farmhouse at dawn.",
     "code": "FACADE",
     "altCode": null,
@@ -218,7 +218,7 @@ const metadata = [
   {
     "id": "station",
     "key": "Station",
-    "name": "Station",
+    "name": "The Quiet Station",
     "summary": "The departures board is still lit in a nearly empty station.",
     "code": "EXIT",
     "altCode": null,
@@ -237,7 +237,7 @@ const metadata = [
   {
     "id": "pi",
     "key": "Pi",
-    "name": "Pi",
+    "name": "The Sleeping City",
     "summary": "Across the water, a few windows remain lit in the sleeping skyline.",
     "code": "PI",
     "altCode": "3.14",
@@ -256,7 +256,7 @@ const metadata = [
   {
     "id": "crossing",
     "key": "Crossing",
-    "name": "Crossing",
+    "name": "The Cat on the Crossing",
     "summary": "A quiet street, a wandering cat and a worn pedestrian crossing.",
     "code": "GO",
     "altCode": null,
@@ -275,7 +275,7 @@ const metadata = [
   {
     "id": "flags",
     "key": "Flags",
-    "name": "Flags",
+    "name": "Harbor at Dusk",
     "summary": "Colourful flags stir in the breeze along a sunlit harbour.",
     "code": "DEBRIEFING",
     "altCode": null,
@@ -293,7 +293,7 @@ const metadata = [
   {
     "id": "tapcode",
     "key": "TapCode",
-    "name": "Tap Code",
+    "name": "Marks in Stone",
     "summary": "Someone has carved small marks into an old stone slab.",
     "code": "ESCAPE",
     "altCode": null,
@@ -312,7 +312,7 @@ const metadata = [
   {
     "id": "rally",
     "key": "Rally",
-    "name": "Rally",
+    "name": "The Night Circuit",
     "summary": "Engines cut through the night as cars approach the finish line.",
     "code": "SILVER",
     "altCode": null,
@@ -337,7 +337,7 @@ const metadata = [
   {
     "id": "overtime",
     "key": "Overtime",
-    "name": "Overtime",
+    "name": "After Hours",
     "summary": "The office is empty, but the clocks and desk lamp are still working.",
     "code": "SOIL",
     "altCode": null,
@@ -359,7 +359,7 @@ const metadata = [
   {
     "id": "fireworks",
     "key": "Fireworks",
-    "name": "Fireworks",
+    "name": "Midnight Over Paris",
     "summary": "Fireworks scatter colour over the rooftops of Paris.",
     "code": "NIGHT",
     "altCode": null,
@@ -379,7 +379,7 @@ const metadata = [
   {
     "id": "compass",
     "key": "Compass",
-    "name": "Compass",
+    "name": "The Captain’s Cabin",
     "summary": "A lantern swings above the chart table in a creaking ship's cabin.",
     "code": "LOST",
     "altCode": null,
@@ -400,7 +400,7 @@ const metadata = [
   {
     "id": "bookshelf",
     "key": "Bookshelf",
-    "name": "Bookshelf",
+    "name": "Lamplight in the Library",
     "summary": "Lamplight falls on old books while a cat sleeps above the shelves.",
     "code": "SIGHT",
     "altCode": null,
@@ -420,7 +420,7 @@ const metadata = [
   {
     "id": "chemistry",
     "key": "Chemistry",
-    "name": "Chemistry",
+    "name": "The Apothecary’s Bench",
     "summary": "Graduated glass bottles crowd an abandoned laboratory bench.",
     "code": "FOCUS",
     "altCode": null,
@@ -440,7 +440,7 @@ const metadata = [
   {
     "id": "billiards",
     "key": "Billiards",
-    "name": "Billiards",
+    "name": "The Quiet Pub",
     "summary": "A pool table waits beneath the lights in a quiet pub.",
     "code": "BLIND",
     "altCode": null,
@@ -461,7 +461,7 @@ const metadata = [
   {
     "id": "metro",
     "key": "Metro",
-    "name": "Metro",
+    "name": "Platform After Dark",
     "summary": "A glowing network map lights an otherwise deserted platform.",
     "code": "TRAIN",
     "altCode": null,
@@ -482,7 +482,7 @@ const metadata = [
   {
     "id": "resistors",
     "key": "Resistors",
-    "name": "Resistors",
+    "name": "The Workshop Bench",
     "summary": "A magnifier lamp illuminates a circuit board on the workbench.",
     "code": "1024",
     "altCode": null,
@@ -503,7 +503,7 @@ const metadata = [
   {
     "id": "ripples",
     "key": "Ripples",
-    "name": "Ripples",
+    "name": "Moonlight on the Water",
     "summary": "Rain disturbs a shallow puddle among the engraved paving stones.",
     "code": "DROP",
     "altCode": null,
@@ -523,7 +523,7 @@ const metadata = [
   {
     "id": "vertex",
     "key": "Vertex",
-    "name": "Vertex",
+    "name": "The Strange Arrangement",
     "summary": "A delicate wireframe structure hangs against dark drafting paper.",
     "code": "FACE",
     "altCode": null,
@@ -543,7 +543,7 @@ const metadata = [
   {
     "id": "plotter",
     "key": "Plotter",
-    "name": "Plotter",
+    "name": "The Drafting Desk",
     "summary": "A green terminal glows with the instructions of a silent machine.",
     "code": "PING",
     "altCode": null,
@@ -562,7 +562,7 @@ const metadata = [
   {
     "id": "kinetic",
     "key": "Kinetic",
-    "name": "Kinetic",
+    "name": "The Nursery at Rest",
     "summary": "A baby sleeps beneath a gently swaying mobile in a moonlit purple nursery.",
     "code": "CAGE",
     "altCode": null,
@@ -582,7 +582,7 @@ const metadata = [
   {
     "id": "genome",
     "key": "Genome",
-    "name": "Genome",
+    "name": "The Glass Specimen",
     "summary": "A laboratory display flickers with fragments of a genetic sequence.",
     "code": "SPACE",
     "altCode": null,
@@ -602,7 +602,7 @@ const metadata = [
   {
     "id": "curtain",
     "key": "Curtain",
-    "name": "The Curtain",
+    "name": "The Drawing Room",
     "summary": "Moonlight enters an abandoned room through a worn velvet curtain.",
     "code": "MOTH",
     "altCode": null,
@@ -622,7 +622,7 @@ const metadata = [
   {
     "id": "thesill",
     "key": "TheSill",
-    "name": "The Sill",
+    "name": "The Window Ledge",
     "summary": "Everyday objects rest in silhouette along an old moonlit window.",
     "code": "WAKE",
     "altCode": null,
@@ -641,7 +641,7 @@ const metadata = [
   {
     "id": "venetian",
     "key": "Venetian",
-    "name": "Venetian",
+    "name": "An Evening in Venice",
     "summary": "Beyond the lowered blinds, a thousand distant windows shine.",
     "code": "CITY",
     "altCode": null,

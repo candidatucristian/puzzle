@@ -3,6 +3,7 @@ import { paintRoom, releaseRoom } from "./room.js";
 import './scene.css';
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 
 // Level 7 — "LIGHTSWITCH"
 // Dark room. Open door — warm hallway light. Small switch left of the door.
@@ -47,6 +48,8 @@ export default class LightswitchScene extends BasePuzzleScene {
   }
 
   _teardown() {
+    this._switchSparkleCleanup?.();
+    this._switchSparkleCleanup = null;
     if (this._sparkTimer) { this._sparkTimer.remove(false); this._sparkTimer = null; }
     this.tweens.killAll();
     this.time.removeAllEvents();
@@ -68,6 +71,13 @@ export default class LightswitchScene extends BasePuzzleScene {
     this._litLayer = this.add.image(0, 0, art.lit).setOrigin(0).setDepth(3).setAlpha(0);
     this._sparkGfx = this.add.graphics().setDepth(20);
 
+    const { cx, cy, w, h } = this._geo.sw;
+    const switchZone = this.add.zone(cx, cy, w * 1.6, h * 1.3);
+    this._switchSparkleCleanup = attachMovableSparkles(this, switchZone, {
+      bounds: () => ({ x: cx - w * 0.8, y: cy - h * 0.65, width: w * 1.6, height: h * 1.3 }),
+      enabled: () => !this.isSolved,
+      padding: 4,
+    });
     this._injectDOM(W, H);
   }
 
@@ -320,6 +330,8 @@ const overlay = document.createElement("div");
   replay() { this._letterIdx = 0; this._teardown(); this._build(this._W, this._H); }
 
   shutdown() {
+    this._switchSparkleCleanup?.();
+    this._switchSparkleCleanup = null;
     if (this._sparkTimer) { this._sparkTimer.remove(false); this._sparkTimer = null; }
     this.tweens.killAll(); this.time.removeAllEvents(); this._removeDOM();
     this.children.removeAll(true);

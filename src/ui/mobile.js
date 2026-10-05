@@ -20,7 +20,6 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   const toast = document.getElementById('ui-toast');
   const drawers = {
     menu: { panel: document.getElementById('right-sidebar-wrapper'), button: document.getElementById('compact-menu') },
-    levels: { panel: document.getElementById('sidebar'), button: document.getElementById('compact-levels') },
   };
   // the one bar that slides away, up, on its handle
   const handle = document.getElementById('handle-top');
@@ -54,7 +53,7 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     for (const [name, { panel, button }] of Object.entries(drawers)) {
       const shown = open === name;
       panel.classList.toggle('drawer-open', shown);
-      panel.inert = !shown;
+      panel.inert = compact.matches && !shown;
       button.setAttribute('aria-expanded', String(shown));
     }
     scrim.hidden = !open;
@@ -131,7 +130,7 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   });
 
   for (const [name, { button }] of Object.entries(drawers)) scope.on(button, 'click', () => toggle(name));
-  for (const button of document.querySelectorAll('[data-close-drawer]')) scope.on(button, 'click', close);
+  for (const button of drawers.menu.panel.querySelectorAll('[data-close-drawer]')) scope.on(button, 'click', close);
   scope.on(document.getElementById('compact-fullscreen'), 'click', immersive);
   scope.on(scrim, 'click', close);
   scope.on(document, 'keydown', e => {

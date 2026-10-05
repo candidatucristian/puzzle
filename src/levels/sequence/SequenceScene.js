@@ -1,6 +1,7 @@
 import { playPaperTick, playPuzzleChime } from "../../shared/puzzleSounds.js";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { paintStudy, releaseStudyArt } from "./board.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,6 +68,7 @@ export default class SequenceScene extends BasePuzzleScene {
   _build(W, H) {
     this._W = W;
     this._H = H;
+    this._movableSparkleCleanups = [];
 
     const compact = H < 450;
     const deskY = H * (compact ? 0.68 : 0.74);
@@ -206,6 +208,11 @@ export default class SequenceScene extends BasePuzzleScene {
         .setOrigin(0.5)
         .setInteractive({ draggable: true, useHandCursor: true });
       cont.add(zone);
+      this._movableSparkleCleanups.push(attachMovableSparkles(this, cont, {
+        bounds: () => cont.getBounds(),
+        enabled: () => !this._solved,
+        padding: Math.max(3, s.w * 0.025),
+      }));
 
       // follow the pointer's world position — dragX/dragY are mapped into
       // the container's local space and would drift under rotation/scale
@@ -358,6 +365,8 @@ export default class SequenceScene extends BasePuzzleScene {
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
+    for (const cleanup of this._movableSparkleCleanups || []) cleanup();
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     // destroy rather than just detach: removeAll(true) left the old cards'
@@ -369,6 +378,8 @@ export default class SequenceScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    for (const cleanup of this._movableSparkleCleanups || []) cleanup();
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseStudyArt(this.textures);

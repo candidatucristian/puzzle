@@ -28,12 +28,49 @@ async function sceneState(page, expression) {
   }, expression);
 }
 
-test('desktop sidebars place level information on the left and navigation on the right', async ({ page }) => {
+test('the room index stays in the frame and narrows the game area', async ({ page }) => {
   await launch(page);
-  const info = await page.locator('#right-sidebar-wrapper').boundingBox();
+  const game = await page.locator('#game-viewport').boundingBox();
   const levels = await page.locator('#sidebar').boundingBox();
-  expect(info.x + info.width).toBeLessThan(levels.x);
-  expect(levels.x).toBeGreaterThan(page.viewportSize().width / 2);
+  await expect(page.locator('#sidebar')).toBeInViewport();
+  expect(levels.x).toBeGreaterThan(game.x + game.width);
+  expect(game.width).toBeLessThan(page.viewportSize().width - levels.width);
+});
+
+test('the selected room stays in place with a darker tile and no visible border', async ({ page }) => {
+  await launch(page);
+  const initialRects = await page.locator('.level-btn').evaluateAll(tiles => tiles.slice(0, 2).map(tile => {
+    const tileRect = tile.getBoundingClientRect();
+    const numberRect = tile.querySelector('.level-number').getBoundingClientRect();
+    return { tileWidth: tileRect.width, numberWidth: numberRect.width };
+  }));
+  await navigate(page, 'PlantPot');
+  const currentTile = page.locator('.level-btn[aria-current="step"]');
+  await expect(currentTile).toContainText('The Moonlit Garden');
+  const result = await currentTile.evaluate(element => {
+    const tile = getComputedStyle(element);
+    const number = getComputedStyle(element.querySelector('.level-number'));
+    return {
+      tileWidth: element.getBoundingClientRect().width,
+      numberWidth: element.querySelector('.level-number').getBoundingClientRect().width,
+      borderColor: tile.borderTopColor,
+      shadow: tile.boxShadow,
+      backgroundColor: tile.backgroundColor,
+      numberFill: getComputedStyle(element.querySelector('.level-number'), '::before').content,
+      numberColor: number.color,
+      nameVisible: getComputedStyle(element.querySelector('.level-name')).visibility,
+      previewVisible: getComputedStyle(element.querySelector('.level-preview')).visibility,
+    };
+  });
+  expect(result.borderColor).toBe('rgb(69, 89, 103)');
+  expect(result.shadow).toBe('none');
+  expect(result.backgroundColor).toBe('rgb(11, 20, 29)');
+  expect(result.numberFill).toBe('none');
+  expect(result.numberColor).not.toBe('rgb(17, 24, 32)');
+  expect(result.numberWidth).toBeCloseTo(initialRects[1].numberWidth, 0);
+  expect(result.numberWidth / result.tileWidth).toBeCloseTo(initialRects[1].numberWidth / initialRects[1].tileWidth, 2);
+  expect(result.nameVisible).toBe('visible');
+  expect(result.previewVisible).toBe('visible');
 });
 
 test('test access reuses the entry module when its URL has a Vite timestamp', async ({ page }) => {

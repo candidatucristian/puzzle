@@ -4,14 +4,14 @@ import { evaluateApp } from './app.js';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 
 async function open(page, { unlocked = false, start = true } = {}) {
-  await page.addInitScript(unlocked => {
+  await page.addInitScript(unlockedLevel => {
     if (!localStorage.getItem('puzzleComfort')) localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced' }));
-    if (unlocked && !localStorage.getItem('puzzleProgress')) {
+    if (unlockedLevel > 0 && !localStorage.getItem('puzzleProgress')) {
       localStorage.setItem('puzzleProgressSchema', '2');
-      localStorage.setItem('puzzleUnlockedLevel', '17');
+      localStorage.setItem('puzzleUnlockedLevel', String(unlockedLevel));
     }
     localStorage.setItem('hasPlayedBefore', 'true');
-  }, unlocked);
+  }, typeof unlocked === 'number' ? unlocked : unlocked ? 17 : 0);
   await page.goto('/');
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   if (start) await page.locator('#btn-continue').click();
@@ -26,10 +26,65 @@ async function screenshot(page, name) {
   await page.screenshot({ path: `.artifacts/after/UX-${name}.png` });
 }
 
+test('the title page uses the same cratered moon texture as the garden', async ({ page }) => {
+  await open(page, { start: false, unlocked: true });
+  const moon = page.locator('#start-moon');
+  await expect(moon).toBeVisible();
+  const titleMoon = await moon.evaluate(canvas => ({
+    width: canvas.width,
+    height: canvas.height,
+    centerAlpha: canvas.getContext('2d').getImageData(256, 256, 1, 1).data[3],
+    cornerAlpha: canvas.getContext('2d').getImageData(0, 0, 1, 1).data[3],
+  }));
+  expect(titleMoon.width).toBe(512);
+  expect(titleMoon.height).toBe(512);
+  expect(titleMoon.centerAlpha).toBeGreaterThan(0);
+  expect(titleMoon.cornerAlpha).toBe(0);
+  await navigate(page, 'PlantPot');
+  const sameMoon = await evaluateApp(page, ({ game }) => {
+    const canvas = game.textures.get('tele_moon').getSourceImage();
+    const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      centerAlpha: pixels[(256 * canvas.width + 256) * 4 + 3],
+      cornerAlpha: pixels[3],
+    };
+  });
+  expect(sameMoon).toEqual({
+    width: titleMoon.width,
+    height: titleMoon.height,
+    centerAlpha: titleMoon.centerAlpha,
+    cornerAlpha: titleMoon.cornerAlpha,
+  });
+});
+
+test('the display font preview loads DM Serif Display and keeps the title compact and upright', async ({ page }) => {
+  await open(page, { start: false });
+  const fonts = await page.evaluate(async () => {
+    await document.fonts.load('400 48px "DM Serif Display"', 'The Descipher');
+    return {
+      loaded: document.fonts.check('400 48px "DM Serif Display"', 'The Descipher'),
+      title: getComputedStyle(document.querySelector('#start-title h1')).fontFamily,
+      titleSize: getComputedStyle(document.querySelector('#start-title h1')).fontSize,
+      text: document.querySelector('#start-title h1').innerText.replace(/\s+/g, ' ').trim(),
+    };
+  });
+  expect(fonts.loaded).toBe(true);
+  expect(fonts.title).toContain('DM Serif Display');
+  expect(Number.parseFloat(fonts.titleSize)).toBeLessThanOrEqual(74);
+  expect(fonts.text).toBe('The Descipher');
+  await expect(page.locator('.app-signature')).toHaveCount(0);
+  const headerPositions = await page.evaluate(() => ({
+    actions: document.querySelector('.header-actions').getBoundingClientRect().left,
+    navigation: document.querySelector('.room-navigation').getBoundingClientRect().left,
+  }));
+  expect(headerPositions.actions).toBeLessThan(headerPositions.navigation);
+});
+
 test('hints reveal individually, remember each room, and reset with the game', async ({ page }) => {
   await open(page, { unlocked: true }); await navigate(page, 'Cryptex');
-  await expect(page.locator('#current-level-number')).toHaveText('Level 4');
-  await expect(page.locator('#current-level-name')).toHaveText('Cryptex');
+  await expect(page.locator('#current-level-number')).toHaveText('ROOM 04');
   await expect(page.locator('#current-level-summary')).toHaveText(LEVEL_METADATA[3].summary);
   await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
   await page.locator('#btn-info').click();
@@ -56,8 +111,8 @@ test('hints reveal individually, remember each room, and reset with the game', a
   await page.keyboard.press('Escape'); await page.locator('#btn-options').click();
   await page.locator('#btn-new').click(); await page.locator('#btn-new').click();
   await expect(page.locator('#progress-count')).toHaveText(`0 / ${LEVEL_METADATA.length} solved`);
-  await expect(page.locator('#current-level-name')).toHaveText('Binary Tree');
-  await expect(page.locator('#current-level-state')).toHaveText('Unsolved');
+  await expect(page.locator('#current-level-number')).toHaveText('ROOM 01');
+  await expect(page.locator('#current-level-state')).toHaveCount(0);
   await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
   expect(await evaluateApp(page, ({ services }) => services.hints.count('cryptex'))).toBe(0);
   expect(await evaluateApp(page, ({ services }) => services.preferences.reducedMotion)).toBe(true);
@@ -65,7 +120,7 @@ test('hints reveal individually, remember each room, and reset with the game', a
 
 test('progress, solved rooms, thumbnails and Continue survive reload', async ({ page }) => {
   await open(page);
-  await expect(page.locator('#current-level-state')).toHaveText('Unsolved');
+  await expect(page.locator('#current-level-state')).toHaveCount(0);
   await expect(page.locator('.level-btn').nth(1)).toBeDisabled();
   await page.locator('#level-code').fill('CABBAGE'); await page.locator('#btn-submit').click();
   await expect(page.locator('#progress-count')).toHaveText(`1 / ${LEVEL_METADATA.length} solved`);
@@ -82,10 +137,35 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await page.locator('#btn-continue').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('PlantPot');
   await expect(page.locator('.level-btn').nth(1).locator('img')).toBeVisible();
-  await expect(page.locator('#current-level-name')).toHaveText('Plant Pot');
   await page.locator('.level-btn').first().click();
-  await expect(page.locator('#current-level-name')).toHaveText('Binary Tree');
-  await expect(page.locator('#current-level-state')).toHaveText('Solved');
+  await expect(page.locator('#current-level-state')).toHaveCount(0);
+});
+
+test('header arrows navigate unlocked rooms and the footer shows only the room number', async ({ page }) => {
+  await open(page, { unlocked: 1 });
+  await expect(page.locator('.room-title-line')).toHaveText('ROOM 02');
+  await expect(page.locator('#header-room')).toHaveAttribute('aria-label', 'Current level: The Moonlit Garden, level II');
+  await expect(page.locator('#header-room-name')).toHaveText('The Moonlit Garden');
+  await expect(page.locator('#header-progress')).toHaveText('II');
+  expect(await page.locator('#header-progress').evaluate(el => getComputedStyle(el).fontFamily))
+    .toBe(await page.locator('#header-room').evaluate(el => getComputedStyle(el).fontFamily));
+  expect(await page.locator('#header-progress').evaluate(el => getComputedStyle(el).fontSize))
+    .toBe(await page.locator('#header-room').evaluate(el => getComputedStyle(el).fontSize));
+  expect(await page.locator('#current-level-number').evaluate(el => getComputedStyle(el).fontVariantNumeric))
+    .toContain('lining-nums');
+  await expect(page.locator('#room-previous')).toBeEnabled();
+  await expect(page.locator('#room-next')).toBeDisabled();
+  await page.locator('#room-previous').click();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(0);
+  await expect(page.locator('.room-title-line')).toHaveText('ROOM 01');
+  await expect(page.locator('#header-room')).toHaveAttribute('aria-label', 'Current level: The Old Tree, level I');
+  await expect(page.locator('#header-room-name')).toHaveText('The Old Tree');
+  await expect(page.locator('#header-progress')).toHaveText('I');
+  await expect(page.locator('#room-previous')).toBeDisabled();
+  await page.locator('#room-next').click();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.locator('#current-level-number').evaluate(el => getComputedStyle(el).fontSize)).toBe('19px');
 });
 
 test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page }) => {
@@ -101,12 +181,59 @@ test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page })
     .filter(object => object.type === 'Graphics' && object.depth === 10000).length)).toBe(0);
   const glints = () => evaluateApp(page, ({ services }) => {
     const scene = services.levels.activeScene;
-    return scene.bucketGlints.list.map(glint => ({ visible: glint.visible, alpha: glint.alpha }));
+    return {
+      anchors: scene.bucketGlints.list.slice(0, 4).map(glint => ({ visible: glint.visible, alpha: glint.alpha })),
+      particles: scene._bucketSparklePool.map(particle => ({
+        visible: particle.image.visible,
+        y: particle.image.y,
+        age: particle.age,
+      })),
+    };
   });
-  await expect.poll(async () => (await glints()).filter(glint => glint.visible)).toHaveLength(3);
-  await expect.poll(async () => Math.max(...(await glints()).map(glint => glint.alpha))).toBeGreaterThan(0.4);
+  await expect.poll(async () => (await glints()).anchors.filter(glint => glint.visible)).toHaveLength(4);
+  await expect.poll(async () => Math.max(...(await glints()).anchors.map(glint => glint.alpha))).toBeGreaterThan(0.4);
+  await expect.poll(async () => (await glints()).particles.filter(particle => particle.visible).length).toBeGreaterThan(0);
   await screenshot(page, 'level-2-bucket-sparkle');
+  const risingParticle = await evaluateApp(page, ({ services }) => {
+    const scene = services.levels.activeScene;
+    scene._bucketSparkleTimer = 10000;
+    scene._spawnBucketSparkle();
+    return scene._bucketSparklePool.findIndex(particle => particle.image.visible);
+  });
+  const initialY = await evaluateApp(page, ({ services }, index) =>
+    services.levels.activeScene._bucketSparklePool[index].image.y, risingParticle);
+  await evaluateApp(page, ({ services }) => services.levels.activeScene._updateBucketSparkles(180));
+  const risingY = await evaluateApp(page, ({ services }, index) =>
+    services.levels.activeScene._bucketSparklePool[index].image.y, risingParticle);
+  expect(risingY).toBeLessThan(initialY);
+  await evaluateApp(page, ({ services }) => services.levels.activeScene._updateBucketSparkles(1000));
+  expect(await evaluateApp(page, ({ services }, index) => services.levels.activeScene._bucketSparklePool[index].image.visible, risingParticle)).toBe(false);
 });
+
+for (const [key, expected] of [
+  ['Sequence', 6], ['Curtain', 1], ['Venetian', 1],
+  ['Bookshelf', 5], ['Chemistry', 5], ['Billiards', 6],
+  ['Cryptex', 2], ['MobilePhone', 1], ['Lightswitch', 1],
+  ['Telescope', 1], ['Overtime', 1], ['Compass', 1],
+]) {
+  test(`${key} puzzle items receive sparkle cues`, async ({ page }) => {
+    await open(page, { unlocked: 33 });
+    await evaluateApp(page, ({ services }) => services.preferences.set({ motion: 'system' }));
+    await navigate(page, key);
+    await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene.children.list
+      .filter(object => object.getData?.('movableSparkles')).length)).toBe(expected);
+    if (key === 'Sequence') await screenshot(page, 'sequence-draggable-sparkles');
+  });
+}
+
+for (const key of ['Chessboard', 'TV', 'Modem', 'Wires', 'Station', 'Pi', 'Crossing', 'Flags', 'TapCode', 'Rally', 'Fireworks']) {
+  test(`${key} has no sparkle cues`, async ({ page }) => {
+    await open(page, { unlocked: 33 });
+    await navigate(page, key);
+    await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene.children.list
+      .filter(object => object.getData?.('movableSparkles')).length)).toBe(0);
+  });
+}
 
 test('inspection magnifies Phaser and DOM together and does not operate the puzzle', async ({ page }) => {
   await open(page, { unlocked: true }); await navigate(page, 'Cryptex');

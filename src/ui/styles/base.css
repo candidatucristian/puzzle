@@ -78,11 +78,6 @@
   --grad-panel: linear-gradient(180deg, #23262c, #1a1c21 55%, #131519);
 }
 
-::selection {
-  background: var(--pencil-deep);
-  color: var(--bone);
-}
-
 body {
   margin: 0;
   display: flex;
@@ -93,6 +88,12 @@ body {
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+}
+
+body,
+body * {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* the room takes every touch itself: no page scroll, no double-tap zoom,
@@ -301,4 +302,3 @@ button {
     ),
     linear-gradient(105deg, #17191e, #101216);
 }
-

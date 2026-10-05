@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { CALCULATOR_DIGITS, createCalculator, pressKey } from "./puzzle.js";
 import { paintOffice, releaseOfficeArt, glyph } from "./office.js";
 import { createCalculatorView } from "./calculatorView.js";
@@ -79,6 +80,7 @@ export default class OvertimeScene extends BasePuzzleScene {
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
+    this._movableSparkleCleanups = [];
     this._W = W;
     this._H = H;
     const art = paintOffice(this, W, H, OvertimeScene.KEYPAD);
@@ -145,6 +147,11 @@ export default class OvertimeScene extends BasePuzzleScene {
       .setDepth(9)
       .setInteractive({ useHandCursor: true })
       .setData('interactionLabel', 'Use calculator');
+    this._movableSparkleCleanups.push(attachMovableSparkles(this, this._calculatorTarget, {
+      bounds: () => this._calculatorTarget.getBounds(),
+      enabled: () => !this.isSolved,
+      padding: 5,
+    }));
     this._openOnTap(this._calculatorTarget);
   }
 
@@ -283,6 +290,8 @@ export default class OvertimeScene extends BasePuzzleScene {
   // stays. Objects are destroyed, not just detached — a detached zone would
   // go on catching clicks where a key used to be.
   _teardown() {
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
@@ -292,6 +301,8 @@ export default class OvertimeScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this._calculatorView?.destroy();
     this._calculatorView = null;
     this.tweens.killAll();

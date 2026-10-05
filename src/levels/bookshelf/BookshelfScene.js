@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst } from "../../shared/paint.js";
 import { layoutLibrary, paintLibrary, releaseLibraryArt } from "./library.js";
 
@@ -41,6 +42,7 @@ export default class BookshelfScene extends BasePuzzleScene {
   }
 
   _build(W, H) {
+    this._movableSparkleCleanups = [];
     const L = layoutLibrary(W, H);
     const art = paintLibrary(this, L);
     this._L = L;
@@ -56,6 +58,7 @@ export default class BookshelfScene extends BasePuzzleScene {
         .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 8 })
         .setData("interactionLabel", "Pull the book");
       const home = { x: img.x, y: img.y };
+      this._movableSparkleCleanups.push(attachMovableSparkles(this, img, { padding: 3 }));
       img.on("pointerdown", () => this._pull(img, home, L));
       return img;
     });
@@ -161,6 +164,8 @@ export default class BookshelfScene extends BasePuzzleScene {
   }
 
   _teardown() {
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
@@ -171,6 +176,8 @@ export default class BookshelfScene extends BasePuzzleScene {
 
   shutdown() {
     this._onResize = null;
+    this._movableSparkleCleanups?.forEach(cleanup => cleanup());
+    this._movableSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseLibraryArt(this.textures);

@@ -1,5 +1,6 @@
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
 import { drawLevelLabel } from '../../shared/levelLabel.js';
+import { attachMovableSparkles } from '../../shared/movableSparkles.js';
 import { releaseTextures } from '../../shared/paint.js';
 import { adjustmentKeys } from '../../shared/windowLight.js';
 import { VENETIAN_START, VENETIAN_ROWS, clampTilt, blindSlits, venetianLayout } from './puzzle.js';
@@ -26,6 +27,7 @@ export default class VenetianScene extends BasePuzzleScene {
     const grip = Math.max(24, Math.min(44, W * 0.055));
     this._pull = this.add.zone(L.cordX, 0, grip, Math.max(grip, H * 0.075))
       .setInteractive({ draggable: true, cursor: 'ns-resize' }).setData('interactionLabel', 'Tilt the slats · draw the cord up or down');
+    this._movableSparklesCleanup = attachMovableSparkles(this, this._pull, { padding: 3 });
     this._pull.on('dragstart', pointer => { this._dragStart = { y: pointer.y, tilt: this.tilt }; });
     this._pull.on('drag', pointer => {
       if (this._dragStart) this._setTilt(this._dragStart.tilt + (pointer.y - this._dragStart.y) / L.pullTravel);
@@ -78,6 +80,8 @@ export default class VenetianScene extends BasePuzzleScene {
   }
 
   _teardown() {
+    this._movableSparklesCleanup?.();
+    this._movableSparklesCleanup = null;
     this._dragStart = null;
     this._city?.clearMask(); this._slitMask?.destroy(); this._maskShape?.destroy();
     this.tweens.killAll();

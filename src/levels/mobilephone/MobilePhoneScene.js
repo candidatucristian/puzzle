@@ -3,6 +3,7 @@ import DeskView from "./DeskView.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { PENCIL } from "../../shared/theme.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,6 +133,14 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     this.createKeypad();
 
     this.setPhoneScale();
+    this._phoneSparkleCleanup = attachMovableSparkles(this, this.phoneContainer, {
+      bounds: () => {
+        const { x, y, s } = this._phoneBase;
+        return { x: x - 170 * s, y: y - 360 * s, width: 340 * s, height: 720 * s };
+      },
+      enabled: () => !this.isSolved,
+      padding: 5,
+    });
 
     this.vibrationSound = this.services.audio.addSceneSound(this, "phone_vib", {
       gain: 0.25,
@@ -1087,6 +1096,8 @@ export default class MobilePhoneScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    this._phoneSparkleCleanup?.();
+    this._phoneSparkleCleanup = null;
     for (const handler of this._audioUnlockHandlers) {
       this.sound.off(Phaser.Sound.Events.UNLOCKED, handler);
     }

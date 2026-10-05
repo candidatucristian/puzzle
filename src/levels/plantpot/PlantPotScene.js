@@ -328,31 +328,43 @@ export default class PlantPotScene extends BasePuzzleScene {
       .setScale(k);
     if (!this.isSolved && this.currentStep < 5) {
       this.bucketGlints = this.add.container(BUCKET_X, -BUCKET.h / 2);
+      this._bucketSparklePool = [];
       for (const [i, x, y] of [
         [0, -BUCKET.topR - 2, -7],
         [1, BUCKET.topR + 2, -1],
         [2, -BUCKET.footR - 3, BUCKET.h / 2 - 1],
+        [3, 2, -BUCKET.h / 2 - 3],
       ]) {
         const glint = this.add.image(x, y, this._art.keys.sparkle)
           .setBlendMode("ADD")
-          .setDisplaySize(8 / cm, 8 / cm)
+          .setTint(0xffe7b0)
+          .setDisplaySize(12 / cm, 12 / cm)
           .setAlpha(0.2);
         const scale = glint.scaleX;
-        glint.setScale(scale * 0.7);
+        glint.setScale(scale * 0.65);
         this.bucketGlints.add(glint);
         this.ambientTween({
           targets: glint,
-          alpha: 0.62,
-          scaleX: scale * 1.15,
-          scaleY: scale * 1.15,
-          duration: 460,
-          delay: 500 + i * 720,
+          alpha: 0.72,
+          scaleX: scale * 1.05,
+          scaleY: scale * 1.05,
+          duration: 380,
+          delay: 250 + i * 440,
           yoyo: true,
           repeat: -1,
-          repeatDelay: 1800 + i * 240,
+          repeatDelay: 1100 + i * 160,
           ease: "Sine.easeInOut",
         });
       }
+      for (let i = 0; i < 16; i++) {
+        const image = this.add.image(0, 0, this._art.keys.sparkle)
+          .setBlendMode("ADD")
+          .setTint(i % 3 === 0 ? 0xffc977 : 0xffedc2)
+          .setVisible(false);
+        this.bucketGlints.add(image);
+        this._bucketSparklePool.push({ image, age: 0, life: 0, x: 0, y: 0, drift: 0, rise: 0, size: 0 });
+      }
+      this._bucketSparkleTimer = 100;
     }
     this.streamGfx = this.add.graphics();
     this.dropLayer = this.add.container(0, 0);
@@ -384,6 +396,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     this._updateStream();
     if (this.bucketGlints && this.bucket) {
       this.bucketGlints.setPosition(this.bucket.x, this.bucket.y).setRotation(this.bucket.rotation);
+      this._updateBucketSparkles(Math.min(delta || 16, 100));
     }
     for (const f of this._fireflies) f.img.setVisible(this.ambientMotion);
     this._shootGfx.setVisible(this.ambientMotion);
@@ -502,10 +515,62 @@ export default class PlantPotScene extends BasePuzzleScene {
     this.bucketShadow.setAlpha(Math.max(0, 1 - lift / 25));
   }
 
+  _updateBucketSparkles(delta) {
+    if (!this.ambientMotion || !this.bucketGlints.visible) {
+      this._resetBucketSparkles();
+      return;
+    }
+    this._bucketSparkleTimer -= delta;
+    if (this._bucketSparkleTimer <= 0) {
+      this._spawnBucketSparkle();
+      this._bucketSparkleTimer = 80 + Math.random() * 100;
+    }
+    for (const particle of this._bucketSparklePool) {
+      if (particle.age >= particle.life) continue;
+      particle.age = Math.min(particle.life, particle.age + delta);
+      const progress = particle.age / particle.life;
+      particle.image.setPosition(
+        particle.x + particle.drift * progress,
+        particle.y - particle.rise * progress,
+      );
+      particle.image.setAlpha(Math.sin(progress * Math.PI) * 0.82);
+      particle.image.setScale((particle.size * (1 - progress * 0.45)) / particle.image.width);
+      if (progress >= 1) particle.image.setVisible(false);
+    }
+  }
+
+  _spawnBucketSparkle() {
+    const particle = this._bucketSparklePool.find(item => item.age >= item.life);
+    if (!particle) return;
+    const side = Math.random() < 0.5 ? -1 : 1;
+    particle.age = 0;
+    particle.life = 550 + Math.random() * 400;
+    particle.x = side * (BUCKET.topR * (0.45 + Math.random() * 0.5));
+    particle.y = -BUCKET.h * (0.15 + Math.random() * 0.65);
+    particle.drift = (Math.random() - 0.5) * 5;
+    particle.rise = 7 + Math.random() * 8;
+    particle.size = 6 + Math.random() * 4;
+    particle.image
+      .setPosition(particle.x, particle.y)
+      .setDisplaySize(particle.size, particle.size)
+      .setAlpha(0.82)
+      .setVisible(true);
+  }
+
+  _resetBucketSparkles() {
+    if (!this._bucketSparklePool) return;
+    this._bucketSparkleTimer = 100;
+    for (const particle of this._bucketSparklePool) {
+      particle.age = particle.life;
+      particle.image.setVisible(false);
+    }
+  }
+
   triggerPour() {
     if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
     this.isAnimating = true;
     this.bucketGlints?.setVisible(false);
+    this._resetBucketSparkles();
     this._pouring = this.currentStep;
     this.input.setDraggable(this.bucket, false);
     this.services.audio.playSfx("wateringplant", 1, this);

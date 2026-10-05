@@ -14,10 +14,16 @@ import { mountProgress } from './progress.js';
 import { mountInspection } from './inspection.js';
 import { mountInteractionFeedback } from './interactions.js';
 import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
+import { createMoonCanvas } from '../shared/moon.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
   const start = byId('start-screen');
+  const moon = byId('start-moon');
+  const moonArt = createMoonCanvas();
+  moon.width = moonArt.width;
+  moon.height = moonArt.height;
+  moon.getContext('2d').drawImage(moonArt, 0, 0);
   const input = byId('level-code');
   const feedback = byId('answer-feedback');
   let inspection, mobile, suspendedInput;

@@ -22,8 +22,7 @@
   margin-bottom: 26px;
 }
 
-#sidebar h1,
-#current-level-name {
+#sidebar h1 {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 700;
@@ -437,20 +436,12 @@ input[type="range"]::-moz-range-track {
   margin-bottom: 20px;
 }
 
-#current-level-name {
-  font-size: calc(18px * var(--reading-scale, 1));
-  line-height: 1.45;
-  letter-spacing: 2px;
-  overflow-wrap: anywhere;
-}
-
 #right-sidebar > *,
 #sidebar > * {
   flex-shrink: 0;
 }
 
 .level-kicker,
-.level-state,
 #current-hint-count {
   margin: 0;
   color: var(--bone-dim);
@@ -472,15 +463,6 @@ input[type="range"]::-moz-range-track {
   font-size: calc(18px * var(--reading-scale, 1));
   line-height: 1.6;
   text-align: center;
-}
-
-.level-state {
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.level-state.solved {
-  color: var(--pencil-bright);
 }
 
 .level-help {

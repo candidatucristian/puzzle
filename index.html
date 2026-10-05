@@ -63,11 +63,6 @@
     <div id="film-grain"></div>
 
     <header id="compact-bar" class="app-header">
-      <div class="app-signature" aria-label="The Descipher, a nocturnal puzzle collection">
-        <svg class="ui-icon signature-moon" aria-hidden="true"><use href="#icon-moon"/></svg>
-        <div><span class="signature-name">The Descipher</span><span class="signature-caption">A nocturnal puzzle collection</span></div>
-      </div>
-      <button id="compact-levels" class="header-button" type="button" aria-controls="sidebar" aria-expanded="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-index"/></svg><span>Rooms</span><span id="header-progress" class="header-count"></span></button>
       <div class="header-actions">
         <div class="volume-widget">
           <button id="vol-icon-ui" class="icon-button" type="button" aria-label="Mute all audio"><svg class="ui-icon" data-audio-icon aria-hidden="true"><use href="#icon-sound"/></svg></button>
@@ -78,6 +73,17 @@
         <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
         <button id="compact-fullscreen" class="icon-button" type="button" aria-label="Full screen: hide the header"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg></button>
       </div>
+      <div class="room-navigation" aria-label="Room navigation">
+        <button id="room-previous" class="room-step-button" type="button" aria-label="Previous room" title="Previous room">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>
+        </button>
+        <div id="header-room" aria-label="Current room">
+          <span id="header-room-name"></span><span id="header-progress" class="header-count"></span>
+        </div>
+        <button id="room-next" class="room-step-button" type="button" aria-label="Next room" title="Next room">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>
+        </button>
+      </div>
     </header>
     <div id="drawer-scrim" hidden></div>
     <!-- the handle the top bar slides on: tap to toggle, pull up to hide,
@@ -85,30 +91,30 @@
     <button id="handle-top" class="ui-handle" type="button" aria-controls="compact-bar" aria-expanded="true" aria-label="Hide the top bar"></button>
     <p id="ui-toast" role="status" hidden></p>
 
-    <!-- Level navigation -->
-    <aside id="sidebar" aria-label="Room index" role="dialog" aria-modal="true">
-      <div class="drawer-heading">
-        <div><p class="eyebrow">The collection</p><h2>The room index</h2></div>
-        <button class="icon-button" type="button" data-close-drawer aria-label="Close room index"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
-      </div>
-      <div class="progress-summary">
-        <span id="progress-count"></span>
-        <progress id="room-progress" value="0" aria-label="Rooms solved"></progress>
-        <span id="save-status" role="status" aria-live="polite"></span>
-      </div>
-      <div id="levels-grid"></div>
-      <p class="drawer-footnote">Every room you solve opens another.</p>
-    </aside>
+    <div id="play-area">
+      <!-- Level navigation -->
+      <aside id="sidebar" aria-label="Room index">
+        <div class="drawer-heading">
+          <div><p class="eyebrow">The collection</p></div>
+        </div>
+        <div class="progress-summary">
+          <span id="progress-count"></span>
+          <progress id="room-progress" value="0" aria-label="Rooms solved"></progress>
+          <span id="save-status" role="status" aria-live="polite"></span>
+        </div>
+        <div id="levels-grid"></div>
+        <p class="drawer-footnote">Every room you solve opens another.</p>
+      </aside>
 
-    <!-- Game Area -->
-    <div id="game-wrapper">
+      <!-- Game Area -->
+      <div id="game-wrapper">
       <!-- The opening title card -->
       <div id="start-screen">
         <canvas id="start-particles"></canvas>
-        <div class="start-moon" aria-hidden="true"><span></span></div>
+        <canvas id="start-moon" class="start-moon" aria-hidden="true"></canvas>
         <div id="start-title">
           <p class="eyebrow">For the quietly curious</p>
-          <h1>Every room<br>keeps a <em>secret.</em></h1>
+          <h1>The<br><span>Descipher</span></h1>
           <p class="start-description">A detail out of place. A pattern in the dark.<br>Take your time. Let the ordinary become a clue.</p>
         </div>
         <div id="start-bottom">
@@ -186,8 +192,7 @@
       <!-- Control Console -->
       <div id="input-area">
         <div class="current-room">
-          <div class="room-meta"><p id="current-level-number" class="eyebrow"></p><p id="current-level-state" class="level-state"></p></div>
-          <h2 id="current-level-name"></h2>
+          <div class="room-title-line"><p id="current-level-number" class="eyebrow"></p></div>
           <button id="compact-menu" class="text-button" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-notes"/></svg>Room notes</button>
         </div>
         <div class="input-container">

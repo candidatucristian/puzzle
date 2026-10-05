@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { layoutCabin, paintCabin, releaseCabinArt, MAP_FONT } from "./cabin.js";
 import { COMPASS_BEARINGS } from "./puzzle.js";
 
@@ -63,6 +64,7 @@ export default class CompassScene extends BasePuzzleScene {
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
+    this._mapSparkleCleanups = [];
     const L = layoutCabin(W, H);
     const art = paintCabin(this, L);
     const k = art.keys;
@@ -184,6 +186,10 @@ export default class CompassScene extends BasePuzzleScene {
       .setData("interactionLabel", "Open the map")
       .setDepth(5)
       .on("pointerdown", () => this._openMap());
+    this._mapSparkleCleanups.push(attachMovableSparkles(this, mapZone, {
+      enabled: () => !this._sheet && !this.isSolved,
+      padding: 5,
+    }));
     this._zones = [glassZone, mapZone];
 
     this.levelText = drawLevelLabel(this, W, H);
@@ -558,6 +564,8 @@ export default class CompassScene extends BasePuzzleScene {
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
+    this._mapSparkleCleanups?.forEach(cleanup => cleanup());
+    this._mapSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
@@ -570,6 +578,8 @@ export default class CompassScene extends BasePuzzleScene {
 
   shutdown() {
     this._onResize = null;
+    this._mapSparkleCleanups?.forEach(cleanup => cleanup());
+    this._mapSparkleCleanups = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseCabinArt(this.textures);

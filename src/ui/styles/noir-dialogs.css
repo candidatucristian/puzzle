@@ -183,6 +183,13 @@
   color-scheme: dark;
 }
 
+#options-modal .comfort-row select:focus,
+#options-modal .comfort-row select:focus-visible {
+  border-color: #526371;
+  outline: none;
+  box-shadow: none;
+}
+
 .comfort-row p,
 .comfort-caption {
   grid-column: 1 / -1;

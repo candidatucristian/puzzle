@@ -4,6 +4,7 @@ import { makeMoonTexture } from "../../shared/moon.js";
 import { ConstellationHover, HOVER_TUNE } from "./constellations.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "TELESCOPE"  ·  code: ORION  ·  TOOL (Braille alphabet)
@@ -184,6 +185,12 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._room.add(sk);
     this._roomSketch = sk;
     this._roomArch = drawRoom(this, sk, W, H);
+    const telescopeHitArea = this.add.zone(0.54 * W - W / 2, 0.61 * H - H / 2, W * 0.22, H * 0.62);
+    sk.add(telescopeHitArea);
+    this._telescopeSparkleCleanup = attachMovableSparkles(this, telescopeHitArea, {
+      enabled: () => this.phase === PHASE.ROOM && !this.isSolved,
+      padding: 5,
+    });
 
     this._breath = this.ambientTween({
       targets: sk,
@@ -784,6 +791,8 @@ export default class TelescopeScene extends BasePuzzleScene {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   _teardown() {
+    this._telescopeSparkleCleanup?.();
+    this._telescopeSparkleCleanup = null;
     this.tweens.killAll();
     // destroy rather than just detach: removeAll(true) only took objects off
     // the display list, and a detached zone stays interactive — the back
@@ -810,6 +819,8 @@ export default class TelescopeScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    this._telescopeSparkleCleanup?.();
+    this._telescopeSparkleCleanup = null;
     this._stopAmbient();
     this.tweens.killAll();
     this.time.removeAllEvents();

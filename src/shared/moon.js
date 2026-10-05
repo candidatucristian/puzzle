@@ -3,8 +3,7 @@
  *  the session under whatever key the scene asks for. */
 
 // cratered moon with soft halo, painted once onto a canvas texture
-export function makeMoonTexture(textures, key) {
-  if (textures.exists(key)) return;
+export function createMoonCanvas() {
   const S = 512;
   const c = document.createElement("canvas");
   c.width = c.height = S;
@@ -113,5 +112,10 @@ export function makeMoonTexture(textures, key) {
   ctx.fill();
   ctx.restore();
 
-  textures.addCanvas(key, c);
+  return c;
+}
+
+export function makeMoonTexture(textures, key) {
+  if (textures.exists(key)) return;
+  textures.addCanvas(key, createMoonCanvas());
 }

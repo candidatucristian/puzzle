@@ -6,6 +6,7 @@ are recorded in `sources.json`.
 
 | Family | Styles | Weights | Purpose |
 | --- | --- | --- | --- |
+| DM Serif Display | Normal | 400 | Display headings |
 | Cormorant Garamond | Normal, italic | Variable, 300–700 | Display headings and editorial accents |
 | IBM Plex Sans | Normal | Variable, 100–700 | Readable interface labels and instructions |
 | IBM Plex Mono | Normal | 400 | Codes and compact numeric details |
@@ -23,6 +24,10 @@ The complete SIL Open Font License 1.1 is retained in
 IBM Plex Sans and IBM Plex Mono are copyright 2017 IBM Corp., with Reserved Font
 Name "Plex". [Project](https://github.com/IBM/plex). Their complete SIL Open Font
 License 1.1 is retained in `IBM-Plex-OFL.txt`.
+
+DM Serif Display is copyright 2014 The DM Serif Display Project Authors.
+[Project](https://github.com/google/fonts/tree/main/ofl/dmserifdisplay).
+The complete SIL Open Font License 1.1 is retained in `DM-Serif-Display-OFL.txt`.
 
 These licenses allow embedding and redistribution with the game. Keep their
 copyright notices and license files with the font files. The downloaded font

@@ -1,5 +1,17 @@
 ﻿[
     {
+        "File":  "dm-serif-display-latin-400.woff2",
+        "Uri":  "https://fonts.gstatic.com/s/dmserifdisplay/v17/-nFnOHM81r4j6k0gjAW3mujVU2B2G_Bx0g.woff2"
+    },
+    {
+        "File":  "dm-serif-display-latin-ext-400.woff2",
+        "Uri":  "https://fonts.gstatic.com/s/dmserifdisplay/v17/-nFnOHM81r4j6k0gjAW3mujVU2B2G_5x0ujy.woff2"
+    },
+    {
+        "File":  "DM-Serif-Display-OFL.txt",
+        "Uri":  "https://raw.githubusercontent.com/google/fonts/main/ofl/dmserifdisplay/OFL.txt"
+    },
+    {
         "File":  "cormorant-garamond-latin-variable.woff2",
         "Uri":  "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2"
     },

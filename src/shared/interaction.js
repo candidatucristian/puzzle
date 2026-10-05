@@ -1,5 +1,5 @@
-/** A common, non-destructive focus frame for Phaser objects. Existing object
- * animation, hit areas and puzzle handlers remain owned by each scene. */
+/** Share interaction labels and cursor feedback without drawing over puzzle
+ * objects. Existing hit areas and handlers remain owned by each scene. */
 export function attachSceneFeedback(scene) {
   let target = null;
   const emit = detail => scene.game.events.emit('puzzle:interaction', detail);

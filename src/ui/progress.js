@@ -1,11 +1,20 @@
 import { RoomPreviewStore } from '../core/RoomPreviewStore.js';
+import { toRoman } from './transitions.js';
 
 export function mountProgress(scope, { game, levels, storage, navigate, canNavigate }) {
   const grid = document.getElementById('levels-grid');
+  const previous = document.getElementById('room-previous');
+  const next = document.getElementById('room-next');
   const previews = new RoomPreviewStore(storage, levels.definitions);
   const tiles = [];
   let captureTimer, captureGeneration = 0;
   grid.replaceChildren();
+  scope.on(previous, 'click', () => {
+    if (canNavigate() && levels.currentIndex > 0) navigate(levels.currentIndex - 1);
+  });
+  scope.on(next, 'click', () => {
+    if (canNavigate() && levels.currentIndex < levels.unlockedIndex) navigate(levels.currentIndex + 1);
+  });
   levels.definitions.forEach((level, index) => {
     const tile = document.createElement('button');
     tile.type = 'button'; tile.dataset.levelId = level.id;
@@ -30,7 +39,7 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       tile.classList.toggle('solved', solved);
       tile.disabled = !allowed;
       tile.setAttribute('aria-disabled', String(!allowed));
-      name.textContent = allowed ? level.name : 'An undiscovered room';
+      name.textContent = allowed ? level.name : 'Locked room';
       status.textContent = !allowed ? 'Locked' : current ? solved ? 'Revisiting · solved' : 'Currently exploring' : solved ? 'Solved · revisit' : 'Ready to explore';
       tile.setAttribute('aria-label', `Level ${index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
       if (current) tile.setAttribute('aria-current', 'step'); else tile.removeAttribute('aria-current');
@@ -42,7 +51,16 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     });
     const done = levels.completedCount, total = levels.definitions.length;
     document.getElementById('progress-count').textContent = `${done} / ${total} solved`;
-    document.getElementById('header-progress').textContent = `${String(done).padStart(2, '0')} / ${total}`;
+    const currentLevel = levels.definitions[levels.currentIndex];
+    const romanLevel = toRoman(levels.currentIndex + 1);
+    document.getElementById('header-room-name').textContent = currentLevel.name;
+    document.getElementById('header-progress').textContent = romanLevel;
+    document.getElementById('header-room').setAttribute('aria-label', `Current level: ${currentLevel.name}, level ${romanLevel}`);
+    previous.disabled = levels.currentIndex <= 0;
+    next.disabled = levels.currentIndex >= levels.unlockedIndex;
+    next.setAttribute('aria-label', `Next room${next.disabled ? ' (locked)' : ''}`);
+    next.title = next.disabled ? 'Solve this room to unlock the next one' : 'Next room';
+    previous.setAttribute('aria-label', `Previous room${previous.disabled ? ' (first room)' : ''}`);
     const meter = document.getElementById('room-progress'); meter.max = total; meter.value = done;
     const save = document.getElementById('save-status');
     save.textContent = levels.saved ? 'Saved on this device' : 'Progress kept for this session only';
