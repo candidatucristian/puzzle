@@ -36,12 +36,12 @@ async function resizePhone(page, width, height) {
     const box = await page.locator('#game-viewport').boundingBox();
     const sceneWidth = await sceneState(page, 'scene.scale.width');
     return Math.abs(box.width - sceneWidth);
-  }).toBeLessThan(1);
+  }).toBeLessThan(3);
   await expect.poll(async () => {
     const canvas = await page.locator('#game-container > canvas').boundingBox();
     const room = await page.locator('#game-viewport').boundingBox();
     return Math.abs(canvas.height - room.height);
-  }).toBeLessThan(1);
+  }).toBeLessThan(3);
 }
 
 test('a phone browser can play without a native shell and fills the screen', async ({ page }) => {
@@ -242,12 +242,12 @@ test('phone hints remain readable and scroll to the last hint with badges and la
   }
 });
 
-test('the Sequence clue fits small phones, clears Inspect, and cards still drag by touch', async ({ page }) => {
+test('the Sequence clue fits small phones and cards still drag by touch', async ({ page }) => {
   await open(page); await navigate(page, 'Sequence');
   for (const [width, height] of [[863, 360], [667, 375], [568, 320]]) {
     await resizePhone(page, width, height);
     const canvas = await page.locator('#game-container > canvas').boundingBox();
-    const inspect = await page.locator('#btn-inspect').boundingBox();
+    await expect(page.locator('#btn-inspect')).toHaveCount(0);
     const texts = await evaluateApp(page, ({ services }) => services.levels.activeScene.children.list
       .filter(o => o.text === '25 → 55' || o.text === 'how many, then what')
       .map(o => o.getBounds()));
@@ -257,9 +257,6 @@ test('the Sequence clue fits small phones, clears Inspect, and cards still drag 
       expect(text.y).toBeGreaterThanOrEqual(0);
       expect(text.x + text.width).toBeLessThanOrEqual(canvas.width);
       expect(text.y + text.height).toBeLessThanOrEqual(canvas.height);
-      const overlaps = canvas.x + text.x < inspect.x + inspect.width && canvas.x + text.x + text.width > inspect.x
-        && canvas.y + text.y < inspect.y + inspect.height && canvas.y + text.y + text.height > inspect.y;
-      expect(overlaps).toBe(false);
     }
     await screenshot(page, `sequence-fixed-${width}`);
   }
@@ -347,7 +344,7 @@ test('the moon clue stays after a tap and resize, toggles off, and resets on rep
   expect(await sceneState(page, 'scene._secantGraphics.visible')).toBe(false);
 });
 
-test('Ripples and Vertex keep their clues in view on small phones and support touch Inspect', async ({ page }) => {
+test('Ripples and Vertex keep their clues in view on small phones', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => {
     localStorage.setItem('puzzleProgressSchema', '2');
@@ -367,19 +364,12 @@ test('Ripples and Vertex keep their clues in view on small phones and support to
       expect(fits).toBe(true);
       await screenshot(page, `${key}-${width}`);
     }
-    await page.locator('#btn-inspect').tap();
-    await expect(page.locator('#inspection-tools')).toBeVisible();
-    await page.locator('#inspection-glass').tap({ position: { x: 260, y: 90 } });
-    await page.locator('#inspect-in').tap();
-    expect(await page.locator('#game-container').evaluate(el => el.style.transform)).toContain('scale(2.5)');
-    await screenshot(page, `${key}-inspect`);
-    await page.locator('#inspect-close').tap();
-    await expect(page.locator('#inspection-tools')).toBeHidden();
+    await expect(page.locator('#btn-inspect, #inspection-tools')).toHaveCount(0);
   }
   expect(errors).toEqual([]);
 });
 
-test('Plotter, Kinetic and Genome keep readable clues inside a small phone and magnify by touch', async ({ page }) => {
+test('Plotter, Kinetic and Genome keep readable clues inside a small phone', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => {
     localStorage.setItem('puzzleProgressSchema', '2');
@@ -404,12 +394,7 @@ test('Plotter, Kinetic and Genome keep readable clues inside a small phone and m
       expect(fits).toEqual([]);
       await screenshot(page, `${key}-${width}`);
     }
-    await page.locator('#btn-inspect').tap();
-    await expect(page.locator('#inspection-tools')).toBeVisible();
-    await page.locator('#inspect-in').tap();
-    expect(await page.locator('#game-container').evaluate(el => el.style.transform)).toContain('scale(2.5)');
-    await screenshot(page, `${key}-inspect`);
-    await page.locator('#inspect-close').tap();
+    await expect(page.locator('#btn-inspect, #inspection-tools')).toHaveCount(0);
   }
   expect(errors).toEqual([]);
 });

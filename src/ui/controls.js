@@ -11,7 +11,6 @@ import { mountFullscreenControl } from './fullscreen.js';
 import { mountComfort } from './comfort.js';
 import { mountHints } from './hints.js';
 import { mountProgress } from './progress.js';
-import { mountInspection } from './inspection.js';
 import { mountInteractionFeedback } from './interactions.js';
 import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
 import { createMoonCanvas } from '../shared/moon.js';
@@ -26,7 +25,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   moon.getContext('2d').drawImage(moonArt, 0, 0);
   const input = byId('level-code');
   const feedback = byId('answer-feedback');
-  let inspection, mobile, suspendedInput;
+  let mobile, suspendedInput;
   const intro = createIntro(preferences);
   function answerFeedback(message = 'Follow the clues in the room. Press Enter to submit.', state = '') {
     if (feedback) { feedback.textContent = message; feedback.dataset.state = state; }
@@ -58,7 +57,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   scope.add(restorePuzzleInput);
   const dialogs = createDialogs(scope, {
     onOpen() {
-      inspection?.close(); mobile?.close();
+      mobile?.close();
       suspendPuzzleInput();
     },
     onClose: restorePuzzleInput,
@@ -81,7 +80,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     onReplay: () => navigate(levels.currentIndex, { quick: true }),
     onFirst: () => { sessionStart = Date.now(); navigate(0); },
   });
-  const transitions = createTransitions({ levels, showGame, preferences, onNavigate() { completion.hide(); inspection?.close(); mobile?.close(); } });
+  const transitions = createTransitions({ levels, showGame, preferences, onNavigate() { completion.hide(); mobile?.close(); } });
   const navigate = (index, options) => transitions.go(index, options);
   const progressUI = mountProgress(scope, {
     game, levels, storage, navigate,
@@ -89,15 +88,10 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   });
   mountComfort(scope, preferences);
   const hintUI = mountHints(scope, { levels, hints, dialogs });
-  inspection = mountInspection(scope, {
-    levels,
-    canOpen: () => !intro.active && !transitions.busy && !dialogs.isOpen && start.classList.contains('hidden'),
-  });
   mountInteractionFeedback(scope, game);
   mobile = mountMobile(scope, {
     canOpenDrawer: () => !intro.active && !dialogs.isOpen,
     onDrawer: name => {
-      inspection?.close();
       if (name) suspendPuzzleInput();
       else if (!dialogs.isOpen) restorePuzzleInput();
     },
@@ -128,9 +122,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (result.correct) {
       answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : 'Answer accepted. Opening the next room.', 'success');
       input.classList.add('success-flash'); scope.later(() => input.classList.remove('success-flash'), 1200);
-      audio.playSuccess();
-      if (result.nextIndex === null) completion.show();
-      else navigate(result.nextIndex, { caption: 'Answer accepted' });
+      if (result.nextIndex === null) {
+        completion.show();
+        audio.playSuccess();
+      } else {
+        audio.playSuccess();
+        navigate(result.nextIndex, { caption: 'Answer accepted' });
+      }
       input.value = '';
     } else {
       answerFeedback('Look again. That answer does not unlock this room.', 'error');
@@ -156,7 +154,6 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       completion.hide();
       dialogs.closeAll();
       transitions.dispose();
-      inspection.close();
       hintUI.reset();
       progressUI.reset();
       levels.reset();

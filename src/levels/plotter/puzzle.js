@@ -29,7 +29,7 @@ export function plotterLayout(width, height) {
   const cellH = (screen.h - header - footer) / rows;
   const perLine = cellW < 570 ? 3 : 6;
   const longest = Math.max(...PLOTTER_BLOCKS.flatMap(p => formatPath(p, perLine).split('\n').map(s => s.length)));
-  const font = Math.min(21, (cellW - 18) / (longest * 0.61), cellH / (perLine === 3 ? 4.5 : 3.3));
+  const font = Math.max(9, Math.min(21, (cellW - 18) / (longest * 0.61), cellH / (perLine === 3 ? 4.5 : 3.3)));
   const blocks = PLOTTER_BLOCKS.map((_, i) => ({
     x: screen.x + pad + i % columns * cellW,
     y: screen.y + header + Math.floor(i / columns) * cellH,

@@ -331,26 +331,11 @@
     width: 40px;
     font-size: 19px;
   }
-  /* the room's own controls */
-  #btn-inspect {
-    right: 10px;
-    bottom: 10px;
-    padding: 8px 10px;
-  }
   #interaction-cue {
     left: 10px;
     bottom: 10px;
     max-width: 60%;
   }
-  #inspection-tools {
-    bottom: 10px;
-    gap: 6px;
-    padding: 6px 8px;
-  }
-  #inspection-tools > span {
-    display: none;
-  }
-
   /* the title cards and the reading panels */
   #intro-title h1,
   #start-title h1 {

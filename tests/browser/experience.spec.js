@@ -237,39 +237,20 @@ for (const key of ['Chessboard', 'TV', 'Modem', 'Wires', 'Station', 'Pi', 'Cross
   });
 }
 
-test('inspection magnifies Phaser and DOM together and does not operate the puzzle', async ({ page }) => {
+test('inspection zoom controls are removed and the puzzle remains interactive', async ({ page }) => {
   await open(page, { unlocked: true }); await navigate(page, 'Cryptex');
   const candle = page.locator('.candle-action');
   await candle.hover();
   await expect(page.locator('#interaction-cue')).toHaveText('Put out the candle');
-  const initial = await candle.boundingBox();
-  await page.locator('#btn-inspect').click();
-  await expect(page.locator('#inspection-tools')).toBeVisible();
-  expect((await candle.boundingBox()).width).toBeCloseTo(initial.width * 2, 1);
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.input.enabled)).toBe(false);
-  await page.locator('#inspection-glass').click({ position: { x: 300, y: 200 } });
-  await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('+');
-  await expect(page.locator('#inspection-zoom')).toHaveText('2.5×');
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.candle.clicks)).toBe(0);
-  await screenshot(page, 'inspect');
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#btn-inspect')).toBeFocused();
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.input.enabled)).toBe(true);
+  await expect(page.locator('#btn-inspect, #inspection-glass, #inspection-tools')).toHaveCount(0);
   await candle.click();
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.candle.clicks)).toBe(1);
-  await page.locator('#btn-inspect').click();
   await page.locator('#btn-options').click();
-  await expect(page.locator('#inspection-tools')).toBeHidden();
   await page.keyboard.press('Escape');
-  await page.locator('#btn-inspect').click(); await navigate(page, 'TV');
-  await expect(page.locator('#inspection-tools')).toBeHidden();
+  await navigate(page, 'TV');
   // the set tunes itself every four seconds; the readings below must not straddle a tick
   await evaluateApp(page, ({ services }) => services.levels.activeScene._autoTimer.remove(false));
   const channel = await evaluateApp(page, ({ services }) => services.levels.activeScene._channel);
-  await page.locator('#btn-inspect').click(); await page.keyboard.press('ArrowRight');
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._channel)).toBe(channel);
-  await page.keyboard.press('Escape');
   await page.locator('.da-btn[data-dir="1"]').focus(); await page.keyboard.press('Enter');
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._channel)).toBe((channel + 1) % 4);
 });

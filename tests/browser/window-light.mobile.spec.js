@@ -4,7 +4,7 @@ import { evaluateApp } from './app.js';
 import { CURTAIN_ALIGNMENT, CURTAIN_TRAVEL } from '../../src/levels/curtain/puzzle.js';
 import { VENETIAN_ALIGNMENT } from '../../src/levels/venetian/puzzle.js';
 
-test('the curtain and blind accept touch drags in the small native-app layout and remain inspectable', async ({ page }) => {
+test('the curtain and blind accept touch drags in the small native-app layout', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => {
     window.Capacitor = { isNativePlatform: () => true };
@@ -39,10 +39,7 @@ test('the curtain and blind accept touch drags in the small native-app layout an
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.position ?? services.levels.activeScene.tilt)).toBeCloseTo(value, 2);
     await page.screenshot({ path: `.artifacts/after/phone-${key}-aligned.png` });
-    await page.locator('#btn-inspect').tap(); await expect(page.locator('#inspection-tools')).toBeVisible();
-    await page.locator('#inspect-in').tap();
-    expect(await page.locator('#game-container').evaluate(el => el.style.transform)).toContain('scale(2.5)');
-    await page.locator('#inspect-close').tap();
+    await expect(page.locator('#btn-inspect, #inspection-tools')).toHaveCount(0);
   }
   await cdp.detach();
   expect(errors).toEqual([]);

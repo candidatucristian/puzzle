@@ -22,9 +22,26 @@ export function createTransitions({ levels, showGame, onNavigate, preferences })
       onNavigate();
       const wasBusy = busy;
       scope.dispose(); scope = new Scope(); busy = true;
+      const changeLevel = () => {
+        options.onBeforeNavigate?.();
+        showGame(); levels.navigate(index);
+        if (!options.quick) veil.classList.add('titled');
+        scope.later(() => {
+          veil.classList.remove('cover', 'titled');
+          scope.later(() => { busy = false; }, 650);
+        }, options.quick ? 350 : options.caption ? 2100 : 1500);
+      };
       if (preferences?.reducedMotion) {
         veil.classList.remove('cover', 'titled');
-        showGame(); levels.navigate(index); busy = false;
+        if (options.coverDelay) {
+          scope.later(() => {
+            options.onBeforeNavigate?.();
+            showGame(); levels.navigate(index); busy = false;
+          }, options.coverDelay);
+        } else {
+          options.onBeforeNavigate?.();
+          showGame(); levels.navigate(index); busy = false;
+        }
         return true;
       }
       caption.textContent = options.caption || '';
@@ -32,12 +49,8 @@ export function createTransitions({ levels, showGame, onNavigate, preferences })
       numeral.textContent = toRoman(index + 1);
       veil.classList.remove('titled'); veil.classList.add('cover');
       scope.later(() => {
-        showGame(); levels.navigate(index);
-        if (!options.quick) veil.classList.add('titled');
-        scope.later(() => {
-          veil.classList.remove('cover', 'titled');
-          scope.later(() => { busy = false; }, 650);
-        }, options.quick ? 350 : options.caption ? 2100 : 1500);
+        if (options.coverDelay) scope.later(changeLevel, options.coverDelay);
+        else changeLevel();
       }, wasBusy ? 0 : 600);
       return true;
     },

@@ -11,29 +11,6 @@
 #game-viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 #game-viewport #game-container { position: absolute; inset: 0; height: 100%; transform-origin: 0 0; }
 
-/* Inspection moves the entire room, so HTML and Phaser stay in alignment. */
-#btn-inspect, #inspection-tools {
-  position: absolute; bottom: 16px; z-index: 30;
-  color: var(--bone); background: rgba(17, 19, 23, .94);
-  border: 1px solid var(--pencil-faint); border-radius: 5px;
-  box-shadow: 0 3px 14px #0005;
-}
-#btn-inspect { right: 16px; display: flex; align-items: center; gap: 8px; padding: 10px 13px; font-size: calc(12px * var(--reading-scale)); cursor: zoom-in; }
-#btn-inspect:hover, #btn-inspect:focus-visible { border-color: var(--pencil); background: #24262b; }
-#btn-inspect[aria-pressed="true"] { visibility: hidden; }
-#inspection-glass { position: absolute; inset: 0; z-index: 25; cursor: grab; touch-action: none; }
-#inspection-glass.dragging { cursor: grabbing; }
-#inspection-glass:focus-visible { outline: 1px solid var(--pencil-dim); outline-offset: -5px; }
-#inspection-tools { left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 9px 12px; white-space: nowrap; font-size: calc(12px * var(--reading-scale)); }
-#inspection-tools > span { color: var(--bone-dim); margin-right: 8px; }
-#inspection-tools button { background: transparent; border: 1px solid var(--pencil-faint); color: var(--bone); min-width: 34px; min-height: 34px; cursor: pointer; border-radius: 3px; font-size: inherit; }
-#inspection-tools button:hover { border-color: var(--pencil); }
-#inspection-tools button:disabled { opacity: .35; cursor: default; }
-#inspect-close { padding: 0 12px; }
-#inspection-tools kbd { font: inherit; color: var(--bone-dim); margin-left: 10px; }
-#inspection-tools[hidden], #inspection-glass[hidden], #interaction-cue[hidden] { display: none; }
-.is-inspecting #game-container { pointer-events: none; }
-.is-inspecting #interaction-cue, .is-inspecting #interaction-pulse,
 .has-open-dialog #interaction-cue, .has-open-dialog #interaction-pulse,
 .has-open-drawer #interaction-cue, .has-open-drawer #interaction-pulse { visibility: hidden; }
 
@@ -129,7 +106,3 @@
 [data-reduced-motion="true"] #howto-modal,
 [data-reduced-motion="true"] .level-btn { transition: none; }
 [data-reduced-motion="true"] #interaction-pulse.visible { animation: none; opacity: .5; }
-@media (max-width: 1250px) {
-  #inspection-tools { gap: 8px; }
-  #inspection-tools > span { display: none; }
-}

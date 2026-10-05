@@ -71,8 +71,19 @@ body {
 /* A broad, quiet frame gives the room the largest share of the screen. */
 #game-wrapper { flex: 1; min-height: 0; min-width: 0; position: relative; display: flex; flex-direction: column; margin: 22px 28px 0; }
 #game-viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; border: 1px solid #344450; background: #060b10; box-shadow: 0 18px 65px #0006; }
-#game-container { position: absolute; inset: 0; height: 100%; width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; transform-origin: 0 0; }
+#game-container { position: absolute; inset: 0; height: 100%; width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 #game-container canvas { filter: grayscale(40%); flex-shrink: 0; }
+#interaction-cue { position: absolute; bottom: 18px; left: 18px; z-index: 22; margin: 0; padding: 8px 12px; max-width: 55%; background: #0c1823ef; border: 1px solid #4a606f; border-radius: 2px; color: var(--ui-text); font: 400 12px/1.5 var(--ui-font); pointer-events: none; }
+#interaction-cue[hidden] { display: none; }
+#interaction-pulse { position: absolute; z-index: 24; width: 10px; height: 10px; border: 1px solid var(--ui-accent); border-radius: 50%; opacity: 0; translate: -50% -50%; pointer-events: none; }
+#interaction-pulse.visible { animation: interaction-ack 220ms ease-out; }
+@keyframes interaction-ack { from { opacity: .8; } to { opacity: 0; } }
+#game-container .scene-interactive:focus-visible, #game-container [data-interaction]:focus-visible { outline: 1px solid #c5d6df; outline-offset: 3px; }
+.has-open-dialog #interaction-cue, .has-open-dialog #interaction-pulse, .has-open-drawer #interaction-cue, .has-open-drawer #interaction-pulse { visibility: hidden; }
+:root[data-ambient-motion='false'] #da-overlay shader-doodle, :root[data-ambient-motion='false'] #da-overlay .tv__scan { visibility: hidden; }
+:root[data-ambient-motion='false'] #da-overlay .tv__fallback { display: block; }
+:root[data-reduced-motion='true'] #da-overlay .rot { transition: none; }
+:root[data-reduced-motion='true'] #interaction-pulse.visible { animation: none; opacity: .5; }
 #input-area { flex-shrink: 0; min-height: 164px; display: grid; grid-template-columns: minmax(220px, 1fr) minmax(310px, 1.8fr) minmax(160px, 1fr); align-items: center; gap: clamp(24px, 3vw, 54px); padding: 24px 12px 25px; font-family: var(--ui-font); }
 .current-room { min-width: 0; padding-right: 15px; }
 .room-title-line { display: flex; align-items: baseline; gap: 9px; min-width: 0; white-space: nowrap; }
@@ -256,6 +267,9 @@ body {
   #btn-submit { padding-inline: 10px; }
   #level-code { padding-inline: 8px; font-size: 12px; }
   .panel-label { letter-spacing: .7px; font-size: 8px; }
+}
+@media (max-width: 900px), (max-height: 620px) {
+  #interaction-cue { left: 10px; bottom: 10px; max-width: 60%; }
 }
 @media (max-width: 700px) and (orientation: portrait) {
   #rotate-prompt { display: flex; position: fixed; inset: 0; z-index: 600; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 15px; padding: 40px; background: #080d13; color: var(--ui-text); font-family: var(--ui-font); }

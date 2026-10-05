@@ -67,7 +67,7 @@ export default class GenomeScene extends BasePuzzleScene {
       .setOrigin(0.5).setDepth(1).setShadow(0, 0, '#89d2bc', 7, false, true);
     this._reader = this.add.graphics();
     this._clue = text(s.x + s.w / 2, s.y + s.h * 0.92,
-      'The building blocks of life spell the answer.', Math.min(18, s.w / 32, s.h * 0.065), '#b4c7bf').setOrigin(0.5);
+      'The building blocks of life spell the answer.', Math.max(9, Math.min(18, s.w / 32, s.h * 0.065)), '#b4c7bf').setOrigin(0.5);
     this._lastFeed = -1;
     this.levelText = drawLevelLabel(this, W, H, { color: '#a7c2bf' });
     this._render();

@@ -53,7 +53,7 @@ test('Ripples exposes only the actual three-wave meetings, preserves phase on re
   expect(errors).toEqual([]);
 });
 
-test('DROP unlocks Vertex, Inspect magnifies its connections, and FACE unlocks Plotter', async ({ page }) => {
+test('DROP unlocks Vertex and FACE unlocks Plotter', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await openRipples(page);
   await page.locator('#level-code').fill('drop');
@@ -62,13 +62,6 @@ test('DROP unlocks Vertex, Inspect magnifies its connections, and FACE unlocks P
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
   const before = await evaluateApp(page, ({ services }) => services.levels.activeScene._elapsed);
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene._elapsed)).toBeGreaterThan(before + 100);
-  await page.locator('#btn-inspect').click();
-  await expect(page.locator('#inspection-tools')).toBeVisible();
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.input.enabled)).toBe(false);
-  await page.locator('#inspection-glass').click({ position: { x: 200, y: 160 } });
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#inspection-tools')).toBeHidden();
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.input.enabled)).toBe(true);
   await page.locator('#level-code').fill('face');
   await page.locator('#btn-submit').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Plotter');

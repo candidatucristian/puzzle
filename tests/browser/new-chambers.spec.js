@@ -50,7 +50,7 @@ test('PING and CAGE unlock the next rooms; Genome requests a reference and SPACE
   expect(errors).toEqual([]);
 });
 
-test('all new scenes preserve their phase on resize, support Inspect and retain clues with motion disabled', async ({ page }) => {
+test('all new scenes preserve their phase on resize and retain clues with motion disabled', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, true);
   for (const [i, key] of ['Plotter', 'Kinetic', 'Genome'].entries()) {
@@ -67,11 +67,7 @@ test('all new scenes preserve their phase on resize, support Inspect and retain 
     await page.setViewportSize(i % 2 ? { width: 1440, height: 1000 } : { width: 980, height: 720 });
     await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene._L.width)).not.toBe(width);
     expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._elapsed)).toBe(9000);
-    await page.locator('#btn-inspect').click();
-    await expect(page.locator('#inspection-tools')).toBeVisible();
-    await page.locator('#inspect-in').click();
-    expect(await page.locator('#game-container').evaluate(el => el.style.transform)).toContain('scale(2.5)');
-    await page.keyboard.press('Escape');
+    await expect(page.locator('#btn-inspect, #inspection-tools')).toHaveCount(0);
     await evaluateApp(page, ({ services }) => {
       services.preferences.set({ motion: 'reduced', ambientEffects: false });
       const scene = services.levels.activeScene; scene.sys.sceneUpdate = scene.update;

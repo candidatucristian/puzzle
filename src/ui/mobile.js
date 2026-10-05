@@ -37,7 +37,6 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   if (touch) {
     document.getElementById('start-prompt').textContent = 'Tap to begin';
     document.getElementById('intro-skip').textContent = 'TAP TO SKIP';
-    document.getElementById('inspect-close').textContent = 'Back to play';
   }
 
   function say(text, ms = 2600) {

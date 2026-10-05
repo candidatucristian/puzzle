@@ -84,6 +84,30 @@ test('answer feedback is readable and clears as soon as the player edits or chan
   await expect(page.locator('#level-code')).toHaveAttribute('aria-invalid', 'false');
 });
 
+test('a correct answer uses the original accepted-code transition to the next room', async ({ page }) => {
+  await open(page);
+  await evaluateApp(page, ({ ui }) => ui.navigate(0, { quick: true }));
+  await expect(page.locator('#current-level-number')).toHaveText('ROOM 01');
+  await evaluateApp(page, ({ services }) => {
+    services.preferences.setSystemMotion(false);
+    services.preferences.set({ motion: 'system' });
+    services.audio.playSuccess = () => { window.successSoundAt = performance.now(); };
+  });
+  expect(await evaluateApp(page, ({ services }) => services.preferences.reducedMotion)).toBe(false);
+  await page.locator('#level-code').fill('CABBAGE');
+  await page.evaluate(() => { window.answerSubmittedAt = performance.now(); });
+  await page.locator('#btn-submit').click();
+
+  await expect(page.locator('#answer-feedback')).toContainText('Opening the next room');
+  await expect(page.locator('#level-veil')).toHaveClass(/cover/);
+  await expect(page.locator('#veil-caption')).toHaveText('Answer accepted');
+  await expect(page.locator('#veil-numeral')).toHaveText('II');
+  expect(await page.evaluate(() => window.successSoundAt)).toBeDefined();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex), { timeout: 2500 }).toBe(1);
+  await expect(page.locator('#level-veil')).toHaveClass(/titled/);
+  await expect(page.locator('.veil-content')).toBeVisible();
+});
+
 test('interface text cannot be selected and clicking the answer field adds no focus frame', async ({ page }) => {
   await open(page);
   const selectionStyles = await page.locator('#current-level-number').evaluate(element => ({
