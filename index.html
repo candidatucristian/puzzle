@@ -9,7 +9,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
     />
-    <meta name="theme-color" content="#0a0b0e" />
+    <meta name="theme-color" content="#080d13" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -26,22 +26,35 @@
     <!-- CRT shader web-component used by the TV level -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Architects Daughter: UI display font (hand-lettered) · Cormorant Garamond: body text · Special Elite: in-level canvas text -->
+    <!-- Legacy drawing fonts belong to the rooms. Interface fonts are self-hosted. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Special+Elite&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Special+Elite&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
+    <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20.8 14.3A9 9 0 0 1 9.7 3.2 9 9 0 1 0 20.8 14.3Z"/></symbol>
+      <symbol id="icon-index" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 3v18m4-13h3m-3 4h3m-3 4h3"/></symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></symbol>
+      <symbol id="icon-fullscreen" viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></symbol>
+      <symbol id="icon-sound" viewBox="0 0 24 24"><path d="m11 4-5 5H3v6h3l5 5V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+      <symbol id="icon-replay" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 0 5m0-11v6h6"/></symbol>
+      <symbol id="icon-hint" viewBox="0 0 24 24"><path d="M8 16c0-3-3-3-3-7a7 7 0 0 1 14 0c0 4-3 4-3 7M8 17h8m-7 4h6m-3-5V9m-3 1 3 2 3-2"/></symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+      <symbol id="icon-notes" viewBox="0 0 24 24"><path d="M6 3h12v18H6zm3 5h6m-6 4h6m-6 4h4"/></symbol>
+    </svg>
     <!-- Loading screen: rendered before the heavy scripts download.
          An inline script right below drives it; the Phaser BootScene
          reports audio progress and removes it when the game is ready. -->
     <div id="loading-screen">
       <div class="loading-card">
+        <svg class="loading-moon ui-icon" aria-hidden="true"><use href="#icon-moon"/></svg>
         <h1>The Descipher</h1>
         <div class="loading-bar"><div id="loading-fill"></div></div>
         <p id="loading-label">
-          sharpening the pencils&nbsp;<span id="loading-pct">0%</span>
+          Preparing your next mystery <span id="loading-pct">0%</span>
         </p>
       </div>
     </div>
@@ -49,14 +62,23 @@
     <!-- Cinematic film grain over the whole app -->
     <div id="film-grain"></div>
 
-    <!-- Compact bar: shown on phones and tablets instead of the two sidebars,
-         which become drawers (ui/mobile.js) -->
-    <div id="compact-bar">
-      <button id="compact-menu" class="compact-btn" type="button" aria-label="Current level information" aria-controls="right-sidebar-wrapper" aria-expanded="false">Level Info</button>
-      <span class="compact-spacer"></span>
-      <button id="compact-fullscreen" class="compact-btn" type="button" aria-label="Full screen: hide the bar" title="Full screen: hide the bar">⛶</button>
-      <button id="compact-levels" class="compact-btn" type="button" aria-controls="sidebar" aria-expanded="false">Levels</button>
-    </div>
+    <header id="compact-bar" class="app-header">
+      <div class="app-signature" aria-label="The Descipher, a nocturnal puzzle collection">
+        <svg class="ui-icon signature-moon" aria-hidden="true"><use href="#icon-moon"/></svg>
+        <div><span class="signature-name">The Descipher</span><span class="signature-caption">A nocturnal puzzle collection</span></div>
+      </div>
+      <button id="compact-levels" class="header-button" type="button" aria-controls="sidebar" aria-expanded="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-index"/></svg><span>Rooms</span><span id="header-progress" class="header-count"></span></button>
+      <div class="header-actions">
+        <div class="volume-widget">
+          <button id="vol-icon-ui" class="icon-button" type="button" aria-label="Mute all audio"><svg class="ui-icon" data-audio-icon aria-hidden="true"><use href="#icon-sound"/></svg></button>
+          <input type="range" id="vol-slider-ui" aria-label="Overall volume" min="0" max="1" step="0.01" />
+          <output id="master-value" class="sr-only" for="vol-slider-ui"></output>
+        </div>
+        <button id="btn-options" class="header-button" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
+        <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
+        <button id="compact-fullscreen" class="icon-button" type="button" aria-label="Full screen: hide the header"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg></button>
+      </div>
+    </header>
     <div id="drawer-scrim" hidden></div>
     <!-- the handle the top bar slides on: tap to toggle, pull up to hide,
          pull down to show -->
@@ -64,10 +86,10 @@
     <p id="ui-toast" role="status" hidden></p>
 
     <!-- Level navigation -->
-    <aside id="sidebar" aria-label="Levels">
-      <div class="sidebar-title">
-        <h1>Levels</h1>
-        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
+    <aside id="sidebar" aria-label="Room index" role="dialog" aria-modal="true">
+      <div class="drawer-heading">
+        <div><p class="eyebrow">The collection</p><h2>The room index</h2></div>
+        <button class="icon-button" type="button" data-close-drawer aria-label="Close room index"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
       </div>
       <div class="progress-summary">
         <span id="progress-count"></span>
@@ -75,24 +97,27 @@
         <span id="save-status" role="status" aria-live="polite"></span>
       </div>
       <div id="levels-grid"></div>
+      <p class="drawer-footnote">Every room you solve opens another.</p>
     </aside>
 
     <!-- Game Area -->
     <div id="game-wrapper">
-      <!-- Start Screen Overlay — the gold title card -->
+      <!-- The opening title card -->
       <div id="start-screen">
         <canvas id="start-particles"></canvas>
+        <div class="start-moon" aria-hidden="true"><span></span></div>
         <div id="start-title">
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-          <h1>The Descipher</h1>
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
+          <p class="eyebrow">For the quietly curious</p>
+          <h1>Every room<br>keeps a <em>secret.</em></h1>
+          <p class="start-description">A detail out of place. A pattern in the dark.<br>Take your time. Let the ordinary become a clue.</p>
         </div>
         <div id="start-bottom">
           <p id="start-progress"></p>
-          <button id="btn-continue" class="menu-btn start-continue" type="button">Begin exploration</button>
+          <button id="btn-continue" class="menu-btn primary-action start-continue" type="button">Begin exploration</button>
           <p id="start-prompt">Press any key to begin</p>
-          <p id="start-footer">&nbsp; HEADPHONES RECOMMENDED</p>
+          <p id="start-footer">Best experienced with headphones. No timer. Just you and the mystery.</p>
         </div>
+        <div class="start-method" aria-label="How to begin"><span><b>01</b> Observe</span><i></i><span><b>02</b> Connect</span><i></i><span><b>03</b> Decipher</span></div>
       </div>
 
       <!-- Intro Sequence Overlay -->
@@ -160,59 +185,54 @@
 
       <!-- Control Console -->
       <div id="input-area">
-        <div class="console-group console-left volume-widget mute-button">
-          <span class="console-label">VOLUME</span>
-          <div class="console-controls">
-            <span id="vol-icon-ui">🔊</span>
-            <input
-              type="range"
-              id="vol-slider-ui"
-              aria-label="Overall volume"
-              title="Overall volume — music and sound effects"
-              min="0"
-              max="1"
-              step="0.01"
-            />
-          </div>
+        <div class="current-room">
+          <div class="room-meta"><p id="current-level-number" class="eyebrow"></p><p id="current-level-state" class="level-state"></p></div>
+          <h2 id="current-level-name"></h2>
+          <button id="compact-menu" class="text-button" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-notes"/></svg>Room notes</button>
         </div>
         <div class="input-container">
-          <span class="panel-label">ACCESS CODE</span>
+          <label class="panel-label" for="level-code">What is the hidden answer?</label>
           <div class="input-wrapper">
             <input
               type="text"
               id="level-code"
-              placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;"
+              placeholder="A word or a number…"
               autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              aria-describedby="answer-feedback"
             />
-            <button id="btn-submit">EXECUTE</button>
-            <button id="btn-replay" class="replay-btn" title="Restart level">
-              ⟳
-            </button>
+            <button id="btn-submit" type="button"><span>Submit</span><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
           </div>
+          <p id="answer-feedback" role="status" aria-live="polite">Follow the clues in the room. Press Enter to submit.</p>
+        </div>
+        <div class="room-assistance">
+          <div class="assistance-actions">
+            <button id="btn-info" class="menu-btn hint-button" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg><span>Hints</span><span class="hint-dot" aria-hidden="true"></span></button>
+            <button id="btn-replay" class="icon-button replay-btn" type="button" title="Restart this room" aria-label="Restart this room"><svg class="ui-icon" aria-hidden="true"><use href="#icon-replay"/></svg></button>
+          </div>
+          <p id="current-hint-count"></p>
         </div>
       </div>
     </div>
 
     <!-- Current level and settings -->
-    <aside id="right-sidebar-wrapper" aria-label="Current level">
+    <aside id="right-sidebar-wrapper" aria-label="Room notes" role="dialog" aria-modal="true">
       <div id="right-sidebar">
-        <section id="current-level-info" aria-labelledby="current-level-name">
-          <div class="sidebar-title">
-            <p id="current-level-number" class="level-kicker"></p>
-            <h2 id="current-level-name"></h2>
-            <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
+        <section id="current-level-info" aria-labelledby="brief-level-name">
+          <div class="drawer-heading">
+            <div><p class="eyebrow">Your field notes</p><h2 id="brief-level-name"></h2></div>
+            <button class="icon-button" type="button" data-close-drawer aria-label="Close room notes"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
           </div>
           <p id="current-level-summary"></p>
-          <p id="current-level-state" class="level-state"></p>
+          <div id="current-requirements"></div>
         </section>
-        <div class="level-help">
-          <button id="btn-info" class="menu-btn" type="button">Hints</button>
-          <p id="current-hint-count"></p>
+        <div class="field-guide">
+          <p class="eyebrow">A way into the mystery</p>
+          <ol><li><span>01</span><div><h3>Look with intention.</h3><p>Notice objects, sounds and details that feel out of place.</p></div></li><li><span>02</span><div><h3>Make a connection.</h3><p>Try objects and look for a pattern. The room holds the clues.</p></div></li><li><span>03</span><div><h3>Trust a possibility.</h3><p>Enter a word or number below. You can try again as often as you need.</p></div></li></ol>
         </div>
-        <div class="sidebar-actions">
-          <button id="btn-options" class="menu-btn" type="button">Options</button>
-          <button id="btn-fullscreen" class="menu-btn" type="button" aria-pressed="false">Full Screen</button>
-        </div>
+        <button id="btn-brief-hints" class="menu-btn" type="button">Ask for a hint <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
+        <p class="drawer-footnote">Hints unfold one at a time. You decide how much to reveal.</p>
       </div>
     </aside>
 

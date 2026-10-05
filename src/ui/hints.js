@@ -8,8 +8,9 @@ export function mountHints(scope, { levels, hints, dialogs }) {
     const level = levels.definitions[levels.currentIndex];
     const revealed = hints.count(level.id);
     const solved = levels.isCompleted(levels.currentIndex);
-    document.getElementById('current-level-number').textContent = `Level ${levels.currentIndex + 1}`;
+    document.getElementById('current-level-number').textContent = `Room ${String(levels.currentIndex + 1).padStart(2, '0')}`;
     document.getElementById('current-level-name').textContent = level.name;
+    document.getElementById('brief-level-name').textContent = level.name;
     document.getElementById('current-level-summary').textContent = level.summary;
     const state = document.getElementById('current-level-state');
     state.textContent = solved ? 'Solved' : 'Unsolved';
@@ -34,21 +35,26 @@ export function mountHints(scope, { levels, hints, dialogs }) {
     next.textContent = next.disabled ? 'All hints revealed' : `Reveal hint ${revealed + 1}`;
     const requirements = document.getElementById('info-requires');
     requirements.replaceChildren();
+    const briefRequirements = document.getElementById('current-requirements');
+    briefRequirements.replaceChildren();
     requirements.hidden = !level.hint.sound && !level.hint.tool;
     for (const [needed, text] of [[level.hint.sound, 'Listening'], [level.hint.tool, 'Reference may help']]) {
       if (!needed) continue;
       const badge = document.createElement('span');
       badge.className = 'info-badge'; badge.textContent = text;
       requirements.append(badge);
+      briefRequirements.append(badge.cloneNode(true));
     }
   }
 
-  scope.on(document.getElementById('btn-info'), 'click', () => {
+  const openHints = event => {
     const id = levels.definitions[levels.currentIndex].id;
     if (!hints.count(id)) hints.reveal(id);
     render();
-    dialogs.open('info-modal');
-  });
+    dialogs.open('info-modal', event.currentTarget);
+  };
+  scope.on(document.getElementById('btn-info'), 'click', openHints);
+  scope.on(document.getElementById('btn-brief-hints'), 'click', openHints);
   scope.on(next, 'click', () => {
     hints.reveal(levels.definitions[levels.currentIndex].id);
     render();

@@ -2,11 +2,14 @@ import { enterFullscreen, exitFullscreen, fullscreenElement, unlockOrientation, 
 
 export function mountFullscreenControl(scope, button) {
   const offered = Boolean(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  const label = button.querySelector('[data-fullscreen-label]') || button;
+  const toast = document.getElementById('ui-toast');
+  let pending = false, toastTimer;
   function sync() {
     const active = Boolean(fullscreenElement());
-    button.textContent = active ? 'Exit Full Screen' : 'Full Screen';
+    label.textContent = active ? 'Exit full screen' : 'Full screen';
     button.setAttribute('aria-pressed', String(active));
-    button.disabled = !offered;
+    button.disabled = !offered || pending;
     button.title = !offered
       ? (isIOS() ? 'Safari on iPhone has no full screen: add the game to the Home Screen instead' : 'Full screen is unavailable in this browser')
       : active ? 'Exit full screen (Esc)' : 'Enter full screen';
@@ -17,12 +20,25 @@ export function mountFullscreenControl(scope, button) {
     if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
   });
   scope.on(button, 'click', async () => {
-    button.disabled = true;
-    let failed = false;
-    if (fullscreenElement()) { exitFullscreen(); unlockOrientation(); }
-    else failed = !(await enterFullscreen());
+    if (pending) return;
+    pending = true; sync();
+    let failed;
+    if (fullscreenElement()) {
+      await exitFullscreen();
+      failed = Boolean(fullscreenElement());
+      if (!failed) unlockOrientation();
+    } else failed = !(await enterFullscreen());
+    pending = false;
     sync();
-    if (failed) button.title = 'Full screen could not be changed. Try again.';
+    if (failed) {
+      const message = 'Full screen could not be changed. Try again.';
+      button.title = message;
+      if (toast) {
+        scope.cancel(toastTimer);
+        toast.textContent = message; toast.hidden = false;
+        toastTimer = scope.later(() => { if (toast.textContent === message) toast.hidden = true; }, 5000);
+      }
+    }
   });
   scope.on(document, 'fullscreenchange', () => { if (!fullscreenElement()) unlockOrientation(); sync(); });
   scope.on(document, 'webkitfullscreenchange', sync);

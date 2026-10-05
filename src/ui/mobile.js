@@ -6,7 +6,7 @@
  *  turn. Nothing here changes the puzzles; the rooms get a smaller (or,
  *  with the bar away, a larger) canvas and keep working. */
 
-const COMPACT = '(max-width: 1100px), (max-height: 560px)';
+const COMPACT = '(max-width: 900px), (max-height: 620px)';
 const PULL = 18; // how far a finger must drag the handle before it counts as a pull
 
 export function isTouchDevice() {
@@ -52,13 +52,13 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   function render() {
     root.dataset.compact = String(compact.matches);
     for (const [name, { panel, button }] of Object.entries(drawers)) {
-      const shown = compact.matches && open === name;
+      const shown = open === name;
       panel.classList.toggle('drawer-open', shown);
-      panel.inert = compact.matches && !shown;
+      panel.inert = !shown;
       button.setAttribute('aria-expanded', String(shown));
     }
-    scrim.hidden = !(compact.matches && open);
-    root.classList.toggle('has-open-drawer', Boolean(compact.matches && open));
+    scrim.hidden = !open;
+    root.classList.toggle('has-open-drawer', Boolean(open));
     const away = compact.matches && topAway;
     root.classList.toggle('ui-top-collapsed', away);
     handle.setAttribute('aria-expanded', String(!away));
@@ -68,13 +68,13 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     if (!open) return;
     const trigger = drawers[open].button;
     open = null; render(); onDrawer?.(null);
-    if (compact.matches) trigger.focus({ preventScroll: true });
+    trigger.focus({ preventScroll: true });
   }
   function toggle(name) {
-    if (!compact.matches) return;
     if (open === name) { close(); return; }
     if (!canOpenDrawer()) return;
     open = name; render(); onDrawer?.(name);
+    if (name === 'menu') document.getElementById('right-sidebar').scrollTop = 0;
     drawers[name].panel.querySelector('button:not(:disabled)')?.focus({ preventScroll: true });
   }
 
@@ -131,10 +131,11 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   });
 
   for (const [name, { button }] of Object.entries(drawers)) scope.on(button, 'click', () => toggle(name));
+  for (const button of document.querySelectorAll('[data-close-drawer]')) scope.on(button, 'click', close);
   scope.on(document.getElementById('compact-fullscreen'), 'click', immersive);
   scope.on(scrim, 'click', close);
   scope.on(document, 'keydown', e => {
-    if (!compact.matches || !open) return;
+    if (!open) return;
     if (e.key === 'Escape') { e.preventDefault(); close(); return; }
     if (e.key !== 'Tab') return;
     const nodes = [...drawers[open].panel.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')]
@@ -144,12 +145,12 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     else if (e.shiftKey && index <= 0) { e.preventDefault(); nodes.at(-1).focus(); }
     else if (!e.shiftKey && (index < 0 || index === nodes.length - 1)) { e.preventDefault(); nodes[0].focus(); }
   });
-  // leaving full screen by the system's own gesture brings the bar back
+  // Leaving full screen by the system's own gesture brings the header back.
   const left = () => { if (!fullscreenElement() && topAway) setTop(false); };
   scope.on(document, 'fullscreenchange', left);
   scope.on(document, 'webkitfullscreenchange', left);
   scope.on(compact, 'change', () => {
-    if (!compact.matches) { open = null; topAway = false; onDrawer?.(null); }
+    if (!compact.matches) topAway = false;
     render();
   });
   scope.add(() => { for (const { panel } of Object.values(drawers)) panel.inert = false; });
@@ -190,11 +191,12 @@ export async function enterFullscreen() {
   return went;
 }
 
-export function exitFullscreen() {
+export async function exitFullscreen() {
   try {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    else if (document.webkitFullscreenElement) document.webkitExitFullscreen?.();
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else if (document.webkitFullscreenElement) await document.webkitExitFullscreen?.();
   } catch { /* nothing to leave */ }
+  return !fullscreenElement();
 }
 
 /** Full screen on a phone is a landscape affair: once the browser grants

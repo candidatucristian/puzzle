@@ -1,10 +1,6 @@
+@import './ui-fonts.css';
 @import './base.css';
-@import './sidebar.css';
-@import './modals.css';
-@import './start.css';
-@import './transitions.css';
-@import './completion.css';
-@import './experience.css';
-@import './responsive.css';
-
-.level-btn:focus-visible, #vol-icon-ui:focus-visible { outline: 1px dashed var(--pencil-bright); outline-offset: 3px; }
+@import './shell.css';
+@import './noir-dialogs.css';
+@import './opening.css';
+@import './inspection.css';

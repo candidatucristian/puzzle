@@ -19,9 +19,45 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
   const start = byId('start-screen');
   const input = byId('level-code');
-  let inspection, mobile;
+  const feedback = byId('answer-feedback');
+  let inspection, mobile, suspendedInput;
   const intro = createIntro(preferences);
-  const dialogs = createDialogs(scope, { onOpen: () => { inspection?.close(); mobile?.close(); } });
+  function answerFeedback(message = 'Follow the clues in the room. Press Enter to submit.', state = '') {
+    if (feedback) { feedback.textContent = message; feedback.dataset.state = state; }
+    input.setAttribute('aria-invalid', String(state === 'error'));
+  }
+  function restorePuzzleInput() {
+    if (!suspendedInput) return;
+    const { scene, pointer, keyboard, manager, managerEnabled } = suspendedInput;
+    if (scene?.input) scene.input.enabled = pointer;
+    if (scene?.input?.keyboard) scene.input.keyboard.enabled = keyboard;
+    if (manager) manager.enabled = managerEnabled;
+    suspendedInput = null;
+  }
+  function suspendPuzzleInput() {
+    if (suspendedInput) return;
+    const scene = levels.activeScene;
+    const manager = game.input?.keyboard;
+    suspendedInput = { scene, pointer: scene?.input?.enabled, keyboard: scene?.input?.keyboard?.enabled,
+      manager, managerEnabled: manager?.enabled };
+    if (scene?.input) scene.input.enabled = false;
+    if (scene?.input?.keyboard) {
+      scene.input.keyboard.resetKeys();
+      scene.input.keyboard.enabled = false;
+    }
+    // Phaser's global key captures would otherwise consume the arrows used
+    // by native settings sliders, even with the scene keyboard disabled.
+    if (manager) manager.enabled = false;
+  }
+  scope.add(restorePuzzleInput);
+  const dialogs = createDialogs(scope, {
+    onOpen() {
+      inspection?.close(); mobile?.close();
+      suspendPuzzleInput();
+    },
+    onClose: restorePuzzleInput,
+  });
+  scope.add(levels.subscribe(() => answerFeedback()));
   let started = false;
   let sessionStart = null;
   const touch = isTouchDevice();
@@ -54,7 +90,11 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   mountInteractionFeedback(scope, game);
   mobile = mountMobile(scope, {
     canOpenDrawer: () => !intro.active && !dialogs.isOpen,
-    onDrawer: () => inspection?.close(),
+    onDrawer: name => {
+      inspection?.close();
+      if (name) suspendPuzzleInput();
+      else if (!dialogs.isOpen) restorePuzzleInput();
+    },
   });
   function begin(event) {
     if (event?.type === 'keydown' && ['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) return;
@@ -73,19 +113,35 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
 
   scope.on(byId('btn-submit'), 'click', () => {
     if (transitions.busy || intro.active || dialogs.isOpen) return;
+    if (!input.value.trim()) {
+      answerFeedback('Enter the answer you found in the room.');
+      input.focus();
+      return;
+    }
     const result = levels.submit(input.value);
     if (result.correct) {
+      answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : 'Answer accepted. Opening the next room.', 'success');
       input.classList.add('success-flash'); scope.later(() => input.classList.remove('success-flash'), 1200);
       audio.playSuccess();
       if (result.nextIndex === null) completion.show();
-      else navigate(result.nextIndex, { caption: 'Code Accepted' });
+      else navigate(result.nextIndex, { caption: 'Answer accepted' });
       input.value = '';
-    } else if (input.value.trim()) {
+    } else {
+      answerFeedback('Look again. That answer does not unlock this room.', 'error');
       audio.playErrorSound(); input.classList.add('error-flash');
       scope.later(() => input.classList.remove('error-flash'), 1000);
     }
   });
+  scope.on(input, 'input', () => {
+    answerFeedback();
+    input.classList.remove('success-flash', 'error-flash');
+  });
   scope.on(input, 'keydown', e => { if (e.key === 'Enter') { e.preventDefault(); byId('btn-submit').click(); } });
+  // Editing a code or adjusting the header volume must not also operate the
+  // room through Phaser's window-level keyboard listener.
+  for (const type of ['keydown', 'keyup']) scope.on(document, type, event => {
+    if (event.target.matches?.('input, select, textarea') && !event.target.closest('#game-container')) event.stopPropagation();
+  });
   scope.on(byId('btn-replay'), 'click', () => { if (!intro.active) navigate(levels.currentIndex, { quick: true }); });
 
   const reset = mountResetConfirmation(scope, byId('btn-new'), {
@@ -104,9 +160,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       intro.play(() => navigate(0));
     },
   });
-  scope.on(byId('btn-howto'), 'click', () => dialogs.open('howto-modal', undefined, { nested: true }));
+  scope.on(byId('btn-howto'), 'click', event => { reset.disarm(); dialogs.open('howto-modal', event.currentTarget, { nested: true }); });
   scope.on(byId('btn-close-howto'), 'click', () => dialogs.close());
-  scope.on(byId('btn-options'), 'click', () => { reset.disarm(); dialogs.open('options-modal'); });
+  scope.on(byId('btn-options'), 'click', event => { reset.disarm(); dialogs.open('options-modal', event.currentTarget); });
   scope.on(byId('btn-close-options'), 'click', () => { reset.disarm(); dialogs.close(); });
   mountAudioControls(audio, scope);
   // while the code box has the on-screen keyboard up, the room waits to be repainted

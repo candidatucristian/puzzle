@@ -326,9 +326,39 @@ export default class PlantPotScene extends BasePuzzleScene {
       .image(BUCKET_X, -BUCKET.h / 2, art.buckets[level])
       .setOrigin(art.bucketOrigin.ox, art.bucketOrigin.oy)
       .setScale(k);
+    if (!this.isSolved && this.currentStep < 5) {
+      this.bucketGlints = this.add.container(BUCKET_X, -BUCKET.h / 2);
+      for (const [i, x, y] of [
+        [0, -BUCKET.topR - 2, -7],
+        [1, BUCKET.topR + 2, -1],
+        [2, -BUCKET.footR - 3, BUCKET.h / 2 - 1],
+      ]) {
+        const glint = this.add.image(x, y, this._art.keys.sparkle)
+          .setBlendMode("ADD")
+          .setDisplaySize(8 / cm, 8 / cm)
+          .setAlpha(0.2);
+        const scale = glint.scaleX;
+        glint.setScale(scale * 0.7);
+        this.bucketGlints.add(glint);
+        this.ambientTween({
+          targets: glint,
+          alpha: 0.62,
+          scaleX: scale * 1.15,
+          scaleY: scale * 1.15,
+          duration: 460,
+          delay: 500 + i * 720,
+          yoyo: true,
+          repeat: -1,
+          repeatDelay: 1800 + i * 240,
+          ease: "Sine.easeInOut",
+        });
+      }
+    }
     this.streamGfx = this.add.graphics();
     this.dropLayer = this.add.container(0, 0);
-    bench.add([potBack, this.wet, this.leafLayer, this.stems, potFront, this.bucketShadow, this.bucket, this.streamGfx, this.dropLayer]);
+    const objects = [potBack, this.wet, this.leafLayer, this.stems, potFront, this.bucketShadow, this.bucket];
+    if (this.bucketGlints) objects.push(this.bucketGlints);
+    bench.add([...objects, this.streamGfx, this.dropLayer]);
 
     if (!this.isSolved && this.currentStep < 5) {
       this.bucket.setInteractive({ cursor: "grab" });
@@ -352,6 +382,9 @@ export default class PlantPotScene extends BasePuzzleScene {
   update(time, delta) {
     if (!this._built) return;
     this._updateStream();
+    if (this.bucketGlints && this.bucket) {
+      this.bucketGlints.setPosition(this.bucket.x, this.bucket.y).setRotation(this.bucket.rotation);
+    }
     for (const f of this._fireflies) f.img.setVisible(this.ambientMotion);
     this._shootGfx.setVisible(this.ambientMotion);
     if (!this.ambientMotion) return;
@@ -472,6 +505,7 @@ export default class PlantPotScene extends BasePuzzleScene {
   triggerPour() {
     if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
     this.isAnimating = true;
+    this.bucketGlints?.setVisible(false);
     this._pouring = this.currentStep;
     this.input.setDraggable(this.bucket, false);
     this.services.audio.playSfx("wateringplant", 1, this);
@@ -605,6 +639,7 @@ export default class PlantPotScene extends BasePuzzleScene {
           else {
             this.isAnimating = false;
             this.input.setDraggable(this.bucket, true);
+            this.bucketGlints?.setVisible(true);
           }
         });
       },
@@ -683,6 +718,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     this.isSolved = true;
     this.isAnimating = false;
     this.bucket.disableInteractive();
+    this.bucketGlints?.setVisible(false);
     // a small reward: a star falls
     if (!this._shoot) this._launchShootingStar();
   }

@@ -1,0 +1,26 @@
+/* Deliberate inspection is a reading tool. No decorative zoom or hover motion. */
+#btn-inspect, #inspection-tools { position: absolute; bottom: 16px; z-index: 30; color: var(--ui-text); background: #0c1823eF; border: 1px solid #4a606f; border-radius: 2px; font-family: var(--ui-font); }
+#btn-inspect { right: 16px; display: flex; align-items: center; gap: 8px; padding: 10px 13px; min-height: 40px; font-size: calc(12px * var(--reading-scale)); cursor: pointer; }
+#btn-inspect:focus-visible, #inspection-tools button:focus-visible, #inspection-glass:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+#btn-inspect[aria-pressed='true'] { visibility: hidden; }
+#inspection-glass { position: absolute; inset: 0; z-index: 25; cursor: grab; touch-action: none; }
+#inspection-glass.dragging { cursor: grabbing; }
+#inspection-tools { left: 50%; translate: -50% 0; display: flex; align-items: center; gap: 10px; padding: 7px 9px; white-space: nowrap; font-size: calc(12px * var(--reading-scale)); }
+#inspection-tools > span { color: var(--ui-muted); margin-right: 6px; }
+#inspection-tools button { background: #172936; border: 1px solid #4a606f; color: var(--ui-text); min-width: 34px; min-height: 34px; cursor: pointer; border-radius: 2px; font: inherit; }
+#inspection-tools button:disabled { opacity: .4; }
+#inspect-close { padding: 0 12px; }
+#inspection-tools kbd { font: inherit; color: var(--ui-muted); margin-left: 10px; }
+#inspection-tools[hidden], #inspection-glass[hidden], #interaction-cue[hidden] { display: none; }
+.is-inspecting #game-container { pointer-events: none; }
+.is-inspecting #interaction-cue, .is-inspecting #interaction-pulse, .has-open-dialog #interaction-cue, .has-open-dialog #interaction-pulse, .has-open-drawer #interaction-cue, .has-open-drawer #interaction-pulse { visibility: hidden; }
+#interaction-cue { position: absolute; bottom: 18px; left: 18px; z-index: 22; margin: 0; padding: 8px 12px; max-width: 55%; background: #0c1823ef; border: 1px solid #4a606f; border-radius: 2px; color: var(--ui-text); font: 400 12px/1.5 var(--ui-font); pointer-events: none; }
+#interaction-pulse { position: absolute; z-index: 24; width: 10px; height: 10px; border: 1px solid var(--ui-accent); border-radius: 50%; opacity: 0; translate: -50% -50%; pointer-events: none; }
+#interaction-pulse.visible { animation: interaction-ack 220ms ease-out; }
+@keyframes interaction-ack { from { opacity: .8; } to { opacity: 0; } }
+#game-container .scene-interactive:focus-visible, #game-container [data-interaction]:focus-visible { outline: 1px solid #c5d6df; outline-offset: 3px; }
+:root[data-ambient-motion='false'] #da-overlay shader-doodle, :root[data-ambient-motion='false'] #da-overlay .tv__scan { visibility: hidden; }
+:root[data-ambient-motion='false'] #da-overlay .tv__fallback { display: block; }
+:root[data-reduced-motion='true'] #da-overlay .rot { transition: none; }
+:root[data-reduced-motion='true'] #interaction-pulse.visible { animation: none; opacity: .5; }
+@media (max-width: 900px), (max-height: 620px) { #inspection-tools > span { display: none; } #btn-inspect { right: 10px; bottom: 10px; padding: 8px 10px; min-height: 34px; } #interaction-cue { left: 10px; bottom: 10px; max-width: 60%; } #inspection-tools { bottom: 10px; gap: 6px; padding: 6px 8px; } }

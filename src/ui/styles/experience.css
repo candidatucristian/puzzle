@@ -46,11 +46,9 @@
 #interaction-pulse { position: absolute; z-index: 24; width: 18px; height: 18px; border: 1px solid var(--bone); border-radius: 50%; opacity: 0; transform: translate(-50%, -50%); pointer-events: none; }
 #interaction-pulse.visible { animation: interaction-ack 220ms ease-out; }
 @keyframes interaction-ack { from { opacity: .65; transform: translate(-50%, -50%) scale(.6); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
-#game-container .scene-interactive:hover, #game-container [data-interaction]:hover,
 #game-container .scene-interactive:focus-visible, #game-container [data-interaction]:focus-visible {
   outline: 1px solid rgba(234, 229, 214, .4); outline-offset: 3px;
 }
-#game-container .scene-interactive:active, #game-container [data-interaction]:active { outline-color: var(--bone); }
 
 /* A room keeps its number; a quiet photograph and check mark add memory. */
 .progress-summary { display: grid; gap: 9px; margin: -5px 0 20px; }

@@ -11,21 +11,27 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     tile.type = 'button'; tile.dataset.levelId = level.id;
     const preview = document.createElement('img');
     preview.className = 'level-preview'; preview.alt = ''; preview.hidden = true;
-    const number = document.createElement('span'); number.className = 'level-number'; number.textContent = index + 1;
+    const number = document.createElement('span'); number.className = 'level-number'; number.textContent = String(index + 1).padStart(2, '0');
+    const caption = document.createElement('span'); caption.className = 'level-caption';
+    const name = document.createElement('span'); name.className = 'level-name';
+    const status = document.createElement('span'); status.className = 'level-status';
+    caption.append(name, status);
     const check = document.createElement('span'); check.className = 'level-check'; check.textContent = '✓'; check.setAttribute('aria-hidden', 'true');
-    tile.append(preview, number, check); grid.append(tile);
+    tile.append(preview, number, caption, check); grid.append(tile);
     scope.on(tile, 'click', () => { if (canNavigate()) navigate(index); });
-    tiles.push({ tile, preview, check });
+    tiles.push({ tile, preview, check, name, status });
   });
 
   function render() {
     levels.definitions.forEach((level, index) => {
-      const { tile, preview, check } = tiles[index];
+      const { tile, preview, check, name, status } = tiles[index];
       const allowed = levels.canAccess(index), solved = levels.isCompleted(index), current = index === levels.currentIndex;
       tile.className = `level-btn ${allowed ? current ? 'current' : 'unlocked' : 'locked'}`;
       tile.classList.toggle('solved', solved);
       tile.disabled = !allowed;
       tile.setAttribute('aria-disabled', String(!allowed));
+      name.textContent = allowed ? level.name : 'An undiscovered room';
+      status.textContent = !allowed ? 'Locked' : current ? solved ? 'Revisiting · solved' : 'Currently exploring' : solved ? 'Solved · revisit' : 'Ready to explore';
       tile.setAttribute('aria-label', `Level ${index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
       if (current) tile.setAttribute('aria-current', 'step'); else tile.removeAttribute('aria-current');
       tile.title = allowed ? `${level.name}${solved ? ' · Solved' : ''}` : 'Solve the previous room to unlock';
@@ -36,6 +42,7 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     });
     const done = levels.completedCount, total = levels.definitions.length;
     document.getElementById('progress-count').textContent = `${done} / ${total} solved`;
+    document.getElementById('header-progress').textContent = `${String(done).padStart(2, '0')} / ${total}`;
     const meter = document.getElementById('room-progress'); meter.max = total; meter.value = done;
     const save = document.getElementById('save-status');
     save.textContent = levels.saved ? 'Saved on this device' : 'Progress kept for this session only';

@@ -13,6 +13,7 @@ export function mountComfort(scope, preferences) {
     root.dataset.ambientEffects = String(state.ambientEffects);
     root.dataset.ambientMotion = String(preferences.ambientMotion);
     grain.value = state.grain;
+    grain.setAttribute('aria-valuetext', state.grain === 0 ? 'Off' : `${state.grain}%`);
     document.getElementById('grain-value').textContent = state.grain === 0 ? 'Off' : `${state.grain}%`;
     size.value = String(state.textScale);
     motion.value = state.motion;

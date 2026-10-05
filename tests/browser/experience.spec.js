@@ -88,6 +88,26 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await expect(page.locator('#current-level-state')).toHaveText('Solved');
 });
 
+test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page }) => {
+  await open(page, { unlocked: true });
+  await navigate(page, 'PlantPot');
+  await evaluateApp(page, ({ services }) => services.preferences.set({ motion: 'system' }));
+  await evaluateApp(page, ({ services }) => {
+    const scene = services.levels.activeScene;
+    scene.input.emit('gameobjectover', { x: scene.bucket.x, y: scene.bucket.y }, scene.bucket);
+  });
+  await expect(page.locator('#interaction-cue')).toHaveText('Drag to move');
+  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.children.list
+    .filter(object => object.type === 'Graphics' && object.depth === 10000).length)).toBe(0);
+  const glints = () => evaluateApp(page, ({ services }) => {
+    const scene = services.levels.activeScene;
+    return scene.bucketGlints.list.map(glint => ({ visible: glint.visible, alpha: glint.alpha }));
+  });
+  await expect.poll(async () => (await glints()).filter(glint => glint.visible)).toHaveLength(3);
+  await expect.poll(async () => Math.max(...(await glints()).map(glint => glint.alpha))).toBeGreaterThan(0.4);
+  await screenshot(page, 'level-2-bucket-sparkle');
+});
+
 test('inspection magnifies Phaser and DOM together and does not operate the puzzle', async ({ page }) => {
   await open(page, { unlocked: true }); await navigate(page, 'Cryptex');
   const candle = page.locator('.candle-action');
