@@ -144,6 +144,8 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
 test('header arrows navigate unlocked rooms and the footer shows only the room number', async ({ page }) => {
   await open(page, { unlocked: 1 });
   await expect(page.locator('.room-title-line')).toHaveText('ROOM 02');
+  await expect(page.locator('#current-level-state')).toHaveCount(0);
+  await expect(page.locator('#sidebar h2')).toHaveCount(0);
   await expect(page.locator('#header-room')).toHaveAttribute('aria-label', 'Current level: The Moonlit Garden, level II');
   await expect(page.locator('#header-room-name')).toHaveText('The Moonlit Garden');
   await expect(page.locator('#header-progress')).toHaveText('II');
@@ -165,7 +167,7 @@ test('header arrows navigate unlocked rooms and the footer shows only the room n
   await page.locator('#room-next').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(1);
   await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.locator('#current-level-number').evaluate(el => getComputedStyle(el).fontSize)).toBe('19px');
+  expect(await page.locator('#current-level-number').evaluate(el => getComputedStyle(el).fontSize)).toBe('20px');
 });
 
 test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page }) => {
