@@ -27,6 +27,12 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   let open = null, topAway = false, toastTimer;
   const touch = isTouchDevice();
   root.dataset.touch = String(touch);
+  const standalone = isStandalone();
+  const fullscreenButton = document.getElementById('compact-fullscreen');
+  if (isIOS() && !standalone) {
+    fullscreenButton.title = 'Add Descipher to your Home Screen for full-screen play';
+    fullscreenButton.setAttribute('aria-label', 'How to play full screen on iPhone');
+  }
 
   // the words on the start screen and the intro: a phone has no keys
   if (touch) {
@@ -80,16 +86,17 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     render(); onBars?.({ top: away });
   }
 
-  // the full-screen button: the top bar slides away, and the browser is
-  // asked for full screen where it offers it. Safari on iPhone offers none,
-  // so there the way to lose the browser's own bars is the home-screen
-  // icon, and the toast says so.
+  // iOS Safari does not expose an API for hiding its browser controls. Keep
+  // the game controls available and explain how to launch the installed app.
   async function immersive() {
+    if (isIOS() && !isStandalone()) {
+      say('Safari on iPhone cannot hide its browser bars. For full-screen play, tap Share → Add to Home Screen → Add, then open Descipher from the new Home Screen icon.', 12000);
+      return;
+    }
     if (topAway) { restore(); return; }
     setTop(true);
     const went = await enterFullscreen();
-    if (went || isStandalone()) say('Pull the handle at the top edge to bring the bar back');
-    else if (isIOS()) say('Safari on iPhone has no full screen. To play without the browser bars, tap Share, then "Add to Home Screen", and open the game from that icon.', 7000);
+    if (went || standalone) say('Pull the handle at the top edge to bring the bar back');
     else say('This browser offers no full screen. Pull the handle at the top edge to bring the bar back.', 4000);
   }
   function restore() {

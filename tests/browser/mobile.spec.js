@@ -188,6 +188,18 @@ test('the full-screen button slides the top bar away, the console stays, and the
   await expect.poll(async () => (await canvas.boundingBox()).height, { timeout: 5000 }).toBeLessThan(before.height + 2);
 });
 
+test('iPhone Safari explains Home Screen installation instead of pretending to hide browser bars', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'userAgent', { configurable: true, get: () => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' });
+    Object.defineProperty(navigator, 'platform', { configurable: true, get: () => 'iPhone' });
+    Object.defineProperty(navigator, 'standalone', { configurable: true, get: () => false });
+  });
+  await open(page);
+  await page.locator('#compact-fullscreen').tap();
+  await expect(page.locator('#ui-toast')).toContainText('Share → Add to Home Screen → Add');
+  await expect(page.locator('html')).not.toHaveClass(/ui-top-collapsed/);
+});
+
 test('a portrait phone is asked to turn, and the rooms survive the turn', async ({ page }) => {
   await open(page);
   await page.locator('#btn-continue').tap();

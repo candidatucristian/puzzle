@@ -8,7 +8,7 @@
   ],
   "start_url": "../../../",
   "scope": "../../../",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "landscape",
   "theme_color": "#0a0b0e",
   "background_color": "#0a0b0e"
