@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
-import { evaluateApp } from './app.js';
+import { evaluateApp, openHints } from './app.js';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 
 async function launch(page) {
@@ -170,11 +170,11 @@ test('an inserted unsolved room prevents premature completion and completes the 
 
 test('Hints follow the catalog and dialogs support keyboard focus and Escape', async ({ page }) => {
   await launch(page); await navigate(page, 'Wires');
-  await page.locator('#btn-info').click();
+  await openHints(page);
   await expect(page.locator('#info-requires')).toContainText('Reference may help');
   await page.keyboard.press('Escape');
-  await expect(page.locator('#btn-info')).toBeFocused();
-  await navigate(page, 'Cryptex'); await page.locator('#btn-info').click();
+  await expect(page.locator('#compact-menu')).toBeFocused();
+  await navigate(page, 'Cryptex'); await openHints(page);
   await expect(page.locator('#info-requires')).toBeHidden();
   const overflow = await page.locator('#info-modal .modal-content').evaluate(el => {
     const style = getComputedStyle(el);

@@ -11,7 +11,7 @@ const metadata = [
     "code": "CABBAGE",
     "altCode": null,
     "hint": {
-      "text": "This looks like a root - could it be a vegetable or a fruit?",
+      "text": "THE ROOTS GROW UPWARDS.\nThe note beside the tree is not a doodle — each line on it is a journey.",
       "sound": false,
       "tool": false
     },
@@ -29,7 +29,7 @@ const metadata = [
     "code": "FIBO",
     "altCode": "FIBONACCI",
     "hint": {
-      "text": "WATER THE PLANT.\nObserve the pattern of its leaves. What or who does it remind you of?",
+      "text": "WATER THE PLANT.\nWatch what each pour brings out of it.",
       "sound": false,
       "tool": false
     },
@@ -48,7 +48,7 @@ const metadata = [
     "code": "19334488111",
     "altCode": "1 9 33 44 88 111",
     "hint": {
-      "text": "SIX NUMBERS, ONE VOICE.\nSmallest first, and they become one. Then don't just look at it — read it aloud, the way the note in the corner does.",
+      "text": "SIX NUMBERS, ONE VOICE.\nThe cards want an order, and the note in the corner shows how they speak.",
       "sound": false,
       "tool": false
     },
@@ -67,7 +67,7 @@ const metadata = [
     "code": "ROTOR",
     "altCode": null,
     "hint": {
-      "text": "AN OLD BRASS WHEEL.\nIt turns like a clock that lost its hours.",
+      "text": "AN OLD BRASS WHEEL.\nThe candle, the envelope and the wheel keep one secret between them.",
       "sound": false,
       "tool": false
     },
@@ -86,7 +86,7 @@ const metadata = [
     "code": "HEADACHE",
     "altCode": null,
     "hint": {
-      "text": "AN ABANDONED GAME.\nNobody won. This game is too heavy for the mind - it brings so much ...",
+      "text": "AN ABANDONED GAME.\nForget the rules — look at where the pieces stand.",
       "sound": false,
       "tool": false
     },
@@ -105,7 +105,7 @@ const metadata = [
     "code": "GEORGE",
     "altCode": null,
     "hint": {
-      "text": "AN OLD FRIEND CALLS.\nFind out who he actually is.",
+      "text": "AN OLD FRIEND CALLS.\nThe number on the screen is someone's name in disguise.",
       "sound": false,
       "tool": false
     },
@@ -125,7 +125,7 @@ const metadata = [
     "code": "POWER",
     "altCode": null,
     "hint": {
-      "text": "A DARK ROOM. A SWITCH ON THE WALL.\nSome bulbs flicker. This one insists.",
+      "text": "A DARK ROOM. A SWITCH ON THE WALL.\nPress it, and keep your eyes on the bulb.",
       "sound": false,
       "tool": true
     },
@@ -145,7 +145,7 @@ const metadata = [
     "code": "VOID",
     "altCode": "NULL",
     "hint": {
-      "text": "DEAD AIR.\nFour channels. Four different worlds. All of them speak of the same thing — without ever saying it.",
+      "text": "DEAD AIR.\nFour channels — watch every one of them to the end.",
       "sound": false,
       "tool": false
     },
@@ -164,7 +164,7 @@ const metadata = [
     "code": "HTTPS",
     "altCode": null,
     "hint": {
-      "text": "SIGNAL INTERCEPTED.\nThe old router never stopped transmitting.",
+      "text": "SIGNAL INTERCEPTED.\nThe old router's lights never stop talking.",
       "sound": false,
       "tool": true
     },
@@ -183,7 +183,7 @@ const metadata = [
     "code": "ORION",
     "altCode": null,
     "hint": {
-      "text": "A TELESCOPE AT THE WINDOW.\nNot everything up there was arranged by nature.",
+      "text": "A TELESCOPE AT THE WINDOW.\nLook through it. Not everything up there was arranged by nature.",
       "sound": false,
       "tool": true
     },
@@ -204,7 +204,7 @@ const metadata = [
     "code": "FACADE",
     "altCode": null,
     "hint": {
-      "text": "THE MORNING CHOIR.\nThey sat down exactly where the composer left them.",
+      "text": "THE MORNING CHOIR.\nLook at the birds sitting on the wires.",
       "sound": false,
       "tool": true
     },
@@ -223,7 +223,7 @@ const metadata = [
     "code": "EXIT",
     "altCode": null,
     "hint": {
-      "text": "THE LAST STATION.\nNobody checks the spelling anymore. Four trains are still boarding — leave in order of departure.",
+      "text": "THE LAST STATION.\nThe departures board — only the trains still boarding.",
       "sound": false,
       "tool": false
     },
@@ -242,7 +242,7 @@ const metadata = [
     "code": "PI",
     "altCode": "3.14",
     "hint": {
-      "text": "ONE BUILDING NEVER SLEEPS.\nThe city keeps its books by lamplight — floor by floor, from the top.",
+      "text": "ONE BUILDING NEVER SLEEPS.\nIts lit windows are worth counting.",
       "sound": false,
       "tool": false
     },
@@ -261,7 +261,7 @@ const metadata = [
     "code": "GO",
     "altCode": null,
     "hint": {
-      "text": "MIND THE CROSSING.\nThe paint is not evenly worn. Wide and narrow is a language too.",
+      "text": "MIND THE CROSSING.\nLook down at the stripes painted on the road.",
       "sound": false,
       "tool": true
     },
@@ -280,7 +280,7 @@ const metadata = [
     "code": "DEBRIEFING",
     "altCode": null,
     "hint": {
-      "text": "DRESS THE SHIP.\nEach colour flies for a country, and every country signs with two letters.",
+      "text": "DRESS THE SHIP.\nThe flags along the line, left to right.",
       "sound": false,
       "tool": true
     },
@@ -298,7 +298,7 @@ const metadata = [
     "code": "ESCAPE",
     "altCode": null,
     "hint": {
-      "text": "KNOCK TWICE.\nA prisoner counts in fives; two numbers find a letter.",
+      "text": "KNOCK TWICE.\nThe marks cut into the great stone.",
       "sound": false,
       "tool": true
     },
@@ -317,7 +317,7 @@ const metadata = [
     "code": "SILVER",
     "altCode": null,
     "hint": {
-      "text": "THE STAGE FINISH.\nEach car wears a number, and every number has a place.",
+      "text": "THE STAGE FINISH.\nWatch the cars as they cross the line.",
       "sound": false,
       "tool": false
     },
@@ -342,7 +342,7 @@ const metadata = [
     "code": "SOIL",
     "altCode": null,
     "hint": {
-      "text": "OVERTIME.\nAll these hours, and nothing to show for them but a number.",
+      "text": "OVERTIME.\nThe clocks on the wall, and the calculator on the desk.",
       "sound": false,
       "tool": false
     },
@@ -364,7 +364,7 @@ const metadata = [
     "code": "NIGHT",
     "altCode": null,
     "hint": {
-      "text": "MIDNIGHT IN PARIS.\nFive fireworks, and every one burns in a colour that has a code of its own.",
+      "text": "MIDNIGHT IN PARIS.\nEvery firework hangs a tag with the code of its colour.",
       "sound": false,
       "tool": true
     },
@@ -384,7 +384,7 @@ const metadata = [
     "code": "LOST",
     "altCode": null,
     "hint": {
-      "text": "THE NEEDLE WILL NOT SETTLE.\nIt keeps pointing somewhere new — but never at random.",
+      "text": "THE NEEDLE WILL NOT SETTLE.\nOpen the map lying on the table.",
       "sound": false,
       "tool": false
     },
@@ -405,7 +405,7 @@ const metadata = [
     "code": "SIGHT",
     "altCode": null,
     "hint": {
-      "text": "THE INDEX IS THE KEY.\nFive books stand out from the rest, and each one keeps its place with a number.",
+      "text": "THE INDEX IS THE KEY.\nFive books stand out from the rest.",
       "sound": false,
       "tool": false
     },
@@ -425,7 +425,7 @@ const metadata = [
     "code": "FOCUS",
     "altCode": null,
     "hint": {
-      "text": "READ THE GRADUATIONS.\nEach meniscus meets a number that names an element.",
+      "text": "READ THE GRADUATIONS.\nLook where the liquid stops in each bottle.",
       "sound": false,
       "tool": true
     },
@@ -445,7 +445,7 @@ const metadata = [
     "code": "BLIND",
     "altCode": null,
     "hint": {
-      "text": "A SET HAS FIFTEEN BALLS.\nThe rack is short of a few, and the pockets know where they went.",
+      "text": "A SET HAS FIFTEEN BALLS.\nThe rack is short of a few — and some pockets are marked.",
       "sound": false,
       "tool": false
     },
@@ -466,7 +466,7 @@ const metadata = [
     "code": "TRAIN",
     "altCode": null,
     "hint": {
-      "text": "ONE LINE IS RUNNING TONIGHT.\nThe stations along it were named by someone who spells things out loud.",
+      "text": "ONE LINE IS RUNNING TONIGHT.\nFollow the lit line on the map, in the direction it runs.",
       "sound": false,
       "tool": true
     },
@@ -487,7 +487,7 @@ const metadata = [
     "code": "1024",
     "altCode": null,
     "hint": {
-      "text": "FOUR PARTS, FOUR BANDS EACH.\nThe card on the bench says what every colour is worth. Start where each one starts.",
+      "text": "FOUR PARTS, FOUR BANDS EACH.\nThe resistors in order, and the card on the bench.",
       "sound": false,
       "tool": true
     },
@@ -508,7 +508,7 @@ const metadata = [
     "code": "DROP",
     "altCode": null,
     "hint": {
-      "text": "THE RAIN RETURNS TO THREE PLACES.\nWatch where all three circles agree. Read the stones from the top down.",
+      "text": "THE RAIN RETURNS TO THREE PLACES.\nWatch the rings on the water and the stones they reach.",
       "sound": false,
       "tool": false
     },
@@ -528,7 +528,7 @@ const metadata = [
     "code": "FACE",
     "altCode": null,
     "hint": {
-      "text": "DEGREE OF CONNECTION.\nFour points keep drawing your eye. Follow them from left to right.",
+      "text": "DEGREE OF CONNECTION.\nThe four pulsing points, from left to right.",
       "sound": false,
       "tool": false
     },
@@ -548,7 +548,7 @@ const metadata = [
     "code": "PING",
     "altCode": null,
     "hint": {
-      "text": "BECOME THE MACHINE. TRACE THE PATH.\nFour blocks, four drawings. The coordinates tell the pen where to go.",
+      "text": "BECOME THE MACHINE.\nThe four blocks of coordinates are instructions for a pen.",
       "sound": false,
       "tool": false
     },
@@ -567,7 +567,7 @@ const metadata = [
     "code": "CAGE",
     "altCode": null,
     "hint": {
-      "text": "A STUDY OF BOUNDARIES.\nRead the four wooden forms above the sleeping baby from highest to lowest. The label defines how to count a curve.",
+      "text": "A STUDY OF BOUNDARIES.\nThe wooden shapes hanging over the cot, from highest to lowest.",
       "sound": false,
       "tool": false
     },
@@ -587,7 +587,7 @@ const metadata = [
     "code": "SPACE",
     "altCode": null,
     "hint": {
-      "text": "THE BUILDING BLOCKS OF LIFE SPELL THE ANSWER.\nThe highlighted DNA fragment uses the standard genetic code. A codon table may help.",
+      "text": "THE BUILDING BLOCKS OF LIFE.\nThe highlighted pieces of DNA, from left to right.",
       "sound": false,
       "tool": true
     },
@@ -607,7 +607,7 @@ const metadata = [
     "code": "MOTH",
     "altCode": null,
     "hint": {
-      "text": "Let the shadows guide your eyes.",
+      "text": "LET THE SHADOWS GUIDE YOUR EYES.\nThe curtain, and the letters on the moonlit floor.",
       "sound": false,
       "tool": false
     },
@@ -627,7 +627,7 @@ const metadata = [
     "code": "WAKE",
     "altCode": null,
     "hint": {
-      "text": "Read the light, not the dark.",
+      "text": "READ THE LIGHT, NOT THE DARK.\nLook at the floor beneath the window.",
       "sound": false,
       "tool": false
     },
@@ -646,7 +646,7 @@ const metadata = [
     "code": "CITY",
     "altCode": null,
     "hint": {
-      "text": "Focus through the noise.",
+      "text": "FOCUS THROUGH THE NOISE.\nThe blinds, and the city lights behind them.",
       "sound": false,
       "tool": false
     },

@@ -21,8 +21,6 @@ export default class LightswitchScene extends BasePuzzleScene {
   preload() {
     this.load.audio("switchsound", "assets/sounds/Lightswitch/switchsound.mp3");
     this.load.audio("sparkle",     "assets/sounds/Lightswitch/sparkle.mp3");
-    // the man himself — hangs on the wall, seen only while the bulb burns
-    this.load.image("samuel", "assets/images/Lightswitch/Samuel.png");
   }
 
   create() {

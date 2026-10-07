@@ -196,15 +196,9 @@
               aria-describedby="answer-feedback"
             />
             <button id="btn-submit" type="button"><span>Submit</span><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
-          </div>
-          <p id="answer-feedback" role="status" aria-live="polite">Follow the clues in the room. Press Enter to submit.</p>
-        </div>
-        <div class="room-assistance">
-          <div class="assistance-actions">
-            <button id="btn-info" class="menu-btn hint-button" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg><span>Hints</span><span class="hint-dot" aria-hidden="true"></span></button>
             <button id="btn-replay" class="icon-button replay-btn" type="button" title="Restart this room" aria-label="Restart this room"><svg class="ui-icon" aria-hidden="true"><use href="#icon-replay"/></svg></button>
           </div>
-          <p id="current-hint-count"></p>
+          <p id="answer-feedback" role="status" aria-live="polite">Follow the clues in the room. Press Enter to submit.</p>
         </div>
       </div>
     </div>
@@ -220,6 +214,7 @@
           <p id="current-level-summary"></p>
           <div id="current-requirements"></div>
         </section>
+        <p id="current-hint-count"></p>
         <div class="field-guide">
           <p class="eyebrow">A way into the mystery</p>
           <ol><li><span>01</span><div><h3>Look with intention.</h3><p>Notice objects, sounds and details that feel out of place.</p></div></li><li><span>02</span><div><h3>Make a connection.</h3><p>Try objects and look for a pattern. The room holds the clues.</p></div></li><li><span>03</span><div><h3>Trust a possibility.</h3><p>Enter a word or number below. You can try again as often as you need.</p></div></li></ol>
@@ -341,8 +336,9 @@
             <div class="howto-row">
               <span class="ui-demo">HINTS</span>
               <p>
-                Open Hints in the right panel for three clues, revealed one at
-                a time. Start with a direction and ask for more when you need it.
+                Open Hints in the right panel for two clues, revealed one at a
+                time: first where to look, then what to notice. They point the
+                way; working it out is yours.
               </p>
             </div>
             <div class="howto-row howto-touch">

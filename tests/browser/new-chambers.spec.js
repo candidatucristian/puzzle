@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { evaluateApp } from './app.js';
+import { evaluateApp, openHints } from './app.js';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 import { PLOTTER_BLOCKS, formatPath } from '../../src/levels/plotter/puzzle.js';
 import { FRAGMENT_TEXT } from '../../src/levels/genome/puzzle.js';
@@ -37,7 +37,7 @@ test('PING and CAGE unlock the next rooms; Genome requests a reference and SPACE
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Genome');
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._fragmentText.text)).toBe(FRAGMENT_TEXT);
-  await page.locator('#btn-info').click();
+  await openHints(page);
   await expect(page.locator('#info-requires')).toContainText('Reference may help');
   await expect(page.locator('#hint-list')).toContainText('codon table');
   await page.keyboard.press('Escape');

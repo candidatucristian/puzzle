@@ -20,7 +20,8 @@ export function layoutParis(W, H) {
   const S = Math.min(W, H);
   const L = { W, H, S };
   L.horizon = H * 0.47;
-  L.river = { y0: H * 0.5, y1: H * 0.76 };
+  L.river = { y0: H * 0.5, y1: H * 0.92 };
+  L.coping = H * 0.745; // the top of the terrace's balustrade
   L.tower = { x: W * 0.54, top: H * 0.055, base: H * 0.505 };
   L.moon = { x: W * 0.84, y: H * 0.08, r: S * 0.024 };
   L.bridge = { x0: W * 0.43, x1: W * 1.02, y: H * 0.525 };
@@ -29,7 +30,7 @@ export function layoutParis(W, H) {
   L.bench = { x1: W * 0.52, back0: H * 0.575, back1: H * 0.76, seat: H * 0.86 };
   L.chest = { x0: -W * 0.01, x1: W * 0.2, top: H * 0.74, bot: H * 0.95 };
   const cw = Math.min(W * 0.2, H * 0.33);
-  L.clock = { x: W * 0.315, base: H * 0.872, w: cw, h: cw * 0.78 };
+  L.clock = { x: W * 0.3, base: L.coping - H * 0.006, w: cw, h: cw * 0.78 };
   L.clock.face = {
     x: L.clock.x,
     y: L.clock.base - L.clock.h * 0.56,
@@ -41,7 +42,7 @@ export function layoutParis(W, H) {
     w: cw * 0.5,
     h: cw * 0.085,
   };
-  L.lamp = { x: W * 0.075, y: H * 0.135, post: H * 0.56 };
+  L.lamp = { x: W * 0.07, y: H * 0.16, post: H };
   L.pillar = { x0: W * 0.94, top: H * 0.62 };
   // where the five fireworks burst, in the order they go up
   const R = S * 0.105;
@@ -65,15 +66,10 @@ export function paintParis(scene, L) {
   paintRiver(ctx, L);
   paintBridge(ctx, L);
   paintBoats(ctx, L);
-  paintWall(ctx, L);
-  paintCobbles(ctx, L);
-  paintRailing(ctx, L);
-  paintPillar(ctx, L);
-  paintLampAndRoses(ctx, L);
-  paintBench(ctx, L);
-  paintChest(ctx, L);
+  paintBalustrade(ctx, L);
+  paintLamp(ctx, L);
+  paintPlanter(ctx, L);
   paintClock(ctx, L);
-  paintRose(ctx, L);
   finish(ctx, L);
   const t = scene.textures;
   add(t, ROOM, cv);
@@ -577,438 +573,7 @@ function paintBoats(ctx, L) {
 
 // ── the terrace ─────────────────────────────────────────────────────────────
 
-// the stone parapet behind the bench, warm in the lamp's light
-function paintWall(ctx, L) {
-  const { S, H } = L;
-  const w = L.wall;
-  const blocks = (x0, y0, x1, y1, seed) => {
-    const g = ctx.createLinearGradient(0, y0, 0, y1);
-    g.addColorStop(0, "#9a8670");
-    g.addColorStop(1, "#4a3c34");
-    ctx.fillStyle = g;
-    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    const rnd = lcg(seed);
-    const bh = (y1 - y0) / 3;
-    for (let r = 0; r < 3; r++) {
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.fillRect(x0, y0 + r * bh, x1 - x0, 1);
-      for (
-        let x = x0 + (r % 2) * S * 0.04;
-        x < x1;
-        x += S * (0.06 + rnd() * 0.03)
-      )
-        ctx.fillRect(x, y0 + r * bh, 1, bh);
-    }
-    for (let i = 0; i < ((x1 - x0) * (y1 - y0)) / 40; i++) {
-      ctx.fillStyle =
-        rnd() < 0.5 ? "rgba(255,240,220,0.05)" : "rgba(0,0,0,0.08)";
-      ctx.fillRect(x0 + rnd() * (x1 - x0), y0 + rnd() * (y1 - y0), 2, 2);
-    }
-    ctx.fillStyle = "rgba(255,220,170,0.35)";
-    ctx.fillRect(x0, y0, x1 - x0, 2);
-  };
-  blocks(w.x0, w.top, w.x1, H * 0.66, 3);
-  blocks(w.x1 - (w.x1 - w.x0) * 0.42, H * 0.6, w.x1 + S * 0.03, H * 0.7, 4);
-  soft(
-    ctx,
-    L.lamp.x + S * 0.2,
-    w.top + S * 0.05,
-    S * 0.35,
-    S * 0.12,
-    WARM,
-    0.2,
-    "lighter",
-  );
-}
 
-// wet cobbles in front of the railing, holding the lights
-function paintCobbles(ctx, L) {
-  const { W, H, S } = L;
-  const y0 = H * 0.84;
-  const x0 = 0;
-  const g = ctx.createLinearGradient(0, y0, 0, H);
-  g.addColorStop(0, "#2a2028");
-  g.addColorStop(1, "#3a2c34");
-  ctx.fillStyle = g;
-  ctx.fillRect(x0, y0, W - x0, H - y0);
-  const rnd = lcg(41);
-  for (let row = 0; row < 10; row++) {
-    const t = row / 10;
-    const y = y0 + (H - y0) * t * t * 1.0 + (H - y0) * t * 0.1;
-    const ch = (H - y0) * (0.05 + t * 0.12);
-    const cw = ch * 1.6;
-    for (let x = x0 + (row % 2) * cw * 0.5; x < W; x += cw) {
-      const tone = 0.7 + rnd() * 0.5;
-      ctx.fillStyle = `rgba(${Math.round(70 * tone)},${Math.round(58 * tone)},${Math.round(66 * tone)},0.9)`;
-      rrect(ctx, x + 1, y + 1, cw - 2, ch - 2, ch * 0.3);
-      ctx.fill();
-      ctx.fillStyle = `rgba(255,220,180,${(0.05 + rnd() * 0.08).toFixed(2)})`;
-      ctx.fillRect(x + cw * 0.2, y + 2, cw * 0.5, 1);
-    }
-  }
-  // the bench's shadow over the left of it
-  const sh = ctx.createLinearGradient(0, 0, W * 0.55, 0);
-  sh.addColorStop(0, "rgba(4,3,6,0.85)");
-  sh.addColorStop(0.8, "rgba(4,3,6,0.5)");
-  sh.addColorStop(1, "rgba(4,3,6,0)");
-  ctx.fillStyle = sh;
-  ctx.fillRect(0, y0, W * 0.55, H - y0);
-  // puddles holding the tower's gold and the sky's violet
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  soft(ctx, W * 0.66, H * 0.93, S * 0.12, S * 0.025, GOLD, 0.25);
-  soft(ctx, W * 0.86, H * 0.9, S * 0.1, S * 0.02, "180,90,255", 0.2);
-  ctx.restore();
-}
-
-// the wrought-iron railing: bars, scrolls, a fleur-de-lis between them
-function paintRailing(ctx, L) {
-  const { S } = L;
-  const r = L.rail;
-  const iron = "#0a080c";
-  const lw = Math.max(2, S * 0.005);
-  ctx.strokeStyle = iron;
-  ctx.fillStyle = iron;
-  ctx.lineCap = "round";
-  // the top and bottom rails, their sheen
-  ctx.fillRect(r.x0, r.top - lw * 1.5, r.x1 - r.x0, lw * 3);
-  ctx.fillRect(r.x0, r.bot - lw, r.x1 - r.x0, lw * 2);
-  ctx.fillStyle = "rgba(255,200,160,0.3)";
-  ctx.fillRect(r.x0, r.top - lw * 1.5, r.x1 - r.x0, 1);
-  const panels = 4;
-  const pw = (r.x1 - r.x0) / panels;
-  const h = r.bot - r.top;
-  for (let p = 0; p <= panels; p++) {
-    const x = r.x0 + p * pw;
-    ctx.fillStyle = iron;
-    ctx.fillRect(x - lw * 1.2, r.top - lw * 2, lw * 2.4, h + lw * 3);
-    ctx.fillStyle = "rgba(255,200,160,0.25)";
-    ctx.fillRect(x - lw * 1.2, r.top, 1, h);
-  }
-  ctx.lineWidth = lw * 0.8;
-  for (let p = 0; p < panels; p++) {
-    const cx = r.x0 + (p + 0.5) * pw;
-    const cy = r.top + h * 0.5;
-    // two big C-scrolls back to back, two small ones above and below
-    for (const s of [-1, 1]) {
-      ctx.beginPath();
-      ctx.arc(
-        cx + s * pw * 0.22,
-        cy,
-        h * 0.22,
-        s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5,
-        s > 0 ? Math.PI * 2.1 : Math.PI * 1.1,
-      );
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(
-        cx + s * pw * 0.22 + s * h * 0.06,
-        cy + h * 0.04,
-        h * 0.07,
-        0,
-        Math.PI * 1.6,
-      );
-      ctx.stroke();
-      for (const vy of [-1, 1]) {
-        ctx.beginPath();
-        ctx.arc(cx + s * pw * 0.4, cy + vy * h * 0.3, h * 0.1, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
-    // the fleur-de-lis in the middle
-    const fh = h * 0.42;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - fh * 0.5);
-    ctx.quadraticCurveTo(cx + fh * 0.12, cy - fh * 0.1, cx, cy + fh * 0.2);
-    ctx.quadraticCurveTo(cx - fh * 0.12, cy - fh * 0.1, cx, cy - fh * 0.5);
-    ctx.fill();
-    for (const s of [-1, 1]) {
-      ctx.beginPath();
-      ctx.moveTo(cx, cy + fh * 0.1);
-      ctx.bezierCurveTo(
-        cx + s * fh * 0.4,
-        cy - fh * 0.1,
-        cx + s * fh * 0.35,
-        cy - fh * 0.45,
-        cx + s * fh * 0.15,
-        cy - fh * 0.25,
-      );
-      ctx.stroke();
-    }
-    ctx.fillRect(cx - fh * 0.2, cy + fh * 0.15, fh * 0.4, lw * 1.4);
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + fh * 0.2);
-    ctx.lineTo(cx, r.bot);
-    ctx.stroke();
-    // thin bars either side
-    for (let k = 1; k < 5; k++) {
-      if (k === 2 || k === 3) continue;
-      const bx = r.x0 + p * pw + (k / 5) * pw;
-      ctx.beginPath();
-      ctx.moveTo(bx, r.top);
-      ctx.lineTo(bx, r.bot);
-      ctx.stroke();
-    }
-  }
-}
-
-// the stone pillar on the right with its urn of roses
-function paintPillar(ctx, L) {
-  const { W, H, S } = L;
-  const p = L.pillar;
-  const g = ctx.createLinearGradient(p.x0, 0, W, 0);
-  g.addColorStop(0, "#5a4a3e");
-  g.addColorStop(0.3, "#3a2e26");
-  g.addColorStop(1, "#140e0c");
-  ctx.fillStyle = g;
-  ctx.fillRect(p.x0, p.top, W - p.x0, H - p.top);
-  const prnd = lcg(83);
-  for (let i = 0; i < 200; i++) {
-    ctx.fillStyle =
-      prnd() < 0.5 ? "rgba(255,230,200,0.05)" : "rgba(0,0,0,0.12)";
-    ctx.fillRect(
-      p.x0 + prnd() * (W - p.x0),
-      p.top + prnd() * (H - p.top),
-      2,
-      2,
-    );
-  }
-  ctx.fillStyle = "rgba(255,200,160,0.25)";
-  ctx.fillRect(p.x0, p.top, 1.5, H - p.top);
-  ctx.fillStyle = "#6a5848";
-  ctx.fillRect(p.x0 - S * 0.01, p.top, W - p.x0 + S * 0.01, S * 0.018);
-  // the urn
-  const ux = p.x0 + (W - p.x0) * 0.6;
-  const uy = p.top;
-  ctx.fillStyle = "#6a5a4c";
-  ctx.beginPath();
-  ctx.moveTo(ux - S * 0.05, uy - S * 0.07);
-  ctx.quadraticCurveTo(ux - S * 0.055, uy - S * 0.01, ux - S * 0.02, uy);
-  ctx.lineTo(ux + S * 0.02, uy);
-  ctx.quadraticCurveTo(
-    ux + S * 0.055,
-    uy - S * 0.01,
-    ux + S * 0.05,
-    uy - S * 0.07,
-  );
-  ctx.closePath();
-  ctx.fill();
-  roses(ctx, ux, uy - S * 0.1, S * 0.08, 7, 61);
-}
-
-// the lamp on its post among climbing roses, against the old wall
-function paintLampAndRoses(ctx, L) {
-  const { H, S } = L;
-  const l = L.lamp;
-  // the wall at the far left
-  const wg = ctx.createLinearGradient(0, 0, S * 0.06, 0);
-  wg.addColorStop(0, "#120c0a");
-  wg.addColorStop(1, "#3a2c22");
-  ctx.fillStyle = wg;
-  ctx.fillRect(0, 0, S * 0.055, H);
-  soft(ctx, l.x, l.y, S * 0.35, S * 0.35, WARM, 0.35, "lighter");
-  // leaves and roses climbing the wall and the post
-  const rnd = lcg(71);
-  for (let i = 0; i < 90; i++) {
-    const x = rnd() * S * 0.22;
-    const y = H * 0.18 + rnd() * H * 0.42;
-    leaf(
-      ctx,
-      x,
-      y,
-      S * (0.012 + rnd() * 0.012),
-      rnd() * Math.PI * 2,
-      rnd() < 0.3,
-    );
-  }
-  roses(ctx, S * 0.12, H * 0.42, S * 0.14, 9, 73);
-  // the post and the lantern
-  ctx.fillStyle = "#0c0a0e";
-  ctx.fillRect(l.x - S * 0.008, l.y + S * 0.06, S * 0.016, l.post - l.y);
-  ctx.fillRect(l.x - S * 0.02, l.post - S * 0.04, S * 0.04, S * 0.04);
-  const lw = S * 0.065;
-  const lh = S * 0.1;
-  ctx.beginPath();
-  ctx.moveTo(l.x - lw * 0.65, l.y - lh * 0.45);
-  ctx.lineTo(l.x, l.y - lh * 0.8);
-  ctx.lineTo(l.x + lw * 0.65, l.y - lh * 0.45);
-  ctx.closePath();
-  ctx.fill();
-  const glass = ctx.createLinearGradient(0, l.y - lh * 0.45, 0, l.y + lh * 0.5);
-  glass.addColorStop(0, "#fff2c8");
-  glass.addColorStop(1, "#ffb860");
-  ctx.fillStyle = glass;
-  ctx.beginPath();
-  ctx.moveTo(l.x - lw * 0.5, l.y - lh * 0.45);
-  ctx.lineTo(l.x + lw * 0.5, l.y - lh * 0.45);
-  ctx.lineTo(l.x + lw * 0.38, l.y + lh * 0.45);
-  ctx.lineTo(l.x - lw * 0.38, l.y + lh * 0.45);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#0c0a0e";
-  ctx.fillRect(l.x - 1, l.y - lh * 0.45, 2, lh * 0.9);
-  ctx.fillRect(l.x - lw * 0.42, l.y + lh * 0.42, lw * 0.84, S * 0.012);
-  soft(ctx, l.x, l.y, lw * 0.6, lh * 0.5, "255,240,200", 0.7, "lighter");
-}
-
-// the bench: rounded slats, dark green and wet, on a cast-iron frame with
-// an arm curling over the seat at its end
-function paintBench(ctx, L) {
-  const { S } = L;
-  const b = L.bench;
-  const end = b.x1 * 0.9;
-  const slat = (x0, x1, y, h, lean) => {
-    // a slat seen a little from above: a rounded bar, lit along its top
-    const g = ctx.createLinearGradient(0, y, 0, y + h);
-    g.addColorStop(0, "#3e4e48");
-    g.addColorStop(0.18, "#22302c");
-    g.addColorStop(0.7, "#101816");
-    g.addColorStop(1, "#060a09");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(x0, y);
-    ctx.lineTo(x1 - h * 0.4, y + lean);
-    ctx.quadraticCurveTo(x1, y + lean, x1, y + lean + h * 0.5);
-    ctx.quadraticCurveTo(x1, y + lean + h, x1 - h * 0.4, y + lean + h);
-    ctx.lineTo(x0, y + h);
-    ctx.closePath();
-    ctx.fill();
-    // the rain on it: a bright line along its top, beads here and there
-    ctx.strokeStyle = "rgba(255,214,170,0.45)";
-    ctx.lineWidth = Math.max(1, h * 0.06);
-    ctx.beginPath();
-    ctx.moveTo(x0, y + h * 0.12);
-    ctx.lineTo(x1 - h * 0.4, y + lean + h * 0.12);
-    ctx.stroke();
-    const rnd = lcg(Math.round(y));
-    for (let i = 0; i < (x1 - x0) / 30; i++) {
-      const bx = x0 + rnd() * (x1 - x0 - h);
-      const by = y + h * (0.25 + rnd() * 0.4) + (lean * (bx - x0)) / (x1 - x0);
-      ctx.fillStyle = "rgba(255,230,200,0.35)";
-      ctx.beginPath();
-      ctx.arc(bx, by, Math.max(0.8, h * 0.05), 0, Math.PI * 2);
-      ctx.fill();
-    }
-    soft(
-      ctx,
-      x0 + (x1 - x0) * 0.25,
-      y + h * 0.3,
-      (x1 - x0) * 0.22,
-      h * 0.6,
-      WARM,
-      0.12,
-      "lighter",
-    );
-  };
-  // the back: three slats, leaning back a touch
-  const bh = (b.back1 - b.back0) / 3;
-  for (let i = 0; i < 3; i++)
-    slat(-4, end * 0.96, b.back0 + i * bh, bh * 0.8, bh * 0.08);
-  // the iron upright behind the arm
-  ctx.fillStyle = "#08090a";
-  ctx.fillRect(end * 0.93, b.back0 - S * 0.01, S * 0.014, b.seat - b.back0);
-  // the seat: three slats coming toward us, each a little lower and wider
-  const sh = (b.seat - b.back1) / 3;
-  for (let i = 0; i < 3; i++)
-    slat(-4, end + i * S * 0.008, b.back1 + S * 0.006 + i * sh, sh * 0.82, 0);
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(-4, b.seat, end + S * 0.02, S * 0.012);
-  // the arm: cast iron curling down over the seat's end
-  const ax = end;
-  ctx.strokeStyle = "#0a0a0c";
-  ctx.lineWidth = Math.max(5, S * 0.014);
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(ax - S * 0.09, b.back1 - S * 0.035);
-  ctx.bezierCurveTo(
-    ax + S * 0.02,
-    b.back1 - S * 0.07,
-    ax + S * 0.07,
-    b.back1 + S * 0.01,
-    ax + S * 0.035,
-    b.back1 + S * 0.065,
-  );
-  ctx.bezierCurveTo(
-    ax + S * 0.005,
-    b.seat - S * 0.02,
-    ax + S * 0.045,
-    b.seat + S * 0.04,
-    ax + S * 0.015,
-    b.seat + S * 0.13,
-  );
-  ctx.stroke();
-  ctx.lineWidth = Math.max(3, S * 0.009);
-  ctx.beginPath();
-  ctx.arc(ax + S * 0.01, b.back1 + S * 0.045, S * 0.028, -0.3, Math.PI * 1.6);
-  ctx.stroke();
-  ctx.strokeStyle = "rgba(255,206,160,0.4)";
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(ax - S * 0.09, b.back1 - S * 0.04);
-  ctx.bezierCurveTo(
-    ax + S * 0.02,
-    b.back1 - S * 0.075,
-    ax + S * 0.066,
-    b.back1,
-    ax + S * 0.032,
-    b.back1 + S * 0.055,
-  );
-  ctx.stroke();
-}
-
-// an old trunk on the bench: worn leather, brass corners, a fleur-de-lis clasp
-function paintChest(ctx, L) {
-  const { S } = L;
-  const c = L.chest;
-  const w = c.x1 - c.x0;
-  const h = c.bot - c.top;
-  soft(ctx, c.x0 + w * 0.6, c.bot, w * 0.6, S * 0.02, "0,0,0", 0.7);
-  const g = ctx.createLinearGradient(0, c.top, 0, c.bot);
-  g.addColorStop(0, "#4a3022");
-  g.addColorStop(1, "#1a100a");
-  ctx.fillStyle = g;
-  rrect(ctx, c.x0, c.top, w, h, S * 0.012);
-  ctx.fill();
-  // its lid, rounded, catching the lamp along its top
-  const lid = ctx.createLinearGradient(0, c.top, 0, c.top + h * 0.3);
-  lid.addColorStop(0, "#6a4630");
-  lid.addColorStop(1, "#2a1a10");
-  ctx.fillStyle = lid;
-  rrect(ctx, c.x0, c.top, w, h * 0.3, S * 0.02);
-  ctx.fill();
-  ctx.fillStyle = "rgba(255,210,160,0.25)";
-  ctx.fillRect(c.x0 + S * 0.01, c.top + 2, w - S * 0.02, 2);
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(c.x0, c.top + h * 0.28, w, h * 0.04);
-  // two leather straps
-  for (const fx of [0.12, 0.6]) {
-    ctx.fillStyle = "#24140a";
-    ctx.fillRect(c.x0 + w * fx, c.top, w * 0.06, h);
-    ctx.fillStyle = "rgba(255,200,150,0.12)";
-    ctx.fillRect(c.x0 + w * fx, c.top, 1, h);
-  }
-  const brass = (x, y, bw, bh) => {
-    const bg = ctx.createLinearGradient(x, y, x + bw, y + bh);
-    bg.addColorStop(0, "#f0d08a");
-    bg.addColorStop(1, "#6a4a1a");
-    ctx.fillStyle = bg;
-    ctx.fillRect(x, y, bw, bh);
-  };
-  const cs = S * 0.03;
-  brass(c.x1 - cs, c.top, cs, cs);
-  brass(c.x1 - cs, c.bot - cs, cs, cs);
-  brass(c.x0 + w * 0.78, c.top + h * 0.22, S * 0.05, S * 0.07);
-  ctx.fillStyle = "#3a2a10";
-  ctx.font = `${Math.round(S * 0.05)}px Georgia, serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("⚜", c.x0 + w * 0.78 + S * 0.025, c.top + h * 0.22 + S * 0.035);
-  ctx.fillStyle = "rgba(255,220,170,0.3)";
-  ctx.fillRect(c.x0, c.top, w, 1.5);
-}
-
-// the clock on the bench, standing at midnight: a mahogany mantel clock with
-// a rising arched top, a brass bezel round a white enamel face, XII in red,
 // and on a brass plate below it: READ THE RED
 function paintClock(ctx, L) {
   const { S } = L;
@@ -1232,35 +797,6 @@ function paintClock(ctx, L) {
   }
 }
 
-// a red rose lying on the bench, a few petals fallen
-function paintRose(ctx, L) {
-  const { S } = L;
-  const c = L.clock;
-  const x = c.x - c.w * 0.62;
-  const y = L.bench.seat - S * 0.012;
-  ctx.strokeStyle = "#1e3a1e";
-  ctx.lineWidth = Math.max(1.5, S * 0.004);
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.quadraticCurveTo(x + S * 0.04, y + S * 0.01, x + S * 0.08, y + S * 0.03);
-  ctx.stroke();
-  leaf(ctx, x + S * 0.03, y + S * 0.01, S * 0.015, 0.4, false);
-  bloom(ctx, x, y - S * 0.01, S * 0.03, "160,20,40");
-  for (const [dx, dy, a] of [
-    [-0.06, 0.03, 0.4],
-    [0.12, 0.04, -0.3],
-    [-0.12, 0.06, 1.2],
-  ]) {
-    ctx.save();
-    ctx.translate(x + dx * S, y + dy * S);
-    ctx.rotate(a);
-    ctx.fillStyle = "rgba(230,160,170,0.85)";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, S * 0.012, S * 0.006, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-}
 
 function finish(ctx, L) {
   const { W, H } = L;
@@ -1325,27 +861,7 @@ function bloom(ctx, x, y, r, rgb) {
   ctx.stroke();
 }
 
-function roses(ctx, cx, cy, spread, n, seed) {
-  const rnd = lcg(seed);
-  for (let i = 0; i < n * 3; i++)
-    leaf(
-      ctx,
-      cx + (rnd() - 0.5) * spread * 2,
-      cy + (rnd() - 0.5) * spread,
-      spread * 0.12,
-      rnd() * 6,
-      rnd() < 0.3,
-    );
-  for (let i = 0; i < n; i++) {
-    bloom(
-      ctx,
-      cx + (rnd() - 0.5) * spread * 1.8,
-      cy + (rnd() - 0.5) * spread * 0.9,
-      spread * (0.1 + rnd() * 0.06),
-      rnd() < 0.7 ? "232,170,160" : "250,215,200",
-    );
-  }
-}
+
 
 function paintGlint() {
   const c = makeCanvas(32, 32);
@@ -1432,4 +948,176 @@ function lcg(seed) {
   let s = seed % 2147483647;
   if (s <= 0) s += 2147483646;
   return () => (s = (s * 16807) % 2147483647) / 2147483647;
+}
+
+// ── the terrace ─────────────────────────────────────────────────────────────
+
+// The terrace's stone balustrade along the bottom of the picture: a broad
+// coping, a row of turned balusters with the river between them, square
+// piers at intervals, a base rail; warm where the lamp reaches, the moon
+// pale along the top.
+function paintBalustrade(ctx, L) {
+  const { W, H, S } = L;
+  const top = L.coping;
+  const cH = H * 0.034; // the coping's face
+  const lid = H * 0.014; // its top, seen from just above
+  const baseY = H * 0.905;
+  const railH = H * 0.03;
+  const stone = (y0, y1, k = 1) => {
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, `rgb(${Math.round(118 * k)},${Math.round(106 * k)},${Math.round(100 * k)})`);
+    g.addColorStop(1, `rgb(${Math.round(52 * k)},${Math.round(44 * k)},${Math.round(48 * k)})`);
+    return g;
+  };
+  // the balusters, each a turned vase shape, the river showing between
+  const bTop = top + cH;
+  const bH = baseY - bTop;
+  const step = Math.max(26, S * 0.05);
+  const piers = [0.17, 0.5, 0.83].map((f) => W * f);
+  const pierW = step * 1.15;
+  for (let x = step / 2; x < W + step; x += step) {
+    if (piers.some((p) => Math.abs(x - p) < pierW * 0.9)) continue;
+    const r = step * 0.3;
+    soft(ctx, x + r * 0.5, bTop + bH * 0.6, r * 1.2, bH * 0.5, "0,0,0", 0.25);
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.55, bTop);
+    ctx.lineTo(x + r * 0.55, bTop);
+    ctx.lineTo(x + r * 0.4, bTop + bH * 0.08);
+    ctx.bezierCurveTo(x + r * 0.25, bTop + bH * 0.22, x + r * 1.1, bTop + bH * 0.45, x + r * 1.0, bTop + bH * 0.7);
+    ctx.quadraticCurveTo(x + r * 0.9, bTop + bH * 0.86, x + r * 0.5, bTop + bH * 0.9);
+    ctx.lineTo(x + r * 0.62, baseY);
+    ctx.lineTo(x - r * 0.62, baseY);
+    ctx.lineTo(x - r * 0.5, bTop + bH * 0.9);
+    ctx.quadraticCurveTo(x - r * 0.9, bTop + bH * 0.86, x - r * 1.0, bTop + bH * 0.7);
+    ctx.bezierCurveTo(x - r * 1.1, bTop + bH * 0.45, x - r * 0.25, bTop + bH * 0.22, x - r * 0.4, bTop + bH * 0.08);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(x - r, 0, x + r, 0);
+    g.addColorStop(0, "#8a7c74");
+    g.addColorStop(0.45, "#5e5254");
+    g.addColorStop(1, "#241e24");
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+  // the piers
+  for (const p of piers) {
+    const g = ctx.createLinearGradient(p - pierW / 2, 0, p + pierW / 2, 0);
+    g.addColorStop(0, "#857668");
+    g.addColorStop(0.6, "#5a4e4c");
+    g.addColorStop(1, "#2a2228");
+    ctx.fillStyle = g;
+    ctx.fillRect(p - pierW / 2, bTop, pierW, baseY - bTop);
+    ctx.strokeStyle = "rgba(40,30,26,0.45)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(p - pierW * 0.36, bTop + bH * 0.14, pierW * 0.72, bH * 0.7);
+  }
+  // the base rail and the coping over all
+  ctx.fillStyle = stone(baseY, baseY + railH, 0.8);
+  ctx.fillRect(0, baseY, W, railH);
+  ctx.fillStyle = stone(top, top + cH);
+  ctx.fillRect(0, top, W, cH);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(0, top + cH, W, Math.max(2, H * 0.005));
+  const lg = ctx.createLinearGradient(0, top - lid, 0, top);
+  lg.addColorStop(0, "#a89a8c");
+  lg.addColorStop(1, "#7a6e66");
+  ctx.fillStyle = lg;
+  ctx.fillRect(0, top - lid, W, lid);
+  ctx.fillStyle = "rgba(200,215,255,0.25)";
+  ctx.fillRect(0, top - lid, W, Math.max(1, H * 0.002));
+  // the stone's joints along the coping
+  ctx.strokeStyle = "rgba(60,46,40,0.4)";
+  ctx.lineWidth = 1;
+  for (const p of piers) {
+    for (const d of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(p + (d * pierW) / 2, top - lid);
+      ctx.lineTo(p + (d * pierW) / 2, top + cH);
+      ctx.stroke();
+    }
+  }
+  // the terrace's flagstones below
+  const fl = ctx.createLinearGradient(0, baseY + railH, 0, H);
+  fl.addColorStop(0, "#2a2226");
+  fl.addColorStop(1, "#16121a");
+  ctx.fillStyle = fl;
+  ctx.fillRect(0, baseY + railH, W, H - baseY - railH);
+  // the lamp's warmth on the stone
+  soft(ctx, L.lamp.x + W * 0.08, top + H * 0.05, W * 0.3, H * 0.2, WARM, 0.3, "lighter");
+  soft(ctx, L.clock.x, top + H * 0.02, L.clock.w * 1.3, H * 0.08, WARM, 0.22, "lighter");
+}
+
+// the street lamp at the left: a slender iron post on a heavy base, its
+// lantern glowing
+function paintLamp(ctx, L) {
+  const { H, S } = L;
+  const l = L.lamp;
+  soft(ctx, l.x, l.y, S * 0.35, S * 0.35, WARM, 0.32, "lighter");
+  ctx.fillStyle = "#0c0a0e";
+  ctx.beginPath();
+  ctx.moveTo(l.x - S * 0.03, H);
+  ctx.lineTo(l.x - S * 0.022, H - S * 0.07);
+  ctx.quadraticCurveTo(l.x, H - S * 0.1, l.x + S * 0.022, H - S * 0.07);
+  ctx.lineTo(l.x + S * 0.03, H);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(l.x - S * 0.0075, l.y + S * 0.06, S * 0.015, H - S * 0.09 - l.y - S * 0.06);
+  ctx.fillRect(l.x - S * 0.014, (l.y + H) / 2, S * 0.028, S * 0.012);
+  ctx.fillRect(l.x - S * 0.035, l.y + S * 0.085, S * 0.07, S * 0.006);
+  ctx.fillStyle = "rgba(255,210,150,0.25)";
+  ctx.fillRect(l.x + S * 0.003, l.y + S * 0.07, S * 0.003, H - S * 0.18 - l.y);
+  ctx.fillStyle = "#0c0a0e";
+  const lw = S * 0.065;
+  const lh = S * 0.1;
+  ctx.beginPath();
+  ctx.moveTo(l.x - lw * 0.65, l.y - lh * 0.45);
+  ctx.lineTo(l.x, l.y - lh * 0.8);
+  ctx.lineTo(l.x + lw * 0.65, l.y - lh * 0.45);
+  ctx.closePath();
+  ctx.fill();
+  const glass = ctx.createLinearGradient(0, l.y - lh * 0.45, 0, l.y + lh * 0.5);
+  glass.addColorStop(0, "#fff2c8");
+  glass.addColorStop(1, "#ffb860");
+  ctx.fillStyle = glass;
+  ctx.beginPath();
+  ctx.moveTo(l.x - lw * 0.5, l.y - lh * 0.45);
+  ctx.lineTo(l.x + lw * 0.5, l.y - lh * 0.45);
+  ctx.lineTo(l.x + lw * 0.38, l.y + lh * 0.45);
+  ctx.lineTo(l.x - lw * 0.38, l.y + lh * 0.45);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#0c0a0e";
+  ctx.fillRect(l.x - 1, l.y - lh * 0.45, 2, lh * 0.9);
+  ctx.fillRect(l.x - lw * 0.42, l.y + lh * 0.42, lw * 0.84, S * 0.012);
+  soft(ctx, l.x, l.y, lw * 0.6, lh * 0.5, "255,240,200", 0.7, "lighter");
+}
+
+// a terracotta pot of red geraniums on the coping
+function paintPlanter(ctx, L) {
+  const { W, S } = L;
+  const x = W * 0.85;
+  const y = L.coping - S * 0.014;
+  const pw = S * 0.07;
+  const ph = S * 0.05;
+  soft(ctx, x + pw * 0.2, y, pw * 0.8, S * 0.01, "0,0,0", 0.6);
+  const g = ctx.createLinearGradient(x - pw / 2, 0, x + pw / 2, 0);
+  g.addColorStop(0, "#c86a3c");
+  g.addColorStop(0.6, "#8a3e20");
+  g.addColorStop(1, "#4a1e10");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(x - pw / 2, y - ph);
+  ctx.lineTo(x + pw / 2, y - ph);
+  ctx.lineTo(x + pw * 0.38, y);
+  ctx.lineTo(x - pw * 0.38, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#9a4a26";
+  ctx.fillRect(x - pw * 0.55, y - ph - S * 0.008, pw * 1.1, S * 0.01);
+  const rnd = lcg(404);
+  for (let i = 0; i < 16; i++) {
+    leaf(ctx, x + (rnd() - 0.5) * pw * 1.1, y - ph - rnd() * S * 0.035, S * 0.012, rnd() * Math.PI * 2, rnd() < 0.3);
+  }
+  for (let i = 0; i < 5; i++) {
+    bloom(ctx, x + (rnd() - 0.5) * pw * 0.9, y - ph - S * 0.02 - rnd() * S * 0.03, S * 0.012, "210,40,50");
+  }
 }

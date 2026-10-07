@@ -24,50 +24,14 @@ import {
 // N I G H T. (Each firework burns in its hex raised to full brightness, so
 // it is the same hue as its code, only bright enough to see in the sky.)
 //
-// The background is a picture (FW_BG, made with an image generator: Paris at
-// night, the clock on the bench at midnight, an empty brass plate, no
-// fireworks). Over it, live: the fireworks and their tags, their light, the
-// clock's red second hand, READ THE RED on the plate, the tower's sparkle. All
-// of them are placed by FW_SPOTS, as fractions of the picture, so that a new
-// picture only needs its spots measured. If the picture can't be loaded the
-// painted Paris (paris.js) stands in for it.
+// The whole of Paris is painted (paris.js): the sky, the tower, the river,
+// the terrace with its bench and the carriage clock. Live over it: the
+// fireworks and their tags, their light, the clock's red second hand, the
+// tower's sparkle, the lamp's flame.
 //
 // The show runs round and round; a click on the clock starts it again from
 // the first firework.
 // ─────────────────────────────────────────────────────────────────────────────
-
-// the background picture, and where things are in it (fractions of its width
-// and height — measure them on the picture you use)
-// baked: true — the picture already has the fireworks (and the notebook with
-// the codes) painted in it: the scene doesn't send up new ones, it makes the
-// painted ones flare again, one after another, in their order. Set it to false
-// for a picture with an empty sky (and the clock): then the scene sends the
-// fireworks up itself and hangs a tag with its code under each.
-const FW_BG = {
-  key: "fw_bg",
-  url: "assets/images/fireworks/paris.png",
-  baked: true,
-};
-const FW_SPOTS = {
-  bursts: [
-    { x: 0.2, y: 0.122 },
-    { x: 0.335, y: 0.273 },
-    { x: 0.45, y: 0.132 },
-    { x: 0.667, y: 0.239 },
-    { x: 0.863, y: 0.278 },
-  ],
-  burstR: 0.076, // a burst's radius, as a fraction of the picture's width
-  clock: { x: 0.29, y: 0.71, r: 0.05 }, // the clock face: centre and radius
-  plate: { x: 0.29, y: 0.83, w: 0.12, h: 0.025 }, // the empty brass plate
-  tower: {
-    top: { x: 0.544, y: 0.07 },
-    left: { x: 0.477, y: 0.49 },
-    right: { x: 0.608, y: 0.49 },
-  },
-  lamp: { x: 0.073, y: 0.157 },
-  river: { y0: 0.55, y1: 0.75 },
-  horizon: 0.45,
-};
 
 const FW_CODES = ["#4E2233", "#492244", "#472255", "#482266", "#542277"];
 const FW_EVERY = 2600; // ms between two fireworks going up
@@ -84,10 +48,6 @@ export default class FireworksScene extends BasePuzzleScene {
   init(data) {
     this.skipFadeIn =
       data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
-  }
-
-  preload() {
-    if (!this.textures.exists(FW_BG.key)) this.load.image(FW_BG.key, FW_BG.url);
   }
 
   create() {
@@ -108,38 +68,12 @@ export default class FireworksScene extends BasePuzzleScene {
   _build(W, H) {
     this._W = W;
     this._H = H;
-    const L = this.textures.exists(FW_BG.key)
-      ? this._layoutPicture(W, H)
-      : layoutParis(W, H);
-    // the painted Paris still makes the small textures (glow, glint); its
-    // room is only shown when there is no picture
-    const art = paintParis(this, L.painted ? L : layoutParis(W, H));
+    const L = layoutParis(W, H);
+    const art = paintParis(this, L);
     this._L = L;
-    this._art = L.towerPts ? { ...art, towerPts: L.towerPts } : art;
-
-    this._baked = !!(L.picture && FW_BG.baked);
-    if (L.picture) {
-      this.add
-        .image(L.picture.x, L.picture.y, FW_BG.key)
-        .setOrigin(0, 0)
-        .setScale(L.picture.k)
-        .setDepth(-10);
-    }
-    if (L.picture && !this._baked) {
-      // READ THE RED, engraved on the clock's plate
-      const p = L.plate;
-      this.add
-        .text(p.x, p.y, "READ THE RED", {
-          fontFamily: FW_FONT,
-          fontSize: Math.max(10, Math.round(p.h * 0.62)) + "px",
-          color: "#4a0e0e",
-        })
-        .setOrigin(0.5)
-        .setShadow(0.8, 1, "rgba(255,236,190,0.55)", 0)
-        .setDepth(-7);
-    } else if (!L.picture) {
-      this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-10);
-    }
+    this._art = art;
+    this._baked = false;
+    this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-10);
 
     // the fireworks' light: a flash on the sky, its echo on the river
     this._flash = this.add
@@ -178,71 +112,12 @@ export default class FireworksScene extends BasePuzzleScene {
       .setAlpha(0.4)
       .setDepth(-9);
 
-    if (!this._baked) {
-      this._makeSecondHand(L);
-      this._makeClockTouch(L);
-    }
+    this._makeSecondHand(L);
+    this._makeClockTouch(L);
     this.levelText = drawLevelLabel(this, W, H);
 
     // the show: fireworks one after another, round and round
     this._show = { t: 0, live: [], fired: -1 };
-  }
-
-  // the picture covers the screen (cropped at the edges if it must); every
-  // spot is mapped from the picture onto the screen
-  _layoutPicture(W, H) {
-    const src = this.textures.get(FW_BG.key).getSourceImage();
-    const iw = src.width;
-    const ih = src.height;
-    const k = Math.max(W / iw, H / ih);
-    const ox = (W - iw * k) / 2;
-    const oy = (H - ih * k) / 2;
-    const P = (f) => ({ x: ox + f.x * iw * k, y: oy + f.y * ih * k });
-    const sp = FW_SPOTS;
-    const S = Math.min(W, H);
-    const R = sp.burstR * iw * k;
-    const clock = P(sp.clock);
-    const plate = P(sp.plate);
-    const L = {
-      W,
-      H,
-      S,
-      picture: { x: ox, y: oy, k },
-      bursts: sp.bursts.map((b) => ({ ...P(b), r: R })),
-      clock: {
-        x: clock.x,
-        base: clock.y + sp.clock.r * iw * k,
-        w: sp.clock.r * iw * k * 2.4,
-        h: sp.clock.r * iw * k * 2.4,
-        face: { x: clock.x, y: clock.y, r: sp.clock.r * iw * k },
-      },
-      plate: {
-        x: plate.x,
-        y: plate.y,
-        w: sp.plate.w * iw * k,
-        h: sp.plate.h * ih * k,
-      },
-      lamp: P(sp.lamp),
-      horizon: oy + sp.horizon * ih * k,
-      river: { y0: oy + sp.river.y0 * ih * k, y1: oy + sp.river.y1 * ih * k },
-      rail: { x0: W * 0.45 },
-    };
-    // points on the tower for its sparkle: inside its outline, a narrow spire
-    const t = {
-      top: P(sp.tower.top),
-      left: P(sp.tower.left),
-      right: P(sp.tower.right),
-    };
-    const pts = [];
-    for (let i = 0; i < 60; i++) {
-      const v = Math.pow(Math.random(), 0.8);
-      const y = t.top.y + (t.left.y - t.top.y) * v;
-      const half = ((t.right.x - t.left.x) / 2) * Math.pow(v, 1.8);
-      const cx = t.top.x + ((t.left.x + t.right.x) / 2 - t.top.x) * v;
-      pts.push({ x: cx + (Math.random() * 2 - 1) * half * 0.8, y });
-    }
-    L.towerPts = pts;
-    return L;
   }
 
   // the clock's red second hand, ticking past midnight

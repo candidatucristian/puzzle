@@ -602,3 +602,17 @@
 @media (prefers-reduced-motion: reduce) {
   :is(#options-modal, #howto-modal, #info-modal, #completion-screen, #intro-screen, #intro-line, #intro-title, #level-veil, .veil-content) { transition: none; }
 }
+
+/* On a short screen the options scroll: Mute and Close stay in reach at the
+   panel's foot, the settings passing under them. */
+#options-modal .modal-actions {
+  position: sticky;
+  /* sticky keeps to the panel's content box: reach down over its padding */
+  bottom: -28px;
+  z-index: 1;
+  margin-inline: -10px;
+  padding: 12px 10px 28px;
+  margin-bottom: -16px;
+  background: var(--ui-panel);
+  box-shadow: 0 -16px 16px -8px var(--ui-panel);
+}

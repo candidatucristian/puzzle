@@ -1,11 +1,12 @@
 import { KINETIC_FORMS, polygonVertices } from './puzzle.js';
 import { makeCanvas, addCanvasTexture, releaseTextures, lcg, polygon } from '../../shared/paint.js';
 
+// lilac, lavender, plum and mauve: painted wood in the nursery's purples
 const PALETTES = [
-  ['#94848b', '#6e5869', '#34283d'],
-  ['#a19385', '#716171', '#382d43'],
-  ['#8c959d', '#5d6979', '#293443'],
-  ['#a68a96', '#795a72', '#3d2a42'],
+  ['#fbeaff', '#dcb4f4', '#a274cc'],
+  ['#f0ecff', '#c4b4f4', '#8a76d0'],
+  ['#f4d8ff', '#c690e8', '#8a56b8'],
+  ['#ffe4f4', '#eab0dc', '#b06aa4'],
 ];
 
 /** Small painted wooden toys, with bevelled edges and grain in the face. */
@@ -33,14 +34,14 @@ export function paintMobileAssets(textures, scaleRef) {
     const rnd = lcg(290 + index);
     for (let i = 0; i < 60; i++) {
       const y = (rnd() * 2 - 1) * r;
-      ctx.strokeStyle = 'rgba(197,172,200,' + (0.025 + rnd() * 0.065) + ')'; ctx.lineWidth = 0.45;
+      ctx.strokeStyle = 'rgba(255,240,255,' + (0.03 + rnd() * 0.06) + ')'; ctx.lineWidth = 0.45;
       ctx.beginPath(); ctx.moveTo(-r, y); ctx.bezierCurveTo(-r * 0.3, y - r * 0.04, r * 0.4, y + r * 0.04, r, y); ctx.stroke();
     }
     ctx.restore();
     shape();
     const edge = ctx.createLinearGradient(r, -r, -r, r);
-    edge.addColorStop(0, '#c6b8cf'); edge.addColorStop(0.5, '#8b7895'); edge.addColorStop(1, '#4a3a56');
-    ctx.strokeStyle = edge; ctx.lineWidth = Math.max(0.8, r * 0.035); ctx.stroke();
+    edge.addColorStop(0, '#fff0b8'); edge.addColorStop(0.5, '#e0b860'); edge.addColorStop(1, '#8a6428');
+    ctx.strokeStyle = edge; ctx.lineWidth = Math.max(1.2, r * 0.07); ctx.stroke();
     ctx.fillStyle = '#18121f'; ctx.beginPath(); ctx.arc(0, -r * 0.85, Math.max(0.75, r * 0.052), 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(187,166,196,.55)'; ctx.lineWidth = 0.65; ctx.stroke();
     addCanvasTexture(textures, form.id, canvas);

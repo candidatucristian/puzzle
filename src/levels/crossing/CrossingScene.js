@@ -144,7 +144,6 @@ export default class CrossingScene extends BasePuzzleScene {
     this._makeWindows(art);
     this._makeSmoke(art.smoke.x, art.smoke.y, art.puff);
     this._makeSteam(art.steam.x, art.steam.y, art.puff);
-    this._makeSign(art);
     this._makeWalkSignal(art);
     this._drawCat(W, H);
     this._drawTexts(W, H);
@@ -288,22 +287,6 @@ export default class CrossingScene extends BasePuzzleScene {
     }
   }
 
-  // the shop's sign, swaying a little on its bracket
-  _makeSign(art) {
-    const sign = this.add
-      .image(art.sign.x, art.sign.y, art.sign.key)
-      .setOrigin(0.5, art.sign.oy)
-      .setDepth(-7);
-    this.ambientTween({
-      targets: sign,
-      angle: 3,
-      duration: 2200,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
-  }
-
   // the walking figure, its green breathing
   _makeWalkSignal(art) {
     const w = this.add
@@ -425,15 +408,15 @@ export default class CrossingScene extends BasePuzzleScene {
         -s * 1.07 + bob,
       );
       walking.lineStyle(1, CR_RIM, 0.4);
+      // along the body's own (flattened) curve, so it lies on its back
       walking.beginPath();
-      walking.arc(
-        0,
-        -s * 0.7 + bob,
-        s * 0.85,
-        Math.PI * 1.15,
-        Math.PI * 1.85,
-        false,
-      );
+      for (let i = 0; i <= 12; i++) {
+        const a = Math.PI * (1.15 + (0.7 * i) / 12);
+        const px = Math.cos(a) * s * 0.85;
+        const py = -s * 0.7 + bob + Math.sin(a) * s * 0.36;
+        if (i) walking.lineTo(px, py);
+        else walking.moveTo(px, py);
+      }
       walking.strokePath();
       // Diagonal pairs of paws take turns supporting the body.
       for (let i = 0; i < 4; i++) {

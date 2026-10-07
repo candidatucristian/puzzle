@@ -12,23 +12,22 @@ function memory() {
   return { getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) };
 }
 
-test('each room has three distinct, progressively available hints', () => {
+test('each room has two distinct, progressively available hints', () => {
   const storage = new SafeStorage(memory());
   const hints = new HintStore(storage, LEVEL_METADATA);
   const progress = new ProgressStore(storage, LEVEL_METADATA);
   const before = progress.state;
   for (const room of LEVEL_METADATA) {
-    assert.equal(room.hint.steps.length, 3);
-    assert.equal(new Set(room.hint.steps).size, 3);
+    assert.equal(room.hint.steps.length, 2);
+    assert.equal(new Set(room.hint.steps).size, 2);
     assert.ok(room.hint.steps.every(step => typeof step === 'string' && step.trim().length > 10));
     assert.equal(hints.count(room.id), 0);
     assert.equal(hints.reveal(room.id), 1);
   }
   assert.equal(hints.reveal('cryptex'), 2);
-  assert.equal(hints.reveal('cryptex'), 3);
-  assert.equal(hints.reveal('cryptex'), 3);
+  assert.equal(hints.reveal('cryptex'), 2);
   const reloaded = new HintStore(storage, [...LEVEL_METADATA].reverse());
-  assert.equal(reloaded.count('cryptex'), 3);
+  assert.equal(reloaded.count('cryptex'), 2);
   assert.equal(reloaded.count('overtime'), 1);
   reloaded.reset();
   assert.equal(new HintStore(storage, LEVEL_METADATA).count('cryptex'), 0);
@@ -39,7 +38,7 @@ test('damaged optional hint and preference saves do not prevent loading', () => 
   const storage = new SafeStorage(memory());
   storage.setItem(HINTS_KEY, JSON.stringify({ cryptex: 900, tv: -1, flags: '2', removed: 1 }));
   const hints = new HintStore(storage, LEVEL_METADATA);
-  assert.equal(hints.count('cryptex'), 3);
+  assert.equal(hints.count('cryptex'), 2);
   assert.equal(hints.count('tv'), 0);
   assert.equal(hints.count('flags'), 0);
   assert.equal(hints.reveal('removed'), 0);

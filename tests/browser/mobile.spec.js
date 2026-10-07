@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
-import { evaluateApp } from './app.js';
+import { evaluateApp, openHints } from './app.js';
 
 // Runs under the "phone" project only: an emulated Pixel 7 held sideways,
 // with touch, a coarse pointer and an 863×360 viewport. These checks use
@@ -65,9 +65,17 @@ test('a phone browser can play without a native shell and fills the screen', asy
   expect(canvas.height).toBeGreaterThan(viewport.height * 0.6);
   // the console sits on one row at the bottom, inside the screen
   const submit = await page.locator('#btn-submit').boundingBox();
+  const answerControls = await page.locator('.input-wrapper').boundingBox();
+  const consoleBounds = await page.locator('#input-area').boundingBox();
+  expect(answerControls.x + answerControls.width / 2).toBeCloseTo(consoleBounds.x + consoleBounds.width / 2, 0);
   expect(submit.x + submit.width).toBeLessThanOrEqual(viewport.width);
-  await expect(page.locator('#btn-replay')).toBeHidden();
-  await expect(page.locator('#btn-info')).toBeInViewport();
+  const replay = await page.locator('#btn-replay').boundingBox();
+  expect(replay).not.toBeNull();
+  expect(replay.y).toBeCloseTo(submit.y, 0);
+  expect(replay.x).toBeCloseTo(submit.x + submit.width + 8, 0);
+  expect(replay.height).toBeCloseTo(submit.height, 0);
+  await expect(page.locator('#btn-replay')).toBeInViewport();
+  await expect(page.locator('#btn-info')).toHaveCount(0);
   await screenshot(page, 'room');
   expect(errors).toEqual([]);
 });
@@ -102,7 +110,7 @@ test('the room index stays open while room notes and settings open normally', as
   // a dialog from the drawer: open, readable, closable
   await page.locator('#compact-menu').tap();
   await expect(page.locator('#current-level-number')).toHaveText('ROOM 10');
-  await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
+  await expect(page.locator('#current-hint-count')).toHaveText('0 of 2 hints revealed');
   await page.locator('#right-sidebar-wrapper [data-close-drawer]').tap();
   await expect(page.locator('#right-sidebar-wrapper')).not.toBeInViewport();
   await page.locator('#btn-options').tap();
@@ -225,8 +233,7 @@ test('phone hints remain readable and scroll to the last hint with badges and la
   for (const [width, height] of [[863, 360], [667, 375], [568, 320]]) {
     await resizePhone(page, width, height);
     await evaluateApp(page, ({ services }) => services.preferences.set({ textScale: 1.3 }));
-    await page.locator('#compact-menu').tap();
-    await page.locator('#btn-info').tap();
+    await openHints(page, { tap: true });
     await expect(page.locator('#handle-top')).toBeHidden();
     const list = page.locator('#hint-list');
     expect(await list.evaluate(el => el.clientHeight)).toBeGreaterThan(65);

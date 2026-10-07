@@ -15,7 +15,6 @@ const WIN = "cr_win_";
 const GLOW = "cr_glow";
 const PUFF = "cr_puff";
 const STAR = "cr_star";
-const SIGN = "cr_sign";
 const WALK = "cr_walk";
 const VARIANTS = 5;
 const WARM = "255,206,130";
@@ -30,6 +29,7 @@ export function paintStreet(scene, W, H, bars) {
   paintBuilding(ctx, cam, true, lay);
   paintBuilding(ctx, cam, false, lay);
   paintSidewalk(ctx, cam, lcg(2233));
+  if (lay.boardAt) paintBoard(ctx, cam, lay.boardAt.x);
   paintRoad(ctx, cam, lcg(5150), lay);
   paintCrossing(ctx, cam, bars, lcg(4848));
   paintCar(ctx, cam);
@@ -74,8 +74,6 @@ export function paintStreet(scene, W, H, bars) {
       [1, 0],
     ]),
   );
-  const sign = paintSign(cam.S);
-  add(t, SIGN, sign.canvas);
   add(t, WALK, paintWalker(lay.walk.size));
   return {
     city: CITY,
@@ -86,7 +84,6 @@ export function paintStreet(scene, W, H, bars) {
     far: lay.far,
     smoke: lay.smoke,
     steam: lay.steam,
-    sign: { key: SIGN, x: lay.signAt.x, y: lay.signAt.y, oy: sign.oy },
     walk: { key: WALK, ...lay.walk },
     baseY: cam.baseY,
     curbY: cam.curbY,
@@ -94,7 +91,7 @@ export function paintStreet(scene, W, H, bars) {
 }
 
 export function releaseStreetArt(textures) {
-  const keys = [CITY, GLOW, PUFF, STAR, SIGN, WALK];
+  const keys = [CITY, GLOW, PUFF, STAR, WALK];
   for (let v = 0; v < VARIANTS; v++) keys.push(WIN + v);
   for (const key of keys) if (textures.exists(key)) textures.remove(key);
 }
@@ -611,16 +608,8 @@ function paintShop(ctx, cam, bx, bw, groundH, lay) {
     0.18,
     "lighter",
   );
-  // the sign's iron bracket
-  const sx = bx + bw * 0.8;
-  const sy = top + groundH * 0.2;
-  ctx.strokeStyle = "#0b0b10";
-  ctx.lineWidth = Math.max(1.5, S * 0.003);
-  ctx.beginPath();
-  ctx.moveTo(sx + bw * 0.06, sy - groundH * 0.05);
-  ctx.lineTo(sx - S * 0.005, sy - groundH * 0.05);
-  ctx.stroke();
-  lay.signAt = { x: sx, y: sy - groundH * 0.05 };
+  // a chalkboard will stand on the sidewalk before its window
+  lay.boardAt = { x: bx + bw * 0.44 };
 }
 
 // ── the ground ──────────────────────────────────────────────────────────────
@@ -1084,53 +1073,99 @@ function paintInterior(w, h, v) {
   return c;
 }
 
-// the shop's hanging sign: a painted board, CAT FOOD and a fish
-function paintSign(S) {
-  const w = Math.ceil(Math.max(70, S * 0.1));
-  const h = Math.ceil(w * 0.42);
-  const c = makeCanvas(w, h + 8);
-  const g = c.getContext("2d");
-  g.strokeStyle = "#0b0b10";
-  g.lineWidth = 1.5;
-  g.beginPath();
-  g.moveTo(w * 0.2, 0);
-  g.lineTo(w * 0.2, 8);
-  g.moveTo(w * 0.8, 0);
-  g.lineTo(w * 0.8, 8);
-  g.stroke();
-  const bg = g.createLinearGradient(0, 8, 0, 8 + h);
-  bg.addColorStop(0, "#2a5446");
-  bg.addColorStop(1, "#1a3a30");
-  g.fillStyle = bg;
-  roundRect(g, 1, 8, w - 2, h - 1, h * 0.18);
-  g.fill();
-  g.strokeStyle = "#c9a35a";
-  g.lineWidth = 1.5;
-  roundRect(g, 3, 10, w - 6, h - 5, h * 0.14);
-  g.stroke();
-  g.fillStyle = "#f2e2b8";
-  let fs = Math.round(h * 0.42);
-  g.font = `bold ${fs}px Georgia, "Times New Roman", serif`;
-  const room = w * 0.66;
-  const tw = g.measureText("CAT FOOD").width;
-  if (tw > room) {
-    fs = Math.max(6, Math.floor((fs * room) / tw));
-    g.font = `bold ${fs}px Georgia, "Times New Roman", serif`;
-  }
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.fillText("CAT FOOD", w * 0.43, 8 + h * 0.54);
-  g.fillStyle = "#e0a34a";
-  const fx = w * 0.88;
-  const fy = 8 + h * 0.52;
-  g.beginPath();
-  g.ellipse(fx - h * 0.06, fy, h * 0.12, h * 0.07, 0, 0, Math.PI * 2);
-  g.moveTo(fx + h * 0.04, fy);
-  g.lineTo(fx + h * 0.13, fy - h * 0.08);
-  g.lineTo(fx + h * 0.13, fy + h * 0.08);
-  g.closePath();
-  g.fill();
-  return { canvas: c, oy: 0 };
+// The shop's sandwich board, standing on the sidewalk before its window: a
+// slate in a wooden frame on splayed legs, CAT FOOD chalked on it in a
+// friendly hand, a little fish drawn under, the shop's warm light behind it.
+function paintBoard(ctx, cam, x) {
+  const { S, baseY, curbY } = cam;
+  const foot = baseY + (curbY - baseY) * 0.55;
+  const h = S * 0.078;
+  const wb = h * 0.62; // at its foot
+  const wt = h * 0.5; // at its head
+  const top = foot - h;
+  soft(ctx, x + h * 0.08, foot, wb * 0.8, h * 0.07, "0,0,0", 0.6);
+  soft(ctx, x - h * 0.1, foot - h * 0.55, h * 0.8, h * 0.7, WARM, 0.12, "lighter");
+  // the back board's legs, just showing
+  ctx.fillStyle = "#24160c";
+  ctx.fillRect(x - wb / 2 - h * 0.02, foot - h * 0.12, h * 0.05, h * 0.12);
+  ctx.fillRect(x + wb / 2 - h * 0.03, foot - h * 0.12, h * 0.05, h * 0.12);
+  // the frame
+  const frame = (k) => {
+    ctx.beginPath();
+    ctx.moveTo(x - wt / 2 - k, top - k);
+    ctx.lineTo(x + wt / 2 + k, top - k);
+    ctx.lineTo(x + wb / 2 + k, foot - h * 0.1 + k);
+    ctx.lineTo(x - wb / 2 - k, foot - h * 0.1 + k);
+    ctx.closePath();
+  };
+  frame(h * 0.045);
+  const fg = ctx.createLinearGradient(x - wb / 2, 0, x + wb / 2, 0);
+  fg.addColorStop(0, "#8a5a30");
+  fg.addColorStop(0.5, "#6a4220");
+  fg.addColorStop(1, "#3a2410");
+  ctx.fillStyle = fg;
+  ctx.fill();
+  // its legs, below the slate
+  ctx.fillStyle = "#4a2e16";
+  ctx.beginPath();
+  ctx.moveTo(x - wb / 2 - h * 0.045, foot - h * 0.1);
+  ctx.lineTo(x - wb / 2 + h * 0.02, foot - h * 0.1);
+  ctx.lineTo(x - wb / 2 - h * 0.01, foot);
+  ctx.lineTo(x - wb / 2 - h * 0.07, foot);
+  ctx.closePath();
+  ctx.moveTo(x + wb / 2 + h * 0.045, foot - h * 0.1);
+  ctx.lineTo(x + wb / 2 - h * 0.02, foot - h * 0.1);
+  ctx.lineTo(x + wb / 2 + h * 0.01, foot);
+  ctx.lineTo(x + wb / 2 + h * 0.07, foot);
+  ctx.closePath();
+  ctx.fill();
+  // the slate
+  frame(0);
+  const sg = ctx.createLinearGradient(0, top, 0, foot);
+  sg.addColorStop(0, "#2c3230");
+  sg.addColorStop(1, "#1c201f");
+  ctx.fillStyle = sg;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  soft(ctx, x + wb * 0.2, top + h * 0.6, wb * 0.5, h * 0.3, "220,220,210", 0.07);
+  // the chalk: CAT FOOD on two lines, a fish beneath
+  ctx.fillStyle = "rgba(244,240,228,0.92)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const fs = Math.round(h * 0.2);
+  ctx.font = `${fs}px "Architects Daughter", "Special Elite", cursive`;
+  ctx.fillText("CAT", x, top + h * 0.2);
+  ctx.fillText("FOOD", x, top + h * 0.41);
+  ctx.strokeStyle = "rgba(244,200,120,0.9)";
+  ctx.lineWidth = Math.max(1, h * 0.022);
+  ctx.lineCap = "round";
+  const fy = top + h * 0.66;
+  const fr = wb * 0.17;
+  ctx.beginPath();
+  ctx.moveTo(x - fr, fy);
+  ctx.quadraticCurveTo(x - fr * 0.1, fy - fr * 0.7, x + fr * 0.7, fy);
+  ctx.quadraticCurveTo(x - fr * 0.1, fy + fr * 0.7, x - fr, fy);
+  ctx.moveTo(x + fr * 0.7, fy);
+  ctx.lineTo(x + fr * 1.2, fy - fr * 0.45);
+  ctx.lineTo(x + fr * 1.2, fy + fr * 0.45);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fillStyle = "rgba(244,240,228,0.92)";
+  ctx.beginPath();
+  ctx.arc(x - fr * 0.55, fy - fr * 0.08, Math.max(0.8, h * 0.014), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.lineCap = "butt";
+  // the hinge at its head, the light catching its frame
+  ctx.fillStyle = "#b8925a";
+  ctx.fillRect(x - h * 0.06, top - h * 0.06, h * 0.12, h * 0.03);
+  ctx.strokeStyle = "rgba(255,214,150,0.35)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x - wt / 2 - h * 0.045, top - h * 0.045);
+  ctx.lineTo(x - wb / 2 - h * 0.045, foot - h * 0.1);
+  ctx.stroke();
 }
 
 // the green walking figure, lit, with its glow

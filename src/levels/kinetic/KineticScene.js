@@ -34,7 +34,9 @@ export default class KineticScene extends BasePuzzleScene {
     this._baby = this.add.image(baby.x, baby.y, room.keys.baby).setOrigin(0).setScale(baby.scale).setRotation(baby.rotation).setDepth(4);
     this._blanket = this.add.image(baby.x, baby.y, room.keys.blanket).setOrigin(0).setScale(baby.scale).setRotation(baby.rotation).setDepth(5);
     this.add.image(0, 0, room.keys.front).setOrigin(0).setDepth(6);
-    this.add.image(0, 0, room.keys.rays).setOrigin(0).setDepth(7).setAlpha(0.22);
+    // the wooden crescent moon the mobile hangs from
+    this._hub = this.add.image(this._L.x, this._L.y - this._L.size * 0.015, room.keys.hub)
+      .setDisplaySize(this._L.size * 0.11, this._L.size * 0.11).setDepth(9.5);
     const curtain = room.curtain;
     this._curtain = this.add.image(curtain.x, curtain.y, room.keys.curtain).setOrigin(0.5, 0).setDepth(2.5).setAlpha(0.72);
     this._mobileStrings = this.add.graphics().setDepth(9);
@@ -57,13 +59,13 @@ export default class KineticScene extends BasePuzzleScene {
     const y = H - Math.max(43, 52 * k);
     const width = Math.min(W * 0.74, 368), height = Math.max(33, 39 * k);
     const label = this.add.graphics().setDepth(30);
-    label.fillStyle(0x0c0813, 0.76); label.fillRoundedRect(x - 8, y - 7, width, height, 3);
-    label.lineStyle(0.7, 0x665170, 0.25); label.lineBetween(x - 8, y - 8, x + width - 8, y - 8);
+    label.fillStyle(0x1a0e2e, 0.8); label.fillRoundedRect(x - 8, y - 7, width, height, 3);
+    label.lineStyle(0.8, 0xb49ad8, 0.35); label.lineBetween(x - 8, y - 8, x + width - 8, y - 8);
     this._clue = this.add.text(x, y, 'ONE UNBROKEN CURVE COUNTS AS ONE', {
-      fontFamily: '"Courier New", monospace', fontSize: font + 'px', color: '#b4a7be',
+      fontFamily: '"Courier New", monospace', fontSize: font + 'px', color: '#d8c8f0',
     }).setResolution(2).setDepth(31);
     this.add.text(x, y + font + 5, 'From the highest, down to the lowest.', {
-      fontFamily: 'Georgia, serif', fontSize: Math.max(9, font) + 'px', fontStyle: 'italic', color: '#82728f',
+      fontFamily: 'Georgia, serif', fontSize: Math.max(9, font) + 'px', fontStyle: 'italic', color: '#a894c8',
     }).setResolution(2).setDepth(31);
   }
 
@@ -81,14 +83,15 @@ export default class KineticScene extends BasePuzzleScene {
     const px = x => X + x * S, py = y => Y + y * S;
     g.clear();
     // A fine cord continues up into the ceiling, with a small bronze eye.
-    g.lineStyle(Math.max(0.6, k * 0.8), 0x948499, 0.48); g.lineBetween(X, 0, X, Y);
-    g.lineStyle(1.1 * k, 0x756078, 1); g.strokeEllipse(X, Y, 5 * k, 8 * k);
+    g.lineStyle(Math.max(0.8, k * 0.9), 0xd8c8ec, 0.55); g.lineBetween(X, 0, X, Y);
     for (const rod of rig.rods) {
-      g.lineStyle(3 * k, 0x322338, 1); g.lineBetween(px(rod.x1), py(rod.y1) + k, px(rod.x2), py(rod.y2) + k);
-      g.lineStyle(1.4 * k, 0x9a829c, 0.82); g.lineBetween(px(rod.x1), py(rod.y1), px(rod.x2), py(rod.y2));
-      g.fillStyle(0xb19aad, 0.9); g.fillCircle(px(rod.cx), py(rod.cy), 1.6 * k);
+      g.lineStyle(3.6 * k, 0x3a2650, 0.9); g.lineBetween(px(rod.x1), py(rod.y1) + k, px(rod.x2), py(rod.y2) + k);
+      g.lineStyle(2.2 * k, 0xd8b88a, 1); g.lineBetween(px(rod.x1), py(rod.y1), px(rod.x2), py(rod.y2));
+      g.lineStyle(0.8 * k, 0xfff0d0, 0.7); g.lineBetween(px(rod.x1), py(rod.y1) - 0.6 * k, px(rod.x2), py(rod.y2) - 0.6 * k);
+      g.fillStyle(0xe8c46a, 1); g.fillCircle(px(rod.x1), py(rod.y1), 2 * k); g.fillCircle(px(rod.x2), py(rod.y2), 2 * k);
+      g.fillCircle(px(rod.cx), py(rod.cy), 1.8 * k);
     }
-    g.lineStyle(Math.max(0.6, 0.7 * k), 0xb0a3bd, 0.53);
+    g.lineStyle(Math.max(0.7, 0.8 * k), 0xe6dcf4, 0.6);
     for (const string of rig.strings) g.lineBetween(px(string.x1), py(string.y1), px(string.x2), py(string.y2));
     for (const form of rig.forms) {
       const obj = this._forms.find(item => item.id === form.id);
@@ -127,7 +130,7 @@ export default class KineticScene extends BasePuzzleScene {
     for (const child of this.children.list.slice()) child.destroy();
     releaseRoomArt(this.textures); releaseMobileArt(this.textures);
     this._L = null; this._roomArt = null; this._forms = [];
-    this._baby = this._blanket = this._curtain = this._mobileStrings = this._stars = this._dust = null;
+    this._baby = this._blanket = this._curtain = this._mobileStrings = this._stars = this._dust = this._hub = null;
   }
 
   shutdown() { this._teardown(); }

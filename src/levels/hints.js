@@ -1,136 +1,104 @@
-// The existing atmospheric hint remains step one. Each click reveals one
-// additional nudge; the final step explains a method, not just an answer.
+// Two hints a room. The first (the level's hint text, in metadata.js) says
+// where to look; this second one says what to notice. Neither names the
+// method nor gives the answer: they help the player see it for themselves.
 export const HINT_DETAILS = {
   binarytree: [
-    'The note describes seven journeys. Begin at the top of the tree for each one: L means left and R means right.',
-    'Follow each three-turn path to a letter at the bottom. Write those letters in the same order as the paths on the note. Repeated paths give repeated letters.',
+    "Every journey starts in the same place and ends on a leaf. Mind which way each turn goes, and keep the journeys in the note's order.",
   ],
   plantpot: [
-    'Drag the watering can over the pot. Count the new leaves on each branch after every pour, rather than all the leaves together.',
-    'Five pours produce groups of 1, 1, 2, 3 and 5 leaves. After the first two, each group is the sum of the previous two. The code is the name of that sequence.',
+    "Count only what is new after each pour. The numbers you collect have a famous habit — and a famous name.",
   ],
   sequence: [
-    'Drag the cards into ascending order. The small example in the corner shows how to turn a pair of digits into something longer.',
-    'Read the first digit of each card as a count and the second as the digit to repeat: 25 means five, twice — 55. Apply that rule to the sorted cards, then join the results into one code.',
+    "Smallest first. Then read each card the way the corner note reads its own example — aloud, as a count.",
   ],
   cryptex: [
-    'Put out the candle and count how many breaths it takes. The writing on the wheel becomes visible in the dark. Open the envelope to inspect the letter.',
-    'The three breaths suggest shifting three places. Turn the wheel so each ciphertext letter maps three letters backwards: D becomes A, E becomes B. Decode the letter and look for the machine’s spinning part.',
+    "Count what it takes to put the flame out. Every letter in the envelope has moved by the same amount.",
   ],
   chessboard: [
-    'There is one piece on each numbered rank. The coordinate letters along the board matter more than the rules of chess.',
-    'Start with rank 1 and work up to rank 8. For each piece, write down its file letter, from A to H. Those eight letters form the code.',
+    "One piece on every row. The edge of the board names each square; read the rows from the bottom up.",
   ],
   mobilephone: [
-    'Read the incoming number in runs of repeated digits. The letters printed on the phone keys are your reference.',
-    'Use old multi-tap typing: one 4 selects G, two 3s select E. Press a key repeatedly to cycle its letters, then wait briefly to commit it. Decode the whole caller number to discover a name.',
+    "Notice how the digits repeat, and the letters printed on the keys. Old phones were typed by pressing again and again.",
   ],
   lightswitch: [
-    'Each press of the switch gives one burst of short and long flashes. Write down one burst at a time; the next press moves to the next letter.',
-    'Use Morse code: short flashes are dots and long flashes are dashes. For example, dot–dash–dash–dot is P. Decode five bursts in order; after the fifth, the sequence repeats.',
+    "Not every flash lasts the same. Each press tells one part of the message; the next press tells the next.",
   ],
   tv: [
-    'Read all four broadcasts. Astronomy, law, programming and physics use the same word for what is absent.',
-    'The programming channel describes a function that returns no value. Find the word that also fits an empty region of space and a legally ineffective contract.',
+    "Four different worlds, one missing thing. Look for the single word each programme circles around.",
   ],
   modem: [
-    'Two lights carry the message, one flash at a time. Treat one as 0 and the other as 1. The five counter lights separate the letters.',
-    'The left of the two transmitting lights represents 0; the right represents 1. Record eight bits per letter and decode them as ASCII. The first byte, 01001000, is H. The full code names a secure web protocol.',
+    "Two lights carry the message, the rest keep count. Two states are all a machine needs — group what you see.",
   ],
   telescope: [
-    'Look through the telescope. Some stars form suspiciously regular groups: two columns of three possible positions.',
-    'These are Braille cells. Number the left column 1–2–3 and the right 4–5–6, top to bottom. Compare the illuminated positions with a Braille alphabet and read the five groups left to right.',
+    "Some stars sit in tidy little groups, all the same frame, only some places lit. A pattern like that is meant to be felt as much as seen.",
   ],
   wires: [
-    'Five parallel wires can be read like a musical staff. Each bird marks a note, and the birds must be read from left to right.',
-    'Use the letter names of the five wires, bottom to top: D, F, A, C, E. Write the letter of the wire each bird sits on. You do not need to identify the background music.',
+    "Five lines and a few notes on them. Which line each bird chose matters; take them from left to right.",
   ],
   station: [
-    'Only the trains marked BOARDING matter. Their destination names each contain one incorrect letter.',
-    'Order the four boarding trains by departure time, earliest first. Take the letter actually printed in the incorrect position of each city name, rather than the letter that should replace it.',
+    "Some of the city names are not quite spelled right. Notice what is wrong, and mind the departure times.",
   ],
   pi: [
-    'Focus on the building with illuminated windows on every floor. Count the lights on each floor, starting at the top.',
-    'Window positions can change, but each floor keeps the same number of lights. The first three counts are 3, 1 and 4. Recognise the mathematical constant and enter its name or its familiar decimal approximation.',
+    "Floor by floor, from the top. Where the lights sit does not matter, only how many — the numbers will feel familiar.",
   ],
   crossing: [
-    'The crossing’s alternating wide and narrow bars resemble a barcode. Read from the near pavement towards the far one.',
-    'Use a Code 39 reference. Account for both the bars and the spaces, and separate the start/stop markers from the two encoded letters. The result is a short instruction to move.',
+    "The stripes and the gaps between them are not all the same width. Things in shops wear stripes like these.",
   ],
   flags: [
-    'Identify the five countries represented by the flags, reading from left to right. Each country contributes exactly two letters.',
-    'The countries are Germany, Brazil, Ireland, Finland and Nigeria. Use their ISO two-letter country codes — for example, Germany is DE — and join all five codes in that order.',
+    "Each flag stands for a country, and every country has a short name of just two letters.",
   ],
   tapcode: [
-    'Each line has two groups of tally marks. Count the first group as a row and the second as a column in a five-by-five alphabet.',
-    'Use the prisoner’s tap-code grid: ABCDE / FGHIJ / LMNOP / QRSTU / VWXYZ, with K sharing C’s square. Count from 1. A pair of 1 and 5 gives E; decode all six lines in order.',
+    "Every line is two counts. Look at the window: something there is divided the same way, and someone began to number it.",
   ],
   rally: [
-    'Watch the door numbers as the cars cross the finish line. Their finishing order matters. The result board lets you review it afterwards.',
-    'Convert each number to its alphabet position: 1 is A, 2 is B, and so on through 26. For example, car 19 gives S. Read all six letters in finishing order.',
+    "Mind the numbers on the doors and the order they finish in. None of them is bigger than the alphabet.",
   ],
   overtime: [
-    'The four clocks can be treated as four-digit numbers. Use the calculator to add all four readings, ignoring the colons.',
-    'Add the displayed values as ordinary numbers, rather than hours and minutes. Then imagine turning the calculator upside down: read its seven-segment digits as letters, starting from the right.',
+    "Take the times as plain numbers and let the machine do the work. Then look at its answer from another angle.",
   ],
   fireworks: [
-    'Each firework hangs out a tag with its number and the exact code of its colour. Take the five in order. The plate on the clock says which part of every code matters.',
-    'A colour written #RRGGBB begins with its red: the first two characters. Take those two from each tag, one to five, and read each pair as a hexadecimal ASCII code. 4E, for example, is N.',
+    "The plate on the clock says which part of each code matters. A computer would read those pairs of characters as letters.",
   ],
   compass: [
-    'Open the map on the table. Its numbers are bearings, the same degrees as on the compass card, and each line of them belongs to one letter.',
-    'Take every bearing as one step: 0 is up, 90 right, 180 down, 270 left. Follow a line with a pencil and it draws a letter: 180, 180, 90 is down, down, right, an L. Draw all four lines in order.',
+    "The map's numbers are directions, the same as on the compass card. Each line is a little journey — make it on paper.",
   ],
   bookshelf: [
-    'Look only at the five books pulled out of the third shelf, left to right. Each has a one-word title on its spine and a bookmark with a number.',
-    'The bookmark’s number is the place of a letter in its own book’s title, counting from the first. SHADOW with bookmark 1 gives S. Take one letter from each of the five, in order.',
+    "Each has a title and a bookmark with a number. The number points somewhere inside its own title.",
   ],
   chemistry: [
-    'The faded chart on the wall is the periodic table. Every element on it has a number of its own: its atomic number.',
-    'Find the element for each bottle’s number, left to right, and write down its chemical symbol. Number 9 is fluorine, F. The five symbols together make the word.',
+    "Each level meets a number. The faded chart on the wall gives every such number a short name of its own.",
   ],
   billiards: [
-    'Five balls are missing from the rack. Each lies in a pocket marked I to V; down there you see only its colour, and whether it is striped. Balls 1 to 7 are solid, 9 to 15 striped in the same colours.',
-    'Read the pockets from I to V and turn each ball’s number into a letter of the alphabet: 1 is A, 2 is B, and so on. Pocket I holds the blue solid, ball 2: B.',
+    "Work out which numbers are missing; their colours and stripes tell them apart. Read the pockets in their order — the numbers are small enough to be letters.",
   ],
   metro: [
-    'Follow the lit line only, in the direction the light runs: Tango Square first, November Street last. Say the first word of each station’s name out loud.',
-    'Tango, Romeo, Alpha, India, November are the NATO phonetic alphabet, each word standing for its first letter: Tango is T. Take one letter from each station, in the line’s order.',
+    "Say the station names out loud. A pilot or a radio operator would know the first word of each.",
   ],
   resistors: [
-    'Read the resistors in order, R1 to R4, and only their first band — the one nearest the end, away from the lone gold band. Click a resistor to see its bands through the loupe.',
-    'The card gives each colour a digit: black 0, brown 1, red 2, orange 3, yellow 4, and so on to white 9. R1’s first band is brown, so its digit is 1. Write the four first-band digits in order as one number.',
+    "Only the first band of each counts — start at the end away from the gold. The card gives every colour a value.",
   ],
   ripples: [
-    'The drops always land in the same three places. Two circles cross often; look for a stone touched by all three fronts at once. The wet letter catches the light for a moment.',
-    'Follow several rounds and note the four stones where three rings meet. Read their engraved letters from the highest stone to the lowest. The other letters are distractions; the show repeats.',
+    "Some stones are touched by all three rings at the same moment. Read only those, from the top down.",
   ],
   vertex: [
-    'Inspect the four pulsing points from left to right. Count only lines that begin or end at the point you are examining; a line crossing elsewhere adds no connection to it.',
-    'A point’s degree is its number of connected edges. The four degrees are 6, 1, 3 and 5. Turn each into a letter using A=1, B=2, and so on, then read left to right.',
+    "Count what truly meets each point, not what merely passes it by. The counts are small enough to be letters.",
   ],
   plotter: [
-    'Treat each pair as (X,Y) on a grid: X goes right, Y goes up. Place the pen at the first point and join each following point with a straight line. Start a separate drawing for every block.',
-    'Each block draws one capital letter. Block 1 goes up, right, halfway down, then left to form P. Trace the other three and read the drawings in block-number order.',
+    "Give each block a sheet of its own and join its points in order. Each one draws something you can read.",
   ],
   kinetic: [
-    'Count the straight sides of each wooden shape, from top to bottom. For the circle, use the rule on the label: its single unbroken curved rim counts as one.',
-    'The four counts are 3, 1, 7 and 5. Convert each to its position in the alphabet: A=1, B=2, C=3, and so on. Read from the highest hanging form to the lowest.',
+    "Count the straight sides of each; the label says how a curve counts. The numbers are small enough to be letters.",
   ],
   genome: [
-    'Read the five highlighted triplets from left to right in a standard DNA codon table. If your table uses RNA, replace T with U. This is the coding strand: do not reverse or complement it.',
-    'Each codon specifies an amino acid. Use the amino acid’s standard ONE-letter symbol, not its three-letter abbreviation or the first letter of its name. TCT gives serine, whose symbol is S. Repeat for CCT, GCT, TGT and GAA.',
+    "Each group of three stands for something in life's own code — and those things have one-letter names.",
   ],
   curtain: [
-    'Draw the heavy curtain across the window. The tears in its fabric move small pools of moonlight over the letters on the floor. You can use the left and right arrow keys for fine adjustments.',
-    'Use the curtain like a stencil: find the position where the rest of the square is in shadow and each of the four holes surrounds one whole letter. Read those four lit letters from left to right.',
+    "The holes in the cloth let only a little light through. Somewhere along the rail they frame just enough to read.",
   ],
   thesill: [
-    'Nothing on the sill needs moving. Let your attention settle on the pale spaces between the long black shadows on the floor.',
-    'Treat the moonlit gaps as the solid shapes and the shadows as their background. Four large capital letters sit side by side; read them from left to right.',
+    "Forget the shadows. The pale shapes between them are the message.",
   ],
   venetian: [
-    'Drag the small cord on the right up and down. It tilts the slats instead of raising the blind. The up and down arrow keys let you adjust it more slowly.',
-    'Move slowly through the narrow openings. One angle blocks the distracting rows of city lights while leaving four large letters visible. Hold that angle and read across the window.',
+    "The cord tilts the slats. At one angle the clutter goes dark and something larger stays lit.",
   ],
 };

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
-import { evaluateApp } from './app.js';
+import { evaluateApp, openHints } from './app.js';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 
 async function open(page, { unlocked = false, start = true } = {}) {
@@ -86,34 +86,32 @@ test('hints reveal individually, remember each room, and reset with the game', a
   await open(page, { unlocked: true }); await navigate(page, 'Cryptex');
   await expect(page.locator('#current-level-number')).toHaveText('ROOM 04');
   await expect(page.locator('#current-level-summary')).toHaveText(LEVEL_METADATA[3].summary);
-  await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
-  await page.locator('#btn-info').click();
+  await expect(page.locator('#current-hint-count')).toHaveText('0 of 2 hints revealed');
+  await openHints(page);
   await expect(page.locator('#hint-list li')).toHaveCount(1);
   await expect(page.locator('#hint-list')).not.toContainText('three breaths');
   await page.locator('#btn-next-hint').click();
   await expect(page.locator('#hint-list li')).toHaveCount(2);
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#current-hint-count')).toHaveText('2 of 3 hints revealed');
-  await page.locator('#btn-info').click();
-  await expect(page.locator('#hint-list li')).toHaveCount(2);
-  await page.locator('#btn-next-hint').click();
   await expect(page.locator('#btn-next-hint')).toBeDisabled();
-  await expect(page.locator('#hint-list li')).toHaveCount(3);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#current-hint-count')).toHaveText('2 of 2 hints revealed');
+  await openHints(page);
+  await expect(page.locator('#hint-list li')).toHaveCount(2);
   await screenshot(page, 'hints');
   await page.keyboard.press('Escape');
-  await navigate(page, 'Wires'); await page.locator('#btn-info').click();
+  await navigate(page, 'Wires'); await openHints(page);
   await expect(page.locator('#hint-list li')).toHaveCount(1);
   await page.reload();
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await page.locator('#btn-continue').click(); await navigate(page, 'Cryptex');
-  await page.locator('#btn-info').click();
-  await expect(page.locator('#hint-list li')).toHaveCount(3);
+  await openHints(page);
+  await expect(page.locator('#hint-list li')).toHaveCount(2);
   await page.keyboard.press('Escape'); await page.locator('#btn-options').click();
   await page.locator('#btn-new').click(); await page.locator('#btn-new').click();
   await expect(page.locator('#progress-count')).toHaveText(`0 / ${LEVEL_METADATA.length} solved`);
   await expect(page.locator('#current-level-number')).toHaveText('ROOM 01');
   await expect(page.locator('#current-level-state')).toHaveCount(0);
-  await expect(page.locator('#current-hint-count')).toHaveText('0 of 3 hints revealed');
+  await expect(page.locator('#current-hint-count')).toHaveText('0 of 2 hints revealed');
   expect(await evaluateApp(page, ({ services }) => services.hints.count('cryptex'))).toBe(0);
   expect(await evaluateApp(page, ({ services }) => services.preferences.reducedMotion)).toBe(true);
 });
@@ -275,12 +273,13 @@ test('comfort controls apply immediately, persist, and follow device preferences
   await screenshot(page, 'comfort');
   await page.locator('#btn-close-options').click();
   await page.waitForTimeout(500); // the responsive scene rebuild uses a 350 ms debounce
-  await page.locator('#btn-info').click();
-  await page.locator('#btn-next-hint').click(); await page.locator('#btn-next-hint').click();
+  await openHints(page);
+  await page.locator('#btn-next-hint').click();
   await expect(page.locator('#btn-close-info')).toBeInViewport();
   const panel = await page.locator('#info-modal .modal-content').boundingBox();
-  expect(panel.y).toBeGreaterThanOrEqual(30);
-  expect(panel.y + panel.height).toBeLessThanOrEqual(738);
+  // the dialog keeps a margin of the screen round it (24px in the current design)
+  expect(panel.y).toBeGreaterThanOrEqual(20);
+  expect(panel.y + panel.height).toBeLessThanOrEqual(748);
   await screenshot(page, 'hints-large');
   await page.keyboard.press('Escape');
   const frame = await evaluateApp(page, ({ services }) => services.levels.activeScene.candle._frame);

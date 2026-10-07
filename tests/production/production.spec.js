@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
+import { openHints } from '../browser/app.js';
 
 test('the production build opens every level through the real UI from a subdirectory', async ({ page, request }) => {
   const forbidden = await request.get('/puzzle/..%2Fpackage.json');
@@ -50,7 +51,7 @@ test('the production build opens every level through the real UI from a subdirec
       await expect(page.locator('#level-veil')).not.toHaveClass(/cover/);
       await page.waitForLoadState('networkidle');
       await expect(page.locator('#game-container > canvas')).toBeVisible();
-      await page.locator('#btn-info').click();
+      await openHints(page);
       await expect(page.locator('#info-modal')).toBeVisible();
       await expect(page.locator('#hint-list li')).toHaveCount(1);
       await expect(page.locator('#hint-list p')).not.toBeEmpty();

@@ -1,114 +1,249 @@
-import { makeCanvas, soft, lcg } from '../../shared/paint.js';
+import { soft } from '../../shared/paint.js';
 
-/** A softly modelled sleeping baby. The painting has its own local plane,
- * aligned with the mattress; a separate blanket allows quiet breathing. */
-export function paintSleepingBaby() {
-  const canvas = makeCanvas(680, 360), ctx = canvas.getContext('2d');
-  const blanket = makeCanvas(680, 360), cloth = blanket.getContext('2d');
-  const rnd = lcg(2918);
-  soft(ctx, 346, 237, 260, 105, '2,1,8', 0.75);
+/** The sleeping baby, painted flat as seen from straight above, in
+ * centimetres: a across the mattress, b along it toward the feet, the head
+ * at b = -12. The room lays these drawings onto the mattress in its
+ * perspective. A lilac knitted cap, closed eyes, rosy cheeks, one tiny hand
+ * out of a lavender swaddle; the quilt over the legs is drawn apart so it
+ * can rise and fall with the breathing. */
 
-  // An ivory fitted sheet catches the moon on the baby's right side.
-  const sheet = ctx.createLinearGradient(0, 120, 280, 330);
-  sheet.addColorStop(0, '#6d667f'); sheet.addColorStop(0.5, '#484055'); sheet.addColorStop(1, '#201b2c');
-  ctx.fillStyle = sheet;
-  ctx.beginPath(); ctx.moveTo(61, 185);
-  ctx.bezierCurveTo(54, 139, 78, 119, 160, 132);
-  ctx.bezierCurveTo(252, 119, 285, 170, 263, 239);
-  ctx.bezierCurveTo(232, 273, 109, 274, 63, 237); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = 'rgba(174,161,195,.14)'; ctx.lineWidth = 2; ctx.stroke();
-  for (let i = 0; i < 12; i++) {
-    ctx.strokeStyle = 'rgba(28,20,43,.18)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(72 + i * 12, 251); ctx.quadraticCurveTo(121 + i * 9, 210, 83 + i * 12, 143); ctx.stroke();
+const SKIN = ['#fbe4d6', '#f0c4b0', '#c88e80'];
+
+export function paintBabyFlat(ctx) {
+  // the shadow the little sleeper makes in the sheet
+  soft(ctx, 1.5, 16, 17, 36, '40,20,60', 0.45);
+  // the swaddle: a soft cocoon, wrapped folds crossing it
+  ctx.beginPath();
+  ctx.moveTo(-12.5, -3);
+  ctx.bezierCurveTo(-14.5, 12, -12, 34, -8, 44);
+  ctx.quadraticCurveTo(0, 50, 8, 44);
+  ctx.bezierCurveTo(12, 34, 14.5, 12, 12.5, -3);
+  ctx.quadraticCurveTo(0, -7, -12.5, -3);
+  ctx.closePath();
+  const sw = ctx.createLinearGradient(-13, 0, 13, 0);
+  sw.addColorStop(0, '#c0aee6');
+  sw.addColorStop(0.45, '#9c86cc');
+  sw.addColorStop(1, '#5e4a8e');
+  ctx.fillStyle = sw;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  // little white stars on the cloth
+  ctx.fillStyle = 'rgba(246,240,255,0.55)';
+  for (let row = 0; row < 7; row++) {
+    for (let col = 0; col < 4; col++) {
+      const x = -9 + col * 6 + (row % 2) * 3;
+      const y = 2 + row * 6.4;
+      star(ctx, x, y, 0.9);
+    }
   }
-
-  // The sleeper and shoulder under the blanket, with one small tucked hand.
-  blob(ctx, 293, 223, 87, 54, ['#756880', '#4d3d5c', '#211b31'], -0.08);
-  blob(ctx, 229, 194, 34, 21, ['#9b7a83', '#755465', '#35273e'], 0.35);
-  blob(ctx, 232, 179, 27, 20, ['#ab8891', '#805e72', '#403044'], -0.25);
-  for (let i = 0; i < 3; i++) {
-    ctx.strokeStyle = 'rgba(52,31,52,.46)'; ctx.lineWidth = 1.3;
-    ctx.beginPath(); ctx.moveTo(226 + i * 6, 164); ctx.quadraticCurveTo(220 + i * 6, 174, 230 + i * 5, 180); ctx.stroke();
+  // the wrap's folds
+  ctx.strokeStyle = 'rgba(60,40,100,0.45)';
+  ctx.lineWidth = 0.7;
+  for (const [x0, y0, x1, y1, cx, cy] of [
+    [-12, 2, 10, 20, -2, 6],
+    [12, 4, -11, 24, 2, 10],
+    [-11, 26, 9, 38, -1, 30],
+  ]) {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(cx, cy, x1, y1);
+    ctx.stroke();
   }
-
-  // Far ear, round cranium, jaw and cheek form a continuous sleeping profile.
-  blob(ctx, 112, 181, 16, 23, ['#8f6b7e', '#63455e', '#302338'], -0.2);
-  ctx.save(); ctx.translate(169, 158); ctx.rotate(0.19);
-  const skin = ctx.createRadialGradient(27, -28, 4, -11, 0, 89);
-  skin.addColorStop(0, '#b398a2'); skin.addColorStop(0.33, '#9a7c8c');
-  skin.addColorStop(0.69, '#77576f'); skin.addColorStop(1, '#37273e');
-  ctx.fillStyle = skin;
-  ctx.beginPath(); ctx.moveTo(-58, -24);
-  ctx.bezierCurveTo(-56, -78, 17, -85, 50, -48);
-  ctx.bezierCurveTo(71, -24, 65, -4, 67, 12);
-  ctx.bezierCurveTo(84, 25, 67, 36, 57, 34);
-  ctx.bezierCurveTo(53, 64, 12, 77, -20, 59);
-  ctx.bezierCurveTo(-43, 49, -65, 8, -58, -24); ctx.closePath(); ctx.fill();
-  soft(ctx, 37, 30, 30, 25, '170,110,133', 0.20);
-  soft(ctx, 25, -28, 37, 31, '195,172,190', 0.13);
-
-  // Wispy newborn hair follows the head, without a hard cap outline.
-  ctx.save(); ctx.beginPath(); ctx.ellipse(-5, -16, 58, 58, 0, Math.PI, Math.PI * 2.10); ctx.clip();
-  soft(ctx, -33, -42, 73, 63, '27,18,33', 0.49);
-  for (let i = 0; i < 95; i++) {
-    const x = -62 + rnd() * 98, y = -70 + rnd() * 60;
-    ctx.strokeStyle = `rgba(37,24,39,${0.08 + rnd() * 0.2})`; ctx.lineWidth = 0.55 + rnd() * 0.6;
-    ctx.beginPath(); ctx.moveTo(x, y + 15); ctx.quadraticCurveTo(x - 8, y - 12, x + 20, y - 15); ctx.stroke();
-  }
+  ctx.strokeStyle = 'rgba(230,220,250,0.3)';
+  ctx.beginPath();
+  ctx.moveTo(-11.5, 3);
+  ctx.quadraticCurveTo(-2.5, 7, 9.5, 20.5);
+  ctx.stroke();
   ctx.restore();
-  // Closed eyelids, a short lash at each corner, a tiny nose and relaxed lips.
-  ctx.lineCap = 'round'; ctx.strokeStyle = '#493347'; ctx.lineWidth = 2.3;
-  ctx.beginPath(); ctx.moveTo(21, 6); ctx.quadraticCurveTo(35, 16, 46, 7); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-13, 2); ctx.quadraticCurveTo(-5, 10, 5, 5); ctx.stroke();
-  ctx.lineWidth = 1.05;
-  ctx.beginPath(); ctx.moveTo(42, 11); ctx.lineTo(47, 14); ctx.moveTo(37, 13); ctx.lineTo(40, 17); ctx.stroke();
-  ctx.strokeStyle = 'rgba(205,170,187,.30)'; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(22, 3); ctx.quadraticCurveTo(36, 10, 46, 5); ctx.stroke();
-  soft(ctx, 53, 23, 13, 9, '209,166,177', 0.24);
-  ctx.strokeStyle = 'rgba(63,37,56,.46)'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(53, 29); ctx.quadraticCurveTo(59, 32, 63, 28); ctx.stroke();
-  ctx.strokeStyle = '#805264'; ctx.lineWidth = 2.8;
-  ctx.beginPath(); ctx.moveTo(29, 46); ctx.quadraticCurveTo(38, 50, 45, 44); ctx.stroke();
-  ctx.strokeStyle = 'rgba(211,156,171,.26)'; ctx.lineWidth = 1.1;
-  ctx.beginPath(); ctx.moveTo(33, 50); ctx.quadraticCurveTo(39, 53, 43, 49); ctx.stroke();
-  ctx.restore();
-
-  // A rounded quilt has weight, a folded hem, stitches and soft cloth valleys.
-  cloth.beginPath(); cloth.moveTo(262, 159);
-  cloth.bezierCurveTo(313, 131, 381, 151, 433, 176);
-  cloth.bezierCurveTo(507, 178, 560, 200, 580, 244);
-  cloth.bezierCurveTo(591, 284, 541, 300, 485, 296);
-  cloth.bezierCurveTo(419, 299, 329, 283, 282, 262);
-  cloth.bezierCurveTo(266, 220, 275, 192, 262, 159); cloth.closePath();
-  const quilt = cloth.createLinearGradient(360, 150, 362, 300);
-  quilt.addColorStop(0, '#80748f'); quilt.addColorStop(0.24, '#625471');
-  quilt.addColorStop(0.64, '#463853'); quilt.addColorStop(1, '#211a2c');
-  cloth.fillStyle = quilt; cloth.fill(); cloth.save(); cloth.clip();
-  soft(cloth, 370, 178, 132, 64, '159,143,178', 0.19);
-  for (let i = 0; i < 11; i++) {
-    const x = 272 + i * 27;
-    cloth.strokeStyle = 'rgba(22,14,32,.18)'; cloth.lineWidth = 4;
-    cloth.beginPath(); cloth.moveTo(x, 156); cloth.bezierCurveTo(x + 31, 190, x - 14, 244, x + 14, 295); cloth.stroke();
-    cloth.strokeStyle = 'rgba(165,144,184,.13)'; cloth.lineWidth = 1.1;
-    cloth.beginPath(); cloth.moveTo(x + 4, 156); cloth.bezierCurveTo(x + 35, 190, x - 10, 244, x + 18, 295); cloth.stroke();
+  // the swaddle's soft collar round the chin
+  ctx.fillStyle = '#b4a0e0';
+  ctx.beginPath();
+  ctx.ellipse(0, -3, 10.5, 3.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // one tiny hand peeping out by the chin
+  ctx.fillStyle = SKIN[0];
+  ctx.beginPath();
+  ctx.ellipse(4.6, -2.2, 2.3, 1.8, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(180,120,110,0.5)';
+  ctx.lineWidth = 0.35;
+  ctx.stroke();
+  // the head and face
+  const hg = ctx.createRadialGradient(-2.5, -14, 1, 0, -12, 10.5);
+  hg.addColorStop(0, SKIN[0]);
+  hg.addColorStop(0.7, SKIN[1]);
+  hg.addColorStop(1, SKIN[2]);
+  ctx.fillStyle = hg;
+  ctx.beginPath();
+  ctx.ellipse(0, -12, 8.6, 9.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // ears
+  for (const d of [-1, 1]) {
+    ctx.fillStyle = SKIN[1];
+    ctx.beginPath();
+    ctx.ellipse(d * 8.4, -11.5, 1.4, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
-  for (let y = 162; y < 300; y += 5) for (let x = 266; x < 595; x += 5) {
-    cloth.strokeStyle = `rgba(193,175,207,${0.024 + rnd() * 0.045})`; cloth.lineWidth = 0.65;
-    cloth.beginPath(); cloth.moveTo(x, y); cloth.lineTo(x + 2, y + 2); cloth.lineTo(x + 4, y); cloth.stroke();
+  // rosy cheeks
+  for (const d of [-1, 1]) soft(ctx, d * 4.6, -8.2, 2.6, 1.8, '240,130,150', 0.55);
+  // closed eyes: soft downward arcs with little lashes
+  ctx.strokeStyle = '#6a4048';
+  ctx.lineWidth = 0.55;
+  ctx.lineCap = 'round';
+  for (const d of [-1, 1]) {
+    ctx.beginPath();
+    ctx.arc(d * 3.3, -11.6, 1.7, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    for (const t of [0.3, 0.5, 0.7]) {
+      const a = t * Math.PI;
+      const x = d * 3.3 + Math.cos(a) * 1.7;
+      const y = -11.6 + Math.sin(a) * 1.7;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(a) * 0.6, y + Math.sin(a) * 0.6);
+      ctx.stroke();
+    }
   }
-  cloth.restore();
-  cloth.strokeStyle = '#84748e'; cloth.lineWidth = 5;
-  cloth.beginPath(); cloth.moveTo(264, 160); cloth.bezierCurveTo(289, 192, 266, 227, 284, 261); cloth.stroke();
-  cloth.strokeStyle = 'rgba(192,174,207,.35)'; cloth.lineWidth = 1.1; cloth.stroke();
-  // One tiny stitched crescent, a nursery detail with no puzzle significance.
-  cloth.strokeStyle = 'rgba(173,155,184,.38)'; cloth.lineWidth = 1.1;
-  cloth.beginPath(); cloth.arc(406, 221, 10, 0.8, 5.2); cloth.bezierCurveTo(395, 217, 398, 227, 413, 228); cloth.stroke();
-  return { canvas, blanket };
+  // a button nose, a small content mouth
+  ctx.fillStyle = 'rgba(200,130,120,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(0, -8.6, 0.9, 0.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#b06a70';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.arc(0, -6.9, 1.1, 0.2 * Math.PI, 0.8 * Math.PI);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  // the knitted cap with its pompom, over the top of the head
+  ctx.beginPath();
+  ctx.ellipse(0, -14.5, 9.1, 7.4, 0, Math.PI * 0.98, Math.PI * 2.02);
+  ctx.closePath();
+  const cg = ctx.createLinearGradient(-9, -20, 9, -12);
+  cg.addColorStop(0, '#d6c2f0');
+  cg.addColorStop(1, '#8a6cc0');
+  ctx.fillStyle = cg;
+  ctx.fill();
+  ctx.fillStyle = '#c4aee8';
+  ctx.beginPath();
+  ctx.roundRect(-9.2, -15.6, 18.4, 2.6, 1.3);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(90,60,140,0.35)';
+  ctx.lineWidth = 0.35;
+  for (let x = -8; x <= 8; x += 1.6) {
+    ctx.beginPath();
+    ctx.moveTo(x, -15.5);
+    ctx.lineTo(x, -13.1);
+    ctx.stroke();
+  }
+  const pg = ctx.createRadialGradient(-0.8, -22.5, 0.3, 0, -21.8, 3);
+  pg.addColorStop(0, '#f6eefe');
+  pg.addColorStop(1, '#b8a0e0');
+  ctx.fillStyle = pg;
+  ctx.beginPath();
+  ctx.arc(0, -21.8, 2.9, 0, Math.PI * 2);
+  ctx.fill();
 }
 
-function blob(ctx, x, y, rx, ry, colors, angle = 0) {
-  ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-  const g = ctx.createRadialGradient(rx * 0.3, -ry * 0.4, 1, 0, 0, Math.max(rx, ry));
-  g.addColorStop(0, colors[0]); g.addColorStop(0.55, colors[1]); g.addColorStop(1, colors[2]);
-  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+// the little quilt over the legs: plum, a scalloped lilac edge, tiny moons
+export function paintBlanketFlat(ctx) {
+  const top = 15;
+  ctx.beginPath();
+  ctx.moveTo(-19, top + 2);
+  for (let i = 0; i <= 8; i++) {
+    const x = -19 + (38 * i) / 8;
+    ctx.quadraticCurveTo(x - 2.4, top - 1.6, x, top + (i % 2 ? 0 : 1));
+  }
+  ctx.lineTo(18, 47);
+  ctx.quadraticCurveTo(0, 51, -18, 47);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(-19, 0, 19, 0);
+  g.addColorStop(0, '#8e68b8');
+  g.addColorStop(0.5, '#6a4896');
+  g.addColorStop(1, '#3e2a62');
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = 'rgba(240,226,255,0.6)';
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 5; col++) {
+      moon(ctx, -14 + col * 7 + (row % 2) * 3.5, top + 6 + row * 7.5, 1.1);
+    }
+  }
+  // the folds the legs make under it
+  ctx.strokeStyle = 'rgba(30,16,50,0.4)';
+  ctx.lineWidth = 0.8;
+  for (const x of [-6, 5]) {
+    ctx.beginPath();
+    ctx.moveTo(x, top + 4);
+    ctx.quadraticCurveTo(x * 0.6, top + 18, x * 0.9, 46);
+    ctx.stroke();
+  }
+  ctx.restore();
+  // the lilac trim along its top
+  ctx.strokeStyle = '#d4bff0';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 8; i++) {
+    const x = -19 + (38 * i) / 8;
+    if (i) ctx.quadraticCurveTo(x - 2.4, top - 1.6, x, top + (i % 2 ? 0 : 1));
+    else ctx.moveTo(x, top + 2);
+  }
+  ctx.stroke();
+}
+
+// a plush bunny to keep the baby company in the crib, lying at the head
+export function paintBunnyFlat(ctx) {
+  soft(ctx, 0.8, 1, 6.5, 8, '40,20,60', 0.4);
+  const fur = (x, y, rx, ry, a = 0) => {
+    const g = ctx.createRadialGradient(x - rx * 0.3, y - ry * 0.3, 0.2, x, y, Math.max(rx, ry));
+    g.addColorStop(0, '#f2e8fb');
+    g.addColorStop(1, '#a890cc');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, a, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  for (const d of [-1, 1]) {
+    fur(d * 2.2, -8.5, 1.5, 4.2, d * 0.25);
+    ctx.fillStyle = 'rgba(240,160,190,0.7)';
+    ctx.beginPath();
+    ctx.ellipse(d * 2.2, -8.5, 0.7, 3, d * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  fur(0, 3, 4.6, 5.4);
+  fur(0, -3, 3.8, 3.4);
+  ctx.strokeStyle = '#4a3a5a';
+  ctx.lineWidth = 0.4;
+  for (const d of [-1, 1]) {
+    ctx.beginPath();
+    ctx.arc(d * 1.4, -3.4, 0.7, 0.2 * Math.PI, 0.8 * Math.PI);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#e88aa8';
+  ctx.beginPath();
+  ctx.arc(0, -2.2, 0.45, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function star(ctx, x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.45 : r;
+    if (i) ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    else ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+function moon(ctx, x, y, r) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0.35 * Math.PI, 1.65 * Math.PI, false);
+  ctx.arc(x + r * 0.45, y - r * 0.15, r * 0.8, 1.6 * Math.PI, 0.4 * Math.PI, true);
+  ctx.closePath();
+  ctx.fill();
 }

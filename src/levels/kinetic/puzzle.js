@@ -70,8 +70,8 @@ export function readKinetic() {
 export function kineticLayout(width, height) {
   return {
     width, height,
-    size: Math.min(width * 0.72, height * 0.47),
-    x: width * 0.37,
-    y: height * 0.12,
+    size: Math.min(width * 0.72, height * 0.7),
+    x: width * 0.5,
+    y: height * 0.07,
   };
 }

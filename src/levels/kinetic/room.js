@@ -1,511 +1,530 @@
-import { makeCanvas, addCanvasTexture, releaseTextures, lcg, polygon, soft, grain, vignette } from '../../shared/paint.js';
-import { materialNoise } from '../../shared/materialNoise.js';
-import { makeMoonTexture } from '../../shared/moon.js';
+import { makeCanvas, addCanvasTexture, releaseTextures, lcg, polygon, soft, grain } from '../../shared/paint.js';
+import { createMoonCanvas } from '../../shared/moon.js';
 import { nurseryLayout } from './nurseryGeometry.js';
-import { paintSleepingBaby } from './baby.js';
+import { paintBabyFlat, paintBlanketFlat, paintBunnyFlat } from './baby.js';
 
 const K = {
   room: 'ki_room', rays: 'ki_rays', back: 'ki_crib_back', front: 'ki_crib_front',
-  baby: 'ki_baby', blanket: 'ki_blanket', curtain: 'ki_curtain', moon: 'ki_moon', shade: 'ki_shade',
+  baby: 'ki_baby', blanket: 'ki_blanket', curtain: 'ki_curtain', shade: 'ki_shade', hub: 'ki_hub',
 };
+const R = 2; // the baby and blanket are painted at twice their size
+const LILAC = '196,176,236';
+const WARM = '255,196,130';
 
-/** Static room surfaces are painted once per viewport. Only the hanging
- * mobile, a voile curtain, breathing and a few dust motes remain live. */
+/** The nursery at night, seen from above at the foot of the crib, all in
+ * purples: star-sprigged walls, a window full of moon, a round fluffy rug,
+ * a little dresser with a star night-light, a crib painted pale lilac with a
+ * baby asleep in it. The crib is two paintings (behind and in front of the
+ * baby), the baby and its quilt are their own, so the quilt can breathe. */
 export function paintRoom(textures, W, H) {
-  const L = nurseryLayout(W, H), room = makeCanvas(W, H), ctx = room.getContext('2d');
+  const L = nurseryLayout(W, H);
+  const room = makeCanvas(W, H), ctx = room.getContext('2d');
   const rnd = lcg(291803);
-  paintSurfaces(ctx, L);
-  paintPanelling(ctx, L);
-  const stars = paintWindow(ctx, L, textures, rnd);
-  paintFloorLight(ctx, L);
+  paintWall(ctx, L, rnd);
+  const stars = paintWindow(ctx, L, rnd);
+  paintFloor(ctx, L, rnd);
+  paintRug(ctx, L, rnd);
   paintDresser(ctx, L);
-  paintRug(ctx, L);
-  paintToys(ctx, L, rnd);
-  grain(ctx, W, H, 0.025);
-  vignette(ctx, W, H, 0.52);
+  paintToys(ctx, L);
+  grain(ctx, W, H, 0.022);
 
   const back = makeCanvas(W, H), front = makeCanvas(W, H);
-  paintCrib(back.getContext('2d'), L, false);
-  paintCrib(front.getContext('2d'), L, true);
-  for (const canvas of [back, front]) {
-    const wood = canvas.getContext('2d');
-    wood.save(); wood.globalCompositeOperation = 'source-atop'; grain(wood, W, H, 0.018); wood.restore();
-  }
-  const baby = paintSleepingBaby();
-  const head = L.crib(-35, 87, 5);
-  const a = L.crib(-45, 68, 0), b = L.crib(45, 68, 0);
-  const babyAngle = Math.atan2(b.y - a.y, b.x - a.x) - 0.08;
-  const babyScale = L.focal / 290 * 0.127;
-  const babyX = head.x - babyScale * (169 * Math.cos(babyAngle) - 158 * Math.sin(babyAngle));
-  const babyY = head.y - babyScale * (169 * Math.sin(babyAngle) + 158 * Math.cos(babyAngle));
-  const curtainW = L.win.w * 0.39, curtainH = L.win.h * 1.09;
+  paintCribBack(back.getContext('2d'), L);
+  paintCribFront(front.getContext('2d'), L);
+
+  const extent = { a0: -31, a1: 34, b0: -34, b1: 63 };
+  const baby = onMattress(L, 28, extent, (g) => {
+    g.scale(1.2, 1.2);
+    paintBabyFlat(g);
+    g.save(); g.translate(20.5, -7); g.rotate(0.35); paintBunnyFlat(g); g.restore();
+  });
+  const blanket = onMattress(L, 28, extent, (g) => { g.scale(1.2, 1.2); paintBlanketFlat(g); });
+  const curtainW = L.win.w * 0.42, curtainH = L.win.h * 1.12;
   for (const [key, canvas] of [
     [K.room, room], [K.rays, paintRays(L)], [K.back, back], [K.front, front],
-    [K.baby, baby.canvas], [K.blanket, baby.blanket], [K.curtain, paintCurtain(curtainW, curtainH)],
-    [K.shade, paintShade(L)],
+    [K.baby, baby.canvas], [K.blanket, blanket.canvas], [K.curtain, paintCurtain(curtainW, curtainH)],
+    [K.shade, paintShade(L)], [K.hub, paintHub()],
   ]) addCanvasTexture(textures, key, canvas);
   return {
     keys: K, layout: L, stars,
-    baby: { x: babyX, y: babyY, scale: babyScale, rotation: babyAngle, head },
-    curtain: { x: L.win.x + L.win.w * 0.94, y: L.win.y - 7, width: curtainW, height: curtainH },
+    baby: { x: baby.x, y: baby.y, scale: 1 / R, rotation: 0, head: L.head },
+    curtain: { x: L.win.x + L.win.w * 0.97, y: L.win.y - 4, width: curtainW, height: curtainH },
   };
 }
 
 export function releaseRoomArt(textures) { releaseTextures(textures, K); }
 
-function paintSurfaces(ctx, L) {
-  const { width: W, height: H, focal, cx, horizon, eye, floor } = L;
-  // Sample plaster and real floorboard coordinates, so grain follows the
-  // vanishing point instead of appearing to float over the furniture.
-  const scale = Math.min(1, 1100 / W);
-  const canvas = makeCanvas(W * scale, H * scale), out = canvas.getContext('2d');
-  const pixels = out.createImageData(canvas.width, canvas.height);
-  for (let py = 0; py < canvas.height; py++) for (let px = 0; px < canvas.width; px++) {
-    const x = px / scale, y = py / scale, i = (py * canvas.width + px) * 4;
-    const pool = Math.exp(-(((x / W - 0.77) / 0.48) ** 2) - ((y / H - 0.36) / 0.61) ** 2);
-    const noise = materialNoise(x * 0.75, y * 0.75);
-    let r, g, b;
-    if (y < floor) {
-      const plaster = materialNoise(x / 96, y / 119) * 0.18 + noise * 0.07 + 0.76;
-      r = (16 + pool * 18) * plaster;
-      g = (10 + pool * 11) * plaster;
-      b = (26 + pool * 27) * plaster;
-    } else {
-      const z = focal * eye / (y - horizon), wx = (x - cx) * z / focal;
-      const board = Math.floor((wx + 600) / 17), across = ((wx + 600) / 17) % 1;
-      const along = ((z + materialNoise(board * 11, 9) * 140) % 112) / 112;
-      const seam = Math.min(1, Math.min(across, 1 - across) * 130) * Math.min(1, Math.min(along, 1 - along) * 150);
-      const bend = materialNoise(wx * 0.16, z * 0.035) * 7;
-      const wood = materialNoise(wx * 3.2, z * 0.14) * 0.17 + Math.sin(wx * 22 + bend) * 0.045;
-      const value = (0.72 + wood + materialNoise(board * 7, Math.floor(z / 112)) * 0.28) * (0.37 + seam * 0.63);
-      r = (23 + pool * 9) * value; g = (15 + pool * 7) * value; b = (30 + pool * 15) * value;
+// A drawing made flat in centimetres on the mattress (a across, b toward the
+// feet, b = 0 at v = vc), laid onto it in the room's perspective; cropped to
+// what it covers.
+function onMattress(L, vc, ext, draw) {
+  const Y = L.size.mattress + 1.5;
+  const o = L.crib(0, Y, vc), pu = L.crib(1, Y, vc), pv = L.crib(0, Y, vc + 1);
+  const eu = { x: pu.x - o.x, y: pu.y - o.y }, ev = { x: pv.x - o.x, y: pv.y - o.y };
+  const at = (a, b) => ({ x: o.x + eu.x * a - ev.x * b, y: o.y + eu.y * a - ev.y * b });
+  const pts = [at(ext.a0, ext.b0), at(ext.a1, ext.b0), at(ext.a1, ext.b1), at(ext.a0, ext.b1)];
+  const x0 = Math.floor(Math.min(...pts.map((p) => p.x))), x1 = Math.ceil(Math.max(...pts.map((p) => p.x)));
+  const y0 = Math.floor(Math.min(...pts.map((p) => p.y))), y1 = Math.ceil(Math.max(...pts.map((p) => p.y)));
+  const canvas = makeCanvas((x1 - x0) * R, (y1 - y0) * R), g = canvas.getContext('2d');
+  g.setTransform(R * eu.x, R * eu.y, -R * ev.x, -R * ev.y, R * (o.x - x0), R * (o.y - y0));
+  draw(g);
+  return { canvas, x: x0, y: y0 };
+}
+
+// the far wall: deep violet, sprigged with little stars and moons, a low
+// panelled dado, a skirting along the floor; the night-light's warmth on it
+function paintWall(ctx, L, rnd) {
+  const { width: W, floor } = L;
+  const g = ctx.createLinearGradient(0, 0, 0, floor);
+  g.addColorStop(0, '#2a1d48');
+  g.addColorStop(1, '#3a2862');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, floor + 2);
+  const s = L.P(0, 60, L.wallZ).s;
+  const step = 34 * s;
+  ctx.fillStyle = 'rgba(214,190,250,0.12)';
+  for (let row = 0, y = step * 0.4; y < floor - 30 * s; row++, y += step) {
+    for (let x = (row % 2) * step * 0.5; x < W; x += step) {
+      if ((row + Math.round(x / step)) % 3 === 0) moonShape(ctx, x, y, 2.6 * s);
+      else starShape(ctx, x, y, 2.4 * s);
     }
-    const edge = 1 - Math.pow(Math.abs(x / W - 0.53) * 1.6, 2) * 0.45;
-    pixels.data[i] = r * edge; pixels.data[i + 1] = g * edge; pixels.data[i + 2] = b * edge;
-    pixels.data[i + 3] = 255;
   }
-  out.putImageData(pixels, 0, 0); ctx.drawImage(canvas, 0, 0, W, H);
+  // the dado: low panels and a rail
+  const dado = L.P(0, 34, L.wallZ).y;
+  const dg = ctx.createLinearGradient(0, dado, 0, floor);
+  dg.addColorStop(0, '#47336e');
+  dg.addColorStop(1, '#2e2050');
+  ctx.fillStyle = dg;
+  ctx.fillRect(0, dado, W, floor - dado);
+  ctx.fillStyle = '#5e4890';
+  ctx.fillRect(0, dado - 3 * s, W, 4 * s);
+  ctx.strokeStyle = 'rgba(20,10,40,0.45)';
+  ctx.lineWidth = Math.max(1, s);
+  for (let x = -200; x <= 420; x += 70) {
+    const a = L.P(x + 6, 28, L.wallZ), b = L.P(x + 64, 8, L.wallZ);
+    ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
+  }
+  ctx.fillStyle = '#1e1436';
+  ctx.fillRect(0, floor - 5 * s, W, 5 * s);
+  void rnd;
 }
 
-function paintPanelling(ctx, L) {
-  const { width: W, height: H, floor } = L, top = floor - H * 0.19;
-  // Low painted wainscoting, in the same purple as the walls.
-  ctx.fillStyle = '#151020'; ctx.fillRect(0, top, W, floor - top);
-  for (let x = -W * 0.05; x < W; x += W * 0.135) {
-    const w = W * 0.115, y = top + H * 0.018, h = floor - y - H * 0.018;
-    const g = ctx.createLinearGradient(x, y, x + w, y + h);
-    g.addColorStop(0, '#21172e'); g.addColorStop(1, '#130e1e');
-    ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = 'rgba(90,71,112,.24)'; ctx.lineWidth = 0.85; ctx.strokeRect(x, y, w, h);
-    ctx.strokeStyle = '#0f0b18'; ctx.lineWidth = Math.max(2, W * 0.003);
-    ctx.strokeRect(x + 4, y + 4, w - 8, h - 8);
-  }
-  for (const [offset, color, width] of [[-3, '#302438', 2], [0, '#0c0913', 5], [3, '#49394f', 0.8]]) {
-    line(ctx, { x: 0, y: top + offset }, { x: W, y: top + offset }, color, width);
-  }
-  const base = ctx.createLinearGradient(0, floor - 8, 0, floor + 5);
-  base.addColorStop(0, '#382b40'); base.addColorStop(0.2, '#191220'); base.addColorStop(1, '#090711');
-  ctx.fillStyle = base; ctx.fillRect(0, floor - 8, W, 13);
-  // Faint star-patterned wallpaper; small enough to read as a material.
-  for (let y = H * 0.05, row = 0; y < top - 12; y += 38, row++) for (let x = 24 + row % 2 * 22; x < W; x += 45) {
-    ctx.strokeStyle = 'rgba(105,77,123,.085)'; ctx.lineWidth = 0.65;
-    ctx.beginPath(); ctx.moveTo(x - 2, y); ctx.lineTo(x + 2, y); ctx.moveTo(x, y - 3); ctx.lineTo(x, y + 3); ctx.stroke();
-  }
-  // Side-wall returns and crown moulding create a room around the camera.
-  for (const side of [0, 1]) {
-    const edge = side ? W : 0, corner = side ? W * 0.975 : W * 0.035;
-    const shade = ctx.createLinearGradient(edge, 0, corner, 0);
-    shade.addColorStop(0, 'rgba(3,2,8,.7)'); shade.addColorStop(1, 'rgba(3,2,8,.12)');
-    ctx.fillStyle = shade; polygon(ctx, [[edge, 0], [corner, H * 0.02], [corner, floor], [edge, floor + H * 0.14]]); ctx.fill();
-    line(ctx, { x: corner, y: H * 0.02 }, { x: corner, y: floor }, 'rgba(80,64,96,.19)', 0.8);
-  }
-  line(ctx, { x: 0, y: H * 0.018 }, { x: W, y: H * 0.018 }, '#302339', 1.3);
-}
-
-function windowPath(ctx, w) {
-  ctx.beginPath(); ctx.moveTo(w.x, w.y + w.arch);
-  ctx.bezierCurveTo(w.x, w.y - w.arch * 0.32, w.x + w.w, w.y - w.arch * 0.32, w.x + w.w, w.y + w.arch);
-  ctx.lineTo(w.x + w.w, w.y + w.h); ctx.lineTo(w.x, w.y + w.h); ctx.closePath();
-}
-
-function paintWindow(ctx, L, textures, rnd) {
-  const { win: w, width: W, height: H } = L;
-  const frame = Math.max(4, Math.min(W, H) * 0.017), stars = [];
-  const moon = { x: w.x + w.w * 0.69, y: w.y + w.h * 0.26, r: Math.min(w.w * 0.115, w.h * 0.10) };
-  ctx.save(); windowPath(ctx, w); ctx.clip();
+// The window: arched, white-framed, the moon and the stars in it, a deep
+// sill; the moon's light round it on the wall. Returns where stars may
+// twinkle.
+function paintWindow(ctx, L, rnd) {
+  const w = L.win;
+  const fw = Math.max(4, w.w * 0.06);
+  soft(ctx, w.x + w.w / 2, w.y + w.h / 2, w.w * 1.3, w.h * 1.1, LILAC, 0.16, 'lighter');
+  windowPath(ctx, { x: w.x - fw, y: w.y - fw, w: w.w + fw * 2, h: w.h + fw * 2, arch: w.arch + fw });
+  ctx.fillStyle = '#d8cceb';
+  ctx.fill();
+  windowPath(ctx, w);
+  ctx.save();
+  ctx.clip();
   const sky = ctx.createLinearGradient(0, w.y, 0, w.y + w.h);
-  sky.addColorStop(0, '#070912'); sky.addColorStop(0.48, '#111127'); sky.addColorStop(1, '#1d1a31');
-  ctx.fillStyle = sky; ctx.fillRect(w.x, w.y, w.w, w.h);
-  soft(ctx, moon.x, moon.y, w.w * 0.8, w.w * 0.75, '144,150,208', 0.14);
-  for (let i = 0; i < 82; i++) {
-    const x = w.x + rnd() * w.w, y = w.y + rnd() * w.h * 0.83, r = 0.35 + rnd() * 0.72;
-    windowPath(ctx, w);
-    if (Math.hypot(x - moon.x, y - moon.y) < moon.r * 1.3 || !ctx.isPointInPath(x, y)) continue;
-    ctx.fillStyle = 'rgba(191,195,226,' + (0.15 + rnd() * 0.5) + ')';
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    if (r > 0.95 && stars.length < 8) stars.push({ x, y, phase: rnd() * Math.PI * 2 });
+  sky.addColorStop(0, '#0c0a2a');
+  sky.addColorStop(0.7, '#2a2260');
+  sky.addColorStop(1, '#4a3a86');
+  ctx.fillStyle = sky;
+  ctx.fillRect(w.x, w.y, w.w, w.h);
+  const stars = [];
+  for (let i = 0; i < 40; i++) {
+    const x = w.x + rnd() * w.w, y = w.y + rnd() * w.h * 0.75;
+    ctx.fillStyle = `rgba(236,230,255,${(0.3 + rnd() * 0.6).toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(x, y, 0.5 + rnd() * 0.8, 0, Math.PI * 2); ctx.fill();
+    if (stars.length < 8 && rnd() < 0.35) stars.push({ x, y, phase: rnd() * Math.PI * 2 });
   }
-  makeMoonTexture(textures, K.moon);
-  const mc = textures.get(K.moon).getSourceImage();
-  ctx.drawImage(mc, moon.x - moon.r / 0.72, moon.y - moon.r / 0.72, moon.r * 2 / 0.72, moon.r * 2 / 0.72);
-  // Low, distant roofs and bare branches stay almost lost in the night.
-  ctx.fillStyle = '#0a0b16';
-  for (let x = w.x - 10; x < w.x + w.w; x += 17 + rnd() * 24) {
-    const roof = w.y + w.h * (0.90 + rnd() * 0.08);
-    ctx.fillRect(x, roof, 35, w.y + w.h - roof);
-    ctx.beginPath(); ctx.moveTo(x - 3, roof); ctx.lineTo(x + 16, roof - 13); ctx.lineTo(x + 37, roof); ctx.fill();
+  const mr = w.w * 0.42;
+  ctx.drawImage(createMoonCanvas(), w.x + w.w * 0.62 - mr / 2, w.y + w.h * 0.3 - mr / 2, mr, mr);
+  // rooftops far off, the night's own hills
+  ctx.fillStyle = '#1a1438';
+  ctx.beginPath();
+  ctx.moveTo(w.x, w.y + w.h);
+  for (let i = 0; i <= 12; i++) {
+    const x = w.x + (w.w * i) / 12;
+    ctx.lineTo(x, w.y + w.h * (0.82 - 0.06 * Math.sin(i * 1.7) - (i % 4 === 1 ? 0.07 : 0)));
   }
-  ctx.strokeStyle = '#0b0b17'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(w.x + w.w, w.y + w.h); ctx.bezierCurveTo(w.x + w.w * 0.80, w.y + w.h * 0.77, w.x + w.w * 0.92, w.y + w.h * 0.75, w.x + w.w * 0.76, w.y + w.h * 0.59); ctx.stroke();
+  ctx.lineTo(w.x + w.w, w.y + w.h);
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
-  // Recess, dark wood and a moon-facing inner bevel all have distinct depth.
-  windowPath(ctx, w); ctx.strokeStyle = '#0b0812'; ctx.lineWidth = frame * 2.1; ctx.stroke();
-  windowPath(ctx, w); ctx.strokeStyle = '#332c43'; ctx.lineWidth = frame * 0.87; ctx.stroke();
-  windowPath(ctx, { ...w, x: w.x + 1.5, y: w.y + 1.5, w: w.w - 3, h: w.h - 3 });
-  ctx.strokeStyle = 'rgba(163,155,195,.32)'; ctx.lineWidth = 1; ctx.stroke();
-  const mid = w.x + w.w * 0.47, cross = w.y + w.h * 0.60;
-  line(ctx, { x: mid, y: w.y }, { x: mid, y: w.y + w.h }, '#0f0c19', frame * 0.70);
-  line(ctx, { x: mid + frame * 0.32, y: w.y + 4 }, { x: mid + frame * 0.32, y: w.y + w.h }, '#5f586f', 0.8);
-  line(ctx, { x: w.x, y: cross }, { x: w.x + w.w, y: cross }, '#100d1a', frame * 0.70);
-  line(ctx, { x: w.x, y: cross - frame * 0.33 }, { x: w.x + w.w, y: cross - frame * 0.33 }, '#6d667b', 0.8);
-  // The lower left casement is slightly open, making the draft visible.
-  const open = [
-    [w.x + 3, cross + 5], [mid - frame * 0.5, cross + 5],
-    [mid - frame * 1.4, w.y + w.h + frame * 0.6], [w.x + frame * 0.55, w.y + w.h - 1],
-  ];
-  polygon(ctx, open); ctx.fillStyle = 'rgba(145,135,184,.045)'; ctx.fill();
-  ctx.strokeStyle = '#52485e'; ctx.lineWidth = Math.max(2, frame * 0.23); ctx.stroke();
-  line(ctx, { x: mid - frame * 1.1, y: cross + w.h * 0.22 }, { x: mid - frame * 1.1, y: cross + w.h * 0.26 }, '#a399ad', 2);
-  const sillY = w.y + w.h;
-  polygon(ctx, [[w.x - frame, sillY], [w.x + w.w + frame, sillY], [w.x + w.w + frame * 1.9, sillY + frame], [w.x - frame * 1.9, sillY + frame]]);
-  ctx.fillStyle = '#4c4058'; ctx.fill();
-  ctx.fillStyle = '#1b1326'; ctx.fillRect(w.x - frame * 1.9, sillY + frame, w.w + frame * 3.8, frame * 0.48);
-  line(ctx, { x: w.x - frame * 1.9, y: sillY + frame }, { x: w.x + w.w + frame * 1.9, y: sillY + frame }, '#73637f', 0.75);
+  // the glazing bars and the frame's lit edge
+  ctx.strokeStyle = '#d8cceb';
+  ctx.lineWidth = Math.max(2, fw * 0.45);
+  ctx.beginPath();
+  ctx.moveTo(w.x + w.w / 2, w.y - w.arch * 0.2);
+  ctx.lineTo(w.x + w.w / 2, w.y + w.h);
+  ctx.moveTo(w.x, w.y + w.arch + (w.h - w.arch) * 0.38);
+  ctx.lineTo(w.x + w.w, w.y + w.arch + (w.h - w.arch) * 0.38);
+  ctx.stroke();
+  // the sill
+  const sy = w.y + w.h + fw;
+  ctx.fillStyle = '#e4daf2';
+  ctx.fillRect(w.x - fw * 2, sy - fw * 0.2, w.w + fw * 4, fw * 0.9);
+  ctx.fillStyle = 'rgba(40,24,80,0.5)';
+  ctx.fillRect(w.x - fw * 2, sy + fw * 0.7, w.w + fw * 4, fw * 0.4);
   return stars;
 }
 
-function paintFloorLight(ctx, L) {
-  const { width: W, height: H, win: w, floor } = L;
-  // Pane-shaped pools share one direction and are interrupted by the mullion.
+function windowPath(ctx, w) {
+  ctx.beginPath();
+  ctx.moveTo(w.x, w.y + w.h);
+  ctx.lineTo(w.x, w.y + w.arch);
+  ctx.ellipse(w.x + w.w / 2, w.y + w.arch, w.w / 2, w.arch, 0, Math.PI, Math.PI * 2);
+  ctx.lineTo(w.x + w.w, w.y + w.h);
+  ctx.closePath();
+}
+
+// the floor: boards running away from us, the moon's window laid on them
+function paintFloor(ctx, L, rnd) {
+  const { width: W, height: H, P, wallZ } = L;
+  const near = 40;
+  polygon(ctx, [P(-600, 0, wallZ), P(600, 0, wallZ), P(600, 0, near), P(-600, 0, near)]);
+  const g = ctx.createLinearGradient(0, L.floor, 0, H);
+  g.addColorStop(0, '#2c1e3c');
+  g.addColorStop(1, '#4a3258');
+  ctx.fillStyle = g;
+  ctx.fill();
   ctx.save();
-  for (let i = 0; i < 2; i++) {
-    const points = [[w.x + w.w * (0.04 + i * 0.49), floor + 2],
-      [w.x + w.w * (0.44 + i * 0.49), floor + 2],
-      [W * (0.23 + i * 0.30), H * 1.05], [W * (-0.02 + i * 0.30), H * 0.95]];
-    polygon(ctx, points);
-    const g = ctx.createLinearGradient(w.x, floor, W * 0.25, H);
-    g.addColorStop(0, 'rgba(151,136,190,.09)'); g.addColorStop(0.5, 'rgba(143,124,181,.13)'); g.addColorStop(1, 'rgba(111,91,159,0)');
-    ctx.fillStyle = g; ctx.fill();
+  ctx.clip();
+  for (let x = -600; x <= 600; x += 15) {
+    const a = P(x, 0, wallZ), b = P(x, 0, near);
+    ctx.strokeStyle = 'rgba(14,6,24,0.55)';
+    ctx.lineWidth = Math.max(0.8, a.s * 0.9);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    let z = wallZ - rnd() * 110;
+    while (z > near) {
+      const c = P(x, 0, z), d = P(x + 15, 0, z);
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke();
+      z -= 90 + rnd() * 60;
+    }
+    ctx.strokeStyle = 'rgba(200,170,230,0.05)';
+    ctx.lineWidth = 0.7;
+    const e = P(x + 7, 0, wallZ), f = P(x + 7, 0, near);
+    ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(f.x, f.y); ctx.stroke();
   }
-  soft(ctx, W * 0.53, H * 0.75, W * 0.43, H * 0.30, '102,80,150', 0.075);
+  // the window's light on the boards
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.filter = 'blur(6px)';
+  polygon(ctx, [P(40, 0, 410), P(150, 0, 420), P(100, 0, 300), P(-20, 0, 290)]);
+  ctx.fillStyle = `rgba(${LILAC},0.12)`;
+  ctx.fill();
+  ctx.restore();
+  ctx.filter = 'none';
+  ctx.restore();
+  // a shadowed edge where the floor meets the wall
+  ctx.fillStyle = 'rgba(10,4,20,0.4)';
+  ctx.fillRect(0, L.floor, W, 3);
+}
+
+// a round rug under the crib, soft and fluffy, lavender with a darker band
+function paintRug(ctx, L, rnd) {
+  const { P } = L;
+  const c = L.world(0, 0, 0);
+  const ring = (r) => Array.from({ length: 64 }, (_, i) => {
+    const a = (i / 64) * Math.PI * 2;
+    return P(c.x + Math.cos(a) * r, 0.5, c.z + Math.sin(a) * r * 0.92);
+  });
+  polygon(ctx, ring(112));
+  ctx.fillStyle = '#5a4488';
+  ctx.fill();
+  polygon(ctx, ring(100));
+  const g = ctx.createRadialGradient(P(c.x, 0, c.z).x, P(c.x, 0, c.z).y, 10, P(c.x, 0, c.z).x, P(c.x, 0, c.z).y, P(c.x + 100, 0, c.z).x - P(c.x, 0, c.z).x);
+  g.addColorStop(0, '#a48ad0');
+  g.addColorStop(1, '#7a62a8');
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(230,214,255,0.35)';
+  ctx.lineWidth = 2;
+  polygon(ctx, ring(84));
+  ctx.stroke();
+  // its fluffy edge
+  ctx.lineCap = 'round';
+  for (const p of ring(111)) {
+    for (let k = 0; k < 3; k++) {
+      ctx.strokeStyle = `rgba(${k % 2 ? '120,96,170' : '170,150,210'},0.55)`;
+      ctx.lineWidth = Math.max(1, 1.6 * p.s);
+      const dx = (rnd() - 0.5) * 3 * p.s, dy = (rnd() - 0.5) * 3 * p.s;
+      ctx.beginPath(); ctx.moveTo(p.x + dx, p.y + dy); ctx.lineTo(p.x + dx * 2.4, p.y + dy * 2.4 + 1.5 * p.s); ctx.stroke();
+    }
+  }
+  ctx.lineCap = 'butt';
+}
+
+// a little dresser against the far wall at the left, a star night-light on it
+// — the one warm light in the room — and a few books
+function paintDresser(ctx, L) {
+  const { P } = L;
+  const x0 = -270, x1 = -165, z0 = 435, z1 = 470, h = 74;
+  const front = [P(x0, 0, z0), P(x1, 0, z0), P(x1, h, z0), P(x0, h, z0)];
+  soft(ctx, (front[0].x + front[1].x) / 2, front[0].y, (front[1].x - front[0].x) * 0.7, 10, '10,4,20', 0.6);
+  polygon(ctx, front);
+  const fg = ctx.createLinearGradient(front[0].x, 0, front[1].x, 0);
+  fg.addColorStop(0, '#cdbfe2');
+  fg.addColorStop(1, '#8e7cb4');
+  ctx.fillStyle = fg;
+  ctx.fill();
+  polygon(ctx, [P(x0 - 2, h, z0 - 2), P(x1 + 2, h, z0 - 2), P(x1 + 2, h, z1), P(x0 - 2, h, z1)]);
+  ctx.fillStyle = '#e6dcf2';
+  ctx.fill();
+  if (x1 < 0) {
+    polygon(ctx, [P(x1, 0, z0), P(x1, 0, z1), P(x1, h, z1), P(x1, h, z0)]);
+    ctx.fillStyle = '#6e5c96';
+    ctx.fill();
+  }
+  // drawers and knobs
+  for (let i = 0; i < 3; i++) {
+    const y0 = 8 + i * 21, y1 = y0 + 17;
+    const a = P(x0 + 6, y1, z0 - 0.5), b = P(x1 - 6, y0, z0 - 0.5);
+    ctx.strokeStyle = 'rgba(60,40,100,0.5)';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
+    const k = P((x0 + x1) / 2, (y0 + y1) / 2, z0 - 1);
+    ctx.fillStyle = '#f0d890';
+    ctx.beginPath(); ctx.arc(k.x, k.y, 2.2 * k.s * 1.5, 0, Math.PI * 2); ctx.fill();
+  }
+  // books
+  const bc = ['#7a5aa8', '#b88ab8', '#5a4a8a'];
+  for (let i = 0; i < 3; i++) {
+    const bx = -255 + i * 7;
+    const a = P(bx, h, 450), b = P(bx + 6, h + 22 - i * 3, 450);
+    ctx.fillStyle = bc[i];
+    ctx.fillRect(a.x, b.y, b.x - a.x, a.y - b.y);
+  }
+  // the star night-light, glowing
+  const st = P(-200, h + 16, 452);
+  soft(ctx, st.x, st.y, 160 * st.s, 120 * st.s, WARM, 0.35, 'lighter');
+  soft(ctx, st.x, st.y + 20 * st.s, 90 * st.s, 26 * st.s, WARM, 0.3, 'lighter');
+  ctx.fillStyle = '#ffe6a8';
+  starShape(ctx, st.x, st.y, 12 * st.s);
+  ctx.fillStyle = '#fff8e0';
+  starShape(ctx, st.x, st.y, 6 * st.s);
+  const base = P(-200, h, 452);
+  ctx.fillStyle = '#9a84c4';
+  ctx.fillRect(base.x - 4 * st.s, st.y + 10 * st.s, 8 * st.s, base.y - st.y - 10 * st.s);
+}
+
+// toys on the floor: a plush elephant, a stack of rings, two blocks
+function paintToys(ctx, L) {
+  const { P } = L;
+  // the stacking rings, at the crib's foot on the right
+  const r0 = P(96, 0, 168);
+  soft(ctx, r0.x, r0.y, 26 * r0.s, 7 * r0.s, '10,4,20', 0.5);
+  const cols = ['#9a6ac8', '#c08ad0', '#e0b0e0', '#f0d8f0'];
+  for (let i = 0; i < 4; i++) {
+    const p = P(96, 4 + i * 5.5, 168);
+    const rr = (11 - i * 2) * p.s;
+    ctx.fillStyle = cols[i];
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, rr, rr * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.beginPath(); ctx.ellipse(p.x - rr * 0.3, p.y - rr * 0.15, rr * 0.4, rr * 0.15, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  const top = P(96, 28, 168);
+  ctx.fillStyle = '#e8d0a0';
+  ctx.beginPath(); ctx.arc(top.x, top.y, 3.4 * top.s, 0, Math.PI * 2); ctx.fill();
+  // two wooden blocks with stars, at the left
+  for (const [x, z, a, col] of [[118, 230, 0.3, '#b49ad8'], [132, 214, -0.2, '#d8a8c8']]) {
+    const s = 9;
+    const pts = [[-s, -s], [s, -s], [s, s], [-s, s]].map(([u, v]) => [u * Math.cos(a) - v * Math.sin(a), u * Math.sin(a) + v * Math.cos(a)]);
+    const topF = pts.map(([u, v]) => P(x + u, 2 * s, z + v));
+    const nearF = [P(x + pts[0][0], 0, z + pts[0][1]), P(x + pts[1][0], 0, z + pts[1][1]), topF[1], topF[0]];
+    polygon(ctx, nearF); ctx.fillStyle = '#6a5290'; ctx.fill();
+    polygon(ctx, topF); ctx.fillStyle = col; ctx.fill();
+    const c = P(x, 2 * s + 0.2, z);
+    ctx.fillStyle = 'rgba(255,250,235,0.85)';
+    starShape(ctx, c.x, c.y, 4 * c.s);
+  }
+  // a plush elephant sitting by the crib's corner, grey-violet, ear flopped
+  const e = P(-82, 0, 205);
+  const s = e.s;
+  soft(ctx, e.x, e.y, 26 * s, 8 * s, '10,4,20', 0.5);
+  const fur = (x, y, rx, ry, a = 0) => {
+    const g = ctx.createRadialGradient(x - rx * 0.3, y - ry * 0.3, 1, x, y, Math.max(rx, ry));
+    g.addColorStop(0, '#c4b4e0'); g.addColorStop(1, '#7a68a6');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, a, 0, Math.PI * 2); ctx.fill();
+  };
+  fur(e.x, e.y - 12 * s, 14 * s, 12 * s);
+  fur(e.x - 11 * s, e.y - 26 * s, 8 * s, 10 * s, -0.3);
+  fur(e.x + 3 * s, e.y - 30 * s, 11 * s, 10 * s);
+  fur(e.x + 12 * s, e.y - 22 * s, 4 * s, 9 * s, 0.4);
+  ctx.fillStyle = 'rgba(240,170,200,0.6)';
+  ctx.beginPath(); ctx.ellipse(e.x - 11 * s, e.y - 26 * s, 4.5 * s, 6 * s, -0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2a1e40';
+  ctx.beginPath(); ctx.arc(e.x + 6 * s, e.y - 32 * s, 1.4 * s, 0, Math.PI * 2); ctx.fill();
+}
+
+// ── the crib ────────────────────────────────────────────────────────────────
+
+const PAINT = { lit: '#efe8f8', mid: '#c4b4de', dark: '#7c6aa6', edge: 'rgba(40,24,72,0.55)' };
+
+// a round rod of painted wood between two points of the crib
+function rod(ctx, L, a, b, width) {
+  const p = L.crib(...a), q = L.crib(...b);
+  const s = (p.s + q.s) / 2;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = PAINT.edge;
+  ctx.lineWidth = (width + 0.8) * s;
+  ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  ctx.strokeStyle = PAINT.mid;
+  ctx.lineWidth = width * s;
+  ctx.stroke();
+  ctx.strokeStyle = PAINT.lit;
+  ctx.lineWidth = width * s * 0.4;
+  ctx.beginPath(); ctx.moveTo(p.x - width * s * 0.18, p.y); ctx.lineTo(q.x - width * s * 0.18, q.y); ctx.stroke();
+  ctx.lineCap = 'butt';
+}
+
+function post(ctx, L, u, v) {
+  const { rail } = L.size;
+  rod(ctx, L, [u, 0, v], [u, rail + 8, v], 6);
+  const f = L.crib(u, rail + 13, v);
+  const g = ctx.createRadialGradient(f.x - 1.4 * f.s, f.y - 1.6 * f.s, 0.5, f.x, f.y, 4.4 * f.s);
+  g.addColorStop(0, '#fffaff'); g.addColorStop(1, PAINT.dark);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(f.x, f.y, 4.2 * f.s, 0, Math.PI * 2); ctx.fill();
+}
+
+// one side of slats: a bottom rail, the slats, a broad top rail
+function side(ctx, L, a, b, n) {
+  const { rail } = L.size;
+  rod(ctx, L, [a[0], 30, a[1]], [b[0], 30, b[1]], 4);
+  for (let i = 1; i < n; i++) {
+    const t = i / n;
+    const u = a[0] + (b[0] - a[0]) * t, v = a[1] + (b[1] - a[1]) * t;
+    rod(ctx, L, [u, 30, v], [u, rail, v], 2.6);
+  }
+  rod(ctx, L, [a[0], rail, a[1]], [b[0], rail, b[1]], 5.5);
+}
+
+// behind the baby: the shadow, the far posts, the headboard with its moon,
+// both long sides, the mattress in its starry sheet
+function paintCribBack(ctx, L) {
+  const { u, v, rail, mattress } = L.size;
+  const c = L.crib(0, 0, 0);
+  soft(ctx, c.x, c.y, (L.crib(u, 0, 0).x - c.x) * 1.5, (L.crib(0, 0, -v).y - L.crib(0, 0, v).y) * 0.62, '20,8,40', 0.6);
+  post(ctx, L, -u, v); post(ctx, L, u, v);
+  // the headboard: a solid arched panel, a crescent moon cut in it
+  const top = (x) => rail + 6 + 14 * (1 - (x / u) ** 2);
+  const pts = [];
+  for (let i = 0; i <= 16; i++) { const x = -u + (2 * u * i) / 16; pts.push(L.crib(x, top(x), v)); }
+  pts.push(L.crib(u, 30, v), L.crib(-u, 30, v));
+  polygon(ctx, pts);
+  const hg = ctx.createLinearGradient(pts[0].x, 0, pts[16].x, 0);
+  hg.addColorStop(0, PAINT.lit); hg.addColorStop(1, PAINT.mid);
+  ctx.fillStyle = hg; ctx.fill();
+  ctx.strokeStyle = PAINT.edge; ctx.lineWidth = 1.2; ctx.stroke();
+  const m = L.crib(0, 76, v);
+  ctx.fillStyle = '#4a3672';
+  moonShape(ctx, m.x, m.y, 9 * m.s);
+  // the long sides
+  side(ctx, L, [-u, -v], [-u, v], 14);
+  side(ctx, L, [u, -v], [u, v], 14);
+  // the mattress, its sheet lavender with tiny stars
+  const mu = u - 2, mv = v - 2;
+  const near = [L.crib(-mu, mattress, -mv), L.crib(mu, mattress, -mv), L.crib(mu, mattress - 14, -mv), L.crib(-mu, mattress - 14, -mv)];
+  polygon(ctx, near); ctx.fillStyle = '#6e58a0'; ctx.fill();
+  const topQ = [L.crib(-mu, mattress, mv), L.crib(mu, mattress, mv), L.crib(mu, mattress, -mv), L.crib(-mu, mattress, -mv)];
+  polygon(ctx, topQ);
+  const sg = ctx.createLinearGradient(0, topQ[0].y, 0, topQ[3].y);
+  sg.addColorStop(0, '#9a86c8'); sg.addColorStop(1, '#b8a6e0');
+  ctx.fillStyle = sg; ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = 'rgba(250,246,255,0.45)';
+  for (let a = -mu + 5; a < mu; a += 9) for (let b = -mv + 5; b < mv; b += 9) {
+    const p = L.crib(a + ((b / 9) % 2 ? 4.5 : 0), mattress + 0.2, b);
+    starShape(ctx, p.x, p.y, 1.3 * p.s);
+  }
+  // the moon's light across the sheet
+  const mid = L.crib(10, mattress, 10);
+  soft(ctx, mid.x, mid.y, (topQ[1].x - topQ[0].x) * 0.5, (topQ[3].y - topQ[0].y) * 0.5, LILAC, 0.12, 'lighter');
   ctx.restore();
 }
 
+// in front of the baby: the footboard's slats and the near posts
+function paintCribFront(ctx, L) {
+  const { u, v } = L.size;
+  side(ctx, L, [-u, -v], [u, -v], 9);
+  post(ctx, L, -u, -v); post(ctx, L, u, -v);
+}
+
+// the moon's beams falling in from the window toward the floor
 function paintRays(L) {
-  const { width: W, height: H, win: w } = L;
+  const { width: W, height: H, win: w, P } = L;
   const canvas = makeCanvas(W, H), ctx = canvas.getContext('2d');
-  ctx.filter = 'blur(' + Math.max(2, W * 0.004) + 'px)';
-  for (const [start, span, alpha] of [[0.15, 0.13, 0.056], [0.48, 0.20, 0.085], [0.81, 0.10, 0.050]]) {
-    const x = w.x + w.w * start, y = w.y + w.h * 0.35;
-    polygon(ctx, [[x, y], [x + w.w * span, y + 4], [x - W * 0.26, H], [x - W * 0.54, H]]);
-    const g = ctx.createLinearGradient(x, y, x - W * 0.40, H);
-    g.addColorStop(0, 'rgba(167,156,213,' + alpha + ')');
-    g.addColorStop(0.62, 'rgba(151,131,198,' + alpha * 1.1 + ')');
-    g.addColorStop(1, 'rgba(110,91,164,0)');
-    ctx.fillStyle = g; ctx.fill();
-  }
+  ctx.filter = 'blur(' + Math.max(3, W * 0.005) + 'px)';
+  const f0 = P(-20, 0, 290), f1 = P(100, 0, 300);
+  polygon(ctx, [[w.x + w.w * 0.1, w.y + w.h * 0.3], [w.x + w.w * 0.9, w.y + w.h * 0.3], [f1.x, f1.y], [f0.x, f0.y]]);
+  const g = ctx.createLinearGradient(0, w.y, 0, f0.y);
+  g.addColorStop(0, `rgba(${LILAC},0.1)`);
+  g.addColorStop(1, `rgba(${LILAC},0.02)`);
+  ctx.fillStyle = g; ctx.fill();
   return canvas;
 }
 
-function paintDresser(ctx, L) {
-  const { P, focal } = L, x = -160, z = 417, w = 83, h = 89, d = 40;
-  const map = (u, y, v) => P(x + u, y, z + v);
-  box(ctx, map, -w / 2, w / 2, 7, h, -d / 2, d / 2, ['#21182a', '#16101e', '#403048']);
-  box(ctx, map, -w / 2 - 2, w / 2 + 2, h, h + 3, -d / 2 - 2, d / 2 + 2, ['#281c30', '#191121', '#49374e']);
-  for (let i = 0; i < 3; i++) {
-    const y = 15 + i * 23;
-    quad(ctx, [map(-37, y, -21), map(37, y, -21), map(37, y + 19, -21), map(-37, y + 19, -21)], '#23192d', '#4a354e');
-    for (const u of [-21, 21]) {
-      const p = map(u, y + 10, -22); sphere(ctx, p.x, p.y, focal / z * 1.2, ['#746477', '#302534', '#0c0912']);
-    }
-  }
-  // A little stack of board books and an unlit nursery lamp.
-  for (let i = 0; i < 3; i++) box(ctx, map, -28 + i, 1 + i, h + 3 + i * 4, h + 6 + i * 4, -8, 12, ['#3c3047', '#282132', i % 2 ? '#4f435e' : '#514454']);
-  const p = map(23, h + 3, 5), s = focal / z;
-  ellipse(ctx, p.x, p.y, s * 11, s * 3, '#181120');
-  line(ctx, p, { x: p.x, y: p.y - s * 22 }, '#57415d', s * 1.4);
-  polygon(ctx, [[p.x - s * 10, p.y - s * 39], [p.x + s * 10, p.y - s * 39], [p.x + s * 17, p.y - s * 19], [p.x - s * 17, p.y - s * 19]]);
-  const shade = ctx.createLinearGradient(p.x - 15 * s, 0, p.x + 17 * s, 0);
-  shade.addColorStop(0, '#201928'); shade.addColorStop(0.7, '#3f314a'); shade.addColorStop(1, '#50415b');
-  ctx.fillStyle = shade; ctx.fill();
-  // An understated framed moon print above the dresser.
-  const print = P(-195, 143, 489), pw = s * 36, ph = s * 47;
-  ctx.fillStyle = '#0f0a16'; ctx.fillRect(print.x - pw / 2, print.y - ph / 2, pw, ph);
-  ctx.strokeStyle = '#4a394f'; ctx.lineWidth = 2.4; ctx.strokeRect(print.x - pw / 2, print.y - ph / 2, pw, ph);
-  ctx.fillStyle = '#2c2238'; ctx.fillRect(print.x - pw * 0.40, print.y - ph * 0.42, pw * 0.8, ph * 0.84);
-  ctx.strokeStyle = '#776180'; ctx.lineWidth = s * 0.5;
-  ctx.beginPath(); ctx.arc(print.x + 2, print.y - 3, pw * 0.21, 0.7, 5.2); ctx.bezierCurveTo(print.x - pw * 0.05, print.y, print.x + pw * 0.07, print.y + 6, print.x + pw * 0.17, print.y + 7); ctx.stroke();
-}
-
-function paintRug(ctx, L) {
-  const points = [];
-  for (let i = 0; i < 96; i++) {
-    const t = i / 96 * Math.PI * 2;
-    points.push(L.P(-22 + Math.cos(t) * 118, 0.8, 280 + Math.sin(t) * 74));
-  }
-  polygon(ctx, points);
-  const g = ctx.createLinearGradient(0, L.floor, 0, L.height);
-  g.addColorStop(0, '#322638'); g.addColorStop(1, '#221828');
-  ctx.fillStyle = g; ctx.fill();
-  ctx.save(); ctx.clip();
-  const rnd = lcg(2929);
-  for (let i = 0; i < 2600; i++) {
-    const x = rnd() * L.width, y = L.floor + rnd() * (L.height - L.floor);
-    ctx.strokeStyle = 'rgba(132,105,142,' + (0.02 + rnd() * 0.08) + ')'; ctx.lineWidth = 0.75;
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3, y - 1); ctx.stroke();
-  }
-  ctx.restore();
-  for (const radius of [0.84, 0.88, 0.93, 0.97]) {
-    const ring = [];
-    for (let i = 0; i < 100; i++) {
-      const t = i / 100 * Math.PI * 2;
-      ring.push(L.P(-22 + Math.cos(t) * 118 * radius, 1, 280 + Math.sin(t) * 74 * radius));
-    }
-    polygon(ctx, ring); ctx.strokeStyle = 'rgba(120,92,133,.2)'; ctx.lineWidth = 1; ctx.stroke();
-  }
-  // Broad contact shadow, followed by the distinct shadows of the slats.
-  const center = L.P(-40, 0, 272);
-  soft(ctx, center.x, center.y, L.focal * 0.32, L.focal * 0.12, '2,1,7', 0.68);
-  for (let u = -70; u < 76; u += 12) {
-    const a = L.crib(u, 0, -36), b = L.crib(u - 17, 0, -70);
-    line(ctx, a, b, 'rgba(3,2,9,.25)', Math.max(2, L.focal / 200));
-  }
-}
-
-function paintCrib(ctx, L, front) {
-  const m = L.crib;
-  // Slats and rails are solid projected wooden pieces. Gaps are empty space,
-  // never an eraser over the already-painted baby.
-  if (!front) {
-    for (const u of [-78, 78]) {
-      box(ctx, m, u - 3.2, u + 3.2, 4, 111, 35, 41, ['#302336', '#22172a', '#66506c']);
-      finial(ctx, L, u, 113, 38);
-    }
-    for (let u = -67; u <= 68; u += 12.2) spindle(ctx, L, u, 38, 29, 100);
-    for (const y of [27, 97]) box(ctx, m, -78, 78, y, y + 5.5, 34.5, 41, ['#413048', '#241a2e', '#6b5673']);
-    // Left end is behind the mattress. Its arch rises slightly at the centre.
-    endPanel(ctx, L, -78, false);
-    box(ctx, m, -74, 74, 55, 60, -35, 35, ['#33263d', '#241a2e', '#50405d']);
-    const sheet = [m(-73, 67, -34), m(73, 67, -34), m(73, 67, 34), m(-73, 67, 34)];
-    const g = ctx.createLinearGradient(sheet[0].x, sheet[0].y, sheet[2].x, sheet[2].y);
-    g.addColorStop(0, '#383040'); g.addColorStop(0.5, '#64586e'); g.addColorStop(1, '#82748e');
-    polygon(ctx, sheet); ctx.fillStyle = g; ctx.fill();
-    box(ctx, m, -73, 73, 62, 67, -34, 34, ['#4f405c', '#372b44', 'rgba(0,0,0,0)']);
-    ctx.save(); polygon(ctx, sheet); ctx.clip();
-    const rnd = lcg(2930);
-    for (let i = 0; i < 85; i++) {
-      const u = -72 + rnd() * 144, v = -33 + rnd() * 66;
-      line(ctx, m(u, 67.1, v), m(u + 4, 67.1, v + 0.2), 'rgba(190,168,206,.10)', 0.6);
-    }
-    ctx.restore();
-    return;
-  }
-  endPanel(ctx, L, 78, true);
-  // The near rail remains below the sleeping face from this elevated view.
-  for (let u = -67; u <= 68; u += 12.2) spindle(ctx, L, u, -38, 28, 88);
-  for (const y of [25, 86]) box(ctx, m, -79, 79, y, y + 6.0, -42, -34, ['#352339', '#211526', '#6e5673']);
-  for (const u of [-78, 78]) {
-    box(ctx, m, u - 3.5, u + 3.5, 4, 105, -42, -35, ['#3f2c44', '#211626', '#806584']);
-    finial(ctx, L, u, 107, -38);
-  }
-  // A small brass maker's plate on the rail is ornamental, without lettering.
-  quad(ctx, [m(42, 87, -42.2), m(55, 87, -42.2), m(55, 90, -42.2), m(42, 90, -42.2)], '#665360', '#8d7586');
-  // Subtle grain follows each long rail, with a few worn edges.
-  for (const y of [27, 29, 88, 90]) {
-    line(ctx, m(-73, y, -42.1), m(74, y + 0.3, -42.1), 'rgba(148,113,157,.12)', 0.65);
-  }
-}
-
-function spindle(ctx, L, u, v, y0, y1) {
-  const a = L.crib(u, y0, v), b = L.crib(u, y1, v);
-  const s = L.focal / L.world(u, 0, v).z;
-  // A turned profile with a moonlit edge and a dark cylindrical belly.
-  const points = [[-1.0, 0], [-1.1, 0.10], [-1.6, 0.18], [-0.95, 0.30], [-0.9, 0.70], [-1.5, 0.81], [-1.1, 0.91], [-1.1, 1]];
-  const path = points.map(([x, t]) => [a.x + x * s, a.y + (b.y - a.y) * t]);
-  path.push(...points.slice().reverse().map(([x, t]) => [a.x - x * s, a.y + (b.y - a.y) * t]));
-  const g = ctx.createLinearGradient(a.x - s * 1.7, 0, a.x + s * 1.7, 0);
-  g.addColorStop(0, '#1d1424'); g.addColorStop(0.38, '#33223b'); g.addColorStop(0.77, '#58405f'); g.addColorStop(1, '#8b6e91');
-  polygon(ctx, path); ctx.fillStyle = g; ctx.fill();
-  line(ctx, { x: b.x + s * 0.55, y: b.y + 2 }, { x: a.x + s * 0.55, y: a.y - 2 }, 'rgba(170,137,183,.17)', 0.65);
-}
-
-function endPanel(ctx, L, u, near) {
-  const m = L.crib, points = [m(u, 26, -38), m(u, 93, -38)];
-  for (let i = 0; i <= 24; i++) {
-    const v = -38 + i / 24 * 76;
-    points.push(m(u, 99 + Math.sin(i / 24 * Math.PI) * 10, v));
-  }
-  points.push(m(u, 26, 38));
-  polygon(ctx, points);
-  const a = m(u, 60, -38), b = m(u, 60, 38);
-  const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-  g.addColorStop(0, near ? '#322139' : '#211729'); g.addColorStop(0.7, '#4b3552'); g.addColorStop(1, '#6c5075');
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = 'rgba(133,103,147,.42)'; ctx.lineWidth = 1; ctx.stroke();
-  // Recessed end panel, moulded along the arched head/foot board.
-  const inner = [m(u + 0.2, 34, -29), m(u + 0.2, 90, -29)];
-  for (let i = 0; i <= 16; i++) inner.push(m(u + 0.2, 91 + Math.sin(i / 16 * Math.PI) * 9, -29 + i / 16 * 58));
-  inner.push(m(u + 0.2, 34, 29));
-  polygon(ctx, inner); ctx.fillStyle = near ? '#302036' : '#281a31'; ctx.fill();
-  ctx.strokeStyle = '#73577b'; ctx.lineWidth = 0.85; ctx.stroke();
-  // Vertical wood grain follows the local end-board plane.
-  ctx.save(); polygon(ctx, inner); ctx.clip();
-  for (let v = -29; v < 30; v += 2) line(ctx, m(u + 0.3, 32, v), m(u + 0.3, 105, v + Math.sin(v) * 0.2), 'rgba(146,106,157,.09)', 0.65);
-  ctx.restore();
-}
-
-function finial(ctx, L, u, y, v) {
-  const p = L.crib(u, y, v), r = L.focal / L.world(u, y, v).z * 3.7;
-  sphere(ctx, p.x, p.y, r, ['#9d80a6', '#4e3559', '#201326']);
-}
-
-function paintToys(ctx, L, rnd) {
-  // All toys rest on the same floor plane as the crib.
-  const teddy = L.P(87, 0, 300), s = L.focal / 300;
-  soft(ctx, teddy.x + 4 * s, teddy.y, 27 * s, 7 * s, '1,1,5', 0.75);
-  ctx.save(); ctx.translate(teddy.x, teddy.y); ctx.scale(s, s);
-  const fur = ['#6a5569', '#483444', '#201625'];
-  plush(ctx, -12, -31, 6, 11, fur, 0.30); plush(ctx, 13, -30, 6, 11, fur, -0.3);
-  plush(ctx, 0, -22, 14, 19, fur); plush(ctx, -11, -6, 10, 6, fur, -0.18); plush(ctx, 12, -6, 10, 6, fur, 0.18);
-  plush(ctx, -11, -53, 6, 7, fur); plush(ctx, 12, -53, 6, 7, fur);
-  plush(ctx, 1, -44, 15, 14, ['#80677c', '#584053', '#2d2032']);
-  plush(ctx, 3, -40, 7.5, 6, ['#94808e', '#786071', '#4a364b']);
-  for (const x of [-4.5, 8.5]) sphere(ctx, x, -47, 1.25, ['#aa95af', '#201926', '#0b0810']);
-  ellipse(ctx, 3, -41, 2.2, 1.7, '#231926');
-  ctx.strokeStyle = '#493347'; ctx.lineWidth = 0.65; ctx.beginPath(); ctx.moveTo(3, -39); ctx.lineTo(3, -36.5); ctx.stroke();
-  // Worn fur and the seam in the stuffed belly, without sharp outlines.
-  for (let i = 0; i < 230; i++) {
-    const x = (rnd() - 0.5) * 23, y = -57 + rnd() * 51;
-    if ((x / 13) ** 2 + ((y + 23) / 17) ** 2 > 1 && (x / 14) ** 2 + ((y + 45) / 11) ** 2 > 1) continue;
-    line(ctx, { x, y }, { x: x + 0.8, y: y - 0.7 }, 'rgba(192,158,180,.12)', 0.3);
-  }
-  ctx.strokeStyle = 'rgba(23,12,28,.35)'; ctx.lineWidth = 0.7;
-  ctx.beginPath(); ctx.moveTo(0, -32); ctx.quadraticCurveTo(3, -22, 0, -11); ctx.stroke();
-  // Dusty plum ribbon.
-  polygon(ctx, [[-2, -33], [-10, -36], [-9, -29], [0, -32], [10, -36], [11, -28]]);
-  ctx.fillStyle = '#51405f'; ctx.fill(); sphere(ctx, 0, -32, 1.6, ['#8c718f', '#4b3556', '#281b31']);
-  ctx.restore();
-
-  // Wooden stacking rings farther back near the window.
-  const rings = L.P(138, 0, 373), rs = L.focal / 373;
-  soft(ctx, rings.x, rings.y, 18 * rs, 5 * rs, '1,1,6', 0.6);
-  line(ctx, rings, { x: rings.x, y: rings.y - 38 * rs }, '#6a526b', rs * 2.4);
-  const colors = [['#5c4468', '#261c32'], ['#5b646f', '#242b37'], ['#807164', '#37303a'], ['#856171', '#342235']];
-  for (let i = 0; i < 4; i++) {
-    const r = (16 - i * 2.7) * rs, y = rings.y - (5 + i * 7) * rs;
-    ellipse(ctx, rings.x, y + rs * 1.6, r, r * 0.37, colors[i][1]);
-    ellipse(ctx, rings.x, y, r, r * 0.35, colors[i][0]);
-    ellipse(ctx, rings.x, y, r * 0.20, r * 0.08, '#221b2c');
-  }
-  sphere(ctx, rings.x, rings.y - 36 * rs, 3 * rs, ['#a08a9b', '#5a425e', '#2b1e32']);
-  // Three small letterless blocks: their geometric faces cannot add clues.
-  for (const [x, z, yaw, col] of [[92, 244, 0.25, ['#594052', '#302338', '#7b6275']], [116, 259, -0.25, ['#4b4c63', '#252338', '#72718c']], [96, 273, 0.08, ['#5d544e', '#2b2730', '#807263']]]) {
-    const map = (u, y, v) => L.P(x + u * Math.cos(yaw) + v * Math.sin(yaw), y, z - u * Math.sin(yaw) + v * Math.cos(yaw));
-    box(ctx, map, -6, 6, 0.5, 12.5, -6, 6, col);
-    quad(ctx, [map(-4, 3, -6.1), map(4, 3, -6.1), map(4, 10, -6.1), map(-4, 10, -6.1)], 'rgba(0,0,0,0)', 'rgba(170,145,177,.27)');
-  }
-  // A little wooden pull duck just inside the foreground shadow.
-  const duck = L.P(-92, 0, 220), ds = L.focal / 220;
-  ctx.save(); ctx.translate(duck.x, duck.y); ctx.scale(ds, ds);
-  soft(ctx, 0, 1, 17, 4, '1,1,5', 0.55);
-  for (const x of [-7, 8]) sphere(ctx, x, -1, 3.7, ['#534155', '#291b30', '#130d1b']);
-  plush(ctx, -1, -7, 12, 6, ['#7c695e', '#5c474b', '#2b1f2d']);
-  plush(ctx, 8, -14, 5.5, 6, ['#8b7868', '#655050', '#302230']);
-  polygon(ctx, [[12, -16], [18, -13.5], [12, -12]]); ctx.fillStyle = '#775454'; ctx.fill();
-  ellipse(ctx, 10, -15.5, 0.6, 0.6, '#140f19');
-  ctx.strokeStyle = '#514155'; ctx.lineWidth = 0.38;
-  ctx.beginPath(); ctx.moveTo(16, -10); ctx.bezierCurveTo(27, -3, 29, 5, 42, 1); ctx.stroke();
-  ctx.restore();
-}
-
+// the dark of the room closing in at the edges, a violet hush over all
 function paintShade(L) {
   const canvas = makeCanvas(L.width, L.height), ctx = canvas.getContext('2d');
-  // One final optical falloff lights the furniture and room together. The
-  // eye adapts to the moon; the foreground remains almost black and plum.
-  ctx.fillStyle = 'rgba(8,3,17,.14)'; ctx.fillRect(0, 0, L.width, L.height);
+  ctx.fillStyle = 'rgba(16,6,34,.12)'; ctx.fillRect(0, 0, L.width, L.height);
   ctx.save(); ctx.scale(L.width, L.height);
-  const g = ctx.createRadialGradient(0.66, 0.30, 0.07, 0.57, 0.42, 0.78);
-  g.addColorStop(0, 'rgba(5,2,12,0)');
-  g.addColorStop(0.4, 'rgba(5,2,12,.11)');
-  g.addColorStop(0.75, 'rgba(4,2,10,.46)');
-  g.addColorStop(1, 'rgba(3,1,8,.76)');
+  const g = ctx.createRadialGradient(0.52, 0.5, 0.12, 0.5, 0.5, 0.8);
+  g.addColorStop(0, 'rgba(10,4,24,0)');
+  g.addColorStop(0.6, 'rgba(10,4,24,.22)');
+  g.addColorStop(1, 'rgba(6,2,16,.66)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, 1, 1); ctx.restore();
   return canvas;
 }
 
+// the sheer curtain at the window's side
 function paintCurtain(w, h) {
   const canvas = makeCanvas(w + 6, h + 6), ctx = canvas.getContext('2d');
   ctx.beginPath(); ctx.moveTo(w * 0.22, 0); ctx.lineTo(w * 0.84, 0);
   ctx.bezierCurveTo(w * 0.74, h * 0.35, w * 0.96, h * 0.58, w, h * 0.98);
   ctx.quadraticCurveTo(w * 0.6, h * 1.01, w * 0.01, h * 0.94);
   ctx.bezierCurveTo(w * 0.3, h * 0.63, -w * 0.09, h * 0.44, w * 0.22, 0); ctx.closePath();
-  ctx.fillStyle = 'rgba(87,69,115,.24)'; ctx.fill(); ctx.save(); ctx.clip();
+  ctx.fillStyle = 'rgba(190,160,230,.28)'; ctx.fill(); ctx.save(); ctx.clip();
   for (let i = -1; i < 9; i++) {
     const x = i * w * 0.13, g = ctx.createLinearGradient(x, 0, x + w * 0.15, 0);
-    g.addColorStop(0, 'rgba(8,5,18,.22)'); g.addColorStop(0.5, 'rgba(174,155,204,.23)'); g.addColorStop(0.85, 'rgba(71,53,95,.07)'); g.addColorStop(1, 'rgba(4,3,10,.23)');
+    g.addColorStop(0, 'rgba(40,20,70,.2)'); g.addColorStop(0.5, 'rgba(236,220,255,.28)'); g.addColorStop(1, 'rgba(40,20,70,.2)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, 0);
     ctx.bezierCurveTo(x - w * 0.1, h * 0.38, x + w * 0.18, h * 0.66, x - w * 0.06, h);
     ctx.lineTo(x + w * 0.17, h);
     ctx.bezierCurveTo(x + w * 0.28, h * 0.66, x + w * 0.06, h * 0.35, x + w * 0.13, 0); ctx.closePath(); ctx.fill();
   }
-  for (let y = 2; y < h; y += 3) {
-    ctx.fillStyle = 'rgba(218,202,236,.018)'; ctx.fillRect(0, y, w, 0.5);
-  }
   ctx.restore();
-  ctx.strokeStyle = 'rgba(188,167,210,.16)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(w * 0.02, h * 0.93); ctx.quadraticCurveTo(w * 0.63, h, w, h * 0.97); ctx.stroke();
   return canvas;
 }
 
-function line(ctx, a, b, color, width) {
-  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+// the wooden crescent moon the mobile hangs from
+function paintHub() {
+  const c = makeCanvas(96, 96), g = c.getContext('2d');
+  g.translate(48, 48);
+  g.beginPath();
+  g.arc(0, 0, 34, 0.35 * Math.PI, 1.65 * Math.PI, false);
+  g.arc(14, -6, 28, 1.58 * Math.PI, 0.42 * Math.PI, true);
+  g.closePath();
+  const grd = g.createLinearGradient(-34, -34, 34, 34);
+  grd.addColorStop(0, '#fff0b8'); grd.addColorStop(0.5, '#e0b860'); grd.addColorStop(1, '#9a7030');
+  g.fillStyle = grd; g.fill();
+  g.strokeStyle = 'rgba(80,50,20,0.6)'; g.lineWidth = 2; g.stroke();
+  g.fillStyle = 'rgba(80,50,20,0.7)';
+  g.beginPath(); g.arc(-14, -4, 2.6, 0, Math.PI * 2); g.fill();
+  return c;
 }
 
-function quad(ctx, points, fill, stroke) {
-  polygon(ctx, points);
-  if (/^#[0-9a-f]{6}$/i.test(fill)) {
-    const xs = points.map(p => p.x), ys = points.map(p => p.y);
-    const face = ctx.createLinearGradient(Math.max(...xs), Math.min(...ys), Math.min(...xs), Math.max(...ys));
-    const rgb = [1, 3, 5].map(i => parseInt(fill.slice(i, i + 2), 16));
-    const tint = strength => 'rgb(' + rgb.map(c => Math.min(255, Math.round(c * strength))).join(',') + ')';
-    face.addColorStop(0, tint(1.16)); face.addColorStop(0.33, tint(0.93)); face.addColorStop(1, tint(0.56));
-    ctx.fillStyle = face;
-  } else ctx.fillStyle = fill;
-  ctx.fill();
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 0.8; ctx.stroke(); }
+function starShape(ctx, x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.45 : r;
+    if (i) ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); else ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath(); ctx.fill();
 }
 
-function box(ctx, map, x0, x1, y0, y1, z0, z1, colors) {
-  quad(ctx, [map(x0, y0, z0), map(x1, y0, z0), map(x1, y1, z0), map(x0, y1, z0)], colors[0]);
-  quad(ctx, [map(x1, y0, z0), map(x1, y0, z1), map(x1, y1, z1), map(x1, y1, z0)], colors[1]);
-  quad(ctx, [map(x0, y1, z0), map(x1, y1, z0), map(x1, y1, z1), map(x0, y1, z1)], colors[2]);
-  const a = map(x0, y1, z0), b = map(x1, y1, z0);
-  line(ctx, a, b, 'rgba(177,146,191,.15)', 0.7);
-}
-
-function ellipse(ctx, x, y, rx, ry, color) {
-  ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-}
-
-function sphere(ctx, x, y, radius, colors) {
-  const g = ctx.createRadialGradient(x + radius * 0.35, y - radius * 0.35, 0, x, y, radius);
-  g.addColorStop(0, colors[0]); g.addColorStop(0.5, colors[1]); g.addColorStop(1, colors[2]);
-  ellipse(ctx, x, y, radius, radius, g);
-}
-
-function plush(ctx, x, y, rx, ry, colors, rotation = 0) {
-  ctx.save(); ctx.translate(x, y); ctx.rotate(rotation);
-  const g = ctx.createRadialGradient(rx * 0.3, -ry * 0.25, 0, 0, 0, Math.max(rx, ry));
-  g.addColorStop(0, colors[0]); g.addColorStop(0.55, colors[1]); g.addColorStop(1, colors[2]);
-  ellipse(ctx, 0, 0, rx, ry, g); ctx.restore();
+function moonShape(ctx, x, y, r) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0.35 * Math.PI, 1.65 * Math.PI, false);
+  ctx.arc(x + r * 0.45, y - r * 0.15, r * 0.8, 1.6 * Math.PI, 0.4 * Math.PI, true);
+  ctx.closePath(); ctx.fill();
 }
