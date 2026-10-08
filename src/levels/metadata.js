@@ -360,20 +360,19 @@ const metadata = [
     "id": "fireworks",
     "key": "Fireworks",
     "name": "Midnight Over Paris",
-    "summary": "Fireworks scatter colour over the rooftops of Paris.",
+    "summary": "Five balloons are tied to a bench in a moonlit park in Paris.",
     "code": "NIGHT",
     "altCode": null,
     "hint": {
-      "text": "MIDNIGHT IN PARIS.\nEvery firework hangs a tag with the code of its colour.",
+      "text": "MIDNIGHT IN PARIS.\nThe balloons tied to the bench, from the highest down.",
       "sound": false,
       "tool": true
     },
-    "description": "New Year’s Eve on a terrace above the Seine: five fireworks go up over Paris one after another, each bursting in its own colour and hanging out a tag with its number and that colour’s hex code — #4E2233, #492244, #472255, #482266, #542277. The brass plate on the carriage clock says READ THE RED: in #RRGGBB the red is the first two digits — 4E 49 47 48 54 — and read as ASCII those spell N I G H T. The show runs round and round; a click on the clock starts it again from the first firework.",
+    "description": "Midnight in a little park in Paris: a full moon, the Tower faint and far off, a pond with the moon in it, an old lantern, fireflies over the lawn. By the gravel path stands a green bench, facing us and turned a little aside; someone has tried colours on it, leaving a brush stroke of each on its slats, and a card tied to its back says FRESH PAINT. Tied to the top of its back are five small matt balloons. Each is one flat colour with no shine or shading, and that colour is exact: from the highest balloon down, #4E2233, #492244, #472255, #482266, #542277. A colour picker reads the codes off the screen. In #RRGGBB the red is the first two digits — 4E 49 47 48 54 — and read as ASCII those spell N I G H T. The balloons sway on their strings; nothing is drawn over them, so their colours stay true.",
     "references": [
-      "FW_CODES = [\"#4E2233\", \"#492244\", \"#472255\", \"#482266\", \"#542277\"] (colors/Fireworksscene.js) — the five tags, in the order the fireworks go up",
-      "_hangTag() — the tag under each burst: its number and its colour’s hex code",
-      "colors/paris.js paintClock() — the brass plate engraved READ THE RED",
-      "burnColour() — each firework burns in its hex raised to full brightness, the same hue as its code"
+      "FW_CODES = [\"#4E2233\", \"#492244\", \"#472255\", \"#482266\", \"#542277\"] (colors/Fireworksscene.js) — the five balloons’ colours, from the highest to the lowest",
+      "colors/park.js layoutPark() — the balloons’ heights, the first the highest; paintBalloon() — each filled with exactly its code’s colour",
+      "colors/park.js paintBench() — the card tied to the bench: FRESH PAINT"
     ]
   },
   {
@@ -409,7 +408,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A library at night: a tall mahogany bookcase lit by a table lamp, a cup of tea steaming beside it, the moon in the window, a ginger cat asleep on top of the case. On the third shelf five books stand pulled a little out, each with a one-word title in gold on its spine and a paper bookmark in it with a number: SHADOW 1, MIRROR 2, MAGIC 3, HOUND 1, WATER 3, left to right. The bookmark is the index into the title (a book cipher): the 1st letter of SHADOW, the 2nd of MIRROR, the 3rd of MAGIC, the 1st of HOUND, the 3rd of WATER — S I G H T. A click on one of the five draws it a little further out, and back.",
+    "description": "A dark library late at night: a tall mahogany bookcase lit only by one table lamp, the rest of the room in shadow; a cup of tea steaming beside the lamp, the moon in the window, a Persian rug, a tabby cat asleep on top of the case. On the third shelf five books stand pulled a little out, each with a one-word title in gold on its spine and a paper bookmark in it with a number: SHADOW 1, MIRROR 2, MAGIC 3, HOUND 1, WATER 3, left to right. The bookmark is the index into the title (a book cipher): the 1st letter of SHADOW, the 2nd of MIRROR, the 3rd of MAGIC, the 1st of HOUND, the 3rd of WATER — S I G H T. A click on one of the five draws it a little further out, and back.",
     "references": [
       "BOOKS (bookshelf/puzzle.js) — the five titles and their bookmarks, left to right",
       "readBook() / readShelf() — the bookmark's number is the letter's place in the title, counting from 1",
@@ -429,12 +428,12 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "An old laboratory at night, lit by a Bunsen burner’s blue flame and an oil lamp: stone walls, a shelf of apothecary jars, a faded periodic table pinned to the wall, a test-tube rack and a retort at the back of the bench, a flask boiling on a tripod. Across the bench stand five graduated bottles of coloured liquid. Each is filled exactly to an etched mark: 9, 8, 6, 92, 16. They are atomic numbers: fluorine F, oxygen O, carbon C, uranium U, sulfur S — F O C U S. Each liquid has its element’s colour (pale yellow, pale blue, black, a glowing uranium green, sulfur yellow). The poster has every element in its place, faded but readable close up. A click on a bottle swirls it; a click on the burner turns up the gas.",
+    "description": "An old laboratory at night, lit by a Bunsen burner’s blue flame and an oil lamp: stone walls, a shelf of apothecary jars, a faded periodic table pinned to the wall, a test-tube rack and a retort at the back of the bench, a flask boiling on a tripod. Across the bench stand five graduated bottles of coloured liquid, each with a fine printed scale too small to read by eye. A magnifying glass lies on a green cloth at the front: click it and it becomes the pointer, enlarging whatever it is held over (click the cloth, or press Escape, to put it down). Under the lens each liquid’s front edge stands at a division of its scale: 9, 8, 6, 92, 16. They are atomic numbers: fluorine F, oxygen O, carbon C, uranium U, sulfur S — F O C U S. Each liquid has its element’s colour (pale yellow, pale blue, black, a glowing uranium green, sulfur yellow). The poster has every element in its place, faded but readable close up. With the glass put down, a click on a bottle swirls it; a click on the burner turns up the gas.",
     "references": [
       "BOTTLES (chemistry/puzzle.js) — the five atomic numbers marked at the menisci, left to right",
       "ELEMENTS / symbolOf() — every element's symbol by atomic number; readBottles() spells FOCUS",
       "cellOf() / familyOf() — each element's place and family on the poster",
-      "chemistry/lab.js paintBottle() — dimensional glass, calibrated graduations and liquid; paintPoster() — the faded periodic table"
+      "chemistry/lab.js paintBottle() — the glass, its fine printed scale and liquid, painted for the bench and again for the lens; paintLoupe() / paintLens() — the magnifying glass; paintPoster() — the faded periodic table"
     ]
   },
   {
@@ -449,7 +448,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "An abandoned pub at night: a pool table seen from above under its lamp, dust on the cloth and the floor, a stool knocked over, the moon laying a window across the boards. The balls stand racked for the break, but five places in the triangle are empty — 2, 4, 9, 12 and 14 are gone. They lie in the pockets, five of which are marked I to V on little brass plates; down in a pocket a ball shows only its colour and whether it is striped, which with the rack and the set’s colours (1–7 solid, 9–15 striped in the same colours, 8 black) tells its number: I blue solid 2, II purple stripe 12, III yellow stripe 9, IV green stripe 14, V purple solid 4. A chalk slate on the floor says “What is missing defines the answer”. In the pockets’ order, 2 12 9 14 4 as letters of the alphabet (A1Z26): B L I N D. A click on a pocket rattles its ball; the cue ball can be nudged.",
+    "description": "An abandoned pub at night, in three dimensions: a pool table seen across its long side from above — legs, apron, polished rails, pockets going down into it — under a billiard lamp of three green shades on a brass bar, the only warm light in a dark room; rain and street lamps in the window at the back, its cold light lying on the boards; a cue leaning on the corner of the table. The balls stand racked for the break, but five places in the triangle are empty — 2, 4, 9, 12 and 14 are gone. They lie in the pockets, five of which are marked I to V on little brass plates; down in a pocket a ball shows only its colour and whether it is striped, which with the rack and the set’s colours (1–7 solid, 9–15 striped in the same colours, 8 black) tells its number: I blue solid 2, II purple stripe 12, III yellow stripe 9, IV green stripe 14, V purple solid 4. A chalk slate on the back wall says “What is missing defines the answer”. In the pockets’ order, 2 12 9 14 4 as letters of the alphabet (A1Z26): B L I N D. A click on a pocket rattles its ball; the cue ball can be nudged.",
     "references": [
       "RACK (billiards/puzzle.js) — the triangle, column by column from its apex; null where a ball is missing",
       "POCKETS / POCKET_MARKS — the ball in each marked pocket, I to V: 2, 12, 9, 14, 4",
@@ -462,21 +461,20 @@ const metadata = [
     "id": "metro",
     "key": "Metro",
     "name": "Platform After Dark",
-    "summary": "A glowing network map lights an otherwise deserted platform.",
-    "code": "TRAIN",
+    "summary": "A line diagram hangs over a deserted underground platform.",
+    "code": "SIGNAL",
     "altCode": null,
     "hint": {
-      "text": "ONE LINE IS RUNNING TONIGHT.\nFollow the lit line on the map, in the direction it runs.",
+      "text": "THE LAST TRAIN HAS GONE.\nThe line diagram hanging over the platform, in the direction the trains run.",
       "sound": false,
       "tool": true
     },
-    "description": "A metro platform at night: a tiled wall, a bench, a tannoy horn that now and then crackles with static, and in a steel frame the network map, lit from behind. Five lines cross it, all dimmed but one. The lit line runs through five stations, in order: Tango Square, Romeo Boulevard, Alpha Park, India Docks, November Street. Their first words are the NATO phonetic alphabet — Tango T, Romeo R, Alpha A, India I, November N — so in the line’s order they spell TRAIN. A small light runs the line end to end, lighting each station as it passes; a click on a station rings its name out; a click on the horn brings an announcement that is nothing but static.",
+    "description": "A real underground platform late at night, seen down its length: the track in its trench running into the tunnel under a signal lamp that turns from red to green and back, a platform wall of glazed tile with the station’s name on it, posters, a bench, a tannoy horn, a row of fluorescent tubes overhead with one of them failing, the way out lit at the far end. Hanging over the platform, facing us, is the enamel line diagram: Line 6, eastbound, its six stops in order — Sierra Heights (marked YOU ARE HERE), India Docks, Golf Links, November Street, Alpha Park, Lima Road — and an arrow for the way the trains run. Their first words are the NATO phonetic alphabet — Sierra S, India I, Golf G, November N, Alpha A, Lima L — so in the line’s order they spell SIGNAL. A small light runs the line end to end, lighting each stop as it passes; a click on a stop rings it; a click on the horn brings an announcement that is nothing but static.",
     "references": [
-      "METRO_STATIONS (metro/puzzle.js) — the five stations of the lit line, in the line's order",
-      "NATO / natoLetter() — the phonetic alphabet, A to Z (ALPHA and ALFA both read A); readLine() spells TRAIN",
-      "metro/map.js layoutStation() — the map, the lit line's route and stations, the other lines' ordinary names",
-      "metro/map.js paintLitLine() — the lit line on a layer of its own, which the scene breathes",
-      "MetroScene _startRun() — the light that runs the line, lighting each station in order"
+      "METRO_STATIONS (metro/puzzle.js) — the six stations of the line, in the order the trains run",
+      "NATO / natoLetter() — the phonetic alphabet, A to Z (ALPHA and ALFA both read A); readLine() spells SIGNAL",
+      "metro/map.js paintDiagram() — the enamel plate with the stops’ names; paintLitLine() — the line, its rings and its arrow",
+      "metro/map.js layoutStation() — the platform in one-point perspective; MetroScene — the running light, the signal, the failing tube"
     ]
   },
   {
@@ -491,7 +489,7 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "A workshop at night: a bench under a magnifier lamp, and in its ring of light a green circuit board with four big resistors soldered in a row, R1 to R4, four colour bands on each — R1 brown black red gold, R2 black brown black gold, R3 red red orange gold, R4 yellow violet red gold. Pinned to the bench is the resistor colour code: ten swatches, black to white, a digit under each (black 0, brown 1, red 2, orange 3, yellow 4, green 5, blue 6, violet 7, grey 8, white 9), gold and silver apart as tolerances. The first band of each resistor, R1 to R4, is brown, black, red, yellow: 1 0 2 4. The code is 1024. A click on a resistor holds a loupe over it, its bands big and clear.",
+    "description": "A workshop bench at night, seen from straight above like a photograph under the magnifier lamp: walnut boards, a grey anti-static mat, a multimeter whose leads rest on the board (its reading flickering round 5 V), a soldering iron smoking in its stand, a reel of solder, tweezers. On the mat lies a green circuit board — copper traces under the mask, vias, silkscreen, a chip, capacitors, a beating red LED — with four big resistors soldered in a row, R1 to R4, four colour bands on each — R1 brown black red gold, R2 black brown black gold, R3 red red orange gold, R4 yellow violet red gold. Pinned to the bench is the resistor colour code: ten swatches, black to white, a digit under each (black 0, brown 1, red 2, orange 3, yellow 4, green 5, blue 6, violet 7, grey 8, white 9), gold and silver apart as tolerances. The first band of each resistor, R1 to R4, is brown, black, red, yellow: 1 0 2 4. The code is 1024. A click on a resistor holds a loupe over it, its bands big and clear.",
     "references": [
       "RESISTORS (resistors/puzzle.js) — the four resistors' bands, R1 to R4, read from the end away from the tolerance band",
       "BAND_DIGITS / bandDigit() — the colour code, black 0 to white 9; readFirstBands() gives 1024",
@@ -571,7 +569,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A baby sleeps in a wooden crib seen in perspective, in a deeply shadowed purple nursery. Moonlight enters through a large window, catching the crib rails, a sheer curtain and toys on the floor. A draft gently moves a wooden mobile above the baby. From highest to lowest, its forms are a triangle, a circle, a heptagon and a pentagon. Count the straight sides of each polygon; the label defines the circle's single unbroken curved rim as one for this puzzle. The counts 3, 1, 7, 5 map through A=1 to C A G E. Connected threads, gentle sway and restrained rotation preserve readable shapes and their vertical order. Reduced motion freezes the nursery while leaving every clue visible.",
+    "description": "A baby sleeps in a pale wooden crib seen from its long side and a little from above, in a small, dark purple nursery whose side walls close in at either hand. The one warm light is a floor lamp in the far corner: it lights the wall behind it and the crib, lays the far rail’s slats in stripes across the sheet and throws the crib’s shadow forward onto the rug. The baby, its pillow, the quilt over its legs and a plush bunny are modelled in three dimensions and seen between the near slats; a small window with the moon in it stands over a dresser, toys lie on the floor. The mobile is small and brightly painted — a coral triangle, a yellow circle, a sea-green heptagon, a blue pentagon. A draft gently moves a wooden mobile above the baby. From highest to lowest, its forms are a triangle, a circle, a heptagon and a pentagon. Count the straight sides of each polygon; the label defines the circle's single unbroken curved rim as one for this puzzle. The counts 3, 1, 7, 5 map through A=1 to C A G E. Connected threads, gentle sway and restrained rotation preserve readable shapes and their vertical order. Reduced motion freezes the nursery while leaving every clue visible.",
     "references": [
       "kinetic/puzzle.js KINETIC_FORMS — triangle, circle, heptagon and pentagon with explicit rim counts",
       "polygonVertices() / kineticPose() — genuine polygon outlines and slow movement that keeps their order",

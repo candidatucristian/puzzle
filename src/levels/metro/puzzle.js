@@ -1,18 +1,19 @@
-/** METRO: a metro map with one line lit. The lit line runs through five
- *  stations — Tango Square, Romeo Boulevard, Alpha Park, India Docks,
- *  November Street — and their first words are not place names at all but
- *  the NATO phonetic alphabet: Tango T, Romeo R, Alpha A, India I,
- *  November N. Read in the line's order they spell TRAIN. */
+/** METRO: the line diagram that hangs over a metro platform. The line runs
+ *  through six stations — Sierra Heights, India Docks, Golf Links, November
+ *  Street, Alpha Park, Lima Road — and their first words are not place names
+ *  at all but the NATO phonetic alphabet: Sierra S, India I, Golf G,
+ *  November N, Alpha A, Lima L. Read in the line's order they spell SIGNAL. */
 
-export const METRO_WORD = "TRAIN";
+export const METRO_WORD = "SIGNAL";
 
-// the stations of the lit line, in the order the line runs through them
+// the stations of the line, in the order the trains run through them
 export const METRO_STATIONS = Object.freeze([
-  "Tango Square",
-  "Romeo Boulevard",
-  "Alpha Park",
+  "Sierra Heights",
   "India Docks",
+  "Golf Links",
   "November Street",
+  "Alpha Park",
+  "Lima Road",
 ]);
 
 // the NATO phonetic alphabet, A to Z

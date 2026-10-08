@@ -8,8 +8,8 @@ import { RESISTORS, readFirstBands } from "./puzzle.js";
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "RESISTORS"  ·  code: 1024  ·  the colour code, first bands
 //
-// A workshop at night, a bench under a magnifier lamp, and in its ring of
-// light a green circuit board with four big resistors soldered in a row,
+// A workshop bench at night, seen from straight above under a magnifier
+// lamp, and in its light a green circuit board with four big resistors soldered in a row,
 // R1 to R4, four colour bands on each:
 //
 //   R1 brown black red gold · R2 black brown black gold
@@ -20,7 +20,8 @@ import { RESISTORS, readFirstBands } from "./puzzle.js";
 // of each resistor, in order: brown black red yellow — 1 0 2 4.
 //
 // A tap on a resistor holds a loupe over it, its bands big and clear; the
-// soldering iron's tip glows, the ring light hums.
+// soldering iron's tip glows and smokes, the ring light hums, the board's
+// LED beats and the multimeter on its supply rail flickers in its last digit.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LOUPE_MS = 3200; // how long the loupe stays over a resistor
@@ -68,11 +69,11 @@ export default class ResistorsScene extends BasePuzzleScene {
       .setDisplaySize(l.r * 4.5, l.r * 4.5)
       .setTint(0xfff0cc)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.16)
+      .setAlpha(0.1)
       .setDepth(-9);
     this.ambientTween({
       targets: this._ring,
-      alpha: { from: 0.16, to: 0.11 },
+      alpha: { from: 0.1, to: 0.06 },
       duration: 1700,
       yoyo: true,
       repeat: -1,
@@ -82,7 +83,7 @@ export default class ResistorsScene extends BasePuzzleScene {
     // the iron's tip, hot
     const it = L.iron;
     const tip = this.add
-      .image(it.x + 48 * it.s, it.y - 26 * it.s, k.glow)
+      .image(it.tip.x, it.tip.y, k.glow)
       .setDisplaySize(30 * it.s, 30 * it.s)
       .setTint(0xff8a30)
       .setBlendMode(Phaser.BlendModes.ADD)
@@ -95,6 +96,69 @@ export default class ResistorsScene extends BasePuzzleScene {
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
+    });
+
+    // a thread of smoke off it, drifting
+    for (let i = 0; i < 3; i++) {
+      const s = this.add
+        .image(it.tip.x, it.tip.y, k.smoke)
+        .setOrigin(0.5, 0.96)
+        .setScale(0.5 * it.s)
+        .setAlpha(0)
+        .setDepth(-8);
+      this.ambientObject(s);
+      this.ambientTween({
+        targets: s,
+        y: { from: it.tip.y, to: it.tip.y - 70 * it.s },
+        x: { from: it.tip.x, to: it.tip.x + (10 + i * 8) * it.s },
+        scaleX: { from: 0.4 * it.s, to: 1.1 * it.s },
+        scaleY: { from: 0.5 * it.s, to: 1.3 * it.s },
+        alpha: { from: 0.85, to: 0 },
+        duration: 4200,
+        delay: i * 1400,
+        repeat: -1,
+        ease: "Sine.easeOut",
+      });
+    }
+
+    // the board is live: its LED beats, slow
+    const led = this.add
+      .image(L.led.x, L.led.y, k.glow)
+      .setDisplaySize(26 * L.m, 26 * L.m)
+      .setTint(0xff4030)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.75)
+      .setDepth(-9);
+    this.ambientTween({
+      targets: led,
+      alpha: { from: 0.75, to: 0.12 },
+      duration: 520,
+      hold: 140,
+      repeatDelay: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: "Quad.easeIn",
+    });
+
+    // and the meter on its supply rail reads it, the last digit never still
+    const lcd = L.meter.lcd;
+    this._reading = this.add
+      .text(lcd.x + 30 * L.meter.s, lcd.y + 4 * L.meter.s, "5.02", {
+        fontFamily: '"Courier New", Courier, monospace',
+        fontStyle: "bold",
+        fontSize: `${Math.round(lcd.size)}px`,
+        color: "#1c2418",
+      })
+      .setOrigin(1, 0.5)
+      .setAlpha(0.88)
+      .setDepth(-9);
+    this.time.addEvent({
+      delay: 700,
+      loop: true,
+      callback: () => {
+        if (!this.ambientMotion || this.reducedMotion) return;
+        this._reading.setText((5.02 + (Math.random() - 0.5) * 0.03).toFixed(2));
+      },
     });
 
     // the loupe over each resistor, held up on a tap

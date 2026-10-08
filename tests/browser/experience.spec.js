@@ -212,7 +212,7 @@ test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page })
 
 for (const [key, expected] of [
   ['Sequence', 6], ['Curtain', 1], ['Venetian', 1],
-  ['Bookshelf', 5], ['Chemistry', 5], ['Billiards', 6],
+  ['Bookshelf', 5], ['Chemistry', 1], ['Billiards', 6],
   ['Cryptex', 2], ['MobilePhone', 1], ['Lightswitch', 1],
   ['Telescope', 1], ['Overtime', 1], ['Compass', 1],
 ]) {

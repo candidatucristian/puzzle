@@ -6,22 +6,25 @@ import { layoutStation, paintStation, releaseStationArt } from "./map.js";
 import { METRO_STATIONS } from "./puzzle.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Level — "METRO"  ·  code: TRAIN  ·  station names → the phonetic alphabet
+// Level — "METRO"  ·  code: SIGNAL  ·  station names → the phonetic alphabet
 //
-// A metro platform at night: tiled wall, a bench, a tannoy horn that now and
-// then crackles with static, and in a steel frame the network map, lit from
-// behind. Five lines cross it, all dimmed but one. The lit line runs through
-// five stations:
+// An underground platform late at night, seen down its length: the track
+// running into the tunnel under a signal lamp, the tiled wall with the
+// station's name, a bench, a tannoy horn that now and then crackles with
+// static, a row of tubes overhead, one of them failing. Over the platform
+// hangs the enamel line diagram — Line 6, eastbound — with its six stops:
 //
-//   Tango Square · Romeo Boulevard · Alpha Park · India Docks · November Street
+//   Sierra Heights · India Docks · Golf Links · November Street · Alpha Park
+//   · Lima Road
 //
-// Their first words are the NATO phonetic alphabet: Tango T, Romeo R, Alpha
-// A, India I, November N — in the line's order, T R A I N.
+// Their first words are the NATO phonetic alphabet: Sierra S, India I, Golf
+// G, November N, Alpha A, Lima L — in the line's order, S I G N A L.
 //
-// A small light runs the line from end to end, lighting each station as it
-// passes, so the order is the line's own. A click on a station rings its
-// name out; a click on the horn brings an announcement, which is nothing
-// but static.
+// A small light runs the line from end to end, lighting each stop as it
+// passes, so the order is the line's own. A click on a stop rings it; a
+// click on the horn brings an announcement, which is nothing but static.
+// The signal by the tunnel goes from red to green and back; far down the
+// tunnel a train's lamps come and go.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const RUN_MS = 9000; // the light's run along the whole line
@@ -73,14 +76,15 @@ export default class MetroScene extends BasePuzzleScene {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
-    // the map's own light on the wall round it
+    this._nightLife(L, k);
+    // the diagram's own light in the air round it
     const m = L.map;
     this.add
       .image(m.x + m.w / 2, m.y + m.h / 2, k.glow)
-      .setDisplaySize(m.w * 1.6, m.h * 1.8)
-      .setTint(0xf0e0b0)
+      .setDisplaySize(m.w * 1.3, m.h * 1.6)
+      .setTint(0xd0e8e0)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.14)
+      .setAlpha(0.07)
       .setDepth(-9);
 
     // the stations of the lit line: a lamp each, and a tap rings the name
@@ -99,7 +103,7 @@ export default class MetroScene extends BasePuzzleScene {
           hitAreaCallback: Phaser.Geom.Circle.Contains,
           useHandCursor: true,
         })
-        .setData("interactionLabel", "Read the station")
+        .setData("interactionLabel", "Ring the stop")
         .setDepth(5)
         .on("pointerdown", () => this._ring(s, lamp));
       return lamp;
@@ -134,6 +138,71 @@ export default class MetroScene extends BasePuzzleScene {
     this._scheduleStatic();
 
     this.levelText = drawLevelLabel(this, W, H);
+  }
+
+  // the station's own slow life: the signal changing, a train's lamps far
+  // down the tunnel, the tube that is on its way out
+  _nightLife(L, k) {
+    const sg = L.signal;
+    const lamp = (dy, tint) =>
+      this.add
+        .image(sg.x, sg.y + dy * sg.r, k.glow)
+        .setDisplaySize(sg.r * 9, sg.r * 9)
+        .setTint(tint)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(-9);
+    const red = lamp(-3.2, 0xff3020).setAlpha(0.95);
+    const green = lamp(0, 0x30ff80).setAlpha(0);
+    // the rails take its colour
+    const shine = this.add
+      .image(sg.x + sg.r * 14, sg.y + sg.r * 16, k.glow)
+      .setDisplaySize(sg.r * 60, sg.r * 16)
+      .setTint(0xff3020)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.22)
+      .setDepth(-9);
+    let clear = false;
+    this.time.addEvent({
+      delay: 7000,
+      loop: true,
+      callback: () => {
+        if (!this.ambientMotion || this.reducedMotion) return;
+        clear = !clear;
+        red.setAlpha(clear ? 0 : 0.95);
+        green.setAlpha(clear ? 0.95 : 0);
+        shine.setTint(clear ? 0x30ff80 : 0xff3020);
+      },
+    });
+    // two lamps deep in the tunnel, swelling and going
+    const far = [-1, 1].map((d) =>
+      this.add
+        .image(L.far.x + d * 3.2 * L.u, L.far.y, k.glow)
+        .setDisplaySize(9 * L.u, 9 * L.u)
+        .setTint(0xfff4d0)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0)
+        .setDepth(-9),
+    );
+    for (const img of far) this.ambientObject(img);
+    this.ambientTween({ targets: far, alpha: { from: 0, to: 0.9 }, duration: 5200, hold: 1800, yoyo: true, repeat: -1, repeatDelay: 9000, ease: "Sine.easeInOut" });
+    // the failing tube: mostly out, catching now and then
+    const f = L.flicker;
+    this._tube = this.add
+      .image(f.x, f.y + f.h * 0.4, k.glow)
+      .setDisplaySize(f.w * 3, f.h * 3.4)
+      .setTint(0xd6ece2)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0)
+      .setDepth(-9);
+    this.time.addEvent({
+      delay: 90,
+      loop: true,
+      callback: () => {
+        if (!this.ambientMotion || this.reducedMotion) return this._tube.setAlpha(0.2);
+        const r = Math.random();
+        this._tube.setAlpha(r < 0.08 ? 0.5 : r < 0.2 ? 0.22 : 0.04);
+      },
+    });
   }
 
   // the light leaves the first station, runs to the last, lighting each

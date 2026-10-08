@@ -57,7 +57,7 @@ export const HINT_DETAILS = {
     "Take the times as plain numbers and let the machine do the work. Then look at its answer from another angle.",
   ],
   fireworks: [
-    "The plate on the clock says which part of each code matters. A computer would read those pairs of characters as letters.",
+    "Each balloon is one exact colour, and a computer writes a colour as three pairs. Only the first pair of each matters — read those pairs as letters.",
   ],
   compass: [
     "The map's numbers are directions, the same as on the compass card. Each line is a little journey — make it on paper.",
@@ -72,7 +72,7 @@ export const HINT_DETAILS = {
     "Work out which numbers are missing; their colours and stripes tell them apart. Read the pockets in their order — the numbers are small enough to be letters.",
   ],
   metro: [
-    "Say the station names out loud. A pilot or a radio operator would know the first word of each.",
+    "Say the stops' names out loud. A pilot or a radio operator would know the first word of each.",
   ],
   resistors: [
     "Only the first band of each counts — start at the end away from the gold. The card gives every colour a value.",

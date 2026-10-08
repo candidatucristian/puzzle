@@ -60,11 +60,30 @@ export default class BinaryTreeScene extends BasePuzzleScene {
     this.add.image(0, 0, art.keys.wall).setOrigin(0, 0).setDepth(-20);
     this._makeDapple(art);
     this.add.image(0, 0, art.keys.box).setOrigin(0, 0).setDepth(-10);
+    this._makeSeedling(art);
     this._makeDrops();
     this._makeMotes(art);
     this.add.image(0, 0, art.keys.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
     this._drawTexts(W, H);
     this._built = true;
+  }
+
+  // the seedling: its stem, and its leaves on their own so they can stir
+  _makeSeedling(art) {
+    const L = art.L;
+    const s = art.seedling;
+    const size = [s.w * L.seedling, s.h * L.seedling];
+    this.add
+      .image(L.start.x, L.soilY, art.keys.stem)
+      .setOrigin(s.foot.x, s.foot.y)
+      .setDisplaySize(...size)
+      .setDepth(-9.8);
+    this._leaves = this.add
+      .image(L.start.x, L.soilY - (s.foot.y - s.node.y) * size[1], art.keys.leaves)
+      .setOrigin(s.node.x, s.node.y)
+      .setDisplaySize(...size)
+      .setDepth(-9.7);
+    this._leafScale = { x: this._leaves.scaleX, y: this._leaves.scaleY };
   }
 
   // the shadows of leaves outside the window, in the patch of sun on the
@@ -125,7 +144,7 @@ export default class BinaryTreeScene extends BasePuzzleScene {
     const { W, H, u, glass, top } = this._L;
     // clear of the stem and of START
     let x = W / 2;
-    while (Math.abs(x - W / 2) < W * 0.16) x = glass.x0 + 20 + Math.random() * (glass.x1 - glass.x0 - 40);
+    while (Math.abs(x - W / 2) < W * 0.1) x = glass.x0 + 20 + Math.random() * (glass.x1 - glass.x0 - 40);
     const s = u * (0.26 + Math.random() * 0.12);
     const img = this.add.image(x, 0, this._art.keys.drop).setDepth(-9).setScale(s).setAlpha(0);
     this._drops.push({
@@ -188,6 +207,15 @@ export default class BinaryTreeScene extends BasePuzzleScene {
     const t = time / 1000;
     const dt = Math.min(delta || 16, 100);
     const u = this._L.u;
+
+    // the seedling's leaves, growing: a slow reaching and settling, and a
+    // fine shiver in it, both barely there
+    const reach = 0.5 + 0.5 * Math.sin(t * 0.55);
+    const shiver = Math.sin(t * 9.3) * 0.5 + Math.sin(t * 13.7 + 1.3) * 0.5;
+    const grow = 1 + 0.022 * reach + 0.004 * shiver * reach;
+    this._leaves
+      .setScale(this._leafScale.x * grow, this._leafScale.y * grow)
+      .setAngle(0.7 * Math.sin(t * 0.8 + 0.6) + 0.35 * shiver * reach);
 
     // a breeze outside: the leaves' shadows stir
     const d = this._dappleAt;

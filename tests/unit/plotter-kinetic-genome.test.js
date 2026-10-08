@@ -76,7 +76,7 @@ test('the standard genetic code translates the displayed coding DNA and correspo
 test('the nursery mobile stays connected, readable and inside the room throughout its sway', () => {
   for (const [W, H] of [[910, 876], [1440, 900], [568, 220], [360, 640]]) {
     const L = kineticLayout(W, H), room = nurseryLayout(W, H);
-    const head = room.crib(-35, 87, 5);
+    const head = room.head;
     assert.ok(head.x > 0 && head.x < W && head.y > 0 && head.y < H);
     for (let time = 0; time < 180000; time += 1337) {
       const rig = kineticRig(time);

@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
 import { drawLevelLabel, uiScale } from '../../shared/levelLabel.js';
 import { lcg } from '../../shared/paint.js';
@@ -5,8 +6,8 @@ import { kineticRig, kineticLayout, polygonVertices, nurseryBreeze, readKinetic 
 import { paintRoom, releaseRoomArt } from './room.js';
 import { paintMobileAssets, releaseMobileArt } from './mobile.js';
 
-/** Kinetic — a sleeping nursery, a draft through the casement and four
- * wooden shapes. The clue remains 3, 1, 7, 5, read from the ceiling down. */
+/** Kinetic — a small sleeping nursery lit by one lamp, a draft through the
+ * casement and four painted wooden shapes. The clue remains 3, 1, 7, 5, read from the ceiling down. */
 export default class KineticScene extends BasePuzzleScene {
   constructor() { super({ key: 'Kinetic' }); }
 
@@ -43,12 +44,19 @@ export default class KineticScene extends BasePuzzleScene {
     this._forms = kineticRig(this._elapsed).forms.map(form => {
       const size = mobile.displaySizes[form.kind];
       const img = this.add.image(0, 0, mobile.keys[form.kind]).setDepth(10).setDisplaySize(size.width, size.height);
-      return { id: form.id, img, size, points: polygonVertices(form.sides, form.radius) };
+      // its shadow, thrown soft on the far wall
+      const shadow = this.add.image(0, 0, mobile.keys[form.kind]).setDepth(1.5).setTint(0x0a0418).setAlpha(0.14);
+      return { id: form.id, img, shadow, size, points: polygonVertices(form.sides, form.radius) };
     });
     const rnd = lcg(29811);
     this._motes = Array.from({ length: 24 }, () => ({ x: rnd(), y: rnd(), phase: rnd() * Math.PI * 2, speed: 0.5 + rnd() * 0.5 }));
     this._dust = this.add.graphics().setDepth(12);
     this.add.image(0, 0, room.keys.shade).setOrigin(0).setDepth(20);
+    // the lamp's glow, over the dark: the room's one warm light, barely breathing
+    const lamp = room.lamp;
+    const glow = this.add.image(lamp.x, lamp.y, room.keys.glow).setDisplaySize(lamp.r * 5, lamp.r * 4.4)
+      .setTint(0xffc884).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.42).setDepth(21);
+    this.ambientTween({ targets: glow, alpha: { from: 0.42, to: 0.34 }, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this._drawClue(W, H);
     this.levelText = drawLevelLabel(this, W, H, { color: '#afa0bc' }).setDepth(31);
     this._render();
@@ -97,6 +105,8 @@ export default class KineticScene extends BasePuzzleScene {
       const obj = this._forms.find(item => item.id === form.id);
       obj.img.setPosition(px(form.x), py(form.y)).setRotation(form.rotation);
       obj.img.setDisplaySize(obj.size.width * Math.cos(form.yaw), obj.size.height);
+      obj.shadow.setPosition(px(form.x) - S * 0.075, py(form.y) + S * 0.04).setRotation(form.rotation)
+        .setDisplaySize(obj.size.width * Math.cos(form.yaw) * 1.25, obj.size.height * 1.25);
     }
     const breeze = nurseryBreeze(this._elapsed), baby = this._roomArt.baby;
     this._curtain.setRotation(-0.012 + breeze * 0.017).setScale(1 + breeze * 0.022, 1);

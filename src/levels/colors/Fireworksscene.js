@@ -1,44 +1,32 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
-import {
-  layoutParis,
-  paintParis,
-  releaseParisArt,
-  burnColour,
-  FW_FONT,
-} from "./paris.js";
+import { layoutPark, paintPark, releaseParkArt } from "./park.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "FIREWORKS"  ·  code: NIGHT  ·  hexadecimal colours → ASCII
 //
-// New Year's Eve in Paris, on a terrace above the Seine. The clock on the
-// bench says midnight, the Eiffel Tower sparkles, and five fireworks go up
-// over the city one after another. Each burns in its own colour, and the tag
-// that hangs from it gives that colour's exact hex code:
+// Midnight over Paris, in a little park: a full moon, the Tower far off, a
+// pond with the moon in it, an old lantern. On the gravel path stands a green
+// bench, a card tied to its back — FRESH PAINT — and tied to the top of its
+// back, left behind after some party, five balloons. Each is matt, one flat
+// colour and nothing else, and that colour is exact. From the highest down:
 //
-//   1 · #4E2233    2 · #492244    3 · #472255    4 · #482266    5 · #542277
+//   #4E2233 · #492244 · #472255 · #482266 · #542277
 //
-// The brass plate on the clock says READ THE RED: in #RRGGBB the red is the
-// first two digits — 4E 49 47 48 54 — and as ASCII letters those spell
-// N I G H T. (Each firework burns in its hex raised to full brightness, so
-// it is the same hue as its code, only bright enough to see in the sky.)
+// A colour picker reads them off the screen. In #RRGGBB the red is the first
+// two digits — 4E 49 47 48 54 — and as ASCII letters those spell N I G H T.
 //
-// The whole of Paris is painted (paris.js): the sky, the tower, the river,
-// the terrace with its bench and the carriage clock. Live over it: the
-// fireworks and their tags, their light, the clock's red second hand, the
-// tower's sparkle, the lamp's flame.
+// The whole park is painted (park.js). Live over it: the balloons swaying on
+// their strings in the night air, fireflies over the lawn, the Tower's faint
+// sparkle, the moon breaking on the pond, the lantern's flame. Nothing is
+// drawn over the balloons, so their colours stay true.
 //
-// The show runs round and round; a click on the clock starts it again from
-// the first firework.
+// (The scene keeps its old key and file name: saves and the level order know
+// it as "Fireworks".)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FW_CODES = ["#4E2233", "#492244", "#472255", "#482266", "#542277"];
-const FW_EVERY = 2600; // ms between two fireworks going up
-const FW_PAUSE = 2600; // ms of quiet after the fifth, before the show repeats
-const FW_RISE = 900; // ms the rocket climbs
-const FW_LIFE = 2300; // ms the burst burns
-const FW_TAG = 3300; // ms its tag stays up
 
 export default class FireworksScene extends BasePuzzleScene {
   constructor() {
@@ -46,484 +34,176 @@ export default class FireworksScene extends BasePuzzleScene {
   }
 
   init(data) {
-    this.skipFadeIn =
-      data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+    this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+  }
+
+  static codes() {
+    return FW_CODES.slice();
   }
 
   create() {
     this.beginScene();
+    this._t = 0;
     this._build(this.cameras.main.width, this.cameras.main.height);
-
     this._onResize = ({ width, height }) => {
       this._teardown();
       this._build(width, height);
     };
     this.listenToResize(this._onResize);
-
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
-    this._W = W;
-    this._H = H;
-    const L = layoutParis(W, H);
-    const art = paintParis(this, L);
-    this._L = L;
-    this._art = art;
-    this._baked = false;
-    this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-10);
+    const L = (this._L = layoutPark(W, H, FW_CODES));
+    const art = (this._art = paintPark(this, L));
+    const k = art.keys;
+    this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
 
-    // the fireworks' light: a flash on the sky, its echo on the river
-    this._flash = this.add
-      .image(0, 0, art.glow)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0)
-      .setDepth(-9);
-    this._echo = this.add
-      .image(0, 0, art.glow)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0)
-      .setDepth(-9);
-    this._sparks = this.add
-      .graphics()
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(-8);
-    this._tags = [];
-
-    // the tower's sparkle, the lamp's flame
-    this._glints = [];
-    for (let i = 0; i < 18; i++) {
-      this._glints.push({
-        img: this.add
-          .image(0, 0, art.glint)
-          .setBlendMode(Phaser.BlendModes.ADD)
-          .setAlpha(0)
-          .setDepth(-9),
-        life: 0,
-      });
-    }
+    // the lantern's flame, never quite still
     this._lampGlow = this.add
-      .image(L.lamp.x, L.lamp.y, art.glow)
-      .setDisplaySize(L.S * 0.3, L.S * 0.3)
+      .image(L.lamp.x, L.lamp.y, k.glow)
+      .setDisplaySize(L.S * 0.34, L.S * 0.34)
       .setTint(0xffc078)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.4)
       .setDepth(-9);
 
-    this._makeSecondHand(L);
-    this._makeClockTouch(L);
+    // the Tower's sparkle, the moon breaking on the pond
+    this._glints = [];
+    for (let i = 0; i < 20; i++) {
+      this._glints.push({
+        img: this.add.image(0, 0, k.glint).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-9),
+        life: 0,
+        pond: i >= 14,
+      });
+    }
+
+    // fireflies over the lawn
+    this._flies = [];
+    for (let i = 0; i < 16; i++) {
+      const f = {
+        img: this.add
+          .image(0, 0, k.glow)
+          .setTint(0xd8ff90)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setAlpha(0)
+          .setDepth(-5),
+        x: Math.random() * W,
+        y: L.horizon + (H - L.horizon) * (0.12 + Math.random() * 0.7),
+        ph: Math.random() * 10,
+        sp: 0.4 + Math.random() * 0.6,
+        size: (5 + Math.random() * 5) * L.u,
+      };
+      f.img.setDisplaySize(f.size, f.size);
+      this._flies.push(f);
+    }
+
+    // the balloons and their strings
+    this._strings = this.add.graphics().setDepth(-8);
+    this._balloons = art.balloons.map((b) => {
+      const img = this.add
+        .image(b.x, b.y, b.key)
+        .setOrigin(0.5, 0.413)
+        .setScale(0.5)
+        .setDepth(-7 + b.i * 0.01);
+      return { ...b, img, ph: b.i * 1.7 + 0.4 };
+    });
+
     this.levelText = drawLevelLabel(this, W, H);
-
-    // the show: fireworks one after another, round and round
-    this._show = { t: 0, live: [], fired: -1 };
+    this._pose();
   }
 
-  // the clock's red second hand, ticking past midnight
-  _makeSecondHand(L) {
-    const f = L.clock.face;
-    const g = this.add.graphics();
-    g.lineStyle(Math.max(1.2, f.r * 0.025), 0xc4161c, 1);
-    g.lineBetween(0, f.r * 0.2, 0, -f.r * 0.86);
-    g.fillStyle(0xc4161c, 1).fillCircle(0, 0, Math.max(2, f.r * 0.06));
-    g.fillStyle(0xf0d08a, 1).fillCircle(0, 0, Math.max(1, f.r * 0.025));
-    this._hand = this.add.container(f.x, f.y, [g]).setDepth(-7);
-    this._sec = 0;
-    this.time.addEvent({
-      delay: 1000,
-      loop: true,
-      callback: () => {
-        this._sec = (this._sec + 1) % 60;
-        if (this._hand) this._hand.setAngle(this._sec * 6);
-      },
-    });
-  }
+  // ── the night air ──────────────────────────────────────────────────────────
 
-  // a click on the clock: midnight again, the show from the first firework
-  _makeClockTouch(L) {
-    const c = L.clock;
-    const zone = this.add
-      .zone(c.x, c.base - c.h / 2, c.w, c.h)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(5);
-    zone.on("pointerdown", () => {
-      this._chime();
-      this._sec = 0;
-      if (this._hand) this._hand.setAngle(0);
-      for (const tag of this._tags) tag.destroy();
-      this._tags = [];
-      this._show = { t: 0, live: [], fired: -1 };
-    });
-  }
-
-  // ── the show ───────────────────────────────────────────────────────────────
-
-  update(time, delta) {
-    if (!this._L || !this._show) return;
+  update(_time, delta) {
+    if (!this._L) return;
     const dt = Math.min(delta || 16, 100);
-    const show = this._show;
-    const L = this._L;
-    const cycle = FW_CODES.length * FW_EVERY + FW_PAUSE;
-    show.t += dt;
-    if (show.t >= cycle) {
-      show.t -= cycle;
-      show.fired = -1;
-    }
-    // the next rocket goes up
-    const due = Math.floor(show.t / FW_EVERY);
-    if (due < FW_CODES.length && due > show.fired) {
-      show.fired = due;
-      this._launch(due);
-    }
-    this._drawShow(dt);
-    this._sparkleTower(dt);
+    const moving = this.ambientMotion && !this.reducedMotion;
+    if (moving) this._t += dt;
+    this._pose();
+    if (!moving) return;
+    this._sparkle(dt);
+    this._fly();
     this._lampGlow.setAlpha(0.36 + Math.random() * 0.08);
-    void L;
   }
 
-  _launch(i) {
-    const b = this._L.bursts[i];
-    const rnd = Math.random;
-    this._show.live.push({
-      i,
-      b,
-      col: burnColour(FW_CODES[i]),
-      age: this._baked ? FW_RISE : 0,
-      baked: this._baked,
-      from: { x: b.x + (rnd() - 0.5) * b.r * 0.4, y: this._L.horizon },
-      sparks: null,
-    });
-  }
-
-  _burst(fw) {
-    const { b } = fw;
-    const sparks = [];
-    const n = 170;
-    for (let k = 0; k < n; k++) {
-      const a = (k / n) * Math.PI * 2 + Math.random() * 0.05;
-      const sp = b.r * 3.1 * (0.78 + Math.random() * 0.28);
-      sparks.push({
-        x: b.x,
-        y: b.y,
-        px: b.x,
-        py: b.y,
-        vx: Math.cos(a) * sp,
-        vy: Math.sin(a) * sp,
-        tw: Math.random(),
-      });
-    }
-    // a smaller, paler ring inside
-    for (let k = 0; k < 60; k++) {
-      const a = Math.random() * Math.PI * 2;
-      const sp = b.r * 3.1 * (0.25 + Math.random() * 0.3);
-      sparks.push({
-        x: b.x,
-        y: b.y,
-        px: b.x,
-        py: b.y,
-        vx: Math.cos(a) * sp,
-        vy: Math.sin(a) * sp,
-        tw: Math.random(),
-        inner: true,
-      });
-    }
-    if (fw.baked) {
-      // over a firework already in the picture: fewer, finer sparks
-      fw.sparks = sparks.filter((_, k) => k % 2 === 0);
-      for (const p of fw.sparks) {
-        p.vx *= 0.9;
-        p.vy *= 0.9;
-      }
-    } else {
-      fw.sparks = sparks;
-    }
-    this._flashAt(fw);
-    if (!fw.baked) this._hangTag(fw);
-    this._boom();
-  }
-
-  // the burst lights the sky round it, and the river under it
-  _flashAt(fw) {
-    const { b } = fw;
+  // where every balloon is now, and its string from the bench's back
+  _pose() {
     const L = this._L;
-    this._flash
-      .setPosition(b.x, b.y)
-      .setDisplaySize(b.r * 6, b.r * 6)
-      .setTint(fw.col)
-      .setAlpha(fw.baked ? 0.4 : 0.55);
-    this.tweens.add({
-      targets: this._flash,
-      alpha: 0,
-      duration: 1200,
-      ease: "Quad.easeOut",
-    });
-    if (b.x > L.rail.x0) {
-      const ry = L.river.y0 + (L.river.y1 - L.river.y0) * 0.35;
-      this._echo
-        .setPosition(b.x, ry)
-        .setDisplaySize(b.r * 1.6, (L.river.y1 - L.river.y0) * 0.8)
-        .setTint(fw.col)
-        .setAlpha(0.4);
-      this.tweens.add({
-        targets: this._echo,
-        alpha: 0,
-        duration: 1400,
-        ease: "Quad.easeOut",
-      });
-    }
-  }
-
-  // the tag that hangs from it: its number, and its colour's exact code
-  _hangTag(fw) {
-    const { b, i } = fw;
-    const S = this._L.S;
-    const w = Math.max(84, b.r * 0.95);
-    const h = w * 0.5;
-    const drop = b.r * 0.95;
-    const cont = this.add
-      .container(b.x, b.y + b.r * 0.2)
-      .setDepth(6)
-      .setAlpha(0);
-    const g = this.add.graphics();
-    g.lineStyle(1, 0xd8c08a, 0.7);
-    g.lineBetween(0, 0, 0, drop - h / 2);
-    g.fillStyle(0x000000, 0.45).fillRoundedRect(
-      -w / 2 + 2,
-      drop - h / 2 + 3,
-      w,
-      h,
-      h * 0.18,
-    );
-    g.fillStyle(0x1a1420, 0.92).fillRoundedRect(
-      -w / 2,
-      drop - h / 2,
-      w,
-      h,
-      h * 0.18,
-    );
-    g.lineStyle(Math.max(1.5, S * 0.003), 0xc8a050, 1).strokeRoundedRect(
-      -w / 2,
-      drop - h / 2,
-      w,
-      h,
-      h * 0.18,
-    );
-    g.lineStyle(1, 0xc8a050, 0.45).strokeRoundedRect(
-      -w / 2 + 3,
-      drop - h / 2 + 3,
-      w - 6,
-      h - 6,
-      h * 0.14,
-    );
-    cont.add(g);
-    const fs = Math.round(h * 0.34);
-    cont.add(
-      this.add
-        .text(0, drop - h * 0.2, String(i + 1), {
-          fontFamily: FW_FONT,
-          fontSize: Math.round(fs * 0.95) + "px",
-          color: "#e8d4a0",
-        })
-        .setOrigin(0.5),
-    );
-    cont.add(
-      this.add
-        .text(0, drop + h * 0.18, FW_CODES[i], {
-          fontFamily: FW_FONT,
-          fontSize: fs + "px",
-          color: "#f6ecd8",
-        })
-        .setOrigin(0.5),
-    );
-    this._tags.push(cont);
-    this.tweens.add({ targets: cont, alpha: 1, duration: 280 });
-    this.tweens.add({
-      targets: cont,
-      angle: { from: -3, to: 3 },
-      duration: 1400,
-      yoyo: true,
-      repeat: 2,
-      ease: "Sine.easeInOut",
-    });
-    this.time.delayedCall(FW_TAG, () => {
-      if (!cont.active) return;
-      this.tweens.add({
-        targets: cont,
-        alpha: 0,
-        duration: 420,
-        onComplete: () => {
-          this._tags = this._tags.filter((t) => t !== cont);
-          cont.destroy();
-        },
-      });
-    });
-  }
-
-  _drawShow(dt) {
-    const g = this._sparks;
+    const t = this._t / 1000;
+    const g = this._strings;
     g.clear();
-    const s = dt / 1000;
-    const live = this._show.live;
-    for (let n = live.length - 1; n >= 0; n--) {
-      const fw = live[n];
-      fw.age += dt;
-      const { b } = fw;
-      if (fw.age < FW_RISE) {
-        // the rocket climbing, a short trail of sparks behind it
-        const k = fw.age / FW_RISE;
-        const e = 1 - (1 - k) * (1 - k);
-        const x = fw.from.x + (b.x - fw.from.x) * e;
-        const y = fw.from.y + (b.y - fw.from.y) * e;
-        for (let j = 0; j < 8; j++) {
-          const kk = Math.max(0, e - j * 0.025);
-          const tx = fw.from.x + (b.x - fw.from.x) * kk;
-          const ty = fw.from.y + (b.y - fw.from.y) * kk;
-          g.fillStyle(0xffd9a0, 0.8 * (1 - j / 8)).fillCircle(
-            tx,
-            ty,
-            Math.max(0.8, 2 - j * 0.2),
-          );
-        }
-        g.fillStyle(0xffffff, 1).fillCircle(x, y, 2.2);
-        continue;
-      }
-      if (!fw.sparks) this._burst(fw);
-      const t = fw.age - FW_RISE;
-      if (t > FW_LIFE) {
-        live.splice(n, 1);
-        continue;
-      }
-      const life = 1 - t / FW_LIFE;
-      const drag = Math.exp(-1.7 * s);
-      const grav = b.r * 0.38;
-      for (const p of fw.sparks) {
-        p.vx *= drag;
-        p.vy = p.vy * drag + grav * s;
-        p.x += p.vx * s;
-        p.y += p.vy * s;
-        // each spark leaves a trail behind it that fades toward its tail
-        (p.trail || (p.trail = [{ x: b.x, y: b.y }])).push({ x: p.x, y: p.y });
-        if (p.trail.length > 9) p.trail.shift();
-        let a = Math.pow(life, 1.2);
-        if (life < 0.35)
-          a *= 0.45 + 0.55 * Math.abs(Math.sin((t + p.tw * 1000) * 0.03));
-        const col = t < 140 ? 0xffffff : p.inner ? 0xffe6f2 : fw.col;
-        const tr = p.trail;
-        const n = tr.length;
-        // a soft glow along the newest stretch of it
-        g.lineStyle(p.inner ? 3 : 5, col, a * 0.18);
-        g.lineBetween(
-          tr[Math.max(0, n - 4)].x,
-          tr[Math.max(0, n - 4)].y,
-          p.x,
-          p.y,
-        );
-        for (let k = 1; k < n; k++) {
-          const f = k / (n - 1);
-          g.lineStyle(p.inner ? 1.1 : 1.7, col, a * f * (p.inner ? 0.7 : 1));
-          g.lineBetween(tr[k - 1].x, tr[k - 1].y, tr[k].x, tr[k].y);
-        }
-        if (!p.inner) g.fillStyle(0xffffff, a * 0.85).fillCircle(p.x, p.y, 1.2);
-      }
-      // the bright heart of it, in the first moment
-      if (t < 300)
-        g.fillStyle(0xffffff, 1 - t / 300).fillCircle(
-          b.x,
-          b.y,
-          b.r * 0.12 * (1 - t / 300),
-        );
+    // one slow breath of wind for all of them, and each its own small bobbing
+    const wind = Math.sin(t * 0.37) * 0.6 + Math.sin(t * 0.83 + 1.1) * 0.4;
+    for (const o of this._balloons) {
+      const r = o.r;
+      const height = (L.knot.y - o.y) / L.H; // the higher, the further it leans
+      const x = o.x + (wind * 0.42 * height * 2.6 + Math.sin(t * 0.9 + o.ph) * 0.07) * r * 2;
+      const y = o.y + Math.sin(t * 0.7 + o.ph * 1.3) * r * 0.06;
+      const lean = (x - o.x) / (r * 9) + Math.sin(t * 0.6 + o.ph) * 0.03;
+      o.img.setPosition(x, y).setRotation(lean);
+      // the knot under it, where the string is tied
+      const kx = x - Math.sin(lean) * r * 1.52;
+      const ky = y + Math.cos(lean) * r * 1.52;
+      // the string: slack near the bench, straight under the balloon
+      const cx = L.knot.x + (kx - L.knot.x) * 0.25 + wind * r * 0.3;
+      const cy = L.knot.y + (ky - L.knot.y) * 0.62;
+      const curve = new Phaser.Curves.QuadraticBezier(
+        new Phaser.Math.Vector2(L.knot.x, L.knot.y),
+        new Phaser.Math.Vector2(cx, cy),
+        new Phaser.Math.Vector2(kx, ky),
+      );
+      g.lineStyle(Math.max(1, 1.1 * L.u), 0xdfe4f2, 0.62);
+      curve.draw(g, 24);
     }
+    // the knot on the bench's back
+    g.fillStyle(0xdfe4f2, 0.8).fillCircle(L.knot.x, L.knot.y, Math.max(1.6, 2.2 * L.u));
+    g.lineStyle(Math.max(1, 1.1 * L.u), 0xdfe4f2, 0.6);
+    g.lineBetween(L.knot.x, L.knot.y, L.knot.x - 5 * L.u, L.knot.y + 9 * L.u);
+    g.lineBetween(L.knot.x, L.knot.y, L.knot.x + 4 * L.u, L.knot.y + 10 * L.u);
   }
 
-  // the tower sparkling, as it does on the hour at night
-  _sparkleTower(dt) {
+  // the Tower sparkling as it does on the hour; the moon in pieces on the pond
+  _sparkle(dt) {
+    const L = this._L;
     const pts = this._art.towerPts;
     for (const gl of this._glints) {
       if (gl.life <= 0) {
-        if (Math.random() < 0.06) {
-          const p = pts[Math.floor(Math.random() * pts.length)];
-          const size = this._L.S * (0.012 + Math.random() * 0.016);
-          gl.img.setPosition(p.x, p.y).setDisplaySize(size, size);
-          gl.life = 220 + Math.random() * 260;
-          gl.max = gl.life;
+        if (Math.random() < (gl.pond ? 0.03 : 0.012)) {
+          let p;
+          let size;
+          if (gl.pond) {
+            const sx = Math.min(L.pond.x + L.pond.rx * 0.7, Math.max(L.pond.x - L.pond.rx * 0.7, L.moon.x));
+            p = { x: sx + (Math.random() - 0.5) * L.pond.rx * 0.34, y: L.pond.y + (Math.random() - 0.5) * L.pond.ry * 1.5 };
+            size = L.S * (0.008 + Math.random() * 0.012);
+          } else {
+            p = pts[Math.floor(Math.random() * pts.length)];
+            size = L.S * (0.005 + Math.random() * 0.006);
+          }
+          gl.img.setPosition(p.x, p.y).setDisplaySize(size, gl.pond ? size * 0.5 : size);
+          gl.life = gl.max = 220 + Math.random() * (gl.pond ? 700 : 260);
         } else {
           gl.img.setAlpha(0);
           continue;
         }
       }
       gl.life -= dt;
-      gl.img.setAlpha(Math.max(0, Math.sin((gl.life / gl.max) * Math.PI)));
+      gl.img.setAlpha(Math.max(0, Math.sin((gl.life / gl.max) * Math.PI)) * (gl.pond ? 0.7 : 0.3));
     }
   }
 
-  // ── sounds ─────────────────────────────────────────────────────────────────
-
-  _ac() {
-    const ac = this.sound && this.sound.context;
-    const st =
-      this.services && this.services.audio && this.services.audio.state;
-    if (!ac || (st && st.muted)) return null;
-    return { ac, vol: st ? st.sfxVol : 0.8 };
-  }
-
-  // a firework far off: a soft low thump, a crackle after it
-  _boom() {
-    const a = this._ac();
-    if (!a) return;
-    try {
-      const { ac, vol } = a;
-      const t = ac.currentTime;
-      const dur = 1.2;
-      const buf = ac.createBuffer(
-        1,
-        Math.floor(ac.sampleRate * dur),
-        ac.sampleRate,
-      );
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) {
-        const k = i / d.length;
-        const thump = Math.exp(-k * 18);
-        const crackle = k > 0.15 && Math.random() < 0.004 ? 0.8 : 0;
-        d[i] = (Math.random() * 2 - 1) * (thump + crackle * Math.exp(-k * 3));
-      }
-      const src = ac.createBufferSource();
-      src.buffer = buf;
-      const lp = ac.createBiquadFilter();
-      lp.type = "lowpass";
-      lp.frequency.value = 900;
-      const g = ac.createGain();
-      g.gain.value = vol * 0.35;
-      src.connect(lp);
-      lp.connect(g);
-      g.connect(this.sound.destination);
-      src.start(t + 0.15);
-    } catch (e) {}
-  }
-
-  // the clock's chime
-  _chime() {
-    const a = this._ac();
-    if (!a) return;
-    try {
-      const { ac, vol } = a;
-      const t = ac.currentTime;
-      for (const [f, g0] of [
-        [880, 0.2],
-        [1320, 0.08],
-        [1760, 0.05],
-      ]) {
-        const o = ac.createOscillator();
-        const g = ac.createGain();
-        o.frequency.value = f;
-        g.gain.setValueAtTime(g0 * vol, t);
-        g.gain.exponentialRampToValueAtTime(0.0005, t + 2.2);
-        o.connect(g);
-        g.connect(this.sound.destination);
-        o.start(t);
-        o.stop(t + 2.3);
-      }
-    } catch (e) {}
+  // fireflies: wandering, each lighting and going out in its own time
+  _fly() {
+    const L = this._L;
+    const t = this._t / 1000;
+    for (const f of this._flies) {
+      const x = f.x + Math.sin(t * 0.21 * f.sp + f.ph) * 70 * L.u + Math.sin(t * 0.9 + f.ph * 2) * 8 * L.u;
+      const y = f.y + Math.cos(t * 0.17 * f.sp + f.ph * 1.7) * 26 * L.u + Math.sin(t * 1.3 + f.ph) * 5 * L.u;
+      const blink = Math.max(0, Math.sin(t * 0.8 * f.sp + f.ph * 3));
+      f.img.setPosition(x, y).setAlpha(blink ** 3 * 0.85);
+    }
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
@@ -532,11 +212,10 @@ export default class FireworksScene extends BasePuzzleScene {
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
-    releaseParisArt(this.textures);
-    this._tags = [];
+    releaseParkArt(this.textures);
+    this._balloons = [];
     this._glints = [];
-    this._show = null;
-    this._hand = null;
+    this._flies = [];
     this._L = null;
   }
 
@@ -544,6 +223,7 @@ export default class FireworksScene extends BasePuzzleScene {
     this._onResize = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
-    releaseParisArt(this.textures);
+    releaseParkArt(this.textures);
+    this._L = null;
   }
 }

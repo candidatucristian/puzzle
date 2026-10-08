@@ -23,6 +23,8 @@ const K = {
   mote: "bt_mote",
   drop: "bt_drop",
   veil: "bt_veil",
+  stem: "bt_stem",
+  leaves: "bt_leaves",
 };
 
 // ── where everything is ─────────────────────────────────────────────────────
@@ -34,12 +36,12 @@ function layoutRootBox(W, H) {
   const top = H * 0.19; // the box's top edge
   const base = H * 0.8; // the foot of the glass, where it sits in the bottom rail
   const shelf = H * 0.9; // the shelf the box stands on
-  const frame = { x0: W * 0.055, x1: W * 0.945, y0: top, y1: shelf };
+  const frame = { x0: W * 0.21, x1: W * 0.79, y0: top, y1: shelf };
   const glass = { x0: frame.x0 + post, x1: frame.x1 - post, y0: top, y1: base };
   const soilY = top + H * 0.025;
   // the root's joints — its three forks and its eight tips — spread over the
-  // middle 80 % of the width, as the old diagram's nodes were
-  const x = (d, i) => W * 0.1 + (W * 0.8 * (i + 0.5)) / 2 ** d;
+  // width of the glass, as the old diagram's nodes were
+  const x = (d, i) => W * 0.24 + (W * 0.52 * (i + 0.5)) / 2 ** d;
   const ys = [0.09, 0.23, 0.37, 0.505].map((k) => soilY + H * k);
   const forks = [0, 1, 2].map((d) =>
     Array.from({ length: 2 ** d }, (_, i) => ({ x: x(d, i), y: ys[d] })),
@@ -65,7 +67,7 @@ function layoutRootBox(W, H) {
     tape: {
       x: W / 2,
       y: (base + shelf) / 2,
-      w: Math.min(W * 0.72, 760 * u),
+      w: Math.min(W * 0.47, 760 * u),
       h: (shelf - base) * 0.56,
     },
     // the seedling's scale, about 1 px to its unit (it stands about 82 of
@@ -163,7 +165,10 @@ export function paintRootBox(scene, W, H) {
     ]),
   );
   add(t, K.drop, paintDrop());
-  return { L, keys: K, dapple: dapple.at };
+  // the seedling stands apart from the painting, so its leaves can stir
+  add(t, K.stem, paintSeedling(L, "stem"));
+  add(t, K.leaves, paintSeedling(L, "leaves"));
+  return { L, keys: K, dapple: dapple.at, seedling: SEEDLING };
 }
 
 export function releaseRootBoxArt(textures) {
@@ -186,7 +191,6 @@ function paintBoxLayer(L) {
   paintInside(ctx, L);
   paintSoil(ctx, L);
   paintRoot(ctx, L);
-  paintSeedling(ctx, L);
   paintGlass(ctx, L);
   paintWriting(ctx, L);
   paintFrame(ctx, L);
@@ -697,15 +701,29 @@ function paintRoot(ctx, L) {
 // Up a week or so: a pale stem, flushed purple at the foot, two broad seed
 // leaves notched at the tip held out flat, and between them the first true
 // leaves opening, rounder and a bluer green. Lit from the window on the left.
-// In its own units (the stem about 60 long), its foot on the soil.
+// In its own units (the stem about 60 long), its foot on the soil. Painted
+// in two pictures of the same size — the stem, and the leaves at its head —
+// so the scene can let the leaves stir on the stem.
 
-function paintSeedling(ctx, L) {
+// the pictures' size in the seedling's units, and where its foot and the
+// node its leaves spring from sit in them (as shares of the picture)
+const SEEDLING = { w: 72, h: 100, foot: { x: 0.5, y: 0.93 }, node: { x: 0.5, y: 0.37 } };
+
+function paintSeedling(L, part) {
   const k = L.seedling;
-  ctx.save();
-  ctx.translate(L.start.x, L.soilY);
-  ctx.scale(k, k);
+  const R = 2;
+  const c = makeCanvas(Math.ceil(SEEDLING.w * k * R), Math.ceil(SEEDLING.h * k * R));
+  const ctx = c.getContext("2d");
+  ctx.scale(k * R, k * R);
+  ctx.translate(SEEDLING.w * SEEDLING.foot.x, SEEDLING.h * SEEDLING.foot.y);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  if (part === "stem") paintStem(ctx);
+  else paintLeaves(ctx);
+  return c;
+}
+
+function paintStem(ctx) {
   softEllipse(ctx, 0, 1.5, 7, 2.5, "0,0,0", 0.6);
   const stem = new Path2D();
   stem.moveTo(0, 3);
@@ -728,6 +746,9 @@ function paintSeedling(ctx, L) {
   };
   offset(1.5, 1.4, "rgba(30,50,24,0.45)");
   offset(-1.2, 1.1, "rgba(240,252,225,0.65)");
+}
+
+function paintLeaves(ctx) {
   // the second true leaf, just showing, behind the rest
   trueLeaf(
     ctx,
@@ -754,7 +775,6 @@ function paintSeedling(ctx, L) {
     "#7ea596",
     "#46705f",
   ]);
-  ctx.restore();
 }
 
 // a seed leaf on its stalk: kidney-broad, notched at the tip, held out flat

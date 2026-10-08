@@ -9,8 +9,9 @@ import { layoutLab, paintLab, releaseLabArt } from "./lab.js";
 // Level — "CHEMISTRY"  ·  code: FOCUS  ·  atomic numbers → symbols
 //
 // An old laboratory at night, lit by a Bunsen burner and an oil lamp. On the
-// bench stand five graduated bottles of coloured liquid. Each meniscus meets
-// its etched atomic-number mark, left to right:
+// bench stand five graduated bottles of coloured liquid, their printed scales
+// too fine to read by eye. A magnifying glass lies on its cloth: picked up, it
+// becomes the pointer, and under it each liquid is seen to stand at:
 //
 //   9 · 8 · 6 · 92 · 16
 //
@@ -19,7 +20,8 @@ import { layoutLab, paintLab, releaseLabArt } from "./lab.js";
 // liquid has its element's colour: pale yellow, pale blue, black, a glowing
 // uranium green, sulfur yellow.)
 //
-// A click on a bottle swirls it; a click on the burner turns up the gas.
+// A click on a bottle swirls it; a click on the burner turns up the gas. The
+// glass is put back by clicking its cloth (or Escape).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class ChemistryScene extends BasePuzzleScene {
@@ -39,6 +41,8 @@ export default class ChemistryScene extends BasePuzzleScene {
       this._build(width, height);
     };
     this.listenToResize(this._onResize);
+    this.input.on("pointermove", (p) => this._follow(p));
+    this.input.keyboard?.on("keydown-ESC", () => this._putDown());
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
@@ -59,7 +63,6 @@ export default class ChemistryScene extends BasePuzzleScene {
         .setDepth(-6)
         .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 10 })
         .setData("interactionLabel", "Swirl the bottle");
-      this._movableSparkleCleanups.push(attachMovableSparkles(this, img, { padding: 3 }));
       img.on("pointerdown", () => this._swirl(img, b));
       if (b.glow) {
         const glow = this.add
@@ -91,12 +94,12 @@ export default class ChemistryScene extends BasePuzzleScene {
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.45)
       .setDepth(-5);
-    this.add
+    this._gasZone = this.add
       .zone(bu.x, bu.y - 50 * L.u * bu.s, 70 * L.u * bu.s, 110 * L.u * bu.s)
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Turn up the gas")
-      .setDepth(5)
-      .on("pointerdown", () => this._gas());
+      .setDepth(5);
+    this._gasZone.on("pointerdown", () => this._gas());
     const f = L.flask;
     for (let i = 0; i < 3; i++) {
       const s = this.add
@@ -147,7 +150,80 @@ export default class ChemistryScene extends BasePuzzleScene {
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.6)
       .setDepth(-5);
+    this._buildLoupe(art);
     this.levelText = drawLevelLabel(this, W, H);
+  }
+
+  // The magnifying glass: lying on its cloth until it is picked up; then the
+  // lens follows the pointer, and inside its ring the room is drawn again,
+  // enlarged about the point it is held over.
+  _buildLoupe(art) {
+    const L = this._L;
+    const k = art.keys;
+    const lp = art.loupe;
+    const Z = L.loupe.zoom;
+    this._held = false;
+    this._loupe = this.add
+      .image(lp.x, lp.y, k.loupe)
+      .setOrigin(lp.ox, lp.oy)
+      .setScale(0.5)
+      .setDepth(-4)
+      .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 10 })
+      .setData("interactionLabel", "Pick up the magnifying glass");
+    this._movableSparkleCleanups.push(
+      attachMovableSparkles(this, this._loupe, { padding: 3, enabled: () => !this._held }),
+    );
+    this._loupe.on("pointerdown", (p) => this._pickUp(p));
+    // its cloth, where it is put back
+    this._cloth = this.add
+      .zone(lp.x + 16 * L.loupe.n, lp.y, 250 * L.loupe.n, 80 * L.loupe.n)
+      .setDepth(6)
+      .setData("interactionLabel", "Put the magnifying glass down")
+      .on("pointerdown", () => this._putDown());
+    this._zoom = this.add.container(0, 0).setDepth(40).setVisible(false);
+    this._zoom.add(this.add.image(0, 0, k.room).setOrigin(0, 0).setScale(Z));
+    for (const b of art.bottles) {
+      this._zoom.add(this.add.image(b.x * Z, b.y * Z, b.zoomKey).setOrigin(b.ox, b.oy));
+    }
+    this._lensMask = this.make.graphics();
+    this._lensMask.fillStyle(0xffffff).fillCircle(0, 0, L.loupe.r);
+    this._zoom.setMask(this._lensMask.createGeometryMask());
+    this._lens = this.add.image(0, 0, k.lens).setScale(0.5).setDepth(41).setVisible(false);
+  }
+
+  _pickUp(pointer) {
+    if (this._held) return;
+    this._held = true;
+    this._loupe.setVisible(false).disableInteractive();
+    this._bottles.forEach((img) => img.disableInteractive());
+    this._gasZone.disableInteractive();
+    this._cloth.setInteractive({ cursor: "none" });
+    this._zoom.setVisible(true);
+    this._lens.setVisible(true);
+    this.input.setDefaultCursor("none");
+    this._follow(pointer);
+    chime(this, [[2600, 0.03]], 0.25);
+  }
+
+  _putDown() {
+    if (!this._held) return;
+    this._held = false;
+    this._zoom.setVisible(false);
+    this._lens.setVisible(false);
+    this._cloth.disableInteractive();
+    this._loupe.setVisible(true).setInteractive();
+    this._bottles.forEach((img) => img.setInteractive());
+    this._gasZone.setInteractive();
+    this.input.setDefaultCursor("default");
+    noiseBurst(this, { dur: 0.12, type: "lowpass", freq: 500, q: 0.7, gain: 0.12, env: (k) => 1 - k });
+  }
+
+  _follow(pointer) {
+    if (!this._held || !this._L) return;
+    const Z = this._L.loupe.zoom;
+    this._lens.setPosition(pointer.x, pointer.y);
+    this._lensMask.setPosition(pointer.x, pointer.y);
+    this._zoom.setPosition(pointer.x * (1 - Z), pointer.y * (1 - Z));
   }
 
   // a bubble rising through a bottle's liquid, over and over
@@ -230,13 +306,23 @@ export default class ChemistryScene extends BasePuzzleScene {
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
+    this._dropLoupe();
     releaseLabArt(this.textures);
     this._bottles = [];
     this._L = null;
   }
 
+  // the glass let go of, with the scene: the pointer is the pointer again
+  _dropLoupe() {
+    this._lensMask?.destroy();
+    this._lensMask = null;
+    this._held = false;
+    this.input.setDefaultCursor("default");
+  }
+
   shutdown() {
     this._onResize = null;
+    this._dropLoupe();
     this._movableSparkleCleanups?.forEach(cleanup => cleanup());
     this._movableSparkleCleanups = [];
     this.tweens.killAll();

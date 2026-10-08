@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // BilliardsScene.js — Level "BILLIARDS"  ·  code: BLIND
 //
-// An abandoned pub at night, a pool table seen from above under its lamp.
+// An abandoned pub at night, a pool table seen across its long side, under
+// its three-shade billiard lamp, rain on the window behind.
 // The balls stand racked for the break, but five places in the triangle are
 // empty: 2, 4, 9, 12 and 14 are gone. They lie in the pockets, five of which
 // are marked I to V on little brass plates; down in a pocket a ball shows only
@@ -11,7 +12,7 @@
 //   I blue solid 2 · II purple stripe 12 · III yellow stripe 9
 //   IV green stripe 14 · V purple solid 4
 //
-// The chalk slate on the floor says WHAT IS MISSING DEFINES THE ANSWER. In
+// The chalk slate on the wall says WHAT IS MISSING DEFINES THE ANSWER. In
 // the pockets' order, 2 12 9 14 4 as letters of the alphabet: B L I N D.
 //
 // A click on a pocket rattles the ball in it; the cue ball can be nudged.
@@ -82,8 +83,8 @@ export default class BilliardsScene extends BasePuzzleScene {
 
     // the lamp's light — a warm cone in the noir dark
     this._lamp = this.add
-      .image(L.vp.x, (L.pockets[0].y + L.pockets[3].y) / 2, k.glow)
-      .setDisplaySize(L.hw * 2.8, L.hw * 1.6)
+      .image(L.spot.x, L.spot.y, k.glow)
+      .setDisplaySize(L.span * 2.8, L.span * 1.2)
       .setTint(0xffb666)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.12)
@@ -93,8 +94,8 @@ export default class BilliardsScene extends BasePuzzleScene {
 
     // motes of dust drifting through the beam
     for (let i = 0; i < 18; i++) {
-      const x0 = L.vp.x + (Math.random() - 0.5) * L.hw * 2;
-      const y0 = this._lamp.y + (Math.random() - 0.5) * L.hw;
+      const x0 = L.spot.x + (Math.random() - 0.5) * L.span * 2;
+      const y0 = L.spot.y - Math.random() * L.H * 0.4;
       const m = this.add
         .image(x0, y0, k.glow)
         .setDisplaySize(4 * L.u, 4 * L.u)
@@ -167,7 +168,7 @@ export default class BilliardsScene extends BasePuzzleScene {
     });
     this.tweens.add({
       targets: cue,
-      x: L.cue.x + L.hw * 0.12,
+      x: L.cue.to.x,
       angle: 120,
       duration: 700,
       ease: "Cubic.easeOut",

@@ -11,11 +11,11 @@ import {
   polygon,
 } from "../../shared/paint.js";
 
-/** The library for BOOKSHELF, painted like the game's other storybook
- *  nights: a tall mahogany bookcase full of old books against green damask,
- *  a table lamp glowing on a little table at its side with a cup of tea, a
- *  window full of moon at the other, a ginger cat asleep on the top of the
- *  case. On the third shelf, five books stand pulled a little out, each with
+/** The library for BOOKSHELF, late at night: a tall mahogany bookcase full
+ *  of old books against green damask, the one lamp burning on a little table
+ *  at its side with a cup of tea, the rest of the room gone to shadow; a
+ *  window full of moon at the other side, a tabby cat asleep on the top of
+ *  the case. On the third shelf, five books stand pulled a little out, each with
  *  its title in gold on the spine and a paper bookmark in it, numbered.
  *
  *  The room is seen straight on, in one-point perspective from the eye at
@@ -78,12 +78,12 @@ export function layoutLibrary(W, H) {
   L.pull = 0.075; // how far they stand out
   L.books = placeBooks(L);
   // the little table, the lamp, the window
-  L.table = { x: Math.min(W * 0.865, c.x1 + W * 0.11), y: H * 0.665, r: Math.min(W * 0.075, H * 0.1) };
+  L.table = { x: Math.min(W * 0.865, c.x1 + W * 0.11), y: H * 0.665, r: Math.min(W * 0.085, H * 0.115) };
   L.lamp = { x: L.table.x - L.table.r * 0.2, base: L.table.y - L.table.r * 0.05, s: u };
   L.lamp.shadeTop = L.lamp.base - 175 * u;
   L.lamp.shadeBot = L.lamp.base - 108 * u;
   L.lamp.bulb = { x: L.lamp.x, y: L.lamp.shadeBot - 18 * u };
-  L.cup = { x: L.table.x + L.table.r * 0.55, y: L.table.y + L.table.r * 0.12, s: u };
+  L.cup = { x: L.table.x + L.table.r * 0.5, y: L.table.y + L.table.r * 0.07, s: u };
   const ww = Math.min(W * 0.115, c.x0 - W * 0.04);
   L.win = { x: Math.max(W * 0.02, c.x0 - ww - W * 0.035), y0: H * 0.14, y1: H * 0.6, w: ww };
   // the cat, asleep on top of the case, its tail over the edge
@@ -153,6 +153,17 @@ function fwd(L, x, y, e) {
   return { x: L.vp.x + (x - L.vp.x) * (1 + e), y: L.vp.y + (y - L.vp.y) * (1 + e) };
 }
 
+// How dark the room is at a place: nothing by the lamp, deep in the corners.
+function gloom(L, x, y) {
+  const lp = L.lamp;
+  const d = Math.hypot((x - lp.x) / (L.W * 0.9), (y - lp.shadeBot) / (L.H * 1.25));
+  // the window keeps its own light
+  const win = L.win;
+  const wd = Math.hypot((x - win.x - win.w / 2) / (win.w * 1.1), (y - (win.y0 + win.y1) / 2) / ((win.y1 - win.y0) * 0.75));
+  const open = 1 - 0.72 * Math.min(1, Math.max(0, 1.5 - wd));
+  return Math.min(0.84, Math.max(0, d - 0.08) * 1.15) * open;
+}
+
 // ── painting ────────────────────────────────────────────────────────────────
 
 export function paintLibrary(scene, L) {
@@ -167,7 +178,8 @@ export function paintLibrary(scene, L) {
   paintCat(ctx, L);
   paintSideTable(ctx, L);
   paintLight(ctx, L);
-  vignette(ctx, W, H, 0.55);
+  paintGloom(ctx, L);
+  vignette(ctx, W, H, 0.7);
   grain(ctx, W, H, 0.03);
   addCanvasTexture(t, K.room, c);
   const books = L.books
@@ -194,9 +206,9 @@ export function releaseLibraryArt(textures) {
 function paintWall(ctx, L) {
   const { W, H } = L;
   const g = ctx.createLinearGradient(0, 0, 0, L.floorY);
-  g.addColorStop(0, "#0f2420");
-  g.addColorStop(0.6, "#1a3a32");
-  g.addColorStop(1, "#14302a");
+  g.addColorStop(0, "#0c1c19");
+  g.addColorStop(0.6, "#173029");
+  g.addColorStop(1, "#112621");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, L.floorY);
   // the damask: rows of soft lozenges with a little flower in each
@@ -256,9 +268,9 @@ function paintWindow(ctx, L) {
   ctx.fill();
   path(0);
   const sky = ctx.createLinearGradient(0, y0, 0, y1);
-  sky.addColorStop(0, "#0a1630");
-  sky.addColorStop(0.7, "#1c3a68");
-  sky.addColorStop(1, "#2c5288");
+  sky.addColorStop(0, "#060c1c");
+  sky.addColorStop(0.7, "#12264a");
+  sky.addColorStop(1, "#1c3a64");
   ctx.fillStyle = sky;
   ctx.fill();
   ctx.save();
@@ -274,10 +286,28 @@ function paintWindow(ctx, L) {
   const my = y0 + arch * 1.1;
   const mr = w * 0.17;
   soft(ctx, mx, my, mr * 4, mr * 4, "200,215,255", 0.4);
-  ctx.fillStyle = "#fbf6e6";
+  const moon = ctx.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, mr * 0.1, mx, my, mr);
+  moon.addColorStop(0, "#fffdf2");
+  moon.addColorStop(0.7, "#ece6d2");
+  moon.addColorStop(1, "#c4c2bc");
+  ctx.fillStyle = moon;
   ctx.beginPath();
   ctx.arc(mx, my, mr, 0, Math.PI * 2);
   ctx.fill();
+  // its seas
+  ctx.save();
+  ctx.clip();
+  for (const [dx, dy, r, a] of [
+    [-0.3, -0.25, 0.34, 0.16],
+    [0.25, -0.05, 0.28, 0.13],
+    [-0.05, 0.4, 0.3, 0.12],
+    [0.45, 0.45, 0.16, 0.1],
+  ]) {
+    soft(ctx, mx + dx * mr, my + dy * mr, r * mr, r * mr * 0.85, "90,96,110", a * 2.2);
+  }
+  ctx.restore();
+  // thin cloud drifting under it
+  soft(ctx, x + w * 0.4, my + mr * 2.2, w * 0.7, mr * 0.7, "150,170,210", 0.16);
   // a branch with its leaves, dark against the sky
   ctx.strokeStyle = "#0a1220";
   ctx.fillStyle = "#0a1220";
@@ -331,7 +361,10 @@ function paintWindow(ctx, L) {
     ctx.lineTo(ex + side * w * 0.04, L.floorY - H * 0.01);
     ctx.closePath();
     const g = ctx.createLinearGradient(Math.min(ex, inner), 0, Math.max(ex, inner), 0);
-    for (let i = 0; i <= 5; i++) g.addColorStop(i / 5, i % 2 ? "#0e1e3a" : "#24406e");
+    // heavy velvet: deep folds, each catching a little of the moon
+    for (let i = 0; i <= 8; i++) {
+      g.addColorStop(i / 8, i % 2 ? "#070e1e" : i % 4 ? "#16284a" : "#1c3158");
+    }
     ctx.fillStyle = g;
     ctx.fill();
     ctx.fillStyle = "#c9973c";
@@ -341,49 +374,148 @@ function paintWindow(ctx, L) {
   ctx.fillRect(x - w * 0.3, y0 - H * 0.045, w * 1.6, Math.max(2, H * 0.006));
 }
 
-// the floorboards running toward us, a rug before the case
+// the floorboards running toward us, worn and waxed, a Persian rug before
+// the case
 function paintFloor(ctx, L) {
-  const { W, H, vp } = L;
+  const { W, H, vp, u } = L;
   const y0 = L.floorY;
   const g = ctx.createLinearGradient(0, y0, 0, H);
-  g.addColorStop(0, "#2a160a");
-  g.addColorStop(1, "#5a3218");
+  g.addColorStop(0, "#1e1008");
+  g.addColorStop(1, "#4a2a14");
   ctx.fillStyle = g;
   ctx.fillRect(0, y0, W, H - y0);
-  ctx.strokeStyle = "rgba(14,6,2,0.7)";
-  ctx.lineWidth = Math.max(1, L.u);
   const k = (H - vp.y) / (y0 - vp.y);
-  for (let i = -14; i <= 14; i++) {
-    const xb = vp.x + i * 60 * L.u;
+  const rnd = lcg(271);
+  // each board its own tone, its joints, its grain
+  for (let i = -15; i < 15; i++) {
+    const xa = vp.x + i * 60 * u;
+    const xb = vp.x + (i + 1) * 60 * u;
+    const tone = rnd();
+    ctx.fillStyle = tone < 0.5 ? `rgba(0,0,0,${(0.04 + tone * 0.3).toFixed(2)})` : `rgba(255,190,130,${((tone - 0.5) * 0.1).toFixed(3)})`;
+    polygon(ctx, [
+      { x: xa, y: y0 },
+      { x: xb, y: y0 },
+      { x: vp.x + (xb - vp.x) * k, y: H },
+      { x: vp.x + (xa - vp.x) * k, y: H },
+    ]);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(8,3,1,0.8)";
+    ctx.lineWidth = Math.max(1, u);
     ctx.beginPath();
-    ctx.moveTo(xb, y0);
-    ctx.lineTo(vp.x + (xb - vp.x) * k, H);
+    ctx.moveTo(xa, y0);
+    ctx.lineTo(vp.x + (xa - vp.x) * k, H);
     ctx.stroke();
+    // an end joint somewhere along it
+    const f = 0.15 + rnd() * 0.7;
+    const s = 1 + (k - 1) * f;
+    const jy = vp.y + (y0 - vp.y) * s;
+    ctx.beginPath();
+    ctx.moveTo(vp.x + (xa - vp.x) * s, jy);
+    ctx.lineTo(vp.x + (xb - vp.x) * s, jy);
+    ctx.stroke();
+    // grain
+    ctx.strokeStyle = "rgba(10,4,1,0.22)";
+    ctx.lineWidth = 0.7;
+    for (let j = 0; j < 3; j++) {
+      const xg = xa + (xb - xa) * (0.2 + rnd() * 0.6);
+      ctx.beginPath();
+      ctx.moveTo(xg, y0);
+      ctx.lineTo(vp.x + (xg - vp.x) * k, H);
+      ctx.stroke();
+    }
   }
-  // the rug: an oval, deep red, a gold border, lying flat before the case
-  const rx = L.case.w * 0.42;
-  const ry = (H - y0) * 0.42;
-  const cx = vp.x;
-  const cy = y0 + (H - y0) * 0.58;
-  soft(ctx, cx, cy + ry * 0.1, rx * 1.05, ry * 1.1, "0,0,0", 0.4);
-  ctx.fillStyle = "#6a1a1e";
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  // the rug, lying square to the case: a dark red field, borders, a medallion
+  const at = (fx, fz) => {
+    // fx across (-1..1), fz from the case (0) toward us (1)
+    const s = 1.03 + (k - 1.03) * (0.06 + fz * 0.8);
+    return { x: vp.x + fx * L.case.w * 0.4 * s, y: vp.y + (y0 - vp.y) * s };
+  };
+  const quad = (m) => [at(-1 + m, m * 1.2), at(1 - m, m * 1.2), at(1 - m, 1 - m * 1.2), at(-1 + m, 1 - m * 1.2)];
+  const a = at(0, 0.5);
+  soft(ctx, a.x, a.y + 4 * u, L.case.w * 0.5, (H - y0) * 0.5, "0,0,0", 0.45);
+  // the fringe at its two ends
+  ctx.strokeStyle = "rgba(214,196,160,0.5)";
+  ctx.lineWidth = Math.max(0.8, u);
+  for (const fz of [0, 1]) {
+    for (let i = 0; i <= 60; i++) {
+      const p = at(-1 + i / 30, fz);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + (rnd() - 0.5) * 2 * u, p.y + (fz ? 7 : -4) * u);
+      ctx.stroke();
+    }
+  }
+  polygon(ctx, quad(0));
+  ctx.fillStyle = "#3e0e12";
   ctx.fill();
-  ctx.strokeStyle = "#c9973c";
-  ctx.lineWidth = Math.max(2, ry * 0.08);
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx * 0.9, ry * 0.82, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.strokeStyle = "rgba(201,151,60,0.5)";
-  ctx.lineWidth = Math.max(1, ry * 0.03);
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx * 0.78, ry * 0.62, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.fillStyle = "rgba(201,151,60,0.35)";
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx * 0.2, ry * 0.2, 0, 0, Math.PI * 2);
+  ctx.save();
+  ctx.clip();
+  polygon(ctx, quad(0.03));
+  ctx.fillStyle = "#1c1c2c";
   ctx.fill();
+  polygon(ctx, quad(0.075));
+  ctx.fillStyle = "#5a1418";
+  ctx.fill();
+  // the border's running pattern
+  ctx.fillStyle = "rgba(196,150,72,0.6)";
+  for (let i = 0; i < 44; i++) {
+    const f = -0.94 + (i / 43) * 1.88;
+    for (const fz of [0.055, 0.945]) {
+      const p = at(f, fz);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 3.2 * u, 1.3 * u, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  for (let i = 0; i < 9; i++) {
+    const fz = 0.12 + (i / 8) * 0.76;
+    for (const f of [-0.955, 0.955]) {
+      const p = at(f, fz);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 3.2 * u, 1.3 * u, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // the field: a lattice of little flowers, a medallion in the middle
+  ctx.fillStyle = "rgba(20,22,44,0.55)";
+  for (let r = 0; r < 6; r++) {
+    for (let cI = 0; cI < 22; cI++) {
+      const p = at(-0.86 + (cI + (r % 2) * 0.5) * 0.08, 0.16 + r * 0.135);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 4 * u, 1.6 * u, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  const m = at(0, 0.5);
+  const mrx = L.case.w * 0.15;
+  const mry = (H - y0) * 0.2;
+  ctx.fillStyle = "#1c1c2c";
+  ctx.beginPath();
+  ctx.moveTo(m.x - mrx, m.y);
+  ctx.quadraticCurveTo(m.x - mrx * 0.4, m.y - mry * 0.9, m.x, m.y - mry);
+  ctx.quadraticCurveTo(m.x + mrx * 0.4, m.y - mry * 0.9, m.x + mrx, m.y);
+  ctx.quadraticCurveTo(m.x + mrx * 0.4, m.y + mry * 0.9, m.x, m.y + mry);
+  ctx.quadraticCurveTo(m.x - mrx * 0.4, m.y + mry * 0.9, m.x - mrx, m.y);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(196,150,72,0.7)";
+  ctx.lineWidth = Math.max(1, 1.6 * u);
+  ctx.stroke();
+  ctx.fillStyle = "#7a2024";
+  ctx.beginPath();
+  ctx.ellipse(m.x, m.y, mrx * 0.45, mry * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(196,150,72,0.7)";
+  ctx.beginPath();
+  ctx.ellipse(m.x, m.y, mrx * 0.14, mry * 0.16, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // the wool's nap, worn paler where feet have gone
+  for (let i = 0; i < 500; i++) {
+    const p = at(rnd() * 2 - 1, rnd());
+    ctx.fillStyle = rnd() < 0.5 ? "rgba(0,0,0,0.14)" : "rgba(255,220,190,0.05)";
+    ctx.fillRect(p.x, p.y, 2.4 * u, 0.9 * u);
+  }
+  soft(ctx, m.x - mrx * 1.2, m.y + mry * 0.6, mrx * 1.1, mry * 0.9, "220,200,180", 0.07);
+  ctx.restore();
 }
 
 // the bookcase: its cornice, its sides, the shelves and every book on them
@@ -406,6 +538,23 @@ function paintCase(ctx, L) {
       paintHollow(ctx, L, bay, row);
     }
     for (const b of L.books) if (b.row === ri && b.kind !== "special") paintBook(ctx, L, b, row);
+    // the shelf above keeps the lamp off the books' heads
+    for (const bay of c.bays) {
+      const sh = ctx.createLinearGradient(0, row.top, 0, row.top + row.h * 0.5);
+      sh.addColorStop(0, "rgba(0,0,0,0.78)");
+      sh.addColorStop(0.35, "rgba(0,0,0,0.34)");
+      sh.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = sh;
+      ctx.fillRect(bay.x0, row.top, bay.x1 - bay.x0, row.h * 0.5);
+      // and the uprights shade the ends
+      for (const [ex, dir] of [[bay.x0, 1], [bay.x1, -1]]) {
+        const eg = ctx.createLinearGradient(ex, 0, ex + dir * 22 * u, 0);
+        eg.addColorStop(0, "rgba(0,0,0,0.5)");
+        eg.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = eg;
+        ctx.fillRect(Math.min(ex, ex + dir * 22 * u), row.top, 22 * u, row.h);
+      }
+    }
     // the shelf board under this row: its front edge
     const by = row.bot;
     const bg = ctx.createLinearGradient(0, by, 0, by + c.board);
@@ -421,6 +570,8 @@ function paintCase(ctx, L) {
     const row = c.rows[b.row];
     ctx.fillStyle = "#0c0604";
     ctx.fillRect(b.x0, row.bot - b.h, b.x1 - b.x0, b.h);
+    // standing out, it shades the neighbours away from the lamp
+    soft(ctx, b.x0 - 9 * u, row.bot - b.h * 0.45, 16 * u, b.h * 0.6, "0,0,0", 0.55);
   }
   // the sides and the middle upright, fluted
   const upright = (x0, w) => {
@@ -634,7 +785,9 @@ function paintBook(ctx, L, b, row) {
     }
     return;
   }
-  const [r, g, bl] = b.col;
+  // each stands a little further in or out, so catches more or less light
+  const set = 0.66 + rnd() * 0.34;
+  const [r, g, bl] = b.col.map((v) => v * set);
   const spine = (x0, x1, top) => {
     const gr = ctx.createLinearGradient(x0, 0, x1, 0);
     gr.addColorStop(0, rgb(r * 0.45, g * 0.45, bl * 0.45));
@@ -644,9 +797,21 @@ function paintBook(ctx, L, b, row) {
     ctx.fillStyle = gr;
     ctx.fillRect(x0, top, x1 - x0, floor - top);
     const h = floor - top;
+    // the dark between it and its neighbour, the worn head and tail
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(x0, top, Math.max(1, u * 0.9), h);
+    ctx.fillStyle = "rgba(255,225,190,0.16)";
+    ctx.fillRect(x0 + 1, top, x1 - x0 - 2, Math.max(1, u * 1.2));
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(x0, floor - h * 0.03, x1 - x0, h * 0.03);
+    // scuffs in the cloth
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = rnd() < 0.5 ? "rgba(255,230,200,0.07)" : "rgba(0,0,0,0.14)";
+      ctx.fillRect(x0 + rnd() * (x1 - x0) * 0.7, top + rnd() * h, (x1 - x0) * (0.2 + rnd() * 0.3), Math.max(0.8, h * 0.006));
+    }
     // gilt bands, raised bands, a dark title patch with no title to read
     const style = Math.floor(rnd() * 3);
-    ctx.fillStyle = "rgba(232,196,106,0.75)";
+    ctx.fillStyle = `rgba(214,176,92,${(0.3 + rnd() * 0.4).toFixed(2)})`;
     for (const f of [0.07, 0.11, 0.89, 0.93]) ctx.fillRect(x0 + 1, top + h * f, x1 - x0 - 2, Math.max(1, h * 0.012));
     if (style === 0) {
       ctx.fillStyle = "rgba(10,6,4,0.5)";
@@ -753,21 +918,32 @@ function paintSpecial(L, b) {
   g.rotate((b.i % 2 ? 1 : -1) * 0.05);
   soft(g, 2 * u, -markH * 0.4, mw * 0.7, markH * 0.6, "0,0,0", 0.25);
   const card = g.createLinearGradient(-mw / 2, 0, mw / 2, 0);
-  card.addColorStop(0, "#e8dcc0");
-  card.addColorStop(0.4, "#fbf3dc");
-  card.addColorStop(1, "#d8c8a4");
+  card.addColorStop(0, "#b8a47c");
+  card.addColorStop(0.35, "#e6d6b0");
+  card.addColorStop(1, "#a8946c");
   g.fillStyle = card;
+  // an old slip of paper, its top torn, a corner dog-eared
+  const tear = lcg(60 + b.i);
   g.beginPath();
   g.moveTo(-mw / 2, 0);
-  g.lineTo(-mw / 2, -markH);
-  g.lineTo(mw / 2, -markH);
+  g.lineTo(-mw / 2, -markH * 0.96);
+  for (let k = 1; k <= 6; k++) g.lineTo(-mw / 2 + (mw * k) / 7, -markH * (0.94 + tear() * 0.07));
+  g.lineTo(mw / 2 - mw * 0.16, -markH);
+  g.lineTo(mw / 2, -markH * 0.86);
   g.lineTo(mw / 2, 0);
   g.closePath();
   g.fill();
-  g.strokeStyle = "rgba(120,96,60,0.5)";
-  g.lineWidth = 0.8;
+  g.strokeStyle = "rgba(70,52,28,0.55)";
+  g.lineWidth = 0.7;
   g.stroke();
-  g.fillStyle = "#3a2210";
+  // foxing, and the shade of the pages it stands in
+  for (let k = 0; k < 5; k++) soft(g, (tear() - 0.5) * mw * 0.8, -tear() * markH, mw * 0.14, mw * 0.12, "120,80,30", 0.22);
+  const foot = g.createLinearGradient(0, -markH * 0.3, 0, 0);
+  foot.addColorStop(0, "rgba(40,24,8,0)");
+  foot.addColorStop(1, "rgba(40,24,8,0.45)");
+  g.fillStyle = foot;
+  g.fillRect(-mw / 2, -markH * 0.3, mw, markH * 0.3);
+  g.fillStyle = "#2a1a0c";
   g.font = `700 ${Math.round(markH * 0.62)}px ${MARK_FONT}`;
   g.textAlign = "center";
   g.textBaseline = "middle";
@@ -797,7 +973,34 @@ function paintSpecial(L, b) {
   g.fill();
   const sw = p1.x - p0.x;
   const sh = p1.y - p0.y;
-  g.fillStyle = GOLD;
+  // old leather: its grain, the rubbed joints, raised bands at head and tail
+  g.save();
+  g.beginPath();
+  g.roundRect(p0.x, p0.y, sw, sh, 2 * u);
+  g.clip();
+  const lr = lcg(90 + b.i);
+  for (let k = 0; k < 260; k++) {
+    g.fillStyle = lr() < 0.55 ? "rgba(0,0,0,0.16)" : "rgba(255,235,210,0.06)";
+    g.fillRect(p0.x + lr() * sw, p0.y + lr() * sh, 1 + lr() * 2.2, 0.8 + lr() * 1.2);
+  }
+  for (const f of [0.14, 0.86]) {
+    const by = p0.y + sh * f;
+    const band = g.createLinearGradient(0, by - sh * 0.012, 0, by + sh * 0.014);
+    band.addColorStop(0, "rgba(255,235,205,0.3)");
+    band.addColorStop(0.5, "rgba(255,235,205,0.04)");
+    band.addColorStop(1, "rgba(0,0,0,0.5)");
+    g.fillStyle = band;
+    g.fillRect(p0.x, by - sh * 0.012, sw, sh * 0.026);
+  }
+  g.fillStyle = "rgba(255,225,190,0.14)";
+  g.fillRect(p0.x, p0.y, sw, Math.max(1, 1.4 * u));
+  const worn = g.createLinearGradient(0, p1.y - sh * 0.05, 0, p1.y);
+  worn.addColorStop(0, "rgba(0,0,0,0)");
+  worn.addColorStop(1, "rgba(0,0,0,0.45)");
+  g.fillStyle = worn;
+  g.fillRect(p0.x, p1.y - sh * 0.05, sw, sh * 0.05);
+  g.restore();
+  g.fillStyle = "#c9a552";
   for (const f of [0.05, 0.085, 0.915, 0.95]) g.fillRect(p0.x + 1.5, p0.y + sh * f, sw - 3, Math.max(1, sh * 0.011));
   // the title, in gold, running down the spine
   const size = Math.min(sw * 0.56, (sh * 0.7) / (b.title.length * 0.78));
@@ -810,87 +1013,151 @@ function paintSpecial(L, b) {
   if ("letterSpacing" in g) g.letterSpacing = `${Math.round(size * 0.12)}px`;
   g.fillStyle = "rgba(0,0,0,0.5)";
   g.fillText(b.title, 1, 1.2);
-  g.fillStyle = GOLD;
+  const gilt = g.createLinearGradient(-sh * 0.35, 0, sh * 0.35, 0);
+  gilt.addColorStop(0, "#b8923e");
+  gilt.addColorStop(0.5, GOLD);
+  gilt.addColorStop(1, "#c9a552");
+  g.fillStyle = gilt;
   g.fillText(b.title, 0, 0);
   g.restore();
+  // the room's dark lies on it as on everything else, but less: it stands
+  // out into the lamplight
+  g.globalCompositeOperation = "source-atop";
+  g.fillStyle = `rgba(5,7,11,${(gloom(L, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2) * 0.55).toFixed(3)})`;
+  g.fillRect(bx0, by0, W2, H2);
+  g.globalCompositeOperation = "source-over";
   return { canvas: c, x: bx0, y: by0, w: W2, h: H2, cx: (p0.x + p1.x) / 2, cy: (p0.y + p1.y) / 2 };
 }
 
-// a ginger cat asleep on top of the case, curled nose to tail
+// a tabby cat asleep on top of the case, a dark loaf of fur against the
+// wall, the lamp finding only the edge of its back
 function paintCat(ctx, L) {
   const { x, y, s } = L.cat;
   const k = s;
-  soft(ctx, x, y, 60 * k, 6 * k, "0,0,0", 0.5);
-  const fur = ctx.createLinearGradient(x - 50 * k, y - 50 * k, x + 50 * k, y);
-  fur.addColorStop(0, "#f0a050");
-  fur.addColorStop(0.6, "#c86a24");
-  fur.addColorStop(1, "#7a3c14");
-  // the body, a round loaf
+  const rnd = lcg(77);
+  soft(ctx, x, y, 62 * k, 6 * k, "0,0,0", 0.6);
+  const body = () => {
+    ctx.beginPath();
+    ctx.moveTo(x - 52 * k, y);
+    ctx.bezierCurveTo(x - 58 * k, y - 16 * k, x - 44 * k, y - 26 * k, x - 30 * k, y - 27 * k);
+    ctx.bezierCurveTo(x - 16 * k, y - 44 * k, x + 22 * k, y - 46 * k, x + 38 * k, y - 34 * k);
+    ctx.bezierCurveTo(x + 54 * k, y - 26 * k, x + 54 * k, y - 8 * k, x + 48 * k, y);
+    ctx.closePath();
+  };
+  body();
+  const fur = ctx.createLinearGradient(x - 40 * k, y - 46 * k, x + 40 * k, y);
+  fur.addColorStop(0, "#3a2a1e");
+  fur.addColorStop(0.5, "#5a4028");
+  fur.addColorStop(1, "#2a1c12");
   ctx.fillStyle = fur;
-  ctx.beginPath();
-  ctx.ellipse(x, y - 20 * k, 48 * k, 22 * k, 0, Math.PI, 0);
-  ctx.lineTo(x + 48 * k, y);
-  ctx.lineTo(x - 48 * k, y);
-  ctx.closePath();
   ctx.fill();
-  // stripes
-  ctx.strokeStyle = "rgba(122,56,16,0.55)";
-  ctx.lineWidth = 3 * k;
+  ctx.save();
+  ctx.clip();
+  // the tabby's bars, broken, following the curve of its side
   ctx.lineCap = "round";
-  for (const dx of [-14, 0, 14, 28]) {
+  for (let i = 0; i < 9; i++) {
+    const bx = x - 22 * k + i * 8.5 * k;
+    ctx.strokeStyle = "rgba(18,10,6,0.55)";
+    ctx.lineWidth = (2 + rnd() * 2) * k;
     ctx.beginPath();
-    ctx.moveTo(x + dx * k, y - 40 * k);
-    ctx.quadraticCurveTo(x + (dx + 6) * k, y - 30 * k, x + (dx + 2) * k, y - 22 * k);
+    ctx.moveTo(bx, y - 46 * k);
+    ctx.quadraticCurveTo(bx + 7 * k, y - 28 * k, bx + (rnd() * 6 - 1) * k, y - (10 + rnd() * 8) * k);
     ctx.stroke();
   }
-  // the head, tucked down on its paws at the left
+  // fur: short strokes lying back along the body
+  for (let i = 0; i < 520; i++) {
+    const fx = x - 54 * k + rnd() * 106 * k;
+    const fy = y - rnd() * 46 * k;
+    const len = (3 + rnd() * 4) * k;
+    ctx.strokeStyle = rnd() < 0.5 ? "rgba(150,112,70,0.2)" : "rgba(10,6,4,0.26)";
+    ctx.lineWidth = Math.max(0.5, 0.7 * k);
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.lineTo(fx + len, fy + len * (0.25 + ((fx - x) / (60 * k)) * 0.5));
+    ctx.stroke();
+  }
+  // the haunch folded under, the dark where the body meets the wood
+  soft(ctx, x + 26 * k, y - 8 * k, 22 * k, 14 * k, "110,80,50", 0.25);
+  soft(ctx, x, y + 2 * k, 60 * k, 9 * k, "0,0,0", 0.6);
+  // the lamp along its back
+  ctx.strokeStyle = "rgba(255,196,120,0.3)";
+  ctx.lineWidth = 5 * k;
+  ctx.beginPath();
+  ctx.moveTo(x + 2 * k, y - 43 * k);
+  ctx.bezierCurveTo(x + 24 * k, y - 46 * k, x + 46 * k, y - 34 * k, x + 51 * k, y - 14 * k);
+  ctx.stroke();
+  ctx.restore();
+  // the head, laid on its paws, turned a little toward us; ears
   const hx = x - 38 * k;
-  const hy = y - 15 * k;
-  ctx.fillStyle = "#e08a3c";
-  ctx.beginPath();
-  ctx.ellipse(hx, hy, 19 * k, 15 * k, -0.15, 0, Math.PI * 2);
-  ctx.fill();
+  const hy = y - 13 * k;
   for (const ex of [-1, 1]) {
-    ctx.fillStyle = "#d07a30";
+    ctx.fillStyle = "#33241a";
     ctx.beginPath();
-    ctx.moveTo(hx + ex * 14 * k - 6 * k, hy - 8 * k);
-    ctx.lineTo(hx + ex * 16 * k, hy - 24 * k);
-    ctx.lineTo(hx + ex * 14 * k + 6 * k, hy - 6 * k);
+    ctx.moveTo(hx + ex * 9 * k - 5 * k, hy - 9 * k);
+    ctx.quadraticCurveTo(hx + ex * 12 * k, hy - 22 * k, hx + ex * 13.5 * k, hy - 22 * k);
+    ctx.quadraticCurveTo(hx + ex * 15 * k, hy - 14 * k, hx + ex * 9 * k + 6 * k, hy - 6 * k);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "#f4b090";
+    ctx.fillStyle = "rgba(150,96,84,0.55)";
     ctx.beginPath();
-    ctx.moveTo(hx + ex * 14 * k - 3 * k, hy - 9 * k);
-    ctx.lineTo(hx + ex * 15.5 * k, hy - 19 * k);
-    ctx.lineTo(hx + ex * 14 * k + 3 * k, hy - 8 * k);
+    ctx.moveTo(hx + ex * 9.5 * k - 2 * k, hy - 10 * k);
+    ctx.quadraticCurveTo(hx + ex * 12 * k, hy - 18 * k, hx + ex * 13 * k, hy - 18 * k);
+    ctx.lineTo(hx + ex * 10 * k + 3 * k, hy - 9 * k);
     ctx.closePath();
     ctx.fill();
   }
-  // shut eyes, a pink nose, a white muzzle and paws
-  ctx.fillStyle = "#fbe6cc";
+  const head = ctx.createRadialGradient(hx + 4 * k, hy - 4 * k, 2 * k, hx, hy, 18 * k);
+  head.addColorStop(0, "#6a4c30");
+  head.addColorStop(1, "#2e2016");
+  ctx.fillStyle = head;
   ctx.beginPath();
-  ctx.ellipse(hx + 1 * k, hy + 6 * k, 9 * k, 6 * k, 0, 0, Math.PI * 2);
+  ctx.ellipse(hx, hy, 16 * k, 12.5 * k, -0.12, 0, Math.PI * 2);
   ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(hx + 14 * k, y - 3 * k, 9 * k, 4 * k, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "#4a2410";
-  ctx.lineWidth = 1.6 * k;
-  for (const ex of [-1, 1]) {
+  // the brow's stripes, the shut eyes, the muzzle and nose
+  ctx.strokeStyle = "rgba(18,10,6,0.6)";
+  ctx.lineWidth = 1.3 * k;
+  for (const dx of [-4, 0, 4]) {
     ctx.beginPath();
-    ctx.arc(hx + ex * 7 * k, hy - 1 * k, 4 * k, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.moveTo(hx + dx * k, hy - 11.5 * k);
+    ctx.lineTo(hx + dx * 0.6 * k, hy - 5.5 * k);
     ctx.stroke();
   }
-  ctx.fillStyle = "#e07a80";
+  ctx.strokeStyle = "rgba(10,6,4,0.85)";
+  ctx.lineWidth = 1.1 * k;
+  for (const ex of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(hx + ex * 3.2 * k, hy - 0.6 * k);
+    ctx.quadraticCurveTo(hx + ex * 6.4 * k, hy + 1.2 * k, hx + ex * 9.4 * k, hy - 1.6 * k);
+    ctx.stroke();
+  }
+  soft(ctx, hx, hy + 5.5 * k, 7 * k, 4.5 * k, "196,176,150", 0.55);
+  ctx.fillStyle = "#6a3c3a";
   ctx.beginPath();
-  ctx.moveTo(hx - 2.5 * k, hy + 3 * k);
-  ctx.lineTo(hx + 2.5 * k, hy + 3 * k);
-  ctx.lineTo(hx, hy + 6 * k);
+  ctx.moveTo(hx - 1.8 * k, hy + 2.6 * k);
+  ctx.lineTo(hx + 1.8 * k, hy + 2.6 * k);
+  ctx.lineTo(hx, hy + 4.8 * k);
   ctx.closePath();
+  ctx.fill();
+  // whiskers, hardly seen
+  ctx.strokeStyle = "rgba(230,220,200,0.3)";
+  ctx.lineWidth = Math.max(0.5, 0.5 * k);
+  for (const ex of [-1, 1]) {
+    for (const dy of [-1, 1.5]) {
+      ctx.beginPath();
+      ctx.moveTo(hx + ex * 4 * k, hy + 5.5 * k);
+      ctx.lineTo(hx + ex * 17 * k, hy + (5.5 + dy * 2) * k);
+      ctx.stroke();
+    }
+  }
+  // a forepaw under its chin
+  const paw = ctx.createLinearGradient(0, y - 6 * k, 0, y);
+  paw.addColorStop(0, "#6a4c30");
+  paw.addColorStop(1, "#2a1c12");
+  ctx.fillStyle = paw;
+  ctx.beginPath();
+  ctx.ellipse(hx + 13 * k, y - 3 * k, 10 * k, 3.6 * k, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.lineCap = "butt";
-  // the lamp's warmth on its back
-  soft(ctx, x + 20 * k, y - 30 * k, 40 * k, 16 * k, WARM, 0.2, "lighter");
 }
 
 // the cat's tail, hanging over the edge of the case; its root at the top
@@ -911,107 +1178,238 @@ function paintTail(L) {
     g.quadraticCurveTo(w * 0.78, h - 6 * k, w * 0.74, h - 18 * k);
   };
   path();
-  g.strokeStyle = "#7a3c14";
-  g.lineWidth = 14 * k;
+  g.strokeStyle = "#1c120a";
+  g.lineWidth = 13 * k;
   g.stroke();
   const fur = g.createLinearGradient(0, 0, w, 0);
-  fur.addColorStop(0, "#f0a050");
-  fur.addColorStop(1, "#c86a24");
+  fur.addColorStop(0, "#4a3422");
+  fur.addColorStop(0.6, "#6a4a2c");
+  fur.addColorStop(1, "#3a281a");
   g.strokeStyle = fur;
   g.lineWidth = 11.5 * k;
   path();
   g.stroke();
   // its rings
-  g.strokeStyle = "rgba(122,56,16,0.55)";
+  g.strokeStyle = "rgba(16,9,5,0.6)";
   g.lineWidth = 11.5 * k;
   g.setLineDash([3.5 * k, 8 * k]);
   path();
   g.stroke();
   g.setLineDash([]);
-  // the cream tip
-  g.fillStyle = "#fbe6cc";
+  // the dark tip
+  g.fillStyle = "#1c120a";
   g.beginPath();
-  g.arc(w * 0.74, h - 18 * k, 5.6 * k, 0, Math.PI * 2);
+  g.arc(w * 0.74, h - 18 * k, 5.2 * k, 0, Math.PI * 2);
   g.fill();
   return c;
 }
 
-// the little round table, its pile of books, the lamp with its pleated
-// shade, the cup of tea
+// the little tripod table: a round mahogany top with a moulded edge on a
+// turned column and three curved legs; on it two books, the lamp with its
+// pleated shade, a cup of coffee on its saucer
 function paintSideTable(ctx, L) {
   const { H, u } = L;
   const t = L.table;
-  const k = 0.22;
+  const k = 0.2; // how round the top looks from where we stand
   const floorY = L.floorY + H * 0.06;
-  soft(ctx, t.x, floorY, t.r * 1.2, t.r * 0.2, "0,0,0", 0.6);
-  // the pedestal and its three feet
-  const pg = ctx.createLinearGradient(t.x - 8 * u, 0, t.x + 8 * u, 0);
-  pg.addColorStop(0, "#2a1206");
-  pg.addColorStop(0.4, "#7a4022");
-  pg.addColorStop(1, "#2a1206");
-  ctx.fillStyle = pg;
+  const edge = 7 * u; // the top's thickness
+  const wood = (x0, x1) => {
+    const g = ctx.createLinearGradient(x0, 0, x1, 0);
+    g.addColorStop(0, "#1c0c05");
+    g.addColorStop(0.3, "#6a3418");
+    g.addColorStop(0.42, "#9a5a30");
+    g.addColorStop(0.6, "#5a2a12");
+    g.addColorStop(1, "#170a04");
+    return g;
+  };
+  // its shadow on the boards, thrown wide by the lamp above
+  soft(ctx, t.x, floorY + 2 * u, t.r * 1.5, t.r * 0.26, "0,0,0", 0.7);
+  // the three legs: the far one first, then the two that come toward us
+  const hub = floorY - 46 * u;
+  const leg = (dx, footY, back) => {
+    const fx = t.x + dx * t.r * 0.74;
+    const w = (back ? 5 : 7) * u;
+    ctx.beginPath();
+    ctx.moveTo(t.x + dx * 4 * u, hub - 16 * u);
+    ctx.bezierCurveTo(t.x + dx * t.r * 0.42, hub - 18 * u, t.x + dx * t.r * 0.5, footY - 12 * u, fx, footY - 5 * u);
+    ctx.quadraticCurveTo(fx + dx * 7 * u, footY - 1 * u, fx + dx * 2 * u, footY);
+    ctx.lineTo(fx - dx * 6 * u, footY);
+    ctx.bezierCurveTo(t.x + dx * t.r * 0.42, footY - 6 * u, t.x + dx * t.r * 0.3, hub + w, t.x + dx * 3 * u, hub + 4 * u);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, hub - 18 * u, 0, footY);
+    g.addColorStop(0, back ? "#3a1c0c" : "#7a4020");
+    g.addColorStop(0.5, back ? "#2a1408" : "#4a2410");
+    g.addColorStop(1, "#140803");
+    ctx.fillStyle = g;
+    ctx.fill();
+    if (!back) {
+      // the light along the top of its curve
+      ctx.strokeStyle = "rgba(255,200,140,0.22)";
+      ctx.lineWidth = Math.max(0.8, 1.3 * u);
+      ctx.beginPath();
+      ctx.moveTo(t.x + dx * 8 * u, hub - 15 * u);
+      ctx.bezierCurveTo(t.x + dx * t.r * 0.42, hub - 17 * u, t.x + dx * t.r * 0.5, footY - 13 * u, fx - dx * 2 * u, footY - 6 * u);
+      ctx.stroke();
+    }
+  };
+  // the far leg, going straight back: seen end on, short
+  ctx.fillStyle = "#1e0e06";
   ctx.beginPath();
-  ctx.moveTo(t.x - 5 * u, t.y);
-  ctx.lineTo(t.x + 5 * u, t.y);
-  ctx.quadraticCurveTo(t.x + 12 * u, (t.y + floorY) / 2, t.x + 7 * u, floorY - 14 * u);
-  ctx.lineTo(t.x - 7 * u, floorY - 14 * u);
-  ctx.quadraticCurveTo(t.x - 12 * u, (t.y + floorY) / 2, t.x - 5 * u, t.y);
+  ctx.moveTo(t.x - 4 * u, hub - 10 * u);
+  ctx.lineTo(t.x + 4 * u, hub - 10 * u);
+  ctx.lineTo(t.x + 5 * u, floorY - 16 * u);
+  ctx.lineTo(t.x - 5 * u, floorY - 16 * u);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = "#3a1a0a";
-  ctx.lineWidth = 5 * u;
-  ctx.lineCap = "round";
-  for (const d of [-1, 0, 1]) {
-    ctx.beginPath();
-    ctx.moveTo(t.x, floorY - 14 * u);
-    ctx.quadraticCurveTo(t.x + d * t.r * 0.4, floorY - 10 * u, t.x + d * t.r * 0.62, floorY + (d === 0 ? 5 : -2) * u);
-    ctx.stroke();
-  }
-  ctx.lineCap = "butt";
-  // the top: a round of mahogany, its edge
-  ctx.fillStyle = "#2a1206";
+  leg(-1, floorY - 2 * u, false);
+  leg(1, floorY + 3 * u, false);
+  // the column, turned on the lathe: a ring under the top, a long vase, a
+  // collar where the legs join
+  const top = t.y + edge;
+  const profile = [
+    [0, 10],
+    [0.04, 10],
+    [0.07, 5],
+    [0.12, 4.5],
+    [0.16, 7],
+    [0.2, 4],
+    [0.34, 5],
+    [0.56, 10.5],
+    [0.7, 11],
+    [0.8, 6.5],
+    [0.84, 9],
+    [0.88, 9],
+    [0.92, 6],
+    [1, 7],
+  ];
+  const colH = hub - top;
   ctx.beginPath();
-  ctx.ellipse(t.x, t.y + 6 * u, t.r, t.r * k, 0, 0, Math.PI * 2);
+  profile.forEach(([f, w], i) => {
+    const y = top + colH * f;
+    if (i) ctx.lineTo(t.x + w * u, y);
+    else ctx.moveTo(t.x + w * u, y);
+  });
+  for (let i = profile.length - 1; i >= 0; i--) ctx.lineTo(t.x - profile[i][1] * u, top + colH * profile[i][0]);
+  ctx.closePath();
+  ctx.fillStyle = wood(t.x - 11 * u, t.x + 11 * u);
   ctx.fill();
-  const tg = ctx.createLinearGradient(t.x - t.r, 0, t.x + t.r, 0);
-  tg.addColorStop(0, "#5a2c14");
-  tg.addColorStop(0.5, "#8a4a24");
-  tg.addColorStop(1, "#4a2410");
+  // the rings' shadows, the shade of the top over it
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  for (const f of [0.07, 0.2, 0.8, 0.92]) ctx.fillRect(t.x - 11 * u, top + colH * f, 22 * u, Math.max(1, 1.5 * u));
+  const under = ctx.createLinearGradient(0, top, 0, top + colH * 0.4);
+  under.addColorStop(0, "rgba(0,0,0,0.75)");
+  under.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = under;
+  ctx.fillRect(t.x - 12 * u, top, 24 * u, colH * 0.4);
+  // the top: its underside's shadow, its moulded edge, the polished round
+  soft(ctx, t.x, t.y + edge + 5 * u, t.r * 0.9, t.r * k * 0.8, "0,0,0", 0.6);
+  ctx.fillStyle = "#170a04";
+  ctx.beginPath();
+  ctx.ellipse(t.x, t.y + edge, t.r * 0.97, t.r * k * 0.97, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = wood(t.x - t.r, t.x + t.r);
+  ctx.beginPath();
+  ctx.ellipse(t.x, t.y + edge * 0.5, t.r, t.r * k, 0, 0, Math.PI);
+  ctx.lineTo(t.x - t.r, t.y);
+  ctx.lineTo(t.x + t.r, t.y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+  ctx.lineWidth = Math.max(0.8, u);
+  ctx.beginPath();
+  ctx.ellipse(t.x, t.y + edge * 0.55, t.r * 0.995, t.r * k, 0, 0.05 * Math.PI, 0.95 * Math.PI);
+  ctx.stroke();
+  const tg = ctx.createRadialGradient(L.lamp.x, t.y - t.r * k * 0.2, t.r * 0.05, t.x, t.y, t.r);
+  tg.addColorStop(0, "#b06a38");
+  tg.addColorStop(0.45, "#7a3e1c");
+  tg.addColorStop(1, "#3a1a0a");
   ctx.fillStyle = tg;
   ctx.beginPath();
   ctx.ellipse(t.x, t.y, t.r, t.r * k, 0, 0, Math.PI * 2);
   ctx.fill();
-  // two books under the lamp
+  ctx.save();
+  ctx.clip();
+  // the figure in the veneer, the lamp lying in the polish
+  const rnd = lcg(633);
+  ctx.lineWidth = Math.max(0.6, 0.8 * u);
+  for (let i = 0; i < 16; i++) {
+    const gy = t.y - t.r * k + rnd() * t.r * k * 2;
+    ctx.strokeStyle = rnd() < 0.6 ? "rgba(30,12,4,0.3)" : "rgba(255,200,140,0.08)";
+    ctx.beginPath();
+    ctx.moveTo(t.x - t.r, gy);
+    ctx.bezierCurveTo(t.x - t.r * 0.3, gy + (rnd() - 0.5) * 5 * u, t.x + t.r * 0.3, gy + (rnd() - 0.5) * 5 * u, t.x + t.r, gy + (rnd() - 0.5) * 3 * u);
+    ctx.stroke();
+  }
+  soft(ctx, L.lamp.x + t.r * 0.1, t.y + t.r * k * 0.15, t.r * 0.6, t.r * k * 0.55, "255,214,150", 0.4, "lighter");
+  ctx.restore();
+  ctx.strokeStyle = "rgba(255,214,160,0.35)";
+  ctx.lineWidth = Math.max(0.8, 1.2 * u);
+  ctx.beginPath();
+  ctx.ellipse(t.x, t.y, t.r * 0.995, t.r * k * 0.99, 0, 0.1 * Math.PI, 0.9 * Math.PI);
+  ctx.stroke();
+  // two books under the lamp, lying a little askew
   const lp = L.lamp;
-  for (const [dy, w, col] of [
-    [0, 0.95, "#2a4a3a"],
-    [-9, 0.8, "#6a1e22"],
+  soft(ctx, lp.x + 4 * u, lp.base + 2 * u, t.r * 0.62, 6 * u, "0,0,0", 0.6);
+  for (const [dy, w, dx, col] of [
+    [0, 1, 0, [34, 62, 50]],
+    [-10, 0.84, -3, [92, 26, 30]],
   ]) {
     const bw = t.r * w;
-    ctx.fillStyle = col;
-    ctx.fillRect(lp.x - bw / 2, lp.base + dy * u - 9 * u, bw, 9 * u);
-    ctx.fillStyle = "rgba(232,196,106,0.5)";
-    ctx.fillRect(lp.x - bw / 2 + 3 * u, lp.base + dy * u - 5 * u, bw - 6 * u, Math.max(1, u));
+    const x0 = lp.x - bw / 2 + dx * u;
+    const y0 = lp.base + dy * u - 10 * u;
+    const cg = ctx.createLinearGradient(0, y0, 0, y0 + 10 * u);
+    cg.addColorStop(0, rgb(col[0] * 1.5, col[1] * 1.5, col[2] * 1.5));
+    cg.addColorStop(0.25, rgb(col[0], col[1], col[2]));
+    cg.addColorStop(1, rgb(col[0] * 0.4, col[1] * 0.4, col[2] * 0.4));
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.roundRect(x0, y0, bw, 10 * u, [2 * u, 1, 1, 2 * u]);
+    ctx.fill();
+    // the page block showing at the fore-edge, the gilt line on the cover
+    ctx.fillStyle = "#cdbb92";
+    ctx.fillRect(x0 + bw - 5 * u, y0 + 2 * u, 4 * u, 6.4 * u);
+    ctx.fillStyle = "rgba(60,44,20,0.4)";
+    for (let i = 1; i < 4; i++) ctx.fillRect(x0 + bw - 5 * u, y0 + 2 * u + i * 1.6 * u, 4 * u, Math.max(0.5, 0.4 * u));
+    ctx.fillStyle = "rgba(214,176,92,0.55)";
+    ctx.fillRect(x0 + 5 * u, y0 + 4.6 * u, bw - 14 * u, Math.max(1, 0.9 * u));
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(x0 + 3 * u, y0, Math.max(1, u), 10 * u);
   }
   // the lamp: a brass urn, its stem, the pleated shade
-  const by = lp.base - 18 * u;
-  const bg = ctx.createLinearGradient(lp.x - 16 * u, 0, lp.x + 16 * u, 0);
-  bg.addColorStop(0, "#6a4810");
-  bg.addColorStop(0.35, "#f0d080");
-  bg.addColorStop(1, "#5a3a0c");
+  const by = lp.base - 20 * u;
+  const bg = ctx.createLinearGradient(lp.x - 18 * u, 0, lp.x + 18 * u, 0);
+  bg.addColorStop(0, "#4a300a");
+  bg.addColorStop(0.22, "#b88a34");
+  bg.addColorStop(0.38, "#f6e0a0");
+  bg.addColorStop(0.58, "#a87a2a");
+  bg.addColorStop(1, "#3a2406");
+  ctx.fillStyle = "#2a1a06";
+  ctx.beginPath();
+  ctx.ellipse(lp.x, by + 2.5 * u, 16 * u, 4.5 * u, 0, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = bg;
   ctx.beginPath();
-  ctx.ellipse(lp.x, by, 14 * u, 4 * u, 0, 0, Math.PI * 2);
+  ctx.ellipse(lp.x, by, 16 * u, 4.5 * u, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(lp.x - 6 * u, by);
-  ctx.bezierCurveTo(lp.x - 22 * u, by - 18 * u, lp.x - 16 * u, by - 40 * u, lp.x - 4 * u, by - 48 * u);
+  ctx.moveTo(lp.x - 6 * u, by - 1 * u);
+  ctx.bezierCurveTo(lp.x - 24 * u, by - 18 * u, lp.x - 17 * u, by - 40 * u, lp.x - 4 * u, by - 48 * u);
+  ctx.lineTo(lp.x - 4 * u, by - 54 * u);
+  ctx.lineTo(lp.x + 4 * u, by - 54 * u);
   ctx.lineTo(lp.x + 4 * u, by - 48 * u);
-  ctx.bezierCurveTo(lp.x + 16 * u, by - 40 * u, lp.x + 22 * u, by - 18 * u, lp.x + 6 * u, by);
+  ctx.bezierCurveTo(lp.x + 17 * u, by - 40 * u, lp.x + 24 * u, by - 18 * u, lp.x + 6 * u, by - 1 * u);
   ctx.closePath();
   ctx.fill();
-  ctx.fillRect(lp.x - 2 * u, lp.shadeBot, 4 * u, by - 48 * u - lp.shadeBot);
-  // the shade, lit from within
+  ctx.fillRect(lp.x - 6.5 * u, by - 50 * u, 13 * u, 2.4 * u);
+  ctx.fillRect(lp.x - 1.8 * u, lp.shadeBot, 3.6 * u, by - 54 * u - lp.shadeBot);
+  soft(ctx, lp.x - 6 * u, by - 26 * u, 4 * u, 9 * u, "255,255,240", 0.55, "lighter");
+  // the urn's own shade, under the lampshade
+  const us = ctx.createLinearGradient(0, lp.shadeBot, 0, by - 30 * u);
+  us.addColorStop(0, "rgba(40,20,0,0.5)");
+  us.addColorStop(1, "rgba(40,20,0,0)");
+  ctx.fillStyle = us;
+  ctx.fillRect(lp.x - 5 * u, lp.shadeBot, 10 * u, by - 30 * u - lp.shadeBot);
+  // the shade, lit from within: brightest round the bulb
   const sTop = lp.shadeTop;
   const sBot = lp.shadeBot;
   const tw = 34 * u;
@@ -1023,68 +1421,181 @@ function paintSideTable(ctx, L) {
   ctx.quadraticCurveTo(lp.x, sBot + 8 * u, lp.x - bw2, sBot);
   ctx.closePath();
   const sg = ctx.createLinearGradient(lp.x - bw2, 0, lp.x + bw2, 0);
-  sg.addColorStop(0, "#c88a3c");
-  sg.addColorStop(0.45, "#ffe2a0");
-  sg.addColorStop(1, "#b0702c");
+  sg.addColorStop(0, "#a8702c");
+  sg.addColorStop(0.5, "#f0cc88");
+  sg.addColorStop(1, "#98601e");
   ctx.fillStyle = sg;
   ctx.fill();
   ctx.save();
   ctx.clip();
-  ctx.strokeStyle = "rgba(140,80,20,0.35)";
+  soft(ctx, lp.x, sBot - 20 * u, 44 * u, 40 * u, "255,244,200", 0.75, "lighter");
   ctx.lineWidth = Math.max(1, u);
-  for (let i = -6; i <= 6; i++) {
+  for (let i = -9; i <= 9; i++) {
+    ctx.strokeStyle = i % 2 ? "rgba(120,66,14,0.32)" : "rgba(255,240,200,0.14)";
     ctx.beginPath();
-    ctx.moveTo(lp.x + (i / 6) * tw, sTop);
-    ctx.lineTo(lp.x + (i / 6) * bw2, sBot + 4 * u);
+    ctx.moveTo(lp.x + (i / 9) * tw, sTop);
+    ctx.lineTo(lp.x + (i / 9) * bw2, sBot + 5 * u);
     ctx.stroke();
   }
   ctx.restore();
-  ctx.fillStyle = "#8a5a20";
-  ctx.fillRect(lp.x - tw, sTop - 2 * u, tw * 2, 3 * u);
+  ctx.fillStyle = "#6a4418";
+  ctx.fillRect(lp.x - tw - u, sTop - 2 * u, tw * 2 + 2 * u, 3.4 * u);
   ctx.beginPath();
-  ctx.ellipse(lp.x, sBot + 2 * u, bw2, 4 * u, 0, 0, Math.PI);
-  ctx.strokeStyle = "#8a5a20";
+  ctx.moveTo(lp.x - bw2, sBot);
+  ctx.quadraticCurveTo(lp.x, sBot + 8 * u, lp.x + bw2, sBot);
+  ctx.strokeStyle = "#6a4418";
   ctx.lineWidth = 3 * u;
   ctx.stroke();
-  // the cup of tea on its saucer
+  // the cup of coffee on its saucer, a spoon laid by it
   const cp = L.cup;
-  ctx.fillStyle = "#e8e2d4";
+  const q = 1.05 * u;
+  soft(ctx, cp.x + 5 * q, cp.y + 2 * q, 24 * q, 5 * q, "0,0,0", 0.6);
+  // the saucer: a rim, a well
+  const china = ctx.createLinearGradient(cp.x - 20 * q, 0, cp.x + 20 * q, 0);
+  china.addColorStop(0, "#8e8778");
+  china.addColorStop(0.35, "#f6f0e2");
+  china.addColorStop(0.6, "#d4ccba");
+  china.addColorStop(1, "#7a7366");
+  ctx.fillStyle = "#5e584c";
   ctx.beginPath();
-  ctx.ellipse(cp.x, cp.y, 20 * u, 5 * u, 0, 0, Math.PI * 2);
+  ctx.ellipse(cp.x, cp.y + 1.4 * q, 19 * q, 4.6 * q, 0, 0, Math.PI * 2);
   ctx.fill();
-  const cg = ctx.createLinearGradient(cp.x - 12 * u, 0, cp.x + 12 * u, 0);
-  cg.addColorStop(0, "#c8c0b0");
-  cg.addColorStop(0.4, "#fffaf0");
-  cg.addColorStop(1, "#b8b0a0");
-  ctx.fillStyle = cg;
+  ctx.fillStyle = china;
   ctx.beginPath();
-  ctx.moveTo(cp.x - 12 * u, cp.y - 16 * u);
-  ctx.lineTo(cp.x + 12 * u, cp.y - 16 * u);
-  ctx.quadraticCurveTo(cp.x + 11 * u, cp.y - 1 * u, cp.x, cp.y - 1 * u);
-  ctx.quadraticCurveTo(cp.x - 11 * u, cp.y - 1 * u, cp.x - 12 * u, cp.y - 16 * u);
+  ctx.ellipse(cp.x, cp.y, 20 * q, 4.8 * q, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(176,140,60,0.8)";
+  ctx.lineWidth = Math.max(0.6, 0.7 * q);
+  ctx.beginPath();
+  ctx.ellipse(cp.x, cp.y, 19.2 * q, 4.4 * q, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  soft(ctx, cp.x, cp.y, 11 * q, 2.6 * q, "60,50,36", 0.4);
+  // the spoon
+  ctx.save();
+  ctx.translate(cp.x - 10 * q, cp.y + 1.6 * q);
+  ctx.rotate(-0.08);
+  const silver = ctx.createLinearGradient(0, -1.5 * q, 0, 1.5 * q);
+  silver.addColorStop(0, "#f4f2ea");
+  silver.addColorStop(1, "#6e6c66");
+  ctx.fillStyle = silver;
+  ctx.fillRect(-9 * q, -0.6 * q, 14 * q, 1.2 * q);
+  ctx.beginPath();
+  ctx.ellipse(6 * q, 0, 3.4 * q, 1.5 * q, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // the cup: a bowl narrowing to its foot, a gilt rim, the handle
+  ctx.strokeStyle = "#cfc7b6";
+  ctx.lineWidth = 2.4 * q;
+  ctx.beginPath();
+  ctx.ellipse(cp.x + 12.5 * q, cp.y - 9.5 * q, 5 * q, 4.6 * q, 0.2, -Math.PI * 0.55, Math.PI * 0.6);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,250,0.5)";
+  ctx.lineWidth = 0.7 * q;
+  ctx.beginPath();
+  ctx.ellipse(cp.x + 12.5 * q, cp.y - 9.5 * q, 5.6 * q, 5.2 * q, 0.2, -Math.PI * 0.5, 0);
+  ctx.stroke();
+  ctx.fillStyle = china;
+  ctx.beginPath();
+  ctx.moveTo(cp.x - 12 * q, cp.y - 16 * q);
+  ctx.bezierCurveTo(cp.x - 12 * q, cp.y - 6 * q, cp.x - 8 * q, cp.y - 2 * q, cp.x - 5 * q, cp.y - 1.6 * q);
+  ctx.lineTo(cp.x - 5.5 * q, cp.y - 0.2 * q);
+  ctx.quadraticCurveTo(cp.x, cp.y + 1.2 * q, cp.x + 5.5 * q, cp.y - 0.2 * q);
+  ctx.lineTo(cp.x + 5 * q, cp.y - 1.6 * q);
+  ctx.bezierCurveTo(cp.x + 8 * q, cp.y - 2 * q, cp.x + 12 * q, cp.y - 6 * q, cp.x + 12 * q, cp.y - 16 * q);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = "#6a3a14";
+  ctx.save();
+  ctx.clip();
+  // a band of blue pattern round it, the shade under its belly
+  ctx.strokeStyle = "rgba(40,64,120,0.7)";
+  ctx.lineWidth = 0.8 * q;
+  for (const dy of [-12.6, -9.8]) {
+    ctx.beginPath();
+    ctx.ellipse(cp.x, cp.y + dy * q, 12.4 * q, 2.4 * q, 0, 0, Math.PI);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "rgba(40,64,120,0.6)";
+  for (let i = -4; i <= 4; i++) {
+    ctx.beginPath();
+    ctx.arc(cp.x + i * 2.7 * q, cp.y - 9 * q + Math.sqrt(Math.max(0, 1 - (i / 4.6) ** 2)) * 2.3 * q, 0.7 * q, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const belly = ctx.createLinearGradient(0, cp.y - 8 * q, 0, cp.y);
+  belly.addColorStop(0, "rgba(30,24,14,0)");
+  belly.addColorStop(1, "rgba(30,24,14,0.5)");
+  ctx.fillStyle = belly;
+  ctx.fillRect(cp.x - 13 * q, cp.y - 8 * q, 26 * q, 9 * q);
+  ctx.restore();
+  // its mouth: the rim, the far wall inside, the coffee and the lamp in it
+  ctx.fillStyle = "#e8e0ce";
   ctx.beginPath();
-  ctx.ellipse(cp.x, cp.y - 16 * u, 11 * u, 3 * u, 0, 0, Math.PI * 2);
+  ctx.ellipse(cp.x, cp.y - 16 * q, 12 * q, 3.2 * q, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "#e8e2d4";
-  ctx.lineWidth = 2.5 * u;
+  ctx.fillStyle = "#2a1408";
   ctx.beginPath();
-  ctx.ellipse(cp.x + 14 * u, cp.y - 10 * u, 5 * u, 4.5 * u, 0, -Math.PI / 2, Math.PI / 2);
-  ctx.stroke();
-  ctx.strokeStyle = "rgba(60,90,150,0.6)";
-  ctx.lineWidth = Math.max(1, u);
+  ctx.ellipse(cp.x, cp.y - 15.4 * q, 10.6 * q, 2.5 * q, 0, 0, Math.PI * 2);
+  ctx.fill();
+  soft(ctx, cp.x - 3 * q, cp.y - 15.8 * q, 4.5 * q, 1 * q, "255,220,160", 0.6, "lighter");
+  ctx.strokeStyle = "rgba(176,140,60,0.9)";
+  ctx.lineWidth = Math.max(0.6, 0.7 * q);
   ctx.beginPath();
-  ctx.moveTo(cp.x - 11 * u, cp.y - 12 * u);
-  ctx.lineTo(cp.x + 11 * u, cp.y - 12 * u);
+  ctx.ellipse(cp.x, cp.y - 16 * q, 12 * q, 3.2 * q, 0, 0, Math.PI * 2);
   ctx.stroke();
+}
+
+// the dark of the room, away from the lamp; the moon keeps a little of the
+// window's side
+function paintGloom(ctx, L) {
+  const { W, H, u } = L;
+  const step = Math.max(6, Math.round(10 * u));
+  for (let y = 0; y < H; y += step) {
+    for (let x = 0; x < W; x += step) {
+      const a = gloom(L, x + step / 2, y + step / 2);
+      if (a <= 0.004) continue;
+      ctx.fillStyle = `rgba(5,7,11,${a.toFixed(3)})`;
+      ctx.fillRect(x, y, step, step);
+    }
+  }
+  const win = L.win;
+  soft(ctx, win.x + win.w * 0.5, (win.y0 + win.y1) / 2, win.w * 1.1, (win.y1 - win.y0) * 0.6, MOON, 0.1, "lighter");
+  // the moon along the near side of the case
+  const c = L.case;
+  const edge = ctx.createLinearGradient(c.x0, 0, c.x0 + c.side * 1.4, 0);
+  edge.addColorStop(0, `rgba(${MOON},0.1)`);
+  edge.addColorStop(1, `rgba(${MOON},0)`);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.fillStyle = edge;
+  ctx.fillRect(c.x0, c.innerTop, c.side * 1.4, c.innerBot - c.innerTop);
+  ctx.restore();
 }
 
 // the lamp's warm light over the room, the moon's from the window
 function paintLight(ctx, L) {
-  const { W, H } = L;
+  const { W, H, u } = L;
   const lp = L.lamp;
+  // what gets out of the shade: a cone up the wall, a wider one down
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (const [y0, y1, w0, w1, a] of [
+    [lp.shadeTop, lp.shadeTop - H * 0.5, 34 * u, 200 * u, 0.22],
+    [lp.shadeBot, lp.shadeBot + H * 0.34, 58 * u, 240 * u, 0.2],
+  ]) {
+    const g2 = ctx.createLinearGradient(0, y0, 0, y1);
+    g2.addColorStop(0, `rgba(${WARM},${a})`);
+    g2.addColorStop(1, `rgba(${WARM},0)`);
+    ctx.fillStyle = g2;
+    ctx.filter = `blur(${Math.round(14 * u)}px)`;
+    polygon(ctx, [
+      { x: lp.x - w0, y: y0 },
+      { x: lp.x + w0, y: y0 },
+      { x: lp.x + w1, y: y1 },
+      { x: lp.x - w1, y: y1 },
+    ]);
+    ctx.fill();
+  }
+  ctx.filter = "none";
+  ctx.restore();
   // the light thrown up and down from the shade
   soft(ctx, lp.x, lp.shadeTop - H * 0.08, W * 0.12, H * 0.18, WARM, 0.25, "lighter");
   soft(ctx, lp.x, lp.base, W * 0.2, H * 0.12, WARM, 0.35, "lighter");
@@ -1104,10 +1615,12 @@ function paintLight(ctx, L) {
   ctx.closePath();
   const g = ctx.createLinearGradient(0, win.y1, 0, H);
   g.addColorStop(0, `rgba(${MOON},0)`);
-  g.addColorStop(0.5, `rgba(${MOON},0.08)`);
-  g.addColorStop(1, `rgba(${MOON},0.02)`);
+  g.addColorStop(0.5, `rgba(${MOON},0.16)`);
+  g.addColorStop(1, `rgba(${MOON},0.07)`);
   ctx.fillStyle = g;
+  ctx.filter = `blur(${Math.round(10 * L.u)}px)`;
   ctx.fill();
+  ctx.filter = "none";
   ctx.restore();
   soft(ctx, win.x + win.w / 2, (win.y0 + win.y1) / 2, win.w * 1.6, (win.y1 - win.y0) * 0.8, MOON, 0.1, "lighter");
 }

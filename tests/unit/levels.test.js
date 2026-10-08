@@ -117,7 +117,7 @@ test("the catalog preserves the current game's accepted answers and Info require
   assert.deepEqual(LEVEL_METADATA.map(({ code }) => code), [
     "CABBAGE", "FIBO", "19334488111", "ROTOR", "HEADACHE", "GEORGE", "POWER", "VOID",
     "HTTPS", "ORION", "FACADE", "EXIT", "PI", "GO", "DEBRIEFING", "ESCAPE", "SILVER", "SOIL", "NIGHT",
-    "LOST", "SIGHT", "FOCUS", "BLIND", "TRAIN", "1024", "DROP", "FACE", "PING", "CAGE", "SPACE", "MOTH", "WAKE", "CITY",
+    "LOST", "SIGHT", "FOCUS", "BLIND", "SIGNAL", "1024", "DROP", "FACE", "PING", "CAGE", "SPACE", "MOTH", "WAKE", "CITY",
   ]);
   assert.deepEqual(LEVEL_METADATA.filter(({ hint }) => hint.tool).map(({ key }) => key),
     ["Lightswitch", "Modem", "Telescope", "Wires", "Crossing", "Flags", "TapCode", "Fireworks", "Chemistry", "Metro", "Resistors", "Genome"]);

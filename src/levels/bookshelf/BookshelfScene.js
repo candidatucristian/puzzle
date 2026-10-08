@@ -83,7 +83,7 @@ export default class BookshelfScene extends BasePuzzleScene {
     });
     for (let i = 0; i < 3; i++) {
       const s = this.add
-        .image(L.cup.x + (i - 1) * 4 * L.u, L.cup.y - 16 * L.u, k.steam)
+        .image(L.cup.x + (i - 1) * 4 * L.u, L.cup.y - 20 * L.u, k.steam)
         .setOrigin(0.5, 1)
         .setScale(0.35 * L.u)
         .setAlpha(0)
@@ -91,7 +91,7 @@ export default class BookshelfScene extends BasePuzzleScene {
       this.ambientObject(s);
       this.ambientTween({
         targets: s,
-        y: { from: L.cup.y - 16 * L.u, to: L.cup.y - 40 * L.u },
+        y: { from: L.cup.y - 20 * L.u, to: L.cup.y - 46 * L.u },
         alpha: { from: 0.9, to: 0 },
         scaleY: { from: 0.3 * L.u, to: 0.5 * L.u },
         duration: 2600,

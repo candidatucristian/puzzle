@@ -59,12 +59,12 @@ test("the missing balls lie in the pockets, I to V: BLIND", () => {
   assert.equal(ballColour(8), "#141414");
 });
 
-test("the lit line's stations are the phonetic alphabet: TRAIN", () => {
-  assert.deepEqual([...METRO_STATIONS], ["Tango Square", "Romeo Boulevard", "Alpha Park", "India Docks", "November Street"]);
+test("the line's stations are the phonetic alphabet: SIGNAL", () => {
+  assert.deepEqual([...METRO_STATIONS], ["Sierra Heights", "India Docks", "Golf Links", "November Street", "Alpha Park", "Lima Road"]);
   assert.equal(NATO.length, 26);
   assert.equal(readLine(), METRO_WORD);
   assert.equal(code("Metro"), METRO_WORD);
-  assert.deepEqual(METRO_STATIONS.map(stationWord), ["Tango", "Romeo", "Alpha", "India", "November"]);
+  assert.deepEqual(METRO_STATIONS.map(stationWord), ["Sierra", "India", "Golf", "November", "Alpha", "Lima"]);
   // both spellings of the first letter, and the official ones, read the same
   assert.equal(natoLetter("Alpha"), "A");
   assert.equal(natoLetter("alfa"), "A");
@@ -72,7 +72,7 @@ test("the lit line's stations are the phonetic alphabet: TRAIN", () => {
   assert.equal(natoLetter("Zulu"), "Z");
   assert.throws(() => natoLetter("Square"), RangeError);
   // no station on the lit line can be read two ways
-  assert.equal(new Set(METRO_STATIONS.map((s) => natoLetter(stationWord(s)))).size, 5);
+  assert.equal(new Set(METRO_STATIONS.map((s) => natoLetter(stationWord(s)))).size, 6);
 });
 
 test("the first bands of the four resistors read 1024", () => {
