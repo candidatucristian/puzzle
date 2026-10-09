@@ -185,7 +185,7 @@
 
 #options-modal .comfort-row select:focus,
 #options-modal .comfort-row select:focus-visible {
-  border-color: #51514c;
+  border-color: transparent;
   outline: none;
   box-shadow: none;
 }
@@ -233,7 +233,6 @@
   line-height: 1.4;
 }
 
-#btn-close-options,
 #btn-close-howto {
   border-color: var(--ui-accent);
   background: var(--ui-accent);
@@ -263,29 +262,51 @@
   line-height: 1.6;
 }
 
-/* Guidance is an open document: the footer stays outside its scrolling pages. */
-#info-modal .modal-content {
-  width: min(640px, 100%);
-  gap: 16px;
-  overflow: hidden;
+/* Hints read as one open page, with space rather than boxes between entries. */
+#info-modal {
+  background: rgb(0 0 0 / 66%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-
+#info-modal .modal-content {
+  width: min(620px, 100%);
+  height: min(480px, calc(100dvh - 64px));
+  max-height: calc(100dvh - 64px);
+  padding: 32px 38px 24px;
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: #141414;
+  box-shadow: 0 24px 90px rgb(0 0 0 / 38%);
+}
+.hints-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+#info-modal .hints-heading h2 {
+  margin: 0;
+  color: #deded9;
+  font: 400 calc(26px * var(--reading-scale, 1))/1.2 var(--ui-font);
+  letter-spacing: -.035em;
+}
+#btn-close-info {
+  align-self: center;
+  width: 40px;
+  min-height: 40px;
+  margin-right: -10px;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: #a4a49e;
+}
+#btn-close-info:hover { background: #222; color: #efefe8; }
 .modal-kicker {
   margin: 0;
-  color: var(--ui-brass);
-  font: 400 calc(11px * var(--reading-scale, 1))/1.6 var(--ui-mono);
-  letter-spacing: .06em;
+  color: var(--ui-muted);
+  font: 400 calc(12px * var(--reading-scale, 1))/1.5 var(--ui-font);
+  letter-spacing: 0;
 }
-
-#info-requires {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
+#hint-room { margin-top: 7px; padding-right: 24px; }
+#info-requires { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 8px; }
 #info-requires[hidden] { display: none; }
-
 .info-badge {
   display: inline-flex;
   align-items: center;
@@ -297,70 +318,84 @@
   font-size: calc(11px * var(--reading-scale, 1));
   line-height: 1.5;
 }
-
-.hint-intro {
-  margin: 0;
-  color: var(--ui-muted);
-  font-size: calc(13px * var(--reading-scale, 1));
-  line-height: 1.65;
-}
-
+#info-requires .info-badge { border: 0; padding: 0; background: none; color: #aaa9a2; font-size: calc(11px * var(--reading-scale, 1)); }
 #hint-list {
   display: grid;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   align-content: start;
-  gap: 12px;
-  min-height: 64px;
-  margin: 0;
-  padding: 0 8px 0 0;
+  gap: 30px;
+  min-height: 0;
+  margin: 30px 0 24px;
+  padding: 2px 14px 8px 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   list-style: none;
-  counter-reset: hint;
   scrollbar-width: thin;
-  scrollbar-color: #454541 transparent;
+  scrollbar-color: #3a3a36 transparent;
 }
-
-#hint-list li {
-  padding: 17px 20px;
-  border: 1px solid var(--ui-border);
-  border-left: 2px solid #92928a;
-  background: rgb(5 5 5 / 35%);
-  counter-increment: hint;
-}
-
+#hint-list li { padding: 0; border: 0; background: none; }
 .hint-step-label {
   display: block;
-  color: var(--ui-brass);
-  font: 400 calc(11px * var(--reading-scale, 1))/1.6 var(--ui-mono);
-  letter-spacing: .04em;
+  color: #a5a59e;
+  font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
+  letter-spacing: 0;
 }
-
-.hint-step-label::before { content: "0" counter(hint) "  /  "; }
-
 #hint-list p {
-  margin: 9px 0 0;
-  color: var(--ui-text);
-  font-size: calc(15px * var(--reading-scale, 1));
-  line-height: 1.75;
+  margin: 8px 0 0;
+  color: #ddddd6;
+  font-size: calc(16px * var(--reading-scale, 1));
+  font-weight: 400;
+  line-height: 1.8;
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
-
 #hint-count {
   margin: 0;
-  color: var(--ui-muted);
-  font: 400 calc(11px * var(--reading-scale, 1))/1.6 var(--ui-mono);
+  color: #92928b;
+  font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
 }
-
 #info-modal .modal-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin: 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--ui-border);
+  padding: 0;
+  border: 0;
 }
-
-#btn-next-hint { flex: 1 1 auto; }
-#btn-close-info { flex: 0 1 auto; min-width: 114px; }
+#info-modal #btn-next-hint {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 10px 14px;
+  margin-right: -14px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #deded6;
+  font-size: calc(12px * var(--reading-scale, 1));
+}
+#btn-next-hint:not(:disabled)::after { content: '→'; position: static; margin-left: 7px; background: none; font-size: 17px; }
+#info-modal #btn-next-hint:hover:not(:disabled) { background: #242423; }
+#info-modal #btn-next-hint:disabled { visibility: hidden; }
+@media (max-width: 640px) {
+  #info-modal .modal-content { padding: 24px; }
+}
+@media (max-height: 560px) {
+  #info-modal .modal-content { height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); padding: 16px 24px 12px; }
+  #info-modal .hints-heading h2 { font-size: calc(21px * var(--reading-scale, 1)); }
+  #btn-close-info { min-height: 36px; width: 36px; padding: 8px; margin-right: -8px; }
+  #hint-room { margin-top: 0; font-size: calc(11px * var(--reading-scale, 1)); }
+  #info-requires { margin-top: 4px; }
+  #hint-list { margin: 14px 0 10px; gap: 22px; padding-bottom: 4px; }
+  #hint-list p { margin-top: 6px; line-height: 1.65; font-size: calc(14px * var(--reading-scale, 1)); }
+  #info-modal #btn-next-hint { min-height: 38px; padding-block: 8px; }
+}
+@media (max-width: 420px) {
+  #info-modal .modal-content { padding-inline: 20px; }
+  #info-modal .modal-actions { gap: 8px; }
+  #hint-count, #info-modal #btn-next-hint { font-size: calc(10px * var(--reading-scale, 1)); }
+}
 
 /* Beginner help uses the same controls as the actual interface. */
 .modal-content.howto-content {
@@ -567,12 +602,6 @@
   :is(#options-modal, #howto-modal, #info-modal) { padding: 12px; }
   .modal-content { max-height: calc(100dvh - 24px); padding: 18px 24px; gap: 14px; }
   .modal-content h2 { font-size: calc(30px * var(--reading-scale, 1)); }
-  #info-modal .modal-content { gap: 9px; }
-  #info-modal .hint-intro, #info-modal .ornate-rule { display: none; }
-  #info-modal .modal-actions { padding-top: 9px; }
-  #hint-list { min-height: 48px; }
-  #hint-list li { padding: 12px 16px; }
-  #hint-list p { margin-top: 6px; line-height: 1.6; }
   .modal-actions .menu-btn { min-height: 40px; padding: 9px 14px; }
   .howto-body { gap: 22px; }
   .completion-card { padding: 22px 32px; gap: 16px; }
@@ -585,14 +614,6 @@
 
 @media (max-height: 360px) {
   .modal-content { padding: 12px 20px; }
-  #info-modal .modal-content { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(48px, 1fr) auto auto; gap: 7px 12px; }
-  #info-modal .modal-kicker { grid-column: 1; grid-row: 1; align-self: center; font-size: calc(10px * var(--reading-scale, 1)); }
-  #info-modal h2 { grid-column: 1 / -1; grid-row: 2; font-size: calc(25px * var(--reading-scale, 1)); }
-  #info-requires { grid-column: 2; grid-row: 1; justify-content: end; }
-  #info-requires .info-badge { padding: 3px 7px; font-size: calc(10px * var(--reading-scale, 1)); }
-  #hint-list { grid-column: 1 / -1; grid-row: 3; }
-  #hint-count { grid-column: 1 / -1; grid-row: 4; }
-  #info-modal .modal-actions { grid-column: 1 / -1; grid-row: 5; }
   .completion-card h1 { font-size: 44px; }
   .completion-message { font-size: calc(14px * var(--reading-scale, 1)); }
 }
@@ -603,21 +624,144 @@
   :is(#options-modal, #howto-modal, #info-modal, #completion-screen, #intro-screen, #intro-line, #intro-title, #level-veil, .veil-content) { transition: none; }
 }
 
-/* On a short screen the options scroll: Mute and Close stay in reach at the
-   panel's foot, the settings passing under them. */
-#options-modal .modal-actions {
-  position: sticky;
-  /* sticky keeps to the panel's content box: reach down over its padding */
-  bottom: -28px;
-  z-index: 1;
-  margin-inline: -10px;
-  padding: 12px 10px 28px;
-  margin-bottom: -16px;
-  background: var(--ui-panel);
-  box-shadow: 0 -16px 16px -8px var(--ui-panel);
-}
-
 /* Interface dialogs use the same neutral ink and paper as the controls. */
 .modal-content h2 { font-family:var(--ui-font); font-size:calc(26px * var(--reading-scale)); font-weight:400; letter-spacing:-.035em; }
 .danger-zone .danger-btn, .danger-zone .danger-btn.armed { color:var(--ui-text); background:#202020; border-color:#55554f; }
 :is(.completion-card,.modal-content) .ornate-rule, .veil-content .ornate-rule, #intro-title .ornate-rule { display:none; }
+
+/* Settings share the open, borderless surface of the hints. */
+#options-modal {
+  background: rgb(0 0 0 / 66%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+#options-modal .modal-content {
+  width: min(620px, 100%);
+  height: min(680px, calc(100dvh - 64px));
+  max-height: calc(100dvh - 64px);
+  padding: 32px 38px 24px;
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: #141414;
+  box-shadow: 0 24px 90px rgb(0 0 0 / 38%);
+}
+#options-modal .options-heading { flex-wrap: nowrap; margin-bottom: 24px; }
+#options-modal .options-heading h2 {
+  font: 400 calc(26px * var(--reading-scale, 1))/1.2 var(--ui-font);
+  letter-spacing: -.035em;
+  color: #deded9;
+}
+#btn-close-options {
+  align-self: center;
+  width: 40px;
+  min-height: 40px;
+  margin-right: -10px;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: #a4a49e;
+}
+#btn-close-options:hover { background: #222; color: #efefe8; }
+#options-modal .options-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-bottom: 18px;
+  padding: 0 12px 8px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a36 transparent;
+}
+#options-modal :is(.audio-settings, .comfort-settings) {
+  display: grid;
+  gap: 14px;
+  flex-shrink: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 0 0;
+  border: 0;
+}
+#options-modal legend {
+  padding: 0;
+  color: #999992;
+  font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
+  text-transform: none;
+  letter-spacing: 0;
+}
+#options-modal :is(.slider-group, .grain-row) {
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 190px) 36px;
+  gap: 12px;
+  min-height: 32px;
+}
+#options-modal :is(.slider-group, .grain-row) label { grid-column: 1; grid-row: 1; }
+#options-modal :is(.slider-group, .grain-row) input { grid-column: 2; grid-row: 1; }
+#options-modal :is(.slider-group, .grain-row) output { grid-column: 3; grid-row: 1; text-align: right; }
+#options-modal :is(.slider-group label, .comfort-row label, .comfort-checkbox) {
+  color: #ddddd6;
+  font-size: calc(13px * var(--reading-scale, 1));
+  font-weight: 400;
+}
+#options-modal :is(.slider-group output, .comfort-row output) { color: #aaa9a2; font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font); }
+#options-modal input[type="range"] { height: 28px; }
+#options-modal input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: #42423d; }
+#options-modal input[type="range"]::-webkit-slider-thumb { width: 12px; height: 12px; margin-top: -5px; border: 0; border-radius: 50%; background: #bcbcb4; box-shadow: none; }
+#options-modal input[type="range"]::-moz-range-track { height: 2px; background: #42423d; }
+#options-modal input[type="range"]::-moz-range-progress { height: 2px; background: #77776f; }
+#options-modal input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #bcbcb4; box-shadow: none; }
+#options-modal .comfort-row { gap: 4px 16px; }
+#options-modal .comfort-row select {
+  width: 178px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 0;
+  border-color: transparent;
+  border-radius: 4px;
+  background-color: #20201e;
+  font-size: calc(12px * var(--reading-scale, 1));
+}
+#options-modal :is(.comfort-row p, .comfort-caption, .danger-note) {
+  color: #92928b;
+  font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
+}
+#options-modal .comfort-row p { max-width: 390px; }
+#options-modal .comfort-checkbox { justify-content: space-between; min-height: 32px; }
+#options-modal .comfort-checkbox input { width: 17px; height: 17px; margin-right: 2px; }
+#options-modal .comfort-caption { margin-top: -10px; }
+#options-modal .danger-zone { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 20px; }
+#options-modal :is(#btn-new, #btn-howto, #btn-mute) {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #c4c4bd;
+  font-size: calc(12px * var(--reading-scale, 1));
+}
+#options-modal :is(#btn-new, #btn-howto, #btn-mute):hover { background: #242423; color: #deded6; }
+#options-modal #btn-new.armed { background: #2b2b27; color: #f0f0e8; }
+#options-modal #btn-new { margin-right: -12px; }
+#options-modal .modal-actions { flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 16px; padding: 0; margin: 0 -12px; border: 0; }
+@media (max-width: 640px) {
+  #options-modal .modal-content { padding: 24px; }
+}
+@media (max-height: 560px) {
+  #options-modal .modal-content { height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); padding: 16px 24px 12px; }
+  #options-modal .options-heading { margin-bottom: 14px; }
+  #options-modal .options-heading h2 { font-size: calc(21px * var(--reading-scale, 1)); }
+  #btn-close-options { min-height: 36px; width: 36px; padding: 8px; margin-right: -8px; }
+  #options-modal .options-body { margin-bottom: 10px; gap: 24px; }
+  #options-modal :is(#btn-new, #btn-howto, #btn-mute) { min-height: 38px; padding-block: 8px; }
+}
+@media (max-width: 480px) {
+  #options-modal .modal-content { padding-inline: 20px; }
+  #options-modal :is(.slider-group, .grain-row) { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
+  #options-modal :is(.slider-group, .grain-row) output { grid-column: 2; }
+  #options-modal :is(.slider-group, .grain-row) input { grid-column: 1 / -1; grid-row: 2; }
+  #options-modal .comfort-row select { width: 150px; max-width: 100%; }
+}

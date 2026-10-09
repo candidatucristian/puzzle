@@ -19,7 +19,7 @@ export function mountHints(scope, { levels, hints, dialogs }) {
       const item = document.createElement('li');
       const label = document.createElement('span');
       label.className = 'hint-step-label';
-      label.textContent = ['A direction', 'A connection', 'A way forward'][i];
+      label.textContent = `Hint ${i + 1}`;
       const text = document.createElement('p');
       text.textContent = level.hint.steps[i];
       item.append(label, text);

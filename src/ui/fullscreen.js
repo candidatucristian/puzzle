@@ -8,6 +8,7 @@ export function mountFullscreenControl(scope, button) {
   function sync() {
     const active = Boolean(fullscreenElement());
     label.textContent = active ? 'Exit full screen' : 'Full screen';
+    button.setAttribute('aria-label', label.textContent);
     button.setAttribute('aria-pressed', String(active));
     button.disabled = !offered || pending;
     button.title = !offered

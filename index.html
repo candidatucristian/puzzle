@@ -60,7 +60,6 @@
     </div>
 
     <header id="compact-bar" class="app-header">
-      <span class="app-wordmark">the descipher</span>
       <div class="room-navigation" aria-label="Room navigation">
         <button id="room-previous" class="room-step-button" type="button" aria-label="Previous room" title="Previous room">
           <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>
@@ -78,8 +77,8 @@
           <input type="range" id="vol-slider-ui" aria-label="Overall volume" min="0" max="1" step="0.01" />
           <output id="master-value" class="sr-only" for="vol-slider-ui"></output>
         </div>
-        <button id="btn-options" class="header-button" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
-        <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
+        <button id="btn-options" class="header-button" type="button" aria-label="Settings"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
+        <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-label="Full screen" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
         <button id="compact-fullscreen" class="icon-button" type="button" aria-label="Full screen: hide the header"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg></button>
       </div>
     </header>
@@ -221,76 +220,65 @@
       <p>The rooms were drawn wide. Hold your phone sideways to step in.</p>
     </div>
 
-    <!-- Options Modal -->
+    <!-- Settings: the controls scroll while the heading and actions stay in reach. -->
     <div id="options-modal" class="hidden">
       <div class="modal-content">
         <div class="options-heading">
-          <h2>Options</h2>
-          <button id="btn-howto" class="menu-btn" type="button">How to Play</button>
+          <h2>Settings</h2>
+          <button id="btn-close-options" class="icon-button" type="button" aria-label="Close settings"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
         </div>
-        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
-        <div class="slider-group">
-          <label for="music-slider">MUSIC VOLUME</label>
-          <input
-            type="range"
-            id="music-slider"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0.5"
-          />
+        <div class="options-body">
+          <fieldset class="audio-settings">
+            <legend>Sound</legend>
+            <div class="slider-group">
+              <label for="music-slider">Music</label>
+              <input type="range" id="music-slider" min="0" max="1" step="0.01" value="0.5" />
+              <output id="music-value" for="music-slider">50%</output>
+            </div>
+            <div class="slider-group">
+              <label for="sfx-slider">Sound effects</label>
+              <input type="range" id="sfx-slider" min="0" max="1" step="0.01" value="0.8" />
+              <output id="sfx-value" for="sfx-slider">80%</output>
+            </div>
+          </fieldset>
+          <fieldset class="comfort-settings">
+            <legend>Display</legend>
+            <div class="comfort-row grain-row">
+              <label for="grain-slider">Film grain</label>
+              <output id="grain-value" for="grain-slider">Off</output>
+              <input id="grain-slider" type="range" min="0" max="100" step="5" value="0" />
+            </div>
+            <div class="comfort-row">
+              <label for="reading-size">Text size</label>
+              <select id="reading-size" aria-describedby="reading-note">
+                <option value="1">Standard</option>
+                <option value="1.15">Larger</option>
+                <option value="1.3">Largest</option>
+              </select>
+              <p id="reading-note">Menus and hints.</p>
+            </div>
+            <div class="comfort-row">
+              <label for="motion-setting">Motion</label>
+              <select id="motion-setting" aria-describedby="motion-note">
+                <option value="system">Follow device</option>
+                <option value="reduced">Reduced</option>
+              </select>
+              <p id="motion-note">Puzzle signals and essential movement remain available.</p>
+            </div>
+            <label class="comfort-checkbox" for="ambient-effects">
+              <span>Ambient effects</span>
+              <input id="ambient-effects" type="checkbox" checked />
+            </label>
+            <p class="comfort-caption">Dust, smoke and background movement.</p>
+          </fieldset>
+          <div class="danger-zone">
+            <p class="danger-note">Clear progress and return to the first room.</p>
+            <button id="btn-new" class="menu-btn danger-btn" type="button">Reset game</button>
+          </div>
         </div>
-        <div class="slider-group">
-          <label for="sfx-slider">SOUND EFFECTS</label>
-          <input
-            type="range"
-            id="sfx-slider"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0.8"
-          />
-        </div>
-        <fieldset class="comfort-settings">
-          <legend>Visual comfort</legend>
-          <div class="comfort-row">
-            <label for="grain-slider">Film grain</label>
-            <output id="grain-value" for="grain-slider">Off</output>
-            <input id="grain-slider" type="range" min="0" max="100" step="5" value="0" />
-          </div>
-          <div class="comfort-row">
-            <label for="reading-size">Reading size</label>
-            <select id="reading-size" aria-describedby="reading-note">
-              <option value="1">Standard</option>
-              <option value="1.15">Larger</option>
-              <option value="1.3">Largest</option>
-            </select>
-            <p id="reading-note">Menus, hints and reading panels.</p>
-          </div>
-          <div class="comfort-row">
-            <label for="motion-setting">Motion</label>
-            <select id="motion-setting" aria-describedby="motion-note">
-              <option value="system">Follow device</option>
-              <option value="reduced">Reduced</option>
-            </select>
-            <p id="motion-note">Puzzle signals and essential movement remain available.</p>
-          </div>
-          <label class="comfort-checkbox" for="ambient-effects">
-            <input id="ambient-effects" type="checkbox" checked />
-            Decorative atmosphere
-          </label>
-          <p class="comfort-caption">Dust, smoke and ambient motion. Your choices are remembered on this device.</p>
-        </fieldset>
         <div class="modal-actions">
-          <button id="btn-mute" class="menu-btn">🔊 MUTE</button>
-          <button id="btn-close-options" class="menu-btn">CLOSE</button>
-        </div>
-        <div class="options-divider"></div>
-        <div class="danger-zone">
-          <button id="btn-new" class="menu-btn danger-btn">RESET GAME</button>
-          <p class="danger-note">
-            Wipes all progress and starts over from Level 1.
-          </p>
+          <button id="btn-howto" class="menu-btn" type="button">How to play</button>
+          <button id="btn-mute" class="menu-btn" type="button">Mute all</button>
         </div>
       </div>
     </div>
@@ -417,18 +405,16 @@
     <!-- Info Modal -->
     <div id="info-modal" class="hidden">
       <div class="modal-content">
+        <div class="hints-heading">
+          <h2>Hints</h2>
+          <button id="btn-close-info" class="icon-button" type="button" aria-label="Close hints"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+        </div>
         <p id="hint-room" class="modal-kicker"></p>
-        <h2>A little guidance</h2>
-        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
         <div id="info-requires"></div>
-        <p class="hint-intro">Take one hint at a time. There is no penalty for asking.</p>
         <ol id="hint-list"></ol>
-        <p id="hint-count" role="status" aria-live="polite"></p>
         <div class="modal-actions">
+          <p id="hint-count" role="status" aria-live="polite"></p>
           <button id="btn-next-hint" class="menu-btn" type="button">Reveal hint 2</button>
-          <button id="btn-close-info" class="menu-btn">
-            CLOSE
-          </button>
         </div>
       </div>
     </div>

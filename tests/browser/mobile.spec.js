@@ -174,7 +174,7 @@ test('the full-screen button slides the top bar away, the console stays, and the
   await page.locator('#compact-fullscreen').tap();
   await expect(page.locator('html')).toHaveClass(/ui-top-collapsed/);
   await expect(page.locator('#ui-toast')).toBeVisible();
-  await expect(page.locator('#compact-levels')).not.toBeInViewport();
+  await expect(page.locator('#compact-bar')).not.toBeInViewport();
   await expect(page.locator('#btn-submit')).toBeInViewport();
   await expect.poll(async () => (await canvas.boundingBox()).height, { timeout: 5000 }).toBeGreaterThan(before.height + 30);
   expect((await page.locator('#input-area').boundingBox()).height).toBeCloseTo(consoleBox.height, 0);
@@ -189,7 +189,7 @@ test('the full-screen button slides the top bar away, the console stays, and the
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down(); await page.mouse.move(box.x + box.width / 2, box.y + 60, { steps: 6 }); await page.mouse.up();
   await expect(page.locator('html')).not.toHaveClass(/ui-top-collapsed/);
-  await expect(page.locator('#compact-levels')).toBeInViewport();
+  await expect(page.locator('#compact-bar')).toBeInViewport();
   box = await top.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down(); await page.mouse.move(box.x + box.width / 2, box.y - 60, { steps: 6 }); await page.mouse.up();
@@ -230,6 +230,8 @@ test('a portrait phone is asked to turn, and the rooms survive the turn', async 
 
 test('phone hints remain readable and scroll to the last hint with badges and large text', async ({ page }) => {
   await open(page); await navigate(page, 'Modem');
+  const hintCount = await evaluateApp(page, ({ services }) =>
+    services.levels.definitions[services.levels.currentIndex].hint.steps.length);
   for (const [width, height] of [[863, 360], [667, 375], [568, 320]]) {
     await resizePhone(page, width, height);
     await evaluateApp(page, ({ services }) => services.preferences.set({ textScale: 1.3 }));
@@ -238,7 +240,7 @@ test('phone hints remain readable and scroll to the last hint with badges and la
     const list = page.locator('#hint-list');
     expect(await list.evaluate(el => el.clientHeight)).toBeGreaterThan(65);
     while (await page.locator('#btn-next-hint').isEnabled()) await page.locator('#btn-next-hint').tap();
-    await expect(list.locator('li')).toHaveCount(3);
+    await expect(list.locator('li')).toHaveCount(hintCount);
     await list.evaluate(el => { el.scrollTop = el.scrollHeight; });
     const last = await list.locator('li p').last().boundingBox();
     const area = await list.boundingBox();
