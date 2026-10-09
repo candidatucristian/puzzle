@@ -6,19 +6,18 @@ import { layoutStation, paintStation, releaseStationArt } from "./map.js";
 import { METRO_STATIONS } from "./puzzle.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Level — "METRO"  ·  code: SIGNAL  ·  station names → the phonetic alphabet
+// Level — "METRO"  ·  code: PYLON  ·  station names → the phonetic alphabet
 //
 // An underground platform late at night, seen down its length: the track
 // running into the tunnel under a signal lamp, the tiled wall with the
 // station's name, a bench, a tannoy horn that now and then crackles with
-// static, a row of tubes overhead, one of them failing. Over the platform
-// hangs the enamel line diagram — Line 6, eastbound — with its six stops:
+// static, a row of tubes overhead, one of them failing. On the wall, close
+// by, is the enamel line diagram — Line 6, eastbound — with its five stops:
 //
-//   Sierra Heights · India Docks · Golf Links · November Street · Alpha Park
-//   · Lima Road
+//   Papa Wharf · Yankee Dock · Lima Road · Oscar Square · November Street
 //
-// Their first words are the NATO phonetic alphabet: Sierra S, India I, Golf
-// G, November N, Alpha A, Lima L — in the line's order, S I G N A L.
+// Their first words are the NATO phonetic alphabet: Papa P, Yankee Y, Lima
+// L, Oscar O, November N — in the line's order, P Y L O N.
 //
 // A small light runs the line from end to end, lighting each stop as it
 // passes, so the order is the line's own. A click on a stop rings it; a
@@ -81,7 +80,7 @@ export default class MetroScene extends BasePuzzleScene {
     const m = L.map;
     this.add
       .image(m.x + m.w / 2, m.y + m.h / 2, k.glow)
-      .setDisplaySize(m.w * 1.3, m.h * 1.6)
+      .setDisplaySize(m.w * 1.6, m.h * 1.3)
       .setTint(0xd0e8e0)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.07)

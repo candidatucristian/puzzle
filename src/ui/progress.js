@@ -39,7 +39,7 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       tile.classList.toggle('solved', solved);
       tile.disabled = !allowed;
       tile.setAttribute('aria-disabled', String(!allowed));
-      name.textContent = allowed ? level.name : 'Locked room';
+      name.textContent = allowed ? level.name : 'Locked';
       status.textContent = !allowed ? 'Locked' : current ? solved ? 'Revisiting · solved' : 'Currently exploring' : solved ? 'Solved · revisit' : 'Ready to explore';
       tile.setAttribute('aria-label', `Level ${index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
       if (current) tile.setAttribute('aria-current', 'step'); else tile.removeAttribute('aria-current');
@@ -68,7 +68,7 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     save.title = levels.saved ? 'Progress is saved in this browser. Clearing site data removes it.' : 'Browser storage is unavailable. Progress may be lost when this page closes.';
     const returning = storage.getItem('hasPlayedBefore') === 'true' || done > 0;
     document.getElementById('btn-continue').textContent = returning ? `Continue · Level ${levels.currentIndex + 1}` : 'Begin exploration';
-    document.getElementById('start-progress').textContent = returning ? `${done} of ${total} rooms solved · ${levels.definitions[levels.currentIndex].name}` : `${total} rooms. One discovery at a time.`;
+    document.getElementById('start-progress').textContent = returning ? `${done} of ${total} rooms solved · ${levels.definitions[levels.currentIndex].name}` : `${total} rooms`;
   }
 
   function scheduleCapture() {

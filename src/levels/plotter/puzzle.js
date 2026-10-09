@@ -20,7 +20,12 @@ export function formatPath(points, perLine = 6) {
 }
 
 export function plotterLayout(width, height) {
-  const screen = { x: width * 0.075, y: height * 0.115, w: width * 0.85, h: height * 0.75 };
+  // With room to spare the terminal stands on its desk beside the plotter;
+  // on a small screen its tube fills the picture.
+  const roomy = width >= 1000 && height >= 560;
+  const screen = roomy
+    ? { x: width * 0.075, y: height * 0.1, w: width * 0.5, h: height * 0.52 }
+    : { x: width * 0.075, y: height * 0.115, w: width * 0.85, h: height * 0.75 };
   const columns = width / height > 1.8 ? 2 : 1;
   const rows = 4 / columns;
   const pad = Math.min(28, screen.w * 0.04);
@@ -35,5 +40,5 @@ export function plotterLayout(width, height) {
     y: screen.y + header + Math.floor(i / columns) * cellH,
     w: cellW, h: cellH,
   }));
-  return { width, height, screen, font, perLine, blocks };
+  return { width, height, screen, font, perLine, blocks, roomy };
 }

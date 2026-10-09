@@ -461,19 +461,19 @@ const metadata = [
     "id": "metro",
     "key": "Metro",
     "name": "Platform After Dark",
-    "summary": "A line diagram hangs over a deserted underground platform.",
-    "code": "SIGNAL",
+    "summary": "A line diagram is screwed to the wall of a deserted underground platform.",
+    "code": "PYLON",
     "altCode": null,
     "hint": {
-      "text": "THE LAST TRAIN HAS GONE.\nThe line diagram hanging over the platform, in the direction the trains run.",
+      "text": "THE LAST TRAIN HAS GONE.\nThe line diagram on the platform wall, in the direction the trains run.",
       "sound": false,
       "tool": true
     },
-    "description": "A real underground platform late at night, seen down its length: the track in its trench running into the tunnel under a signal lamp that turns from red to green and back, a platform wall of glazed tile with the station’s name on it, posters, a bench, a tannoy horn, a row of fluorescent tubes overhead with one of them failing, the way out lit at the far end. Hanging over the platform, facing us, is the enamel line diagram: Line 6, eastbound, its six stops in order — Sierra Heights (marked YOU ARE HERE), India Docks, Golf Links, November Street, Alpha Park, Lima Road — and an arrow for the way the trains run. Their first words are the NATO phonetic alphabet — Sierra S, India I, Golf G, November N, Alpha A, Lima L — so in the line’s order they spell SIGNAL. A small light runs the line end to end, lighting each stop as it passes; a click on a stop rings it; a click on the horn brings an announcement that is nothing but static.",
+    "description": "A real underground platform late at night, seen down its length: the track in its trench running into the tunnel under a signal lamp that turns from red to green and back, a platform wall of glazed tile with the station’s name on it, posters, a bench, a tannoy horn, a row of fluorescent tubes overhead with one of them failing, the way out lit at the far end. On the platform wall, close by and running away with it in the station’s perspective, is the enamel line diagram: Line 6, eastbound, its five stops in order from the top — Papa Wharf (marked YOU ARE HERE), Yankee Dock, Lima Road, Oscar Square, November Street — and an arrow at the bottom for the way the trains run. Their first words are the NATO phonetic alphabet, none of them its famous letters — Papa P, Yankee Y, Lima L, Oscar O, November N — so in the line’s order they spell PYLON. A small light runs the line end to end, lighting each stop as it passes; a click on a stop rings it; a click on the horn brings an announcement that is nothing but static.",
     "references": [
-      "METRO_STATIONS (metro/puzzle.js) — the six stations of the line, in the order the trains run",
-      "NATO / natoLetter() — the phonetic alphabet, A to Z (ALPHA and ALFA both read A); readLine() spells SIGNAL",
-      "metro/map.js paintDiagram() — the enamel plate with the stops’ names; paintLitLine() — the line, its rings and its arrow",
+      "METRO_STATIONS (metro/puzzle.js) — the five stations of the line, in the order the trains run",
+      "NATO / natoLetter() — the phonetic alphabet, A to Z (ALPHA and ALFA both read A); readLine() spells PYLON",
+      "metro/map.js paintDiagram() — the enamel plate with the stops’ names, drawn flat and laid on the wall by onWallPlate(); paintLitLine() — the line, its rings and its arrow",
       "metro/map.js layoutStation() — the platform in one-point perspective; MetroScene — the running light, the signal, the failing tube"
     ]
   },
@@ -542,7 +542,7 @@ const metadata = [
     "id": "plotter",
     "key": "Plotter",
     "name": "The Drafting Desk",
-    "summary": "A green terminal glows with the instructions of a silent machine.",
+    "summary": "A green terminal glows beside a pen plotter waiting over a clean sheet.",
     "code": "PING",
     "altCode": null,
     "hint": {
@@ -550,7 +550,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A green monochrome vector terminal displays four numbered blocks of Cartesian coordinates. Join consecutive points with straight lines, with X increasing right and Y increasing up; lift the pen and start a fresh drawing for each block. The blocks are deliberately ordered P, I, N, G: P has a vertical stem and an upper loop; I has two horizontal bars and a central stem; N has two verticals joined diagonally; G is an open square with an inward stroke. Read the four drawings in block order: PING. The display keeps all instructions visible; it never automatically draws the answer for the player.",
+    "description": "A drafting table in a dark room at night, seen from where one sits at it: a graphic display terminal in a dark steel case with its keyboard, and beside it under a drawing lamp a flatbed pen plotter, its arm idling over a clean sheet of squared paper; a mug on the table, a window behind with the moon over the roofs, one old plot of a curve pinned to the wall. The lamp and the tube are the only light. The terminal’s green tube displays four numbered blocks of Cartesian coordinates. Join consecutive points with straight lines, with X increasing right and Y increasing up; lift the pen and start a fresh drawing for each block. The blocks are deliberately ordered P, I, N, G: P has a vertical stem and an upper loop; I has two horizontal bars and a central stem; N has two verticals joined diagonally; G is an open square with an inward stroke. Read the four drawings in block order: PING. The display keeps all instructions visible; it never automatically draws the answer for the player.",
     "references": [
       "plotter/puzzle.js PLOTTER_BLOCKS — the four coordinate paths, in P-I-N-G order",
       "formatPath() / pathSegments() — the printed instructions and their actual line segments",

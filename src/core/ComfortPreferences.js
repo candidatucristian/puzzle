@@ -1,9 +1,9 @@
 export const COMFORT_KEY = 'puzzleComfort';
-export const COMFORT_DEFAULTS = Object.freeze({ grain: 50, textScale: 1, motion: 'system', ambientEffects: true });
+export const COMFORT_DEFAULTS = Object.freeze({ grain: 0, textScale: 1, motion: 'system', ambientEffects: true });
 
 function normalize(value = {}) {
   return {
-    grain: Number.isFinite(value?.grain) ? Math.max(0, Math.min(100, value.grain)) : 50,
+    grain: Number.isFinite(value?.grain) ? Math.max(0, Math.min(100, value.grain)) : COMFORT_DEFAULTS.grain,
     textScale: [1, 1.15, 1.3].includes(value?.textScale) ? value.textScale : 1,
     motion: value?.motion === 'reduced' ? 'reduced' : 'system',
     ambientEffects: typeof value?.ambientEffects === 'boolean' ? value.ambientEffects : true,

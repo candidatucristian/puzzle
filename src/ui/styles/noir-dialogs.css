@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgb(3 7 12 / 82%);
+  background: rgb(0 0 0 / 76%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   opacity: 1;
@@ -32,11 +32,11 @@
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #536270 var(--ui-panel);
+  scrollbar-color: #454541 var(--ui-panel);
   border: 1px solid var(--ui-border);
-  border-top: 2px solid var(--ui-brass);
-  border-radius: 2px;
-  background: linear-gradient(145deg, #18232d, var(--ui-panel) 62%);
+  border-top: 1px solid var(--ui-border);
+  border-radius: 5px;
+  background: var(--ui-panel);
   box-shadow: 0 28px 100px rgb(0 0 0 / 55%);
   color: var(--ui-text);
   font: 400 calc(14px * var(--reading-scale, 1))/1.6 var(--ui-font);
@@ -126,7 +126,7 @@
 .modal-content input[type="range"]::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 0;
-  background: #566673;
+  background: #51514c;
 }
 
 .modal-content input[type="range"]::-webkit-slider-thumb {
@@ -136,20 +136,20 @@
   appearance: none;
   -webkit-appearance: none;
   border: 2px solid var(--ui-panel);
-  border-radius: 2px;
+  border-radius: 5px;
   background: var(--ui-accent);
-  box-shadow: 0 0 0 1px #79909f;
+  box-shadow: 0 0 0 1px #77776f;
 }
 
-.modal-content input[type="range"]::-moz-range-track { height: 3px; background: #566673; }
+.modal-content input[type="range"]::-moz-range-track { height: 3px; background: #51514c; }
 .modal-content input[type="range"]::-moz-range-progress { height: 3px; background: var(--ui-accent); }
 .modal-content input[type="range"]::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border: 2px solid var(--ui-panel);
-  border-radius: 2px;
+  border-radius: 5px;
   background: var(--ui-accent);
-  box-shadow: 0 0 0 1px #79909f;
+  box-shadow: 0 0 0 1px #77776f;
 }
 
 .comfort-settings {
@@ -174,8 +174,8 @@
   width: min(200px, 100%);
   min-height: 42px;
   padding: 8px 30px 8px 12px;
-  border: 1px solid #526371;
-  border-radius: 2px;
+  border: 1px solid #51514c;
+  border-radius: 5px;
   background-color: var(--ui-bg);
   color: var(--ui-text);
   font: inherit;
@@ -185,7 +185,7 @@
 
 #options-modal .comfort-row select:focus,
 #options-modal .comfort-row select:focus-visible {
-  border-color: #526371;
+  border-color: #51514c;
   outline: none;
   box-shadow: none;
 }
@@ -290,9 +290,9 @@
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
-  border: 1px solid #455563;
-  border-radius: 2px;
-  background: rgb(8 13 19 / 45%);
+  border: 1px solid #484842;
+  border-radius: 5px;
+  background: rgb(8 8 8 / 45%);
   color: var(--ui-accent);
   font-size: calc(11px * var(--reading-scale, 1));
   line-height: 1.5;
@@ -318,14 +318,14 @@
   list-style: none;
   counter-reset: hint;
   scrollbar-width: thin;
-  scrollbar-color: #536270 transparent;
+  scrollbar-color: #454541 transparent;
 }
 
 #hint-list li {
   padding: 17px 20px;
   border: 1px solid var(--ui-border);
-  border-left: 2px solid #879cab;
-  background: rgb(4 10 16 / 35%);
+  border-left: 2px solid #92928a;
+  background: rgb(5 5 5 / 35%);
   counter-increment: hint;
 }
 
@@ -378,7 +378,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #536270 transparent;
+  scrollbar-color: #454541 transparent;
 }
 
 .howto-section h3 {
@@ -417,8 +417,8 @@
   justify-content: center;
   min-height: 42px;
   padding: 9px 12px;
-  border: 1px solid #4a5c69;
-  border-radius: 2px;
+  border: 1px solid #4b4b45;
+  border-radius: 5px;
   background: var(--ui-panel-raised);
   color: var(--ui-text);
   font: 500 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
@@ -445,7 +445,7 @@
   justify-content: center;
   padding: 24px;
   overflow: auto;
-  background: radial-gradient(ellipse at 50% 25%, #1c2a35, #080d13 65%);
+  background: var(--ui-bg);
   opacity: 1;
   transition: opacity 350ms ease;
 }
@@ -467,8 +467,8 @@
   padding: 44px;
   overflow-y: auto;
   border: 1px solid var(--ui-border);
-  border-top: 2px solid var(--ui-brass);
-  background: rgb(16 24 32 / 80%);
+  border-top: 1px solid var(--ui-border);
+  background: rgb(21 21 21 / 80%);
   color: var(--ui-text);
   text-align: center;
 }
@@ -523,7 +523,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at 50% 35%, #17232d, #080d13 72%);
+  background: var(--ui-bg);
   color: var(--ui-text);
 }
 
@@ -616,3 +616,8 @@
   background: var(--ui-panel);
   box-shadow: 0 -16px 16px -8px var(--ui-panel);
 }
+
+/* Interface dialogs use the same neutral ink and paper as the controls. */
+.modal-content h2 { font-family:var(--ui-font); font-size:calc(26px * var(--reading-scale)); font-weight:400; letter-spacing:-.035em; }
+.danger-zone .danger-btn, .danger-zone .danger-btn.armed { color:var(--ui-text); background:#202020; border-color:#55554f; }
+:is(.completion-card,.modal-content) .ornate-rule, .veil-content .ornate-rule, #intro-title .ornate-rule { display:none; }

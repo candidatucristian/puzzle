@@ -5,23 +5,27 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg, p
  *  down its length. To the left the track in its trench, running into the
  *  tunnel under a signal lamp; to the right the platform wall in glazed
  *  tile, the station's name on it, posters, a bench, a tannoy horn; overhead
- *  a row of fluorescent tubes. And hanging over the platform, facing us, the
- *  enamel line diagram every station has: this line's stops in order, the
- *  first of them this station, an arrow for the way the trains run.
+ *  a row of fluorescent tubes. And on that wall, close by us and running
+ *  away with it, the enamel line diagram every station has: this line's
+ *  stops in order from the top, the first of them this station, an arrow for
+ *  the way the trains run.
  *
  *  The station is drawn in one-point perspective from where we stand: a
  *  place is how far across (X) and down (Y) it is from the eye, and how near
  *  (s, 1 at the picture, smaller further off).
  *
- *  Painted once per screen size: the station with the diagram; the diagram's
- *  line as a layer of its own (so the scene can breathe light along it); a
- *  glow. */
+ *  Painted once per screen size: the station with the diagram (drawn flat,
+ *  then laid on the wall in the station's perspective); the diagram's line
+ *  as a layer of its own (so the scene can breathe light along it); a glow. */
 
 const K = { room: "mt_room", line: "mt_line", glow: "mt_glow" };
 const SIGN_FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const AMBER = "255,176,64";
 const TUBE = "214,236,226"; // the fluorescent tubes' cold green-white
 const FAR = 0.1; // how near the far end of the platform is
+// the diagram as it is drawn flat, before it goes on the wall: its size, the
+// line down its left side, where the first stop is and how far apart they are
+const PLATE = { w: 430, h: 312, lineX: 44, first: 104, pitch: 42 };
 
 // ── where everything is ─────────────────────────────────────────────────────
 
@@ -40,29 +44,29 @@ export function layoutStation(W, H) {
     left: -W * 0.66,
   };
   L.P = (X, Y, s) => ({ x: L.vp.x + X * s, y: L.vp.y + Y * s, s });
-  // the line diagram, hanging over the platform and facing us
-  const mw = Math.min(W * 0.56, H * 1.16);
-  const mh = mw * 0.3;
-  L.map = { x: W * 0.55 - mw / 2, y: H * 0.075, w: mw, h: mh };
-  const m = L.map;
-  const y = m.y + mh * 0.6;
-  const x0 = m.x + mw * 0.1;
-  const x1 = m.x + mw * 0.88;
-  L.dot = mh * 0.052;
+  // the line diagram, on the platform wall just ahead of us. A place on it
+  // (cx from its far edge, cy from its top) is a place on the wall: the
+  // further along, the smaller and nearer the vanishing point.
+  const k = H / 700;
+  const focal = W * 0.9;
+  const near = focal * (1 / 0.9 - 1); // how far down the wall its near edge is
+  const top = -H * 0.37;
+  const plate = (cx, cy) => {
+    const s = 1 / (1 + (near + (PLATE.w - cx) * k) / focal);
+    return { x: L.vp.x + L.sec.wall * s, y: L.vp.y + (top + cy * k) * s, s };
+  };
+  L.plate = { at: plate, k };
+  const a = plate(0, 0);
+  const b = plate(PLATE.w, PLATE.h);
+  L.map = { x: a.x, y: plate(PLATE.w, 0).y, w: b.x - a.x, h: b.y - plate(PLATE.w, 0).y };
+  const mid = plate(PLATE.lineX, PLATE.h / 2);
+  L.dot = 5.4 * k * mid.s;
   L.lit = {
-    path: [
-      { x: m.x + mw * 0.045, y },
-      { x: m.x + mw * 0.955, y },
-    ],
-    stations: METRO_STATIONS.map((name, i) => ({
-      name,
-      x: x0 + ((x1 - x0) * i) / (METRO_STATIONS.length - 1),
-      y,
-      side: i % 2 ? 1 : -1,
-    })),
+    path: [plate(PLATE.lineX, PLATE.first - 26), plate(PLATE.lineX, PLATE.first + PLATE.pitch * (METRO_STATIONS.length - 1) + 30)],
+    stations: METRO_STATIONS.map((name, i) => ({ name, ...plate(PLATE.lineX, PLATE.first + i * PLATE.pitch) })),
   };
   // the tannoy horn, on the wall beside us
-  const sp = L.P(L.sec.wall, -H * 0.2, 0.74);
+  const sp = L.P(L.sec.wall, -H * 0.5, 0.56);
   L.speaker = { x: sp.x - 26 * u, y: sp.y, w: 64 * u, h: 52 * u };
   // the signal at the tunnel mouth, the train's lamps far down the tunnel
   const sg = L.P(L.sec.left * 0.94, -H * 0.02, 0.2);
@@ -360,7 +364,7 @@ function paintWall(ctx, L) {
     ctx.restore();
   };
   // the name: a white bar across a red ring, three times down the platform
-  for (const s of [0.86, 0.46, 0.27]) {
+  for (const s of [0.5, 0.3, 0.2]) {
     onWall(s, -H * 0.13, () => {
       const k = H / 700;
       ctx.scale(k, k);
@@ -382,8 +386,8 @@ function paintWall(ctx, L) {
   }
   // posters, sun-faded behind their glass
   [
-    [0.62, ["#284a6a", "#c8a03c"]],
-    [0.35, ["#6a2a3a", "#d8d0b8"]],
+    [0.61, ["#284a6a", "#c8a03c"]],
+    [0.38, ["#6a2a3a", "#d8d0b8"]],
   ].forEach(([s, cols], i) => {
     onWall(s, -H * 0.12, () => {
       const k = H / 700;
@@ -618,140 +622,165 @@ function paintGloom(ctx, L) {
   }
 }
 
-// The line diagram: an enamel plate on two rods from the ceiling, lit along
-// its top. The line's badge and direction, the line itself with a ring at
-// every stop, the stops' names above and below it by turns, the first of
-// them marked as where we stand, an arrow for the way the trains run.
+// lay a flat drawing of the plate onto the wall: a column at a time, each
+// as tall and as far across as the wall is there
+function onWallPlate(ctx, L, flat, R) {
+  for (let cx = 0; cx < PLATE.w; cx++) {
+    const p = L.plate.at(cx, 0);
+    const q = L.plate.at(cx + 1, 0);
+    ctx.drawImage(flat, cx * R, 0, R, PLATE.h * R, p.x, p.y, q.x - p.x + 0.7, PLATE.h * L.plate.k * p.s);
+  }
+}
+
+// a flat canvas the size of the plate, to draw on in the plate's own units
+function flatPlate(R) {
+  const c = makeCanvas(PLATE.w * R, PLATE.h * R);
+  const g = c.getContext("2d");
+  g.scale(R, R);
+  return { c, g };
+}
+
+// type on the plate is set wide, because the wall will narrow it again
+function wide(g, text, x, y, stretch = 1.6) {
+  g.save();
+  g.translate(x, y);
+  g.scale(stretch, 1);
+  g.fillText(text, 0, 0);
+  g.restore();
+}
+
+// The line diagram: an enamel plate screwed to the tiles. The line's badge
+// and direction, the line itself running down it with a ring at every stop,
+// the stops' names beside it, the first of them marked as where we stand, an
+// arrow at the bottom for the way the trains run.
 function paintDiagram(ctx, L) {
-  const { u } = L;
-  const m = L.map;
-  // the rods, and the strip-lamp that lights the plate
-  ctx.fillStyle = "#1a1c1e";
-  for (const f of [0.12, 0.88]) ctx.fillRect(m.x + m.w * f - 3 * u, 0, 6 * u, m.y + 4 * u);
-  soft(ctx, m.x + m.w / 2, m.y + m.h * 0.5, m.w * 0.7, m.h * 1.3, TUBE, 0.14, "lighter");
-  // its shadow on the air behind, its steel edge
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(m.x + 5 * u, m.y + 8 * u, m.w, m.h);
-  ctx.fillStyle = "#3a3e40";
-  ctx.beginPath();
-  ctx.roundRect(m.x - 5 * u, m.y - 5 * u, m.w + 10 * u, m.h + 10 * u, 5 * u);
-  ctx.fill();
-  const g = ctx.createLinearGradient(0, m.y, 0, m.y + m.h);
-  g.addColorStop(0, "#1c2430");
-  g.addColorStop(0.2, "#101620");
-  g.addColorStop(1, "#080b12");
-  ctx.fillStyle = g;
-  ctx.fillRect(m.x, m.y, m.w, m.h);
-  ctx.strokeStyle = "rgba(236,238,230,0.5)";
-  ctx.lineWidth = Math.max(1, 1.4 * u);
-  ctx.strokeRect(m.x + m.h * 0.04, m.y + m.h * 0.04, m.w - m.h * 0.08, m.h * 0.92);
+  const R = 2;
+  const { c, g } = flatPlate(R);
+  const { w, h, lineX, first, pitch } = PLATE;
+  // the steel edge, the enamel
+  g.fillStyle = "#3a3e40";
+  g.fillRect(0, 0, w, h);
+  const bg = g.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, "#1c2430");
+  bg.addColorStop(0.2, "#101620");
+  bg.addColorStop(1, "#080b12");
+  g.fillStyle = bg;
+  g.fillRect(5, 5, w - 10, h - 10);
+  g.strokeStyle = "rgba(236,238,230,0.5)";
+  g.lineWidth = 1.4;
+  g.strokeRect(12, 12, w - 24, h - 24);
   // the badge and the heading
-  const by = m.y + m.h * 0.17;
-  const bx = m.x + m.h * 0.17;
-  ctx.fillStyle = `rgb(${AMBER})`;
-  ctx.beginPath();
-  ctx.arc(bx, by, m.h * 0.075, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#101620";
-  ctx.font = `700 ${Math.round(m.h * 0.1)}px ${SIGN_FONT}`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("6", bx, by + m.h * 0.006);
-  ctx.fillStyle = "#eceee6";
-  ctx.textAlign = "left";
-  ctx.font = `700 ${Math.round(m.h * 0.085)}px ${SIGN_FONT}`;
-  ctx.fillText("EASTBOUND", bx + m.h * 0.12, by - m.h * 0.035);
-  ctx.fillStyle = "rgba(236,238,230,0.6)";
-  ctx.font = `${Math.round(m.h * 0.06)}px ${SIGN_FONT}`;
-  ctx.fillText("Night service · all stations", bx + m.h * 0.12, by + m.h * 0.052);
-  // the stops' names
-  const fs = Math.max(10, Math.round(m.h * 0.092));
-  ctx.textAlign = "center";
-  for (const [i, s] of L.lit.stations.entries()) {
-    ctx.font = `700 ${fs}px ${SIGN_FONT}`;
-    ctx.fillStyle = "#f4f4ec";
-    ctx.fillText(s.name, s.x, s.y + s.side * m.h * 0.15);
+  g.fillStyle = `rgb(${AMBER})`;
+  g.beginPath();
+  g.ellipse(lineX, 46, 26, 17, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = "#101620";
+  g.font = `700 24px ${SIGN_FONT}`;
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  wide(g, "6", lineX, 47.5);
+  g.fillStyle = "#eceee6";
+  g.textAlign = "left";
+  g.font = `700 19px ${SIGN_FONT}`;
+  wide(g, "EASTBOUND", 84, 38);
+  g.fillStyle = "rgba(236,238,230,0.6)";
+  g.font = `13px ${SIGN_FONT}`;
+  wide(g, "Night service · all stations", 84, 58);
+  // the stops' names, down the plate
+  METRO_STATIONS.forEach((name, i) => {
+    const y = first + i * pitch;
+    g.font = `700 20px ${SIGN_FONT}`;
+    g.fillStyle = "#f4f4ec";
+    wide(g, name, 84, y + 1);
     if (i === 0) {
-      ctx.font = `${Math.round(fs * 0.62)}px ${SIGN_FONT}`;
-      ctx.fillStyle = `rgb(${AMBER})`;
-      ctx.fillText("YOU ARE HERE", s.x, s.y + m.h * 0.14);
+      g.font = `11.5px ${SIGN_FONT}`;
+      g.fillStyle = `rgb(${AMBER})`;
+      wide(g, "YOU ARE HERE", 84, y + 18);
     }
-  }
-  // the plate has been up thirty years: chips in the enamel, rust from the bolts
+  });
+  // thirty years on the wall: chips in the enamel, rust from the screws
   const rnd = lcg(606);
-  for (let i = 0; i < 14; i++) {
-    const x = m.x + rnd() * m.w;
-    const y = m.y + rnd() * m.h;
-    ctx.fillStyle = rnd() < 0.5 ? "rgba(60,30,14,0.5)" : "rgba(0,0,0,0.5)";
-    ctx.beginPath();
-    ctx.ellipse(x, y, (1 + rnd() * 3) * u, (1 + rnd() * 2) * u, rnd() * 3, 0, Math.PI * 2);
-    ctx.fill();
+  for (let i = 0; i < 16; i++) {
+    g.fillStyle = rnd() < 0.5 ? "rgba(60,30,14,0.5)" : "rgba(0,0,0,0.5)";
+    g.beginPath();
+    g.ellipse(rnd() * w, rnd() * h, 1 + rnd() * 4, 1 + rnd() * 2, rnd() * 3, 0, Math.PI * 2);
+    g.fill();
   }
-  for (const [fx, fy] of [
-    [0.02, 0.1],
-    [0.98, 0.1],
-    [0.02, 0.9],
-    [0.98, 0.9],
-  ]) {
-    const x = m.x + m.w * fx;
-    const y = m.y + m.h * fy;
-    soft(ctx, x, y + 6 * u, 4 * u, 10 * u, "110,56,20", 0.5);
-    ctx.fillStyle = "#8a9094";
-    ctx.beginPath();
-    ctx.arc(x, y, 2.6 * u, 0, Math.PI * 2);
-    ctx.fill();
+  for (const [x, y] of [[20, 20], [w - 20, 20], [20, h - 20], [w - 20, h - 20]]) {
+    soft(g, x, y + 7, 5, 11, "110,56,20", 0.5);
+    g.fillStyle = "#8a9094";
+    g.beginPath();
+    g.ellipse(x, y, 4.2, 2.8, 0, 0, Math.PI * 2);
+    g.fill();
   }
-  // the lamp's sheen along its top
-  const sheen = ctx.createLinearGradient(0, m.y, 0, m.y + m.h * 0.3);
-  sheen.addColorStop(0, "rgba(220,240,232,0.12)");
-  sheen.addColorStop(1, "rgba(220,240,232,0)");
-  ctx.fillStyle = sheen;
-  ctx.fillRect(m.x, m.y, m.w, m.h * 0.3);
+  // its shadow on the tiles, then the plate itself
+  const P = L.plate.at;
+  const d = 5 * L.u;
+  polygon(ctx, [
+    { x: P(0, 0).x + d, y: P(0, 0).y + d },
+    { x: P(w, 0).x + d, y: P(w, 0).y + d },
+    { x: P(w, h).x + d, y: P(w, h).y + d },
+    { x: P(0, h).x + d, y: P(0, h).y + d },
+  ]);
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  ctx.fill();
+  onWallPlate(ctx, L, c, R);
+  // the tubes' light across its glossy face
+  ctx.save();
+  polygon(ctx, [P(0, 0), P(w, 0), P(w, h), P(0, h)]);
+  ctx.clip();
+  const m = P(w * 0.4, h * 0.2);
+  soft(ctx, m.x, m.y, L.map.w * 0.5, L.map.h * 0.3, TUBE, 0.14, "lighter");
+  ctx.restore();
 }
 
 // the line itself, as its own layer: amber, a white-centred ring at each
 // stop, a solid one where we stand, an arrow at its running end
 function paintLitLine(L) {
-  const c = makeCanvas(L.W, L.H);
-  const ctx = c.getContext("2d");
-  const [a, b] = L.lit.path;
-  const d = L.dot;
-  ctx.lineCap = "round";
-  ctx.strokeStyle = `rgba(${AMBER},0.14)`;
-  ctx.lineWidth = d * 2.2;
-  ctx.beginPath();
-  ctx.moveTo(a.x, a.y);
-  ctx.lineTo(b.x - d * 2, b.y);
-  ctx.stroke();
-  ctx.strokeStyle = `rgb(${AMBER})`;
-  ctx.lineWidth = d * 0.9;
-  ctx.beginPath();
-  ctx.moveTo(a.x, a.y);
-  ctx.lineTo(b.x - d * 2, b.y);
-  ctx.stroke();
+  const R = 2;
+  const { c, g } = flatPlate(R);
+  const { lineX, first, pitch } = PLATE;
+  const y0 = first - 26;
+  const y1 = first + pitch * (METRO_STATIONS.length - 1) + 22;
+  g.lineCap = "round";
+  g.strokeStyle = `rgba(${AMBER},0.16)`;
+  g.lineWidth = 22;
+  g.beginPath();
+  g.moveTo(lineX, y0);
+  g.lineTo(lineX, y1);
+  g.stroke();
+  g.strokeStyle = `rgb(${AMBER})`;
+  g.lineWidth = 9;
+  g.beginPath();
+  g.moveTo(lineX, y0);
+  g.lineTo(lineX, y1);
+  g.stroke();
   // the arrow
-  ctx.fillStyle = `rgb(${AMBER})`;
-  ctx.beginPath();
-  ctx.moveTo(b.x + d * 1.4, b.y);
-  ctx.lineTo(b.x - d * 2.4, b.y - d * 2.2);
-  ctx.lineTo(b.x - d * 2.4, b.y + d * 2.2);
-  ctx.closePath();
-  ctx.fill();
-  for (const [i, s] of L.lit.stations.entries()) {
-    ctx.fillStyle = "#0a0e16";
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, d * 1.9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = i === 0 ? `rgb(${AMBER})` : "#f6f6ee";
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, d * 1.25, 0, Math.PI * 2);
-    ctx.fill();
+  g.fillStyle = `rgb(${AMBER})`;
+  g.beginPath();
+  g.moveTo(lineX, y1 + 20);
+  g.lineTo(lineX - 22, y1 - 2);
+  g.lineTo(lineX + 22, y1 - 2);
+  g.closePath();
+  g.fill();
+  METRO_STATIONS.forEach((_, i) => {
+    const y = first + i * pitch;
+    g.fillStyle = "#0a0e16";
+    g.beginPath();
+    g.ellipse(lineX, y, 19, 12, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = i === 0 ? `rgb(${AMBER})` : "#f6f6ee";
+    g.beginPath();
+    g.ellipse(lineX, y, 12.5, 8, 0, 0, Math.PI * 2);
+    g.fill();
     if (i === 0) {
-      ctx.fillStyle = "#0a0e16";
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, d * 0.5, 0, Math.PI * 2);
-      ctx.fill();
+      g.fillStyle = "#0a0e16";
+      g.beginPath();
+      g.ellipse(lineX, y, 5, 3.2, 0, 0, Math.PI * 2);
+      g.fill();
     }
-  }
-  return c;
+  });
+  const out = makeCanvas(L.W, L.H);
+  onWallPlate(out.getContext("2d"), L, c, R);
+  return out;
 }

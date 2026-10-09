@@ -42,13 +42,15 @@ export function mountHints(scope, { levels, hints, dialogs }) {
     }
   }
 
-  const openHints = () => {
+  const openHints = event => {
     const id = levels.definitions[levels.currentIndex].id;
     if (!hints.count(id)) hints.reveal(id);
     render();
-    dialogs.open('info-modal', document.getElementById('compact-menu'));
+    const trigger = event.currentTarget.id === 'btn-hint' ? event.currentTarget : document.getElementById('compact-menu');
+    dialogs.open('info-modal', trigger);
   };
   scope.on(document.getElementById('btn-brief-hints'), 'click', openHints);
+  scope.on(document.getElementById('btn-hint'), 'click', openHints);
   scope.on(next, 'click', () => {
     hints.reveal(levels.definitions[levels.currentIndex].id);
     render();

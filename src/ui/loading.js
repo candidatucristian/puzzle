@@ -4,7 +4,7 @@ export function createLoadingScreen() {
   const scope = new Scope(), screen = document.getElementById('loading-screen');
   const fill = document.getElementById('loading-fill'), label = document.getElementById('loading-label');
   const percent = document.getElementById('loading-pct');
-  let current = 0, target = 6, text = 'sharpening the pencils', done = false, failed = false;
+  let current = 0, target = 6, text = 'Loading', done = false, failed = false;
   const paint = () => {
     current += (target - current) * .09;
     fill.style.width = current + '%'; percent.textContent = Math.round(current) + '%';
@@ -16,10 +16,10 @@ export function createLoadingScreen() {
   retry.className = 'menu-btn'; retry.hidden = true; screen.querySelector('.loading-card').append(retry);
   scope.on(retry, 'click', () => location.reload());
   const api = {
-    progress(value) { if (!failed && !done) { target = 68 + value * 28; text = 'tuning the instruments'; } },
+    progress(value) { if (!failed && !done) { target = 68 + value * 28; text = 'Loading'; } },
     ready() {
       if (done || failed) return;
-      done = true; target = 100; text = 'ready';
+      done = true; target = 100; text = 'Ready';
       scope.later(() => { screen.classList.add('fade-out'); scope.later(() => { screen.remove(); scope.dispose(); }, 750); }, 500);
     },
     fail(error) {

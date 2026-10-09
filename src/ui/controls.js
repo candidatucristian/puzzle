@@ -3,10 +3,8 @@ import { mountResetConfirmation } from './resetConfirmation.js';
 import { Scope } from '../shared/Scope.js';
 import { observeViewport } from '../shared/viewport.js';
 import { createTransitions } from './transitions.js';
-import { createIntro } from './intro.js';
 import { createDialogs } from './dialogs.js';
 import { mountAudioControls } from './audioControls.js';
-import { mountStartParticles } from './particles.js';
 import { mountFullscreenControl } from './fullscreen.js';
 import { mountComfort } from './comfort.js';
 import { mountHints } from './hints.js';
@@ -26,8 +24,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const input = byId('level-code');
   const feedback = byId('answer-feedback');
   let mobile, suspendedInput;
-  const intro = createIntro(preferences);
-  function answerFeedback(message = 'Follow the clues in the room. Press Enter to submit.', state = '') {
+  function answerFeedback(message = '', state = '') {
     if (feedback) { feedback.textContent = message; feedback.dataset.state = state; }
     input.setAttribute('aria-invalid', String(state === 'error'));
   }
@@ -84,13 +81,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const navigate = (index, options) => transitions.go(index, options);
   const progressUI = mountProgress(scope, {
     game, levels, storage, navigate,
-    canNavigate: () => !intro.active && !dialogs.isOpen,
+    canNavigate: () => !transitions.busy && !dialogs.isOpen,
   });
   mountComfort(scope, preferences);
   const hintUI = mountHints(scope, { levels, hints, dialogs });
   mountInteractionFeedback(scope, game);
   mobile = mountMobile(scope, {
-    canOpenDrawer: () => !intro.active && !dialogs.isOpen,
+    canOpenDrawer: () => !transitions.busy && !dialogs.isOpen,
     onDrawer: name => {
       if (name) suspendPuzzleInput();
       else if (!dialogs.isOpen) restorePuzzleInput();
@@ -99,22 +96,19 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   function begin(event) {
     if (event?.type === 'keydown' && ['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) return;
     if (event?.type === 'keydown' && event.target !== document.body && !start.contains(event.target)) return;
-    if (started || dialogs.isOpen || start.classList.contains('hidden')) return;
+    if (started || transitions.busy || dialogs.isOpen || start.classList.contains('hidden')) return;
     started = true; sessionStart = Date.now();
     // a phone's first tap is the one gesture that may take the whole screen
     if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
-    if (!storage.getItem('hasPlayedBefore')) intro.play(() => navigate(levels.currentIndex));
-    else navigate(levels.currentIndex);
+    navigate(levels.currentIndex);
   }
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
-  // the graphite dust on the start screen costs a phone more than it gives
-  mountStartParticles({ scope, startScreen: start, disabled: touch && mobile.compact, preferences });
   mountFullscreenControl(scope, byId('btn-fullscreen'));
 
   scope.on(byId('btn-submit'), 'click', () => {
-    if (transitions.busy || intro.active || dialogs.isOpen) return;
+    if (transitions.busy || dialogs.isOpen) return;
     if (!input.value.trim()) {
-      answerFeedback('Enter the answer you found in the room.');
+      answerFeedback('Enter the answer you found in the room.', 'info');
       input.focus();
       return;
     }
@@ -146,10 +140,10 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   for (const type of ['keydown', 'keyup']) scope.on(document, type, event => {
     if (event.target.matches?.('input, select, textarea') && !event.target.closest('#game-container')) event.stopPropagation();
   });
-  scope.on(byId('btn-replay'), 'click', () => { if (!intro.active) navigate(levels.currentIndex, { quick: true }); });
+  scope.on(byId('btn-replay'), 'click', () => { if (!transitions.busy) navigate(levels.currentIndex, { quick: true }); });
 
   const reset = mountResetConfirmation(scope, byId('btn-new'), {
-    isBlocked: () => intro.active,
+    isBlocked: () => transitions.busy,
     onConfirm() {
       completion.hide();
       dialogs.closeAll();
@@ -160,7 +154,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       started = true;
       sessionStart = Date.now();
       showGame();
-      intro.play(() => navigate(0));
+      navigate(0);
     },
   });
   scope.on(byId('btn-howto'), 'click', event => { reset.disarm(); dialogs.open('howto-modal', event.currentTarget, { nested: true }); });
@@ -170,6 +164,6 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   mountAudioControls(audio, scope);
   // while the code box has the on-screen keyboard up, the room waits to be repainted
   observeViewport(game, scope, { defer: () => touch && document.activeElement === input });
-  return { navigate, showGame, get busy() { return transitions.busy || intro.active; },
-    dispose() { transitions.dispose(); intro.dispose(); dialogs.closeAll(); scope.dispose(); } };
+  return { navigate, showGame, get busy() { return transitions.busy; },
+    dispose() { transitions.dispose(); dialogs.closeAll(); scope.dispose(); } };
 }

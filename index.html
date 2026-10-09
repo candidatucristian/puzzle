@@ -9,7 +9,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
     />
-    <meta name="theme-color" content="#080d13" />
+    <meta name="theme-color" content="#0c0c0c" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -54,25 +54,13 @@
         <h1>The Descipher</h1>
         <div class="loading-bar"><div id="loading-fill"></div></div>
         <p id="loading-label">
-          Preparing your next mystery <span id="loading-pct">0%</span>
+          Loading <span id="loading-pct">0%</span>
         </p>
       </div>
     </div>
 
-    <!-- Cinematic film grain over the whole app -->
-    <div id="film-grain"></div>
-
     <header id="compact-bar" class="app-header">
-      <div class="header-actions">
-        <div class="volume-widget">
-          <button id="vol-icon-ui" class="icon-button" type="button" aria-label="Mute all audio"><svg class="ui-icon" data-audio-icon aria-hidden="true"><use href="#icon-sound"/></svg></button>
-          <input type="range" id="vol-slider-ui" aria-label="Overall volume" min="0" max="1" step="0.01" />
-          <output id="master-value" class="sr-only" for="vol-slider-ui"></output>
-        </div>
-        <button id="btn-options" class="header-button" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
-        <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
-        <button id="compact-fullscreen" class="icon-button" type="button" aria-label="Full screen: hide the header"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg></button>
-      </div>
+      <span class="app-wordmark">the descipher</span>
       <div class="room-navigation" aria-label="Room navigation">
         <button id="room-previous" class="room-step-button" type="button" aria-label="Previous room" title="Previous room">
           <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>
@@ -83,6 +71,16 @@
         <button id="room-next" class="room-step-button" type="button" aria-label="Next room" title="Next room">
           <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>
         </button>
+      </div>
+      <div class="header-actions">
+        <div class="volume-widget">
+          <button id="vol-icon-ui" class="icon-button" type="button" aria-label="Mute all audio"><svg class="ui-icon" data-audio-icon aria-hidden="true"><use href="#icon-sound"/></svg></button>
+          <input type="range" id="vol-slider-ui" aria-label="Overall volume" min="0" max="1" step="0.01" />
+          <output id="master-value" class="sr-only" for="vol-slider-ui"></output>
+        </div>
+        <button id="btn-options" class="header-button" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
+        <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
+        <button id="compact-fullscreen" class="icon-button" type="button" aria-label="Full screen: hide the header"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg></button>
       </div>
     </header>
     <div id="drawer-scrim" hidden></div>
@@ -95,7 +93,7 @@
       <!-- Level navigation -->
       <aside id="sidebar" aria-label="Room index">
         <div class="drawer-heading">
-          <div><p class="eyebrow">The collection</p></div>
+          <div><p class="eyebrow">Rooms</p></div>
         </div>
         <div class="progress-summary">
           <span id="progress-count"></span>
@@ -103,27 +101,21 @@
           <span id="save-status" role="status" aria-live="polite"></span>
         </div>
         <div id="levels-grid"></div>
-        <p class="drawer-footnote">Every room you solve opens another.</p>
       </aside>
 
       <!-- Game Area -->
       <div id="game-wrapper">
       <!-- The opening title card -->
       <div id="start-screen">
-        <canvas id="start-particles"></canvas>
         <canvas id="start-moon" class="start-moon" aria-hidden="true"></canvas>
         <div id="start-title">
-          <p class="eyebrow">For the quietly curious</p>
           <h1>The<br><span>Descipher</span></h1>
-          <p class="start-description">A detail out of place. A pattern in the dark.<br>Take your time. Let the ordinary become a clue.</p>
         </div>
         <div id="start-bottom">
           <p id="start-progress"></p>
           <button id="btn-continue" class="menu-btn primary-action start-continue" type="button">Begin exploration</button>
           <p id="start-prompt">Press any key to begin</p>
-          <p id="start-footer">Best experienced with headphones. No timer. Just you and the mystery.</p>
         </div>
-        <div class="start-method" aria-label="How to begin"><span><b>01</b> Observe</span><i></i><span><b>02</b> Connect</span><i></i><span><b>03</b> Decipher</span></div>
       </div>
 
       <!-- Intro Sequence Overlay -->
@@ -173,6 +165,7 @@
 
       <div id="game-viewport">
         <div id="game-container"></div>
+        <div id="film-grain" aria-hidden="true"></div>
         <p id="interaction-cue" hidden></p>
         <span id="interaction-pulse" aria-hidden="true"></span>
       </div>
@@ -184,12 +177,12 @@
           <button id="compact-menu" class="text-button" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-notes"/></svg>Room notes</button>
         </div>
         <div class="input-container">
-          <label class="panel-label" for="level-code">What is the hidden answer?</label>
+          <label class="panel-label sr-only" for="level-code">Your answer</label>
           <div class="input-wrapper">
             <input
               type="text"
               id="level-code"
-              placeholder="A word or a number…"
+              placeholder="Your answer"
               autocomplete="off"
               autocapitalize="characters"
               spellcheck="false"
@@ -198,8 +191,9 @@
             <button id="btn-submit" type="button"><span>Submit</span><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
             <button id="btn-replay" class="icon-button replay-btn" type="button" title="Restart this room" aria-label="Restart this room"><svg class="ui-icon" aria-hidden="true"><use href="#icon-replay"/></svg></button>
           </div>
-          <p id="answer-feedback" role="status" aria-live="polite">Follow the clues in the room. Press Enter to submit.</p>
+          <p id="answer-feedback" role="status" aria-live="polite"></p>
         </div>
+        <button id="btn-hint" class="text-button" type="button" aria-haspopup="dialog"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg>Hint</button>
       </div>
     </div>
 
@@ -208,19 +202,14 @@
       <div id="right-sidebar">
         <section id="current-level-info" aria-labelledby="brief-level-name">
           <div class="drawer-heading">
-            <div><p class="eyebrow">Your field notes</p><h2 id="brief-level-name"></h2></div>
+            <div><p class="eyebrow">Room notes</p><h2 id="brief-level-name"></h2></div>
             <button class="icon-button" type="button" data-close-drawer aria-label="Close room notes"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
           </div>
           <p id="current-level-summary"></p>
           <div id="current-requirements"></div>
         </section>
         <p id="current-hint-count"></p>
-        <div class="field-guide">
-          <p class="eyebrow">A way into the mystery</p>
-          <ol><li><span>01</span><div><h3>Look with intention.</h3><p>Notice objects, sounds and details that feel out of place.</p></div></li><li><span>02</span><div><h3>Make a connection.</h3><p>Try objects and look for a pattern. The room holds the clues.</p></div></li><li><span>03</span><div><h3>Trust a possibility.</h3><p>Enter a word or number below. You can try again as often as you need.</p></div></li></ol>
-        </div>
         <button id="btn-brief-hints" class="menu-btn" type="button">Ask for a hint <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
-        <p class="drawer-footnote">Hints unfold one at a time. You decide how much to reveal.</p>
       </div>
     </aside>
 
@@ -266,8 +255,8 @@
           <legend>Visual comfort</legend>
           <div class="comfort-row">
             <label for="grain-slider">Film grain</label>
-            <output id="grain-value" for="grain-slider">50%</output>
-            <input id="grain-slider" type="range" min="0" max="100" step="5" value="50" />
+            <output id="grain-value" for="grain-slider">Off</output>
+            <input id="grain-slider" type="range" min="0" max="100" step="5" value="0" />
           </div>
           <div class="comfort-row">
             <label for="reading-size">Reading size</label>
@@ -318,7 +307,7 @@
               Every level hides a <b>secret word</b> — the code. Explore the
               scene: look, listen, count, experiment. When you think you have
               it, type it in the code box at the bottom of the screen and press
-              <b>EXECUTE</b> (or hit Enter). A wrong code just flashes red —
+              <b>Submit</b> (or hit Enter). An incorrect answer shows a short message —
               guessing costs nothing, but the answer is always earned.
             </p>
           </div>
@@ -326,7 +315,7 @@
           <div class="howto-section">
             <h3>THE CONTROLS</h3>
             <div class="howto-row">
-              <span class="ui-demo demo-execute">EXECUTE</span>
+              <span class="ui-demo demo-execute">Submit</span>
               <p>Submits the code you typed in the box next to it.</p>
             </div>
             <div class="howto-row">
@@ -336,7 +325,7 @@
             <div class="howto-row">
               <span class="ui-demo">HINTS</span>
               <p>
-                Open Hints in the right panel for two clues, revealed one at a
+                Use Hint beneath the room for two clues, revealed one at a
                 time: first where to look, then what to notice. They point the
                 way; working it out is yours.
               </p>

@@ -39,7 +39,7 @@ test('PING and CAGE unlock the next rooms; Genome requests a reference and SPACE
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._fragmentText.text)).toBe(FRAGMENT_TEXT);
   await openHints(page);
   await expect(page.locator('#info-requires')).toContainText('Reference may help');
-  await expect(page.locator('#hint-list')).toContainText('codon table');
+  await expect(page.locator('#hint-list')).toContainText('BUILDING BLOCKS OF LIFE');
   await page.keyboard.press('Escape');
   await page.locator('#level-code').fill('space'); await page.locator('#btn-submit').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Curtain');

@@ -76,11 +76,11 @@ test('answer feedback is readable and clears as soon as the player edits or chan
   await expect(page.locator('#answer-feedback')).toContainText('does not unlock');
   await expect(page.locator('#level-code')).toHaveAttribute('aria-invalid', 'true');
   await page.locator('#level-code').fill('C');
-  await expect(page.locator('#answer-feedback')).toHaveText('Follow the clues in the room. Press Enter to submit.');
+  await expect(page.locator('#answer-feedback')).toHaveText('');
   await expect(page.locator('#level-code')).toHaveAttribute('aria-invalid', 'false');
   await page.locator('#btn-submit').click();
   await evaluateApp(page, ({ ui }) => ui.navigate(1, { quick: true }));
-  await expect(page.locator('#answer-feedback')).toHaveText('Follow the clues in the room. Press Enter to submit.');
+  await expect(page.locator('#answer-feedback')).toHaveText('');
   await expect(page.locator('#level-code')).toHaveAttribute('aria-invalid', 'false');
 });
 

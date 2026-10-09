@@ -79,7 +79,7 @@ test('the display font preview loads DM Serif Display and keeps the title compac
     actions: document.querySelector('.header-actions').getBoundingClientRect().left,
     navigation: document.querySelector('.room-navigation').getBoundingClientRect().left,
   }));
-  expect(headerPositions.actions).toBeLessThan(headerPositions.navigation);
+  expect(headerPositions.actions).toBeGreaterThan(headerPositions.navigation);
 });
 
 test('hints reveal individually, remember each room, and reset with the game', async ({ page }) => {
@@ -124,7 +124,10 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await expect(page.locator('#progress-count')).toHaveText(`1 / ${LEVEL_METADATA.length} solved`);
   await expect(page.locator('.level-btn.solved')).toHaveCount(1);
   await expect(page.locator('.level-btn').nth(1)).toHaveAttribute('aria-current', 'step');
-  await expect(page.locator('.level-btn').nth(1).locator('img')).toBeVisible({ timeout: 12000 });
+  const preview = page.locator('.level-btn').nth(1).locator('img');
+  await expect(preview).toHaveAttribute('src', /^data:image\//, { timeout: 12000 });
+  const savedPreview = await preview.getAttribute('src');
+  await expect(preview).toBeHidden();
   await expect(page.locator('#save-status')).toHaveText('Saved on this device');
   await screenshot(page, 'progress');
   await page.reload();
@@ -134,7 +137,8 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await screenshot(page, 'continue');
   await page.locator('#btn-continue').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('PlantPot');
-  await expect(page.locator('.level-btn').nth(1).locator('img')).toBeVisible();
+  await expect(preview).toHaveAttribute('src', savedPreview);
+  await expect(preview).toBeHidden();
   await page.locator('.level-btn').first().click();
   await expect(page.locator('#current-level-state')).toHaveCount(0);
 });
@@ -165,7 +169,12 @@ test('header arrows navigate unlocked rooms and the footer shows only the room n
   await page.locator('#room-next').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(1);
   await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.locator('#current-level-number').evaluate(el => getComputedStyle(el).fontSize)).toBe('20px');
+  const roomLabel = await page.locator('#current-level-number').evaluate(element => ({
+    size: Number.parseFloat(getComputedStyle(element).fontSize),
+    wrapping: getComputedStyle(element.closest('.room-title-line')).whiteSpace,
+  }));
+  expect(roomLabel.size).toBeGreaterThanOrEqual(10);
+  expect(roomLabel.wrapping).toBe('nowrap');
 });
 
 test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page }) => {

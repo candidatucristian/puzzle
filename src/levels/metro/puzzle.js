@@ -1,19 +1,19 @@
-/** METRO: the line diagram that hangs over a metro platform. The line runs
- *  through six stations — Sierra Heights, India Docks, Golf Links, November
- *  Street, Alpha Park, Lima Road — and their first words are not place names
- *  at all but the NATO phonetic alphabet: Sierra S, India I, Golf G,
- *  November N, Alpha A, Lima L. Read in the line's order they spell SIGNAL. */
+/** METRO: the line diagram on a metro platform's wall. The line runs through
+ *  five stations — Papa Wharf, Yankee Dock, Lima Road, Oscar Square,
+ *  November Street — and their first words are not place names at all but
+ *  the NATO phonetic alphabet (and none of its famous letters): Papa P,
+ *  Yankee Y, Lima L, Oscar O, November N. Read in the line's order they
+ *  spell PYLON. */
 
-export const METRO_WORD = "SIGNAL";
+export const METRO_WORD = "PYLON";
 
 // the stations of the line, in the order the trains run through them
 export const METRO_STATIONS = Object.freeze([
-  "Sierra Heights",
-  "India Docks",
-  "Golf Links",
-  "November Street",
-  "Alpha Park",
+  "Papa Wharf",
+  "Yankee Dock",
   "Lima Road",
+  "Oscar Square",
+  "November Street",
 ]);
 
 // the NATO phonetic alphabet, A to Z
