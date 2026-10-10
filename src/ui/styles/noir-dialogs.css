@@ -722,5 +722,26 @@
 
 /* In the hall there is no room to answer for: the console and the room
    notes wait, without the layout moving. */
-body.in-hall #input-area,
-body.in-hall #right-sidebar-wrapper { visibility: hidden; }
+body.in-house #input-area,
+body.in-house #right-sidebar-wrapper,
+body.in-house .room-step-button { visibility: hidden; }
+/* The index of a place only tells: what is here, and whether it is solved. */
+.level-btn[hidden] { display: none; }
+.level-btn { cursor: default; pointer-events: none; }
+/* The way back through the house — out of a puzzle, out of a room: a small
+   graphite plate in the corner of the picture, one with the rest of the
+   console (the same panel, border and type as its other buttons). */
+#btn-leave { position: absolute; top: 14px; left: 14px; z-index: 6; appearance: none; display: inline-flex; align-items: center; gap: 8px;
+  min-height: 34px; padding: 7px 14px 7px 10px; border: 1px solid var(--ui-border); border-radius: 5px; cursor: pointer;
+  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .04em; color: var(--ui-muted);
+  background: #151515e0; backdrop-filter: blur(6px); transition: color .15s, border-color .15s, background .15s; }
+#btn-leave[hidden] { display: none; }
+#btn-leave .ui-icon { width: 14px; height: 14px; rotate: 180deg; }
+#btn-leave:hover { color: var(--ui-text); border-color: #4a4a47; background: #1b1b1bf0; }
+#btn-leave:active { transform: translateY(1px); }
+#room-progress[hidden], #progress-count[hidden] { display: none; }
+/* Under the index, a few lines of story: where we are, what there is to do. */
+#index-story { flex-shrink: 0; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--ui-border); }
+#index-story[hidden] { display: none; }
+#index-story p { margin: 0 0 10px; font: 400 calc(12px * var(--reading-scale, 1))/1.65 var(--ui-font); color: var(--ui-muted); }
+#index-story p:last-child { margin-bottom: 0; }

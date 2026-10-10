@@ -1,18 +1,22 @@
+import { PLACES, PUZZLE_STORY } from "../shared/house.js";
+
 /** Coordinates level selection and answers; scenes own their resources.
- * The player is either in a room (a level) or in the hall, between rooms. */
-const HALL = "Hall";
+ * The player is either at a puzzle (a level) or standing somewhere in the
+ * house — the hall, a room — among the things that open the puzzles. */
 export class LevelManager {
   #progress;
   #game = null;
   #currentIndex;
   #subscribers = new Set();
-  #inHall = false;
+  #place = null;
+  #places;
 
-  constructor(definitions, progress) {
+  constructor(definitions, progress, places = PLACES) {
     if (!definitions?.length || !progress) throw new TypeError("Levels and progress are required.");
     this.definitions = Object.freeze([...definitions]);
     this.#progress = progress;
     this.#currentIndex = progress.currentIndex;
+    this.#places = places;
   }
 
   attach(game) {
@@ -26,28 +30,77 @@ export class LevelManager {
   get completedCount() { return this.#progress.state.completedLevelIds.length; }
   get saved() { return this.#progress.persisted; }
   isCompleted(index) { return this.#progress.state.completedLevelIds.includes(this.definitions[index]?.id); }
+  indexOf(id) { return this.definitions.findIndex((level) => level.id === id); }
 
-  /** True while the player stands in the hall, in no room at all. */
-  get inHall() { return this.#inHall; }
+  /** Where in the house the player stands, or null while at a puzzle. */
+  get place() { return this.#place; }
+
+  /** The place a level is found in, if it has been put in the house yet. */
+  homeOf(index) {
+    const id = this.definitions[index]?.id;
+    return this.#places.find((place) => place.holds.includes(id)) ?? null;
+  }
+
+  /** Where stepping back leads: out of a puzzle to the place it is found in
+   *  (the hall, for one not yet put anywhere), out of a room to the place
+   *  its door gives on. Null in the hall: there is nowhere further back. */
+  get back() {
+    const key = this.#place ? this.#place.back : (this.homeOf(this.#currentIndex) ?? this.#places[0]).key;
+    return this.#places.find((place) => place.key === key) ?? null;
+  }
+
+  /** What the index lists: the puzzles of the place the player is in — or,
+   *  at a puzzle, of the place it is found in. A puzzle not yet put anywhere
+   *  in the house is listed with the others still waiting for a room. */
+  get nearby() {
+    const place = this.#place ?? this.homeOf(this.#currentIndex);
+    const all = this.definitions.map((_, index) => index);
+    // the few lines told under the list: the place's own, or a puzzle's
+    const story = this.#place ? this.#place.story ?? [] : PUZZLE_STORY;
+    return place
+      ? { name: place.name, story, indexes: all.filter((index) => place.holds.includes(this.definitions[index].id)) }
+      : { name: "Rooms", story, indexes: all.filter((index) => !this.homeOf(index)) };
+  }
+
+  /** The rooms behind the doors of the place the player stands in, in the
+   *  doors' order: each locked or not, and whether everything in it has
+   *  been solved. None while at a puzzle, or in a place with no doors. */
+  get rooms() {
+    return (this.#place?.doors ?? []).map((key, n) => {
+      const place = this.#places.find((item) => item.key === key);
+      if (!place) return { name: `Room ${n + 1}`, locked: true, solved: false };
+      return {
+        name: place.name,
+        locked: false,
+        solved: place.holds.length > 0 && place.holds.every((id) => this.isCompleted(this.indexOf(id))),
+      };
+    });
+  }
 
   get activeScene() {
-    const key = this.#inHall ? HALL : this.definitions[this.#currentIndex].key;
+    const key = this.#place ? this.#place.key : this.definitions[this.#currentIndex].key;
     return this.#game?.scene.isActive(key) ? this.#game.scene.getScene(key) : null;
   }
 
   canAccess(index) { return this.#progress.canAccess(index); }
+
+  /** A puzzle come upon in the house is open from then on, whatever the
+   *  order the others were solved in. */
+  discover(index) { return this.#progress.unlock(index); }
+
+  #leaveEverything() {
+    for (const { key } of [...this.definitions, ...this.#places, { key: "Boot" }]) {
+      if (this.#game.scene.isActive(key)) this.#game.scene.stop(key);
+    }
+  }
 
   navigate(index, { force = false } = {}) {
     if (!Number.isInteger(index) || !this.definitions[index] || (!force && !this.canAccess(index))) {
       return false;
     }
     if (!this.#game) return false;
-    for (const { key } of this.definitions) {
-      if (this.#game.scene.isActive(key)) this.#game.scene.stop(key);
-    }
-    if (this.#game.scene.isActive("Boot")) this.#game.scene.stop("Boot");
-    if (this.#game.scene.isActive(HALL)) this.#game.scene.stop(HALL);
-    this.#inHall = false;
+    this.#leaveEverything();
+    this.#place = null;
     this.#currentIndex = index;
     // Forced navigation is for development previews; it never unlocks a level.
     if (!force) this.#progress.visit(index);
@@ -56,22 +109,23 @@ export class LevelManager {
     return true;
   }
 
-  /** Step into the hall: every room is left, its doors stand before us. */
-  enterHall() {
-    if (!this.#game) return false;
-    for (const { key } of this.definitions) {
-      if (this.#game.scene.isActive(key)) this.#game.scene.stop(key);
-    }
-    if (this.#game.scene.isActive("Boot")) this.#game.scene.stop("Boot");
-    if (this.#game.scene.isActive(HALL)) this.#game.scene.stop(HALL);
-    this.#inHall = true;
-    this.#game.scene.start(HALL);
+  /** Step into a place of the house: whatever puzzle was open is left. */
+  enterPlace(key) {
+    const place = this.#places.find((item) => item.key === key);
+    if (!this.#game || !place) return false;
+    this.#leaveEverything();
+    this.#place = place;
+    // what a place holds is there to be found: all of it is open from now on
+    for (const id of place.holds) this.#progress.unlock(this.indexOf(id));
+    this.#game.scene.start(place.key);
     this.#notify();
     return true;
   }
 
+  enterHall() { return this.enterPlace(this.#places[0].key); }
+
   submit(answer) {
-    if (this.#inHall) return { correct: false, isLast: false, nextIndex: null };
+    if (this.#place) return { correct: false, isLast: false, nextIndex: null };
     const level = this.definitions[this.#currentIndex];
     const value = typeof answer === "string" ? answer.trim().toUpperCase() : "";
     const isLast = this.#currentIndex === this.definitions.length - 1;
@@ -106,7 +160,7 @@ export class LevelManager {
       currentIndex: this.currentIndex,
       unlockedIndex: this.unlockedIndex,
       completed: this.completed,
-      inHall: this.#inHall,
+      place: this.#place?.key ?? null,
     };
     for (const callback of this.#subscribers) callback(state);
   }

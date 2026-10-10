@@ -34,8 +34,9 @@ body { display:flex; flex-direction:column; height:100dvh; background:var(--ui-b
 #header-room-name { overflow:hidden; text-overflow:ellipsis; }
 .header-count { flex-shrink:0; margin-left:12px; font:inherit; color:var(--ui-muted); }
 .header-count::before { content:'/'; margin-right:12px; color:#51514e; }
+.header-count:empty { display:none; }
 .room-step-button { appearance:none; width:34px; height:34px; padding:0; display:grid; place-items:center; border:0; border-radius:4px; color:var(--ui-muted); background:transparent; cursor:pointer; }
-.room-step-button:first-child .ui-icon { rotate:180deg; }
+#room-previous .ui-icon { rotate:180deg; }
 .room-step-button .ui-icon { width:16px; height:16px; }
 .room-step-button:hover:not(:disabled) { color:var(--ui-text); background:#1c1c1c; }
 .room-step-button:disabled { color:#454542; cursor:default; }

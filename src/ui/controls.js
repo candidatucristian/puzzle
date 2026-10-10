@@ -13,7 +13,7 @@ import { mountInteractionFeedback } from './interactions.js';
 import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
 import { createMoonCanvas } from '../shared/moon.js';
 import { mountStartFilm } from './startFilm.js';
-import { HALL_DOOR } from '../levels/hall/HallScene.js';
+import { HOUSE_GO, WALK_MS } from '../shared/house.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -63,9 +63,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     onClose: restorePuzzleInput,
   });
   scope.add(levels.subscribe(() => answerFeedback()));
-  // In the hall there is no room, so nothing to answer: the console waits
-  // until the player has gone through a door.
-  scope.add(levels.subscribe(() => document.body.classList.toggle('in-hall', levels.inHall)));
+  // Standing in the house there is no puzzle, so nothing to answer: the
+  // console waits until the player has opened one.
+  scope.add(levels.subscribe(() => document.body.classList.toggle('in-house', Boolean(levels.place))));
   let started = false;
   let sessionStart = null;
   const touch = isTouchDevice();
@@ -111,13 +111,41 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     completion.hide(); mobile?.close();
     showGame(); levels.enterHall();
   }
-  // for now every door of the hall opens on the first room
-  const openDoor = () => {
-    if (!levels.inHall || transitions.busy || dialogs.isOpen) return;
-    navigate(0);
+  // Walking through the house: the picture dissolves to black, what is
+  // behind it changes, and it comes softly back. No veil, no title — one
+  // place is simply walked into from another. Walking up to something takes
+  // the whole of `out`: the picture holds while the eye sets off toward it,
+  // then darkens steadily for the rest of the way.
+  let walking = false;
+  function walk(arrive, out = 240) {
+    if (walking) return;
+    const canvas = game.canvas;
+    const land = () => { completion.hide(); mobile?.close(); arrive(); walking = false; };
+    if (preferences?.reducedMotion || !canvas.animate) { land(); return; }
+    walking = true;
+    const leaving = canvas.animate([{ opacity: 1 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }],
+      { duration: out, fill: 'forwards', easing: 'ease-in-out' });
+    leaving.onfinish = () => {
+      land();
+      leaving.cancel();
+      canvas.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 520, easing: 'ease-out' });
+    };
+  }
+  // A door leads to a place, a thing found in one opens its puzzle; the
+  // scene is already going toward whichever was clicked.
+  const houseGo = ({ place, level } = {}) => {
+    if (!levels.place || walking || transitions.busy || dialogs.isOpen) return;
+    const index = levels.indexOf(level);
+    if (place) walk(() => levels.enterPlace(place), WALK_MS);
+    else if (levels.discover(index)) walk(() => levels.navigate(index), WALK_MS);
   };
-  game.events.on(HALL_DOOR, openDoor);
-  scope.add(() => game.events.off(HALL_DOOR, openDoor));
+  game.events.on(HOUSE_GO, houseGo);
+  scope.add(() => game.events.off(HOUSE_GO, houseGo));
+  scope.on(byId('btn-leave'), 'click', () => {
+    const back = levels.back;
+    if (walking || transitions.busy || dialogs.isOpen || !back) return;
+    walk(() => levels.enterPlace(back.key));
+  });
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
   mountFullscreenControl(scope, byId('btn-fullscreen'));
 
@@ -128,16 +156,20 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       input.focus();
       return;
     }
+    // a puzzle found in the house is come back from to where it was found;
+    // one not put anywhere yet still leads straight on to the next
+    const home = levels.homeOf(levels.currentIndex);
     const result = levels.submit(input.value);
     if (result.correct) {
-      answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : 'Answer accepted. Opening the next room.', 'success');
+      answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : home ? 'Answer accepted.' : 'Answer accepted. Opening the next room.', 'success');
       input.classList.add('success-flash'); scope.later(() => input.classList.remove('success-flash'), 1200);
       if (result.nextIndex === null) {
         completion.show();
         audio.playSuccess();
       } else {
         audio.playSuccess();
-        navigate(result.nextIndex, { caption: 'Answer accepted' });
+        if (home) transitions.enter(home.key, { caption: 'Answer accepted' });
+        else navigate(result.nextIndex, { caption: 'Answer accepted' });
       }
       input.value = '';
     } else {
@@ -170,7 +202,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       started = true;
       sessionStart = Date.now();
       showGame();
-      navigate(0);
+      transitions.enter('Hall');
     },
   });
   scope.on(byId('btn-howto'), 'click', event => { reset.disarm(); dialogs.open('howto-modal', event.currentTarget, { nested: true }); });

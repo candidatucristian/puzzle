@@ -92,7 +92,7 @@
       <!-- Level navigation -->
       <aside id="sidebar" aria-label="Room index">
         <div class="drawer-heading">
-          <div><p class="eyebrow">Rooms</p></div>
+          <div><p id="index-heading" class="eyebrow">Rooms</p></div>
         </div>
         <div class="progress-summary">
           <span id="progress-count"></span>
@@ -100,6 +100,7 @@
           <span id="save-status" role="status" aria-live="polite"></span>
         </div>
         <div id="levels-grid"></div>
+        <div id="index-story" aria-label="Story"></div>
       </aside>
 
       <!-- Game Area -->
@@ -174,6 +175,7 @@
 
       <div id="game-viewport">
         <div id="game-container"></div>
+        <button id="btn-leave" type="button" hidden><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>Back</button>
         <div id="film-grain" aria-hidden="true"></div>
         <p id="interaction-cue" hidden></p>
         <span id="interaction-pulse" aria-hidden="true"></span>

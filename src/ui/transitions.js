@@ -15,44 +15,54 @@ export function createTransitions({ levels, showGame, onNavigate, preferences })
   const caption = document.getElementById('veil-caption');
   const numeral = document.getElementById('veil-numeral');
   let scope = new Scope(), busy = false;
+  // The veil closes, `arrive` changes what is behind it, the veil opens. A
+  // level is announced by its numeral; a place of the house has none, and
+  // is simply walked into.
+  function pass(arrive, title, options) {
+    onNavigate();
+    const wasBusy = busy;
+    scope.dispose(); scope = new Scope(); busy = true;
+    const change = () => {
+      options.onBeforeNavigate?.();
+      showGame(); arrive();
+      if (!options.quick && title) veil.classList.add('titled');
+      scope.later(() => {
+        veil.classList.remove('cover', 'titled');
+        scope.later(() => { busy = false; }, 650);
+      }, options.quick ? 350 : options.caption ? 2100 : 1500);
+    };
+    if (preferences?.reducedMotion) {
+      veil.classList.remove('cover', 'titled');
+      if (options.coverDelay) {
+        scope.later(() => {
+          options.onBeforeNavigate?.();
+          showGame(); arrive(); busy = false;
+        }, options.coverDelay);
+      } else {
+        options.onBeforeNavigate?.();
+        showGame(); arrive(); busy = false;
+      }
+      return true;
+    }
+    caption.textContent = options.caption || '';
+    caption.style.display = options.caption ? '' : 'none';
+    numeral.textContent = title;
+    veil.classList.remove('titled'); veil.classList.add('cover');
+    scope.later(() => {
+      if (options.coverDelay) scope.later(change, options.coverDelay);
+      else change();
+    }, wasBusy ? 0 : 600);
+    return true;
+  }
   return {
     get busy() { return busy; },
     go(index, options = {}) {
       if (!levels.canAccess(index)) return false;
-      onNavigate();
-      const wasBusy = busy;
-      scope.dispose(); scope = new Scope(); busy = true;
-      const changeLevel = () => {
-        options.onBeforeNavigate?.();
-        showGame(); levels.navigate(index);
-        if (!options.quick) veil.classList.add('titled');
-        scope.later(() => {
-          veil.classList.remove('cover', 'titled');
-          scope.later(() => { busy = false; }, 650);
-        }, options.quick ? 350 : options.caption ? 2100 : 1500);
-      };
-      if (preferences?.reducedMotion) {
-        veil.classList.remove('cover', 'titled');
-        if (options.coverDelay) {
-          scope.later(() => {
-            options.onBeforeNavigate?.();
-            showGame(); levels.navigate(index); busy = false;
-          }, options.coverDelay);
-        } else {
-          options.onBeforeNavigate?.();
-          showGame(); levels.navigate(index); busy = false;
-        }
-        return true;
-      }
-      caption.textContent = options.caption || '';
-      caption.style.display = options.caption ? '' : 'none';
-      numeral.textContent = toRoman(index + 1);
-      veil.classList.remove('titled'); veil.classList.add('cover');
-      scope.later(() => {
-        if (options.coverDelay) scope.later(changeLevel, options.coverDelay);
-        else changeLevel();
-      }, wasBusy ? 0 : 600);
-      return true;
+      return pass(() => levels.navigate(index), toRoman(index + 1), options);
+    },
+    /** Walk into a place of the house. */
+    enter(key, options = {}) {
+      return pass(() => levels.enterPlace(key), '', { quick: !options.caption, ...options });
     },
     dispose() { scope.dispose(); veil.classList.remove('cover', 'titled'); busy = false; },
   };

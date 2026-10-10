@@ -52,6 +52,17 @@ export class ProgressStore {
     return this.#state.unlockedLevelIds.includes(id);
   }
 
+  /** Opens a level out of turn: it was come upon in the house. */
+  unlock(index) {
+    if (!Number.isInteger(index) || !this.#definitions[index]) return false;
+    const { id } = this.#definitions[index];
+    if (!this.#state.unlockedLevelIds.includes(id)) {
+      this.#state.unlockedLevelIds.push(id);
+      this.#save();
+    }
+    return true;
+  }
+
   visit(index) {
     if (!this.canAccess(index)) return false;
     this.#state.lastPlayedLevelId = this.#definitions[index].id;

@@ -9,6 +9,7 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
   const tiles = [];
   let captureTimer, captureGeneration = 0;
   grid.replaceChildren();
+  grid.setAttribute('role', 'list');
   scope.on(previous, 'click', () => {
     if (canNavigate() && levels.currentIndex > 0) navigate(levels.currentIndex - 1);
   });
@@ -16,8 +17,10 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     if (canNavigate() && levels.currentIndex < levels.unlockedIndex) navigate(levels.currentIndex + 1);
   });
   levels.definitions.forEach((level, index) => {
-    const tile = document.createElement('button');
-    tile.type = 'button'; tile.dataset.levelId = level.id;
+    // a line of the index, not a control: it says what is here and whether
+    // it is solved; the way to a puzzle is the thing itself, in its room
+    const tile = document.createElement('div');
+    tile.setAttribute('role', 'listitem'); tile.dataset.levelId = level.id;
     const preview = document.createElement('img');
     preview.className = 'level-preview'; preview.alt = ''; preview.hidden = true;
     const number = document.createElement('span'); number.className = 'level-number'; number.textContent = String(index + 1).padStart(2, '0');
@@ -27,20 +30,19 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     caption.append(name, status);
     const check = document.createElement('span'); check.className = 'level-check'; check.textContent = '✓'; check.setAttribute('aria-hidden', 'true');
     tile.append(preview, number, caption, check); grid.append(tile);
-    scope.on(tile, 'click', () => { if (canNavigate()) navigate(index); });
     tiles.push({ tile, preview, check, name, status });
   });
 
   function render() {
+    const near = levels.nearby;
     levels.definitions.forEach((level, index) => {
       const { tile, preview, check, name, status } = tiles[index];
-      const allowed = levels.canAccess(index), solved = levels.isCompleted(index), current = index === levels.currentIndex;
+      const allowed = levels.canAccess(index), solved = levels.isCompleted(index), current = !levels.place && index === levels.currentIndex;
+      tile.hidden = !near.indexes.includes(index);
       tile.className = `level-btn ${allowed ? current ? 'current' : 'unlocked' : 'locked'}`;
       tile.classList.toggle('solved', solved);
-      tile.disabled = !allowed;
-      tile.setAttribute('aria-disabled', String(!allowed));
       name.textContent = allowed ? level.name : 'Locked';
-      status.textContent = !allowed ? 'Locked' : current ? solved ? 'Revisiting · solved' : 'Currently exploring' : solved ? 'Solved · revisit' : 'Ready to explore';
+      status.textContent = !allowed ? 'Locked' : solved ? 'Solved' : current ? 'Currently exploring' : 'Not solved yet';
       tile.setAttribute('aria-label', `Level ${index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
       if (current) tile.setAttribute('aria-current', 'step'); else tile.removeAttribute('aria-current');
       tile.title = allowed ? `${level.name}${solved ? ' · Solved' : ''}` : 'Solve the previous room to unlock';
@@ -50,19 +52,52 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       preview.hidden = !source; tile.classList.toggle('has-preview', Boolean(source));
     });
     const done = levels.completedCount, total = levels.definitions.length;
-    document.getElementById('progress-count').textContent = `${done} / ${total} solved`;
+    // where the place has doors rather than puzzles, the index lists the
+    // rooms behind them, each ticked once everything in it is solved
+    for (const old of grid.querySelectorAll('.room-row')) old.remove();
+    levels.rooms.forEach((room, n) => {
+      const row = document.createElement('div');
+      row.className = `level-btn room-row ${room.locked ? 'locked' : 'unlocked'}${room.solved ? ' solved' : ''}`;
+      row.setAttribute('role', 'listitem');
+      row.setAttribute('aria-label', `${room.name}${room.locked ? ' — locked' : room.solved ? ' — solved' : ''}`);
+      const number = document.createElement('span'); number.className = 'level-number'; number.textContent = String(n + 1).padStart(2, '0');
+      const caption = document.createElement('span'); caption.className = 'level-caption';
+      const name = document.createElement('span'); name.className = 'level-name'; name.textContent = room.name;
+      const status = document.createElement('span'); status.className = 'level-status'; status.textContent = room.locked ? 'Locked' : room.solved ? 'Solved' : 'Not solved yet';
+      caption.append(name, status);
+      const check = document.createElement('span'); check.className = 'level-check'; check.textContent = '✓';
+      check.setAttribute('aria-hidden', 'true'); check.hidden = !room.solved;
+      row.append(number, caption, check); grid.append(row);
+    });
+    // under the list, the few lines of story for where the player is
+    const story = document.getElementById('index-story');
+    story.replaceChildren(...near.story.map(line => Object.assign(document.createElement('p'), { textContent: line })));
+    story.hidden = near.story.length === 0;
+    const here = near.indexes.filter(index => levels.isCompleted(index)).length;
+    // a count only where there is something to count
+    document.getElementById('progress-count').hidden = near.indexes.length === 0;
+    document.getElementById('room-progress').hidden = near.indexes.length === 0;
+    document.getElementById('index-heading').textContent = near.name;
+    document.getElementById('progress-count').textContent = `${here} / ${near.indexes.length} solved`;
     const currentLevel = levels.definitions[levels.currentIndex];
     const romanLevel = toRoman(levels.currentIndex + 1);
-    // in the hall, the header names the hall, not a room off it
-    document.getElementById('header-room-name').textContent = levels.inHall ? 'The Hall' : currentLevel.name;
-    document.getElementById('header-progress').textContent = levels.inHall ? '' : romanLevel;
+    // in the house, the header names the place stood in, not a puzzle
+    document.getElementById('header-room-name').textContent = levels.place ? levels.place.name : currentLevel.name;
+    document.getElementById('header-progress').textContent = levels.place ? '' : romanLevel;
+    // the way back: out of a puzzle to where it was found, out of a room to the hall
+    const leave = document.getElementById('btn-leave'), back = levels.back;
+    leave.hidden = !back;
+    if (back) {
+      leave.setAttribute('aria-label', `Back to ${back.name.replace(/^The /, 'the ')}`);
+      leave.title = leave.getAttribute('aria-label');
+    }
     document.getElementById('header-room').setAttribute('aria-label', `Current level: ${currentLevel.name}, level ${romanLevel}`);
     previous.disabled = levels.currentIndex <= 0;
     next.disabled = levels.currentIndex >= levels.unlockedIndex;
     next.setAttribute('aria-label', `Next room${next.disabled ? ' (locked)' : ''}`);
     next.title = next.disabled ? 'Solve this room to unlock the next one' : 'Next room';
     previous.setAttribute('aria-label', `Previous room${previous.disabled ? ' (first room)' : ''}`);
-    const meter = document.getElementById('room-progress'); meter.max = total; meter.value = done;
+    const meter = document.getElementById('room-progress'); meter.max = near.indexes.length; meter.value = here;
     const save = document.getElementById('save-status');
     save.textContent = levels.saved ? 'Saved on this device' : 'Progress kept for this session only';
     save.dataset.state = levels.saved ? 'saved' : 'temporary';

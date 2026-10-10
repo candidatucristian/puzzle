@@ -52,6 +52,9 @@ export function layoutHall(W, H) {
       });
     });
   }
+  // the window at the far end
+  const win = endWindow(L);
+  L.window = { x: win.cx - win.rx, y: win.top, width: win.rx * 2, height: win.sill - win.top };
   L.sconces = [];
   for (const side of [-1, 1]) for (const z of SCONCES) L.sconces.push({ side, z, ...L.P(side * L.wall, -H * 0.2, z) });
   return L;
@@ -235,10 +238,23 @@ function paintEnd(ctx, L) {
   const w = endWindow(L);
   // its light on the wall round it
   soft(ctx, w.cx, (w.top + w.sill) / 2, w.rx * 3.4, (w.sill - w.top) * 1.2, MOON, 0.26, "lighter");
+  paintNightWindow(ctx, W, H, w, L.vp);
+  // the panelling runs on under the sill, in front of the window's foot
+  ctx.fillStyle = "#140c07";
+  ctx.fillRect(a.x, dado, b.x - a.x, b.y - dado);
+  ctx.fillStyle = "#2a1a0e";
+  ctx.fillRect(a.x, dado - 2, b.x - a.x, 4);
+}
+
+/** A tall arched window with the night in it — sky, moon, hills, its deep
+ *  reveal and its sill — as the house has them. `w` is where it is on the
+ *  screen: its middle, half its width, its head and its sill; `eye` is the
+ *  point the room is seen from, which its reveals run back toward. */
+export function paintNightWindow(ctx, W, H, w, eye) {
   const geo = archGeo({
     W, H, S: w.rx * 1.25, V: w.rx * 1.25, Wv: w.rx / 0.455,
     archCX: w.cx, archCY: w.top + w.rx * 0.9, archRX: w.rx, archRY: w.rx * 0.9, sillY: w.sill,
-    eye: L.vp,
+    eye,
     moon: { x: w.cx + w.rx * 0.28, y: w.top + (w.sill - w.top) * 0.26, r: w.rx * 0.13 },
     horizonY: w.top + (w.sill - w.top) * 0.86,
     K: 0.94,
@@ -276,11 +292,6 @@ function paintEnd(ctx, L) {
   o.fillRect(0, 0, W, H);
   o.restore();
   ctx.drawImage(off, 0, 0);
-  // the panelling runs on under the sill, in front of the window's foot
-  ctx.fillStyle = "#140c07";
-  ctx.fillRect(a.x, dado, b.x - a.x, b.y - dado);
-  ctx.fillStyle = "#2a1a0e";
-  ctx.fillRect(a.x, dado - 2, b.x - a.x, 4);
 }
 
 // where the end window is, on the screen
