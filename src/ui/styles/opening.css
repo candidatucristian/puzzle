@@ -25,19 +25,23 @@
 /* The title stands before the manor: the film fills the screen behind it,
    whole (never cropped; startFilm.js sizes it), only its very edges darkened; the words sit
    in the lower left, clear of the house. */
-#start-screen { justify-content:flex-end; background:#030405; }
-#start-film { position:absolute; inset:0; z-index:0; background:#030405; }
+#start-screen { justify-content:flex-end; background:var(--ui-bg); }
+#start-film { position:absolute; inset:0; z-index:0; background:var(--ui-bg); }
 .start-reel { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:fill; opacity:0; transition:opacity 1.4s ease-in-out; pointer-events:none; }
 .start-reel.on { opacity:1; }
-#start-film::after { content:''; position:absolute; inset:0; pointer-events:none;
-  background:
-    linear-gradient(90deg, rgba(3,4,5,.8) 0%, transparent 4%, transparent 96%, rgba(3,4,5,.8) 100%),
-    linear-gradient(180deg, transparent 0%, transparent 84%, rgba(3,4,5,.6) 100%); }
+/* No straight edge anywhere: the film itself fades out toward all four of
+   its own sides, wherever in the screen it has been fitted, and what is left
+   round it is the screen's own dark. */
+.start-reel {
+  -webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 9%, #000 89%, transparent 100%);
+  -webkit-mask-composite:source-in;
+  mask-image:linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 9%, #000 89%, transparent 100%);
+  mask-composite:intersect; }
 /* the film has its own moon */
 .start-moon { display:none; }
 /* no pane, no border: the words stand in a soft pool of dark that feathers
    away into the picture, as the rooms' own edges do */
-#start-card { position:relative; z-index:2; align-self:flex-start; max-width:min(460px,80%); padding:0; background:none; border:0; }
+#start-card { position:relative; z-index:2; align-self:flex-start; max-width:min(460px,80%); margin-left:10px; padding:0; background:none; border:0; }
 #start-card::before { content:''; position:absolute; z-index:-1; inset:-90px -150px -90px -140px; pointer-events:none;
   background:radial-gradient(closest-side, rgba(3,4,5,.94) 0%, rgba(3,4,5,.82) 45%, rgba(3,4,5,.4) 75%, rgba(3,4,5,0) 100%);
   filter:blur(18px); }
