@@ -146,7 +146,7 @@
     0 0 5px rgba(0, 0, 0, 0.95);
 }
 
-/* the knobs and the channel dial: dark wood and brass */
+/* the knobs and the channel dial: smoked wood and dark metal */
 #da-overlay .da-knob,
 #da-overlay .da-dial {
   position: absolute;
@@ -192,7 +192,7 @@
   transform: translateY(1px);
 }
 #da-overlay .da-knob:focus-visible {
-  outline: 1px dashed #d6ba78;
+  outline: 1px dashed #a4aaa4;
   outline-offset: 3px;
 }
 #da-overlay .rot {

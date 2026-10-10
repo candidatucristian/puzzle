@@ -53,7 +53,7 @@ body { display:flex; flex-direction:column; height:100dvh; background:var(--ui-b
 #play-area { display:flex; flex:1; min-height:0; min-width:0; }
 #game-wrapper { position:relative; display:flex; flex-direction:column; flex:1; min-height:0; min-width:0; margin:8px 22px 0 24px; }
 #game-viewport {
-  --edge-fade:clamp(12px,1.8vw,28px);
+  --edge-fade:clamp(13.2px,1.98vw,30.8px);
   position:relative; flex:1; min-height:0; overflow:hidden; border:0; border-radius:16px; background:var(--ui-bg); box-shadow:none;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--edge-fade),#000 calc(100% - var(--edge-fade)),transparent),linear-gradient(transparent,#000 var(--edge-fade),#000 calc(100% - var(--edge-fade)),transparent);
   mask-image:linear-gradient(90deg,transparent,#000 var(--edge-fade),#000 calc(100% - var(--edge-fade)),transparent),linear-gradient(transparent,#000 var(--edge-fade),#000 calc(100% - var(--edge-fade)),transparent);

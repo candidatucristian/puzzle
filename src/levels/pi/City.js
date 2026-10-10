@@ -798,10 +798,9 @@ function paintInterior(w, h, v, rnd) {
       for (const x of [w * 0.08, w * 0.16, w * 0.84, w * 0.92])
         g.fillRect(x, 0, 1, h);
       break;
-    case 1: // blinds
-      g.fillStyle = "rgba(120,60,22,0.35)";
-      for (let y = h / 8; y < h * 0.6; y += h / 8)
-        g.fillRect(0, y, w, Math.max(1, h * 0.05));
+    case 1: // a raised blind leaves one uninterrupted pane of light
+      g.fillStyle = "rgba(120,60,22,0.25)";
+      g.fillRect(0, 0, w, h * 0.16);
       break;
     case 2: // a plant on the sill
       g.fillStyle = dark;
@@ -822,8 +821,7 @@ function paintInterior(w, h, v, rnd) {
       g.fillRect(w * 0.73, h * 0.55, Math.max(1, w * 0.04), h * 0.45);
       g.fillRect(0, h * 0.3, w * 0.35, Math.max(1, h * 0.05));
   }
-  g.fillStyle = "rgba(48,28,14,0.9)";
-  g.fillRect(w / 2 - Math.max(0.5, w * 0.035), 0, Math.max(1, w * 0.07), h);
+  // One lit opening is one countable window; retain only the outer frame.
   g.strokeStyle = "rgba(90,45,15,0.45)";
   g.lineWidth = 1;
   g.strokeRect(0.5, 0.5, w - 1, h - 1);

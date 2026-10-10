@@ -29,19 +29,16 @@ const BODY = "wi_bird_body_";
 const HEAD = "wi_bird_head_";
 const NOTE = "wi_note_";
 
-// the hill, in the manner of the "Bliss" wallpaper: alternating crests and
-// hollows (x, y as fractions of the screen), smoothstepped between
+// Broad, uneven folds of pasture (x, y as fractions of the screen). The
+// pole keeps its original crest; the land rolls away more gently either side.
 const HILLS = [
-  [0.0, 0.66],
-  [0.09, 0.622],
-  [0.2, 0.688],
-  [0.32, 0.628],
-  [0.42, 0.67],
+  [0.0, 0.666],
+  [0.16, 0.635],
+  [0.3, 0.659],
   [0.52, 0.598], // the hump the pole stands on
-  [0.64, 0.682],
-  [0.76, 0.614],
-  [0.88, 0.684],
-  [1.0, 0.636],
+  [0.7, 0.673],
+  [0.84, 0.645],
+  [1.0, 0.682],
 ];
 
 // trees and bushes along the crest (h = height, as a fraction of the screen)
@@ -339,13 +336,21 @@ function paintLand(L) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  paintFarRidge(ctx, L);
-  paintHill(ctx, L, lcg(6446));
+  // Resolve the fine grass and continuous crests at twice the scene size,
+  // then downsample once. The stored texture and all scene coordinates stay
+  // at their original size.
+  const terrain = makeCanvas(W * 2, H * 2);
+  const ground = terrain.getContext("2d");
+  ground.scale(2, 2);
+  paintFarRidge(ground, L);
+  paintHill(ground, L, lcg(6446));
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(terrain, 0, 0, W, H);
   paintTrees(ctx, L);
   paintPole(ctx, L);
   paintWires(ctx, L);
   paintHouse(ctx, L, lcg(9229));
-  grain(ctx, W, H, 0.04, true);
+  grain(ctx, W, H, 0.014, true);
   return c;
 }
 
@@ -358,75 +363,114 @@ function paintFarRidge(ctx, L) {
       (0.012 +
         0.008 * Math.sin((x / W) * 6.2 + 0.8) +
         0.005 * Math.sin((x / W) * 14.3 + 2.1));
-  ctx.beginPath();
-  ctx.moveTo(-10, H);
-  for (let x = -10; x <= W + 10; x += 6) ctx.lineTo(x, ridge(x));
-  ctx.lineTo(W + 10, H);
-  ctx.closePath();
+  const crest = new Path2D();
+  crest.moveTo(-10, ridge(-10));
+  for (let x = -8; x <= W + 10; x += 2) crest.lineTo(x, ridge(x));
+  const land = new Path2D(crest);
+  land.lineTo(W + 10, H);
+  land.lineTo(-10, H);
+  land.closePath();
   const g = ctx.createLinearGradient(0, 0, W, 0);
   g.addColorStop(0, "#433f5e");
   g.addColorStop(sun.x / W, "#7c6173");
   g.addColorStop(1, "#56506c");
   ctx.fillStyle = g;
-  ctx.fill();
-  // the gold just catching its top, strongest over the sun
-  ctx.lineWidth = Math.max(1, L.k);
-  for (let x = -10; x <= W; x += 6) {
-    const a = 0.5 * Math.exp(-(((x - sun.x) / (W * 0.25)) ** 2));
-    if (a < 0.02) continue;
-    ctx.strokeStyle = `rgba(255,214,160,${a})`;
-    line(ctx, x, ridge(x), x + 6, ridge(x + 6));
-  }
+  ctx.fill(land);
+  // Haze catches the distant crest as one continuous, low-contrast edge.
+  const light = ctx.createLinearGradient(0, 0, W, 0);
+  light.addColorStop(0, "rgba(240,194,156,0.02)");
+  light.addColorStop(sun.x / W, "rgba(240,194,156,0.22)");
+  light.addColorStop(1, "rgba(240,194,156,0.07)");
+  ctx.strokeStyle = light;
+  ctx.lineWidth = Math.max(0.7, L.k);
+  ctx.stroke(crest);
 }
 
 function paintHill(ctx, L, rnd) {
   const { W, H, hillY, sun, k } = L;
-  const crest = [];
-  for (let x = -12; x <= W + 12; x += 4) crest.push({ x, y: hillY(x) });
-
-  ctx.beginPath();
-  crest.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-  ctx.lineTo(W + 12, H + 12);
-  ctx.lineTo(-12, H + 12);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(0, H * 0.59, 0, H);
-  g.addColorStop(0, "#1f3034");
-  g.addColorStop(0.35, "#132021");
-  g.addColorStop(1, "#070c0e");
-  ctx.fillStyle = g;
-  ctx.fill();
-
-  // the grass: a faint mottle, darker in the hollows
-  ctx.save();
-  ctx.clip();
-  for (let i = 0; i < 260; i++) {
-    const x = rnd() * W;
-    const y = hillY(x) + rnd() * (H - hillY(x));
-    softEllipse(ctx, x, y, 12 + rnd() * 30, 4 + rnd() * 8, rnd() < 0.5 ? "0,0,0" : "70,96,80", 0.12);
+  // These cubic curves are the exact smoothstep used by hillY, so trees,
+  // the pole and ambient motion continue to meet the painted ground.
+  const crest = new Path2D();
+  crest.moveTo(-12, hillY(0));
+  crest.lineTo(0, hillY(0));
+  for (let i = 1; i < HILLS.length; i++) {
+    const [x0, y0] = HILLS[i - 1];
+    const [x1, y1] = HILLS[i];
+    const third = (x1 - x0) / 3;
+    crest.bezierCurveTo((x0 + third) * W, y0 * H, (x1 - third) * W, y1 * H, x1 * W, y1 * H);
   }
+  crest.lineTo(W + 12, hillY(W));
+  const land = new Path2D(crest);
+  land.lineTo(W + 12, H + 12);
+  land.lineTo(-12, H + 12);
+  land.closePath();
+  const g = ctx.createLinearGradient(0, H * 0.59, 0, H);
+  g.addColorStop(0, "#303a32");
+  g.addColorStop(0.24, "#253129");
+  g.addColorStop(0.62, "#16241e");
+  g.addColorStop(1, "#0b1512");
+  ctx.fillStyle = g;
+  ctx.fill(land);
+
+  ctx.save();
+  ctx.clip(land);
+  // Broad light and cool hollows describe the slope before any grass detail.
+  // Their scale follows the landscape, avoiding repeated little dark blobs.
+  for (const [x, y, rx, ry, rgb, alpha, angle] of [
+    [0.53, 0.65, 0.23, 0.12, "132,133,91", 0.19, 0.32],
+    [0.83, 0.7, 0.2, 0.105, "141,139,91", 0.2, 0.16],
+    [0.16, 0.68, 0.22, 0.08, "116,125,100", 0.12, -0.1],
+    [0.33, 0.77, 0.22, 0.1, "3,12,13", 0.32, -0.2],
+    [0.68, 0.78, 0.16, 0.13, "3,12,13", 0.36, -0.4],
+    [0.97, 0.83, 0.22, 0.11, "5,14,14", 0.3, 0.25],
+  ]) {
+    ctx.save();
+    ctx.translate(x * W, y * H);
+    ctx.rotate(angle);
+    softEllipse(ctx, 0, 0, rx * W, ry * H, rgb, alpha);
+    ctx.restore();
+  }
+  for (let i = 0; i < 65; i++) {
+    const x = rnd() * W;
+    const depth = rnd();
+    const y = hillY(x) + depth * (H - hillY(x));
+    softEllipse(ctx, x, y, W * (0.025 + rnd() * 0.045), H * (0.008 + depth * 0.016), rnd() < 0.5 ? "9,17,13" : "100,114,78", 0.07);
+  }
+
+  // A small amount of fine grass comes into focus only in the foreground.
+  ctx.lineCap = "round";
+  for (let i = 0; i < 420; i++) {
+    const x = rnd() * W;
+    const depth = Math.sqrt(rnd());
+    const y = hillY(x) + depth * (H - hillY(x));
+    const h = (0.6 + rnd() * 2.4) * depth * k;
+    ctx.strokeStyle = `rgba(135,145,105,${0.02 + depth * 0.035})`;
+    ctx.lineWidth = 0.45 * k;
+    line(ctx, x, y, x + h * 0.45, y - h);
+  }
+
+  // A single continuous stroke avoids the bright joins of short segments.
+  // Clipping keeps the faint dawn light on the grass side of the silhouette.
+  const rim = ctx.createLinearGradient(0, 0, W, 0);
+  rim.addColorStop(0, "rgba(216,192,139,0.03)");
+  rim.addColorStop(sun.x / W, "rgba(216,192,139,0.38)");
+  rim.addColorStop(1, "rgba(216,192,139,0.12)");
+  ctx.strokeStyle = rim;
+  ctx.lineWidth = 2.2 * k;
+  ctx.stroke(crest);
+  ctx.globalAlpha = 0.17;
+  ctx.lineWidth = 10 * k;
+  ctx.stroke(crest);
   ctx.restore();
 
-  // backlit: a hairline of gold along the crest, brightest toward the sun
-  for (let i = 1; i < crest.length; i++) {
-    const a = crest[i - 1];
-    const b = crest[i];
-    const lit = 0.12 + 0.6 * Math.exp(-(((a.x - sun.x) / (W * 0.33)) ** 2));
-    ctx.strokeStyle = `rgba(255,206,150,${lit})`;
-    ctx.lineWidth = 1.3 * k;
-    line(ctx, a.x, a.y + 0.5, b.x, b.y + 0.5);
-    ctx.strokeStyle = `rgba(255,190,130,${lit * 0.18})`;
-    ctx.lineWidth = 5 * k;
-    line(ctx, a.x, a.y + 2, b.x, b.y + 2);
-  }
-
-  // a few tufts standing up against the light
-  for (let i = 0; i < 70; i++) {
+  // Sparse, small tufts soften the skyline without a picket-fence edge.
+  for (let i = 0; i < 90; i++) {
     const x = rnd() * W;
-    const y = hillY(x) + 1;
-    const h = (3 + rnd() * 6) * k;
-    const lean = (rnd() - 0.5) * 4 * k;
-    ctx.strokeStyle = "#0c1412";
-    ctx.lineWidth = Math.max(0.8, 0.9 * k);
+    const y = hillY(x) + 0.6;
+    const h = (0.7 + rnd() * 2.1) * k;
+    const lean = (rnd() - 0.5) * 2 * k;
+    ctx.strokeStyle = "rgba(22,34,24,0.65)";
+    ctx.lineWidth = 0.6 * k;
     line(ctx, x, y, x + lean, y - h);
   }
 }

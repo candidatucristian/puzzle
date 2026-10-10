@@ -70,18 +70,13 @@
   line-height: 1.65;
 }
 
-.options-heading {
+.options-heading,
+.howto-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 14px;
-}
-
-.options-heading #btn-howto {
-  min-height: 42px;
-  padding: 10px 14px;
-  font-size: calc(12px * var(--reading-scale, 1));
 }
 
 .slider-group,
@@ -231,12 +226,6 @@
   padding: 12px 16px;
   font-size: calc(13px * var(--reading-scale, 1));
   line-height: 1.4;
-}
-
-#btn-close-howto {
-  border-color: var(--ui-accent);
-  background: var(--ui-accent);
-  color: var(--ui-bg);
 }
 
 .options-divider { height: 1px; margin: 0; background: var(--ui-border); }
@@ -397,77 +386,43 @@
   #hint-count, #info-modal #btn-next-hint { font-size: calc(10px * var(--reading-scale, 1)); }
 }
 
-/* Beginner help uses the same controls as the actual interface. */
-.modal-content.howto-content {
-  width: min(820px, 100%);
-  overflow: hidden;
-}
-
-.howto-body {
+/* Help is a plain reading surface, with no imitation buttons or badges. */
+#howto-modal .howto-body {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   flex-direction: column;
-  gap: 28px;
+  gap: 30px;
   min-height: 0;
-  padding-right: 12px;
+  padding: 0 12px 8px 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #454541 transparent;
+  scrollbar-color: #3a3a36 transparent;
 }
 
+.howto-section { flex-shrink: 0; }
 .howto-section h3 {
-  margin: 0 0 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--ui-border);
-  color: var(--ui-brass);
-  font: 500 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-mono);
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  margin: 0 0 12px;
+  color: #999992;
+  font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
+  letter-spacing: 0;
 }
 
-.howto-section p {
+.howto-section p,
+.howto-row dd {
   margin: 0;
-  color: var(--ui-muted);
-  font-size: calc(14px * var(--reading-scale, 1));
-  line-height: 1.8;
+  color: #c4c4bd;
+  font: 400 calc(14px * var(--reading-scale, 1))/1.75 var(--ui-font);
 }
 
-.howto-section b { color: var(--ui-text); font-weight: 500; }
-.howto-lead { margin-bottom: 10px !important; }
-
+.howto-controls { display: grid; gap: 16px; margin: 0; }
 .howto-row {
   display: grid;
-  grid-template-columns: 136px minmax(0, 1fr);
-  align-items: start;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: baseline;
   gap: 20px;
-  padding: 10px 0;
 }
-
-.ui-demo,
-.lvl-demo,
-.badge-demo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 9px 12px;
-  border: 1px solid #4b4b45;
-  border-radius: 5px;
-  background: var(--ui-panel-raised);
-  color: var(--ui-text);
-  font: 500 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
-  text-align: center;
-}
-
-.ui-demo.demo-execute { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-bg); }
-.ui-demo.demo-replay,
-.ui-demo.demo-volume { font-size: 20px; }
-.lvl-demo { width: 44px; justify-self: center; font-family: var(--ui-mono); }
-.lvl-demo.lvl-current { border-color: var(--ui-accent); box-shadow: inset 3px 0 var(--ui-accent); }
-.lvl-demo.lvl-locked { border-style: dashed; color: var(--ui-muted); background: var(--ui-bg); }
-.badge-demo { color: var(--ui-accent); font-family: var(--ui-mono); font-weight: 400; }
-.badge-demo i { font-style: normal; }
+.howto-row dt { color: #ddddd6; font-size: calc(13px * var(--reading-scale, 1)); }
 :root:not([data-touch="true"]) .howto-touch { display: none; }
 
 /* A closed case is a quiet title card, not a scaled or bouncing celebration. */
@@ -593,7 +548,6 @@
   .modal-content { padding: 20px 18px; }
   .comfort-row select { max-width: 160px; }
   .howto-row { grid-template-columns: 1fr; gap: 10px; }
-  .ui-demo, .lvl-demo, .badge-demo { justify-self: start; width: auto; min-width: 100px; }
   .modal-actions { gap: 8px; }
   .modal-actions .menu-btn { padding: 10px; }
 }
@@ -603,7 +557,7 @@
   .modal-content { max-height: calc(100dvh - 24px); padding: 18px 24px; gap: 14px; }
   .modal-content h2 { font-size: calc(30px * var(--reading-scale, 1)); }
   .modal-actions .menu-btn { min-height: 40px; padding: 9px 14px; }
-  .howto-body { gap: 22px; }
+  #howto-modal .howto-body { gap: 24px; }
   .completion-card { padding: 22px 32px; gap: 16px; }
   .completion-card h1 { font-size: 52px; }
   .completion-card > .ornate-rule { display: none; }
@@ -629,13 +583,13 @@
 .danger-zone .danger-btn, .danger-zone .danger-btn.armed { color:var(--ui-text); background:#202020; border-color:#55554f; }
 :is(.completion-card,.modal-content) .ornate-rule, .veil-content .ornate-rule, #intro-title .ornate-rule { display:none; }
 
-/* Settings share the open, borderless surface of the hints. */
-#options-modal {
+/* Settings and help share the open, borderless surface of the hints. */
+:is(#options-modal, #howto-modal) {
   background: rgb(0 0 0 / 66%);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-#options-modal .modal-content {
+:is(#options-modal, #howto-modal) .modal-content {
   width: min(620px, 100%);
   height: min(680px, calc(100dvh - 64px));
   max-height: calc(100dvh - 64px);
@@ -647,13 +601,13 @@
   background: #141414;
   box-shadow: 0 24px 90px rgb(0 0 0 / 38%);
 }
-#options-modal .options-heading { flex-wrap: nowrap; margin-bottom: 24px; }
-#options-modal .options-heading h2 {
+:is(.options-heading, .howto-heading) { flex-wrap: nowrap; margin-bottom: 24px; }
+:is(#options-modal, #howto-modal) h2 {
   font: 400 calc(26px * var(--reading-scale, 1))/1.2 var(--ui-font);
   letter-spacing: -.035em;
   color: #deded9;
 }
-#btn-close-options {
+:is(#btn-close-options, #btn-close-howto) {
   align-self: center;
   width: 40px;
   min-height: 40px;
@@ -663,7 +617,7 @@
   background: transparent;
   color: #a4a49e;
 }
-#btn-close-options:hover { background: #222; color: #efefe8; }
+:is(#btn-close-options, #btn-close-howto):hover { background: #222; color: #efefe8; }
 #options-modal .options-body {
   flex: 1 1 0;
   min-height: 0;
@@ -748,18 +702,18 @@
 #options-modal #btn-new { margin-right: -12px; }
 #options-modal .modal-actions { flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 16px; padding: 0; margin: 0 -12px; border: 0; }
 @media (max-width: 640px) {
-  #options-modal .modal-content { padding: 24px; }
+  :is(#options-modal, #howto-modal) .modal-content { padding: 24px; }
 }
 @media (max-height: 560px) {
-  #options-modal .modal-content { height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); padding: 16px 24px 12px; }
-  #options-modal .options-heading { margin-bottom: 14px; }
-  #options-modal .options-heading h2 { font-size: calc(21px * var(--reading-scale, 1)); }
-  #btn-close-options { min-height: 36px; width: 36px; padding: 8px; margin-right: -8px; }
+  :is(#options-modal, #howto-modal) .modal-content { height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); padding: 16px 24px 12px; }
+  :is(.options-heading, .howto-heading) { margin-bottom: 14px; }
+  :is(#options-modal, #howto-modal) h2 { font-size: calc(21px * var(--reading-scale, 1)); }
+  :is(#btn-close-options, #btn-close-howto) { min-height: 36px; width: 36px; padding: 8px; margin-right: -8px; }
   #options-modal .options-body { margin-bottom: 10px; gap: 24px; }
   #options-modal :is(#btn-new, #btn-howto, #btn-mute) { min-height: 38px; padding-block: 8px; }
 }
 @media (max-width: 480px) {
-  #options-modal .modal-content { padding-inline: 20px; }
+  :is(#options-modal, #howto-modal) .modal-content { padding-inline: 20px; }
   #options-modal :is(.slider-group, .grain-row) { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
   #options-modal :is(.slider-group, .grain-row) output { grid-column: 2; }
   #options-modal :is(.slider-group, .grain-row) input { grid-column: 1 / -1; grid-row: 2; }

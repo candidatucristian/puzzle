@@ -26,6 +26,7 @@ import {
 
 const K = { room: "bk_room", glow: "bk_glow", tail: "bk_tail", steam: "bk_steam" };
 const bookKey = (i) => `bk_book_${i}`;
+const bookLightKey = (i) => `bk_book_lit_${i}`;
 const WARM = "255,196,120";
 const MOON = "150,180,235";
 const GOLD = "#e8c46a";
@@ -174,7 +175,19 @@ export function paintLibrary(scene, L) {
   paintWall(ctx, L);
   paintWindow(ctx, L);
   paintFloor(ctx, L);
-  paintCase(ctx, L);
+  // The shelves sit behind the lamp's pool. Keep this shadow on the case
+  // itself so the window, cat and table retain their own lighting.
+  const caseArt = makeCanvas(W, H);
+  const caseContext = caseArt.getContext("2d");
+  paintCase(caseContext, L);
+  caseContext.globalCompositeOperation = "source-atop";
+  const caseShade = caseContext.createLinearGradient(L.case.x0, 0, L.case.x1, 0);
+  caseShade.addColorStop(0, "rgba(3,5,6,0.66)");
+  caseShade.addColorStop(0.65, "rgba(3,5,6,0.60)");
+  caseShade.addColorStop(1, "rgba(5,5,4,0.47)");
+  caseContext.fillStyle = caseShade;
+  caseContext.fillRect(0, 0, W, H);
+  ctx.drawImage(caseArt, 0, 0);
   paintCat(ctx, L);
   paintSideTable(ctx, L);
   paintLight(ctx, L);
@@ -188,7 +201,8 @@ export function paintLibrary(scene, L) {
     .map((b) => {
       const art = paintSpecial(L, b);
       addCanvasTexture(t, bookKey(b.i), art.canvas);
-      return { key: bookKey(b.i), x: art.x, y: art.y, w: art.w, h: art.h, cx: art.cx, cy: art.cy };
+      addCanvasTexture(t, bookLightKey(b.i), art.litCanvas);
+      return { key: bookKey(b.i), lightKey: bookLightKey(b.i), x: art.x, y: art.y, w: art.w, h: art.h, cx: art.cx, cy: art.cy };
     });
   addCanvasTexture(t, K.tail, paintTail(L));
   addCanvasTexture(t, K.steam, paintSteam());
@@ -197,7 +211,7 @@ export function paintLibrary(scene, L) {
 }
 
 export function releaseLibraryArt(textures) {
-  for (const key of [...Object.values(K), ...BOOKS.map((_, i) => bookKey(i))]) {
+  for (const key of [...Object.values(K), ...BOOKS.flatMap((_, i) => [bookKey(i), bookLightKey(i)])]) {
     if (textures.exists(key)) textures.remove(key);
   }
 }
@@ -1020,13 +1034,34 @@ function paintSpecial(L, b) {
   g.fillStyle = gilt;
   g.fillText(b.title, 0, 0);
   g.restore();
-  // the room's dark lies on it as on everything else, but less: it stands
-  // out into the lamplight
+  // Keep a second exposure of the same leather, lettering and paper. Pulling
+  // the book brings that surface into the lamp's light, without a halo.
+  const litCanvas = makeCanvas(c.width, c.height);
+  const light = litCanvas.getContext("2d");
+  light.drawImage(c, 0, 0);
+  light.scale(R, R);
+  light.translate(-bx0, -by0);
+  light.globalCompositeOperation = "source-atop";
+  const litShade = light.createLinearGradient(p0.x, p0.y, p1.x, p0.y + sh * 0.25);
+  litShade.addColorStop(0, "rgba(8,7,5,0.30)");
+  litShade.addColorStop(0.7, "rgba(8,7,5,0.08)");
+  litShade.addColorStop(1, "rgba(8,7,5,0.04)");
+  light.fillStyle = litShade;
+  light.fillRect(bx0, by0, W2, H2);
+  const lamplight = light.createLinearGradient(p0.x, 0, p1.x, 0);
+  lamplight.addColorStop(0, "rgba(255,215,150,0)");
+  lamplight.addColorStop(0.6, "rgba(255,215,150,0.035)");
+  lamplight.addColorStop(1, "rgba(255,215,150,0.13)");
+  light.fillStyle = lamplight;
+  light.fillRect(bx0, by0, W2, H2);
+
+  // At rest even the five readable spines belong to the shaded shelves.
   g.globalCompositeOperation = "source-atop";
-  g.fillStyle = `rgba(5,7,11,${(gloom(L, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2) * 0.55).toFixed(3)})`;
+  const restingShade = 0.57 + gloom(L, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2) * 0.2;
+  g.fillStyle = `rgba(4,6,8,${restingShade.toFixed(3)})`;
   g.fillRect(bx0, by0, W2, H2);
   g.globalCompositeOperation = "source-over";
-  return { canvas: c, x: bx0, y: by0, w: W2, h: H2, cx: (p0.x + p1.x) / 2, cy: (p0.y + p1.y) / 2 };
+  return { canvas: c, litCanvas, x: bx0, y: by0, w: W2, h: H2, cx: (p0.x + p1.x) / 2, cy: (p0.y + p1.y) / 2 };
 }
 
 // a tabby cat asleep on top of the case, a dark loaf of fur against the
@@ -1599,10 +1634,11 @@ function paintLight(ctx, L) {
   // the light thrown up and down from the shade
   soft(ctx, lp.x, lp.shadeTop - H * 0.08, W * 0.12, H * 0.18, WARM, 0.25, "lighter");
   soft(ctx, lp.x, lp.base, W * 0.2, H * 0.12, WARM, 0.35, "lighter");
-  soft(ctx, lp.x - W * 0.12, H * 0.5, W * 0.45, H * 0.45, WARM, 0.16, "lighter");
-  // the third shelf is where the lamp reaches best
+  soft(ctx, lp.x - W * 0.12, H * 0.5, W * 0.45, H * 0.45, WARM, 0.045, "lighter");
+  // A trace of reflected light reaches the shelf; the pulled book catches
+  // the direct light separately, as it leaves the recess.
   const row = L.case.rows[L.special];
-  soft(ctx, L.vp.x + L.case.w * 0.1, (row.top + row.bot) / 2, L.case.w * 0.6, row.h * 1.2, WARM, 0.12, "lighter");
+  soft(ctx, L.vp.x + L.case.w * 0.1, (row.top + row.bot) / 2, L.case.w * 0.6, row.h * 1.2, WARM, 0.025, "lighter");
   // moonlight from the window, lying on the floor
   const win = L.win;
   ctx.save();

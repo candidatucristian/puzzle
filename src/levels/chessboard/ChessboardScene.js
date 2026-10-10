@@ -29,6 +29,7 @@ import { paintParlour, releaseParlourArt, releasePieceArt } from "./parlour.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CH_FONT = '"Special Elite", monospace';
+const DENIED_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#171717" fill-opacity=".85" stroke="#e45454" stroke-width="2.5"/><path d="m6 6 12 12" stroke="#e45454" stroke-width="2.5"/></svg>')}") 12 12, not-allowed`;
 
 // the eight survivors — file+rank is the cipher, the pieces are dressing.
 // No pawns on back ranks, kings never adjacent, nobody left in check.
@@ -58,6 +59,10 @@ export default class ChessboardScene extends BasePuzzleScene {
 
     this.isSolved = false;
     this._build(this.cameras.main.width, this.cameras.main.height);
+
+    this.input.on("pointerup", this._restorePieceCursor, this);
+    this.input.on("pointerupoutside", this._restorePieceCursor, this);
+    this.input.on("gameout", this._restorePieceCursor, this);
 
     // kept as a reference so shutdown() can remove it (otherwise every
     // restart of the level would add one more listener)
@@ -111,6 +116,11 @@ export default class ChessboardScene extends BasePuzzleScene {
       });
       c.on("pointerdown", () => {
         if (c._lifted) return;
+        if (this._cursorBeforeHold === undefined) {
+          this._cursorBeforeHold = this.input.manager.defaultCursor;
+        }
+        for (const piece of this._pieces) piece.input.cursor = DENIED_CURSOR;
+        this.input.setDefaultCursor(DENIED_CURSOR);
         c._lifted = true;
         body.y = -p.lift;
         shadow.setPosition(p.lift * 0.5, p.lift * 0.18).setAlpha(0.32);
@@ -128,6 +138,15 @@ export default class ChessboardScene extends BasePuzzleScene {
 
       this._pieces.push(c);
     }
+  }
+
+  _restorePieceCursor() {
+    if (this._cursorBeforeHold === undefined) return;
+    for (const piece of this._pieces || []) {
+      if (piece.input) piece.input.cursor = "pointer";
+    }
+    this.input.setDefaultCursor(this._cursorBeforeHold);
+    this._cursorBeforeHold = undefined;
   }
 
   // a few motes of dust, turning slowly in the window's light
@@ -213,6 +232,7 @@ export default class ChessboardScene extends BasePuzzleScene {
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   _teardown() {
+    this._restorePieceCursor();
     this.tweens.killAll();
     // destroy rather than just detach: removeAll(true) only took objects off
     // the display list, and the old pieces went on catching clicks after a
@@ -223,6 +243,7 @@ export default class ChessboardScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    this._restorePieceCursor();
     this._onResize = null;
     this.tweens.killAll();
     this.time.removeAllEvents();

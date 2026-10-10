@@ -1149,11 +1149,12 @@ function paintMug(ctx, cam, lay) {
   strokePts(ctx, hp, "rgba(255,255,255,0.06)", k * 0.3);
   const top = cylinder(ctx, cam, lay, m.x, m.z, m.r, 0, m.h, CER, false);
   polyPath(ctx, top, css(shade(CER, v3(m.x, m.h, m.z), UP, lay, 0), 1.05));
-  polyPath(
-    ctx,
-    ringS(cam, m.x, m.z, m.r - 0.4, m.h),
-    css(shade(CER, v3(m.x, m.h, m.z), UP, lay, 0), 0.4),
-  );
+  // The lowered liquid is seen through the opening, behind the near rim.
+  // Its projected ellipse extends over the front wall unless clipped here.
+  const opening = ringS(cam, m.x, m.z, m.r - 0.4, m.h);
+  ctx.save();
+  polyPath(ctx, opening, css(shade(CER, v3(m.x, m.h, m.z), UP, lay, 0), 0.4));
+  ctx.clip();
   polyPath(ctx, ringS(cam, m.x, m.z, m.r - 0.45, m.h - 1.1), "#22130a");
   const hl = cam.P(m.x + 1.2, m.h - 1.1, m.z - 1.3);
   softEllipse(
@@ -1166,6 +1167,7 @@ function paintMug(ctx, cam, lay) {
     0.35,
     "lighter",
   );
+  ctx.restore();
 }
 
 function paintLampBase(ctx, cam, lay) {

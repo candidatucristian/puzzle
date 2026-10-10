@@ -283,121 +283,68 @@
       </div>
     </div>
 
-    <!-- How to Play Modal -->
+    <!-- How to play: an open guide with a persistent close control. -->
     <div id="howto-modal" class="hidden">
       <div class="modal-content howto-content">
-        <h2>How to Play</h2>
-        <div class="ornate-rule"><span></span><i>◆</i><span></span></div>
-        <div class="howto-body">
-          <div class="howto-section">
-            <h3>THE GOAL</h3>
-            <p class="howto-lead">
-              Every level hides a <b>secret word</b> — the code. Explore the
-              scene: look, listen, count, experiment. When you think you have
-              it, type it in the code box at the bottom of the screen and press
-              <b>Submit</b> (or hit Enter). An incorrect answer shows a short message —
-              guessing costs nothing, but the answer is always earned.
-            </p>
-          </div>
-
-          <div class="howto-section">
-            <h3>THE CONTROLS</h3>
-            <div class="howto-row">
-              <span class="ui-demo demo-execute">Submit</span>
-              <p>Submits the code you typed in the box next to it.</p>
-            </div>
-            <div class="howto-row">
-              <span class="ui-demo demo-replay">⟳</span>
-              <p>Restarts the current level from scratch.</p>
-            </div>
-            <div class="howto-row">
-              <span class="ui-demo">HINTS</span>
-              <p>
-                Use Hint beneath the room for two clues, revealed one at a
-                time: first where to look, then what to notice. They point the
-                way; working it out is yours.
-              </p>
-            </div>
-            <div class="howto-row howto-touch">
-              <span class="ui-demo">LEVELS · INFO</span>
-              <p>On a phone or tablet, Levels opens the left panel. Level Info opens the right panel with hints and options. Tap what you would click; drag what you would drag. Hold your phone sideways to play.</p>
-            </div>
-            <div class="howto-row howto-touch">
-              <span class="ui-demo">⛶</span>
-              <p>Slides the top bar away and asks the browser for full screen, so the room fills the phone; the code box stays. The bar also has a small handle on its edge: tap it, or pull it up or down, to slide the bar away or back. Safari on iPhone has no full screen at all: to lose its bars, tap Share, choose <b>Add to Home Screen</b>, and open the game from that icon.</p>
-            </div>
-            <div class="howto-row">
-              <span class="ui-demo demo-volume">🔊</span>
-              <p>
-                Game volume. Drag the slider, or click the icon to mute and
-                unmute.
-              </p>
-            </div>
-            <div class="howto-row">
-              <span class="ui-demo">Options</span>
-              <p>
-                Music and sound-effect volume settings. This is also where you
-                can <b>reset the game</b> — it wipes all progress and starts
-                over from Level 1 (it asks you to confirm first).
-              </p>
-            </div>
-          </div>
-
-          <div class="howto-section">
-            <h3>THE LEVELS PANEL</h3>
-            <div class="howto-row">
-              <span class="lvl-demo lvl-current">2</span>
-              <p>The level you are playing right now.</p>
-            </div>
-            <div class="howto-row">
-              <span class="lvl-demo lvl-unlocked">1</span>
-              <p>A solved level — click it any time to revisit.</p>
-            </div>
-            <div class="howto-row">
-              <span class="lvl-demo lvl-locked">🔒</span>
-              <p>
-                Still locked. Levels open in order — solve the current one to
-                unlock the next.
-              </p>
-            </div>
-          </div>
-
-          <div class="howto-section">
-            <h3>THE BADGES</h3>
-            <p class="howto-lead">
-              Open Hints and you may find badges under the title. They tell you
-              what kind of attention the level wants:
-            </p>
-            <div class="howto-row">
-              <span class="badge-demo">LISTENING</span>
-              <p>
-                Audio matters here. Turn the volume up and listen carefully —
-                something is said only in sound. On an iPhone, the ring/silent
-                switch must be set to ring for the game to be heard.
-              </p>
-            </div>
-            <div class="howto-row">
-              <span class="badge-demo">REFERENCE</span>
-              <p>
-                The level speaks a language you may need to look up: an
-                alphabet, a cipher, a notation. Decoding it is the puzzle.
-              </p>
-            </div>
-          </div>
-
-          <div class="howto-section">
-            <h3>ONE LAST THING</h3>
-            <p class="howto-lead">
-              Everything you need is inside the room. Nothing is random — if
-              something feels slightly wrong, it probably is. That is the way
-              in.
-            </p>
-          </div>
+        <div class="howto-heading">
+          <h2>How to play</h2>
+          <button id="btn-close-howto" class="icon-button" type="button" aria-label="Back to settings" title="Back to settings"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
         </div>
-        <div class="modal-actions">
-          <button id="btn-close-howto" class="menu-btn" style="width: 100%">
-            BACK TO OPTIONS
-          </button>
+        <div class="howto-body" tabindex="0" role="region" aria-label="How to play instructions">
+          <section class="howto-section">
+            <h3>Find the answer</h3>
+            <p>Each room hides an answer. Look, listen and interact with the scene. Enter what you find in the answer field below the room. Wrong answers carry no penalty.</p>
+          </section>
+
+          <section class="howto-section">
+            <h3>The controls</h3>
+            <dl class="howto-controls">
+              <div class="howto-row">
+                <dt>Submit</dt>
+                <dd>Check your answer, or press Enter.</dd>
+              </div>
+              <div class="howto-row">
+                <dt>Restart</dt>
+                <dd>The circular arrow beside Submit starts the current room again. Your progress is kept.</dd>
+              </div>
+              <div class="howto-row">
+                <dt>Hint</dt>
+                <dd>Use Hint below the room to reveal one clue at a time.</dd>
+              </div>
+              <div class="howto-row">
+                <dt>Room notes</dt>
+                <dd>Read a short description of the room and see whether sound or a reference may help.</dd>
+              </div>
+              <div class="howto-row">
+                <dt>Settings</dt>
+                <dd>Adjust sound, text size, motion and effects. Reset game clears all progress after a second click to confirm.</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="howto-section">
+            <h3>Moving between rooms</h3>
+            <p>Solve a room to unlock the next. Revisit unlocked rooms from the list on the right or use the arrows above the scene. Progress is saved automatically in this browser.</p>
+          </section>
+
+          <section class="howto-section">
+            <h3>Clue labels</h3>
+            <dl class="howto-controls">
+              <div class="howto-row">
+                <dt>Listening</dt>
+                <dd>Sound is part of the puzzle. Check the volume in Settings and listen carefully.</dd>
+              </div>
+              <div class="howto-row">
+                <dt>Reference may help</dt>
+                <dd>You may need to look up an alphabet, cipher or notation to decode the clue.</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="howto-section howto-touch">
+            <h3>On a phone or tablet</h3>
+            <p>Hold your device sideways. Tap to interact and drag to move things. Full screen hides the top bar for more space; tap or pull the small handle to bring it back.</p>
+          </section>
         </div>
       </div>
     </div>

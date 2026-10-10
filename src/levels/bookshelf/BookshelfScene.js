@@ -58,6 +58,9 @@ export default class BookshelfScene extends BasePuzzleScene {
         .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 8 })
         .setData("interactionLabel", "Pull the book");
       const home = { x: img.x, y: img.y };
+      const light = this.add.image(img.x, img.y, b.lightKey)
+        .setScale(0.5).setAlpha(0).setDepth(-5.9);
+      img.setData("pullLight", light);
       this._movableSparkleCleanups.push(attachMovableSparkles(this, img, { padding: 3 }));
       img.on("pointerdown", () => this._pull(img, home, L));
       return img;
@@ -137,6 +140,7 @@ export default class BookshelfScene extends BasePuzzleScene {
     if (img.getData("busy")) return;
     img.setData("busy", true);
     const e = 0.035;
+    const light = img.getData("pullLight");
     this._slide();
     this.tweens.add({
       targets: img,
@@ -147,7 +151,16 @@ export default class BookshelfScene extends BasePuzzleScene {
       ease: "Quad.easeOut",
       yoyo: true,
       hold: 900,
-      onComplete: () => img.active && img.setData("busy", false),
+      onUpdate: () => {
+        if (!light.active) return;
+        const amount = Phaser.Math.Clamp((img.scaleX / 0.5 - 1) / e, 0, 1);
+        light.setPosition(img.x, img.y).setScale(img.scaleX);
+        light.setAlpha(amount * amount * (3 - 2 * amount));
+      },
+      onComplete: () => {
+        if (light.active) light.setAlpha(0);
+        if (img.active) img.setData("busy", false);
+      },
     });
   }
 

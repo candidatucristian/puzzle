@@ -31,7 +31,7 @@ const K = {
 export const LANTERN = { x: -53.5, flameY: -12.5, back: 1.5 };
 // the bench top: how much of its depth we see (cm, from above), the rail
 // under its near edge, and the shelf below
-const BENCH = { depth: 9, apron: 4.5, shelf: 21 };
+const BENCH = { depth: 12.5, apron: 4.5, shelf: 21 };
 export const POT_X = -35.5;
 export const BUCKET_X = 36;
 
@@ -283,82 +283,84 @@ function tallCypress(ctx, L, x, base, h, w, rnd) {
 
 // ── the bench, and the lantern on it ────────────────────────────────────────
 
-// A potting bench of old planks, seen a little from above: the top's planks
-// run along it, a rail under its near edge, square legs going down out of
-// the picture and a shelf between them with spare pots stacked on it. The
-// lantern's pool of light spreads along the top from its left end; the far
-// end is left to the moon.
+// Three broad boards sit on a joined frame. The top overhangs the legs;
+// its receding ends and separate front edge give the objects a firm surface.
 function paintBench(ctx, L) {
   const { H, cm, bench, at, flame } = L;
-  const X0 = at(bench.x0, 0).x;
-  const X1 = at(bench.x1, 0).x;
+  const X0 = at(bench.x0 - 3, 0).x;
+  const X1 = at(bench.x1 + 2, 0).x;
   const back = at(0, -BENCH.depth / 2).y;
   const front = at(0, BENCH.depth / 2).y;
-  const apron = at(0, BENCH.depth / 2 + BENCH.apron).y;
-  const legW = 5 * cm;
-  const legs = [X0 + 3 * cm, X1 - 3 * cm - legW];
-  // the far pair of legs, just showing under the top
-  for (const lx of legs) board(ctx, L, lx + 2 * cm, back, legW * 0.8, H + 20 - back, 0.3, true);
-  // the shelf: two slats, and on it three spare pots stacked, rims down
+  const thickness = 1.8 * cm;
+  const apron = front + thickness + BENCH.apron * cm;
+  const legW = 4.6 * cm;
+  const legs = [X0 + 5 * cm, X1 - 5 * cm - legW];
+  const top = [[X0 + 3 * cm, back], [X1 - 3 * cm, back], [X1, front], [X0, front]];
+  const endY = H + 12;
+
+  // Rear legs and the lower shelf remain in shade behind the front frame.
+  for (const lx of legs) board(ctx, L, lx + 2 * cm, back + thickness, legW * .8, endY - back, .26, true);
   const shelf = at(0, BENCH.shelf).y;
-  board(ctx, L, legs[0], shelf - 2.2 * cm, legs[1] + legW - legs[0], 2.2 * cm, 0.38);
-  board(ctx, L, legs[0], shelf, legs[1] + legW - legs[0], 2.6 * cm, 0.44);
-  const sp = at(-24, 0).x;
+  board(ctx, L, legs[0] + legW, shelf - 1.7 * cm, legs[1] - legs[0] - legW, 1.7 * cm, .34);
+  board(ctx, L, legs[0] + legW, shelf, legs[1] - legs[0] - legW, 2 * cm, .27);
+  for (const lx of legs) {
+    board(ctx, L, lx, front + thickness, legW, endY - front, .49, true);
+    ctx.fillStyle = "rgba(6,9,12,.35)";
+    ctx.fillRect(lx + legW * .76, front + thickness, legW * .24, endY - front);
+  }
+
+  board(ctx, L, X0 + 3.5 * cm, front + thickness, X1 - X0 - 7 * cm, BENCH.apron * cm, .43);
+  ctx.fillStyle = "rgba(0,0,0,.38)";
+  ctx.fillRect(X0 + 3.5 * cm, front + thickness, X1 - X0 - 7 * cm, .65 * cm);
+
+  // End grain and the solid front edge sit below the top, rather than
+  // becoming another bright stripe in the plank surface.
+  poly(ctx, [[X1 - 3 * cm, back], [X1, front], [X1, front + thickness], [X1 - 3 * cm, back + thickness]]);
+  ctx.fillStyle = "#302b24";
+  ctx.fill();
+  board(ctx, L, X0, front, X1 - X0, thickness, .6);
+  ctx.fillStyle = "rgba(0,0,0,.2)";
+  ctx.fillRect(X0, front + thickness - .3 * cm, X1 - X0, .3 * cm);
+
+  ctx.save();
+  poly(ctx, top);
+  ctx.clip();
   for (let i = 0; i < 3; i++) {
-    const w = 13 * cm;
-    const h = 4.6 * cm;
-    const y = shelf - 2.2 * cm - h * (i + 1) + i * 1.8 * cm;
-    const g = ctx.createLinearGradient(sp - w / 2, 0, sp + w / 2, 0);
-    g.addColorStop(0, "#8a4c2a");
-    g.addColorStop(0.25, "#a45c34");
-    g.addColorStop(0.6, "#5a2a16");
-    g.addColorStop(1, "#301408");
-    ctx.fillStyle = g;
-    poly(ctx, [
-      [sp - w * 0.4, y],
-      [sp + w * 0.4, y],
-      [sp + w / 2, y + h],
-      [sp - w / 2, y + h],
-    ]);
-    ctx.fill();
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(sp - w / 2, y + h - 1.4 * cm, w, 1.4 * cm);
+    const y0 = back + (front - back) * i / 3;
+    const y1 = back + (front - back) * (i + 1) / 3;
+    board(ctx, L, X0, y0, X1 - X0, y1 - y0, [.72, .68, .75][i]);
+    if (i < 2) {
+      ctx.fillStyle = "rgba(9,8,6,.5)";
+      ctx.fillRect(X0, y1 - .12 * cm, X1 - X0, Math.max(.5, .2 * cm));
+    }
   }
-  for (const lx of legs) board(ctx, L, lx, front, legW, H + 20 - front, 0.56, true);
-
-  // the top: four planks, a dark gap between each
-  const planks = 4;
-  for (let i = 0; i < planks; i++) {
-    const y0 = back + ((front - back) * i) / planks;
-    const y1 = back + ((front - back) * (i + 1)) / planks;
-    board(ctx, L, X0, y0, X1 - X0, y1 - y0, 0.74 + 0.05 * i);
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillRect(X0, y1 - Math.max(1, 0.26 * cm), X1 - X0, Math.max(1, 0.26 * cm));
-  }
-  // the rail under the near edge
-  board(ctx, L, X0, front, X1 - X0, apron - front, 0.46);
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
-  ctx.fillRect(X0, front, X1 - X0, Math.max(1, 0.4 * cm));
-  // the near edge of the top catches the lantern; the far edge, the moon
-  ctx.fillStyle = "rgba(255,214,170,0.28)";
-  ctx.fillRect(X0, front - Math.max(1, 0.35 * cm), X1 - X0, Math.max(1, 0.35 * cm));
-  ctx.fillStyle = "rgba(170,190,230,0.28)";
-  ctx.fillRect(X0, back, X1 - X0, Math.max(1, 0.3 * cm));
-
-  // the lantern's pool of light: bright at its foot, fading along the planks
-  // and down the rail and the near leg
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(X0, back, X1 - X0, apron - back);
-  ctx.clip();
-  softEllipse(ctx, flame.x, at(0, 0).y, 80 * cm, 11 * cm, "255,160,80", 0.55, "lighter");
-  softEllipse(ctx, flame.x, at(0, 0).y, 30 * cm, 6 * cm, "255,205,140", 0.5, "lighter");
+  softEllipse(ctx, flame.x, at(0, 0).y, 74 * cm, 12 * cm, "235,170,100", .24, "lighter");
+  softEllipse(ctx, flame.x, at(0, 0).y, 22 * cm, 5 * cm, "255,208,147", .2, "lighter");
   ctx.restore();
+
+  // A worn arris catches the light only near the lantern; the far edge
+  // takes a much softer line of moonlight.
+  const edge = ctx.createLinearGradient(X0, 0, X1, 0);
+  edge.addColorStop(0, "rgba(233,196,145,.4)");
+  edge.addColorStop(.35, "rgba(181,155,120,.18)");
+  edge.addColorStop(1, "rgba(131,145,159,.13)");
+  ctx.strokeStyle = edge;
+  ctx.lineWidth = Math.max(.7, .2 * cm);
+  ctx.beginPath(); ctx.moveTo(X0, front); ctx.lineTo(X1, front); ctx.stroke();
+  ctx.strokeStyle = "rgba(137,154,180,.15)";
+  ctx.lineWidth = Math.max(.5, .14 * cm);
+  ctx.beginPath(); ctx.moveTo(top[0][0], back); ctx.lineTo(top[1][0], back); ctx.stroke();
+
+  // Flush joinery pegs belong to the frame, below the working surface.
+  for (const lx of legs) {
+    ctx.fillStyle = "rgba(20,15,10,.5)";
+    ctx.beginPath(); ctx.arc(lx + legW * .44, apron - 1.8 * cm, .34 * cm, 0, Math.PI * 2); ctx.fill();
+  }
   ctx.save();
   ctx.beginPath();
-  ctx.rect(legs[0], front, legW, H - front);
+  ctx.rect(legs[0], front + thickness, legW, H - front);
   ctx.clip();
-  softEllipse(ctx, flame.x, front, 12 * cm, 30 * cm, "255,160,80", 0.35, "lighter");
+  softEllipse(ctx, flame.x, front, 13 * cm, 26 * cm, "220,153,92", .2, "lighter");
   ctx.restore();
 
   // what stands on the top throws its shadow away from the lantern
@@ -374,8 +376,8 @@ function paintBench(ctx, L) {
 function board(ctx, L, x, y, w, h, tone, upright = false) {
   const col = (k) => `rgb(${Math.round(104 * tone * k)},${Math.round(76 * tone * k)},${Math.round(52 * tone * k)})`;
   const g = upright ? ctx.createLinearGradient(x, 0, x + w, 0) : ctx.createLinearGradient(0, y, 0, y + h);
-  g.addColorStop(0, col(1.15));
-  g.addColorStop(1, col(0.6));
+  g.addColorStop(0, col(1.06));
+  g.addColorStop(1, col(0.84));
   ctx.fillStyle = g;
   ctx.fillRect(x, y, w, h);
   ctx.save();
