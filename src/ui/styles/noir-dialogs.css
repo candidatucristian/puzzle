@@ -719,3 +719,8 @@
   #options-modal :is(.slider-group, .grain-row) input { grid-column: 1 / -1; grid-row: 2; }
   #options-modal .comfort-row select { width: 150px; max-width: 100%; }
 }
+
+/* In the hall there is no room to answer for: the console and the room
+   notes wait, without the layout moving. */
+body.in-hall #input-area,
+body.in-hall #right-sidebar-wrapper { visibility: hidden; }

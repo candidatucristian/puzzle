@@ -53,8 +53,9 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     document.getElementById('progress-count').textContent = `${done} / ${total} solved`;
     const currentLevel = levels.definitions[levels.currentIndex];
     const romanLevel = toRoman(levels.currentIndex + 1);
-    document.getElementById('header-room-name').textContent = currentLevel.name;
-    document.getElementById('header-progress').textContent = romanLevel;
+    // in the hall, the header names the hall, not a room off it
+    document.getElementById('header-room-name').textContent = levels.inHall ? 'The Hall' : currentLevel.name;
+    document.getElementById('header-progress').textContent = levels.inHall ? '' : romanLevel;
     document.getElementById('header-room').setAttribute('aria-label', `Current level: ${currentLevel.name}, level ${romanLevel}`);
     previous.disabled = levels.currentIndex <= 0;
     next.disabled = levels.currentIndex >= levels.unlockedIndex;
@@ -67,7 +68,7 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     save.dataset.state = levels.saved ? 'saved' : 'temporary';
     save.title = levels.saved ? 'Progress is saved in this browser. Clearing site data removes it.' : 'Browser storage is unavailable. Progress may be lost when this page closes.';
     const returning = storage.getItem('hasPlayedBefore') === 'true' || done > 0;
-    document.getElementById('btn-continue').textContent = returning ? `Continue · Level ${levels.currentIndex + 1}` : 'Begin exploration';
+    document.getElementById('btn-continue').textContent = returning ? `Continue · Level ${levels.currentIndex + 1}` : 'Get inside';
     document.getElementById('start-progress').textContent = returning ? `${done} of ${total} rooms solved · ${levels.definitions[levels.currentIndex].name}` : `${total} rooms`;
   }
 

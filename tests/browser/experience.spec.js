@@ -28,8 +28,9 @@ async function screenshot(page, name) {
 
 test('the title page uses the same cratered moon texture as the garden', async ({ page }) => {
   await open(page, { start: false, unlocked: true });
+  // the title's moon is the film's now; its canvas still carries the texture
   const moon = page.locator('#start-moon');
-  await expect(moon).toBeVisible();
+  await expect(moon).toHaveCount(1);
   const titleMoon = await moon.evaluate(canvas => ({
     width: canvas.width,
     height: canvas.height,

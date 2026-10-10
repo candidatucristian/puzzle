@@ -106,14 +106,24 @@
       <div id="game-wrapper">
       <!-- The opening title card -->
       <div id="start-screen">
-        <canvas id="start-moon" class="start-moon" aria-hidden="true"></canvas>
-        <div id="start-title">
-          <h1>The<br><span>Descipher</span></h1>
+        <!-- the manor at night: a silent film, two copies taking turns so its
+             end dissolves into its beginning -->
+        <div id="start-film" aria-hidden="true">
+          <video class="start-reel" src="assets/video/manor.mp4" muted playsinline preload="auto" tabindex="-1"></video>
+          <video class="start-reel" src="assets/video/manor.mp4" muted playsinline preload="auto" tabindex="-1"></video>
         </div>
-        <div id="start-bottom">
-          <p id="start-progress"></p>
-          <button id="btn-continue" class="menu-btn primary-action start-continue" type="button">Begin exploration</button>
-          <p id="start-prompt">Press any key to begin</p>
+        <!-- the front door in the film: it glints, and a click on it goes in -->
+        <div id="start-door" aria-hidden="true"><canvas id="start-door-glint"></canvas></div>
+        <canvas id="start-moon" class="start-moon" aria-hidden="true"></canvas>
+        <div id="start-card">
+          <div id="start-title">
+            <h1>The<br><span>Descipher</span></h1>
+          </div>
+          <div id="start-bottom">
+            <p id="start-progress"></p>
+            <button id="btn-continue" class="menu-btn primary-action start-continue" type="button">Get inside</button>
+            <p id="start-prompt">Press any key to begin</p>
+          </div>
         </div>
       </div>
 

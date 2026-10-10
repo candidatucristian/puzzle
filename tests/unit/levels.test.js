@@ -93,7 +93,7 @@ test("subscriptions report changes, unsubscribe detaches and reset removes unloc
   manager.submit("FIRST");
   manager.navigate(1);
   manager.reset();
-  assert.deepEqual(states.at(-1), { currentIndex: 0, unlockedIndex: 0, completed: false });
+  assert.deepEqual(states.at(-1), { currentIndex: 0, unlockedIndex: 0, completed: false, inHall: false });
   assert.equal(manager.canAccess(1), false);
   const count = states.length;
   unsubscribe();

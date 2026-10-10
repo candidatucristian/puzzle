@@ -12,6 +12,8 @@ import { mountProgress } from './progress.js';
 import { mountInteractionFeedback } from './interactions.js';
 import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
 import { createMoonCanvas } from '../shared/moon.js';
+import { mountStartFilm } from './startFilm.js';
+import { HALL_DOOR } from '../levels/hall/HallScene.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -21,6 +23,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   moon.width = moonArt.width;
   moon.height = moonArt.height;
   moon.getContext('2d').drawImage(moonArt, 0, 0);
+  const film = mountStartFilm(scope, preferences);
   const input = byId('level-code');
   const feedback = byId('answer-feedback');
   let mobile, suspendedInput;
@@ -60,11 +63,15 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     onClose: restorePuzzleInput,
   });
   scope.add(levels.subscribe(() => answerFeedback()));
+  // In the hall there is no room, so nothing to answer: the console waits
+  // until the player has gone through a door.
+  scope.add(levels.subscribe(() => document.body.classList.toggle('in-hall', levels.inHall)));
   let started = false;
   let sessionStart = null;
   const touch = isTouchDevice();
 
   function showGame() {
+    if (!start.classList.contains('hidden')) film.stop();
     start.classList.add('hidden'); storage.setItem('hasPlayedBefore', 'true');
     progressUI.render();
     if (game.sound.context?.state === 'suspended') {
@@ -100,8 +107,17 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     started = true; sessionStart = Date.now();
     // a phone's first tap is the one gesture that may take the whole screen
     if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
-    navigate(levels.currentIndex);
+    // the way in leads to the hall; its doors lead to the rooms
+    completion.hide(); mobile?.close();
+    showGame(); levels.enterHall();
   }
+  // for now every door of the hall opens on the first room
+  const openDoor = () => {
+    if (!levels.inHall || transitions.busy || dialogs.isOpen) return;
+    navigate(0);
+  };
+  game.events.on(HALL_DOOR, openDoor);
+  scope.add(() => game.events.off(HALL_DOOR, openDoor));
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
   mountFullscreenControl(scope, byId('btn-fullscreen'));
 
