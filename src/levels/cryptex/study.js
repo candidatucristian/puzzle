@@ -326,39 +326,81 @@ function paintStudyDetails(rc, lc, cam, flame) {
     }
   };
   const x = W * .755, y = H * .19, ww = W * .17, hh = H * .285;
-  // A narrow recessed window, quiet night glass, and a timber sill. No
-  // enlarged texture or bloom: every bevel is resolved in the final canvas.
+  // A deep timber casement: two tall panes sit behind the bevelled frame.
+  // Moonlight belongs to the base pass; the candle only catches the timber.
+  const frame = Math.max(3, ww * .047), recess = frame * .72;
+  const gx = x + frame + recess, gy = y + frame + recess;
+  const gw = ww - 2 * (frame + recess), gh = hh - 2 * (frame + recess);
   for (const [ctx, lit] of [[rc, false], [lc, true]]) {
-    ctx.fillStyle = lit ? '#000' : '#080e14'; ctx.fillRect(x, y, ww, hh);
+    ctx.save();
+    ctx.fillStyle = lit ? '#000' : 'rgba(0,0,0,.3)';
+    ctx.fillRect(x - frame * .5, y - frame * .4, ww + frame, hh + frame);
+    const wood = ctx.createLinearGradient(x, y, x + ww, y + hh);
+    wood.addColorStop(0, lit ? '#0e100c' : '#292d29');
+    wood.addColorStop(.45, lit ? '#15150e' : '#20241f');
+    wood.addColorStop(1, lit ? '#211e13' : '#33382f');
+    ctx.fillStyle = wood; ctx.fillRect(x, y, ww, hh);
+    ctx.strokeStyle = lit ? '#15150e' : '#43473c';
+    ctx.lineWidth = Math.max(.5, frame * .11);
+    ctx.strokeRect(x + frame * .16, y + frame * .16, ww - frame * .32, hh - frame * .32);
+
+    ctx.fillStyle = lit ? '#020302' : '#080d0e';
+    ctx.fillRect(x + frame, y + frame, ww - frame * 2, hh - frame * 2);
+    ctx.fillStyle = lit ? '#0d0e09' : '#30382f';
+    ctx.fillRect(gx + gw, gy, recess * .65, gh);
+    ctx.fillStyle = lit ? '#16160d' : '#3b4137';
+    ctx.fillRect(gx, gy + gh, gw + recess * .65, recess * .55);
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(gx, gy, gw, gh); ctx.clip();
+    ctx.fillStyle = '#000'; ctx.fillRect(gx, gy, gw, gh);
     if (!lit) {
-      const sky = ctx.createLinearGradient(0, y, 0, y + hh);
-      sky.addColorStop(0, '#101923'); sky.addColorStop(1, '#202e36');
-      ctx.fillStyle = sky; ctx.fillRect(x + 10, y + 10, ww - 20, hh - 20);
-      ctx.save(); ctx.beginPath(); ctx.rect(x + 10, y + 10, ww - 20, hh - 20); ctx.clip();
-      const rnd = lcg(49);
-      ctx.strokeStyle = '#0b141c'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(x + ww * .88, y + hh); ctx.lineTo(x + ww * .7, y + hh * .5);
-      ctx.lineTo(x + ww * .36, y + hh * .18); ctx.stroke();
-      for (let i = 0; i < 7; i++) {
-        const yy = y + hh * (.3 + i * .09), xx = x + ww * (.44 + i * .053);
-        ctx.lineWidth = .7 + i * .13; ctx.beginPath(); ctx.moveTo(xx, yy);
-        ctx.lineTo(xx + (i % 2 ? 1 : -1) * ww * (.16 + rnd() * .2), yy - hh * (.1 + rnd() * .16)); ctx.stroke();
+      const sky = ctx.createLinearGradient(0, gy, 0, gy + gh);
+      sky.addColorStop(0, '#101c24'); sky.addColorStop(.62, '#1c2a30');
+      sky.addColorStop(1, '#27363a');
+      ctx.fillStyle = sky; ctx.fillRect(gx, gy, gw, gh);
+      // Soft distant rooflines and a curved bare branch remain outside.
+      ctx.fillStyle = '#111d21';
+      ctx.beginPath(); ctx.moveTo(gx, gy + gh);
+      ctx.lineTo(gx, gy + gh * .87); ctx.lineTo(gx + gw * .17, gy + gh * .79);
+      ctx.lineTo(gx + gw * .38, gy + gh * .86); ctx.lineTo(gx + gw * .6, gy + gh * .82);
+      ctx.lineTo(gx + gw, gy + gh * .92); ctx.lineTo(gx + gw, gy + gh); ctx.fill();
+      ctx.strokeStyle = 'rgba(8,16,19,.7)'; ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(1, ww * .014);
+      ctx.beginPath(); ctx.moveTo(gx + gw * 1.04, gy + gh * 1.06);
+      ctx.bezierCurveTo(gx + gw * .92, gy + gh * .84, gx + gw * .88, gy + gh * .55, gx + gw * .61, gy + gh * .29); ctx.stroke();
+      ctx.lineWidth *= .52;
+      for (const [sx, sy, cx, cy, ex, ey] of [
+        [.87, .67, .68, .61, .52, .48], [.78, .51, .86, .42, .89, .27],
+        [.68, .38, .54, .34, .44, .23],
+      ]) {
+        ctx.beginPath(); ctx.moveTo(gx + gw * sx, gy + gh * sy);
+        ctx.quadraticCurveTo(gx + gw * cx, gy + gh * cy, gx + gw * ex, gy + gh * ey); ctx.stroke();
       }
-      for (let i = 0; i < 24; i++) {
-        const xx = x + rnd() * ww, yy = y + rnd() * hh;
-        ctx.strokeStyle = 'rgba(149,162,164,.09)'; ctx.lineWidth = .6;
-        ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 1, yy + 7 + rnd() * 21); ctx.stroke();
-      }
-      ctx.restore();
+      const reflection = ctx.createLinearGradient(gx, gy, gx + gw, gy + gh);
+      reflection.addColorStop(0, 'rgba(161,181,188,.08)');
+      reflection.addColorStop(.48, 'rgba(161,181,188,.015)');
+      reflection.addColorStop(1, 'rgba(161,181,188,0)');
+      ctx.fillStyle = reflection; ctx.fillRect(gx, gy, gw, gh);
+      const shade = ctx.createLinearGradient(gx, 0, gx + gw, 0);
+      shade.addColorStop(0, 'rgba(0,0,0,.3)'); shade.addColorStop(.12, 'rgba(0,0,0,0)');
+      shade.addColorStop(.88, 'rgba(0,0,0,0)'); shade.addColorStop(1, 'rgba(0,0,0,.24)');
+      ctx.fillStyle = shade; ctx.fillRect(gx, gy, gw, gh);
     }
-    ctx.strokeStyle = lit ? '#080907' : '#080c0d'; ctx.lineWidth = 9; ctx.strokeRect(x, y, ww, hh);
-    ctx.strokeStyle = lit ? '#10120e' : '#252923'; ctx.lineWidth = 2; ctx.strokeRect(x - 3, y - 3, ww + 6, hh + 6);
-    ctx.fillStyle = lit ? '#11110c' : '#242821';
-    ctx.fillRect(x + ww * .5 - 3, y, 6, hh);
-    ctx.fillRect(x, y + hh * .5 - 3, ww, 6);
-    ctx.fillStyle = lit ? '#18170f' : '#353830';
-    ctx.fillRect(x + ww * .5 - 3, y, 1, hh);
-    ctx.fillRect(x, y + hh * .5 - 3, ww, 1);
+    ctx.restore();
+
+    const middle = x + ww * .5, bar = frame * .58;
+    ctx.fillStyle = lit ? '#10120c' : '#252c26';
+    ctx.fillRect(middle - bar / 2, gy, bar, gh);
+    ctx.fillStyle = lit ? '#1b1b10' : '#454d40';
+    ctx.fillRect(middle - bar / 2, gy, Math.max(.6, frame * .1), gh);
+    ctx.fillStyle = lit ? '#020301' : 'rgba(0,0,0,.45)';
+    ctx.fillRect(middle + bar / 2, gy, Math.max(.7, frame * .14), gh);
+    // A small iron latch, attached to the frame rather than floating on glass.
+    ctx.fillStyle = lit ? '#17170e' : '#626456';
+    ctx.fillRect(middle - bar * .15, gy + gh * .57, bar * .3, frame * 1.3);
+    ctx.fillRect(middle - bar * .1, gy + gh * .57 + frame, frame * .85, frame * .23);
+    ctx.restore();
   }
   const a = cam.wallToWorld(x - 11, y + hh + 4), b = cam.wallToWorld(x + ww + 11, y + hh + 4);
   face([a, b, { ...b, z: 95.5 }, { ...a, z: 95.5 }], [72, 63, 44], { x: 0, y: 1, z: 0 });

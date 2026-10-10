@@ -149,6 +149,7 @@ export function paintPub(scene, L) {
   paintFloor(ctx, L);
   paintWall(ctx, L);
   paintWindowLight(ctx, L);
+  paintLampBeams(ctx, L);
   paintTable(ctx, L);
   paintRack(ctx, L);
   paintLeaningCue(ctx, L);
@@ -426,12 +427,12 @@ function paintSlate(ctx, L, Wp, rect) {
   }
   const mid = Wp((x0 + x1) / 2, (y0 + y1) / 2);
   plane(ctx, mid, Wp((x0 + x1) / 2 + 1, (y0 + y1) / 2), Wp((x0 + x1) / 2, (y0 + y1) / 2 - 1), () => {
-    ctx.fillStyle = "rgba(236,238,232,0.95)";
+    ctx.fillStyle = "rgba(218,222,212,0.72)";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = `13px ${CHALK_FONT}`;
-    ctx.fillText("What is missing", 0, -11);
-    ctx.fillText("defines the answer", 0, 11);
+    ctx.font = `10.5px ${CHALK_FONT}`;
+    ctx.fillText("What is missing", 0, -8.5);
+    ctx.fillText("defines the answer", 0, 8.5);
     // the chalk skips on the slate's grain
     ctx.globalCompositeOperation = "destination-out";
     for (let i = 0; i < 260; i++) {
@@ -1040,115 +1041,153 @@ function paintLeaningCue(ctx, L) {
 
 // ── the billiard lamp: three green shades on a brass bar, on chains ────────
 
-function paintLamp(ctx, L) {
+// Light in the air is behind the table and balls, so their silhouettes and
+// clue colours remain clear. The three soft beams merge into the felt pools.
+function paintLampBeams(ctx, L) {
   const { P, Zc, u } = L;
-  const barY = 194;
-  const topY = 188;
-  const botY = 168;
-  // the haze under each shade, down to the cloth
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  ctx.filter = `blur(${Math.round(12 * u)}px)`;
+  ctx.filter = `blur(${Math.max(1.5, 3.5 * u)}px)`;
   for (const X of [-44, 0, 44]) {
-    const a = P(X - 17, botY, Zc);
-    const b = P(X + 17, botY, Zc);
-    const c = at(L, X + 70, 10, 0);
-    const d = at(L, X - 70, 10, 0);
-    const g = ctx.createLinearGradient(0, a.y, 0, c.y);
-    g.addColorStop(0, `rgba(${LAMP_HOT},0.12)`);
-    g.addColorStop(1, `rgba(${LAMP},0)`);
-    ctx.fillStyle = g;
-    polygon(ctx, [a, b, c, d]);
-    ctx.fill();
+    const mouth = P(X, 167.5, Zc);
+    const foot = at(L, X, 18, 0);
+    const radius = 18.5 * mouth.s;
+    const reach = 48 * foot.s;
+    const beam = ctx.createLinearGradient(0, mouth.y, 0, foot.y);
+    beam.addColorStop(0, `rgba(${LAMP_HOT},0.13)`);
+    beam.addColorStop(.18, `rgba(${LAMP_HOT},0.09)`);
+    beam.addColorStop(.75, `rgba(${LAMP},0.045)`);
+    beam.addColorStop(1, `rgba(${LAMP},0)`);
+    // Several overlapping widths give the air a soft edge, not a cut-out cone.
+    ctx.fillStyle = beam;
+    for (let layer = 0; layer < 4; layer++) {
+      const width = 1 - layer * .17;
+      ctx.globalAlpha = .24;
+      polygon(ctx, [
+        { x: mouth.x - radius * width, y: mouth.y },
+        { x: mouth.x + radius * width, y: mouth.y },
+        { x: foot.x + reach * width, y: foot.y },
+        { x: foot.x - reach * width, y: foot.y },
+      ]);
+      ctx.fill();
+    }
+    // A little brighter air immediately below the concealed bulb.
+    soft(ctx, mouth.x, mouth.y + radius * .25, radius * .8, radius * .6, LAMP_HOT, .1);
   }
-  ctx.filter = "none";
   ctx.restore();
-  // the chains, up out of sight
-  ctx.strokeStyle = "#5a4418";
-  ctx.lineWidth = Math.max(1, 1.6 * u);
-  ctx.setLineDash([3 * u, 2 * u]);
+}
+
+function paintLamp(ctx, L) {
+  const { P, Zc, u } = L;
+  const barY = 196;
+  const positions = [-44, 0, 44];
+  ctx.save();
+
+  // Fine oval chain links catch light along one side.
   for (const X of [-52, 52]) {
-    const a = P(X, barY, Zc);
-    const b = P(X * 0.72, 330, Zc);
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
-  // the bar
-  const b0 = P(-64, barY, Zc);
-  const b1 = P(64, barY, Zc);
-  const bw = 3.2 * b0.s;
-  const bg = ctx.createLinearGradient(0, b0.y - bw / 2, 0, b0.y + bw / 2);
-  bg.addColorStop(0, "#f2d88e");
-  bg.addColorStop(0.5, "#a87a2a");
-  bg.addColorStop(1, "#3a2606");
-  ctx.fillStyle = bg;
-  ctx.beginPath();
-  ctx.roundRect(b0.x, b0.y - bw / 2, b1.x - b0.x, bw, bw / 2);
-  ctx.fill();
-  for (const X of [-44, 0, 44]) {
-    const circle = (Y, rad) => {
-      const pts = [];
-      for (let i = 0; i < 36; i++) {
-        const a = (i / 36) * Math.PI * 2;
-        pts.push(P(X + Math.cos(a) * rad, Y, Zc + Math.sin(a) * rad));
-      }
-      return pts;
-    };
-    const bot = circle(botY, 19);
-    const top = circle(topY, 6);
-    const pc = P(X, botY, Zc);
-    const pt = P(X, topY, Zc);
-    const rb = 19 * pc.s;
-    const rt = 6 * pt.s;
-    // the stem to the bar
-    const st = P(X, barY, Zc);
-    ctx.fillStyle = "#8a6424";
-    ctx.fillRect(pt.x - 1.2 * pt.s, st.y, 2.4 * pt.s, pt.y - st.y);
-    // the shade: its skirt, its sloping side, its cap
-    const body = () => {
+    const a = P(X, barY, Zc), b = P(X * .72, 330, Zc);
+    const dx = b.x - a.x, dy = b.y - a.y, length = Math.hypot(dx, dy);
+    const step = Math.max(3.5, 5 * u), angle = Math.atan2(dy, dx) - Math.PI / 2;
+    for (let d = 0; d < length; d += step) {
+      const t = d / length;
       ctx.beginPath();
-      ctx.moveTo(pt.x - rt, pt.y);
-      ctx.lineTo(pt.x + rt, pt.y);
-      ctx.lineTo(pc.x + rb, pc.y);
-      for (let i = 1; i < 18; i++) ctx.lineTo(bot[i].x, bot[i].y);
-      ctx.lineTo(pc.x - rb, pc.y);
-      ctx.closePath();
-    };
-    body();
-    const g = ctx.createLinearGradient(pc.x - rb, 0, pc.x + rb, 0);
-    g.addColorStop(0, "#0a2a1a");
-    g.addColorStop(0.3, "#2a8a5a");
-    g.addColorStop(0.42, "#5ac08a");
-    g.addColorStop(0.62, "#1c6a44");
-    g.addColorStop(1, "#082214");
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.save();
-    ctx.clip();
-    // the glass glows a little where the bulb is close behind it
-    soft(ctx, pc.x, pc.y, rb * 0.9, rb * 0.5, "150,255,190", 0.35, "lighter");
-    const dk = ctx.createLinearGradient(0, pt.y, 0, pc.y);
-    dk.addColorStop(0, "rgba(0,0,0,0.4)");
-    dk.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = dk;
-    ctx.fillRect(pc.x - rb, pt.y - rt, rb * 2, pc.y - pt.y + rt);
-    ctx.restore();
-    polygon(ctx, top);
-    ctx.fillStyle = "#a87a2a";
-    ctx.fill();
-    // the lit rim of the skirt, and the light under it
-    ctx.strokeStyle = `rgba(${LAMP_HOT},0.9)`;
-    ctx.lineWidth = Math.max(1, 1.5 * u);
-    ctx.beginPath();
-    ctx.moveTo(pc.x + rb, pc.y);
-    for (let i = 1; i < 18; i++) ctx.lineTo(bot[i].x, bot[i].y);
-    ctx.lineTo(pc.x - rb, pc.y);
-    ctx.stroke();
-    soft(ctx, pc.x, bot[9].y + 4 * u, rb * 1.3, rb * 0.5, LAMP_HOT, 0.4, "lighter");
+      ctx.ellipse(a.x + dx * t, a.y + dy * t, step * .22, step * .61, angle, 0, Math.PI * 2);
+      ctx.strokeStyle = "#484333"; ctx.lineWidth = Math.max(.65, u * .85); ctx.stroke();
+    }
   }
+
+  const b0 = P(-64, barY, Zc), b1 = P(64, barY, Zc);
+  const bw = 2.5 * b0.s;
+  const metal = ctx.createLinearGradient(0, b0.y - bw / 2, 0, b0.y + bw / 2);
+  metal.addColorStop(0, "#34322a"); metal.addColorStop(.3, "#a09773");
+  metal.addColorStop(.52, "#625c44"); metal.addColorStop(1, "#24261f");
+  ctx.fillStyle = metal;
+  ctx.beginPath(); ctx.roundRect(b0.x, b0.y - bw / 2, b1.x - b0.x, bw, bw / 2); ctx.fill();
+
+  for (const X of positions) {
+    const crown = P(X, 188, Zc), mount = P(X, barY, Zc);
+    const stemW = crown.s * 2.3;
+    const stem = ctx.createLinearGradient(crown.x - stemW / 2, 0, crown.x + stemW / 2, 0);
+    stem.addColorStop(0, "#2b2d26"); stem.addColorStop(.4, "#9a9271"); stem.addColorStop(1, "#454231");
+    ctx.fillStyle = stem; ctx.fillRect(crown.x - stemW / 2, mount.y, stemW, crown.y - mount.y);
+
+    // A spun enamel bell, modelled as rings. Every face uses the same camera;
+    // sorting by depth gives the skirt its real lower/front semicircle.
+    const shape = [[188, 5.2], [187, 6.2], [184, 7.2], [180, 9.9],
+      [175, 14.1], [170, 18.5], [168.5, 20]];
+    const slopes = shape.slice(1).map(([y, radius], i) => (radius - shape[i][1]) / (shape[i][0] - y));
+    const tangents = shape.map((_, i) => i === 0 ? slopes[0] : i === shape.length - 1
+      ? slopes[i - 1] : 2 * slopes[i - 1] * slopes[i] / (slopes[i - 1] + slopes[i]));
+    const profile = [];
+    // A continuous spun curve gives the shoulder continuous surface normals,
+    // instead of a separate flat highlight for every band of the bell.
+    for (let i = 0; i < shape.length - 1; i++) {
+      const [y0, r0] = shape[i], [y1, r1] = shape[i + 1], h = y0 - y1;
+      const steps = Math.max(2, Math.ceil(h * 2));
+      for (let j = 0; j < steps; j++) {
+        const t = j / steps, t2 = t * t, t3 = t2 * t;
+        const radius = (2 * t3 - 3 * t2 + 1) * r0 + (t3 - 2 * t2 + t) * h * tangents[i]
+          + (-2 * t3 + 3 * t2) * r1 + (t3 - t2) * h * tangents[i + 1];
+        profile.push([y0 - h * t, radius]);
+      }
+    }
+    profile.push(shape[shape.length - 1], [167.5, 20]);
+    const segments = 128, faces = [];
+    const direction = vector => {
+      const length = Math.hypot(...vector);
+      return vector.map(value => value / length);
+    };
+    const light = direction([-.5, .45, -.74]);
+    const eye = direction([-X / Zc, .38, -.92]);
+    const half = direction(light.map((value, i) => value + eye[i]));
+    for (let row = 0; row < profile.length - 1; row++) {
+      const [y0, r0] = profile[row], [y1, r1] = profile[row + 1];
+      const slope = (r0 - r1) / (y0 - y1);
+      for (let i = 0; i < segments; i++) {
+        const a = i / segments * Math.PI * 2, b = (i + 1) / segments * Math.PI * 2;
+        const mid = (a + b) / 2, normal = direction([Math.cos(mid), -slope, Math.sin(mid)]);
+        const diffuse = Math.max(0, normal.reduce((sum, value, j) => sum + value * light[j], 0));
+        const specular = Math.pow(Math.max(0, normal.reduce((sum, value, j) => sum + value * half[j], 0)), 20);
+        const base = row === profile.length - 2 ? [87, 83, 63] : [34, 75, 51];
+        const colour = base.map((value, j) => Math.round(value * (.46 + .75 * diffuse) + [58, 67, 60][j] * specular));
+        const points = [
+          P(X + Math.cos(a) * r0, y0, Zc + Math.sin(a) * r0),
+          P(X + Math.cos(b) * r0, y0, Zc + Math.sin(b) * r0),
+          P(X + Math.cos(b) * r1, y1, Zc + Math.sin(b) * r1),
+          P(X + Math.cos(a) * r1, y1, Zc + Math.sin(a) * r1),
+        ];
+        faces.push({ points, depth: points.reduce((sum, point) => sum + 1 / point.s, 0), colour: `rgb(${colour.join(",")})` });
+      }
+    }
+    faces.sort((a, b) => b.depth - a.depth);
+    for (const face of faces) {
+      polygon(ctx, face.points); ctx.fillStyle = face.colour; ctx.fill();
+      ctx.strokeStyle = face.colour; ctx.lineWidth = .45; ctx.stroke();
+    }
+
+    // The socket cap above the green shell is a separate piece of aged metal.
+    const cap = [];
+    for (let i = 0; i < 48; i++) {
+      const angle = i / 48 * Math.PI * 2;
+      cap.push(P(X + Math.cos(angle) * 5.3, 188.2, Zc + Math.sin(angle) * 5.3));
+    }
+    polygon(ctx, cap); ctx.fillStyle = "#6a6850"; ctx.fill();
+    ctx.strokeStyle = "#a39b76"; ctx.lineWidth = Math.max(.5, .6 * u); ctx.stroke();
+
+    // Only the near half of the rolled lip catches the warm interior light.
+    // The bulb remains concealed at this elevated viewing angle.
+    ctx.beginPath();
+    for (let i = 0; i <= 48; i++) {
+      const angle = -i / 48 * Math.PI;
+      const p = P(X + Math.cos(angle) * 19.8, 167.4, Zc + Math.sin(angle) * 19.8);
+      if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y);
+    }
+    ctx.strokeStyle = `rgba(${LAMP_HOT},.65)`;
+    ctx.lineWidth = Math.max(.7, .8 * u); ctx.stroke();
+    const near = P(X, 167.4, Zc - 19.8), radius = 20 * near.s;
+    soft(ctx, near.x, near.y + 1.2 * u, radius * .68, 3.4 * u, LAMP_HOT, .13, "lighter");
+  }
+  ctx.restore();
 }
 
 // ── the dark of the room, away from the lamp ────────────────────────────────
