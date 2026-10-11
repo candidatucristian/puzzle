@@ -4,6 +4,7 @@ import { paintStage, releaseStageArt, groundLight, CAR_LANES } from "./stage.js"
 import { paintCarsSteps, releaseCarArt, relativeYaw, frameAt, FRAME_COUNT } from "./cars.js";
 import { paintPeople, releasePeopleArt, FLAG_FRAMES } from "./people.js";
 import { drawPodium, releasePodiumArt } from "./podium.js";
+import { paintTvFrame, releaseTvFrame } from "./tvSet.js";
 import {
   RALLY_NUMBERS as RY_NUMBERS,
   RALLY_START_DELAY_MS,
@@ -37,10 +38,14 @@ import {
 // needs (cars.js) and placed by the track's one projection (track.js) — so a
 // car is seen from the front coming round the bend, side-on at the line, from
 // behind as it goes, and is never tilted or squashed by hand.
+//
+// Found in the house, the stage is watched on a television: the same scene,
+// drawn back a little, with the set round it (tvSet.js).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEG = Math.PI / 180;
 const MOONLIT = [86, 96, 122]; // what the floodlit things fall to at the end
+const TV_ZOOM = 0.9; // how much of its size the picture is shown on the television
 
 export default class RallyScene extends BasePuzzleScene {
   constructor() {
@@ -61,6 +66,9 @@ export default class RallyScene extends BasePuzzleScene {
     this.beginScene();
 
     this._finished = false; // a fresh visit: the race has not run yet
+    // found in the house, the stage is on a television
+    const levels = this.services.levels;
+    this._onTv = Boolean(levels.homeOf(levels.definitions.findIndex((l) => l.key === "Rally")));
     this._build(this.cameras.main.width, this.cameras.main.height);
 
     this._resize = ({ width, height }) => {
@@ -128,6 +136,11 @@ export default class RallyScene extends BasePuzzleScene {
     this._light(this.add.image(0, 0, K.haze).setOrigin(0, 0).setDisplaySize(W, H).setDepth(8).setBlendMode("ADD"));
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
     this._drawTexts(W, H);
+    if (this._onTv) {
+      // the set goes over and round everything, whatever is added after it
+      this.add.image(W / 2, H / 2, paintTvFrame(this, W, H, TV_ZOOM)).setDepth(1000);
+      this.cameras.main.setZoom(TV_ZOOM);
+    }
 
     if (this._finished) {
       // rebuilt after the race (a resize): straight to the dark stage and the podium
@@ -670,6 +683,7 @@ export default class RallyScene extends BasePuzzleScene {
     releaseCarArt(this.textures);
     releasePeopleArt(this.textures);
     releasePodiumArt(this.textures);
+    releaseTvFrame(this.textures);
   }
 
   // a resize: everything is painted again from scratch

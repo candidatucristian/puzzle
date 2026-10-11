@@ -16,10 +16,13 @@ const GLOW = "cr_glow";
 const PUFF = "cr_puff";
 const STAR = "cr_star";
 const WALK = "cr_walk";
+const FRAME = "cr_frame";
 const VARIANTS = 5;
 const WARM = "255,206,130";
 
-export function paintStreet(scene, W, H, bars) {
+/** `still`: the street as a painter would have it, for hanging on a wall —
+ *  nobody about, no car, the signals dark. */
+export function paintStreet(scene, W, H, bars, { still = false } = {}) {
   const cam = camera(W, H);
   const lay = { windows: [], far: [] };
   const cv = makeCanvas(W, H);
@@ -32,13 +35,13 @@ export function paintStreet(scene, W, H, bars) {
   if (lay.boardAt) paintBoard(ctx, cam, lay.boardAt.x);
   paintRoad(ctx, cam, lcg(5150), lay);
   paintCrossing(ctx, cam, bars, lcg(4848));
-  paintCar(ctx, cam);
+  if (!still) paintCar(ctx, cam);
   for (const [x, dir] of [
     [W * 0.06, 1],
     [W * 0.94, -1],
   ])
     paintLamp(ctx, cam, x, dir);
-  paintTrafficLight(ctx, cam, W * 0.315);
+  paintTrafficLight(ctx, cam, W * 0.315, !still);
   lay.walk = paintPedSignal(ctx, cam, W * 0.685);
   finish(ctx, cam);
 
@@ -91,9 +94,99 @@ export function paintStreet(scene, W, H, bars) {
 }
 
 export function releaseStreetArt(textures) {
-  const keys = [CITY, GLOW, PUFF, STAR, WALK];
+  const keys = [CITY, GLOW, PUFF, STAR, WALK, FRAME];
   for (let v = 0; v < VARIANTS; v++) keys.push(WIN + v);
   for (const key of keys) if (textures.exists(key)) textures.remove(key);
+}
+
+/** The picture's frame, and the wall it hangs on: the street is shown
+ *  `zoom` of its size, and this goes over and round it — a wide moulding of
+ *  dull gilt, the plaster beyond, a little light on both from above; and
+ *  over the picture itself the weave of its canvas, its varnish gone yellow
+ *  and crazed, the frame's shadow along its top. */
+export function paintFrame(scene, W, H, zoom) {
+  const FW = Math.ceil(W / zoom), FH = Math.ceil(H / zoom);
+  const cv = makeCanvas(FW, FH);
+  const ctx = cv.getContext("2d");
+  const rnd = lcg(3391);
+  const quad = (pts) => poly(ctx, pts.map(([x, y]) => ({ x, y })));
+  const x0 = (FW - W) / 2, y0 = (FH - H) / 2, m = Math.min(x0, y0) * 0.74;
+  // the wall
+  ctx.fillStyle = "#1b1a16";
+  ctx.fillRect(0, 0, FW, FH);
+  for (let i = 0; i < 60; i++) soft(ctx, rnd() * FW, rnd() * FH, 40 + rnd() * 160, 30 + rnd() * 110, rnd() < 0.5 ? "0,0,0" : "120,112,92", 0.04 + rnd() * 0.05);
+  soft(ctx, FW / 2, 0, FW * 0.62, FH * 0.5, WARM, 0.1, "lighter");
+  // the frame's shadow on it
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.8)";
+  ctx.shadowBlur = m * 0.6;
+  ctx.shadowOffsetY = m * 0.3;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x0 - m, y0 - m, W + m * 2, H + m * 2);
+  ctx.restore();
+  // the moulding: four mitred lengths, the top one lit, the bottom in its own shadow
+  const ox0 = x0 - m, oy0 = y0 - m, ox1 = x0 + W + m, oy1 = y0 + H + m;
+  const length = (pts, a, b) => {
+    const g = ctx.createLinearGradient(a[0], a[1], b[0], b[1]);
+    g.addColorStop(0, "#241808");
+    g.addColorStop(0.18, "#7a6230");
+    g.addColorStop(0.34, "#4a3a1a");
+    g.addColorStop(0.6, "#6a5428");
+    g.addColorStop(0.8, "#2e2210");
+    g.addColorStop(0.9, "#8a7238");
+    g.addColorStop(1, "#1a1206");
+    ctx.fillStyle = g;
+    quad(pts);
+    ctx.fill();
+  };
+  length([[ox0, oy0], [ox1, oy0], [x0 + W, y0], [x0, y0]], [0, oy0], [0, y0]);
+  length([[ox0, oy1], [ox1, oy1], [x0 + W, y0 + H], [x0, y0 + H]], [0, oy1], [0, y0 + H]);
+  length([[ox0, oy0], [x0, y0], [x0, y0 + H], [ox0, oy1]], [ox0, 0], [x0, 0]);
+  length([[ox1, oy0], [x0 + W, y0], [x0 + W, y0 + H], [ox1, oy1]], [ox1, 0], [x0 + W, 0]);
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  quad([[ox0, oy1], [ox1, oy1], [x0 + W, y0 + H], [x0, y0 + H]]);
+  ctx.fill();
+  quad([[ox1, oy0], [x0 + W, y0], [x0 + W, y0 + H], [ox1, oy1]]);
+  ctx.fill();
+  // the gilt rubbed through, here and there
+  for (let i = 0; i < 500; i++) {
+    const along = rnd(), across = rnd() * m, side = Math.floor(rnd() * 4);
+    const px = side < 2 ? ox0 + along * (ox1 - ox0) : side === 2 ? ox0 + across : ox1 - across;
+    const py = side === 0 ? oy0 + across : side === 1 ? oy1 - across : oy0 + along * (oy1 - oy0);
+    ctx.fillStyle = rnd() < 0.7 ? "rgba(20,12,4,0.3)" : "rgba(255,226,160,0.14)";
+    ctx.fillRect(px, py, 1 + rnd() * 5, 1 + rnd() * 2);
+  }
+  ctx.strokeStyle = "rgba(0,0,0,0.5)";
+  ctx.lineWidth = 1.2;
+  for (const [ax, ay, bx, by] of [[ox0, oy0, x0, y0], [ox1, oy0, x0 + W, y0], [ox0, oy1, x0, y0 + H], [ox1, oy1, x0 + W, y0 + H]]) {
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+  }
+  // ── the picture shows through; over it, what a painting has that a street has not
+  ctx.clearRect(x0, y0, W, H);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x0, y0, W, H); ctx.clip();
+  ctx.fillStyle = "rgba(124,92,30,0.07)";
+  ctx.fillRect(x0, y0, W, H);
+  for (let y = y0; y < y0 + H; y += 3) { ctx.fillStyle = "rgba(255,255,255,0.022)"; ctx.fillRect(x0, y, W, 1); }
+  for (let x = x0; x < x0 + W; x += 3) { ctx.fillStyle = "rgba(0,0,0,0.04)"; ctx.fillRect(x, y0, 1, H); }
+  ctx.strokeStyle = "rgba(8,6,3,0.16)";
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < 90; i++) {
+    let px = x0 + rnd() * W, py = y0 + rnd() * H;
+    ctx.beginPath(); ctx.moveTo(px, py);
+    for (let k = 0; k < 4; k++) { px += (rnd() - 0.5) * 34; py += (rnd() - 0.5) * 34; ctx.lineTo(px, py); }
+    ctx.stroke();
+  }
+  for (const [ax, ay, bx, by, a] of [[0, y0, 0, y0 + m * 0.5, 0.55], [x0, 0, x0 + m * 0.3, 0, 0.35]]) {
+    const g = ctx.createLinearGradient(ax, ay, bx, by);
+    g.addColorStop(0, `rgba(0,0,0,${a})`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x0, y0, W, H);
+  }
+  ctx.restore();
+  add(scene.textures, FRAME, cv);
+  return FRAME;
 }
 
 // ── the camera: the road and the crossing on the ground ─────────────────────
@@ -946,8 +1039,8 @@ function paintLamp(ctx, cam, px, dir) {
   ctx.fillRect(lx - lw * 0.4, ly + lh, lw * 0.8, Math.max(2, S * 0.004));
 }
 
-// the traffic light, its green lit
-function paintTrafficLight(ctx, cam, px) {
+// the traffic light, its green lit (or, `lit` false, all three dark)
+function paintTrafficLight(ctx, cam, px, lit = true) {
   const { H, S, curbY } = cam;
   const base = curbY + 2;
   const top = H * 0.33;
@@ -966,7 +1059,7 @@ function paintTrafficLight(ctx, cam, px) {
   const lamps = [
     ["208,72,58", 0.18],
     ["224,166,58", 0.18],
-    ["58,208,106", 1],
+    ["58,208,106", lit ? 1 : 0.18],
   ];
   lamps.forEach(([rgb, a], i) => {
     const cy = hy + hh * (0.2 + i * 0.3);

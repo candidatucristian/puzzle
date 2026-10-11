@@ -3,18 +3,20 @@ import { layoutRoom4, paintRoom4, releaseRoom4Art } from "./room4.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The counting room: the fourth room off the hall (see house/RoomScene.js for
-// what every room does). One puzzle is found in it so far: the six numbered
-// cards pinned on the cork board over the desk. The gilt chest is on the
-// desk's far end.
+// what every room does). Three puzzles are found in it: the six numbered
+// cards pinned on the cork board over the desk, the painting of a street
+// hung beside them, and the drawer of old tickets pulled out of the chest
+// under the window. The gilt chest is on the desk's far end.
 //
-// The room is painted (room4.js). The cards' lights — the picture light over
-// the board, the lamp on the desk — burn only until the puzzle is solved.
+// The room is painted (room4.js). Each puzzle's light — the picture light
+// over the board and the lamp on the desk, the light over the painting, the
+// candle on the chest of drawers — burns only until that puzzle is solved.
 // Live over the painting: those lights, the embers in the stove (which stay
 // in), and dust in the moonbeam.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // which puzzle each of the room's lights is lit for
-const LIT_FOR = { cards: "sequence" };
+const LIT_FOR = { cards: "sequence", painting: "crossing", drawer: "station" };
 
 export default class Room4Scene extends RoomScene {
   constructor() {
@@ -38,9 +40,12 @@ export default class Room4Scene extends RoomScene {
   live(L, k, glow) {
     // the stove's embers, always
     this._embers = glow(L.glows.stove, 0.3, 0xff7a28);
-    if (!L.on.cards) return;
-    // the two lamps, breathing very slightly
-    for (const [at, a] of [[L.glows.desk, 0.18], [L.glows.picture, 0.14]]) {
+    // whichever lamps still burn, breathing very slightly
+    const lamps = [];
+    if (L.on.cards) lamps.push([L.glows.desk, 0.18], [L.glows.picture, 0.14]);
+    if (L.on.painting) lamps.push([L.glows.painting, 0.14]);
+    if (L.on.drawer) lamps.push([L.glows.candle, 0.2]);
+    for (const [at, a] of lamps) {
       const lamp = glow(at, a);
       this.ambientTween({ targets: lamp, alpha: { from: a * 0.85, to: a * 1.2 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }

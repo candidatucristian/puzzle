@@ -1,6 +1,7 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintHall, releaseHallArt } from "./hall.js";
+import { STATION_ROWS } from "./rows.js";
 import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
 
 const SPARKLE = "st_sparkle";
@@ -27,35 +28,6 @@ const SPARKLE = "st_sparkle";
 // lamp's light, the clock's second hand and the dust are live. Lifecycle
 // provided by BasePuzzleScene.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const STATION_ROWS = [
-  {
-    time: "22:41",
-    dest: "GENETA",
-    track: "4",
-    remark: "BOARDING",
-    wrongIdx: 4,
-  },
-  { time: "21:26", dest: "VIENNA", track: "7", remark: "CANCELLED" },
-  {
-    time: "22:07",
-    dest: "MOXCOW",
-    track: "2",
-    remark: "BOARDING",
-    wrongIdx: 2,
-  },
-  { time: "21:03", dest: "PERIS", track: "9", remark: "BOARDING", wrongIdx: 1 },
-  { time: "23:19", dest: "LISBON", track: "3", remark: "DELAYED" },
-  { time: "21:48", dest: "MADRID", track: "6", remark: "CANCELLED" },
-  {
-    time: "22:24",
-    dest: "LINDON",
-    track: "1",
-    remark: "BOARDING",
-    wrongIdx: 1,
-  },
-  { time: "23:52", dest: "PRAGUE", track: "5", remark: "NO SERVICE" },
-];
 
 // board geometry: cells per column group
 const ST_TIME_CELLS = 5;

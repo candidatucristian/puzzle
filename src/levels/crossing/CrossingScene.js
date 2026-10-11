@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
-import { paintStreet, releaseStreetArt } from "./street.js";
+import { paintStreet, paintFrame, releaseStreetArt } from "./street.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CROSSING"  ·  code: GO   ·  read the stripes
@@ -26,6 +26,9 @@ import { paintStreet, releaseStreetArt } from "./street.js";
 //
 // The street is painted once per screen size (street.js); the windows,
 // signals, smoke, steam, the shop's sign, the stars and the cat are live.
+//
+// Found in the house, it is a painting on a wall: the same street in a
+// frame, and nothing in it moves — no cat, no car, the signals dark.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CR_WORD = "GO";
@@ -89,6 +92,9 @@ export default class CrossingScene extends BasePuzzleScene {
   create() {
     this.beginScene();
 
+    // found in the house, the street is a painting of itself
+    const levels = this.services.levels;
+    this._still = Boolean(levels.homeOf(levels.definitions.findIndex((l) => l.key === "Crossing")));
     this._build(this.cameras.main.width, this.cameras.main.height);
 
     this.listenToResize(({ width, height }) => {
@@ -133,12 +139,13 @@ export default class CrossingScene extends BasePuzzleScene {
   _build(W, H) {
     this._W = W;
     this._H = H;
-    const art = paintStreet(this, W, H, this._bars());
+    const art = paintStreet(this, W, H, this._bars(), { still: this._still });
     this._art = art;
     this._baseY = art.baseY;
     this._curbY = art.curbY;
 
     this.add.image(0, 0, art.city).setOrigin(0, 0).setDepth(-20);
+    if (this._still) { this._hang(W, H, art); return; }
     this._makeStars(W, H, art);
     this._makeFarWindows(art);
     this._makeWindows(art);
@@ -147,6 +154,19 @@ export default class CrossingScene extends BasePuzzleScene {
     this._makeWalkSignal(art);
     this._drawCat(W, H);
     this._drawTexts(W, H);
+  }
+
+  // The street as a painting: its lit windows painted lit, and the frame
+  // round it — the whole picture drawn back a little to make room for that.
+  _hang(W, H, art) {
+    const ZOOM = 0.84;
+    for (const p of art.far) this.add.rectangle(p.x, p.y, 3, 4, CR_WARM, 0.45).setDepth(-12);
+    for (const w of art.windows) {
+      this.add.image(w.x, w.y, art.glow).setDisplaySize(w.w * 3.2, w.h * 3.2).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.4).setDepth(-7);
+      this.add.image(w.x, w.y, w.key).setDisplaySize(w.w, w.h).setAlpha(0.9).setDepth(-6);
+    }
+    this.add.image(W / 2, H / 2, paintFrame(this, W, H, ZOOM)).setDepth(30);
+    this.cameras.main.setZoom(ZOOM);
   }
 
   // a few stars that twinkle

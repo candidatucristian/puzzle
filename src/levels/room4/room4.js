@@ -1,8 +1,9 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 import { paintKey } from "../../shared/keyArt.js";
-import { writingDesk, greenLamp } from "../house/furniture.js";
+import { writingDesk, greenLamp, candle } from "../house/furniture.js";
+import { paintRoomDetails, paintStove } from "./details.js";
 import {
-  WARM, BACK, roomLayout, roomStyle, block, chestAt, thingAt, fillPoly, paintShell, paintWindowWall, paintMoonlight, paintChest, gloom,
+  WARM, BACK, roomLayout, roomStyle, block, chestAt, thingAt, fillPoly, paintShell, paintWindowWall, paintMoonlight, paintChest, gloom, footShadow, onWall,
 } from "../house/roomKit.js";
 
 /** The fourth room off the hall, at night: the counting room. Seen from just
@@ -12,12 +13,17 @@ import {
  *  with a green-shaded lamp, and the gilt chest on the desk's far end. To
  *  the right, set high and deep in the wall, a small leaded window and the
  *  moon, its light on the rug; in the corner beyond it an iron stove, a
- *  little fire still in it. A bare working room: plaster walls, stone
- *  flags underfoot, beams overhead.
+ *  little fire still in it. Plaster walls, stone flags underfoot, beams
+ *  overhead; a chair at the desk, registers on a bookcase and a log basket.
  *
- *  One puzzle is found here so far — the cards; in the room they are only
- *  themselves, small, enough to know them by. Their lights burn until the
- *  puzzle is solved.
+ *  On the left wall hangs a painting in a dull gilt frame —
+ *  a street at night, and a pedestrian crossing — under a picture light of
+ *  its own. Under the window stands a chest of three drawers, the top one
+ *  pulled out, old tickets in it, and a candle on the chest.
+ *
+ *  Three puzzles are found here — the cards, the painting, the drawer; in
+ *  the room they are only themselves, small, enough to know them by. Each
+ *  has its light, which burns until its puzzle is solved.
  *
  *  Measured and seen as every room is (house/roomKit.js). Painted once per
  *  screen size: the room; a glow; the chest, shut and open; the key. */
@@ -30,10 +36,11 @@ const CARDS = [23, 31, 11, 28, 19, 24];
 // ── where everything is ─────────────────────────────────────────────────────
 
 /** `on` says which of the room's lights still burn: `cards` the picture
- *  light over the board and the lamp on the desk under it. */
-export function layoutRoom4(W, H, on = { cards: true }) {
+ *  light over the board and the lamp on the desk under it, `painting` the
+ *  light over the painting, `drawer` the candle on the chest of drawers. */
+export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: true }) {
   const L = roomLayout(W, H);
-  // a bare working room: plaster walls, stone flags, a small leaded window
+  // a counting room: plaster walls, stone flags, a small leaded window
   // set high and deep, an iron stove in the corner
   L.style = roomStyle({
     wall: "plaster", near: "#2e2c26", far: "#161510", back: "#1e1d18", rail: 0, dado: null,
@@ -56,15 +63,31 @@ export function layoutRoom4(W, H, on = { cards: true }) {
   chestAt(L);
   const b = (L.board = { x0: k.x0 - 6, x1: k.x1 + 6, y0: 122, y1: 180 });
 
+  // The street painting hangs on the left wall, following its perspective.
+  const p = (L.painting = { d0: 448, d1: 582, y0: 120 });
+  p.y1 = p.y0 + ((p.d1 - p.d0 - 10) * 9) / 16 + 10;
+  p.quad = [Q(-hx, p.y1, p.d0), Q(-hx, p.y1, p.d1), Q(-hx, p.y0, p.d1), Q(-hx, p.y0, p.d0)];
+  // the chest of drawers under the window, its top drawer pulled out, a candle on it
+  const cb = (L.cabinet = { x0: 0.3 * hx, x1: 0.54 * hx, d0: 554, d1: 598, h: 88 });
+  const dr = (L.drawer = { x0: cb.x0 + 3, x1: cb.x1 - 3, y0: cb.h - 26, y1: cb.h - 6, d0: cb.d0 - 16, d1: cb.d0 });
+  L.cabinetCandle = { x: cb.x0 + 13, y: cb.h, d: 574 };
+
   // what opens a puzzle
   L.things = [
     thingAt("sequence", "Look at the cards", [Q(b.x0, b.y1, BACK), Q(b.x1, b.y1, BACK), Q(b.x1, b.y0, BACK), Q(b.x0, b.y0, BACK)]),
+    thingAt("crossing", "Look at the painting", p.quad),
+    thingAt("station", "Look in the drawer", [Q(dr.x0, dr.y1 + 4, dr.d1), Q(dr.x1, dr.y1 + 4, dr.d1), Q(dr.x1, dr.y0, dr.d0), Q(dr.x0, dr.y0, dr.d0)]),
   ];
   // what burns, for the scene to keep alive
   const dp = Q(L.deskLamp.x, L.deskLamp.y + 22, L.deskLamp.d);
   const pp = Q((b.x0 + b.x1) / 2, b.y1 + 8, BACK - 9);
-  const sv = Q(L.stove.x, 34, L.stove.d - 22);
-  L.glows = { desk: { x: dp.x, y: dp.y, r: 90 * dp.s }, picture: { x: pp.x, y: pp.y, r: 46 * pp.s }, stove: { x: sv.x, y: sv.y, r: 40 * sv.s } };
+  const sv = Q(L.stove.x, 42, L.stove.d - 22);
+  const tp = Q(-hx + 7, p.y1 + 8, (p.d0 + p.d1) / 2);
+  const cp = Q(L.cabinetCandle.x, L.cabinetCandle.y + 20, L.cabinetCandle.d);
+  L.glows = {
+    desk: { x: dp.x, y: dp.y, r: 90 * dp.s }, picture: { x: pp.x, y: pp.y, r: 46 * pp.s }, stove: { x: sv.x, y: sv.y, r: 46 * sv.s },
+    painting: { x: tp.x, y: tp.y, r: 40 * tp.s }, candle: { x: cp.x, y: cp.y, r: 70 * cp.s },
+  };
   return L;
 }
 
@@ -80,10 +103,14 @@ export function paintRoom4(scene, L) {
   paintShell(ctx, L);
   paintWindowWall(ctx, L);
   paintBoard(ctx, L);
+  paintPicture(ctx, L);
   paintRug(ctx, L);
   paintMoonlight(ctx, L);
+  paintRoomDetails(ctx, L, "back");
   paintStove(ctx, L);
+  paintCabinet(ctx, L);
   writingDesk(ctx, L, L.desk);
+  paintRoomDetails(ctx, L, "front");
   greenLamp(ctx, L, L.deskLamp, L.desk, L.on.cards);
   paintGloom(ctx, L);
   vignette(ctx, W, H, 0.7);
@@ -165,19 +192,28 @@ function paintBoard(ctx, L) {
   sh.addColorStop(1, "rgba(0,0,0,0)");
   g.fillStyle = sh;
   g.fillRect(5.5 * R, 5.5 * R, fw - 11 * R, 7.5 * R);
-  // the lamp's light on the wall round the board, the board's shadow, the board
-  if (on) soft(ctx, (a.x + z.x) / 2, a.y + 10 * s, (z.x - a.x) * 0.7, 80 * s, WARM, 0.2, "lighter");
+  // the board's shadow, the board, its light
   ctx.fillStyle = "rgba(0,0,0,0.5)";
   ctx.fillRect(a.x + 1.5 * s, a.y + 2.4 * s, z.x - a.x, z.y - a.y);
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(flat, a.x, a.y, z.x - a.x, z.y - a.y);
-  // the picture light: a brass tube on two arms over the frame
-  const tube = (x) => Q(x, b.y1 + 9, BACK - 9);
-  const p0 = tube(b.x0 + 22), p1 = tube(b.x1 - 22);
+  pictureLight(ctx, L, b.x0, b.x1, b.y1, on);
+}
+
+// A picture light over something hung on the back wall between x0 and x1,
+// its top at y: a brass tube on two arms, and — `on` — its light on the
+// wall and down the thing under it.
+function pictureLight(ctx, L, x0, x1, y, on) {
+  const { Q } = L;
+  const a = Q(x0, y, BACK), z = Q(x1, y, BACK), s = a.s;
+  const inset = Math.min(22, (x1 - x0) * 0.18), arm = Math.min(40, (x1 - x0) * 0.3);
+  if (on) soft(ctx, (a.x + z.x) / 2, a.y + 10 * s, (z.x - a.x) * 0.7, 80 * s, WARM, 0.2, "lighter");
+  const tube = (x) => Q(x, y + 9, BACK - 9);
+  const p0 = tube(x0 + inset), p1 = tube(x1 - inset);
   ctx.strokeStyle = "#2a1e0c";
   ctx.lineWidth = Math.max(1, 1.6 * s);
-  for (const x of [b.x0 + 40, b.x1 - 40]) {
-    const w = Q(x, b.y1 + 5, BACK), q = tube(x);
+  for (const x of [x0 + arm, x1 - arm]) {
+    const w = Q(x, y + 5, BACK), q = tube(x);
     ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(q.x, q.y); ctx.stroke();
   }
   ctx.lineCap = "round";
@@ -191,51 +227,152 @@ function paintBoard(ctx, L) {
   if (on) soft(ctx, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2 + 5 * s, (p1.x - p0.x) * 0.5, 12 * s, "255,226,170", 0.5, "lighter");
 }
 
-// The stove: a pot-bellied one of black iron on three legs, its pipe going
-// up and into the wall, a little fire still showing through the bars of
-// its door. It is not one of the puzzle's lights: it stays in.
-function paintStove(ctx, L) {
+// The painting: a street at night in a dull gilt frame — the moon between
+// two dark blocks, a lit window or two, the wet road, and across it the
+// pale stripes of a crossing. Small here, and only itself: enough to know
+// it by. Over it, its own picture light.
+function paintPicture(ctx, L) {
   const { Q } = L;
-  const st = L.stove, f = Q(st.x, 0, st.d), u = f.s;
-  const y = (cm) => f.y - cm * u;
-  soft(ctx, f.x, f.y, 34 * u, 8 * u, "0,0,0", 0.7);
-  // the stone it stands on, the embers' light on it
-  block(ctx, L, { x0: st.x - 32, x1: st.x + 32, d0: st.d - 30, d1: st.d + 24, y0: 0, y1: 3 }, { side: "#0c0c0d", top: "#26262a", front: "#161618" });
-  soft(ctx, f.x, y(2) + 8 * u, 40 * u, 9 * u, "255,120,40", 0.3, "lighter");
-  const iron = ctx.createLinearGradient(f.x - 22 * u, 0, f.x + 22 * u, 0);
-  iron.addColorStop(0, "#050506");
-  iron.addColorStop(0.35, "#2c2d32");
-  iron.addColorStop(1, "#08080a");
-  ctx.fillStyle = iron;
-  // the pipe, the legs, the belly, the top
-  ctx.fillRect(f.x - 5 * u, y(L.top - 40), 10 * u, (L.top - 40 - 74) * u);
-  ctx.fillRect(f.x - 5 * u, y(L.top - 30), 34 * u, 10 * u);
-  for (const dx of [-15, 15]) { ctx.beginPath(); ctx.moveTo(f.x + (dx - 3) * u, y(16)); ctx.lineTo(f.x + (dx + 3) * u, y(16)); ctx.lineTo(f.x + dx * 1.3 * u, y(2)); ctx.closePath(); ctx.fill(); }
-  ctx.beginPath();
-  ctx.moveTo(f.x - 15 * u, y(74));
-  ctx.bezierCurveTo(f.x - 30 * u, y(60), f.x - 30 * u, y(24), f.x - 17 * u, y(14));
-  ctx.lineTo(f.x + 17 * u, y(14));
-  ctx.bezierCurveTo(f.x + 30 * u, y(24), f.x + 30 * u, y(60), f.x + 15 * u, y(74));
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillRect(f.x - 18 * u, y(79), 36 * u, 5 * u);
-  ctx.fillStyle = "rgba(255,255,255,0.06)";
-  ctx.fillRect(f.x - 18 * u, y(79), 36 * u, 0.8 * u);
-  // the door: its bars, and what is still burning behind them
-  const dx0 = f.x - 11 * u, dy0 = y(48), dw = 22 * u, dh = 22 * u;
-  const fire = ctx.createRadialGradient(f.x, dy0 + dh * 0.7, 1, f.x, dy0 + dh * 0.6, dw * 0.7);
-  fire.addColorStop(0, "#ffd070");
-  fire.addColorStop(0.4, "#ff7a20");
-  fire.addColorStop(1, "#5a1206");
-  ctx.fillStyle = fire;
-  ctx.beginPath(); ctx.roundRect(dx0, dy0, dw, dh, 2 * u); ctx.fill();
-  ctx.fillStyle = "#08080a";
-  for (let i = 0; i <= 5; i++) ctx.fillRect(dx0 + (dw * i) / 5 - 0.9 * u, dy0, 1.8 * u, dh);
-  ctx.strokeStyle = "#0a0a0c";
-  ctx.lineWidth = Math.max(1, 1.6 * u);
-  ctx.beginPath(); ctx.roundRect(dx0, dy0, dw, dh, 2 * u); ctx.stroke();
-  soft(ctx, f.x, dy0 + dh * 0.6, 34 * u, 30 * u, "255,120,40", 0.3, "lighter");
+  const p = L.painting, on = L.on.painting;
+  const s = Q(-L.half, p.y0, (p.d0 + p.d1) / 2).s;
+  const R = 6, fw = Math.round((p.d1 - p.d0) * R), fh = Math.round((p.y1 - p.y0) * R), m = 5 * R;
+  const flat = makeCanvas(fw, fh);
+  const g = flat.getContext("2d");
+  const rnd = lcg(64);
+  // the frame: gilt gone dull, a dark hollow in its moulding
+  const gilt = g.createLinearGradient(0, 0, 0, fh);
+  gilt.addColorStop(0, on ? "#7a6230" : "#3e3218");
+  gilt.addColorStop(1, on ? "#3a2c12" : "#1e180a");
+  g.fillStyle = gilt;
+  g.fillRect(0, 0, fw, fh);
+  g.fillStyle = "rgba(10,6,2,0.55)";
+  g.fillRect(m * 0.36, m * 0.36, fw - m * 0.72, fh - m * 0.72);
+  g.fillStyle = gilt;
+  g.fillRect(m * 0.62, m * 0.62, fw - m * 1.24, fh - m * 1.24);
+  g.fillStyle = "rgba(255,226,160,0.2)";
+  g.fillRect(0, 0, fw, 1.2 * R * 0.5);
+  // the picture
+  const w = fw - m * 2, h = fh - m * 2;
+  g.save();
+  g.translate(m, m);
+  g.beginPath(); g.rect(0, 0, w, h); g.clip();
+  const sky = g.createLinearGradient(0, 0, 0, h * 0.52);
+  sky.addColorStop(0, "#0a1230");
+  sky.addColorStop(1, "#22335e");
+  g.fillStyle = sky;
+  g.fillRect(0, 0, w, h);
+  soft(g, w * 0.5, h * 0.17, h * 0.2, h * 0.2, "200,214,250", 0.5, "lighter");
+  g.fillStyle = "#ece8d6";
+  g.beginPath(); g.arc(w * 0.5, h * 0.17, h * 0.05, 0, Math.PI * 2); g.fill();
+  // the far skyline, then the two blocks
+  g.fillStyle = "#0c1226";
+  for (let x = w * 0.28; x < w * 0.72; x += w * 0.035) g.fillRect(x, h * (0.36 + rnd() * 0.1), w * 0.035 + 1, h * 0.2);
+  g.fillStyle = "#1c1519";
+  g.fillRect(0, h * 0.05, w * 0.3, h * 0.47);
+  g.fillStyle = "#171b22";
+  g.fillRect(w * 0.7, h * 0.1, w * 0.3, h * 0.42);
+  g.fillStyle = "rgba(255,206,130,0.85)";
+  for (const [fx, fy] of [[0.07, 0.16], [0.2, 0.28], [0.12, 0.4], [0.78, 0.2], [0.9, 0.34], [0.82, 0.44]]) g.fillRect(w * fx, h * fy, w * 0.03, h * 0.05);
+  // the sidewalk, the wet road, the moon lying on it
+  g.fillStyle = "#2a2d36";
+  g.fillRect(0, h * 0.52, w, h * 0.05);
+  const road = g.createLinearGradient(0, h * 0.57, 0, h);
+  road.addColorStop(0, "#161a24");
+  road.addColorStop(1, "#0b0d13");
+  g.fillStyle = road;
+  g.fillRect(0, h * 0.57, w, h * 0.43);
+  soft(g, w * 0.5, h * 0.8, w * 0.1, h * 0.24, "170,190,236", 0.2, "lighter");
+  // the crossing, running away from our feet
+  g.fillStyle = "rgba(214,212,200,0.82)";
+  for (let i = 0; i < 6; i++) {
+    const t0 = i / 6 + 0.035, t1 = t0 + 0.095;
+    const at = (t) => ({ y: h - (h - h * 0.57) * t, hw: w * (0.3 - 0.16 * t) });
+    const n = at(t0), f = at(t1);
+    g.beginPath();
+    g.moveTo(w / 2 - n.hw, n.y); g.lineTo(w / 2 + n.hw, n.y); g.lineTo(w / 2 + f.hw, f.y); g.lineTo(w / 2 - f.hw, f.y);
+    g.closePath();
+    g.fill();
+  }
+  // two street lamps
+  for (const fx of [0.33, 0.67]) {
+    g.fillStyle = "#07080c";
+    g.fillRect(w * fx - 1, h * 0.3, 2, h * 0.24);
+    soft(g, w * fx, h * 0.3, h * 0.07, h * 0.07, "255,206,130", 0.8, "lighter");
+  }
+  // old varnish; and with its light out, only the moon on it
+  g.fillStyle = "rgba(120,88,30,0.12)";
+  g.fillRect(0, 0, w, h);
+  if (!on) { g.fillStyle = "rgba(4,6,12,0.55)"; g.fillRect(0, 0, w, h); }
+  const sh = g.createLinearGradient(0, 0, 0, h * 0.14);
+  sh.addColorStop(0, "rgba(0,0,0,0.5)");
+  sh.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = sh;
+  g.fillRect(0, 0, w, h * 0.14);
+  g.restore();
+  fillPoly(ctx, p.quad.map(q => ({ x: q.x + 2 * s, y: q.y + 3 * s })), "rgba(0,0,0,0.55)");
+  ctx.imageSmoothingQuality = "high";
+  onWall(ctx, L, -1, p, flat);
+  const tube = d => Q(-L.half + 7, p.y1 + 9, d);
+  const t0 = tube(p.d0 + 24), t1 = tube(p.d1 - 24);
+  ctx.lineCap = "round";
+  for (const d of [p.d0 + 35, p.d1 - 35]) {
+    const wall = Q(-L.half, p.y1 + 5, d), tip = tube(d);
+    ctx.strokeStyle = "#3b2b12"; ctx.lineWidth = 1.4 * s;
+    ctx.beginPath(); ctx.moveTo(wall.x, wall.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+  }
+  ctx.strokeStyle = "#22180a"; ctx.lineWidth = 5 * s;
+  ctx.beginPath(); ctx.moveTo(t0.x, t0.y); ctx.lineTo(t1.x, t1.y); ctx.stroke();
+  ctx.strokeStyle = on ? "#b28c47" : "#514024"; ctx.lineWidth = 1.8 * s;
+  ctx.beginPath(); ctx.moveTo(t0.x, t0.y - s); ctx.lineTo(t1.x, t1.y - s); ctx.stroke();
+  ctx.lineCap = "butt";
+  if (on) soft(ctx, (t0.x + t1.x) / 2, (t0.y + t1.y) / 2 + 12 * s, 34 * s, 59 * s, WARM, 0.24, "lighter");
 }
+
+// The chest of drawers under the window: oak, three drawers, two brass
+// knobs to each; the top one pulled out, and the ends of the old card
+// tickets in it showing. A candle on the chest, which is the drawer's light.
+function paintCabinet(ctx, L) {
+  const { Q } = L;
+  const c = L.cabinet, dr = L.drawer, on = L.on.drawer;
+  footShadow(ctx, L, c);
+  block(ctx, L, { x0: c.x0, x1: c.x1, y0: 0, y1: c.h, d0: c.d0, d1: c.d1 }, { side: "#160d07", top: "#3a2414", front: "#24150c" });
+  const face = (x0, y0, x1, y1, d, col) => fillPoly(ctx, [Q(x0, y1, d), Q(x1, y1, d), Q(x1, y0, d), Q(x0, y0, d)], col);
+  const knobs = (y, d) => {
+    for (const k of [0.24, 0.76]) {
+      const q = Q(c.x0 + (c.x1 - c.x0) * k, y, d);
+      ctx.fillStyle = "#120c05";
+      ctx.beginPath(); ctx.arc(q.x, q.y, 2.3 * q.s, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = on ? "#b08c44" : "#5e5028";
+      ctx.beginPath(); ctx.arc(q.x - 0.4 * q.s, q.y - 0.4 * q.s, 1.6 * q.s, 0, Math.PI * 2); ctx.fill();
+    }
+  };
+  face(c.x0, 0, c.x1, 5, c.d0, "#100905");
+  // the two that are shut
+  for (const [y0, y1] of [[8, 32], [35, 59]]) {
+    face(c.x0 + 3, y0, c.x1 - 3, y1, c.d0, "#2e1b0f");
+    face(c.x0 + 3, y1 - 0.9, c.x1 - 3, y1, c.d0, "rgba(4,2,1,0.8)");
+    face(c.x0 + 3, y0, c.x1 - 3, y0 + 0.7, c.d0, "rgba(255,206,160,0.1)");
+    knobs((y0 + y1) / 2, c.d0);
+  }
+  // the top one: the dark it has come out of, the drawer, what is in it
+  face(dr.x0, dr.y0, dr.x1, dr.y1 + 1, c.d0, "#040302");
+  block(ctx, L, dr, { side: "#1c1109", top: "#0b0705", front: "#2e1b0f" });
+  const n = 8, step = (dr.x1 - dr.x0 - 6) / n;
+  for (let i = 0; i < n; i++) {
+    const x = dr.x0 + 3 + i * step;
+    const points = [Q(x, dr.y1, dr.d0 + 2.5), Q(x + step, dr.y1, dr.d0 + 2.5), Q(x + step, dr.y1, dr.d1 - 1), Q(x, dr.y1, dr.d1 - 1)];
+    fillPoly(ctx, points, on ? "#c7b994" : "#46473f");
+    if (i > 0) {
+      ctx.save(); ctx.strokeStyle = "#504531"; ctx.lineWidth = 0.6 * points[0].s;
+      ctx.setLineDash([0.65 * points[0].s, 1.4 * points[0].s]);
+      ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y); ctx.lineTo(points[3].x, points[3].y); ctx.stroke(); ctx.restore();
+    }
+  }
+  face(dr.x0, dr.y1 - 0.8, dr.x1, dr.y1, dr.d0, "rgba(255,206,160,0.16)");
+  knobs((dr.y0 + dr.y1) / 2, dr.d0);
+  candle(ctx, L, L.cabinetCandle, on);
+}
+
 
 // the rug in the middle of the room: deep red, a paler border, worn
 function paintRug(ctx, L) {
@@ -265,5 +402,7 @@ function paintGloom(ctx, L) {
     { x: g.desk.x + 40 * ds, y: g.desk.y + 10 * ds, rx: 170 * ds, ry: 110 * ds, k: on.cards ? 0.95 : 0.32 },
     { x: g.picture.x, y: g.picture.y + 40 * ps, rx: 130 * ps, ry: 90 * ps, k: on.cards ? 0.95 : 0.36 },
     { x: g.stove.x, y: g.stove.y + 20 * ps, rx: 110 * ps, ry: 100 * ps, k: 0.7 },
+    { x: g.painting.x, y: g.painting.y + 34 * ps, rx: 100 * ps, ry: 80 * ps, k: on.painting ? 0.95 : 0.36 },
+    { x: g.candle.x, y: g.candle.y + 16 * ps, rx: 120 * ps, ry: 100 * ps, k: on.drawer ? 0.92 : 0.3 },
   ]);
 }

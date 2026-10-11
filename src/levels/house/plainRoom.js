@@ -18,7 +18,10 @@ import {
  *    hearth    where along the back wall the fireplace stands (a share of
  *              half the width), or null for none
  *    chest     where the chest's table stands (the same), or null for none
- *    rug       the three colours of its rug: ground, border, field */
+ *    rug       the three colours of its rug: ground, border, field
+ *
+ *  A furnished subclass can add `things` and `detailLights` to its layout
+ *  and implement paintDetails(ctx, L), painted before the room's lighting. */
 
 // ── where everything is ─────────────────────────────────────────────────────
 
@@ -68,6 +71,7 @@ function paintPlain(scene, L, K) {
     }
     block(ctx, L, { ...tb, x0: tb.x0 - 2, x1: tb.x1 + 2, y0: tb.h - 3, y1: tb.h }, oak);
   }
+  scene.paintDetails?.(ctx, L);
   const w = L.win, floor = Q(w.x - 30, 0, 470);
   const lights = [
     { x: w.cx, y: (w.top + w.sill) / 2, rx: w.rx * 3, ry: (w.sill - w.top) * 0.95, k: 0.95 },
@@ -75,6 +79,7 @@ function paintPlain(scene, L, K) {
   ];
   if (L.embers) lights.push({ x: L.embers.x, y: L.embers.y - L.embers.r * 0.4, rx: L.embers.r * 3.4, ry: L.embers.r * 2.8, k: 0.8 });
   if (L.chest) lights.push({ x: L.chest.mouth.x, y: L.chest.mouth.y, rx: 90 * L.chest.mouth.s, ry: 70 * L.chest.mouth.s, k: 0.5 });
+  lights.push(...(L.detailLights ?? []));
   gloom(ctx, L, lights);
   vignette(ctx, W, H, 0.7);
   grain(ctx, W, H, 0.035);
@@ -88,59 +93,180 @@ function paintPlain(scene, L, K) {
   return K;
 }
 
-// The hearth: a stone surround and a deep mantelshelf against the back wall,
-// a black opening with an iron basket in it, the last of a fire in the
-// basket — a few coals still red, their light on the hearthstone.
+// The hearth: a chimneypiece of grey stone against the back wall — a plinth
+// and a pilaster either side, a frieze with a raised tablet, a moulded
+// mantelshelf, two brass candlesticks on it — and under its low arch the
+// firebox, lined with firebrick gone black above and red below. In it, on a
+// pair of iron dogs, the last of a fire: two charred logs, a bed of embers,
+// a few small flames. A brass fender on the hearthstone before it.
+//
+// Drawn in centimetres about the middle of its foot (x across, y up).
 function paintHearth(ctx, L) {
   const { Q } = L;
-  const h = L.hearth;
-  const a = Q(h.x0, h.h, BACK), b = Q(h.x1, 0, BACK), s = a.s;
-  const mx = (a.x + b.x) / 2;
-  const stone = ctx.createLinearGradient(a.x, 0, b.x, 0);
-  stone.addColorStop(0, "#151517");
-  stone.addColorStop(0.5, "#26272c");
-  stone.addColorStop(1, "#121214");
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(a.x + 3 * s, a.y, b.x - a.x, b.y - a.y);
-  ctx.fillStyle = stone;
-  ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
-  // the mantelshelf, standing out over it
-  ctx.fillStyle = "#303238";
-  ctx.fillRect(a.x - 8 * s, a.y - 7 * s, b.x - a.x + 16 * s, 8 * s);
-  ctx.fillStyle = "rgba(190,204,240,0.25)";
-  ctx.fillRect(a.x - 8 * s, a.y - 7 * s, b.x - a.x + 16 * s, 1 * s);
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(a.x, a.y + 1 * s, b.x - a.x, 5 * s);
-  // its stones: a course line or two, a keystone over the arch
-  ctx.strokeStyle = "rgba(0,0,0,0.5)";
-  ctx.lineWidth = Math.max(0.8, 0.5 * s);
-  for (const fy of [0.3, 0.55, 0.8]) { ctx.beginPath(); ctx.moveTo(a.x, a.y + (b.y - a.y) * fy); ctx.lineTo(b.x, a.y + (b.y - a.y) * fy); ctx.stroke(); }
-  // the opening, arched
-  const ox = 34 * s, oh = 78 * s;
-  ctx.fillStyle = "#040405";
-  ctx.beginPath();
-  ctx.moveTo(mx - ox, b.y);
-  ctx.lineTo(mx - ox, b.y - oh + 16 * s);
-  ctx.quadraticCurveTo(mx, b.y - oh - 10 * s, mx + ox, b.y - oh + 16 * s);
-  ctx.lineTo(mx + ox, b.y);
-  ctx.closePath();
-  ctx.fill();
-  // the embers' light inside it, the basket, the coals
-  soft(ctx, mx, b.y - 14 * s, 40 * s, 34 * s, "255,110,30", 0.4, "lighter");
+  const h = L.hearth, mid = (h.x0 + h.x1) / 2;
+  const o = Q(mid, 0, BACK), s = o.s;
   const rnd = lcg(606);
-  for (let i = 0; i < 26; i++) {
-    const x = mx + (rnd() * 2 - 1) * 20 * s, y = b.y - (6 + rnd() * 12) * s, r = (1.6 + rnd() * 2.6) * s;
-    ctx.fillStyle = rnd() < 0.4 ? "#ffb24a" : rnd() < 0.6 ? "#d8481a" : "#2a0c06";
-    ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+  const grad = (x0, y0, x1, y1, stops) => {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    for (const [at, col] of stops) g.addColorStop(at, col);
+    return g;
+  };
+  const box = (x0, y0, x1, y1, fill) => { ctx.fillStyle = fill; ctx.fillRect(x0, -y1, x1 - x0, y1 - y0); };
+  // its shadow on the wall
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  ctx.fillRect(o.x - 60 * s, o.y - 118 * s, 126 * s, 118 * s);
+  ctx.save();
+  ctx.translate(o.x, o.y);
+  ctx.scale(s, s);
+  // ── the stone: the whole face of it, then what stands out
+  const stone = grad(-62, 0, 62, 0, [[0, "#1a1a1d"], [0.3, "#34353a"], [0.62, "#2a2b30"], [1, "#141416"]]);
+  box(-62, 0, 62, 108, stone);
+  for (let i = 0; i < 2600; i++) {
+    ctx.fillStyle = rnd() < 0.55 ? "rgba(0,0,0,0.2)" : "rgba(214,214,222,0.07)";
+    ctx.fillRect(-62 + rnd() * 124, -rnd() * 108, 0.3 + rnd() * 0.9, 0.3 + rnd() * 0.6);
   }
-  ctx.strokeStyle = "#08080a";
-  ctx.lineWidth = Math.max(1, 1.4 * s);
-  for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(mx + i * 7 * s, b.y - 22 * s); ctx.lineTo(mx + i * 7.6 * s, b.y - 3 * s); ctx.stroke(); }
-  ctx.beginPath(); ctx.moveTo(mx - 24 * s, b.y - 13 * s); ctx.lineTo(mx + 24 * s, b.y - 13 * s); ctx.stroke();
-  // the hearthstone before it, the fire's light lying on it
+  // the joints between its blocks
+  ctx.strokeStyle = "rgba(0,0,0,0.55)";
+  ctx.lineWidth = 0.5;
+  for (const y of [28, 56]) for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * 62, -y); ctx.lineTo(side * 44, -y); ctx.stroke(); }
+  // the pilasters: a plinth, a sunk panel up each, a cap
+  for (const side of [-1, 1]) {
+    const x0 = side < 0 ? -62 : 44, x1 = x0 + 18;
+    box(x0 - 2, 0, x1 + 2, 10, grad(x0, 0, x1, 0, [[0, "#232428"], [0.4, "#3c3d43"], [1, "#18181b"]]));
+    box(x0 - 2, 10, x1 + 2, 10.8, "rgba(214,220,236,0.16)");
+    box(x0 + 4, 16, x1 - 4, 78, "rgba(0,0,0,0.28)");
+    box(x0 + 4, 16, x0 + 4.7, 78, "rgba(0,0,0,0.4)");
+    box(x1 - 4.7, 16, x1 - 4, 78, "rgba(214,220,236,0.12)");
+    box(x0 - 1.5, 82, x1 + 1.5, 86, grad(0, -86, 0, -82, [[0, "#46474e"], [1, "#1e1e22"]]));
+  }
+  // the frieze over the opening, a raised tablet in the middle of it
+  box(-62, 86, 62, 108, grad(0, -108, 0, -86, [[0, "#303136"], [1, "#222327"]]));
+  box(-20, 90, 20, 104, grad(0, -104, 0, -90, [[0, "#3e3f46"], [1, "#2a2b30"]]));
+  box(-20, 103.3, 20, 104, "rgba(214,220,236,0.2)");
+  box(-20, 90, 20, 90.8, "rgba(0,0,0,0.5)");
+  // the mantelshelf: three steps of moulding, the top one lit
+  box(-64, 106, 64, 109, "#27282c");
+  box(-67, 109, 67, 112, "#303136");
+  box(-70, 112, 70, 117, grad(0, -117, 0, -112, [[0, "#4a4b53"], [1, "#2a2b30"]]));
+  box(-70, 116.3, 70, 117, "rgba(190,204,240,0.3)");
+  box(-64, 102.5, 64, 106, "rgba(0,0,0,0.45)");
+  // two brass candlesticks on it, their candles burnt down
+  for (const x of [-52, 52]) {
+    box(x - 4, 117, x + 4, 118.6, "#5a4418");
+    box(x - 1.2, 118.6, x + 1.2, 131, grad(x - 1.2, 0, x + 1.2, 0, [[0, "#3a2a10"], [0.5, "#a88848"], [1, "#2a1e0c"]]));
+    box(x - 2.6, 124, x + 2.6, 125.4, "#7a5c26");
+    box(x - 3, 131, x + 3, 132.4, "#7a5c26");
+    box(x - 1.3, 132.4, x + 1.3, 137, "#b8b09a");
+  }
+  // ── the firebox: a low arch, its cheeks splayed in, its back
+  const opening = () => {
+    ctx.beginPath();
+    ctx.moveTo(-38, 0);
+    ctx.lineTo(-38, -62);
+    ctx.quadraticCurveTo(0, -86, 38, -62);
+    ctx.lineTo(38, 0);
+    ctx.closePath();
+  };
+  opening();
+  ctx.fillStyle = "#050404";
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  // firebrick: sooted black above, red in the fire's light below
+  ctx.fillStyle = grad(0, -80, 0, 0, [[0, "#070605"], [0.45, "#1c0f0a"], [0.8, "#4e2010"], [1, "#8a3a14"]]);
+  ctx.fillRect(-38, -86, 76, 86);
+  ctx.strokeStyle = "rgba(4,2,1,0.7)";
+  ctx.lineWidth = 0.5;
+  for (let row = 0; row < 10; row++) {
+    const y = -2 - row * 7.6;
+    ctx.beginPath(); ctx.moveTo(-28, y); ctx.lineTo(28, y); ctx.stroke();
+    for (let x = -34 + (row % 2) * 7; x < 30; x += 14) { if (Math.abs(x) > 28) continue; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 7.6); ctx.stroke(); }
+  }
+  // the cheeks, darker, their courses running in toward the back
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = side < 0 ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.3)";
+    ctx.beginPath(); ctx.moveTo(side * 38, 0); ctx.lineTo(side * 38, -70); ctx.lineTo(side * 28, -64); ctx.lineTo(side * 28, -3); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(4,2,1,0.6)";
+    for (let row = 1; row < 9; row++) { ctx.beginPath(); ctx.moveTo(side * 38, -row * 8.2); ctx.lineTo(side * 28, -2 - row * 7.6); ctx.stroke(); }
+  }
+  ctx.fillStyle = "#0c0705";
+  ctx.beginPath(); ctx.moveTo(-38, 0); ctx.lineTo(-28, -3); ctx.lineTo(28, -3); ctx.lineTo(38, 0); ctx.closePath(); ctx.fill();
+  soft(ctx, 0, -14, 34, 26, "226,70,10", 0.34, "lighter");
+  // the dogs: two iron bars running back, an upright with a knob at the front of each
+  for (const x of [-17, 17]) {
+    ctx.fillStyle = "#0a0a0c";
+    ctx.fillRect(x - 1, -8, 2, 6);
+    ctx.fillRect(x - 1.2, -8.6, 2.4, 1.6);
+  }
+  // the logs across them, charred, splitting red
+  for (const [x, y, len, angle] of [[-3, -12.5, 44, -0.05], [6, -18, 34, 0.1]]) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.beginPath(); ctx.roundRect(-len / 2, -3.6, len, 7.2, 2.4);
+    ctx.fillStyle = grad(0, -3.6, 0, 3.6, [[0, "#35241a"], [0.5, "#120e0b"], [1, "#2a120a"]]);
+    ctx.fill();
+    for (let k = 0; k < 26; k++) {
+      const xx = -len / 2 + 1 + rnd() * (len - 2);
+      ctx.strokeStyle = rnd() < 0.55 ? "#6a280c" : "#d85c14";
+      ctx.lineWidth = 0.3;
+      ctx.beginPath(); ctx.moveTo(xx, -2.8 + rnd() * 2); ctx.lineTo(xx + 0.6 + rnd() * 2, 2.8); ctx.stroke();
+    }
+    ctx.fillStyle = "#4a3828";
+    ctx.beginPath(); ctx.ellipse(len / 2, 0, 1.6, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  // tongues of flame, low: translucent at the tip, a pale heart in each
+  const flame = (x, y, w, tall, lean, core = false) => {
+    ctx.beginPath();
+    ctx.moveTo(x - w, y);
+    ctx.bezierCurveTo(x - w * 1.4, y - tall * 0.24, x + lean - w * 0.7, y - tall * 0.41, x + lean * 0.5 - w * 0.2, y - tall * 0.69);
+    ctx.bezierCurveTo(x + lean * 0.8, y - tall * 0.79, x + lean * 0.7 - w * 0.2, y - tall * 0.92, x + lean, y - tall);
+    ctx.bezierCurveTo(x + lean * 0.45 + w * 0.6, y - tall * 0.75, x - lean * 0.4 + w * 0.2, y - tall * 0.48, x + w * 0.85, y - tall * 0.38);
+    ctx.bezierCurveTo(x + w * 1.1, y - tall * 0.19, x + w * 0.7, y - tall * 0.03, x + w, y);
+    ctx.closePath();
+    ctx.fillStyle = grad(0, y - tall, 0, y, core
+      ? [[0, "rgba(255,183,56,0)"], [0.5, "rgba(255,207,102,0.7)"], [1, "#ffe6b0"]]
+      : [[0, "rgba(202,48,5,0)"], [0.2, "rgba(233,86,11,0.38)"], [0.55, "rgba(246,147,33,0.86)"], [1, "#ffcc76"]]);
+    ctx.fill();
+  };
+  for (const [x, tall, w, lean] of [[-14, 15, 3.6, 3], [-5, 24, 4, -4], [5, 19, 3.8, 4], [13, 13, 3, -3], [-9, 11, 2.6, 2], [9, 10, 2.4, -2]]) {
+    flame(x, -15, w, tall, lean);
+    flame(x - 0.3, -15, w * 0.5, tall * 0.62, lean * 0.7, true);
+  }
+  // the embers under the logs, and the ash they lie in
+  ctx.fillStyle = "#16100c";
+  ctx.beginPath(); ctx.ellipse(0, -4, 27, 3.4, 0, 0, Math.PI * 2); ctx.fill();
+  for (let i = 0; i < 70; i++) {
+    const k = rnd();
+    ctx.fillStyle = k < 0.3 ? "#ffc468" : k < 0.75 ? "#c0440e" : "#3a1408";
+    ctx.beginPath(); ctx.ellipse((rnd() * 2 - 1) * 24, -4 - rnd() * 5, 0.7 + rnd() * 1.4, 0.4 + rnd() * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  // the arch's edge, and the soot gone up the stone over it
+  opening();
+  ctx.strokeStyle = "rgba(0,0,0,0.7)";
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(255,150,70,0.16)";
+  ctx.lineWidth = 0.6;
+  ctx.beginPath(); ctx.moveTo(-38.6, -2); ctx.lineTo(-38.6, -62); ctx.quadraticCurveTo(0, -86.6, 38.6, -62); ctx.lineTo(38.6, -2); ctx.stroke();
+  soft(ctx, 0, -84, 34, 14, "0,0,0", 0.55);
+  ctx.restore();
+  // ── the hearthstone before it, the fire's light lying on it; the fender
   fillPoly(ctx, [Q(h.x0 - 6, 0.6, BACK), Q(h.x1 + 6, 0.6, BACK), Q(h.x1 + 12, 0.6, BACK - 42), Q(h.x0 - 12, 0.6, BACK - 42)], "#1c1c20");
-  const st = Q((h.x0 + h.x1) / 2, 0.6, BACK - 18);
-  soft(ctx, st.x, st.y, 54 * st.s, 12 * st.s, "255,120,40", 0.3, "lighter");
+  const st = Q(mid, 0.6, BACK - 18);
+  soft(ctx, st.x, st.y, 58 * st.s, 13 * st.s, "255,120,40", 0.34, "lighter");
+  const f0 = Q(h.x0 + 4, 0, BACK - 34), f1 = Q(h.x1 - 4, 0, BACK - 34), fs = f0.s;
+  ctx.fillStyle = "#3a2a10";
+  ctx.fillRect(f0.x, f0.y - 9 * fs, f1.x - f0.x, 9 * fs);
+  ctx.fillStyle = "#050404";
+  for (let x = f0.x + 4 * fs; x < f1.x - 3 * fs; x += 5 * fs) ctx.fillRect(x, f0.y - 7 * fs, 2.6 * fs, 5 * fs);
+  ctx.fillStyle = "#b08c44";
+  ctx.fillRect(f0.x - 1.5 * fs, f0.y - 10.4 * fs, f1.x - f0.x + 3 * fs, 1.8 * fs);
+  ctx.fillStyle = "rgba(255,170,90,0.3)";
+  ctx.fillRect(f0.x, f0.y - 1.4 * fs, f1.x - f0.x, 1.4 * fs);
+  for (const p of [f0, f1]) { ctx.fillStyle = "#8a6c34"; ctx.beginPath(); ctx.arc(p.x, p.y - 11.6 * fs, 2.4 * fs, 0, Math.PI * 2); ctx.fill(); }
 }
 
 // the rug in the middle of the room, worn

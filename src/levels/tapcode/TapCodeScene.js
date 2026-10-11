@@ -1,17 +1,17 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
-import { layoutCell, paintCell, releaseCellArt } from "./cell.js";
+import { layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "TAPCODE"  ·  code: ESCAPE   ·  count the knocks
 //
-// A tower cell at night, painted like the game's other storybook rooms: cold
-// moonlight through a small window barred five squares by five, laying the
-// grille across the floor; a candle on a stool, warm on a great smooth stone
-// where a prisoner cut his message in the old prisoners' tap code — a 5×5
-// grid of letters (K borrows C's square), each letter two numbers: the row
-// in marks, then the column in marks.
+// The cellar under the house, down an iron ladder: brick, joists overhead,
+// no window. A little light falls through the hatch; the rest is a candle
+// on a stool, warm on a smooth stone let into the wall where somebody cut
+// a message in the old prisoners' tap code — a 5×5 grid of letters (K
+// borrows C's square), each letter two numbers: the row in marks, then the
+// column in marks.
 //
 //        1 2 3 4 5
 //     1  A B C D E
@@ -23,10 +23,11 @@ import { layoutCell, paintCell, releaseCellArt } from "./cell.js";
 //   (1,5)(4,3)(1,3)(1,1)(3,5)(1,5)   →   E S C A P E
 //
 // Six lines, two clusters of marks each. Nothing names the cipher; the
-// longest cluster is five, and the window is a grid of five by five that
-// someone began numbering — a 1 over the first column, a 1 beside the first
-// row — and stopped. A straw cot, an iron-bound door, a tin cup, and the
-// last prisoner's bones, still chained to the wall under the window.
+// longest cluster is five, and the bottle rack against the wall is a grid of
+// five by five that someone began numbering in chalk — a 1 over the first
+// column, a 1 beside the first row — and stopped. A water pipe runs along
+// under the joists and weeps at one joint into a puddle; barrels, a crate,
+// and the bones of whoever cut the marks, still chained to the wall.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class TapCodeScene extends BasePuzzleScene {
@@ -49,9 +50,8 @@ export default class TapCodeScene extends BasePuzzleScene {
   }
 
   _build(W, H) {
-    const L = layoutCell(W, H);
-    const art = paintCell(this, L);
-    const k = art.keys;
+    const L = layoutCellar(W, H);
+    const k = paintCellar(this, L).keys;
     this._L = L;
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
 
@@ -71,48 +71,60 @@ export default class TapCodeScene extends BasePuzzleScene {
       .setAlpha(0.55)
       .setDepth(-6);
 
-    this._makeStars(L, k.glow);
+    this._makeDrip(L, k.glow);
     this._makeMotes(L, k.glow);
     this._makeFog(L, k.fog);
     this.levelText = drawLevelLabel(this, W, H);
   }
 
-  // a few stars twinkling in the window, in the clear of the bars
-  _makeStars(L, key) {
-    const { x0, y0, w, h } = L.win;
-    const rnd = this._rng(4111);
-    for (let i = 0; i < 7; i++) {
-      const cx = Math.floor(rnd() * 5);
-      const cy = Math.floor(rnd() * 3);
-      if (cx >= 3 && cy <= 1) continue; // the moon's corner
-      const star = this.add
-        .image(x0 + (w * (cx + 0.3 + rnd() * 0.4)) / 5, y0 + (h * (cy + 0.3 + rnd() * 0.4)) / 5, key)
-        .setDisplaySize(5 * L.u, 5 * L.u)
-        .setTint(0xe8eeff)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(0.6)
-        .setDepth(-9);
-      this.ambientTween({
-        targets: star,
-        alpha: 0.1,
-        duration: 1400 + rnd() * 1800,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
+  // The weeping joint: a bead of water gathers under it, lets go, falls the
+  // height of the cellar and rings the puddle — over and over.
+  _makeDrip(L, key) {
+    const d = L.drip, u = L.u;
+    const bead = this.add.image(d.x, d.y0, key).setTint(0xcfe0ff).setBlendMode(Phaser.BlendModes.ADD).setDepth(-5).setAlpha(0);
+    this.ambientObject(bead);
+    const fall = () => {
+      if (!this.ambientMotion || this.reducedMotion) return;
+      bead.setPosition(d.x, d.y0).setDisplaySize(2 * u, 2 * u).setAlpha(0.9);
+      this.tweens.add({
+        targets: bead,
+        displayWidth: 7 * u,
+        displayHeight: 9 * u,
+        duration: 900,
+        ease: "Sine.easeIn",
+        onComplete: () => {
+          this.tweens.add({
+            targets: bead,
+            y: d.y1,
+            displayWidth: 4 * u,
+            displayHeight: 16 * u,
+            duration: 520,
+            ease: "Quad.easeIn",
+            onComplete: () => {
+              bead.setAlpha(0);
+              for (const wait of [0, 170]) {
+                const ring = this.add.ellipse(d.x, d.y1 + 3 * u, 12 * u, 3 * u).setStrokeStyle(Math.max(1, 1.2 * u), 0xc8d8f0, 0.55).setDepth(-5).setAlpha(0);
+                this.tweens.add({ targets: ring, scaleX: 7, scaleY: 5, alpha: { from: 0.8, to: 0 }, delay: wait, duration: 1100, ease: "Cubic.easeOut", onComplete: () => ring.destroy() });
+              }
+            },
+          });
+        },
       });
-    }
+    };
+    this.time.addEvent({ delay: 2300, loop: true, callback: fall });
+    this.time.delayedCall(600, fall);
   }
 
-  // banks of fog drifting slowly across the cell, low along the floor
+  // the damp air drifting slowly, low along the floor
   _makeFog(L, key) {
     const { W, H, floorY } = L;
-    for (let i = 0; i < 4; i++) {
-      const y = floorY + (H - floorY) * (i * 0.28 - 0.15);
+    for (let i = 0; i < 3; i++) {
+      const y = floorY + (H - floorY) * (i * 0.3 - 0.05);
       const fog = this.add
         .image(W * (i % 2 ? 0.25 : 0.7), y, key)
-        .setDisplaySize(W * (0.75 + i * 0.12), H * (0.16 + i * 0.03))
-        .setTint(0x9aa6b8)
-        .setAlpha(0.22 + i * 0.05)
+        .setDisplaySize(W * (0.75 + i * 0.12), H * (0.14 + i * 0.03))
+        .setTint(0x8f9aa2)
+        .setAlpha(0.14 + i * 0.04)
         .setDepth(-4);
       this.ambientTween({
         targets: fog,
@@ -125,13 +137,13 @@ export default class TapCodeScene extends BasePuzzleScene {
     }
   }
 
-  // dust turning in the moon's shaft
+  // dust turning in the light that falls through the hatch
   _makeMotes(L, key) {
-    const { x0, x1, y1, w } = L.win;
-    for (let i = 0; i < 14; i++) {
+    const x0 = L.ladder.x;
+    for (let i = 0; i < 12; i++) {
       const t = Math.random();
-      const x = x0 + (x1 - x0) * Math.random() + t * w * 1.1;
-      const y = y1 + t * (L.floorY - y1);
+      const x = x0 + (Math.random() - 0.5) * (120 + t * 130) * L.u;
+      const y = L.ceilY + t * (L.floorY - L.ceilY);
       const m = this.add
         .image(x, y, key)
         .setDisplaySize(3.5 * L.u, 3.5 * L.u)
@@ -142,9 +154,9 @@ export default class TapCodeScene extends BasePuzzleScene {
       this.ambientObject(m);
       this.ambientTween({
         targets: m,
-        x: x + (Math.random() - 0.3) * 30 * L.u,
-        y: y + (Math.random() - 0.5) * 24 * L.u,
-        alpha: { from: 0, to: 0.35 + Math.random() * 0.35 },
+        x: x + (Math.random() - 0.5) * 30 * L.u,
+        y: y + (Math.random() - 0.3) * 30 * L.u,
+        alpha: { from: 0, to: 0.25 + Math.random() * 0.3 },
         duration: 4000 + Math.random() * 4000,
         delay: Math.random() * 3000,
         yoyo: true,
@@ -169,14 +181,14 @@ export default class TapCodeScene extends BasePuzzleScene {
     this.tweens.killAll();
     this.time.removeAllEvents();
     this.children.removeAll(true);
-    releaseCellArt(this.textures);
+    releaseCellarArt(this.textures);
     this._L = null;
   }
 
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
-    releaseCellArt(this.textures);
+    releaseCellarArt(this.textures);
     this._L = null;
   }
 }

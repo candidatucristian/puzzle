@@ -218,18 +218,18 @@ const metadata = [
   {
     "id": "station",
     "key": "Station",
-    "name": "The Quiet Station",
-    "summary": "The departures board is still lit in a nearly empty station.",
+    "name": "The Ticket Drawer",
+    "summary": "A drawer of old train tickets, each stamped with what became of its train.",
     "code": "EXIT",
     "altCode": null,
     "hint": {
-      "text": "THE LAST STATION.\nThe departures board — only the trains still boarding.",
+      "text": "A DRAWER OF OLD TICKETS.\nOnly the trains that were still boarding.",
       "sound": false,
       "tool": false
     },
-    "description": "The departures board lists 8 rows; only 4 are marked BOARDING — GENETA 22:41, MOXCOW 22:07, PERIS 21:03, LINDON 22:24 (the rest are cancelled/delayed filler). Each boarding destination has one visibly misspelled letter that stutters into place: P(E)RIS, MO(X)COW, L(I)NDON, GENE(T)A. Sorted by departure time — 21:03 PERIS→E, 22:07 MOXCOW→X, 22:24 LINDON→I, 22:41 GENETA→T — the anomalous letters read E-X-I-T.",
+    "description": "The drawer holds 8 card tickets in a row; only 4 are stamped BOARDING — GENETA 22:41, MOXCOW 22:07, PERIS 21:03, LINDON 22:24 (the rest are stamped cancelled/delayed/no service, and are filler). Each boarding destination has one misspelled letter, printed a little low and askew: P(E)RIS, MO(X)COW, L(I)NDON, GENE(T)A. Sorted by departure time — 21:03 PERIS→E, 22:07 MOXCOW→X, 22:24 LINDON→I, 22:41 GENETA→T — the wrong letters read E-X-I-T.",
     "references": [
-      "STATION_ROWS — time, dest, remark, wrongIdx fields",
+      "STATION_ROWS (station/rows.js) — time, dest, remark, wrongIdx fields",
       "wrongIdx — the anomalous letter index in each destination",
       "only remark === \"BOARDING\" rows matter; sort key is time"
     ]
@@ -237,27 +237,27 @@ const metadata = [
   {
     "id": "pi",
     "key": "Pi",
-    "name": "The Sleeping City",
-    "summary": "Across the water, a few windows remain lit in the sleeping skyline.",
+    "name": "The Lit Tree",
+    "summary": "Nobody took the Christmas tree down, and some of its lamps are still alight.",
     "code": "PI",
     "altCode": "3.14",
     "hint": {
-      "text": "ONE BUILDING NEVER SLEEPS.\nIts lit windows are worth counting.",
+      "text": "THE TREE IS STILL LIT.\nIts lamps are worth counting, tier by tier.",
       "sound": false,
       "tool": false
     },
-    "description": "In a sleeping skyline, one building has lit windows on every floor. The count of lit windows per floor, top to bottom, is 3, 1, 4, 1, 5, 9, 2, 6, 5 — the digits of π. Window position within each floor is randomized and irrelevant; only the count per row matters (clicking a lit window relocates it within its own floor, preserving the count).",
+    "description": "A Christmas tree stands in the drawing room with a string of lamps along each of its nine tiers. The count of lamps alight per tier, top to bottom, is 3, 1, 4, 1, 5, 9, 2, 6, 5 — the digits of π. Which holders are alight within a tier is randomized and irrelevant; only the count per tier matters (clicking a lit lamp puts it out and lights the nearest dark one on the same string, preserving the count). Hovering the moon in the window draws a line straight across it.",
     "references": [
-      "PI_DIGITS = [3,1,4,1,5,9,2,6,5] — lit-window count per floor, top to bottom",
-      "_drawHeroBuilding() — scatters PI_DIGITS[f] lit windows per floor",
-      "_onLitWindowClick() — relocates but never changes the per-floor count"
+      "PI_DIGITS = [3,1,4,1,5,9,2,6,5] (pi/TreeScene.js) — lit-lamp count per tier, top to bottom",
+      "_makeLamps() — lights PI_DIGITS[tier] of each tier's holders",
+      "_move() — relocates a light but never changes the per-tier count"
     ]
   },
   {
     "id": "crossing",
     "key": "Crossing",
-    "name": "The Cat on the Crossing",
-    "summary": "A quiet street, a wandering cat and a worn pedestrian crossing.",
+    "name": "The Painted Crossing",
+    "summary": "A painting of a quiet street at night, and its worn pedestrian crossing.",
     "code": "GO",
     "altCode": null,
     "hint": {
@@ -265,7 +265,7 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "The painted pedestrian crossing is a Code 39 barcode for GO. Read the wide and narrow stripe pattern from the near curb to the far curb to decode the two letters. A cat walks near the crossing, and the shop advertises cat food.",
+    "description": "The painted pedestrian crossing is a Code 39 barcode for GO. Read the wide and narrow stripe pattern from the near curb to the far curb to decode the two letters. In the house the street hangs as a painting: nothing in it moves.",
     "references": [
       "CR_WORD = \"GO\" — the encoded string",
       "CR_CODE39 — letter → wide/narrow bar pattern lookup",
@@ -294,7 +294,7 @@ const metadata = [
     "id": "tapcode",
     "key": "TapCode",
     "name": "Marks in Stone",
-    "summary": "Someone has carved small marks into an old stone slab.",
+    "summary": "Down in the cellar, someone has cut small marks into a smooth stone in the wall.",
     "code": "ESCAPE",
     "altCode": null,
     "hint": {
@@ -302,11 +302,11 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "A stone slab carries 6 lines of tally marks, two clusters per line, following the classic 5×5 prisoner's tap code (K folded into C's square). Each letter of ESCAPE becomes a (row, column) pair rendered as that many carved marks: E=(1,5), S=(4,3), C=(1,3), A=(1,1), P=(3,5), E=(1,5). Two small scratched \"1\" labels are the only nudge toward counting rows-then-columns from 1.",
+    "description": "In the cellar, a smooth stone let into the brick carries 6 lines of tally marks, two clusters per line, following the classic 5×5 prisoner's tap code (K folded into C's square). Each letter of ESCAPE becomes a (row, column) pair rendered as that many carved marks: E=(1,5), S=(4,3), C=(1,3), A=(1,1), P=(3,5), E=(1,5). The empty bottle rack is five holes by five, and two small chalked \"1\" labels — over its first column, beside its first row — are the only nudge toward counting rows-then-columns from 1.",
     "references": [
       "TAP_WORD = \"ESCAPE\", TAP_GRID = 5×5 tap-code grid (K→C)",
       "tapPair() — converts a letter to its (row, col) grid position",
-      "_drawSlab() — carves row marks, a gap, then column marks per letter"
+      "paintSlab() (tapcode/cellar.js) — carves row marks, a gap, then column marks per letter"
     ]
   },
   {
@@ -321,7 +321,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Six numbered rally cars come round a floodlit gravel oval at night and cross the finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the floodlights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level.",
+    "description": "Six numbered rally cars come round a floodlit gravel oval at night and cross the finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the floodlights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level. In the house the stage is watched on the drawing room's television.",
     "references": [
       "RALLY_NUMBERS = [19, 9, 12, 22, 5, 18] (puzzle.js) — the door numbers, in order of crossing",
       "RALLY_CROSS_MS — original crossing times [0, 3000, 3420, 6420, 7170, 7590] and RALLY_CAR_MS are divided by RALLY_PACE (0.77), running at 77% of base pace while preserving their spacing; tight pairs cross about 545 ms apart",

@@ -36,11 +36,11 @@ export const PLACES = Object.freeze([
       "Three things here still keep a word each, and each has a light of its own. Find the word, and the light can go out.",
       "When all three are dark, the room will give up what it has been keeping.",
     ] },
-  { key: "Room4", name: "Room 4", back: "Hall", holds: ["sequence"], needsKey: true, chest: "Room5",
+  { key: "Room4", name: "Room 4", back: "Hall", holds: ["sequence", "crossing", "station"], needsKey: true, chest: "Room5",
     story: [
-      "The counting room: somebody kept the house's figures here, and pinned the last of them to the wall.",
-      "What is pinned up still keeps a word, under a light of its own. Find the word, and the light can go out.",
-      "When the room is dark, it will give up what it has been keeping.",
+      "The counting room: somebody kept the house's figures here — pinned to the wall, hung beside them, shut away in a drawer.",
+      "Three things here still keep a word each, and each has a light of its own. Find the word, and the light can go out.",
+      "When all three are dark, the room will give up what it has been keeping.",
     ] },
   // Up the stairs from the hall: the upper hall. Its five doors — VII to XI —
   // have nothing behind them yet. Its puzzle is not gone into, as a room's
@@ -59,10 +59,12 @@ export const PLACES = Object.freeze([
       "The top of the house: a round room under the dome, its doors set about the wall. Nobody has been up here in years.",
       "Somebody carried a telescope all this way and set it at the window. It is still pointed at something.",
     ] },
-  // The last two rooms are built but hold nothing yet. Until something is put
-  // in Room 5, there is nothing to solve there and its chest opens at once.
-  { key: "Room5", name: "Room 5", back: "Hall", holds: [], needsKey: true, chest: "Room6",
-    story: ["The drawing room. The fire has burned low, and whatever was kept here has not been found yet."] },
+  { key: "Room5", name: "Room 5", back: "Hall", holds: ["tapcode", "pi", "rally"], needsKey: true, chest: "Room6",
+    story: [
+      "The drawing room. The fire has burned low, and somebody has left the trap in the floor standing open.",
+      "An iron ladder goes down into the cellar, and a candle has been left at the head of it. Whatever is down there still keeps a word.",
+      "Nobody took the tree down, either, and nobody switched the television off. Three things here still keep a word each; when all three are dark, the room will give up what it has been keeping.",
+    ] },
   { key: "Room6", name: "Room 6", back: "Hall", holds: [], needsKey: true,
     story: ["The last room along the hall. It has been cleared: there is nothing here yet."] },
 ]);

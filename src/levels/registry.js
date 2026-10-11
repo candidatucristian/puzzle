@@ -9,8 +9,8 @@ import TVScene from "./tv/TVScene.js";
 import ModemScene from "./modem/ModemScene.js";
 import TelescopeScene from "./telescope/TelescopeScene.js";
 import WiresScene from "./wires/WiresScene.js";
-import StationScene from "./station/StationScene.js";
-import PiScene from "./pi/PiScene.js";
+import TicketsScene from "./station/TicketsScene.js";
+import TreeScene from "./pi/TreeScene.js";
 import CrossingScene from "./crossing/CrossingScene.js";
 import FlagsScene from "./flags/FlagsScene.js";
 import TapCodeScene from "./tapcode/TapCodeScene.js";
@@ -45,8 +45,8 @@ const scenes = {
   Modem: ModemScene,
   Telescope: TelescopeScene,
   Wires: WiresScene,
-  Station: StationScene,
-  Pi: PiScene,
+  Station: TicketsScene,
+  Pi: TreeScene,
   Crossing: CrossingScene,
   Flags: FlagsScene,
   TapCode: TapCodeScene,

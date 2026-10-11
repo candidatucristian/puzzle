@@ -52,7 +52,7 @@ export default class TopScene extends BasePuzzleScene {
         .setDisplaySize(120 * s.s, 120 * s.s)
         .setTint(0xffc078)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(0.3)
+        .setAlpha(0.2)
         .setDepth(-8),
     );
 
@@ -132,7 +132,7 @@ export default class TopScene extends BasePuzzleScene {
   update(time) {
     if (!this._L || !this.ambientMotion || this.reducedMotion) return;
     const t = time / 1000;
-    this._candles.forEach((g, i) => g.setAlpha(0.26 + 0.05 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.04));
+    this._candles.forEach((g, i) => g.setAlpha(0.17 + 0.04 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.03));
   }
 
   _teardown() {

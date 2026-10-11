@@ -488,14 +488,17 @@ function paintEnd(ctx, L) {
 /** A tall arched window with the night in it — sky, moon, hills, its deep
  *  reveal and its sill — as the house has them. `w` is where it is on the
  *  screen: its middle, half its width, its head and its sill; `eye` is the
- *  point the room is seen from, which its reveals run back toward. */
-export function paintNightWindow(ctx, W, H, w, eye) {
+ *  point the room is seen from, which its reveals run back toward. `shape`
+ *  is its build where that is not the house's tall one: how high its arch
+ *  is for its half-width, how far down it the moon and the horizon are, and
+ *  how big the moon. */
+export function paintNightWindow(ctx, W, H, w, eye, { ry = 0.9, moonY = 0.26, moonR = 0.13, horizon = 0.86 } = {}) {
   const geo = archGeo({
     W, H, S: w.rx * 1.25, V: w.rx * 1.25, Wv: w.rx / 0.455,
-    archCX: w.cx, archCY: w.top + w.rx * 0.9, archRX: w.rx, archRY: w.rx * 0.9, sillY: w.sill,
+    archCX: w.cx, archCY: w.top + w.rx * ry, archRX: w.rx, archRY: w.rx * ry, sillY: w.sill,
     eye,
-    moon: { x: w.cx + w.rx * 0.28, y: w.top + (w.sill - w.top) * 0.26, r: w.rx * 0.13 },
-    horizonY: w.top + (w.sill - w.top) * 0.86,
+    moon: { x: w.cx + w.rx * 0.28, y: w.top + (w.sill - w.top) * moonY, r: w.rx * moonR },
+    horizonY: w.top + (w.sill - w.top) * horizon,
     K: 0.94,
   });
   // painted on its own, so the hall's dark can lie on its frame without
