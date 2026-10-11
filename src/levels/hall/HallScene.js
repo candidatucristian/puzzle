@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { HOUSE_GO, zoomInto, zoomOutFrom } from "../../shared/house.js";
+import { HOUSE_GO, HOUSE_SOLVED, zoomInto, zoomOutFrom } from "../../shared/house.js";
+import { buildMorseSteps } from "../lightswitch/puzzle.js";
 import { chime } from "../../shared/paint.js";
 import { layoutHall, paintHall, releaseHallArt } from "./hall.js";
 
@@ -19,8 +20,9 @@ import { layoutHall, paintHall, releaseHallArt } from "./hall.js";
 // stairs glint in their turn — though there is nowhere up them to go yet.
 //
 // The same scene is the upper hall's too (UpperHallScene, below): the floor
-// above, gone to seed — its doors locked, one sconce alight, and a bare bulb
-// on a flex that is itself a puzzle to be opened.
+// above, gone to seed — its doors locked, one sconce alight — and there the
+// hall is itself a puzzle's stage: a switch on the wall, a bare bulb on a
+// flex, and the answer written in the box under the picture.
 //
 // The hall is painted (hall.js). Live over it: the sconces' candles, the
 // light under the doors, dust in the moonbeams, the glints.
@@ -28,15 +30,13 @@ import { layoutHall, paintHall, releaseHallArt } from "./hall.js";
 
 // the gate across the stairs is remembered open under this name, with the keys
 const GATES = "HallGates";
-// the puzzle the upper hall's bulb burns for
-const BULB_FOR = "lightswitch";
 
 export default class HallScene extends BasePuzzleScene {
-  /** `key` is the hall's place in the house; `upper` whether it is the
-   *  floor above's (see hall.js). */
-  constructor(key = "Hall", upper = false) {
+  /** `key` is the hall's place in the house; `floor` which hall it is —
+   *  "ground" or "upper" (see hall.js). */
+  constructor(key = "Hall", floor = "ground") {
     super({ key });
-    this.upper = upper;
+    this.upper = floor === "upper";
   }
 
   create(data) {
@@ -49,21 +49,24 @@ export default class HallScene extends BasePuzzleScene {
     if (door) zoomOutFrom(this, door.box);
     // come back down from the floor above: draw back from the stairs
     else if (data?.from?.place === "Upper" && this._L.gate) zoomOutFrom(this, this._L.gate);
-    // come away from the light: draw back from it
-    else if (this._L.thing && data?.from?.level === this._L.thing.level) zoomOutFrom(this, this._L.thing.box);
+    // come back down from the top floor: draw back from the stairs at the side
+    else if (data?.from?.place === "Top" && this._L.up) zoomOutFrom(this, this._L.up);
+
     this._onResize = ({ width, height }) => {
       this._teardown();
       this._build(width, height);
     };
     this.listenToResize(this._onResize);
+    // the puzzle played here has been answered: the hall is put right for it
+    this._onSolved = () => { if (this.upper) { this._teardown(); this._build(this.cameras.main.width, this.cameras.main.height); } };
+    this.game.events.on(HOUSE_SOLVED, this._onSolved);
     this.cameras.main.fadeIn(800, 0, 0, 0);
   }
 
   _build(W, H) {
-    const levels = this.services.levels;
-    const bulbOn = !levels.isCompleted(levels.indexOf(BULB_FOR));
-    const L = (this._L = layoutHall(W, H, { upper: this.upper, bulbOn }));
-    const art = paintHall(this, L);
+    // the bulb is painted dark: it is lit from here, when the switch is pressed
+    const L = (this._L = layoutHall(W, H, { upper: this.upper, bulbOn: false }));
+    const art = (this._art = paintHall(this, L));
     const k = art.keys;
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
 
@@ -114,7 +117,8 @@ export default class HallScene extends BasePuzzleScene {
     });
 
     if (L.gate) this._gate(L, k);
-    if (L.thing) this._light(L, k);
+    if (L.thing && this.upper) this._light(L, k);
+    if (L.up) this._stairsUp(L);
 
     // dust turning in the moonlight down the middle of the hall
     for (let i = 0; i < 16; i++) {
@@ -198,23 +202,121 @@ export default class HallScene extends BasePuzzleScene {
     });
   }
 
-  // The light of the upper hall: the bulb on its flex. Until its puzzle is
-  // solved it burns, badly — dipping, catching, going out for a moment — and
-  // glints, and a click walks up to it.
+  // The stairs at the side of the upper hall: they glint, and a click goes up them.
+  _stairsUp(L) {
+    const steps = this.add
+      .zone(L.up.x, L.up.y, L.up.width, L.up.height)
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true })
+      .setData("interactionLabel", "Go up the stairs")
+      .setDepth(5);
+    steps.on("pointerdown", () => this._go(L.up, { place: "Top" }));
+    this._sparkles.push(attachMovableSparkles(this, steps, { padding: 2, bounds: () => L.up }));
+  }
+
+  // The upper hall's puzzle is played in the hall itself, exactly as it is in
+  // its own room: each press of the switch makes the bulb flash one letter of
+  // the answer in Morse — a short flash a dot, a long one a dash — the next
+  // press the next letter, round and round; after each letter the wiring
+  // shorts — sparks fly from the switch, it springs back off, the bulb
+  // stutters and is dark. The answer is written in the box below.
+  // Solved, the switch is dead and stops glinting.
   _light(L, k) {
-    const b = L.bulb, thing = L.thing;
-    this._bulb = null;
-    if (!L.bulbOn) return;
-    this._bulb = this.add.image(b.x, b.y, k.glow).setDisplaySize(b.r * 16, b.r * 16).setTint(0xffc078).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setDepth(-8);
-    this._dark = this.add.image(b.x, b.y, k.glow).setDisplaySize(b.r * 3, b.r * 3).setTint(0x000000).setAlpha(0).setDepth(-7.5);
+    const levels = this.services.levels, b = L.bulb, thing = L.thing, s = L.switch;
+    const index = levels.indexOf(thing.level);
+    this._bulb = [
+      this.add.image(b.x, b.y, k.glow).setDisplaySize(b.r * 18, b.r * 18).setTint(0xffc078).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-8),
+      this.add.image(b.x, b.y, k.glow).setDisplaySize(b.r * 3.2, b.r * 3.2).setTint(0xfff2cc).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-7.5),
+    ];
+    // the rocker pressed on, laid over the painted one while the switch is on;
+    // and its lamp — green while it waits, dark red once pressed, bright red
+    // with each flash of the bulb
+    this._rocker = this.add.image(s.x, s.y, k.rocker).setDisplaySize(s.rocker.w * s.slant, s.rocker.h).setVisible(false).setDepth(-9);
+    this._led = this.add.image(s.led.x, s.led.y, k.glow).setDisplaySize(s.led.r * 5 * s.slant, s.led.r * 5).setBlendMode(Phaser.BlendModes.ADD).setDepth(-8.5);
+    this._lamp("idle");
+    this._busy = false;
+    this._letter = 0;
+    if (levels.isCompleted(index)) return;
+    this._answer = levels.definitions[index].code;
+    this._lamp("idle");
     const zone = this.add
       .zone(thing.box.x, thing.box.y, thing.box.width, thing.box.height)
       .setOrigin(0, 0)
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", thing.label)
       .setDepth(5);
-    zone.on("pointerdown", () => this._go(thing.box, { level: thing.level }));
-    this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box }));
+    zone.on("pointerdown", () => this._press());
+    this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box, enabled: () => !this._busy }));
+  }
+
+  _lit(on, level = 1) {
+    this._bulb[0].setAlpha(on ? 0.55 * level : 0);
+    this._bulb[1].setAlpha(on ? level : 0);
+    if (this._busy) this._lamp(on ? "flash" : "armed");
+  }
+
+  // the switch's little lamp
+  _lamp(state) {
+    const look = { idle: [0x22bb44, 0.7], armed: [0x8a1c1c, 0.5], flash: [0xff2a2a, 1], dead: [0x22bb44, 0] }[state];
+    this._led.setTint(look[0]).setAlpha(this._answer || state !== "idle" ? look[1] : 0);
+  }
+
+  _press() {
+    if (this._busy || !this._answer) return;
+    this._busy = true;
+    if (this.cache.audio.exists("switchsound")) this.sound.play("switchsound", { volume: 0.6 });
+    this._rocker.setVisible(true);
+    this._lamp("armed");
+    const steps = buildMorseSteps(this._answer.charAt(this._letter));
+    const next = () => {
+      const step = steps.shift();
+      if (!step) { this._short(); return; }
+      this._lit(step.on);
+      this.time.delayedCall(step.dur, next);
+    };
+    this.time.delayedCall(520, next);
+  }
+
+  // The wiring shorts: a crack and a shower of sparks from the switch, which
+  // springs back off, the bulb stuttering — and dark till the next press.
+  _short() {
+    const L = this._L, jaws = L.switch, u = L.u; // the sparks come out of the switch itself
+    this._lit(false);
+    this.time.delayedCall(20, () => this._lit(true, 0.6));
+    this.time.delayedCall(40, () => this._lit(false));
+    this.time.delayedCall(54, () => {
+      if (this.cache.audio.exists("sparkle")) this.sound.play("sparkle", { volume: 0.5 });
+      this._letter = (this._letter + 1) % this._answer.length;
+      this._rocker.setVisible(false);
+      // the flash of the arc, lighting the wall for an instant
+      const k = this._art.keys;
+      const flash = this.add.image(jaws.x, jaws.y, k.glow).setDisplaySize(170 * u, 170 * u).setTint(0xcfe4ff).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.95).setDepth(6);
+      this.tweens.add({ targets: flash, alpha: 0, duration: 260, ease: "Cubic.easeOut", onComplete: () => flash.destroy() });
+      if (this.reducedMotion) return;
+      // the sparks: thrown out toward the hall, falling, going out; two or three bursts
+      for (const [wait, n] of [[0, 16], [90, 9], [210, 6]]) {
+        this.time.delayedCall(wait, () => {
+          for (let i = 0; i < n; i++) {
+            const spark = this.add.image(jaws.x, jaws.y, k.glow).setTint(i % 3 ? 0xffd27a : 0xffffff).setBlendMode(Phaser.BlendModes.ADD).setDepth(7);
+            const size = (5 + Math.random() * 7) * u;
+            spark.setDisplaySize(size, size);
+            const a = Math.PI * (0.75 + Math.random() * 0.9), reach = (30 + Math.random() * 90) * u;
+            this.tweens.add({
+              targets: spark,
+              x: jaws.x + Math.cos(a) * reach,
+              y: { value: jaws.y - Math.sin(a) * reach * 0.6 + (60 + Math.random() * 90) * u, ease: "Quad.easeIn" },
+              alpha: 0,
+              displayWidth: size * 0.3,
+              displayHeight: size * 0.3,
+              duration: 320 + Math.random() * 420,
+              ease: "Cubic.easeOut",
+              onComplete: () => spark.destroy(),
+            });
+          }
+        });
+      }
+    });
+    this.time.delayedCall(700, () => { this._busy = false; this._lamp("idle"); });
   }
 
   // walk up to what was clicked, and ask to be taken through it
@@ -227,14 +329,6 @@ export default class HallScene extends BasePuzzleScene {
     if (!this._L || !this.ambientMotion || this.reducedMotion) return;
     const t = time / 1000;
     this._candles.forEach((g, i) => g.setAlpha(0.26 + 0.05 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.04));
-    if (this._bulb) {
-      // a bad connection: mostly on, with dips and short blackouts, to no rhythm
-      const k = (t * 0.9) % 7;
-      const out = (k > 2.1 && k < 2.24) || (k > 2.4 && k < 2.48) || (k > 5.3 && k < 5.75);
-      const level = out ? 0 : 0.3 + 0.05 * Math.sin(t * 31) + (Math.sin(t * 2.3) > 0.93 ? -0.16 : 0);
-      this._bulb.setAlpha(Math.max(0, level));
-      this._dark.setAlpha(out ? 0.85 : 0);
-    }
   }
 
   _teardown() {
@@ -248,6 +342,7 @@ export default class HallScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    this.game.events.off(HOUSE_SOLVED, this._onSolved);
     this._onResize = null;
     this._sparkles?.forEach((off) => off());
     this._sparkles = [];
@@ -261,6 +356,12 @@ export default class HallScene extends BasePuzzleScene {
 /** The hall of the floor above. */
 export class UpperHallScene extends HallScene {
   constructor() {
-    super("Upper", true);
+    super("Upper", "upper");
+  }
+
+  preload() {
+    // the switch's click and the short's crackle, the puzzle's own
+    this.load.audio("switchsound", "assets/sounds/Lightswitch/switchsound.mp3");
+    this.load.audio("sparkle", "assets/sounds/Lightswitch/sparkle.mp3");
   }
 }

@@ -14,7 +14,7 @@ import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
 import { createMoonCanvas } from '../shared/moon.js';
 import { mountStartFilm } from './startFilm.js';
 import { mountStartManor } from './startManor.js';
-import { HOUSE_GO, WALK_MS } from '../shared/house.js';
+import { HOUSE_GO, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -70,7 +70,11 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   scope.add(levels.subscribe(() => answerFeedback()));
   // Standing in the house there is no puzzle, so nothing to answer: the
   // console waits until the player has opened one.
-  scope.add(levels.subscribe(() => document.body.classList.toggle('in-house', Boolean(levels.place))));
+  // — unless the place is itself a puzzle's stage, still unsolved.
+  scope.add(levels.subscribe(() => {
+    document.body.classList.toggle('in-place', Boolean(levels.place));
+    document.body.classList.toggle('in-house', Boolean(levels.place) && !levels.answering);
+  }));
   let started = false;
   let sessionStart = null;
   const touch = isTouchDevice();
@@ -183,6 +187,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     // one not put anywhere yet still leads straight on to the next
     const home = levels.homeOf(levels.currentIndex);
     const solvedId = levels.definitions[levels.currentIndex].id;
+    const onStage = Boolean(levels.place); // answered standing in the place it is played in
     const result = levels.submit(input.value);
     if (result.correct) {
       answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : home ? 'Answer accepted.' : 'Answer accepted. Opening the next room.', 'success');
@@ -194,7 +199,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
         audio.playSuccess();
         // a moment for the answer to be seen accepted, then back out to the
         // room, which opens on the thing just solved and draws back from it
-        if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, 700);
+        if (onStage) game.events.emit(HOUSE_SOLVED, solvedId); // nowhere to go back to: the place itself takes note
+        else if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, 700);
         else navigate(result.nextIndex, { caption: 'Answer accepted' });
       }
       input.value = '';
@@ -214,7 +220,12 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   for (const type of ['keydown', 'keyup']) scope.on(document, type, event => {
     if (event.target.matches?.('input, select, textarea') && !event.target.closest('#game-container')) event.stopPropagation();
   });
-  scope.on(byId('btn-replay'), 'click', () => { if (!transitions.busy) navigate(levels.currentIndex, { quick: true }); });
+  scope.on(byId('btn-replay'), 'click', () => {
+    if (transitions.busy) return;
+    // a puzzle played in a place starts again there, not in a scene of its own
+    if (levels.place) levels.enterPlace(levels.place.key);
+    else navigate(levels.currentIndex, { quick: true });
+  });
 
   const reset = mountResetConfirmation(scope, byId('btn-new'), {
     isBlocked: () => transitions.busy,

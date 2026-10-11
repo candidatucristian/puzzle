@@ -724,7 +724,7 @@
    notes wait, without the layout moving. */
 body.in-house #input-area,
 body.in-house #right-sidebar-wrapper,
-body.in-house .room-step-button { visibility: hidden; }
+body.in-place .room-step-button { visibility: hidden; }
 /* The index of a place only tells: what is here, and whether it is solved. */
 .level-btn[hidden] { display: none; }
 .level-btn { cursor: default; pointer-events: none; }

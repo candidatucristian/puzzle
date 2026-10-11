@@ -35,6 +35,13 @@ export class LevelManager {
   /** Where in the house the player stands, or null while at a puzzle. */
   get place() { return this.#place; }
 
+  /** True where the place stood in is itself a puzzle's stage, and that
+   *  puzzle is not solved yet: there is something to answer here. */
+  get answering() {
+    const index = this.indexOf(this.#place?.plays);
+    return index >= 0 && !this.isCompleted(index);
+  }
+
   /** The place a level is found in, if it has been put in the house yet. */
   homeOf(index) {
     const id = this.definitions[index]?.id;
@@ -180,6 +187,8 @@ export class LevelManager {
     if (!this.#game || !place || place.unbuilt || this.#locked(place)) return false;
     this.#leaveEverything();
     this.#place = place;
+    // a puzzle played in the place itself is the one in hand while we stand there
+    if (place.plays && this.indexOf(place.plays) >= 0) this.#currentIndex = this.indexOf(place.plays);
     // what a place holds is there to be found: all of it is open from now on
     for (const id of place.holds) this.#progress.unlock(this.indexOf(id));
     this.#game.scene.start(place.key, { from });
@@ -190,7 +199,7 @@ export class LevelManager {
   enterHall() { return this.enterPlace(this.#places[0].key); }
 
   submit(answer) {
-    if (this.#place) return { correct: false, isLast: false, nextIndex: null };
+    if (this.#place && !this.answering) return { correct: false, isLast: false, nextIndex: null };
     const level = this.definitions[this.#currentIndex];
     const value = typeof answer === "string" ? answer.trim().toUpperCase() : "";
     const isLast = this.#currentIndex === this.definitions.length - 1;

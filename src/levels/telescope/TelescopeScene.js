@@ -10,7 +10,9 @@ import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 // Level — "TELESCOPE"  ·  code: ORION  ·  TOOL (Braille alphabet)
 //
 // PHASE 1 (ROOM): a pencil sketch of a child on tiptoe at a telescope, aimed
-//   out the window. Click the telescope to go to the glass.
+//   out the window. Click the telescope to go to the glass. Not shown when
+//   the telescope stands somewhere in the house: there it has been walked
+//   up to already, and the level opens at the glass.
 // PHASE 2 (SKY): the same window, right up close — a tall arch filling the
 //   screen, sheer curtains tied back either side, a moonlit valley beyond.
 //   Five groups of stars sit on perfect 2×3 grids — Braille cells (dot layout
@@ -125,6 +127,10 @@ export default class TelescopeScene extends BasePuzzleScene {
     );
     this.ANSWER = cfg && cfg.code ? cfg.code.toUpperCase() : "ORION";
 
+    // found in the house, the telescope has been walked up to already
+    const levels = this.services.levels;
+    this._atGlass = Boolean(levels.homeOf?.(levels.definitions.indexOf(cfg)));
+
     this.isSolved = false;
     this.phase = PHASE.ROOM;
     this._transitionTarget = PHASE.ROOM;
@@ -136,7 +142,7 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._W = this.cameras.main.width;
     this._H = this.cameras.main.height;
 
-    this._buildRoom(true);
+    if (this._atGlass) { this.phase = PHASE.SKY; this._buildSky(); } else this._buildRoom(true);
     this._startAmbient();
 
     this.input.on("pointerdown", (p) => this._onDown(p));
@@ -539,7 +545,8 @@ export default class TelescopeScene extends BasePuzzleScene {
 
     this._starGfx = this.add.graphics().setDepth(2);
     frame.setDepth(3);
-    this._drawBackButton(W, H);
+    // the way back to the sketched room — there is none to go back to from the house
+    if (!this._atGlass) this._drawBackButton(W, H);
 
     if (this.phase !== PHASE.TRANSITION) this.phase = PHASE.SKY;
   }
@@ -814,6 +821,7 @@ export default class TelescopeScene extends BasePuzzleScene {
 
   replay() {
     this._teardown();
+    if (this._atGlass) { this.phase = PHASE.SKY; this._buildSky(); return; }
     this.phase = PHASE.ROOM;
     this._buildRoom(false);
   }

@@ -4,7 +4,8 @@
  *  `back` is the place its door leads out to; `doors` are a place's own
  *  doors in the order they are numbered, each the place behind it, or null
  *  for one with nothing behind it yet (`first` is the number on the first of
- *  them, where it is not I). A room that `needsKey` stays locked
+ *  them, where it is not I). A place that `plays` a level is that level's
+ *  own stage: the puzzle is worked and answered standing in the place. A room that `needsKey` stays locked
  *  until its key has been found; the key is in the `chest` of another room,
  *  which opens once everything that room holds has been solved. A room
  *  marked `unbuilt` has a door and a key but cannot be gone into yet.
@@ -41,12 +42,22 @@ export const PLACES = Object.freeze([
       "What is pinned up still keeps a word, under a light of its own. Find the word, and the light can go out.",
       "When the room is dark, it will give up what it has been keeping.",
     ] },
-  // Up the stairs from the hall: the upper hall. Its six doors — VII to XII —
-  // have nothing behind them yet; what is found there is in the hall itself.
-  { key: "Upper", name: "The Upper Hall", back: "Hall", holds: ["lightswitch"], doors: [null, null, null, null, null, null], first: 7,
+  // Up the stairs from the hall: the upper hall. Its five doors — VII to XI —
+  // have nothing behind them yet. Its puzzle is not gone into, as a room's
+  // are: it `plays` there, in the hall itself, and is answered there.
+  { key: "Upper", name: "The Upper Hall", back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: [null, null, null, null, null], first: 7,
     story: [
       "The floor above has been shut up longer than the one below. The paper is coming off the walls, and nobody has swept.",
       "One light still works up here, after a fashion. It is trying to say something.",
+    ] },
+  // Up again, by the stairs at the side of the upper hall: the top floor,
+  // the last — a round room under the dome. Five doors, XII to XVI, nothing
+  // behind them yet; at its window the telescope, which is looked through
+  // as a room's puzzles are gone to.
+  { key: "Top", name: "The Top Floor", back: "Upper", holds: ["telescope"], doors: [null, null, null, null, null], first: 12,
+    story: [
+      "The top of the house: a round room under the dome, its doors set about the wall. Nobody has been up here in years.",
+      "Somebody carried a telescope all this way and set it at the window. It is still pointed at something.",
     ] },
   // The last two rooms are built but hold nothing yet. Until something is put
   // in Room 5, there is nothing to solve there and its chest opens at once.
@@ -63,6 +74,9 @@ export const ALL_DOORS_OPEN = true;
 
 /** A place asks to go somewhere: `{ place: key }` or `{ level: id }`. */
 export const HOUSE_GO = "house:go";
+
+/** A puzzle played in a place has been answered there: its level's id. */
+export const HOUSE_SOLVED = "house:solved";
 
 /** How long walking up to something takes, before the picture changes. */
 export const WALK_MS = 1000;
