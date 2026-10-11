@@ -27,7 +27,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   // Behind the title: the manor painted, as the rooms are — or, asked for
   // with ?start=video in the address, the film of it.
   const filmed = new URLSearchParams(location.search).get('start') === 'video';
-  const film = filmed ? mountStartFilm(scope, preferences) : mountStartManor(scope, preferences);
+  const raiseFilm = () => (filmed ? mountStartFilm(scope, preferences) : mountStartManor(scope, preferences));
+  let film = raiseFilm();
   const input = byId('level-code');
   const feedback = byId('answer-feedback');
   let mobile, suspendedInput;
@@ -113,7 +114,12 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
     // the way in leads to the hall; its doors lead to the rooms
     completion.hide(); mobile?.close();
-    showGame(); levels.enterHall();
+    // the button takes someone coming back on to their room; the door, or
+    // any key, leads into the hall
+    const returning = storage.getItem('hasPlayedBefore') === 'true';
+    const room = returning && event?.target?.closest?.('#btn-continue') ? levels.resumeRoom : null;
+    showGame();
+    if (!room?.open || !levels.enterPlace(room.key)) levels.enterHall();
   }
   // Walking through the house: the picture dissolves to black, what is
   // behind it changes, and it comes softly back. No veil, no title — one
@@ -146,9 +152,19 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   };
   game.events.on(HOUSE_GO, houseGo);
   scope.add(() => game.events.off(HOUSE_GO, houseGo));
+  // Out of the hall there is only outside: the title again, the house seen
+  // from the drive. The hall waits behind it as it was left.
+  function goOutside() {
+    completion.hide(); mobile?.close();
+    film = raiseFilm();
+    start.classList.remove('hidden');
+    started = false;
+    progressUI.render();
+  }
   scope.on(byId('btn-leave'), 'click', () => {
     const back = levels.back;
-    if (walking || transitions.busy || dialogs.isOpen || !back) return;
+    if (walking || transitions.busy || dialogs.isOpen) return;
+    if (!back) { if (levels.place) goOutside(); return; }
     // the place opens on what is being come away from, and draws back from it
     const from = levels.place ? { place: levels.place.key } : { level: levels.definitions[levels.currentIndex].id };
     walk(() => levels.enterPlace(back.key, from));

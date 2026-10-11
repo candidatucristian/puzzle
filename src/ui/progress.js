@@ -52,7 +52,7 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       if (source && preview.getAttribute('src') !== source) preview.src = source;
       preview.hidden = !source; tile.classList.toggle('has-preview', Boolean(source));
     });
-    const done = levels.completedCount, total = levels.definitions.length;
+    const done = levels.completedCount;
     // where the place has doors rather than puzzles, the index lists the
     // rooms behind them, each ticked once everything in it is solved
     for (const old of grid.querySelectorAll('.room-row')) old.remove();
@@ -106,7 +106,9 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     document.getElementById('header-progress').textContent = levels.place ? '' : romanLevel;
     // the way back: out of a puzzle to where it was found, out of a room to the hall
     const leave = document.getElementById('btn-leave'), back = levels.back;
-    leave.hidden = !back;
+    // from the hall, back is outside
+    leave.hidden = !back && !levels.place;
+    if (!back) { leave.setAttribute('aria-label', 'Back outside'); leave.title = 'Back outside'; }
     if (back) {
       leave.setAttribute('aria-label', `Back to ${back.name.replace(/^The /, 'the ')}`);
       leave.title = leave.getAttribute('aria-label');
@@ -123,8 +125,11 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     save.dataset.state = levels.saved ? 'saved' : 'temporary';
     save.title = levels.saved ? 'Progress is saved in this browser. Clearing site data removes it.' : 'Browser storage is unavailable. Progress may be lost when this page closes.';
     const returning = storage.getItem('hasPlayedBefore') === 'true' || done > 0;
-    document.getElementById('btn-continue').textContent = returning ? `Continue · Level ${levels.currentIndex + 1}` : 'Get inside';
-    document.getElementById('start-progress').textContent = returning ? `${done} of ${total} rooms solved · ${levels.definitions[levels.currentIndex].name}` : `${total} rooms`;
+    // someone coming back is taken on to the room they had got to
+    const room = levels.resumeRoom;
+    document.getElementById('btn-continue').textContent = returning && room ? `Continue to Room ${room.number}` : 'Get inside';
+    // the title says nothing of how much is solved
+    document.getElementById('start-progress').hidden = true;
   }
 
   function scheduleCapture() {

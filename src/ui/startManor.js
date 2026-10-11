@@ -10,11 +10,12 @@ import { glint } from './startFilm.js';
  *  lower in the picture than they are, hides their inner ends, and throws
  *  its shadow on the one away from the moon — and a tower at the right.
  *
- *  Nobody keeps it. Slates are gone from the roofs, the stone is streaked
- *  and cracked and has shed its facing in patches, ivy has the wings; panes
- *  are broken, some windows boarded, a shutter hangs by one hinge; iron and
- *  balusters are missing, the hedge and the drive have grown wild, the lamps
- *  lean and are dark, bare trees stand over it and crows sit on the ridge.
+ *  Nobody keeps it, though it is not a ruin: a house shut up and let go.
+ *  A few slates are gone, the stone is rain-streaked and cracked here and
+ *  there, ivy has a corner of each wing; a pane or two is out, one window
+ *  boarded; a length of balustrade and of the roof's iron is missing, the
+ *  hedge and the drive have grown wild, the lamps lean and are dark, bare
+ *  trees stand over it and crows sit on the ridge.
  *  Almost nothing is alight: a candle's worth in three windows — the tower
  *  room, where the telescope still stands — one lantern at the door, one
  *  lamp on the drive. It is uneasy, never gruesome.
@@ -25,8 +26,9 @@ import { glint } from './startFilm.js';
  *  upright — the columns, the corners — stays true. Then the
  *  night is laid over it, and the few lights put back.
  *
- *  Over it, alive: those lights guttering, heavy cloud going across the
- *  moon, stars, mist on the grass. The front door glints and takes the
+ *  Over it, alive: heavy cloud going across the moon, stars, mist on the
+ *  grass, and the one lamp on the drive, which stutters. The lights in the
+ *  house are steady. The front door glints and takes the
  *  hand, as the things to open inside do.
  *
  *  Measured in units of which the house is about a hundred across: x across
@@ -46,9 +48,13 @@ export function mountStartManor(scope, preferences) {
   if (!film) return { stop() {} };
   const still = () => preferences?.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
   for (const reel of film.querySelectorAll('.start-reel')) { reel.removeAttribute('src'); reel.hidden = true; }
-  const base = document.createElement('canvas'), live = document.createElement('canvas');
-  base.className = 'start-painting'; live.className = 'start-painting';
-  film.append(base, live);
+  // its two canvases — the ones it left, when it is being put up again
+  let [base, live] = film.querySelectorAll('.start-painting');
+  if (!live) {
+    base = document.createElement('canvas'); live = document.createElement('canvas');
+    base.className = 'start-painting'; live.className = 'start-painting';
+    film.append(base, live);
+  }
   let scene = null, stopped = false, frame = 0;
 
   function layout() {
@@ -203,8 +209,8 @@ function paintManor(ctx, W, H) {
     ctx.fillRect(X(x0), Y(y1), (x1 - x0) * s, 3 * s);
     const area = (x1 - x0) * (y1 - y0);
     // rain has run down it for years: long dark streaks from the top
-    for (let i = 0; i < area * 0.05; i++) {
-      const x = x0 + rnd() * (x1 - x0), len = 3 + rnd() * (y1 - y0) * 0.7, w = 0.2 + rnd() * 0.7;
+    for (let i = 0; i < area * 0.028; i++) {
+      const x = x0 + rnd() * (x1 - x0), len = 3 + rnd() * (y1 - y0) * 0.5, w = 0.2 + rnd() * 0.7;
       const g = ctx.createLinearGradient(0, Y(y1), 0, Y(y1 - len));
       g.addColorStop(0, 'rgba(3,5,8,0.5)');
       g.addColorStop(1, 'rgba(3,5,8,0)');
@@ -212,12 +218,12 @@ function paintManor(ctx, W, H) {
       ctx.fillRect(X(x), Y(y1), w * s, len * s);
     }
     // damp and lichen in blotches, darkest toward the foot
-    for (let i = 0; i < area * 0.03; i++) {
+    for (let i = 0; i < area * 0.014; i++) {
       const x = x0 + rnd() * (x1 - x0), y = y0 + Math.pow(rnd(), 1.6) * (y1 - y0);
       soft(ctx, X(x), Y(y), (1.5 + rnd() * 4) * s, (1 + rnd() * 3) * s, rnd() < 0.7 ? '2,4,6' : '40,52,40', 0.3 + rnd() * 0.3);
     }
     // where the facing has come away: the rough stuff of the wall behind
-    for (let i = 0; i < area * 0.006; i++) {
+    for (let i = 0; i < area * 0.0016; i++) {
       const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0), r = 0.8 + rnd() * 2;
       ctx.fillStyle = 'rgba(14,13,14,0.75)';
       ctx.beginPath();
@@ -229,7 +235,7 @@ function paintManor(ctx, W, H) {
       ctx.fill();
     }
     // a crack or two, wandering down from the top
-    for (let i = 0; i < 1 + area * 0.002; i++) {
+    for (let i = 0; i < area * 0.0014; i++) {
       let x = x0 + rnd() * (x1 - x0), y = y1 - rnd() * (y1 - y0) * 0.4;
       ctx.strokeStyle = 'rgba(2,3,5,0.85)';
       ctx.lineWidth = Math.max(0.7, 0.12 * s);
@@ -269,7 +275,7 @@ function paintManor(ctx, W, H) {
   const dentils = (x0, x1, y) => {
     const n = Math.round((x1 - x0) / 0.95);
     for (let i = 0; i < n; i++) {
-      if (rnd() < 0.15) continue; // dropped out
+      if (rnd() < 0.04) continue; // dropped out
       const x = x0 + ((x1 - x0) * (i + 0.25)) / n;
       box(x, y - 0.55, x + ((x1 - x0) / n) * 0.5, y, '#515c70');
     }
@@ -288,7 +294,7 @@ function paintManor(ctx, W, H) {
   // dressed stones up a corner
   const quoins = (x, y0, y1, side) => {
     for (let y = y0, i = 0; y < y1 - 0.5; y += 1.15, i++) {
-      if (rnd() < 0.14) continue; // fallen
+      if (rnd() < 0.04) continue; // fallen
       const w = i % 2 ? 1.5 : 2.3;
       box(side < 0 ? x : x - w, y, side < 0 ? x + w : x, y + 1.05, 'rgba(120,136,168,0.22)');
     }
@@ -315,14 +321,14 @@ function paintManor(ctx, W, H) {
     ctx.fillStyle = m;
     ctx.fillRect(X(x0 - 1), Y(y1), (x1 - x0 + 2) * s, (y1 - y0) * s);
     // slates gone: holes, the battens showing in them; others slipped; moss
-    for (let i = 0; i < (x1 - x0) * 0.16; i++) {
+    for (let i = 0; i < (x1 - x0) * 0.05; i++) {
       const x = x0 + 1 + rnd() * (x1 - x0 - 2), y = y0 + 0.75 * Math.floor(rnd() * ((y1 - y0) / 0.75 - 2)), w = 0.9 + rnd() * 2.8, h = 0.75 * (1 + Math.floor(rnd() * 3));
       ctx.fillStyle = '#020305';
       ctx.fillRect(X(x), Y(y + h), w * s, h * s);
       ctx.fillStyle = 'rgba(70,60,48,0.5)';
       for (let k = 0.3; k < h; k += 0.75) ctx.fillRect(X(x), Y(y + k), w * s, Math.max(1, 0.1 * s));
     }
-    for (let i = 0; i < (x1 - x0) * 0.5; i++) {
+    for (let i = 0; i < (x1 - x0) * 0.18; i++) {
       const x = x0 + rnd() * (x1 - x0), y = y0 + 0.75 * Math.floor(rnd() * ((y1 - y0) / 0.75));
       ctx.save();
       ctx.translate(X(x), Y(y));
@@ -331,7 +337,7 @@ function paintManor(ctx, W, H) {
       ctx.fillRect(0, 0, 0.9 * s, 0.75 * s);
       ctx.restore();
     }
-    for (let i = 0; i < (x1 - x0) * 0.25; i++) soft(ctx, X(x0 + rnd() * (x1 - x0)), Y(y0 + rnd() * (y1 - y0) * 0.6), (1 + rnd() * 2.4) * s, (0.5 + rnd()) * s, '34,48,34', 0.45);
+    for (let i = 0; i < (x1 - x0) * 0.1; i++) soft(ctx, X(x0 + rnd() * (x1 - x0)), Y(y0 + rnd() * (y1 - y0) * 0.6), (1 + rnd() * 2.4) * s, (0.5 + rnd()) * s, '34,48,34', 0.45);
     ctx.restore();
     // the lead along its top, and the slope's edge toward the moon
     box(x0 + inset - 0.2, y1, x1 - inset + 0.2, y1 + 0.4, '#38445a');
@@ -351,7 +357,7 @@ function paintManor(ctx, W, H) {
   // sliding across it, or lit, with curtains drawn back — and its bars.
   const window_ = (x, y, w, h, { lit = false, arch = false, tone = 0, who = null } = {}) => {
     const x0 = x - w / 2;
-    // what has become of it: under 0.3 a pane is out, under 0.44 it is boarded
+    // what has become of it: under 0.13 a pane is out, under 0.19 it is boarded
     const fate = lit ? 1 : rnd();
     box(x0 - 0.5, y - 0.3, x0 + w + 0.5, y + h + (arch ? 0 : 0.5), '#4a5466');
     if (arch) { ctx.fillStyle = '#4a5466'; ctx.beginPath(); ctx.arc(X(x), Y(y + h), (w / 2 + 0.5) * s, Math.PI, 0); ctx.fill(); }
@@ -403,7 +409,7 @@ function paintManor(ctx, W, H) {
         poly([[x - 0.75, y + 1.5], [x + 0.75, y + 1.5], [x + 0.45, y + 2.5], [x - 0.45, y + 2.5]], '#fff6dc');
       }
       ctx.restore();
-      lights.push({ x: X(x), y: Y(y + h / 2), w: w * s, h: h * s, ph: rnd() * 6.28, sp: 0.25 + rnd() * 0.5, flick: 5 + rnd() * 7 });
+      lights.push({ x: X(x), y: Y(y + h / 2), w: w * s, h: h * s, ph: rnd() * 6.28, sp: 0.25 + rnd() * 0.5, });
     } else {
       ctx.fillStyle = '#05080e';
       ctx.fill();
@@ -432,11 +438,11 @@ function paintManor(ctx, W, H) {
     const bw = Math.max(1, 0.16 * s);
     ctx.fillRect(X(x) - bw / 2, Y(y + h + (arch ? w / 2 : 0)), bw, (h + (arch ? w / 2 : 0)) * s);
     for (let i = 1; i < Math.round(h / 1.7); i++) {
-      if (fate < 0.6 && rnd() < 0.3) continue;
+      if (fate < 0.25 && rnd() < 0.25) continue;
       ctx.fillRect(X(x0), Y(y + (h * i) / Math.round(h / 1.7)) - bw / 2, w * s, bw);
     }
     if (arch) ctx.fillRect(X(x0), Y(y + h) - bw / 2, w * s, bw);
-    if (fate < 0.3) {
+    if (fate < 0.13) {
       // a pane out: a ragged black hole, cracks running from it
       const hx = x + (rnd() - 0.5) * w * 0.5, hy = y + h * (0.25 + rnd() * 0.5), r = w * (0.2 + rnd() * 0.16);
       ctx.fillStyle = '#010203';
@@ -453,7 +459,7 @@ function paintManor(ctx, W, H) {
         const a = rnd() * Math.PI * 2;
         ctx.beginPath(); ctx.moveTo(X(hx + Math.cos(a) * r), Y(hy + Math.sin(a) * r)); ctx.lineTo(X(hx + Math.cos(a + 0.2) * r * 2.6), Y(hy + Math.sin(a + 0.2) * r * 2.6)); ctx.stroke();
       }
-    } else if (fate < 0.44) {
+    } else if (fate < 0.19) {
       // boarded up: rough planks nailed across, none of them level
       for (let k = 0; k < 4; k++) {
         ctx.save();
@@ -469,8 +475,8 @@ function paintManor(ctx, W, H) {
       }
     }
     // a shutter left hanging by one hinge
-    if (!lit && w >= 3 && fate > 0.62 && fate < 0.78) {
-      const e = fate < 0.7 ? -1 : 1;
+    if (!lit && w >= 3 && fate > 0.7 && fate < 0.76) {
+      const e = fate < 0.73 ? -1 : 1;
       ctx.save();
       ctx.translate(X(x + e * (w / 2 + 0.3)), Y(y + h));
       ctx.rotate(e * (0.1 + rnd() * 0.16));
@@ -508,8 +514,8 @@ function paintManor(ctx, W, H) {
       poly([[x - 2.5, 26.6], [x, 29], [x + 2.5, 26.6], [x + 2.5, 26.2], [x, 28.5], [x - 2.5, 26.2]], '#55627a');
       window_(x, 23.5, 2.2, 2.9, { lit: lit() });
     }
-    // ivy has most of the left wing, and is starting on the right
-    if (e < 0) ivy(-43, -24, 27, 620); else ivy(24, 43, 13, 260);
+    // ivy at the far end of the left wing, a little at the foot of the right
+    if (e < 0) ivy(-43, -31, 17, 230); else ivy(37, 43, 7, 60);
   }
   // the tower: three storeys and a steep roof to a finial
   poly([[42, 30.6], [56, 30.6], [49, 46]], '#0f141e');
@@ -536,7 +542,9 @@ function paintManor(ctx, W, H) {
   window_(49, 11.4, 3.2, 5.8, { lit: false, arch: true });
   // the top room of the tower: lit, and the telescope standing in its window
   window_(49, 21, 4.2, 5.6, { lit: true, tone: 0, who: 'scope', arch: true });
-  ivy(43, 51, 26, 300);
+  // at the tower only round its foot: the room at the top, and what stands
+  // in its window, are clear
+  ivy(43, 48, 10, 80);
   crow(49.3, 49.3, -1);
   // the wing's roof falls in the tower's shadow, away from the moon
   const shade = ctx.createLinearGradient(X(34), 0, X(43), 0);
@@ -572,13 +580,13 @@ function paintManor(ctx, W, H) {
   // the middle block: three storeys, a mansard, the bay standing forward
   slate(-22, 22, 30.8, 39.4, 3.4);
   for (let x = -18.2; x <= 18.21; x += 0.7) {
-    if (rnd() < 0.4 || (x > 3 && x < 8.5)) continue; // rusted through, or carried off
+    if (rnd() < 0.1 || (x > 4.5 && x < 8)) continue; // rusted through, or carried off
     box(x - 0.05, 39.8, x + 0.05, 40.7, '#2a3344');
     ctx.fillStyle = '#3a465c';
     ctx.beginPath(); ctx.arc(X(x), Y(40.8), 0.14 * s, 0, Math.PI * 2); ctx.fill();
   }
-  box(-18.4, 40.2, 3, 40.3, '#2a3344');
-  box(8.5, 40.2, 18.4, 40.3, '#2a3344');
+  box(-18.4, 40.2, 4.5, 40.3, '#2a3344');
+  box(8, 40.2, 18.4, 40.3, '#2a3344');
   crow(-7.4, 39.9);
   crow(-4.8, 39.9, -1);
   crow(11.6, 39.9);
@@ -635,8 +643,7 @@ function paintManor(ctx, W, H) {
     window_(x, 11.8, 3.4, 6.8, { lit: x === 0, tone: 1, arch: true });
   }
 
-  ivy(-22, -13, 24, 420);
-  ivy(15, 22, 11, 150);
+  ivy(-22, -17, 13, 130);
   // ── the porch: four columns, the door between them, a balcony over
   const porch = ctx.createLinearGradient(0, Y(10.4), 0, Y(0));
   porch.addColorStop(0, '#08090c');
@@ -678,7 +685,7 @@ function paintManor(ctx, W, H) {
     box(e * 3.3 - 0.5, 6.7, e * 3.3 + 0.5, 6.95, '#1a120a');
     box(e * 3.3 - 0.5, 5.35, e * 3.3 + 0.5, 5.55, '#1a120a');
     // only the right-hand one still burns
-    if (e > 0) lights.push({ x: X(e * 3.3), y: Y(6.1), w: 1.6 * s, h: 2 * s, ph: e, sp: 1.3, flick: 6, lamp: true });
+    if (e > 0) lights.push({ x: X(e * 3.3), y: Y(6.1), w: 1.6 * s, h: 2 * s, ph: e, sp: 1.3, lamp: true });
   }
   // the lanterns' light inside the porch and out over its floor
   soft(ctx, X(3), Y(5), 6 * s, 6 * s, WARM, 0.2, 'lighter');
@@ -697,17 +704,11 @@ function paintManor(ctx, W, H) {
   box(-8.9, 11.8, 8.9, 12.25, '#7a88a2');
   box(-8.6, 10.5, 8.6, 10.75, 'rgba(4,6,10,0.4)');
   for (let x = -8; x <= 8.01; x += 0.8) {
-    if ((x > 2 && x < 5.2) || rnd() < 0.12) continue; // a length of it has gone over
+    if ((x > 2.6 && x < 4.6) || rnd() < 0.03) continue; // a length of it has gone over
     box(x - 0.16, 12.25, x + 0.16, 13.9, '#4f5b70');
   }
-  box(-8.6, 13.9, 2.1, 14.3, '#7a88a2');
-  box(5.1, 13.9, 8.6, 14.3, '#7a88a2');
-  ctx.save();
-  ctx.translate(X(2.1), Y(13.9));
-  ctx.rotate(0.5);
-  ctx.fillStyle = '#66738c';
-  ctx.fillRect(0, 0, 2.6 * s, 0.4 * s);
-  ctx.restore();
+  box(-8.6, 13.9, 2.6, 14.3, '#7a88a2');
+  box(4.6, 13.9, 8.6, 14.3, '#7a88a2');
   for (const x of [-8.3, 8.3]) box(x - 0.4, 12.25, x + 0.4, 14.5, '#66738c');
 
   const doorAt = { x: X(-2.5), y: Y(10.7), w: 5 * s, h: 10.7 * s };
@@ -797,13 +798,13 @@ function paintManor(ctx, W, H) {
     g.addColorStop(1, '#4e5868');
     box(-hw, y - 0.2, hw, y, g);
     // broken at the edges, weeds in the joints
-    for (let k = 0; k < 3; k++) {
+    if (i % 2) {
       const x = (rnd() * 2 - 1) * hw;
-      poly([[x, y], [x + 0.5 + rnd() * 1.4, y], [x + 0.3 + rnd(), y - 0.3 - rnd() * 0.4]], '#12161d');
+      poly([[x, y], [x + 0.5 + rnd() * 1.2, y], [x + 0.3 + rnd(), y - 0.3 - rnd() * 0.3]], '#12161d');
     }
     ctx.strokeStyle = '#05090a';
     ctx.lineWidth = Math.max(0.6, 0.09 * s);
-    for (let k = 0; k < 7; k++) {
+    for (let k = 0; k < 3; k++) {
       const x = (rnd() * 2 - 1) * hw;
       ctx.beginPath(); ctx.moveTo(X(x), Y(y - 0.68)); ctx.lineTo(X(x + (rnd() - 0.5) * 0.7), Y(y - 0.68 + 0.5 + rnd() * 0.9)); ctx.stroke();
     }
@@ -930,7 +931,7 @@ function paintManor(ctx, W, H) {
   };
   bare(-52, -3, 54, 0.14);
   bare(-66, -5, 40, -0.2);
-  bare(60, -3, 46, -0.12);
+  bare(67, -3, 44, -0.2); // clear of the tower and of its window
   crow(-55.8, 24.5);
 
   // ── Nothing ruled: the whole picture drawn again a thread at a time, each
@@ -1038,28 +1039,23 @@ function drawLive(ctx, sc, t, frozen) {
     ctx.fillStyle = `rgba(226,234,255,${a.toFixed(3)})`;
     ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2); ctx.fill();
   }
-  // A failing bulb: steady for some seconds, then a short stutter of dark.
+  // The lamp out on the drive is failing: steady for some seconds, then a
+  // short stutter of dark. Nothing else in the picture flickers.
   const out = (l) => {
     if (frozen || !l.flick) return false;
     const k = (t + l.ph * 3) % l.flick;
     return k < 0.9 && Math.sin(k * 46 + l.ph) + Math.sin(k * 17) > 0.5;
   };
-  // the windows: each breathing at its own pace
-  for (const l of sc.lights) {
-    if (out(l)) continue;
-    // a candle, or a lamp nearly out of oil: never still
-    const a = frozen ? 0.08 : 0.08 + 0.04 * Math.sin(t * 2.3 * l.sp + l.ph) + 0.035 * Math.sin(t * 11.3 + l.ph) + 0.02 * Math.sin(t * 23 + l.ph * 2);
-    soft(ctx, l.x, l.y, l.w * 1.3, l.h * 0.95, WARM, Math.max(0, a), 'lighter');
-  }
+  // the windows, and the lantern at the door: a steady glow
+  for (const l of sc.lights) soft(ctx, l.x, l.y, l.w * 1.3, l.h * 0.95, WARM, 0.09, 'lighter');
   for (const l of sc.lamps) {
     if (out(l)) continue;
     const a = frozen ? 0.2 : 0.2 + 0.05 * Math.sin(t * 1.1 + l.ph) + 0.02 * Math.sin(t * 11 + l.ph);
     soft(ctx, l.x, l.y, l.r, l.r, WARM, a, 'lighter');
   }
   ctx.globalCompositeOperation = 'source-over';
-  // where a bulb has dropped out, its window — or its lantern — goes dark
+  // where the lamp on the drive drops out, its lantern goes dark
   ctx.fillStyle = 'rgba(8,7,10,0.8)';
-  for (const l of sc.lights) if (out(l)) ctx.fillRect(l.x - l.w / 2, l.y - l.h / 2, l.w, l.h);
   for (const l of sc.lamps) {
     if (!out(l)) continue;
     ctx.fillRect(l.x - 0.52 * l.u, l.y - 0.62 * l.u, 1.04 * l.u, 1.34 * l.u);

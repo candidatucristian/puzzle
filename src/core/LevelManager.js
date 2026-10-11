@@ -102,6 +102,21 @@ export class LevelManager {
     return held;
   }
 
+  /** The room to go on with: the first along the hall whose door is unlocked
+   *  and which is not finished yet — or, all of them finished, the last. Its
+   *  place, the number on its door, and whether it can be gone into. */
+  get resumeRoom() {
+    let last = null;
+    for (const [n, key] of (this.#places[0].doors ?? []).entries()) {
+      const place = this.#places.find((item) => item.key === key);
+      if (!place || (place.needsKey && !this.hasKey(place.key))) continue;
+      const room = { key: place.key, number: n + 1, open: !place.unbuilt };
+      if (!this.#finished(place)) return room;
+      last = room;
+    }
+    return last;
+  }
+
   /** A key is named for the room it opens. */
   hasKey(key) { return this.#progress.hasKey(key); }
 
