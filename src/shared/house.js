@@ -11,7 +11,7 @@
  *  its list while the player stands there: where they are, and what there
  *  is to do — never how. No scene code lives here. */
 export const PLACES = Object.freeze([
-  { key: "Hall", name: "The Hall", back: null, holds: [], doors: ["Study", "Room2", null, null, null, null],
+  { key: "Hall", name: "The Hall", back: null, holds: [], doors: ["Study", "Room2", "Room3", "Room4", null, null],
     story: [
       "The manor has been shut up for years, and everyone who lived in it left something behind.",
       "Six doors open off this hall, and most of them are locked tonight. Each room keeps the key to another.",
@@ -22,7 +22,19 @@ export const PLACES = Object.freeze([
       "Three things here still keep a word each. Look closely at whatever catches the light, find its word, and give it back to the house.",
       "When all three have gone dark, the room will give up what it has been keeping.",
     ] },
-  { key: "Room2", name: "Room 2", back: "Hall", holds: [], needsKey: true, unbuilt: true },
+  { key: "Room2", name: "Room 2", back: "Hall", holds: ["bookshelf", "overtime", "modem"], needsKey: true, chest: "Room3",
+    story: [
+      "The library: the house's books and its accounts, all left as they were.",
+      "Three things here still keep a word each, and each has a light of its own. Find the word, and the light can go out.",
+      "When all three are dark, the room will give up what it has been keeping.",
+    ] },
+  { key: "Room3", name: "Room 3", back: "Hall", holds: ["compass", "chessboard", "mobilephone"], needsKey: true, chest: "Room4",
+    story: [
+      "The captain's room: what a man home from the sea brought back with him, and could not put down.",
+      "Three things here still keep a word each, and each has a light of its own. Find the word, and the light can go out.",
+      "When all three are dark, the room will give up what it has been keeping.",
+    ] },
+  { key: "Room4", name: "Room 4", back: "Hall", holds: [], needsKey: true, unbuilt: true },
 ]);
 
 /** A place asks to go somewhere: `{ place: key }` or `{ level: id }`. */
