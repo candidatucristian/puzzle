@@ -17,7 +17,8 @@ import { chime } from "../../shared/paint.js";
  *
  *  A room says what it is by overriding:
  *    layout(W, H, levels)   where everything is — with `things` (see
- *                           roomKit's thingAt) and `chest` (chestAt)
+ *                           roomKit's thingAt) and, if the room keeps a key,
+ *                           `chest` (chestAt)
  *    paint(L)               paints it; returns the texture keys
  *                           { room, glow, shut, open, key }
  *    release()              lets those textures go
@@ -83,6 +84,37 @@ export default class RoomScene extends BasePuzzleScene {
       this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box }));
     }
 
+    if (L.chest) this._setChest(L, k);
+
+    // dust turning in the moonbeam
+    const beam = this.dustIn?.(L);
+    for (let i = 0; beam && i < 14; i++) {
+      const x0 = beam.x + Math.random() * beam.width;
+      const y0 = beam.y + Math.random() * beam.height;
+      const mote = this.add
+        .image(x0, y0, k.glow)
+        .setDisplaySize(4 * L.u, 4 * L.u)
+        .setTint(0xc8d8ff)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0)
+        .setDepth(-7);
+      this.ambientObject(mote);
+      this.ambientTween({
+        targets: mote,
+        x: x0 + (Math.random() - 0.5) * 50 * L.u,
+        y: y0 + (10 + Math.random() * 40) * L.u,
+        alpha: { from: 0, to: 0.25 + Math.random() * 0.35 },
+        duration: 4000 + Math.random() * 4000,
+        delay: Math.random() * 4000,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
+  }
+
+  _setChest(L, k) {
+    const levels = this.services.levels;
     // the chest: open if its key has been taken; otherwise shut — locked, and
     // saying so — and if the room is finished, about to open
     const waiting = levels.keyWaitingIn(this.place);
@@ -111,32 +143,6 @@ export default class RoomScene extends BasePuzzleScene {
     }
     // not before the room has been walked back into
     if (waiting) this.time.delayedCall(WALK_MS + 700, () => this._offerKey(waiting, k));
-
-    // dust turning in the moonbeam
-    const beam = this.dustIn?.(L);
-    for (let i = 0; beam && i < 14; i++) {
-      const x0 = beam.x + Math.random() * beam.width;
-      const y0 = beam.y + Math.random() * beam.height;
-      const mote = this.add
-        .image(x0, y0, k.glow)
-        .setDisplaySize(4 * L.u, 4 * L.u)
-        .setTint(0xc8d8ff)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(0)
-        .setDepth(-7);
-      this.ambientObject(mote);
-      this.ambientTween({
-        targets: mote,
-        x: x0 + (Math.random() - 0.5) * 50 * L.u,
-        y: y0 + (10 + Math.random() * 40) * L.u,
-        alpha: { from: 0, to: 0.25 + Math.random() * 0.35 },
-        duration: 4000 + Math.random() * 4000,
-        delay: Math.random() * 4000,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-    }
   }
 
   // The chest opens and offers its key: light gathers on it, the lid goes

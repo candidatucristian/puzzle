@@ -1,4 +1,4 @@
-import { PLACES, PUZZLE_STORY } from "../shared/house.js";
+import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN } from "../shared/house.js";
 
 /** Coordinates level selection and answers; scenes own their resources.
  * The player is either at a puzzle (a level) or standing somewhere in the
@@ -71,8 +71,8 @@ export class LevelManager {
   get rooms() {
     return (this.#place?.doors ?? []).map((key, n) => {
       const place = this.#places.find((item) => item.key === key);
-      if (!place) return { key: null, name: `Room ${n + 1}`, locked: true, open: false, solved: false, completed: false };
-      const locked = Boolean(place.needsKey) && !this.hasKey(place.key);
+      if (!place) return { key: null, name: `Room ${n + (this.#place.first ?? 1)}`, locked: true, open: false, solved: false, completed: false };
+      const locked = this.#locked(place);
       return {
         key: place.key,
         name: place.name,
@@ -82,6 +82,11 @@ export class LevelManager {
         completed: this.#finished(place),
       };
     });
+  }
+
+  // A place whose door needs a key that has not been found yet.
+  #locked(place) {
+    return Boolean(place.needsKey) && !ALL_DOORS_OPEN && !this.hasKey(place.key);
   }
 
   // Everything a place holds is solved, and the key in its chest taken.
@@ -96,7 +101,7 @@ export class LevelManager {
     const held = [];
     for (const place of this.#places) {
       (place.doors ?? []).forEach((key, n) => {
-        if (key && this.hasKey(key)) held.push({ key, door: n + 1 });
+        if (key && this.hasKey(key)) held.push({ key, door: n + (place.first ?? 1) });
       });
     }
     return held;
@@ -109,7 +114,7 @@ export class LevelManager {
     let last = null;
     for (const [n, key] of (this.#places[0].doors ?? []).entries()) {
       const place = this.#places.find((item) => item.key === key);
-      if (!place || (place.needsKey && !this.hasKey(place.key))) continue;
+      if (!place || this.#locked(place)) continue;
       const room = { key: place.key, number: n + 1, open: !place.unbuilt };
       if (!this.#finished(place)) return room;
       last = room;
@@ -172,7 +177,7 @@ export class LevelManager {
    *  can open on it. */
   enterPlace(key, from = null) {
     const place = this.#places.find((item) => item.key === key);
-    if (!this.#game || !place || place.unbuilt || (place.needsKey && !this.hasKey(place.key))) return false;
+    if (!this.#game || !place || place.unbuilt || this.#locked(place)) return false;
     this.#leaveEverything();
     this.#place = place;
     // what a place holds is there to be found: all of it is open from now on

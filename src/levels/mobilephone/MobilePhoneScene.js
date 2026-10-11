@@ -4,10 +4,10 @@ import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { DESK_ART, PHONE_ART, phonePoint } from "./art.js";
+import { PHONE_ART, phonePoint, preparePhoneArt } from "./art.js";
 
 // An old handset on the manor's desk. The caller number encodes GEORGE using
-// multi-tap input; the screen and physical keys stay live over the photo assets.
+// multi-tap input. All materials and geometry are drawn procedurally in Canvas.
 const MP_FONT = '"Special Elite", monospace';
 const MP_BUZZ_EVERY = 5000; // ms between two vibrations of the phone
 
@@ -22,14 +22,13 @@ export default class MobilePhoneScene extends BasePuzzleScene {
   }
 
   preload() {
-    this.load.image(DESK_ART.key, DESK_ART.url);
-    this.load.image(PHONE_ART.key, PHONE_ART.url);
     this.load.audio("phone_vib", "assets/sounds/MobilePhone/vibration.mp3");
     this.load.audio("keypad", "assets/sounds/MobilePhone/keypad.mp3");
   }
 
   create() {
     this.beginScene();
+    preparePhoneArt(this);
     this._audioUnlockHandlers = new Set();
 
     const width = this.cameras.main.width;
@@ -76,7 +75,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     this.phoneContainer = this.add.container(0, 0);
 
     this.phoneContainer.add([
-      this.add.image(0, 0, "mp_contact_shadow"),
+      this.add.image(0, 0, "mp_contact_shadow_code"),
       this.add.image(0, 0, PHONE_ART.key).setScale(PHONE_ART.scale),
     ]);
 
@@ -279,7 +278,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     const h = screen.height * PHONE_ART.scale;
     const x = -w / 2, y = -h / 2;
 
-    // Preserve the photographed glass, its reflections and the inset bezel.
+    // Live pixels and icons sit over the procedurally drawn glass and bezel.
     g.fillStyle(0xb8ce83, 0.1).fillRoundedRect(x + 2, y + 2, w - 4, h - 4, 4);
     g.lineStyle(0.45, 0x203211, 0.065);
     for (let row = 3; row < h - 2; row += 3)
@@ -346,17 +345,16 @@ export default class MobilePhoneScene extends BasePuzzleScene {
 
   createKeypad() {
     const art = PHONE_ART;
-    const texture = this.textures.get(art.key);
     const font = "Arial, sans-serif";
 
-    // Each cap uses pixels from the handset itself. Its image, lettering and
-    // hit area share one container, including during presses and vibration.
+    // Each rubber cap is independently drawn in code. Its geometry, lettering
+    // and hit area share one container during presses, vibration and resizing.
     const createCap = (frame, sx, sy, sw, sh) => {
-      if (!texture.has(frame))
-        texture.add(frame, 0, Math.round(sx - sw / 2), Math.round(sy - sh / 2), sw, sh);
+      const textureKey = frame.startsWith("number-") ? art.keys.key
+        : frame.startsWith("soft-") ? art.softKeys.key : art.rocker.key;
       const p = phonePoint(sx, sy);
       const c = this.add.container(p.x, p.y);
-      const cap = this.add.image(0, 0, art.key, frame).setScale(art.scale);
+      const cap = this.add.image(0, 0, textureKey).setScale(art.scale);
       const w = sw * art.scale, h = sh * art.scale;
       const shade = this.add.graphics().setAlpha(0);
       shade.fillStyle(0x000000, 0.24).fillRoundedRect(-w / 2, -h / 2, w, h, h * 0.3);

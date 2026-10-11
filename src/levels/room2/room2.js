@@ -3,7 +3,7 @@ import { paintKey } from "../../shared/keyArt.js";
 import { OVERTIME_CLOCKS } from "../overtime/puzzle.js";
 import { writingDesk, greenLamp } from "../house/furniture.js";
 import {
-  WARM, BACK, roomLayout, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
+  WARM, BACK, roomLayout, roomStyle, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
   paintChest, gloom,
 } from "../house/roomKit.js";
 
@@ -22,6 +22,9 @@ import {
  *  Three puzzles are found here — the books, the clocks, the router; in the
  *  room they are only themselves, small, enough to know them by. Each has its own light, which burns until its puzzle is solved.
  *
+ *  The room is panelled in walnut to a coffered ceiling, its floor parquet,
+ *  its window a tall sash between heavy red curtains.
+ *
  *  Measured and seen as every room is (house/roomKit.js). Painted once per
  *  screen size: the room; a glow; the chest, shut and open; the key. */
 
@@ -34,11 +37,20 @@ const K = { room: "r2_room", glow: "r2_glow", shut: "r2_chest_shut", open: "r2_c
  *  and the clocks' own digits, `desk` the lamp over the router. */
 export function layoutRoom2(W, H, on = { shelf: true, desk: true, clock: true }) {
   const L = roomLayout(W, H);
+  // panelled in walnut to a coffered ceiling, parquet underfoot, a tall sash
+  // window between heavy red curtains
+  L.style = roomStyle({
+    wall: "panel", near: "#2c1b10", far: "#130b06", back: "#1c110a", rail: 0,
+    dado: { near: "#26170d", far: "#110905", back: "#170e08", rail: "#3c2616", railFar: "#190f08", railBack: "#2c1a0f" },
+    skirt: "#120a06", skirtBack: "#0a0504",
+    floor: "herringbone", floorNear: "#35220f", floorFar: "#190f08",
+    ceiling: "coffers", ceilingCol: "#0f0a06", window: "sash",
+  });
   L.on = on;
   const { Q, half: hx } = L;
   // the window in the back wall, right of the middle
   const wc = Q(0.24 * hx, 0, BACK);
-  L.win = { cx: wc.x, rx: 0.15 * hx * wc.s, top: Q(0, 288, BACK).y, sill: Q(0, 104, BACK).y, x: 0.24 * hx, hw: 0.15 * hx };
+  L.win = { cx: wc.x, rx: 0.15 * hx * wc.s, top: Q(0, 266, BACK).y, sill: Q(0, 104, BACK).y, x: 0.24 * hx, hw: 0.15 * hx };
   // the bookshelves down the left-hand wall; the standard lamp in the corner beyond them
   const c = (L.shelf = { d0: 366, d1: 548, y0: 0, y1: 236 });
   L.stand = { x: -0.8 * hx, d: 574, shade: 152 };

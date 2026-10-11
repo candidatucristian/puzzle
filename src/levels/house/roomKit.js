@@ -24,7 +24,7 @@ export const NEAR = 250; // where the walls leave the picture, behind us
  *  place in the room is (and how many pixels a centimetre is there). */
 export function roomLayout(W, H) {
   const u = Math.min(W / 1000, H / 700);
-  const L = { W, H, u };
+  const L = { W, H, u, style: STYLE };
   L.vp = { x: W * 0.5, y: H * 0.44 };
   L.cm = (H * 0.6) / EYE; // a centimetre at the picture, in pixels
   L.half = Math.max(W * 0.62, H) / L.cm; // half the room's width
@@ -307,109 +307,378 @@ export function onWall(ctx, L, side, at, flat) {
   }
 }
 
-// the room itself: ceiling, boards, the papered walls over their oak dado
+/** How a room is built: what its walls are and their colours (toward us, far
+ *  off, and on the back wall), the dado under them if it has one, the
+ *  picture rail, the skirting, the floor, the ceiling, the window. A room
+ *  takes this and changes what is its own (see roomStyle). */
+export const STYLE = {
+  wall: "paper", // "paper" striped, "panel" wood to the ceiling, "planks" limewashed boards, "plaster" bare
+  near: "#1b2622", far: "#0e1513", back: "#101816", mark: "rgba(170,200,180,0.035)",
+  dado: { h: 96, kind: "panels", near: "#2a1a10", far: "#150c07", back: "#1a100a", rail: "#3e2616", railFar: "#1c1009", railBack: "#32200f" },
+  rail: 248, // the picture rail's height, or 0 for none
+  skirt: "#140b06", skirtBack: "#0b0604",
+  floor: "boards", // "boards", "herringbone" parquet, "deck" wide planks, "flags" of stone
+  floorNear: "#2c1d13", floorFar: "#150e09",
+  ceiling: "plain", ceilingCol: "#0b0a0c", // "plain", "coffers", "beams"
+  window: "arch", // "arch" the tall one, "sash" with curtains, "round" a port, "leaded" small and high
+};
+
+/** A room's own build: the house's, with what it changes. */
+export function roomStyle(own = {}) {
+  return { ...STYLE, ...own, dado: own.dado === null ? null : own.dado ? { ...STYLE.dado, ...own.dado } : STYLE.dado };
+}
+
+// One wall, dressed as the room's style says. `M(a, y)` is where on the screen
+// a place on the wall is — a along it in centimetres, y up it — `a0`..`a1`
+// its length, `tone(near, far)` the paint for a colour that is `near` at our
+// end and `far` at the other. Done in two goes, so that a window can go in
+// between: the wall itself, then what stands in front of its foot.
+function wallUpper(ctx, L, M, a0, a1, tone, rnd) {
+  const st = L.style, top = L.top;
+  const band = (y0, y1, fill) => fillPoly(ctx, [M(a0, y0), M(a1, y0), M(a1, y1), M(a0, y1)], fill);
+  const line = (a, y0, y1, col, w) => {
+    const p = M(a, y0), q = M(a, y1);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = Math.max(0.6, w * p.s);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  };
+  band(0, top, tone(st.near, st.far));
+  const foot = st.dado ? st.dado.h : 0;
+  if (st.wall === "paper") {
+    for (let a = a0; a < a1; a += 11) line(a, foot, top, st.mark, 2.2);
+  } else if (st.wall === "planks") {
+    // boards up and down, no two quite the same, the limewash thin on them
+    for (let a = a0; a < a1; a += 15) {
+      fillPoly(ctx, [M(a, foot), M(Math.min(a1, a + 15), foot), M(Math.min(a1, a + 15), top), M(a, top)], rnd() < 0.5 ? `rgba(0,0,0,${(rnd() * 0.16).toFixed(3)})` : `rgba(210,224,236,${(rnd() * 0.05).toFixed(3)})`);
+      line(a, foot, top, "rgba(2,4,6,0.6)", 0.5);
+    }
+  } else if (st.wall === "panel") {
+    // wood to the ceiling: tall panels between stiles, a frieze of small ones over them
+    for (let a = a0 + 4; a < a1 - 20; a += 66) {
+      for (const [y0, y1] of [[foot + 12, top - 62], [top - 52, top - 14]]) {
+        const pts = [M(a + 6, y0), M(a + 60, y0), M(a + 60, y1), M(a + 6, y1)];
+        fillPoly(ctx, pts, "rgba(0,0,0,0.16)");
+        ctx.strokeStyle = "rgba(3,2,1,0.8)";
+        ctx.lineWidth = Math.max(0.8, 0.8 * pts[0].s);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,206,160,0.1)";
+        ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.lineTo(pts[2].x, pts[2].y); ctx.stroke();
+      }
+    }
+    for (let i = 0; i < (a1 - a0) * 0.5; i++) line(a0 + rnd() * (a1 - a0), foot, top, rnd() < 0.6 ? "rgba(0,0,0,0.07)" : "rgba(255,210,170,0.02)", 0.6 + rnd() * 1.4);
+  } else {
+    // bare plaster: patched, stained, cracked here and there
+    for (let i = 0; i < (a1 - a0) * 0.2; i++) {
+      const p = M(a0 + rnd() * (a1 - a0), rnd() * top);
+      soft(ctx, p.x, p.y, (10 + rnd() * 40) * p.s, (8 + rnd() * 30) * p.s, rnd() < 0.6 ? "0,0,0" : "150,146,128", 0.1 + rnd() * 0.1);
+    }
+    for (let i = 0; i < 3; i++) {
+      let a = a0 + rnd() * (a1 - a0), y = top - rnd() * 60;
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
+      ctx.lineWidth = Math.max(0.6, 0.3 * M(a, y).s);
+      ctx.beginPath();
+      ctx.moveTo(M(a, y).x, M(a, y).y);
+      for (let k = 0; k < 8; k++) { a += (rnd() - 0.5) * 14; y -= 6 + rnd() * 14; ctx.lineTo(M(a, y).x, M(a, y).y); }
+      ctx.stroke();
+    }
+  }
+  if (st.rail) band(st.rail - 2, st.rail + 2, tone(st.dado?.rail ?? "#3e2616", st.dado?.railFar ?? "#1c1009"));
+}
+function wallLower(ctx, L, M, a0, a1, tone, isBack) {
+  const st = L.style, d = st.dado;
+  const band = (y0, y1, fill) => fillPoly(ctx, [M(a0, y0), M(a1, y0), M(a1, y1), M(a0, y1)], fill);
+  if (d) {
+    band(0, d.h, isBack ? d.back : tone(d.near, d.far));
+    if (d.kind === "panels") {
+      ctx.strokeStyle = "rgba(4,2,1,0.7)";
+      for (let a = a0 + 8; a < a1 - 30; a += 62) {
+        polygon(ctx, [M(a + 6, d.h - 10), M(a + 56, d.h - 10), M(a + 56, 18), M(a + 6, 18)]);
+        ctx.lineWidth = Math.max(0.8, 0.7 * M(a, 0).s);
+        ctx.stroke();
+      }
+    } else {
+      // match-boarding: narrow boards up and down
+      for (let a = a0; a < a1; a += 12) {
+        const p = M(a, 10), q = M(a, d.h - 3);
+        ctx.strokeStyle = "rgba(2,3,5,0.6)";
+        ctx.lineWidth = Math.max(0.6, 0.4 * p.s);
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+      }
+    }
+    band(d.h - 3, d.h + 3, isBack ? d.railBack : tone(d.rail, d.railFar));
+  }
+  band(0, 10, isBack ? st.skirtBack : tone(st.skirt, st.skirtBack));
+}
+
+/** The room itself: its ceiling, its floor, its two side walls. */
 export function paintShell(ctx, L) {
   const { Q, half: hx, top, u } = L;
+  const st = L.style;
   const rnd = lcg(311);
-  fillPoly(ctx, [Q(-hx, top, NEAR), Q(hx, top, NEAR), Q(hx, top, BACK), Q(-hx, top, BACK)], "#0b0a0c");
-  // the floor: dark oak boards running to the back wall
+  // ── the ceiling
+  fillPoly(ctx, [Q(-hx, top, NEAR), Q(hx, top, NEAR), Q(hx, top, BACK), Q(-hx, top, BACK)], st.ceilingCol);
+  if (st.ceiling === "beams") {
+    // heavy timbers across it, the furthest first: the underside, then the face toward us
+    for (let d = BACK - 40; d > NEAR; d -= 78) {
+      fillPoly(ctx, [Q(-hx, top - 16, d), Q(hx, top - 16, d), Q(hx, top - 16, d + 20), Q(-hx, top - 16, d + 20)], "#120c08");
+      fillPoly(ctx, [Q(-hx, top, d), Q(hx, top, d), Q(hx, top - 16, d), Q(-hx, top - 16, d)], "#22160e");
+      const p = Q(-hx, top - 16, d), q = Q(hx, top - 16, d);
+      ctx.strokeStyle = "rgba(255,206,160,0.08)";
+      ctx.lineWidth = Math.max(0.8, 0.6 * p.s);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+    }
+  } else if (st.ceiling === "coffers") {
+    // a grid of moulded ribs, a sunk square between each four
+    const rib = (pts) => { fillPoly(ctx, pts, "#1c120b"); ctx.strokeStyle = "rgba(255,206,160,0.07)"; ctx.lineWidth = 1; ctx.stroke(); };
+    for (let d = NEAR; d < BACK; d += 70) rib([Q(-hx, top, d), Q(hx, top, d), Q(hx, top, d + 9), Q(-hx, top, d + 9)]);
+    for (let x = -hx; x <= hx; x += (2 * hx) / 8) rib([Q(x - 4.5, top, NEAR), Q(x + 4.5, top, NEAR), Q(x + 4.5, top, BACK), Q(x - 4.5, top, BACK)]);
+  }
+  // ── the floor
   polygon(ctx, [Q(-hx, 0, NEAR), Q(hx, 0, NEAR), Q(hx, 0, BACK), Q(-hx, 0, BACK)]);
   const fg = ctx.createLinearGradient(0, Q(0, 0, BACK).y, 0, L.H);
-  fg.addColorStop(0, "#150e09");
-  fg.addColorStop(1, "#2c1d13");
+  fg.addColorStop(0, st.floorFar);
+  fg.addColorStop(1, st.floorNear);
   ctx.fillStyle = fg;
   ctx.fill();
   ctx.save();
   ctx.clip();
-  const n = 18;
-  for (let i = 0; i <= n; i++) {
-    const x = -hx + (2 * hx * i) / n, x2 = x + (2 * hx) / n;
-    const tone = rnd();
-    if (i < n) {
-      fillPoly(ctx, [Q(x, 0, NEAR), Q(x2, 0, NEAR), Q(x2, 0, BACK), Q(x, 0, BACK)],
-        tone < 0.5 ? `rgba(0,0,0,${(tone * 0.3).toFixed(3)})` : `rgba(255,200,150,${((tone - 0.5) * 0.06).toFixed(3)})`);
+  const tint = () => { const k = rnd(); return k < 0.5 ? `rgba(0,0,0,${(k * 0.3).toFixed(3)})` : `rgba(255,214,170,${((k - 0.5) * 0.07).toFixed(3)})`; };
+  if (st.floor === "herringbone") {
+    // parquet laid in zigzag: short blocks, each column leaning the other way
+    const cw = 30, bh = 10;
+    for (let c = 0, x = -hx; x < hx; x += cw, c++) {
+      for (let d = NEAR - cw; d < BACK; d += bh) {
+        const up = c % 2 === 0;
+        fillPoly(ctx, [Q(x, 0, up ? d : d + cw), Q(x + cw, 0, up ? d + cw : d), Q(x + cw, 0, (up ? d + cw : d) + bh), Q(x, 0, (up ? d : d + cw) + bh)], tint());
+        ctx.strokeStyle = "rgba(4,2,1,0.6)";
+        ctx.lineWidth = Math.max(0.6, 0.8 * u);
+        ctx.stroke();
+      }
     }
-    const a = Q(x, 0, NEAR), b = Q(x, 0, BACK);
-    ctx.strokeStyle = "rgba(4,2,1,0.75)";
-    ctx.lineWidth = Math.max(1, 1.4 * u);
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  } else if (st.floor === "flags") {
+    // stone flags in courses, each course shifted, worn hollow in the middle
+    for (let r = 0, d = NEAR; d < BACK; d += 58, r++) {
+      for (let x = -hx - (r % 2 ? 36 : 0); x < hx; x += 72) {
+        fillPoly(ctx, [Q(x + 1, 0, d + 1), Q(x + 71, 0, d + 1), Q(x + 71, 0, d + 57), Q(x + 1, 0, d + 57)], rnd() < 0.5 ? `rgba(0,0,0,${(rnd() * 0.3).toFixed(3)})` : `rgba(170,176,186,${(rnd() * 0.09).toFixed(3)})`);
+        polygon(ctx, [Q(x, 0, d), Q(x + 72, 0, d), Q(x + 72, 0, d + 58), Q(x, 0, d + 58)]);
+        ctx.strokeStyle = "rgba(2,3,4,0.85)";
+        ctx.lineWidth = Math.max(1, 1.6 * u);
+        ctx.stroke();
+      }
+    }
+  } else {
+    // boards running to the back wall: narrow ones, or the wide planks of a deck
+    const n = st.floor === "deck" ? 11 : 18;
+    for (let i = 0; i <= n; i++) {
+      const x = -hx + (2 * hx * i) / n, x2 = x + (2 * hx) / n;
+      if (i < n) fillPoly(ctx, [Q(x, 0, NEAR), Q(x2, 0, NEAR), Q(x2, 0, BACK), Q(x, 0, BACK)], tint());
+      const a = Q(x, 0, NEAR), b = Q(x, 0, BACK);
+      ctx.strokeStyle = "rgba(4,2,1,0.75)";
+      ctx.lineWidth = Math.max(1, (st.floor === "deck" ? 2.4 : 1.4) * u);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      if (st.floor === "deck" && i < n) {
+        // where one plank ends and the next begins, and the pegs that hold them
+        for (let k = 0; k < 2; k++) {
+          const d = NEAR + rnd() * (BACK - NEAR);
+          const p = Q(x, 0, d), q = Q(x2, 0, d);
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+          ctx.fillStyle = "rgba(4,2,1,0.7)";
+          for (const f of [0.2, 0.8]) { const g = Q(x + (x2 - x) * f, 0, d + 4); ctx.beginPath(); ctx.arc(g.x, g.y, Math.max(1, 0.9 * g.s), 0, Math.PI * 2); ctx.fill(); }
+        }
+      }
+    }
   }
   ctx.restore();
-  // the side walls
+  // ── the side walls
   for (const side of [-1, 1]) {
     const X = side * hx;
-    const band = (y0, y1, near, far) => {
-      polygon(ctx, [Q(X, y0, NEAR), Q(X, y0, BACK), Q(X, y1, BACK), Q(X, y1, NEAR)]);
+    const M = (a, y) => Q(X, y, a);
+    const tone = (near, far) => {
       const g = ctx.createLinearGradient(Q(X, 0, BACK).x, 0, Q(X, 0, NEAR + 60).x, 0);
       g.addColorStop(0, far);
       g.addColorStop(1, near);
-      ctx.fillStyle = g;
-      ctx.fill();
+      return g;
     };
-    band(0, top, "#1b2622", "#0e1513");
-    ctx.save();
-    polygon(ctx, [Q(X, top, NEAR), Q(X, top, BACK), Q(X, 96, BACK), Q(X, 96, NEAR)]);
-    ctx.clip();
-    for (let d = NEAR; d < BACK; d += 11) {
-      const a = Q(X, top, d), b = Q(X, 96, d);
-      ctx.strokeStyle = "rgba(170,200,180,0.035)";
-      ctx.lineWidth = Math.max(0.6, 2.2 * a.s);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-    }
-    ctx.restore();
-    band(0, 96, "#2a1a10", "#150c07");
-    band(93, 99, "#3e2616", "#1c1009");
-    band(246, 250, "#3e2616", "#1c1009");
-    band(0, 10, "#140b06", "#090504");
-    ctx.strokeStyle = "rgba(4,2,1,0.7)";
-    for (let d = NEAR + 8; d < BACK - 30; d += 62) {
-      polygon(ctx, [Q(X, 86, d + 6), Q(X, 86, d + 56), Q(X, 18, d + 56), Q(X, 18, d + 6)]);
-      ctx.lineWidth = Math.max(0.8, 0.7 * Q(X, 0, d).s);
-      ctx.stroke();
-    }
+    wallUpper(ctx, L, M, NEAR, BACK, tone, rnd);
+    wallLower(ctx, L, M, NEAR, BACK, tone, false);
   }
 }
 
-// the back wall, and the window in it
+// The night in a window that is not the tall arched one: sky going from
+// near-black to deep blue, a few stars, the moon, a dark line of hills.
+// `shape` lays the path of the glass; `box` is its bounds on the screen.
+function nightThrough(ctx, shape, box) {
+  const rnd = lcg(4410);
+  ctx.save();
+  shape();
+  ctx.clip();
+  const sky = ctx.createLinearGradient(0, box.y, 0, box.y + box.h);
+  sky.addColorStop(0, "#03060e");
+  sky.addColorStop(0.6, "#0c1834");
+  sky.addColorStop(1, "#1d2d52");
+  ctx.fillStyle = sky;
+  ctx.fillRect(box.x, box.y, box.w, box.h);
+  const unit = Math.min(box.w, box.h);
+  for (let i = 0; i < 46; i++) {
+    ctx.fillStyle = `rgba(220,230,255,${(0.2 + rnd() * 0.5).toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(box.x + rnd() * box.w, box.y + rnd() * box.h * 0.8, Math.max(0.5, unit * 0.006 * (0.6 + rnd())), 0, Math.PI * 2); ctx.fill();
+  }
+  const mx = box.x + box.w * 0.62, my = box.y + box.h * 0.32, mr = unit * 0.1;
+  soft(ctx, mx, my, mr * 4, mr * 4, "200,214,250", 0.4, "lighter");
+  const body = ctx.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, mr * 0.1, mx, my, mr);
+  body.addColorStop(0, "#fbf8ec");
+  body.addColorStop(0.75, "#e2dccb");
+  body.addColorStop(1, "#b8b29f");
+  ctx.fillStyle = body;
+  ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#0a1122";
+  ctx.beginPath();
+  ctx.moveTo(box.x, box.y + box.h);
+  for (let i = 0; i <= 12; i++) ctx.lineTo(box.x + (box.w * i) / 12, box.y + box.h * (0.86 + 0.04 * Math.sin(i * 1.3) + 0.02 * Math.sin(i * 3.1)));
+  ctx.lineTo(box.x + box.w, box.y + box.h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// A tall sash window between heavy curtains, a pelmet over them.
+function sashWindow(ctx, L) {
+  const w = L.win, h = w.sill - w.top, s = L.Q(0, 0, BACK).s;
+  const x0 = w.cx - w.rx;
+  ctx.fillStyle = "#150c07";
+  ctx.fillRect(x0 - 5 * s, w.top - 5 * s, w.rx * 2 + 10 * s, h + 10 * s);
+  nightThrough(ctx, () => { ctx.beginPath(); ctx.rect(x0, w.top, w.rx * 2, h); }, { x: x0, y: w.top, w: w.rx * 2, h });
+  // the sashes: a meeting rail across the middle, four panes to each
+  ctx.fillStyle = "#1a110b";
+  ctx.fillRect(x0, w.top + h / 2 - 1.6 * s, w.rx * 2, 3.2 * s);
+  for (const y of [w.top + h * 0.25, w.top + h * 0.75]) ctx.fillRect(x0, y - 0.7 * s, w.rx * 2, 1.4 * s);
+  ctx.fillRect(w.cx - 0.8 * s, w.top, 1.6 * s, h);
+  ctx.fillStyle = "rgba(170,190,236,0.3)";
+  ctx.fillRect(w.cx + 0.8 * s, w.top, 0.5 * s, h);
+  ctx.fillRect(x0, w.top + h / 2 + 1.6 * s, w.rx * 2, 0.5 * s);
+  // the sill
+  ctx.fillStyle = "#2a1a0e";
+  ctx.fillRect(x0 - 9 * s, w.sill + 4 * s, w.rx * 2 + 18 * s, 5 * s);
+  ctx.fillStyle = "rgba(170,190,236,0.3)";
+  ctx.fillRect(x0 - 9 * s, w.sill + 4 * s, w.rx * 2 + 18 * s, 0.7 * s);
+  // the curtains: dark red, drawn back and tied, falling well below the sill
+  for (const e of [-1, 1]) {
+    const out = w.cx + e * (w.rx + 26 * s), inn = w.cx + e * (w.rx - 10 * s), foot = w.sill + 62 * s, tie = w.top + h * 0.62;
+    ctx.beginPath();
+    ctx.moveTo(out, w.top - 12 * s);
+    ctx.lineTo(inn - e * 4 * s, w.top - 12 * s);
+    ctx.quadraticCurveTo(inn - e * 2 * s, tie - 30 * s, w.cx + e * (w.rx + 6 * s), tie);
+    ctx.quadraticCurveTo(inn + e * 6 * s, tie + 40 * s, w.cx + e * (w.rx - 2 * s), foot);
+    ctx.lineTo(out, foot);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(out, 0, inn, 0);
+    g.addColorStop(0, "#14060a");
+    g.addColorStop(1, "#3a0e14");
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.save();
+    ctx.clip();
+    for (let i = 0; i < 6; i++) {
+      const x = out - e * (4 + i * 6) * s;
+      ctx.strokeStyle = i % 2 ? "rgba(0,0,0,0.45)" : "rgba(170,150,200,0.1)";
+      ctx.lineWidth = Math.max(0.8, 1.6 * s);
+      ctx.beginPath(); ctx.moveTo(x, w.top - 12 * s); ctx.quadraticCurveTo(x - e * 3 * s, tie, x + e * 2 * s, foot); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.fillStyle = "#8a6a2a";
+    ctx.fillRect(Math.min(out, w.cx + e * (w.rx + 2 * s)), tie - 1.6 * s, Math.abs(out - (w.cx + e * (w.rx + 2 * s))), 3.2 * s);
+  }
+  // the pelmet over them, its fringe
+  ctx.fillStyle = "#2a0a10";
+  ctx.fillRect(x0 - 30 * s, w.top - 26 * s, w.rx * 2 + 60 * s, 16 * s);
+  ctx.fillStyle = "#8a6a2a";
+  ctx.fillRect(x0 - 30 * s, w.top - 11 * s, w.rx * 2 + 60 * s, 1.6 * s);
+  ctx.fillStyle = "rgba(255,206,160,0.1)";
+  ctx.fillRect(x0 - 30 * s, w.top - 26 * s, w.rx * 2 + 60 * s, 1 * s);
+}
+
+// A round window, as a ship has: a heavy brass ring bolted to the wall, a
+// cross of glazing bars.
+function roundWindow(ctx, L) {
+  const w = L.win, s = L.Q(0, 0, BACK).s;
+  const cy = (w.top + w.sill) / 2, r = w.rx;
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.beginPath(); ctx.arc(w.cx + 2 * s, cy + 3 * s, r + 7 * s, 0, Math.PI * 2); ctx.fill();
+  const brass = ctx.createLinearGradient(w.cx - r, cy - r, w.cx + r, cy + r);
+  brass.addColorStop(0, "#3a2a10");
+  brass.addColorStop(0.5, "#8a6c34");
+  brass.addColorStop(1, "#2a1e0c");
+  ctx.fillStyle = brass;
+  ctx.beginPath(); ctx.arc(w.cx, cy, r + 7 * s, 0, Math.PI * 2); ctx.fill();
+  nightThrough(ctx, () => { ctx.beginPath(); ctx.arc(w.cx, cy, r, 0, Math.PI * 2); }, { x: w.cx - r, y: cy - r, w: r * 2, h: r * 2 });
+  ctx.strokeStyle = "#1a1208";
+  ctx.lineWidth = Math.max(1, 1.2 * s);
+  ctx.beginPath(); ctx.arc(w.cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = "#2a1e0c";
+  ctx.lineWidth = Math.max(1, 1.8 * s);
+  ctx.beginPath(); ctx.moveTo(w.cx - r, cy); ctx.lineTo(w.cx + r, cy); ctx.moveTo(w.cx, cy - r); ctx.lineTo(w.cx, cy + r); ctx.stroke();
+  // the bolts round the ring, the moon on its lower edge
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + 0.3;
+    ctx.fillStyle = "#1a1208";
+    ctx.beginPath(); ctx.arc(w.cx + Math.cos(a) * (r + 3.6 * s), cy + Math.sin(a) * (r + 3.6 * s), Math.max(1, 1.1 * s), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(190,206,246,0.4)";
+  ctx.lineWidth = Math.max(0.8, 0.7 * s);
+  ctx.beginPath(); ctx.arc(w.cx, cy, r + 6.4 * s, 0.3, 2.2); ctx.stroke();
+}
+
+// A small window set high and deep in a thick wall, its glass in lead.
+function leadedWindow(ctx, L) {
+  const w = L.win, h = w.sill - w.top, s = L.Q(0, 0, BACK).s;
+  const x0 = w.cx - w.rx, deep = 9 * s;
+  // the reveal: the thickness of the wall, lit on the side toward the moon
+  ctx.fillStyle = "#0c0b09";
+  ctx.fillRect(x0 - deep, w.top - deep, w.rx * 2 + deep * 2, h + deep * 2);
+  fillPoly(ctx, [{ x: x0 - deep, y: w.top - deep }, { x: x0, y: w.top }, { x: x0, y: w.sill }, { x: x0 - deep, y: w.sill + deep }], "rgba(150,170,214,0.2)");
+  fillPoly(ctx, [{ x: x0 - deep, y: w.sill + deep }, { x: x0, y: w.sill }, { x: x0 + w.rx * 2, y: w.sill }, { x: x0 + w.rx * 2 + deep, y: w.sill + deep }], "rgba(150,170,214,0.3)");
+  nightThrough(ctx, () => { ctx.beginPath(); ctx.rect(x0, w.top, w.rx * 2, h); }, { x: x0, y: w.top, w: w.rx * 2, h });
+  // the leads: diamonds, and two iron bars across
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x0, w.top, w.rx * 2, h); ctx.clip();
+  ctx.strokeStyle = "rgba(8,9,10,0.9)";
+  ctx.lineWidth = Math.max(0.8, 0.6 * s);
+  const step = 9 * s;
+  for (let k = -h; k < w.rx * 2 + h; k += step) {
+    ctx.beginPath(); ctx.moveTo(x0 + k, w.top); ctx.lineTo(x0 + k + h, w.sill); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x0 + k + h, w.top); ctx.lineTo(x0 + k, w.sill); ctx.stroke();
+  }
+  ctx.lineWidth = Math.max(1.4, 1.6 * s);
+  for (const fy of [0.34, 0.68]) { ctx.beginPath(); ctx.moveTo(x0, w.top + h * fy); ctx.lineTo(x0 + w.rx * 2, w.top + h * fy); ctx.stroke(); }
+  ctx.restore();
+}
+
+/** The back wall, and the window in it. */
 export function paintWindowWall(ctx, L) {
   const { Q, half: hx, top, W, H } = L;
-  const a = Q(-hx, top, BACK), b = Q(hx, 0, BACK), s = a.s;
-  const yAt = (y) => Q(0, y, BACK).y;
-  ctx.fillStyle = "#101816";
-  ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
-  // the paper's stripe
-  ctx.strokeStyle = "rgba(170,200,180,0.035)";
-  ctx.lineWidth = Math.max(0.6, 2.2 * s);
-  for (let x = -hx; x < hx; x += 11) {
-    const p = Q(x, 0, BACK);
-    ctx.beginPath(); ctx.moveTo(p.x, a.y); ctx.lineTo(p.x, yAt(96)); ctx.stroke();
-  }
-  ctx.fillStyle = "#32200f";
-  ctx.fillRect(a.x, yAt(250), b.x - a.x, 4 * s);
+  const st = L.style;
+  const a = Q(-hx, top, BACK), b = Q(hx, 0, BACK);
+  const M = (x, y) => Q(x, y, BACK);
+  // the back wall is all one distance off: one colour to a thing
+  const tone = (near, far) => (far === st.far ? st.back : far);
+  wallUpper(ctx, L, M, -hx, hx, tone, lcg(77));
   const w = L.win;
   // the moon's light on the wall round the window
   soft(ctx, w.cx, (w.top + w.sill) / 2, w.rx * 3, (w.sill - w.top) * 1.1, MOON, 0.24, "lighter");
-  paintNightWindow(ctx, W, H, w, L.vp);
-  // the dado runs on under the sill: rail, panels, skirting
-  ctx.fillStyle = "#1a100a";
-  ctx.fillRect(a.x, yAt(96), b.x - a.x, b.y - yAt(96));
-  ctx.fillStyle = "#32200f";
-  ctx.fillRect(a.x, yAt(99), b.x - a.x, 6 * s);
-  ctx.fillStyle = "#0b0604";
-  ctx.fillRect(a.x, yAt(10), b.x - a.x, 10 * s);
-  ctx.strokeStyle = "rgba(4,2,1,0.7)";
-  ctx.lineWidth = Math.max(0.8, 0.7 * s);
-  for (let x = -hx + 8; x < hx - 30; x += 62) {
-    const p = Q(x + 6, 86, BACK), q = Q(x + 56, 18, BACK);
-    ctx.strokeRect(p.x, p.y, q.x - p.x, q.y - p.y);
-  }
+  if (st.window === "sash") sashWindow(ctx, L);
+  else if (st.window === "round") roundWindow(ctx, L);
+  else if (st.window === "leaded") leadedWindow(ctx, L);
+  else paintNightWindow(ctx, W, H, w, L.vp);
+  // what stands in front of the wall's foot runs on under the sill
+  wallLower(ctx, L, M, -hx, hx, tone, true);
   // the corners, where the walls meet
   for (const side of [-1, 1]) {
-    const g = ctx.createLinearGradient(Q(side * hx, 0, BACK).x, 0, Q(side * (hx - 70), 0, BACK).x, 0);
+    const x0 = Q(side * hx, 0, BACK).x, x1 = Q(side * (hx - 70), 0, BACK).x;
+    const g = ctx.createLinearGradient(x0, 0, x1, 0);
     g.addColorStop(0, "rgba(0,0,0,0.5)");
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
-    ctx.fillRect(Math.min(Q(side * hx, 0, BACK).x, Q(side * (hx - 70), 0, BACK).x), a.y, 70 * s, b.y - a.y);
+    ctx.fillRect(Math.min(x0, x1), a.y, Math.abs(x1 - x0), b.y - a.y);
   }
 }
 

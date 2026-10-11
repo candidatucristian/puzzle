@@ -3,7 +3,8 @@
  *  each level it holds is found there, and is come back to there once solved.
  *  `back` is the place its door leads out to; `doors` are a place's own
  *  doors in the order they are numbered, each the place behind it, or null
- *  for one with nothing behind it yet. A room that `needsKey` stays locked
+ *  for one with nothing behind it yet (`first` is the number on the first of
+ *  them, where it is not I). A room that `needsKey` stays locked
  *  until its key has been found; the key is in the `chest` of another room,
  *  which opens once everything that room holds has been solved. A room
  *  marked `unbuilt` has a door and a key but cannot be gone into yet.
@@ -11,7 +12,7 @@
  *  its list while the player stands there: where they are, and what there
  *  is to do — never how. No scene code lives here. */
 export const PLACES = Object.freeze([
-  { key: "Hall", name: "The Hall", back: null, holds: [], doors: ["Study", "Room2", "Room3", "Room4", null, null],
+  { key: "Hall", name: "The Hall", back: null, holds: [], doors: ["Study", "Room2", "Room3", "Room4", "Room5", "Room6"],
     story: [
       "The manor has been shut up for years, and everyone who lived in it left something behind.",
       "Six doors open off this hall, and most of them are locked tonight. Each room keeps the key to another.",
@@ -34,8 +35,31 @@ export const PLACES = Object.freeze([
       "Three things here still keep a word each, and each has a light of its own. Find the word, and the light can go out.",
       "When all three are dark, the room will give up what it has been keeping.",
     ] },
-  { key: "Room4", name: "Room 4", back: "Hall", holds: [], needsKey: true, unbuilt: true },
+  { key: "Room4", name: "Room 4", back: "Hall", holds: ["sequence"], needsKey: true, chest: "Room5",
+    story: [
+      "The counting room: somebody kept the house's figures here, and pinned the last of them to the wall.",
+      "What is pinned up still keeps a word, under a light of its own. Find the word, and the light can go out.",
+      "When the room is dark, it will give up what it has been keeping.",
+    ] },
+  // Up the stairs from the hall: the upper hall. Its six doors — VII to XII —
+  // have nothing behind them yet; what is found there is in the hall itself.
+  { key: "Upper", name: "The Upper Hall", back: "Hall", holds: ["lightswitch"], doors: [null, null, null, null, null, null], first: 7,
+    story: [
+      "The floor above has been shut up longer than the one below. The paper is coming off the walls, and nobody has swept.",
+      "One light still works up here, after a fashion. It is trying to say something.",
+    ] },
+  // The last two rooms are built but hold nothing yet. Until something is put
+  // in Room 5, there is nothing to solve there and its chest opens at once.
+  { key: "Room5", name: "Room 5", back: "Hall", holds: [], needsKey: true, chest: "Room6",
+    story: ["The drawing room. The fire has burned low, and whatever was kept here has not been found yet."] },
+  { key: "Room6", name: "Room 6", back: "Hall", holds: [], needsKey: true,
+    story: ["The last room along the hall. It has been cleared: there is nothing here yet."] },
 ]);
+
+/** While the house is being built: every door opens without its key, so
+ *  that each room can be walked into and looked at. Set this to false to
+ *  have the keys matter again — nothing else needs changing. */
+export const ALL_DOORS_OPEN = true;
 
 /** A place asks to go somewhere: `{ place: key }` or `{ level: id }`. */
 export const HOUSE_GO = "house:go";

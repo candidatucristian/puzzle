@@ -2,7 +2,7 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
 import { paintKey } from "../../shared/keyArt.js";
 import { writingDesk, greenLamp, candle, gamesTable } from "../house/furniture.js";
 import {
-  WARM, BACK, roomLayout, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
+  WARM, BACK, roomLayout, roomStyle, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
   footShadow, paintChest, gloom,
 } from "../house/roomKit.js";
 
@@ -20,6 +20,10 @@ import {
  *  Three puzzles are found here — the bottle, the board, the telephone; in
  *  the room they are only themselves, small, enough to know them by. Each
  *  has its own light, which burns until its puzzle is solved.
+ *
+ *  The room is fitted out like a cabin: limewashed boards over navy
+ *  match-boarding, beams overhead, a deck of wide planks underfoot, and a
+ *  round port for a window.
  *
  *  Measured and seen as every room is (house/roomKit.js). Painted once per
  *  screen size: the room; a glow; the chest, shut and open; the key. */
@@ -41,11 +45,21 @@ const GAME = [[7, 0, true, 5.6], [4, 1, true, 9.6], [0, 2, true, 4.6], [3, 3, fa
  *  over the telephone and the telephone's own screen. */
 export function layoutRoom3(W, H, on = { ship: true, chess: true, phone: true }) {
   const L = roomLayout(W, H);
+  // fitted out like a cabin: limewashed boards over navy match-boarding,
+  // beams overhead, a deck of wide planks, a round port for a window
+  L.style = roomStyle({
+    wall: "planks", near: "#2b333b", far: "#131a20", back: "#1b232a", rail: 0,
+    dado: { kind: "boards", h: 100, near: "#13243c", far: "#08111e", back: "#0d192a", rail: "#2c3e58", railFar: "#121c2c", railBack: "#1d2d46" },
+    skirt: "#0a1420", skirtBack: "#060c14",
+    floor: "deck", floorNear: "#3c3226", floorFar: "#1c1610",
+    ceiling: "beams", ceilingCol: "#151b20", window: "round",
+  });
   L.on = on;
   const { Q, half: hx } = L;
   // the window in the back wall
   const wc = Q(0.06 * hx, 0, BACK);
-  L.win = { cx: wc.x, rx: 0.15 * hx * wc.s, top: Q(0, 288, BACK).y, sill: Q(0, 104, BACK).y, x: 0.06 * hx, hw: 0.15 * hx };
+  const port = 0.13 * hx; // the port's radius; its middle is 196 up
+  L.win = { cx: wc.x, rx: port * wc.s, top: Q(0, 196 + port, BACK).y, sill: Q(0, 196 - port, BACK).y, x: 0.06 * hx, hw: port };
   // the table on the left: the bottle in its cradle, the lantern beside it
   const t = (L.table = { x0: -0.66 * hx, x1: -0.27 * hx, d0: 398, d1: 456, h: 72 });
   const tw = t.x1 - t.x0;
