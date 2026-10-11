@@ -1,5 +1,6 @@
 import { RoomPreviewStore } from '../core/RoomPreviewStore.js';
 import { toRoman } from './transitions.js';
+import { paintKey } from '../shared/keyArt.js';
 
 export function mountProgress(scope, { game, levels, storage, navigate, canNavigate }) {
   const grid = document.getElementById('levels-grid');
@@ -72,7 +73,26 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     // under the list, the few lines of story for where the player is
     const story = document.getElementById('index-story');
     story.replaceChildren(...near.story.map(line => Object.assign(document.createElement('p'), { textContent: line })));
-    story.hidden = near.story.length === 0;
+    // a finished room says so, in place of its story
+    story.hidden = near.story.length === 0 || near.completed;
+    document.getElementById('index-done').hidden = !near.completed;
+    // under the story, the keys found so far, each with the door it is for
+    const ring = document.getElementById('index-keys');
+    const held = levels.keys;
+    if (ring.dataset.held !== held.map(item => item.key).join()) {
+      ring.dataset.held = held.map(item => item.key).join();
+      ring.replaceChildren(...held.map(item => {
+        const figure = document.createElement('figure');
+        const caption = document.createElement('figcaption');
+        caption.append(Object.assign(document.createElement('span'), { className: 'key-label', textContent: 'Key found' }),
+          `This key unlocks door ${toRoman(item.door)}`);
+        const picture = paintKey();
+        picture.setAttribute('role', 'img'); picture.setAttribute('aria-label', `The key to door ${toRoman(item.door)}`);
+        figure.append(caption, picture);
+        return figure;
+      }));
+    }
+    ring.hidden = held.length === 0;
     const here = near.indexes.filter(index => levels.isCompleted(index)).length;
     // a count only where there is something to count
     document.getElementById('progress-count').hidden = near.indexes.length === 0;

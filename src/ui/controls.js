@@ -13,6 +13,7 @@ import { mountInteractionFeedback } from './interactions.js';
 import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
 import { createMoonCanvas } from '../shared/moon.js';
 import { mountStartFilm } from './startFilm.js';
+import { mountStartManor } from './startManor.js';
 import { HOUSE_GO, WALK_MS } from '../shared/house.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
@@ -23,7 +24,10 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   moon.width = moonArt.width;
   moon.height = moonArt.height;
   moon.getContext('2d').drawImage(moonArt, 0, 0);
-  const film = mountStartFilm(scope, preferences);
+  // Behind the title: the manor painted, as the rooms are — or, asked for
+  // with ?start=video in the address, the film of it.
+  const filmed = new URLSearchParams(location.search).get('start') === 'video';
+  const film = filmed ? mountStartFilm(scope, preferences) : mountStartManor(scope, preferences);
   const input = byId('level-code');
   const feedback = byId('answer-feedback');
   let mobile, suspendedInput;
@@ -117,8 +121,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   // the whole of `out`: the picture holds while the eye sets off toward it,
   // then darkens steadily for the rest of the way.
   let walking = false;
-  function walk(arrive, out = 240) {
+  function walk(arrive, out = 240, hold = 0) {
     if (walking) return;
+    if (hold) { walking = true; scope.later(() => { walking = false; walk(arrive, out); }, hold); return; }
     const canvas = game.canvas;
     const land = () => { completion.hide(); mobile?.close(); arrive(); walking = false; };
     if (preferences?.reducedMotion || !canvas.animate) { land(); return; }
@@ -144,7 +149,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   scope.on(byId('btn-leave'), 'click', () => {
     const back = levels.back;
     if (walking || transitions.busy || dialogs.isOpen || !back) return;
-    walk(() => levels.enterPlace(back.key));
+    // the place opens on what is being come away from, and draws back from it
+    const from = levels.place ? { place: levels.place.key } : { level: levels.definitions[levels.currentIndex].id };
+    walk(() => levels.enterPlace(back.key, from));
   });
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
   mountFullscreenControl(scope, byId('btn-fullscreen'));
@@ -159,6 +166,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     // a puzzle found in the house is come back from to where it was found;
     // one not put anywhere yet still leads straight on to the next
     const home = levels.homeOf(levels.currentIndex);
+    const solvedId = levels.definitions[levels.currentIndex].id;
     const result = levels.submit(input.value);
     if (result.correct) {
       answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : home ? 'Answer accepted.' : 'Answer accepted. Opening the next room.', 'success');
@@ -168,7 +176,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
         audio.playSuccess();
       } else {
         audio.playSuccess();
-        if (home) transitions.enter(home.key, { caption: 'Answer accepted' });
+        // a moment for the answer to be seen accepted, then back out to the
+        // room, which opens on the thing just solved and draws back from it
+        if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, 700);
         else navigate(result.nextIndex, { caption: 'Answer accepted' });
       }
       input.value = '';

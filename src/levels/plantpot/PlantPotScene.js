@@ -15,9 +15,9 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PLANT POT"  ·  code: FIBO / FIBONACCI  ·  water the plant
 //
-// A garden at night under a full moon, told as simply as the valley through
-// the telescope's window. On the potting bench in front of us, beside a
-// storm lantern, stand a terracotta pot and a zinc bucket of water. Drag the
+// A garden at night under a full moon, seen from the study's window: we
+// look out and down over the sill. On the potting bench under the window,
+// beside a storm lantern, stand a terracotta pot and a zinc bucket of water. Drag the
 // bucket to the pot and it pours; each pour grows the plant one branch, and
 // each new branch brings its leaves: 1, 1, 2, 3, 5. Five pours, and the plant
 // has grown the sequence that bears a name. The scenery holds no formula and
@@ -27,8 +27,7 @@ import {
 // bucket too (plant.js); the stems are painted live as they grow, and the
 // leaves are the level's own leaf image (assets/images/PlantPot/leaf.png).
 // What moves is driven from here: the lantern's flame, fireflies over the
-// grass, the grass in the corners stirring, the stars, now and then a
-// shooting star.
+// grass, the stars, now and then a shooting star.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // the plant's skeleton, in cm from the middle of the soil: one segment per
@@ -176,7 +175,6 @@ export default class PlantPotScene extends BasePuzzleScene {
     this._W = W;
     this._H = H;
     this._fireflies = [];
-    this._sway = [];
     this._drops = [];
     this._stream = null;
     this._shoot = null;
@@ -194,7 +192,8 @@ export default class PlantPotScene extends BasePuzzleScene {
 
     this._makeBench(L);
     this._makeLantern(L);
-    this._makeTufts(L);
+    // the window we look out of, in front of everything in the garden
+    this.add.image(0, 0, K.frame).setOrigin(0, 0).setDepth(17);
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
     this._drawTexts(W, H);
     this._built = true;
@@ -242,21 +241,6 @@ export default class PlantPotScene extends BasePuzzleScene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
-    }
-  }
-
-  // tall grass in the bottom corners, dark against the slope, stirring
-  _makeTufts(L) {
-    const rnd = this._rng(2024);
-    for (const fx of [0.015, 0.06, 0.115, 0.885, 0.94, 0.99]) {
-      const x = L.W * fx + (rnd() - 0.5) * 16;
-      const s = (L.u * (0.8 + rnd() * 0.5)) / 2; // the tuft is painted at twice its size
-      const img = this.add
-        .image(x, L.H + 4, this._art.keys.tuft)
-        .setOrigin(0.5, 1)
-        .setScale(s)
-        .setDepth(12);
-      this._sway.push({ img, amp: 0.045, ph: rnd() * 6.28, sp: 1.1 + rnd() * 0.7 });
     }
   }
 
@@ -403,9 +387,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     if (!this.ambientMotion) return;
     const t = time / 1000;
     const dt = Math.min(delta || 16, 100);
-    const wind = 0.55 * Math.sin(t * 0.63) + 0.3 * Math.sin(t * 1.71 + 1.2) + 0.15 * Math.sin(t * 3.1 + 0.4);
 
-    for (const s of this._sway) s.img.rotation = s.amp * (wind * 0.8 + 0.35 * Math.sin(t * s.sp + s.ph));
 
     // the flame
     const f = this._flame;

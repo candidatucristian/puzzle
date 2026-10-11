@@ -25,6 +25,7 @@ export class ProgressStore {
       ...this.#state,
       completedLevelIds: [...this.#state.completedLevelIds],
       unlockedLevelIds: [...this.#state.unlockedLevelIds],
+      keys: [...this.#state.keys],
     };
   }
 
@@ -63,6 +64,16 @@ export class ProgressStore {
     return true;
   }
 
+  /** The keys found so far, each named for the room it opens. */
+  hasKey(id) { return this.#state.keys.includes(id); }
+
+  grantKey(id) {
+    if (typeof id !== "string" || !id || this.hasKey(id)) return false;
+    this.#state.keys.push(id);
+    this.#save();
+    return true;
+  }
+
   visit(index) {
     if (!this.canAccess(index)) return false;
     this.#state.lastPlayedLevelId = this.#definitions[index].id;
@@ -93,6 +104,7 @@ export class ProgressStore {
       completedLevelIds: [],
       unlockedLevelIds: [this.#definitions[0].id],
       lastPlayedLevelId: this.#definitions[0].id,
+      keys: [],
     };
   }
 
@@ -125,6 +137,8 @@ export class ProgressStore {
           lastPlayedLevelId: valid.has(parsed.lastPlayedLevelId)
             ? parsed.lastPlayedLevelId
             : (firstIncomplete || this.#definitions.at(-1)).id,
+          // saves from before the house had keys simply have none
+          keys: Array.isArray(parsed.keys) ? [...new Set(parsed.keys)].filter((id) => typeof id === "string") : [],
         };
       } catch {
         // A damaged modern save must not resurrect stale legacy progress.
@@ -149,6 +163,7 @@ export class ProgressStore {
       completedLevelIds: this.#definitions.slice(0, index).map(({ id }) => id),
       unlockedLevelIds: this.#definitions.slice(0, index + 1).map(({ id }) => id),
       lastPlayedLevelId: this.#definitions[index].id,
+      keys: [],
     };
   }
 

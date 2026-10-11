@@ -1,32 +1,35 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { HOUSE_GO, PLACES, zoomInto } from "../../shared/house.js";
+import { HOUSE_GO, zoomInto, zoomOutFrom } from "../../shared/house.js";
 import { layoutHall, paintHall, releaseHallArt } from "./hall.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The hall: the ground floor of the manor, where the player stands on coming
-// in. Night; three closed doors down either side, the moon in the window at
-// the far end. This is not a level and has no code: it is the way to them.
-// What can be gone to glints. The first door opens on the first room; the
-// other doors are shut for now: nothing is behind them yet.
+// in. Night; three closed doors down either side, the stairs to the floor
+// above at the far end. This is not a level and has no code: it is the way to them.
+// A door with something still to be found behind it glints, and has the
+// light on under it: the first, and any whose key has been found. A room
+// that is finished goes dark and stops glinting, though its door still
+// opens. The rest are dark, locked, with nothing to be done at them yet.
 //
 // The hall is painted (hall.js). Live over it: the sconces' candles, the
 // light under the doors, dust in the moonbeams, the glints.
 // ─────────────────────────────────────────────────────────────────────────────
-
-// where each door leads, in the order they are numbered; null is a locked door
-const BEHIND = PLACES.find((place) => place.key === "Hall").doors;
 
 export default class HallScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Hall" });
   }
 
-  create() {
+  create(data) {
     this.beginScene();
     this._sparkles = [];
     this._build(this.cameras.main.width, this.cameras.main.height);
+    // come out of one of the rooms: draw back from its door
+    const n = this.services.levels.rooms.findIndex((room) => room.key && room.key === data?.from?.place);
+    const door = this._L.doors.find((d) => d.number === n + 1);
+    if (door) zoomOutFrom(this, door.box);
     this._onResize = ({ width, height }) => {
       this._teardown();
       this._build(width, height);
@@ -52,35 +55,39 @@ export default class HallScene extends BasePuzzleScene {
         .setDepth(-8),
     );
 
-    // the doors: one that opens has the light of its room breathing under
-    // it, a glint on it, and a click that goes through it
+    // the doors: one with something still behind it has the light of its
+    // room breathing under it and a glint on it; one that opens takes a click
+    const rooms = this.services.levels.rooms;
     L.doors.forEach((d, n) => {
-      const place = BEHIND[d.number - 1];
+      const room = rooms[d.number - 1];
+      const calling = Boolean(room) && !room.locked && !room.completed;
       const glow = this.add
         .image(d.sill.x, d.sill.y, k.glow)
         .setDisplaySize((L.wall * 0.42) / d.z, (H * 0.09) / d.z)
         .setTint(0xffc078)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(place ? 0.3 : 0.08)
+        .setAlpha(calling ? 0.3 : 0.06)
         .setDepth(-8);
-      if (!place) return;
-      this.ambientTween({
-        targets: glow,
-        alpha: { from: 0.22, to: 0.5 },
-        duration: 2200 + n * 260,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-      const shape = new Phaser.Geom.Polygon(d.quad.flatMap((p) => [p.x, p.y]));
-      const zone = this.add
-        .zone(0, 0, W, H)
-        .setOrigin(0, 0)
-        .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
-        .setData("interactionLabel", "Open the door")
-        .setDepth(5);
-      zone.on("pointerdown", () => this._go(d.box, { place }));
-      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => d.box }));
+      if (calling) {
+        this.ambientTween({
+          targets: glow,
+          alpha: { from: 0.22, to: 0.5 },
+          duration: 2200 + n * 260,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      }
+      if (!room || room.locked) return;
+      const zone = this.add.zone(0, 0, W, H).setOrigin(0, 0).setDepth(5);
+      if (room.open) {
+        const shape = new Phaser.Geom.Polygon(d.quad.flatMap((p) => [p.x, p.y]));
+        zone
+          .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
+          .setData("interactionLabel", room.completed ? "Open the door — completed" : "Open the door");
+        zone.on("pointerdown", () => this._go(d.box, { place: room.key }));
+      }
+      if (calling) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => d.box }));
     });
 
     // dust turning in the moonlight down the middle of the hall

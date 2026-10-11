@@ -1,5 +1,6 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg, polygon } from "../../shared/paint.js";
 import { paintNightWindow } from "../hall/hall.js";
+import { paintKey } from "../../shared/keyArt.js";
 
 /** The study, the first room off the hall, at night. Seen from just inside
  *  its door: the back wall with a tall window and the moon in it, a side wall
@@ -17,9 +18,13 @@ import { paintNightWindow } from "../hall/hall.js";
  *  the floor, d away from the eye — which is a standing person's, 150 up,
  *  with the picture three metres in front of it.
  *
- *  Painted once per screen size: the room; a glow. */
+ *  On the desk too, a small gilt chest. It is shut until the room's three
+ *  puzzles are solved; then it opens of itself and gives up a key.
+ *
+ *  Painted once per screen size: the room; a glow; the chest, shut and
+ *  open; the key. */
 
-const K = { room: "sd_room", glow: "sd_glow" };
+const K = { room: "sd_room", glow: "sd_glow", shut: "sd_chest_shut", open: "sd_chest_open", key: "sd_key" };
 const WARM = "255,190,120";
 const MOON = "150,178,232";
 const EYE = 150; // how high we look from
@@ -30,10 +35,12 @@ const NEAR = 250; // where the walls leave the picture, behind us
 // ── where everything is ─────────────────────────────────────────────────────
 
 /** `lampOn`: whether the lamp on the table is alight — it is, until the case
- *  under it has given up its puzzle; after that it is turned right down. */
-export function layoutStudy(W, H, { lampOn = true } = {}) {
+ *  under it has given up its puzzle; after that it is turned right down.
+ *  `candleOn`: the candle on the desk, which burns until the cipher wheel
+ *  over it has been solved, and is then out. */
+export function layoutStudy(W, H, { lampOn = true, candleOn = true } = {}) {
   const u = Math.min(W / 1000, H / 700);
-  const L = { W, H, u, lampOn };
+  const L = { W, H, u, lampOn, candleOn };
   L.vp = { x: W * 0.5, y: H * 0.44 };
   L.cm = (H * 0.6) / EYE; // a centimetre at the picture, in pixels
   L.half = Math.max(W * 0.62, H) / L.cm; // half the room's width
@@ -56,6 +63,22 @@ export function layoutStudy(W, H, { lampOn = true } = {}) {
   const kw = k.x1 - k.x0;
   L.wheel = { x: k.x0 + kw * 0.44, y: 152, r: 24, plaque: 30 };
   L.candle = { x: k.x0 + kw * 0.8, d: 540, y: k.h };
+  // the little chest on the desk's left end
+  L.chest = { x0: k.x0 + kw * 0.1, x1: k.x0 + kw * 0.28, d0: 524, d1: 539, y0: k.h + 1, y1: k.h + 8.5, lid: 5.5 };
+  {
+    const c = L.chest, pts = [];
+    for (const x of [c.x0, c.x1]) for (const d of [c.d0, c.d1 + 12]) for (const y of [c.y0, c.y1 + c.lid + 22]) pts.push(Q(x, y, d));
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y), pad = 6;
+    c.box = { x: Math.floor(Math.min(...xs) - pad), y: Math.floor(Math.min(...ys) - pad) };
+    c.box.width = Math.ceil(Math.max(...xs) + pad) - c.box.x;
+    c.box.height = Math.ceil(Math.max(...ys) + pad) - c.box.y;
+    const m = Q((c.x0 + c.x1) / 2, c.y1 + 2, (c.d0 + c.d1) / 2);
+    c.mouth = { x: m.x, y: m.y, s: m.s };
+    // the chest itself on the screen, and two places on it a glint may show
+    const a = Q(c.x0, c.y1 + c.lid, c.d1), b = Q(c.x1, c.y0, c.d0);
+    c.hit = { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y };
+    c.glints = [Q(c.x1 - 2, c.y1 + c.lid * 0.9, (c.d0 + c.d1) / 2), Q(c.x0 + (c.x1 - c.x0) * 0.62, c.y1 - 1, c.d0), Q(c.x0 + 3, c.y1 + c.lid * 0.7, c.d0 + 3)];
+  }
   // down the left-hand wall, the books
   L.shelf = { d0: 372, d1: 566, y0: 0, y1: 236 };
 
@@ -104,6 +127,9 @@ export function paintStudy(scene, L) {
   grain(ctx, W, H, 0.035);
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
+  addCanvasTexture(t, K.shut, paintChest(L, false));
+  addCanvasTexture(t, K.open, paintChest(L, true));
+  addCanvasTexture(t, K.key, paintKey());
   return { keys: K };
 }
 
@@ -116,6 +142,188 @@ const fillPoly = (ctx, pts, style) => {
   ctx.fillStyle = style;
   ctx.fill();
 };
+
+// The chest: a small coffer of gilded wood, bound with darker bronze straps,
+// a lock plate on its front, a barrel lid. Painted by the room's own eye on
+// a canvas of its own (laid at L.chest.box), shut or open — open, the lid
+// stands back on its hinges and shows its red lining, and the box is empty.
+// The candle is on its right: it is brightest there.
+function paintChest(L, open) {
+  const c = L.chest, box = c.box;
+  const cv = makeCanvas(box.width, box.height);
+  const ctx = cv.getContext("2d");
+  ctx.translate(-box.x, -box.y);
+  const Q = L.Q;
+  const s = Q(0, 0, c.d0).s;
+  const r = (c.d1 - c.d0) / 2;
+  const gold = (xa, xb, k = 1) => {
+    const g = ctx.createLinearGradient(xa, 0, xb, 0);
+    const col = (R, G, B) => `rgb(${Math.round(R * k)},${Math.round(G * k)},${Math.round(B * k)})`;
+    g.addColorStop(0, col(126, 88, 12));
+    g.addColorStop(0.4, col(220, 168, 40));
+    g.addColorStop(0.72, col(255, 214, 92));
+    g.addColorStop(0.9, col(255, 244, 176));
+    g.addColorStop(1, col(240, 190, 70));
+    return g;
+  };
+  const xa = Q(c.x0, 0, c.d0).x, xb = Q(c.x1, 0, c.d0).x;
+  // a place on the lid: how far round its barrel (0 the front edge, 1 the
+  // hinge), turned back on the hinge when the chest is open
+  const swing = open ? 1.9 : 0;
+  const lidAt = (x, k) => {
+    const dd = -r - r * Math.cos(k * Math.PI), yy = c.lid * Math.sin(k * Math.PI);
+    return Q(x, c.y1 + (-dd * Math.sin(swing) + yy * Math.cos(swing)), c.d1 + dd * Math.cos(swing) + yy * Math.sin(swing));
+  };
+  const lid = () => {
+    const N = 10;
+    for (let i = 0; i < N; i++) {
+      const k0 = i / N, k1 = (i + 1) / N;
+      fillPoly(ctx, [lidAt(c.x0, k0), lidAt(c.x1, k0), lidAt(c.x1, k1), lidAt(c.x0, k1)],
+        open ? `rgb(${Math.round(96 - 50 * k0)},${Math.round(22 - 10 * k0)},${Math.round(26 - 12 * k0)})` : gold(xa, xb, 0.62 + 0.5 * Math.sin((k0 + 0.18) * Math.PI)));
+    }
+    // its end, toward the middle of the room
+    const end = [];
+    for (let i = 0; i <= N; i++) end.push(lidAt(c.x0, i / N));
+    fillPoly(ctx, end, open ? "#6a4c10" : "#9a741c");
+    // the straps over it, and its rim
+    for (const f of [0.2, 0.8]) {
+      const x0 = c.x0 + (c.x1 - c.x0) * (f - 0.035), x1 = c.x0 + (c.x1 - c.x0) * (f + 0.035);
+      for (let i = 0; i < N; i++) {
+        fillPoly(ctx, [lidAt(x0, i / N), lidAt(x1, i / N), lidAt(x1, (i + 1) / N), lidAt(x0, (i + 1) / N)], open ? "rgba(30,8,8,0.5)" : "rgba(156,108,20,0.92)");
+      }
+    }
+    if (!open) {
+      // the candle running along the crown of the lid
+      const p = lidAt(c.x0 + (c.x1 - c.x0) * 0.3, 0.4), q = lidAt(c.x1 - (c.x1 - c.x0) * 0.04, 0.4);
+      ctx.strokeStyle = "rgba(255,252,224,0.75)";
+      ctx.lineWidth = Math.max(0.8, 0.5 * s);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+    }
+    if (!open) {
+      // a row of beading just above the lid's front edge
+      ctx.fillStyle = "rgba(255,248,206,0.8)";
+      for (let i = 1; i < 14; i++) {
+        const p = lidAt(c.x0 + ((c.x1 - c.x0) * i) / 14, 0.1);
+        ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.5, 0.26 * s), 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.strokeStyle = open ? "#e6c060" : "rgba(110,74,10,0.9)";
+    ctx.lineWidth = Math.max(1, 0.7 * s);
+    ctx.beginPath();
+    const a = lidAt(c.x0, 0), b = lidAt(c.x1, 0);
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  };
+  // what it throws on the leather
+  const foot = Q((c.x0 + c.x1) / 2, c.y0, (c.d0 + c.d1) / 2);
+  soft(ctx, foot.x - 4 * s, foot.y + 1 * s, (c.x1 - c.x0) * 0.62 * s, r * 0.9 * s, "0,0,0", 0.6);
+  // four little ball feet
+  for (const [x, d] of [[c.x0 + 1.2, c.d1 - 1], [c.x1 - 1.2, c.d1 - 1], [c.x0 + 1.2, c.d0 + 0.6], [c.x1 - 1.2, c.d0 + 0.6]]) {
+    const p = Q(x, c.y0 - 0.5, d);
+    ctx.fillStyle = "#7a5610";
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1, 0.9 * s), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(255,240,180,0.7)";
+    ctx.beginPath(); ctx.arc(p.x + 0.25 * s, p.y - 0.25 * s, Math.max(0.4, 0.3 * s), 0, Math.PI * 2); ctx.fill();
+  }
+  if (open) lid();
+  // the box: its end, then its front
+  fillPoly(ctx, [Q(c.x0, c.y0, c.d0), Q(c.x0, c.y0, c.d1), Q(c.x0, c.y1, c.d1), Q(c.x0, c.y1, c.d0)], "#8c6616");
+  const f0 = Q(c.x0, c.y1, c.d0), f1 = Q(c.x1, c.y0, c.d0);
+  ctx.fillStyle = gold(xa, xb);
+  ctx.fillRect(f0.x, f0.y, f1.x - f0.x, f1.y - f0.y);
+  // chased work on the front: a faint diaper of lozenges
+  ctx.save();
+  ctx.beginPath(); ctx.rect(f0.x, f0.y, f1.x - f0.x, f1.y - f0.y); ctx.clip();
+  ctx.strokeStyle = "rgba(120,80,8,0.26)";
+  ctx.lineWidth = Math.max(0.5, 0.25 * s);
+  for (let i = -6; i < 14; i++) {
+    for (const dir of [1, -1]) {
+      ctx.beginPath();
+      ctx.moveTo(f0.x + i * 3.2 * s, dir > 0 ? f0.y : f1.y);
+      ctx.lineTo(f0.x + (i + 4) * 3.2 * s, dir > 0 ? f1.y : f0.y);
+      ctx.stroke();
+    }
+  }
+  // the straps, each with its rivets; the box's foot in shadow
+  for (const f of [0.2, 0.8]) {
+    const x = f0.x + (f1.x - f0.x) * f, w = (f1.x - f0.x) * 0.07;
+    ctx.fillStyle = "#a87a1a";
+    ctx.fillRect(x - w / 2, f0.y, w, f1.y - f0.y);
+    ctx.fillStyle = "rgba(90,58,6,0.7)";
+    ctx.fillRect(x - w / 2, f0.y, Math.max(0.6, 0.3 * s), f1.y - f0.y);
+    ctx.fillStyle = "rgba(255,244,190,0.6)";
+    ctx.fillRect(x + w / 2 - Math.max(0.6, 0.3 * s), f0.y, Math.max(0.6, 0.3 * s), f1.y - f0.y);
+    ctx.fillStyle = "rgba(255,250,214,0.95)";
+    for (const y of [0.22, 0.78]) { ctx.beginPath(); ctx.arc(x, f0.y + (f1.y - f0.y) * y, Math.max(0.7, 0.42 * s), 0, Math.PI * 2); ctx.fill(); }
+  }
+  // a raised border round the front, a leaf in each corner
+  const bw = f1.x - f0.x, bh = f1.y - f0.y, inset = 0.9 * s;
+  ctx.strokeStyle = "rgba(96,62,6,0.75)";
+  ctx.lineWidth = Math.max(0.6, 0.3 * s);
+  ctx.strokeRect(f0.x + inset, f0.y + inset, bw - inset * 2, bh - inset * 2);
+  ctx.strokeStyle = "rgba(255,248,206,0.6)";
+  ctx.strokeRect(f0.x + inset + 0.4 * s, f0.y + inset + 0.4 * s, bw - inset * 2, bh - inset * 2);
+  ctx.fillStyle = "rgba(255,246,196,0.85)";
+  for (const [cx, cy] of [[f0.x + inset, f0.y + inset], [f1.x - inset, f0.y + inset], [f0.x + inset, f1.y - inset], [f1.x - inset, f1.y - inset]]) {
+    ctx.beginPath(); ctx.arc(cx, cy, Math.max(0.7, 0.5 * s), 0, Math.PI * 2); ctx.fill();
+  }
+  // a bright line under the lid's edge, as polished metal has
+  const shine = ctx.createLinearGradient(f0.x, 0, f1.x, 0);
+  shine.addColorStop(0, "rgba(255,252,224,0)");
+  shine.addColorStop(0.55, "rgba(255,252,224,0.55)");
+  shine.addColorStop(1, "rgba(255,252,224,0.2)");
+  ctx.fillStyle = shine;
+  ctx.fillRect(f0.x, f0.y + (f1.y - f0.y) * 0.12, f1.x - f0.x, Math.max(0.8, 0.5 * s));
+  const sh = ctx.createLinearGradient(0, f1.y - 3 * s, 0, f1.y);
+  sh.addColorStop(0, "rgba(60,34,0,0)");
+  sh.addColorStop(1, "rgba(60,34,0,0.5)");
+  ctx.fillStyle = sh;
+  ctx.fillRect(f0.x, f1.y - 3 * s, f1.x - f0.x, 3 * s);
+  ctx.restore();
+  // the lock plate and its keyhole
+  const lx = (f0.x + f1.x) / 2, ly = f0.y + (f1.y - f0.y) * 0.34;
+  ctx.fillStyle = "#8a6212";
+  ctx.beginPath(); ctx.roundRect(lx - 2.2 * s, ly - 2.4 * s, 4.4 * s, 5.4 * s, 0.8 * s); ctx.fill();
+  ctx.fillStyle = "#fff0b0";
+  ctx.beginPath(); ctx.roundRect(lx - 1.8 * s, ly - 2 * s, 3.6 * s, 4.6 * s, 0.6 * s); ctx.fill();
+  ctx.fillStyle = "#1a0e02";
+  ctx.beginPath(); ctx.arc(lx, ly - 0.2 * s, 0.62 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.fillRect(lx - 0.3 * s, ly, 0.6 * s, 1.6 * s);
+  // a garnet set either side of the lock, a spark in each
+  for (const e of [-1, 1]) {
+    const gx = lx + e * (f1.x - f0.x) * 0.17, gy = f0.y + (f1.y - f0.y) * 0.5, gr = Math.max(1, 0.85 * s);
+    ctx.fillStyle = "#6a4a0c";
+    ctx.beginPath(); ctx.arc(gx, gy, gr * 1.35, 0, Math.PI * 2); ctx.fill();
+    const gem = ctx.createRadialGradient(gx - gr * 0.3, gy - gr * 0.3, gr * 0.1, gx, gy, gr);
+    gem.addColorStop(0, "#ff9a8a");
+    gem.addColorStop(0.5, "#b0182a");
+    gem.addColorStop(1, "#3a0610");
+    ctx.fillStyle = gem;
+    ctx.beginPath(); ctx.arc(gx, gy, gr, 0, Math.PI * 2); ctx.fill();
+  }
+  if (open) {
+    // the mouth of it: the red lining going down into the dark, nothing in it
+    const m = [Q(c.x0, c.y1, c.d0), Q(c.x1, c.y1, c.d0), Q(c.x1, c.y1, c.d1), Q(c.x0, c.y1, c.d1)];
+    polygon(ctx, m);
+    const g = ctx.createLinearGradient(0, m[2].y, 0, m[0].y);
+    g.addColorStop(0, "#5a1418");
+    g.addColorStop(1, "#150406");
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = "#e6c26a";
+    ctx.lineWidth = Math.max(1, 0.6 * s);
+    ctx.stroke();
+  } else {
+    lid();
+    // the hasp coming down over the lock
+    ctx.fillStyle = "#c89426";
+    ctx.fillRect(lx - 0.9 * s, f0.y - 1.4 * s, 1.8 * s, 2.4 * s);
+  }
+  // the candle on its right-hand corner
+  const edge = Q(c.x1, c.y1, c.d0);
+  soft(ctx, edge.x - 1 * s, edge.y + 2 * s, 5 * s, 7 * s, "255,240,190", 0.5, "lighter");
+  return cv;
+}
 
 // A block standing square to the room: the faces of it we can see — the side
 // toward the middle of the room, the top if it is below the eye, the front.
@@ -350,7 +558,7 @@ function paintWheel(ctx, L) {
   const c = L.Q(wh.x, wh.y, BACK), s = c.s;
   const r = wh.r * s, pl = wh.plaque * s;
   // the candle's light on the wall here
-  soft(ctx, c.x + 30 * s, c.y + 40 * s, 110 * s, 90 * s, WARM, 0.16, "lighter");
+  if (L.candleOn) soft(ctx, c.x + 30 * s, c.y + 40 * s, 110 * s, 90 * s, WARM, 0.16, "lighter");
   // the plaque, standing a little off the wall
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.beginPath(); ctx.roundRect(c.x - pl - 2 * s, c.y - pl - 3 * s, pl * 2, pl * 2, 3 * s); ctx.fill();
@@ -545,7 +753,7 @@ function paintDesk(ctx, L) {
 
   // ── the candle: a brass chamberstick, a stub of wax, its flame
   const cn = L.candle, c = Q(cn.x, cn.y, cn.d), u = c.s;
-  soft(ctx, c.x, c.y, 60 * u, 16 * u, WARM, 0.3, "lighter");
+  if (L.candleOn) soft(ctx, c.x, c.y, 60 * u, 16 * u, WARM, 0.3, "lighter");
   ctx.fillStyle = "#1a1208";
   ctx.beginPath(); ctx.ellipse(c.x, c.y, 9 * u, 2.8 * u, 0, 0, Math.PI * 2); ctx.fill();
   const br = ctx.createLinearGradient(c.x - 9 * u, 0, c.x + 9 * u, 0);
@@ -557,13 +765,25 @@ function paintDesk(ctx, L) {
   wax.addColorStop(0, "#b8ab8a"); wax.addColorStop(0.5, "#f4ecd4"); wax.addColorStop(1, "#8e8468");
   ctx.fillStyle = wax;
   ctx.fillRect(c.x - 2 * u, c.y - 22 * u, 4 * u, 16.5 * u);
+  ctx.fillStyle = "#1a120a";
+  ctx.fillRect(c.x - 0.3 * u, c.y - 24 * u, 0.6 * u, 2.4 * u);
+  if (!L.candleOn) {
+    // out: the wax gone cold and grey, a last thread of smoke off the wick
+    ctx.fillStyle = "rgba(10,12,20,0.5)";
+    ctx.fillRect(c.x - 2 * u, c.y - 22 * u, 4 * u, 16.5 * u);
+    ctx.strokeStyle = "rgba(150,160,190,0.14)";
+    ctx.lineWidth = Math.max(0.6, 0.5 * u);
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.y - 24.5 * u);
+    ctx.bezierCurveTo(c.x + 2.4 * u, c.y - 30 * u, c.x - 2.6 * u, c.y - 35 * u, c.x + 1 * u, c.y - 42 * u);
+    ctx.stroke();
+    return;
+  }
   const top = ctx.createLinearGradient(0, c.y - 22 * u, 0, c.y - 15 * u);
   top.addColorStop(0, "rgba(255,214,150,0.75)");
   top.addColorStop(1, "rgba(255,214,150,0)");
   ctx.fillStyle = top;
   ctx.fillRect(c.x - 2 * u, c.y - 22 * u, 4 * u, 7 * u);
-  ctx.fillStyle = "#1a120a";
-  ctx.fillRect(c.x - 0.3 * u, c.y - 24 * u, 0.6 * u, 2.4 * u);
   soft(ctx, c.x, c.y - 27 * u, 26 * u, 26 * u, WARM, 0.5, "lighter");
   const fl = ctx.createLinearGradient(0, c.y - 32 * u, 0, c.y - 23 * u);
   fl.addColorStop(0, "#ffd070"); fl.addColorStop(0.5, "#fff2c8"); fl.addColorStop(1, "#ff9a3a");
@@ -767,7 +987,7 @@ function paintGloom(ctx, L) {
     { x: lamp.x + 30 * lamp.s, y: lamp.y, rx: 250 * lamp.s, ry: 190 * lamp.s, k: L.lampOn ? 1 : 0.42 },
     { x: w.cx, y: (w.top + w.sill) / 2, rx: w.rx * 3, ry: (w.sill - w.top) * 0.95, k: 0.95 },
     { x: floor.x, y: floor.y, rx: 230 * floor.s, ry: 80 * floor.s, k: 0.7 },
-    { x: candle.x - 30 * Q(0, 0, L.candle.d).s, y: candle.y + 6, rx: 130 * Q(0, 0, L.candle.d).s, ry: 90 * Q(0, 0, L.candle.d).s, k: 0.95 },
+    { x: candle.x - 30 * Q(0, 0, L.candle.d).s, y: candle.y + 6, rx: 130 * Q(0, 0, L.candle.d).s, ry: 90 * Q(0, 0, L.candle.d).s, k: L.candleOn ? 0.95 : 0.3 },
   ];
   const step = 8, gw = Math.ceil(W / step), gh = Math.ceil(H / step);
   const small = makeCanvas(gw, gh);

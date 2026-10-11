@@ -57,24 +57,66 @@ export class LevelManager {
     const all = this.definitions.map((_, index) => index);
     // the few lines told under the list: the place's own, or a puzzle's
     const story = this.#place ? this.#place.story ?? [] : PUZZLE_STORY;
+    // standing in a place with nothing left in it
+    const completed = Boolean(this.#place) && this.#finished(this.#place);
     return place
-      ? { name: place.name, story, indexes: all.filter((index) => place.holds.includes(this.definitions[index].id)) }
-      : { name: "Rooms", story, indexes: all.filter((index) => !this.homeOf(index)) };
+      ? { name: place.name, story, completed, indexes: all.filter((index) => place.holds.includes(this.definitions[index].id)) }
+      : { name: "Rooms", story, completed, indexes: all.filter((index) => !this.homeOf(index)) };
   }
 
   /** The rooms behind the doors of the place the player stands in, in the
-   *  doors' order: each locked or not, and whether everything in it has
-   *  been solved. None while at a puzzle, or in a place with no doors. */
+   *  doors' order: its place key, whether it is locked (nothing behind it, or
+   *  its key not found yet), whether it can be gone into, and whether
+   *  everything in it has been solved. None at a puzzle or without doors. */
   get rooms() {
     return (this.#place?.doors ?? []).map((key, n) => {
       const place = this.#places.find((item) => item.key === key);
-      if (!place) return { name: `Room ${n + 1}`, locked: true, solved: false };
+      if (!place) return { key: null, name: `Room ${n + 1}`, locked: true, open: false, solved: false, completed: false };
+      const locked = Boolean(place.needsKey) && !this.hasKey(place.key);
       return {
+        key: place.key,
         name: place.name,
-        locked: false,
+        locked,
+        open: !locked && !place.unbuilt,
         solved: place.holds.length > 0 && place.holds.every((id) => this.isCompleted(this.indexOf(id))),
+        completed: this.#finished(place),
       };
     });
+  }
+
+  // Everything a place holds is solved, and the key in its chest taken.
+  #finished(place) {
+    return place.holds.length > 0 && place.holds.every((id) => this.isCompleted(this.indexOf(id))) &&
+      (!place.chest || this.hasKey(place.chest));
+  }
+
+  /** The keys found so far: the room each opens, and the number on that
+   *  room's door. */
+  get keys() {
+    const held = [];
+    for (const place of this.#places) {
+      (place.doors ?? []).forEach((key, n) => {
+        if (key && this.hasKey(key)) held.push({ key, door: n + 1 });
+      });
+    }
+    return held;
+  }
+
+  /** A key is named for the room it opens. */
+  hasKey(key) { return this.#progress.hasKey(key); }
+
+  /** The key a place's chest holds, once everything the place holds has
+   *  been solved and until the key has been taken; null otherwise. */
+  keyWaitingIn(placeKey) {
+    const place = this.#places.find((item) => item.key === placeKey);
+    if (!place?.chest || this.hasKey(place.chest)) return null;
+    return place.holds.every((id) => this.isCompleted(this.indexOf(id))) ? place.chest : null;
+  }
+
+  takeKey(key) {
+    if (!this.#progress.grantKey(key)) return false;
+    this.#notify();
+    return true;
   }
 
   get activeScene() {
@@ -109,15 +151,18 @@ export class LevelManager {
     return true;
   }
 
-  /** Step into a place of the house: whatever puzzle was open is left. */
-  enterPlace(key) {
+  /** Step into a place of the house: whatever puzzle was open is left.
+   *  `from` says what the player is coming away from, when it is something
+   *  in that place — `{ level: id }` or `{ place: key }` — so the place
+   *  can open on it. */
+  enterPlace(key, from = null) {
     const place = this.#places.find((item) => item.key === key);
-    if (!this.#game || !place) return false;
+    if (!this.#game || !place || place.unbuilt || (place.needsKey && !this.hasKey(place.key))) return false;
     this.#leaveEverything();
     this.#place = place;
     // what a place holds is there to be found: all of it is open from now on
     for (const id of place.holds) this.#progress.unlock(this.indexOf(id));
-    this.#game.scene.start(place.key);
+    this.#game.scene.start(place.key, { from });
     this.#notify();
     return true;
   }

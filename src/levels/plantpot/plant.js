@@ -16,7 +16,7 @@ export const RES = 2; // texture pixels per screen pixel
 export const POT = { h: 19, rimR: 11, bodyR: 10, footR: 7, band: 3, soilY: -17.3 };
 // the bucket, in cm, about its middle (so it tips about its middle)
 export const BUCKET = { h: 25, topR: 13.5, footR: 10.5 };
-const TILT = 0.2; // how much of a round opening we see, looking down at it
+const TILT = 0.42; // how much of a round opening we see, looking down at it from the window
 
 const K = {
   potBack: "pp_pot_back",
@@ -63,9 +63,13 @@ export function releasePlantArt(textures) {
 
 // ── the pot ─────────────────────────────────────────────────────────────────
 
-// A terracotta pot, lit from the lantern on its left: the clay warm and bright
-// there, going to shadow round the right with a thread of moonlight on the
-// far edge; salt bloom and a little moss low down, as old pots have.
+// A terracotta pot, looked down on from the window: we see into it — the
+// thick rim's flat top all the way round, the far wall inside going down
+// into shadow, the soil — and down its outside: the collar under the rim,
+// the tapered body, the foot. The lantern is low on its left: the clay is
+// warm and bright there and goes to shadow round the right, with a thread
+// of moonlight on the far edge. Throwing rings, salt bloom, a little moss
+// low down, a chip out of the rim, as old pots have.
 function paintPot(px) {
   const P = POT;
   const pad = 2;
@@ -84,22 +88,35 @@ function paintPot(px) {
   const front = mk();
   const wetC = mk();
   const g = back.g;
-  const rTop = P.rimR;
-  const yTop = -P.h; // the rim's top edge, at its middle
-  const yBand = yTop + P.band;
+  const R = P.rimR;
+  const yTop = -P.h; // the rim's top, at its middle
+  const yBand = yTop + P.band; // where the collar ends
+  const rIn = R - 1.35; // the rim is this thick
+  const rCol = R - 0.3;
+  const rSoil = rIn - 0.5;
+  const rnd = lcg(404);
   // how the clay is lit across its width: the lantern low on the left
-  const clay = (xl, xr) => {
-    const gr = g.createLinearGradient(xl, 0, xr, 0);
-    gr.addColorStop(0, "#a4502a");
-    gr.addColorStop(0.12, "#e08a52");
-    gr.addColorStop(0.3, "#c06a3a");
-    gr.addColorStop(0.55, "#7a3a1c");
-    gr.addColorStop(0.8, "#3e1a0c");
-    gr.addColorStop(0.94, "#2c1208");
-    gr.addColorStop(1, "#4e5462");
-    return gr;
+  const clay = (xl, xr, k = 1) => {
+    const c = (r, gr, b) => `rgb(${Math.round(r * k)},${Math.round(gr * k)},${Math.round(b * k)})`;
+    const grd = g.createLinearGradient(xl, 0, xr, 0);
+    grd.addColorStop(0, c(150, 74, 40));
+    grd.addColorStop(0.1, c(226, 140, 86));
+    grd.addColorStop(0.28, c(190, 106, 60));
+    grd.addColorStop(0.54, c(122, 60, 30));
+    grd.addColorStop(0.8, c(62, 28, 13));
+    grd.addColorStop(0.94, c(42, 18, 9));
+    grd.addColorStop(1, "#56607a");
+    return grd;
   };
-  // the body: a tapered drum from under the band to the foot
+  // fine grain, pits and flecks, over whatever is clipped
+  const grain = (n, xa, xb, ya, yb) => {
+    for (let i = 0; i < n; i++) {
+      g.fillStyle = rnd() < 0.5 ? "rgba(255,206,166,0.09)" : "rgba(40,14,6,0.14)";
+      g.fillRect(xa + rnd() * (xb - xa), ya + rnd() * (yb - ya), 0.14 + rnd() * 0.22, 0.14 + rnd() * 0.16);
+    }
+  };
+
+  // ── the body: a tapered drum from under the collar to the foot
   const body = new Path2D();
   body.moveTo(-P.bodyR, yBand);
   body.lineTo(-P.footR, -0.6);
@@ -110,128 +127,207 @@ function paintPot(px) {
   g.fill(body);
   g.save();
   g.clip(body);
-  // top of the body in the band's shadow; salt bloom and moss at the foot
-  const sh = g.createLinearGradient(0, yBand, 0, yBand + 3);
-  sh.addColorStop(0, "rgba(20,8,4,0.55)");
-  sh.addColorStop(1, "rgba(20,8,4,0)");
-  g.fillStyle = sh;
-  g.fillRect(x0, yBand, x1 - x0, 3);
-  const rnd = lcg(404);
-  for (let i = 0; i < 14; i++) {
-    const x = (rnd() - 0.5) * P.bodyR * 1.8;
-    const y = -1 - rnd() * 7;
-    softEllipse(g, x, y, 1 + rnd() * 1.8, 0.5 + rnd() * 0.7, "215,205,185", 0.05 + rnd() * 0.05);
+  // the rings the potter's fingers left, going round it
+  for (let y = yBand + 1.2; y < 2; y += 0.85) {
+    const k = (y - yBand) / (-0.6 - yBand);
+    const r = P.bodyR + (P.footR - P.bodyR) * k;
+    g.strokeStyle = rnd() < 0.5 ? "rgba(30,10,4,0.13)" : "rgba(255,210,170,0.07)";
+    g.lineWidth = 0.16 + rnd() * 0.2;
+    g.beginPath();
+    g.ellipse(0, y - r * TILT, r + 0.4, r * TILT, 0, 0, Math.PI);
+    g.stroke();
   }
-  for (let i = 0; i < 6; i++) {
-    const x = (rnd() - 0.2) * P.footR * 1.6;
-    softEllipse(g, x, -1 - rnd() * 1.5, 2 + rnd() * 2, 0.8, "70,90,40", 0.25);
+  // the collar's shadow lying on its shoulder
+  g.fillStyle = "rgba(12,4,2,0.55)";
+  g.beginPath();
+  g.ellipse(0, yBand + 0.2, rCol + 0.2, rCol * TILT + 1.1, 0, 0, Math.PI);
+  g.fill();
+  // salt bloom creeping up from the foot, moss in the damp at the bottom
+  for (let i = 0; i < 18; i++) {
+    softEllipse(g, (rnd() - 0.5) * P.bodyR * 1.8, 1.5 - rnd() * 8, 1 + rnd() * 2, 0.5 + rnd() * 0.9, "222,212,192", 0.05 + rnd() * 0.06);
   }
-  // the clay's grain
-  for (let i = 0; i < 260; i++) {
-    const x = (rnd() - 0.5) * P.bodyR * 2;
-    const y = yBand + rnd() * (P.h - P.band);
-    g.fillStyle = rnd() < 0.5 ? "rgba(255,200,160,0.08)" : "rgba(40,14,6,0.12)";
-    g.fillRect(x, y, 0.25, 0.25);
+  for (let i = 0; i < 7; i++) {
+    softEllipse(g, (rnd() - 0.2) * P.footR * 1.6, 2.2 - rnd() * 2, 1.6 + rnd() * 2, 0.8, "70,92,40", 0.28);
   }
+  grain(420, -P.bodyR, P.bodyR, yBand, 3.5);
+  // a hairline crack down from the shoulder
+  g.strokeStyle = "rgba(20,8,4,0.5)";
+  g.lineWidth = 0.14;
+  g.beginPath();
+  g.moveTo(-3.2, yBand + 4.6);
+  g.lineTo(-3.6, yBand + 7);
+  g.lineTo(-3.1, yBand + 9);
+  g.lineTo(-3.5, yBand + 11.5);
+  g.stroke();
+  // the foot turning under, and the bench's warmth thrown back up into it
+  const under = g.createLinearGradient(0, -3, 0, 3);
+  under.addColorStop(0, "rgba(8,3,1,0)");
+  under.addColorStop(1, "rgba(8,3,1,0.6)");
+  g.fillStyle = under;
+  g.fillRect(x0, -3, x1 - x0, 7);
+  softEllipse(g, -P.footR * 0.7, 0.5, 4, 1.6, "255,170,110", 0.16, "lighter");
   g.restore();
 
-  // the inside, seen over the rim: the far wall, then the soil
+  // ── the collar: the thick band under the rim, standing proud of the body
+  const collar = new Path2D();
+  collar.moveTo(-R, yTop);
+  collar.lineTo(-rCol, yBand);
+  collar.ellipse(0, yBand, rCol, rCol * TILT, 0, Math.PI, 0, true);
+  collar.lineTo(R, yTop);
+  collar.ellipse(0, yTop, R, R * TILT, 0, 0, Math.PI);
+  collar.closePath();
+  g.fillStyle = clay(-R, R, 1.06);
+  g.fill(collar);
+  g.save();
+  g.clip(collar);
+  grain(260, -R, R, yTop, yBand + R * TILT);
+  // its lower edge rounds under into shadow
+  g.strokeStyle = "rgba(14,5,2,0.6)";
+  g.lineWidth = 0.7;
+  g.beginPath();
+  g.ellipse(0, yBand - 0.1, rCol, rCol * TILT, 0, 0, Math.PI);
+  g.stroke();
+  g.strokeStyle = "rgba(255,214,172,0.16)";
+  g.lineWidth = 0.3;
+  g.beginPath();
+  g.ellipse(0, yBand - 0.75, rCol, rCol * TILT, 0, Math.PI * 0.55, Math.PI * 0.95);
+  g.stroke();
+  g.restore();
+
+  // ── the inside, seen over the rim: the far wall going down, then the soil
   const inner = new Path2D();
-  inner.ellipse(0, yTop, rTop - 1.1, (rTop - 1.1) * TILT, 0, 0, Math.PI * 2);
+  inner.ellipse(0, yTop, rIn, rIn * TILT, 0, 0, Math.PI * 2);
   g.save();
   g.clip(inner);
-  const wall = g.createLinearGradient(0, yTop - rTop * TILT, 0, P.soilY);
-  wall.addColorStop(0, "#5a2c18");
-  wall.addColorStop(1, "#2a120a");
+  const wall = g.createLinearGradient(0, yTop - rIn * TILT, 0, P.soilY);
+  wall.addColorStop(0, "#6a3620");
+  wall.addColorStop(0.5, "#3c1c10");
+  wall.addColorStop(1, "#190a05");
   g.fillStyle = wall;
-  g.fillRect(x0, y0, x1 - x0, 6);
-  // the soil: crumbly and dark, a few grains of perlite, warm where the
-  // lantern reaches over the rim
+  g.fillRect(x0, y0, x1 - x0, y1 - y0);
+  // the moon reaches the inside of the wall on the left; the lantern, lower
+  // than the rim, does not reach in at all
+  const cool = g.createLinearGradient(-rIn, 0, rIn * 0.2, 0);
+  cool.addColorStop(0, "rgba(140,160,210,0.26)");
+  cool.addColorStop(1, "rgba(140,160,210,0)");
+  g.fillStyle = cool;
+  g.fillRect(x0, y0, x1 - x0, y1 - y0);
+  // the soil: dark, crumbly, a little hollowed toward the middle
   const soil = new Path2D();
-  soil.ellipse(0, P.soilY, rTop - 1.6, (rTop - 1.6) * TILT, 0, 0, Math.PI * 2);
-  const sg = g.createLinearGradient(-rTop, 0, rTop, 0);
-  sg.addColorStop(0, "#4a3020");
-  sg.addColorStop(0.5, "#2c1c12");
-  sg.addColorStop(1, "#1a100a");
+  soil.ellipse(0, P.soilY, rSoil, rSoil * TILT, 0, 0, Math.PI * 2);
+  const sg = g.createRadialGradient(-rSoil * 0.3, P.soilY - rSoil * TILT * 0.3, 0.5, 0, P.soilY, rSoil);
+  sg.addColorStop(0, "#4a3222");
+  sg.addColorStop(0.6, "#2c1c12");
+  sg.addColorStop(1, "#150c07");
   g.fillStyle = sg;
   g.fill(soil);
   g.save();
   g.clip(soil);
-  for (let i = 0; i < 220; i++) {
-    const x = (rnd() - 0.5) * rTop * 2;
-    const y = P.soilY + (rnd() - 0.5) * rTop * TILT * 2;
-    const r = 0.12 + rnd() * 0.3;
-    g.fillStyle = rnd() < 0.08 ? "rgba(230,226,214,0.8)" : rnd() < 0.5 ? "rgba(110,76,50,0.6)" : "rgba(8,4,2,0.6)";
-    g.fillRect(x, y, r, r * 0.6);
-  }
-  // the rim's shadow over the back of the soil
-  softEllipse(g, 0, P.soilY - rTop * TILT * 0.7, rTop, rTop * TILT * 0.7, "0,0,0", 0.45);
-  g.restore();
-  g.restore();
-
-  // the band round the rim, all the way round (its front half goes on the
-  // front image too, over the stems)
-  const band = (ctx, frontOnly) => {
-    const p = new Path2D();
-    if (frontOnly) {
-      p.ellipse(0, yTop, rTop, rTop * TILT, 0, 0, Math.PI);
-      p.lineTo(-rTop + 0.4, yBand);
-      p.ellipse(0, yBand, rTop - 0.4, (rTop - 0.4) * TILT, 0, Math.PI, 0, true);
-      p.closePath();
-    } else {
-      p.rect(-rTop, yTop, rTop * 2, P.band);
-      p.ellipse(0, yBand, rTop - 0.4, (rTop - 0.4) * TILT, 0, 0, Math.PI);
-    }
-    const gr = ctx.createLinearGradient(-rTop, 0, rTop, 0);
-    gr.addColorStop(0, "#b05a30");
-    gr.addColorStop(0.1, "#ec9860");
-    gr.addColorStop(0.3, "#c8713e");
-    gr.addColorStop(0.56, "#843f1e");
-    gr.addColorStop(0.82, "#43200e");
-    gr.addColorStop(0.95, "#321509");
-    gr.addColorStop(1, "#5e6676");
-    ctx.fillStyle = gr;
-    ctx.fill(p);
-    // the lip catches the lantern along its top edge
-    ctx.strokeStyle = "rgba(255,196,140,0.5)";
-    ctx.lineWidth = 0.35;
-    ctx.beginPath();
-    ctx.ellipse(0, yTop, rTop - 0.2, (rTop - 0.2) * TILT, 0, frontOnly ? 0.2 : Math.PI * 0.95, frontOnly ? Math.PI * 0.8 : Math.PI * 1.6);
-    ctx.stroke();
+  const inSoil = () => {
+    const a = rnd() * Math.PI * 2, q = Math.sqrt(rnd());
+    return { x: Math.cos(a) * q * rSoil, y: P.soilY + Math.sin(a) * q * rSoil * TILT };
   };
-  band(g, false);
-  // the rim's top surface ring (the back half shows behind the soil)
-  g.strokeStyle = "#b86c42";
-  g.lineWidth = 1.1;
+  for (let i = 0; i < 420; i++) {
+    const p = inSoil();
+    const r = 0.1 + rnd() * 0.3;
+    g.fillStyle = rnd() < 0.5 ? "rgba(118,82,54,0.55)" : "rgba(6,3,1,0.6)";
+    g.fillRect(p.x, p.y, r, r * 0.6);
+  }
+  // clods, each lit on its upper left, and a few grains of perlite
+  for (let i = 0; i < 26; i++) {
+    const p = inSoil();
+    const r = 0.35 + rnd() * 0.55;
+    g.fillStyle = "rgba(6,3,1,0.6)";
+    g.beginPath(); g.ellipse(p.x + r * 0.2, p.y + r * 0.25, r, r * 0.6, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#3e2a1c";
+    g.beginPath(); g.ellipse(p.x, p.y, r, r * 0.6, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "rgba(170,150,150,0.22)";
+    g.beginPath(); g.ellipse(p.x - r * 0.25, p.y - r * 0.2, r * 0.5, r * 0.26, 0, 0, Math.PI * 2); g.fill();
+  }
+  for (let i = 0; i < 12; i++) {
+    const p = inSoil();
+    g.fillStyle = "rgba(232,228,216,0.85)";
+    g.beginPath(); g.ellipse(p.x, p.y, 0.22, 0.15, 0, 0, Math.PI * 2); g.fill();
+  }
+  // the near lip's shadow on the soil under it, and the right-hand side dark
+  softEllipse(g, rSoil * 0.5, P.soilY + rSoil * TILT * 0.5, rSoil, rSoil * TILT * 0.9, "0,0,0", 0.5);
+  g.restore();
+  // where the soil meets the wall
+  g.strokeStyle = "rgba(4,2,1,0.7)";
+  g.lineWidth = 0.4;
   g.beginPath();
-  g.ellipse(0, yTop, rTop - 0.55, (rTop - 0.55) * TILT, 0, Math.PI, Math.PI * 2);
+  g.ellipse(0, P.soilY, rSoil, rSoil * TILT, 0, Math.PI, Math.PI * 2);
   g.stroke();
-  band(front.g, true);
-  front.g.strokeStyle = "#c47a4c";
-  front.g.lineWidth = 1.1;
-  front.g.beginPath();
-  front.g.ellipse(0, yTop, rTop - 0.55, (rTop - 0.55) * TILT, 0, 0, Math.PI);
-  front.g.stroke();
-
-  // the band throws a thin shadow on the body under it
-  g.save();
-  g.clip(body);
-  g.fillStyle = "rgba(12,4,2,0.45)";
-  g.beginPath();
-  g.ellipse(0, yBand + 0.2, rTop - 0.3, (rTop - 0.3) * TILT + 0.6, 0, 0, Math.PI);
-  g.fill();
   g.restore();
 
-  // wet soil: darker, with the lantern shining in it
+  // ── the rim's flat top, all the way round
+  const rim = new Path2D();
+  rim.ellipse(0, yTop, R, R * TILT, 0, 0, Math.PI * 2);
+  rim.ellipse(0, yTop, rIn, rIn * TILT, 0, 0, Math.PI * 2);
+  g.fillStyle = clay(-R, R, 1.16);
+  g.fill(rim, "evenodd");
+  g.save();
+  g.clip(rim, "evenodd");
+  // the moon on the top of it, most at the back; the grain of the clay
+  const moon = g.createLinearGradient(0, yTop - R * TILT, 0, yTop + R * TILT);
+  moon.addColorStop(0, "rgba(150,170,220,0.3)");
+  moon.addColorStop(1, "rgba(150,170,220,0.04)");
+  g.fillStyle = moon;
+  g.fillRect(x0, y0, x1 - x0, y1 - y0);
+  grain(220, -R, R, yTop - R * TILT, yTop + R * TILT);
+  // a chip out of its near edge
+  g.fillStyle = "#7c3a1e";
+  g.beginPath();
+  g.ellipse(3.4, yTop + R * TILT * 0.93, 1.1, 0.5, 0.2, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = "rgba(255,196,150,0.35)";
+  g.fillRect(2.5, yTop + R * TILT * 0.86, 1.6, 0.14);
+  g.restore();
+  // its edges: the outer one bright toward the lantern, the inner one dark
+  // where the wall drops away
+  g.strokeStyle = "rgba(255,206,156,0.55)";
+  g.lineWidth = 0.28;
+  g.beginPath();
+  g.ellipse(0, yTop, R - 0.1, (R - 0.1) * TILT, 0, Math.PI * 0.52, Math.PI * 1.25);
+  g.stroke();
+  g.strokeStyle = "rgba(16,6,3,0.6)";
+  g.lineWidth = 0.3;
+  g.beginPath();
+  g.ellipse(0, yTop, rIn, rIn * TILT, 0, 0, Math.PI * 2);
+  g.stroke();
+  g.strokeStyle = "rgba(170,186,226,0.3)";
+  g.lineWidth = 0.2;
+  g.beginPath();
+  g.ellipse(0, yTop, R - 0.1, (R - 0.1) * TILT, 0, Math.PI * 1.55, Math.PI * 2);
+  g.stroke();
+
+  // ── the front of the pot goes over the stems: everything this side of the
+  // rim's inner edge, taken from what has just been painted
+  const f = front.g;
+  f.save();
+  f.beginPath();
+  f.moveTo(x0, yTop);
+  f.lineTo(-rIn, yTop);
+  f.ellipse(0, yTop, rIn, rIn * TILT, 0, Math.PI, 0, true);
+  f.lineTo(x1, yTop);
+  f.lineTo(x1, y1);
+  f.lineTo(x0, y1);
+  f.closePath();
+  f.clip();
+  f.setTransform(1, 0, 0, 1, 0, 0);
+  f.drawImage(back.c, 0, 0);
+  f.restore();
+
+  // wet soil: darker, with the moon and the lantern's glow shining in it
   const wg = wetC.g;
   const wet = new Path2D();
-  wet.ellipse(0, P.soilY, rTop - 1.7, (rTop - 1.7) * TILT, 0, 0, Math.PI * 2);
+  wet.ellipse(0, P.soilY, rSoil - 0.1, (rSoil - 0.1) * TILT, 0, 0, Math.PI * 2);
   wg.save();
   wg.clip(wet);
   wg.fillStyle = "rgba(10,5,2,0.72)";
   wg.fill(wet);
-  softEllipse(wg, -rTop * 0.35, P.soilY - 0.2, rTop * 0.35, rTop * TILT * 0.4, "255,200,140", 0.55, "lighter");
-  softEllipse(wg, rTop * 0.4, P.soilY - 0.3, rTop * 0.25, rTop * TILT * 0.3, "170,190,220", 0.3, "lighter");
+  softEllipse(wg, -R * 0.35, P.soilY - 0.4, R * 0.32, R * TILT * 0.3, "255,200,140", 0.4, "lighter");
+  softEllipse(wg, R * 0.3, P.soilY - 1, R * 0.26, R * TILT * 0.24, "170,190,230", 0.4, "lighter");
   wg.restore();
   return {
     back: back.c,

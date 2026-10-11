@@ -82,7 +82,7 @@ export function mountStartFilm(scope, preferences) {
 // drawn here on a canvas because the title is not part of the game's picture:
 // three stars standing at the door's edges, pulsing in turn, and small ones
 // that light somewhere on it, drift up a little and go out.
-function glint(scope, door, still, done) {
+export function glint(scope, door, still, done) {
   const canvas = document.getElementById('start-door-glint');
   if (!door || !canvas) return;
   const ctx = canvas.getContext('2d'), PAD = 40, EDGE = 4;

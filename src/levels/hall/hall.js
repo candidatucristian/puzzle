@@ -2,14 +2,13 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg, p
 import { archGeo, paintSkyOn, paintWindowOn, openingPath } from "../telescope/window.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
- *  length, three closed doors along either wall, a tall window at its far end
- *  with the moon coming in through it (the same window, by the same hand, as
- *  the one the telescope stands at). Dark panelling under dark paper, a
- *  runner down the boards, a pair of candle sconces between the doors, a
- *  chandelier, a long-case clock, and the things a hall gathers. Every door
- *  has its number on it — a Roman numeral in raised brass — and a thread of
- *  light under it: there is
- *  something behind each.
+ *  length, three closed doors along either wall, and at its far end the
+ *  stairs going up to the floor above, the moon coming down them from a
+ *  window out of sight. Dark panelling under dark paper, a runner down the
+ *  boards and on up the stairs, a pair of candle sconces between the doors,
+ *  a chandelier, a long-case clock, and the things a hall gathers. Every
+ *  door has its number on it — a Roman numeral carved into its top rail —
+ *  and a thread of light under it: there is something behind each.
  *
  *  The hall is drawn in one-point perspective from where we stand: a place
  *  is how far across (X) and down (Y) it is from the eye, and how far away
@@ -26,6 +25,10 @@ const DOORS = [1.32, 2.2, 3.1];
 const DOOR_LEN = 0.5;
 const SCONCES = [2.01, 2.9];
 const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
+// The stairs at the far end, going up and away to the floor above: how wide
+// they and their opening are (of the hall's half-width), how deep and how
+// high one step is, how many there are, and how high the opening's head.
+const STAIR = { half: 0.4, open: 0.5, run: 0.16, rise: 0.085, steps: 15, head: -0.52, rail: 0.3 };
 
 // ── where everything is ─────────────────────────────────────────────────────
 
@@ -52,9 +55,6 @@ export function layoutHall(W, H) {
       });
     });
   }
-  // the window at the far end
-  const win = endWindow(L);
-  L.window = { x: win.cx - win.rx, y: win.top, width: win.rx * 2, height: win.sill - win.top };
   L.sconces = [];
   for (const side of [-1, 1]) for (const z of SCONCES) L.sconces.push({ side, z, ...L.P(side * L.wall, -H * 0.2, z) });
   return L;
@@ -73,7 +73,7 @@ export function paintHall(scene, L) {
   paintFloor(ctx, L);
   for (const side of [-1, 1]) paintWall(ctx, L, side);
   paintEnd(ctx, L);
-  paintMoonlight(ctx, L);
+  paintStairLight(ctx, L);
   for (const d of L.doors) paintDoor(ctx, L, d);
   for (const s of L.sconces) paintSconce(ctx, L, s);
   paintThings(ctx, L);
@@ -133,7 +133,7 @@ function paintFloor(ctx, L) {
   // the runner
   const rw = wall * 0.34;
   const strip = (hw, col) => {
-    polygon(ctx, [P(-hw, floor, 0.7), P(hw, floor, 0.7), P(hw, floor, END - 0.25), P(-hw, floor, END - 0.25)]);
+    polygon(ctx, [P(-hw, floor, 0.7), P(hw, floor, 0.7), P(hw, floor, END), P(-hw, floor, END)]);
     ctx.fillStyle = col;
     ctx.fill();
   };
@@ -222,10 +222,14 @@ function paintWall(ctx, L, side) {
   }
 }
 
-// the far end: the tall arched window — sky, moon, hills and all — with its
-// deep reveal and its sill, panelling under it
+// The far end: a wide opening in the end wall, and through it the stairs to
+// the floor above — a straight flight going up and away from us, the hall's
+// runner carried on up it under brass rods, a balustrade either side. The
+// moon comes down the stairwell from a window we cannot see, somewhere
+// above: it lies on the treads and on the noses of the steps, and leaves the
+// risers dark.
 function paintEnd(ctx, L) {
-  const { P, wall, floor, ceil, H, W } = L;
+  const { P, wall, floor, ceil, H } = L;
   const a = P(-wall, ceil, END), b = P(wall, floor, END);
   ctx.fillStyle = "#0b100f";
   ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
@@ -233,17 +237,115 @@ function paintEnd(ctx, L) {
   const dado = P(0, floor - H * 0.36, END).y;
   ctx.fillStyle = "#140c07";
   ctx.fillRect(a.x, dado, b.x - a.x, b.y - dado);
-  ctx.fillStyle = "#24160c";
-  ctx.fillRect(a.x, dado - 2, b.x - a.x, 4);
-  const w = endWindow(L);
-  // its light on the wall round it
-  soft(ctx, w.cx, (w.top + w.sill) / 2, w.rx * 3.4, (w.sill - w.top) * 1.2, MOON, 0.26, "lighter");
-  paintNightWindow(ctx, W, H, w, L.vp);
-  // the panelling runs on under the sill, in front of the window's foot
-  ctx.fillStyle = "#140c07";
-  ctx.fillRect(a.x, dado, b.x - a.x, b.y - dado);
   ctx.fillStyle = "#2a1a0e";
   ctx.fillRect(a.x, dado - 2, b.x - a.x, 4);
+
+  const ox = wall * STAIR.open, sx = wall * STAIR.half, rw = wall * 0.34 * 0.84;
+  const head = H * STAIR.head, rise = H * STAIR.rise, n = STAIR.steps;
+  const o0 = P(-ox, head, END), o1 = P(ox, floor, END);
+  const s = 1 / END; // a pixel at the picture, here
+  // the stairwell, dark, and the moon in the top of it
+  ctx.fillStyle = "#04060a";
+  ctx.fillRect(o0.x, o0.y, o1.x - o0.x, o1.y - o0.y);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(o0.x, o0.y, o1.x - o0.x, o1.y - o0.y);
+  ctx.clip();
+  soft(ctx, L.vp.x - ox * 0.2 * s, o0.y, ox * 1.5 * s, (o1.y - o0.y) * 0.75, MOON, 0.42, "lighter");
+  // its two walls, running up beside the flight
+  const far = END + n * STAIR.run;
+  for (const side of [-1, 1]) {
+    polygon(ctx, [P(side * ox, head, END), P(side * ox, head - H, far), P(side * ox, floor - n * rise, far), P(side * ox, floor, END)]);
+    const g = ctx.createLinearGradient(0, o0.y, 0, o1.y);
+    g.addColorStop(0, side < 0 ? "#1a2430" : "#27364a");
+    g.addColorStop(1, "#080b0d");
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+  // the steps, the furthest first: tread, then riser, then the runner on both
+  for (let i = n - 1; i >= 0; i--) {
+    const z0 = END + i * STAIR.run, z1 = z0 + STAIR.run;
+    const y0 = floor - i * rise, y1 = y0 - rise;
+    const lit = 0.25 + 0.75 * (i / (n - 1)); // more of the moon the higher we go
+    const tread = (hw, col) => {
+      polygon(ctx, [P(-hw, y1, z0), P(hw, y1, z0), P(hw, y1, z1), P(-hw, y1, z1)]);
+      ctx.fillStyle = col;
+      ctx.fill();
+    };
+    const riser = (hw, col) => {
+      const p = P(-hw, y1, z0), q = P(hw, y0, z0);
+      ctx.fillStyle = col;
+      ctx.fillRect(p.x, p.y, q.x - p.x, q.y - p.y + 0.5);
+    };
+    if (y1 > 0) {
+      tread(sx, "#3a2616");
+      tread(rw, "#5a1a20");
+      tread(sx, `rgba(${MOON},${(0.3 * lit).toFixed(3)})`);
+    }
+    riser(sx, "#120a06");
+    riser(rw, "#280a0e");
+    // the nose of the step, catching the light; the brass rod at its foot
+    const p = P(-sx, y1, z0), q = P(sx, y1, z0);
+    ctx.fillStyle = `rgba(190,208,240,${(0.2 + 0.5 * lit).toFixed(3)})`;
+    ctx.fillRect(p.x, p.y, q.x - p.x, Math.max(1, 2.2 * s * (END / z0)));
+    const r0 = P(-rw * 1.08, y0, z0), r1 = P(rw * 1.08, y0, z0);
+    ctx.fillStyle = "rgba(196,160,84,0.75)";
+    ctx.fillRect(r0.x, r0.y - Math.max(1, 3 * s), r1.x - r0.x, Math.max(0.8, 1.6 * s));
+  }
+  // the balustrade either side: a baluster to every step, the rail over them
+  const railAt = (z) => floor - ((z - END) / STAIR.run) * rise - H * STAIR.rail;
+  for (const side of [-1, 1]) {
+    const X = side * sx * 1.04;
+    ctx.strokeStyle = "#0c0705";
+    ctx.lineWidth = Math.max(1, 6 * s);
+    for (let i = 0; i < n; i++) {
+      for (const k of [0.3, 0.8]) {
+        const z = END + (i + k) * STAIR.run;
+        const foot = P(X, floor - (i + 1) * rise, z), top = P(X, railAt(z), z);
+        ctx.beginPath(); ctx.moveTo(foot.x, foot.y); ctx.lineTo(top.x, top.y); ctx.stroke();
+      }
+    }
+    const r0 = P(X, railAt(END), END), r1 = P(X, railAt(far), far);
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#1c110a";
+    ctx.lineWidth = Math.max(2, 16 * s);
+    ctx.beginPath(); ctx.moveTo(r0.x, r0.y); ctx.lineTo(r1.x, r1.y); ctx.stroke();
+    ctx.strokeStyle = "rgba(170,190,228,0.5)";
+    ctx.lineWidth = Math.max(0.8, 4 * s);
+    ctx.beginPath(); ctx.moveTo(r0.x, r0.y - 5 * s); ctx.lineTo(r1.x, r1.y - 3 * s); ctx.stroke();
+    ctx.lineCap = "butt";
+  }
+  ctx.restore();
+  // the opening's architrave: a pilaster either side, a deep head over them
+  const pw = wall * 0.045 * s;
+  const oak = ctx.createLinearGradient(0, o0.y, 0, o1.y);
+  oak.addColorStop(0, "#2e1c10");
+  oak.addColorStop(1, "#160c07");
+  ctx.fillStyle = oak;
+  ctx.fillRect(o0.x - pw, o0.y - pw * 1.5, pw, o1.y - o0.y + pw * 1.5);
+  ctx.fillRect(o1.x, o0.y - pw * 1.5, pw, o1.y - o0.y + pw * 1.5);
+  ctx.fillRect(o0.x - pw * 1.3, o0.y - pw * 1.7, o1.x - o0.x + pw * 2.6, pw * 1.7);
+  ctx.fillStyle = "rgba(170,190,228,0.22)";
+  ctx.fillRect(o0.x - 1, o0.y, 1.2, o1.y - o0.y);
+  ctx.fillRect(o1.x, o0.y, 1.2, o1.y - o0.y);
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(o0.x, o0.y, o1.x - o0.x, pw * 0.5);
+  // the newel posts at the foot of the flight, a turned ball on each
+  for (const side of [-1, 1]) {
+    const foot = P(side * sx * 1.04, floor, END - 0.03), top = P(side * sx * 1.04, railAt(END) - H * 0.05, END - 0.03);
+    const nw = Math.max(3, 30 * s);
+    const g = ctx.createLinearGradient(foot.x - nw / 2, 0, foot.x + nw / 2, 0);
+    g.addColorStop(0, "#0e0806");
+    g.addColorStop(0.5, "#3c2414");
+    g.addColorStop(1, "#0e0806");
+    ctx.fillStyle = g;
+    ctx.fillRect(foot.x - nw / 2, top.y, nw, foot.y - top.y);
+    ctx.fillRect(foot.x - nw * 0.7, top.y, nw * 1.4, nw * 0.4);
+    ctx.fillRect(foot.x - nw * 0.7, foot.y - nw * 0.6, nw * 1.4, nw * 0.6);
+    ctx.beginPath(); ctx.arc(foot.x, top.y - nw * 0.5, nw * 0.62, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(190,208,240,0.4)";
+    ctx.beginPath(); ctx.arc(foot.x - nw * 0.15, top.y - nw * 0.7, nw * 0.2, 0, Math.PI * 2); ctx.fill();
+  }
 }
 
 /** A tall arched window with the night in it — sky, moon, hills, its deep
@@ -294,50 +396,28 @@ export function paintNightWindow(ctx, W, H, w, eye) {
   ctx.drawImage(off, 0, 0);
 }
 
-// where the end window is, on the screen
-function endWindow(L) {
-  const { P, wall, floor, H } = L;
-  const rx = (wall * 0.24) / END;
-  return { cx: L.vp.x, rx, top: P(0, -H * 0.52, END).y, sill: P(0, floor - H * 0.36, END).y };
-}
-
-// the moon through the window: its beams in the hall's dusty air, and the
-// window laid long and pale on the runner
-function paintMoonlight(ctx, L) {
-  const { P, wall, floor, u } = L;
-  const win = endWindow(L);
-  const ww = win.rx, top = win.top, sill = win.sill;
+// The moon down the stairwell: it spills out of the opening onto the runner
+// at the foot of the stairs and reaches a little way up the hall, and hangs
+// in the dusty air in front of the flight.
+function paintStairLight(ctx, L) {
+  const { P, wall, floor, H, u } = L;
+  const ox = wall * STAIR.open;
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  // the window on the floor: four panes, stretching toward us
-  ctx.filter = `blur(${Math.round(5 * u)}px)`;
-  for (const [x0, x1] of [[-1, -0.06], [0.06, 1]]) {
-    for (const [z0, z1, a] of [[END - 0.5, END - 1.5, 0.26], [END - 1.6, END - 2.6, 0.17], [END - 2.7, END - 3.3, 0.07]]) {
-      const hw = wall * 0.24;
-      const spread = (z) => 1 + (END - z) * 0.1;
-      polygon(ctx, [P(x0 * hw * spread(z0), floor, z0), P(x1 * hw * spread(z0), floor, z0), P(x1 * hw * spread(z1), floor, z1), P(x0 * hw * spread(z1), floor, z1)]);
-      ctx.fillStyle = `rgba(${MOON},${a})`;
-      ctx.fill();
-    }
-  }
-  // the beams themselves, from the glass down to that patch
-  ctx.filter = `blur(${Math.round(14 * u)}px)`;
-  const near = P(0, floor, END - 2.9);
-  const g = ctx.createLinearGradient(0, top, 0, near.y);
-  g.addColorStop(0, `rgba(${MOON},0.2)`);
-  g.addColorStop(1, `rgba(${MOON},0)`);
-  ctx.fillStyle = g;
-  polygon(ctx, [{ x: L.vp.x - ww, y: top + ww }, { x: L.vp.x + ww, y: top + ww }, { x: near.x + wall * 0.19, y: near.y }, { x: near.x - wall * 0.19, y: near.y }]);
-  ctx.fill();
-  // three shafts in it, where the bars leave gaps
-  for (const dx of [-0.6, 0, 0.6]) {
-    const g2 = ctx.createLinearGradient(0, sill, 0, near.y);
-    g2.addColorStop(0, `rgba(${MOON},0.14)`);
-    g2.addColorStop(1, `rgba(${MOON},0)`);
-    ctx.fillStyle = g2;
-    polygon(ctx, [{ x: L.vp.x + (dx - 0.22) * ww, y: sill - (sill - top) * 0.4 }, { x: L.vp.x + (dx + 0.22) * ww, y: sill - (sill - top) * 0.4 }, { x: near.x + (dx + 0.3) * wall * 0.26, y: near.y }, { x: near.x + (dx - 0.3) * wall * 0.26, y: near.y }]);
+  ctx.filter = `blur(${Math.round(6 * u)}px)`;
+  for (const [z0, z1, k0, k1, a] of [[END - 0.02, END - 1.2, 0.86, 1.1, 0.24], [END - 1.2, END - 2.5, 1.1, 1.36, 0.12], [END - 2.5, END - 3.3, 1.36, 1.5, 0.05]]) {
+    polygon(ctx, [P(-ox * k0, floor, z0), P(ox * k0, floor, z0), P(ox * k1, floor, z1), P(-ox * k1, floor, z1)]);
+    ctx.fillStyle = `rgba(${MOON},${a})`;
     ctx.fill();
   }
+  ctx.filter = `blur(${Math.round(14 * u)}px)`;
+  const top = P(0, H * STAIR.head, END), near = P(0, floor, END - 2.6);
+  const g = ctx.createLinearGradient(0, top.y, 0, near.y);
+  g.addColorStop(0, `rgba(${MOON},0.22)`);
+  g.addColorStop(1, `rgba(${MOON},0)`);
+  ctx.fillStyle = g;
+  polygon(ctx, [P(-ox * 0.8, H * STAIR.head, END), P(ox * 0.8, H * STAIR.head, END), { x: near.x + wall * 0.2, y: near.y }, { x: near.x - wall * 0.2, y: near.y }]);
+  ctx.fill();
   ctx.filter = "none";
   ctx.restore();
 }
@@ -490,14 +570,14 @@ function paintSconce(ctx, L, s) {
 }
 
 // What a hall gathers: a chandelier, unlit, over the middle of it; at the far
-// end a long-case clock and a coat stand either side of the window; between
+// end a long-case clock and a coat stand either side of the stairs; between
 // the doors a little table with a fern, a chair, an umbrella stand; a trunk.
 function paintThings(ctx, L) {
   const { P, wall, floor, ceil, H } = L;
   const dark = "#070504";
   // ── the chandelier: old bronze on a chain from a plaster rose — a turned
   // stem, eight arms sweeping out and up to their candle cups, a drop of cut
-  // glass under each, the candles out; the moon from the window on it
+  // glass under each, the candles out; the moon from the stairwell on it
   {
     const z = 1.9;
     const hub = P(0, ceil + H * 0.26, z);
@@ -610,8 +690,8 @@ function paintThings(ctx, L) {
     ctx.restore();
   };
   const shadow = (w) => soft(ctx, 0, 2, w, 7, "0,0,0", 0.7);
-  // ── the long-case clock, left of the window
-  stand(-1, END - 0.12, wall * 0.5, () => {
+  // ── the long-case clock, left of the stairs
+  stand(-1, END - 0.12, wall * 0.26, () => {
     shadow(40);
     const g = ctx.createLinearGradient(-26, 0, 26, 0);
     g.addColorStop(0, "#1c0f08"); g.addColorStop(0.5, "#3e2414"); g.addColorStop(1, "#140a05");
@@ -630,8 +710,8 @@ function paintThings(ctx, L) {
     ctx.fillRect(-1.2, -230, 2.4, 120);
     ctx.beginPath(); ctx.arc(0, -104, 9, 0, Math.PI * 2); ctx.fill();
   });
-  // ── the coat stand, right of the window: a coat and a hat on it
-  stand(1, END - 0.12, wall * 0.5, () => {
+  // ── the coat stand, right of the stairs: a coat and a hat on it
+  stand(1, END - 0.12, wall * 0.26, () => {
     shadow(34);
     ctx.strokeStyle = "#1c120a"; ctx.lineWidth = 7; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -330); ctx.stroke();
@@ -714,7 +794,7 @@ function paintThings(ctx, L) {
   });
 }
 
-// the dark of a house asleep: the sconces and the moon are all there is
+// the dark of a house asleep: the sconces and the moon down the stairs are all there is
 function paintGloom(ctx, L) {
   const { W, H, u } = L;
   const step = Math.max(6, Math.round(10 * u));
