@@ -3,16 +3,21 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
 
 /** The Christmas tree for PI, in the drawing room at night: a tall fir in a
  *  wooden tub, nine tiers of boughs, a brass star on its top, glass balls
- *  hung here and there, a few parcels under it. Along each tier a string of
+ *  hung here and there, a parcel or two under it. One more stands a little
+ *  apart, tied up in blue paper: that one is the scene's, to be opened — in
+ *  it a schoolroom set, a ruler, a protractor and a pair of compasses. Along each tier a string of
  *  small lamps — more holders than lamps alight; which are alight is the
  *  scene's business, so here every holder has its lamp dark. Beside the
  *  tree, the room's tall window with the moon in it, and the moon's light
  *  on the boards.
  *
  *  Painted once per screen size: the room with the tree; a lamp, alight; a
- *  glow. */
+ *  glow; the parcel, tied up and opened; the three things in it. */
 
-const K = { room: "pt_room", lamp: "pt_lamp", glow: "pt_glow" };
+const K = {
+  room: "pt_room", lamp: "pt_lamp", glow: "pt_glow",
+  giftShut: "pt_gift_shut", giftOpen: "pt_gift_open", ruler: "pt_ruler", protractor: "pt_protractor", compasses: "pt_compasses",
+};
 const MOON = "150,178,232";
 // how many holders each tier's string has, top to bottom — always more than
 // are ever alight on it, so a light has somewhere to go
@@ -39,6 +44,17 @@ export function layoutTree(W, H) {
     });
   });
   L.lamp = { w: 9 * u, h: 13 * u };
+  // the parcel that is opened: where its foot is on the boards, and how big a
+  // unit of it is; where each thing in it comes to rest (in those units from
+  // the parcel's foot) and how it lies
+  L.gift = {
+    x: cx + 236 * u, y: L.floorY + 36 * u, s: 1.08 * u,
+    toys: [
+      { key: "protractor", dx: 78, dy: -7, turn: 0.1 },
+      { key: "ruler", dx: 88, dy: 14, turn: -0.07 },
+      { key: "compasses", dx: 140, dy: -5, turn: 1.22 },
+    ],
+  };
   // the window, and the moon in it
   const wx0 = W * 0.69, wx1 = W * 0.89, wy0 = H * 0.09, wy1 = H * 0.63;
   L.win = { x0: wx0, x1: wx1, y0: wy0, y1: wy1 };
@@ -72,6 +88,12 @@ export function paintTree(scene, L) {
   grain(ctx, W, H, 0.03);
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.lamp, paintLamp());
+  const origins = {};
+  for (const [name, art] of Object.entries(giftArt(L.gift.s))) {
+    addCanvasTexture(t, K[name], art.canvas);
+    origins[name] = { x: art.ox / art.canvas.width, y: art.oy / art.canvas.height };
+  }
+  L.gift.origins = origins;
   addCanvasTexture(t, K.glow, glowCanvas());
   return { keys: K };
 }
@@ -90,6 +112,9 @@ export function paintTreeAlone(W, H) {
   paintBalls(ctx, L);
   paintStrings(ctx, L);
   paintParcels(ctx, L, true);
+  // the parcel that is opened, as it stands tied up
+  const shut = giftArt(L.gift.s).giftShut;
+  ctx.drawImage(shut.canvas, L.gift.x - shut.ox, L.gift.y - shut.oy);
   return { canvas, L };
 }
 
@@ -401,13 +426,13 @@ function paintStrings(ctx, L) {
   }
 }
 
-// a few parcels under the tree: brown paper and ribbon — `front` the ones before the tub
+// a parcel or two under the tree: paper and ribbon — `front` the ones before the tub
 function paintParcels(ctx, L, front) {
   const { u, floorY } = L;
   const { cx } = L.tree;
   const parcels = front
-    ? [[-128, 20, 96, 56, "#3a2a1a", "#6a1a1e"], [86, 24, 70, 70, "#1e2a3a", "#b08c44"]]
-    : [[-70, 4, 84, 78, "#2a3324", "#b08c44"], [128, 6, 104, 48, "#3c1a1e", "#c8c0a8"]];
+    ? [[-128, 20, 96, 56, "#3a2a1a", "#6a1a1e"]]
+    : [[118, 6, 104, 48, "#3c1a1e", "#c8c0a8"]];
   for (const [dx, dy, w, h, paper, ribbon] of parcels) {
     const x = cx + dx * u, y1 = floorY + dy * u, pw = w * u, ph = h * u;
     soft(ctx, x + 6 * u, y1, pw * 0.62, 7 * u, "0,0,0", 0.6);
@@ -427,6 +452,272 @@ function paintParcels(ctx, L, front) {
     ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.fillRect(x - pw / 2, y1 - ph, pw * 0.2, ph);
   }
+}
+
+// The parcel that is opened, and what is in it — each on a sheet of its own,
+// for the scene to stand on the boards and throw about. `k` is how many
+// pixels a unit is; each comes with where on its sheet its own middle (for
+// the parcel, the middle of its foot) is.
+function giftArt(k) {
+  const sheet = (w, h, ox, oy, paint) => {
+    const canvas = makeCanvas(Math.ceil(w * k), Math.ceil(h * k));
+    const g = canvas.getContext("2d");
+    g.scale(k, k);
+    g.translate(ox, oy);
+    paint(g);
+    return { canvas, ox: ox * k, oy: oy * k };
+  };
+  return {
+    giftShut: sheet(130, 130, 65, 104, paintGiftShut),
+    giftOpen: sheet(190, 140, 95, 104, paintGiftOpen),
+    ruler: sheet(134, 24, 67, 12, paintRuler),
+    protractor: sheet(100, 62, 50, 36, paintProtractor),
+    compasses: sheet(84, 120, 42, 60, paintCompasses),
+  };
+}
+
+// tied up: a shallow box in dark blue paper, a gold ribbon both ways and a bow
+function paintGiftShut(g) {
+  soft(g, 2, 3, 56, 9, "0,0,0", 0.6);
+  // its top, seen a little from above; then its front
+  g.fillStyle = "#2c3f66";
+  g.beginPath(); g.moveTo(-36, -44); g.lineTo(36, -44); g.lineTo(44, -26); g.lineTo(-44, -26); g.closePath(); g.fill();
+  const front = g.createLinearGradient(-44, 0, 44, 0);
+  front.addColorStop(0, "#101a2c");
+  front.addColorStop(0.5, "#1e2e4c");
+  front.addColorStop(1, "#162238");
+  g.fillStyle = front;
+  g.fillRect(-44, -26, 88, 26);
+  g.fillStyle = "rgba(255,255,255,0.1)";
+  g.fillRect(-44, -26, 88, 1.2);
+  // the ribbon: down the front, back across the top, and round the middle
+  const gold = g.createLinearGradient(-6, 0, 6, 0);
+  gold.addColorStop(0, "#8a6c34");
+  gold.addColorStop(0.5, "#d8b868");
+  gold.addColorStop(1, "#8a6c34");
+  g.fillStyle = gold;
+  g.fillRect(-6, -26, 12, 26);
+  g.beginPath(); g.moveTo(-5, -44); g.lineTo(5, -44); g.lineTo(6, -26); g.lineTo(-6, -26); g.closePath(); g.fill();
+  g.fillStyle = "#b08c44";
+  g.beginPath(); g.moveTo(-40, -36.5); g.lineTo(40, -36.5); g.lineTo(42, -32); g.lineTo(-42, -32); g.closePath(); g.fill();
+  // the bow: two loops and their tails, a knot between
+  for (const s of [-1, 1]) {
+    g.fillStyle = "#c8a858";
+    g.beginPath();
+    g.moveTo(0, -37);
+    g.bezierCurveTo(s * 8, -58, s * 30, -56, s * 26, -42);
+    g.bezierCurveTo(s * 22, -34, s * 8, -34, 0, -37);
+    g.fill();
+    g.fillStyle = "#6a5220";
+    g.beginPath();
+    g.moveTo(s * 5, -40);
+    g.bezierCurveTo(s * 10, -50, s * 22, -50, s * 20, -43);
+    g.bezierCurveTo(s * 17, -38, s * 9, -38, s * 5, -40);
+    g.fill();
+    g.fillStyle = "#b08c44";
+    g.beginPath(); g.moveTo(0, -36); g.lineTo(s * 16, -22); g.lineTo(s * 10, -20); g.lineTo(s * 12, -27); g.closePath(); g.fill();
+  }
+  g.fillStyle = "#e0c478";
+  g.beginPath(); g.ellipse(0, -37.5, 5, 4, 0, 0, Math.PI * 2); g.fill();
+}
+
+// opened: the paper torn down and spread round it, the ribbon thrown aside,
+// the lid off and leaning on the back of the box, red tissue in the bottom
+function paintGiftOpen(g) {
+  const rnd = lcg(1618);
+  soft(g, 2, 3, 76, 10, "0,0,0", 0.6);
+  g.fillStyle = "#1c2a40";
+  g.beginPath();
+  g.moveTo(-74, 6);
+  for (let i = 0; i <= 10; i++) g.lineTo(-74 + i * 14.4, -(13 + rnd() * 9));
+  g.lineTo(72, 8);
+  for (let i = 10; i >= 0; i--) g.lineTo(-74 + i * 14.4, 10 + rnd() * 7);
+  g.closePath();
+  g.fill();
+  g.strokeStyle = "rgba(226,222,206,0.5)";
+  g.lineWidth = 1.2;
+  g.stroke();
+  g.strokeStyle = "#b08c44";
+  g.lineWidth = 5;
+  g.lineCap = "round";
+  g.beginPath(); g.moveTo(-84, 12); g.bezierCurveTo(-66, -4, -50, 22, -30, 15); g.stroke();
+  g.lineCap = "butt";
+  // the lid, leaning
+  g.fillStyle = "#26385a";
+  g.beginPath(); g.moveTo(-36, -62); g.lineTo(48, -58); g.lineTo(42, -24); g.lineTo(-42, -24); g.closePath(); g.fill();
+  g.fillStyle = "rgba(255,255,255,0.1)";
+  g.beginPath(); g.moveTo(-36, -62); g.lineTo(48, -58); g.lineTo(47.6, -56.4); g.lineTo(-36.3, -60.4); g.closePath(); g.fill();
+  // the box: its inside, the tissue, its front
+  g.fillStyle = "#0e0906";
+  g.beginPath(); g.moveTo(-42, -24); g.lineTo(42, -24); g.lineTo(50, -4); g.lineTo(-50, -4); g.closePath(); g.fill();
+  g.fillStyle = "#4a1620";
+  g.beginPath(); g.moveTo(-37, -21); g.lineTo(37, -21); g.lineTo(44, -7); g.lineTo(-44, -7); g.closePath(); g.fill();
+  g.strokeStyle = "rgba(255,200,200,0.14)";
+  g.lineWidth = 0.8;
+  for (let i = 0; i < 7; i++) { g.beginPath(); g.moveTo(-36 + rnd() * 72, -20); g.lineTo(-40 + rnd() * 80, -8); g.stroke(); }
+  const front = g.createLinearGradient(0, -4, 0, 10);
+  front.addColorStop(0, "#4a3220");
+  front.addColorStop(1, "#22150c");
+  g.fillStyle = front;
+  g.fillRect(-50, -4, 100, 14);
+  g.fillStyle = "rgba(255,220,180,0.16)";
+  g.fillRect(-50, -4, 100, 1.2);
+}
+
+// the ruler: boxwood, a brass tip at either end, its inches cut along one edge
+function paintRuler(g) {
+  const len = 124, wide = 13;
+  g.fillStyle = "rgba(0,0,0,0.45)";
+  g.fillRect(-len / 2 + 2, -wide / 2 + 3, len, wide);
+  const box = g.createLinearGradient(0, -wide / 2, 0, wide / 2);
+  box.addColorStop(0, "#dcc084");
+  box.addColorStop(1, "#a88848");
+  g.fillStyle = box;
+  g.fillRect(-len / 2, -wide / 2, len, wide);
+  g.fillStyle = "rgba(40,24,8,0.85)";
+  for (let i = 0; i <= 48; i++) {
+    const tall = i % 8 === 0 ? 0.55 : i % 4 === 0 ? 0.4 : 0.24;
+    g.fillRect(-len / 2 + 5 + (i * (len - 10)) / 48, -wide / 2, 0.8, wide * tall);
+  }
+  g.fillStyle = "#8a6c34";
+  g.fillRect(-len / 2, -wide / 2, 3, wide);
+  g.fillRect(len / 2 - 3, -wide / 2, 3, wide);
+  g.fillStyle = "rgba(255,244,214,0.3)";
+  g.fillRect(-len / 2, wide / 2 - 1.3, len, 1.3);
+}
+
+// the protractor: a half circle of brass, open in the middle, its degrees cut
+// round the rim — lying flat, so seen squat
+function paintProtractor(g) {
+  const r = 44;
+  g.scale(1, 0.52);
+  g.translate(0, 22);
+  g.fillStyle = "rgba(0,0,0,0.45)";
+  g.beginPath(); g.arc(2, 5, r, Math.PI, 0); g.closePath(); g.fill();
+  const brass = g.createLinearGradient(-r, -r, r, 0);
+  brass.addColorStop(0, "#7a5c26");
+  brass.addColorStop(0.5, "#d0b068");
+  brass.addColorStop(1, "#8a6c34");
+  g.fillStyle = brass;
+  g.beginPath();
+  g.arc(0, 0, r, Math.PI, 0);
+  g.lineTo(r, 8); g.lineTo(-r, 8);
+  g.closePath();
+  g.arc(0, 0, r * 0.62, 0, Math.PI, true);
+  g.closePath();
+  g.fill("evenodd");
+  g.strokeStyle = "rgba(40,24,8,0.85)";
+  g.lineWidth = 0.9;
+  for (let d = 0; d <= 180; d += 5) {
+    const a = Math.PI + (d * Math.PI) / 180, r0 = r * (d % 30 === 0 ? 0.78 : d % 10 === 0 ? 0.85 : 0.91);
+    g.beginPath(); g.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); g.lineTo(Math.cos(a) * r * 0.985, Math.sin(a) * r * 0.985); g.stroke();
+  }
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(0, 8); g.stroke();
+  g.strokeStyle = "rgba(255,244,214,0.45)";
+  g.beginPath(); g.arc(0, 0, r * 0.99, Math.PI * 1.1, Math.PI * 1.5); g.stroke();
+}
+
+// The pair of compasses, standing on its points with its head up (the scene
+// lays it down): two tapered steel legs hinged in a round brass head under a
+// milled handle; one leg ends in a needle held by a small screw, the other
+// in a clamp with a stub of red pencil in it; a brass wing between them,
+// with its thumbscrew, to hold them at their spread.
+function paintCompasses(g) {
+  const head = { x: 0, y: -34 }, needle = { x: -17, y: 50 }, lead = { x: 17, y: 44 };
+  const steel = (p, q, w0, w1) => {
+    const dx = q.x - p.x, dy = q.y - p.y, n = Math.hypot(dx, dy), nx = -dy / n, ny = dx / n;
+    const fill = g.createLinearGradient(p.x - nx * w0, p.y - ny * w0, p.x + nx * w0, p.y + ny * w0);
+    fill.addColorStop(0, "#3a3f48");
+    fill.addColorStop(0.4, "#c8ced8");
+    fill.addColorStop(0.6, "#8a929e");
+    fill.addColorStop(1, "#23262c");
+    g.fillStyle = fill;
+    g.beginPath();
+    g.moveTo(p.x - nx * w0, p.y - ny * w0); g.lineTo(q.x - nx * w1, q.y - ny * w1);
+    g.lineTo(q.x + nx * w1, q.y + ny * w1); g.lineTo(p.x + nx * w0, p.y + ny * w0);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = "rgba(8,9,12,0.7)";
+    g.lineWidth = 0.6;
+    g.stroke();
+  };
+  // the wing: a brass arc from one leg through the other
+  g.strokeStyle = "#5a4418";
+  g.lineWidth = 3.4;
+  g.beginPath(); g.arc(head.x, head.y, 46, Math.PI * 0.5 - 0.3, Math.PI * 0.5 + 0.46); g.stroke();
+  g.strokeStyle = "#c8a858";
+  g.lineWidth = 1.8;
+  g.beginPath(); g.arc(head.x, head.y, 46, Math.PI * 0.5 - 0.3, Math.PI * 0.5 + 0.46); g.stroke();
+  // the legs: wide at the head, fine at the foot
+  const knee = (to, f) => ({ x: head.x + (to.x - head.x) * f, y: head.y + (to.y - head.y) * f });
+  steel(head, knee(needle, 0.84), 4.2, 2.2);
+  steel(head, knee(lead, 0.72), 4.2, 2.6);
+  // the needle and the little screw that holds it
+  g.strokeStyle = "#e4e8f0";
+  g.lineWidth = 1;
+  g.beginPath(); g.moveTo(knee(needle, 0.82).x, knee(needle, 0.82).y); g.lineTo(needle.x, needle.y); g.stroke();
+  g.fillStyle = "#8a6c34";
+  g.beginPath(); g.arc(knee(needle, 0.8).x - 2.6, knee(needle, 0.8).y, 1.9, 0, Math.PI * 2); g.fill();
+  // the thumbscrew where the wing passes the other leg
+  const grip = knee(lead, 0.56);
+  g.fillStyle = "#3a2a10";
+  g.beginPath(); g.arc(grip.x + 0.6, grip.y + 0.8, 4.4, 0, Math.PI * 2); g.fill();
+  const thumb = g.createRadialGradient(grip.x - 1, grip.y - 1, 0.4, grip.x, grip.y, 4);
+  thumb.addColorStop(0, "#f0d890");
+  thumb.addColorStop(1, "#7a5c26");
+  g.fillStyle = thumb;
+  g.beginPath(); g.arc(grip.x, grip.y, 4, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "rgba(40,24,8,0.8)";
+  g.lineWidth = 0.8;
+  g.beginPath(); g.moveTo(grip.x - 2.6, grip.y); g.lineTo(grip.x + 2.6, grip.y); g.stroke();
+  // the clamp and the pencil in it
+  const clamp = knee(lead, 0.74), ang = Math.atan2(lead.y - head.y, lead.x - head.x) - Math.PI / 2;
+  g.save();
+  g.translate(clamp.x, clamp.y);
+  g.rotate(ang);
+  g.fillStyle = "#a03a2c";
+  g.fillRect(-2.6, -9, 5.2, 21);
+  g.fillStyle = "rgba(255,220,200,0.3)";
+  g.fillRect(-1.6, -9, 1, 21);
+  g.fillStyle = "#c8a878";
+  g.beginPath(); g.moveTo(-2.6, 12); g.lineTo(2.6, 12); g.lineTo(0, 19); g.closePath(); g.fill();
+  g.fillStyle = "#1a1a1c";
+  g.beginPath(); g.moveTo(-1, 16.4); g.lineTo(1, 16.4); g.lineTo(0, 19); g.closePath(); g.fill();
+  const band = g.createLinearGradient(-4, 0, 4, 0);
+  band.addColorStop(0, "#5a4418");
+  band.addColorStop(0.5, "#d8b868");
+  band.addColorStop(1, "#5a4418");
+  g.fillStyle = band;
+  g.fillRect(-4, -3, 8, 5);
+  g.fillStyle = "#8a6c34";
+  g.beginPath(); g.arc(5.4, -0.5, 1.9, 0, Math.PI * 2); g.fill();
+  g.restore();
+  // the head: a brass disc with its pivot screw; over it the milled handle
+  const grip2 = g.createLinearGradient(-3.4, 0, 3.4, 0);
+  grip2.addColorStop(0, "#3a2a10");
+  grip2.addColorStop(0.45, "#e0c478");
+  grip2.addColorStop(1, "#4a3816");
+  g.fillStyle = grip2;
+  g.fillRect(-3.4, head.y - 24, 6.8, 18);
+  g.strokeStyle = "rgba(40,24,8,0.6)";
+  g.lineWidth = 0.6;
+  for (let y = head.y - 23; y < head.y - 7; y += 1.8) { g.beginPath(); g.moveTo(-3.4, y); g.lineTo(3.4, y); g.stroke(); }
+  g.fillStyle = "#c8a858";
+  g.fillRect(-4.2, head.y - 25.4, 8.4, 2.4);
+  const disc = g.createRadialGradient(head.x - 2.4, head.y - 2.4, 0.6, head.x, head.y, 8.4);
+  disc.addColorStop(0, "#f4e0a0");
+  disc.addColorStop(0.6, "#a88848");
+  disc.addColorStop(1, "#3a2a10");
+  g.fillStyle = disc;
+  g.beginPath(); g.arc(head.x, head.y, 8.4, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "rgba(30,18,6,0.7)";
+  g.lineWidth = 0.8;
+  g.stroke();
+  g.fillStyle = "#4a3816";
+  g.beginPath(); g.arc(head.x, head.y, 2.8, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "#e8d8a0";
+  g.lineWidth = 0.7;
+  g.beginPath(); g.moveTo(head.x - 1.9, head.y - 1.2); g.lineTo(head.x + 1.9, head.y + 1.2); g.stroke();
 }
 
 // one lamp alight: the glass full of light, white at its heart

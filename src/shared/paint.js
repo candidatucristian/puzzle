@@ -43,9 +43,9 @@ export function grain(ctx, W, H, alpha) {
 }
 
 /** A vignette darkening the edges; only where something is painted. */
-export function vignette(ctx, W, H, a = 0.6) {
+export function vignette(ctx, W, H, a = 0.6, op = "source-atop") {
   ctx.save();
-  ctx.globalCompositeOperation = "source-atop";
+  ctx.globalCompositeOperation = op;
   const R0 = Math.hypot(W, H) / 2;
   const v = ctx.createRadialGradient(W * 0.5, H * 0.5, R0 * 0.35, W * 0.5, H * 0.5, R0 * 1.05);
   v.addColorStop(0, "rgba(0,0,0,0)");

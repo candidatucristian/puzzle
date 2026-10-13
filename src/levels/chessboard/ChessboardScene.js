@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintParlour, releaseParlourArt, releasePieceArt } from "./parlour.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,7 +27,6 @@ import { paintParlour, releaseParlourArt, releasePieceArt } from "./parlour.js";
 // only a few motes of dust turning in the window's light.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CH_FONT = '"Special Elite", monospace';
 const DENIED_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#171717" fill-opacity=".85" stroke="#e45454" stroke-width="2.5"/><path d="m6 6 12 12" stroke="#e45454" stroke-width="2.5"/></svg>')}") 12 12, not-allowed`;
 
 // the eight survivors — file+rank is the cipher, the pieces are dressing.
@@ -84,7 +82,6 @@ export default class ChessboardScene extends BasePuzzleScene {
     this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-10);
     this._placePieces(art);
     this._makeMotes(art);
-    this._drawTexts(W, H);
   }
 
   _placePieces(art) {
@@ -184,15 +181,6 @@ export default class ChessboardScene extends BasePuzzleScene {
         onUpdate: (tw) => dot.setAlpha(Math.sin(Math.PI * tw.progress) * 0.35),
       });
     }
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H, {
-      y: 30,
-      font: CH_FONT,
-      color: "#f0e2c4",
-      shadow: "rgba(10,4,2,0.9)",
-    });
   }
 
   // soft wooden knock — a piece lifted (higher) or set down (lower)

@@ -1,5 +1,4 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintHall, releaseHallArt } from "./hall.js";
 import { STATION_ROWS } from "./rows.js";
 import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
@@ -96,7 +95,6 @@ export default class StationScene extends BasePuzzleScene {
     // the split across each flap lies over its letter
     this.add.image(0, 0, art.splits).setOrigin(0, 0).setDepth(3);
     this._makeSecondHand(L, art.hand);
-    this._drawTexts(W, H);
     this._spawnDust(W, H, art.mote);
 
     if (!this._entered) {
@@ -350,10 +348,6 @@ export default class StationScene extends BasePuzzleScene {
       duration: 60000,
       repeat: -1,
     });
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // slow dust motes drifting through the lamp's light, a few of them

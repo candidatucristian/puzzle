@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import { planTransmission } from "./puzzle.js";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintRoom, releaseRoomArt } from "./room.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,7 +66,6 @@ export default class ModemScene extends BasePuzzleScene {
     this.add.image(0, 0, art.keys.room).setOrigin(0, 0).setDepth(0);
     this._makeLeds(art);
     this._makeMotes(art);
-    this._drawTexts(W, H);
     this._built = true;
   }
 
@@ -117,10 +115,6 @@ export default class ModemScene extends BasePuzzleScene {
     m.peak = 0.2 + Math.random() * 0.4;
     const s = (1.6 + Math.random() * 2.6) * Math.max(0.8, this._art.u);
     m.img.setDisplaySize(s, s);
-  }
-
-  _drawTexts(W, H) {
-    drawLevelLabel(this, W, H);
   }
 
   update(time, delta) {

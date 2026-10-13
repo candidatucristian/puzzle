@@ -1,5 +1,4 @@
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
-import { drawLevelLabel } from '../../shared/levelLabel.js';
 import { releaseTextures } from '../../shared/paint.js';
 import { sillLayout } from './puzzle.js';
 import { SILL_ART, paintSill } from './sill.js';
@@ -18,7 +17,6 @@ export default class TheSillScene extends BasePuzzleScene {
     this._clue = this.add.text(W / 2, H * 0.963, 'Read the light, not the dark.', {
       fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: Math.max(10, Math.min(16, H * 0.024)) + 'px', color: '#aebcca',
     }).setOrigin(0.5);
-    this.levelText = drawLevelLabel(this, W, H, { color: '#aebcca' });
   }
 
   _teardown() {

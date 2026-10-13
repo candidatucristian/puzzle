@@ -1,5 +1,4 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintMeadow, releaseMeadowArt, ROCK_R } from "./meadow.js";
 import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
 
@@ -103,7 +102,6 @@ export default class WiresScene extends BasePuzzleScene {
     this._makeLantern(art);
     this._makeFireflies(art);
     this.add.image(0, 0, art.veil).setOrigin(0, 0).setDepth(18);
-    this._drawTexts(W, H);
 
     this._built = true;
   }
@@ -417,10 +415,6 @@ export default class WiresScene extends BasePuzzleScene {
     this._music = this.services.audio.playLevelMusic(this, "wires_music", {
       gain: 0.7,
     });
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

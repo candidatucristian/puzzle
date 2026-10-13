@@ -1,5 +1,5 @@
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
-import { drawLevelLabel, uiScale } from '../../shared/levelLabel.js';
+import { uiScale } from '../../shared/levelLabel.js';
 import { makeCanvas, addCanvasTexture, releaseTextures, soft, grain, vignette } from '../../shared/paint.js';
 import { PLOTTER_BLOCKS, formatPath, plotterLayout } from './puzzle.js';
 import { deskLayout, paintDesk } from './desk.js';
@@ -58,7 +58,6 @@ export default class PlotterScene extends BasePuzzleScene {
 
   // what the tube says: the four blocks, and how the machine reads them
   _writeTube(L, s, k) {
-    const W = L.width, H = L.height;
     const pad = Math.min(28, s.w * 0.04);
     const text = (x, y, value, size, alpha = 1) => this.add.text(x, y, value, {
       fontFamily: MONO, fontSize: size + 'px', color: '#a7dca3',
@@ -81,7 +80,6 @@ export default class PlotterScene extends BasePuzzleScene {
     this._clue = text(s.x + pad, guideY - hintSize * 1.35 - 5 * k, 'Become the machine. Trace the path.', hintSize, 0.93);
     text(s.x + pad, guideY, 'X RIGHT   /   Y UP   /   RESET AT EACH BLOCK', guideSize, 0.57);
     this._scan = this.add.graphics().setDepth(-2);
-    this.levelText = drawLevelLabel(this, W, H, { color: '#96ae8d' });
     this._render();
   }
 

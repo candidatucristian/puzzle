@@ -1,20 +1,28 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { HOUSE_GO, zoomInto, zoomOutFrom } from "../../shared/house.js";
+import { HOUSE_GO, ALL_DOORS_OPEN, zoomInto, zoomOutFrom } from "../../shared/house.js";
+import { chime } from "../../shared/paint.js";
 import { layoutRotunda, paintRotunda, releaseRotundaArt } from "./rotunda.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The top floor: the last, and not a hall at all but a round room under the
-// dome, as long shut up as the floor below — five doors set round its wall,
+// dome, as long shut up as the floor below — three doors set round its wall,
 // two candles still alight between them, a tall window facing us with the
 // moon in it, and the telescope before the window. Like the halls below it is a way to things and has no code of its
 // own: the telescope glints until its puzzle is solved, and a click walks up
 // to it; a door glints once there is something behind it to be found.
 //
+// On the left an archway opens on a passage with three doors more, and an
+// iron gate hangs across it. The gate opens — a click — once every room up
+// here is finished; it stays open after that, and the passage is gone into.
+//
 // The room is painted (rotunda.js). Live over it: the candles, the light
 // under a door that calls, dust in the moonlight, the glints.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// the gate across the archway is remembered open under this name, with the keys
+const GATE = "TopGate";
 
 export default class TopScene extends BasePuzzleScene {
   constructor() {
@@ -31,6 +39,8 @@ export default class TopScene extends BasePuzzleScene {
     if (door) zoomOutFrom(this, door.box);
     // come away from the telescope: draw back from it
     else if (data?.from?.level === this._L.thing.level) zoomOutFrom(this, this._L.thing.box);
+    // come back out of the passage: draw back from its archway
+    else if (data?.from?.place === "TopHall") zoomOutFrom(this, this._L.passage.box);
 
     this._onResize = ({ width, height }) => {
       this._teardown();
@@ -42,7 +52,7 @@ export default class TopScene extends BasePuzzleScene {
 
   _build(W, H) {
     const L = (this._L = layoutRotunda(W, H));
-    const k = paintRotunda(this, L).keys;
+    const k = paintRotunda(this, L, this.services.levels.hasKey(GATE)).keys;
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
 
     // the candles in the sconces, never quite still
@@ -83,6 +93,8 @@ export default class TopScene extends BasePuzzleScene {
       this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => d.box }));
     });
 
+    this._gate(L, rooms);
+
     // the telescope: it glints until its puzzle is solved
     const levels = this.services.levels, thing = L.thing;
     if (!levels.isCompleted(levels.indexOf(thing.level))) {
@@ -121,6 +133,42 @@ export default class TopScene extends BasePuzzleScene {
         ease: "Sine.easeInOut",
       });
     }
+  }
+
+  // The archway and its gate. Open, the passage glints and a click goes
+  // down it. Shut, the gate glints and a click opens it — but only once
+  // every room up here is finished; until then it is locked.
+  _gate(L, rooms) {
+    const levels = this.services.levels, p = L.passage;
+    const shape = new Phaser.Geom.Polygon(p.quad.flatMap((q) => [q.x, q.y]));
+    const zone = this.add.zone(0, 0, L.W, L.H).setOrigin(0, 0).setDepth(5);
+    const take = (label, hand = true) => zone
+      .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: hand })
+      .setData("interactionLabel", label);
+    if (levels.hasKey(GATE)) {
+      take("Go down the passage");
+      zone.on("pointerdown", () => this._go(p.box, { place: "TopHall" }));
+      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => p.box }));
+      return;
+    }
+    // (while the house is being built every door opens, and so does this)
+    const free = ALL_DOORS_OPEN || (rooms.length > 0 && rooms.every((room) => room.completed));
+    if (!free) { take("Locked", false); return; }
+    take("Open the gate");
+    this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => p.box }));
+    zone.once("pointerdown", () => {
+      levels.takeKey(GATE);
+      this.game.events.emit("puzzle:interaction", { label: "" });
+      this.game.canvas.style.cursor = "";
+      // the latch, then the hinges; and the room seen again with the gate back
+      chime(this, [[196, 0.05], [147, 0.04]], 0.5);
+      this.time.delayedCall(240, () => {
+        chime(this, [[82, 0.05], [61, 0.04]], 1.6);
+        this._teardown();
+        this._build(this.cameras.main.width, this.cameras.main.height);
+        this.cameras.main.fadeIn(this.reducedMotion ? 1 : 520, 0, 0, 0);
+      });
+    });
   }
 
   // walk up to what was clicked, and ask to be taken through it

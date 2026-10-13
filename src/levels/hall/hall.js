@@ -1,5 +1,6 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg, polygon } from "../../shared/paint.js";
 import { archGeo, paintSkyOn, paintWindowOn, openingPath } from "../telescope/window.js";
+import { projectDoor, DOOR_LENGTH as DOOR_LEN } from "./doorMotion.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
  *  length, three closed doors along either wall, and at its far end the
@@ -25,17 +26,19 @@ import { archGeo, paintSkyOn, paintWindowOn, openingPath } from "../telescope/wi
 
 // each floor's hall has its own pictures
 const KEYS = {
-  ground: { room: "hl_hall", glow: "hl_glow", gateL: "hl_gate_l", gateR: "hl_gate_r" },
+  ground: { room: "hl_hall", glow: "hl_glow", gateL: "hl_gate_l", gateR: "hl_gate_r", fog: "hl_fog", pendulum: "hl_pendulum" },
   upper: { room: "hu_hall", glow: "hu_glow", rocker: "hu_rocker" },
+  wing: { room: "hw_hall", glow: "hw_glow" },
 };
+// Only the small doorway is uploaded while its leaf moves.
+const SWING = "hl_swing";
 const WARM = "255,190,120";
 const MOON = "150,178,232";
 const END = 4.7; // how far off the end wall is
 // where along the walls the doors are, and the sconces between them
 const DOORS = [1.32, 2.2, 3.1];
-const DOOR_LEN = 0.5;
 const SCONCES = [2.01, 2.9];
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI"];
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII"];
 // The stairs at the far end, going up and away to the floor above: how wide
 // they and their opening are (of the hall's half-width), how deep and how
 // high one step is, how many there are, and how high the opening's head.
@@ -47,9 +50,13 @@ const STAIR = { half: 0.4, open: 0.5, run: 0.16, rise: 0.085, steps: 15, head: -
  *  doors VII to XII, a window where the stairs are below, one sconce still
  *  alight, and in place of the chandelier a bare bulb on a flex, which is
  *  `bulbOn` until its puzzle is solved. */
-export function layoutHall(W, H, { upper = false, bulbOn = true } = {}) {
+/** `wing`: the passage that opens off the top floor — as far gone as the
+ *  upper hall, and shorter of doors: one on the left, two on the right, XV
+ *  to XVII; one sconce alight; a boarded window at its end. `worn` is true
+ *  of both. */
+export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } = {}) {
   const u = Math.min(W / 1000, H / 700);
-  const L = { W, H, u, upper, bulbOn };
+  const L = { W, H, u, upper, wing, worn: upper || wing, bulbOn };
   L.vp = { x: W * 0.5, y: H * 0.47 };
   L.wall = Math.max(W * 0.6, H * 0.95); // half the hall's width, at the picture
   L.floor = H * 0.62;
@@ -62,11 +69,13 @@ export function layoutHall(W, H, { upper = false, bulbOn = true } = {}) {
     DOORS.forEach((z, i) => {
       // upstairs the first place on the right is not a door: the stairs go up there
       if (upper && side > 0 && i === 0) return;
+      // the passage has three: the middle one on the left, the first and the last on the right
+      if (wing && (side < 0 ? i !== 1 : i === 1)) return;
       const X = side * L.wall;
       const quad = [L.P(X, L.doorTop, z), L.P(X, L.doorTop, z + DOOR_LEN), L.P(X, L.floor, z + DOOR_LEN), L.P(X, L.floor, z)];
       const xs = quad.map((p) => p.x), ys = quad.map((p) => p.y);
       L.doors.push({
-        side, i, z, quad, number: upper ? 7 + L.doors.length : (side < 0 ? 0 : DOORS.length) + i + 1,
+        side, i, z, quad, number: upper ? 7 + L.doors.length : wing ? 15 + L.doors.length : (side < 0 ? 0 : DOORS.length) + i + 1,
         box: { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) },
         sill: L.P(X - side * L.wall * 0.1, L.floor, z + DOOR_LEN / 2),
       });
@@ -74,14 +83,29 @@ export function layoutHall(W, H, { upper = false, bulbOn = true } = {}) {
   }
   // the opening the stairs go up through, on the screen: the two leaves of
   // the iron gate hang in it
-  if (!upper) {
+  if (!L.worn) {
     const ox = L.wall * STAIR.open;
     const a = L.P(-ox, H * STAIR.head, END), b = L.P(ox, L.floor, END);
     L.gate = { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y };
+    // What is alive in this hall, for the scene. The long-case clock's
+    // pendulum: where it hangs from, how long, how big its bob (the clock
+    // is painted without it).
+    const zc = END - 0.12, cf = L.P(-L.wall * 0.74, L.floor, zc), ck = H / 700 / zc;
+    L.clock = { x: cf.x, y: cf.y - 232 * ck, len: 124 * ck, bob: 7.5 * ck };
+    // the chandelier's eight wicks, the ones toward us first
+    const hub = L.P(0, L.ceil + H * 0.26, 1.9), hk = H / 700 / 1.9;
+    L.wicks = Array.from({ length: 8 }, (_, i) => (i / 8) * Math.PI * 2 + 0.32)
+      .sort((p, q) => Math.sin(q) - Math.sin(p))
+      .map((ang) => ({ x: hub.x + Math.cos(ang) * 132 * hk, y: hub.y + (Math.sin(ang) * 132 * 0.22 - 14 - 54) * hk, s: hk }));
+    // the shadows the gate's bars throw down the runner in the moon from the stairs
+    L.bars = Array.from({ length: 9 }, (_, i) => {
+      const X = ox * ((i / 8) * 2 - 1) * 0.92;
+      return [L.P(X, L.floor, END - 0.04), L.P(X * 1.5, L.floor, END - 2.3)];
+    });
   }
   L.sconces = [];
   // upstairs only the first on the left still has a candle in it
-  for (const side of [-1, 1]) for (const z of SCONCES) L.sconces.push({ side, z, dead: upper && !(side < 0 && z === SCONCES[0]), ...L.P(side * L.wall, -H * 0.2, z) });
+  for (const side of [-1, 1]) for (const z of SCONCES) L.sconces.push({ side, z, dead: (upper && !(side < 0 && z === SCONCES[0])) || (wing && !(side > 0 && z === SCONCES[1])), ...L.P(side * L.wall, -H * 0.2, z) });
   if (upper) {
     // the bulb on its flex, where the chandelier hangs below: what opens the puzzle
     const b = L.P(0, L.ceil + H * 0.36, 1.9), top = L.P(0, L.ceil, 1.9), r = (36 * u) / 1.9;
@@ -114,7 +138,7 @@ export function layoutHall(W, H, { upper = false, bulbOn = true } = {}) {
 export function paintHall(scene, L) {
   const t = scene.textures;
   const { W, H } = L;
-  const K = L.upper ? KEYS.upper : KEYS.ground;
+  const K = L.wing ? KEYS.wing : L.upper ? KEYS.upper : KEYS.ground;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
@@ -122,11 +146,11 @@ export function paintHall(scene, L) {
   paintCeiling(ctx, L);
   paintFloor(ctx, L);
   for (const side of [-1, 1]) paintWall(ctx, L, side);
-  if (L.upper) paintEndWindow(ctx, L); else paintEnd(ctx, L);
+  if (L.worn) paintEndWindow(ctx, L); else paintEnd(ctx, L);
   paintStairLight(ctx, L);
   if (L.stairs) paintSideStairs(ctx, L, L.stairs, 1, 1);
   for (const d of L.doors) paintDoor(ctx, L, d);
-  if (L.upper) paintDecay(ctx, L);
+  if (L.worn) paintDecay(ctx, L);
   for (const s of L.sconces) paintSconce(ctx, L, s);
   paintThings(ctx, L);
   if (L.upper) paintBulb(ctx, L);
@@ -140,11 +164,222 @@ export function paintHall(scene, L) {
     addCanvasTexture(t, K.gateL, paintGateLeaf(L, -1));
     addCanvasTexture(t, K.gateR, paintGateLeaf(L, 1));
   }
+  if (K.fog) addCanvasTexture(t, K.fog, paintFogBank());
+  if (K.pendulum) addCanvasTexture(t, K.pendulum, paintPendulum(L.clock));
   return { keys: K };
+}
+
+/** Cache the room, foreground and lettering once. Redraw just the rigid
+ *  door at its exact angle each frame, with supersampled edges. Nothing is
+ *  quantized into animation frames, and the surrounding hall stays still. */
+export function paintDoorSwing(scene, L, d, lit) {
+  const t = scene.textures;
+  const X = d.side * L.wall, into = (dist) => d.side * (L.wall + dist);
+  const z0 = d.z, z1 = d.z + DOOR_LEN, top = L.doorTop, floor = L.floor, tall = floor - top;
+  // the door's width, in the units the hall is measured across: a door is
+  // about 0.43 as wide as it is tall
+  const wide = tall * 0.43;
+  const box = { x: Math.floor(d.box.x) - 2, y: Math.floor(d.box.y) - 2, width: Math.ceil(d.box.width) + 4, height: Math.ceil(d.box.height) + 4 };
+  // Keep the edge clean during the camera's approach without uploading a
+  // full-screen canvas. Bound the allocation on very large displays.
+  const resolution = Math.min(3, 2048 / box.height, Math.sqrt(1500000 / (box.width * box.height)));
+  const sheet = (paint) => {
+    const c = makeCanvas(box.width * resolution, box.height * resolution);
+    const ctx = c.getContext("2d");
+    ctx.scale(resolution, resolution);
+    ctx.translate(-box.x, -box.y);
+    polygon(ctx, d.quad);
+    ctx.clip();
+    paint(ctx);
+    return c;
+  };
+  const fill = (ctx, pts, style) => { polygon(ctx, pts); ctx.fillStyle = style; ctx.fill(); };
+  const glow = lit ? WARM : MOON;
+  // ── the room, through the frame
+  const room = sheet((ctx) => {
+    const deep = wide * 4.2, far = z1 + DOOR_LEN * 2.4, mid = (d.quad[0].x + d.quad[1].x) / 2;
+    fill(ctx, d.quad, lit ? "#170d07" : "#07090d");
+    // its far wall, its floor running in from the sill, its ceiling
+    const wall = ctx.createLinearGradient(0, L.P(X, top, far).y, 0, L.P(X, floor, far).y);
+    wall.addColorStop(0, lit ? "#3a2416" : "#10151e");
+    wall.addColorStop(0.62, lit ? "#6a4426" : "#1a2230");
+    wall.addColorStop(1, lit ? "#2a180c" : "#0c1016");
+    fill(ctx, [L.P(X, top - tall * 0.3, far), L.P(into(deep), top - tall * 0.3, far), L.P(into(deep), floor, far), L.P(X, floor, far)], wall);
+    // its paper, in stripes
+    for (let i = 0; i < 26; i++) {
+      const a = L.P(into((deep * i) / 26), top - tall * 0.3, far), b = L.P(into((deep * i) / 26), floor, far);
+      ctx.strokeStyle = lit ? "rgba(255,214,170,0.07)" : "rgba(170,190,236,0.05)";
+      ctx.lineWidth = Math.max(1, (5 * L.u) / far);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    // a dado along it, a picture, the edge of something standing against it
+    fill(ctx, [L.P(X, floor - tall * 0.36, far), L.P(into(deep), floor - tall * 0.36, far), L.P(into(deep), floor, far), L.P(X, floor, far)], lit ? "rgba(30,16,8,0.6)" : "rgba(4,6,10,0.6)");
+    fill(ctx, [L.P(into(wide * 0.5), floor - tall * 0.78, far), L.P(into(wide * 1.3), floor - tall * 0.78, far), L.P(into(wide * 1.3), floor - tall * 0.52, far), L.P(into(wide * 0.5), floor - tall * 0.52, far)], lit ? "#1c110a" : "#06080c");
+    fill(ctx, [L.P(into(wide * 0.6), floor - tall * 0.75, far), L.P(into(wide * 1.2), floor - tall * 0.75, far), L.P(into(wide * 1.2), floor - tall * 0.55, far), L.P(into(wide * 0.6), floor - tall * 0.55, far)], lit ? "#7a5a34" : "#141a26");
+    const boards = ctx.createLinearGradient(L.P(X, floor, z0).x, 0, L.P(into(deep), floor, z1).x, 0);
+    boards.addColorStop(0, lit ? "#5a3820" : "#131820");
+    boards.addColorStop(1, lit ? "#2a180c" : "#080a0e");
+    fill(ctx, [L.P(X, floor, z0), L.P(X, floor, far), L.P(into(deep), floor, far), L.P(into(deep), floor, z0)], boards);
+    for (let i = 1; i < 7; i++) {
+      const a = L.P(into((wide * i) / 2.2), floor, z0), b = L.P(into((wide * i) / 2.2), floor, far);
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.lineWidth = Math.max(0.6, L.u / d.z);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    // a rug on the boards; a small table against the wall, a lamp on it
+    fill(ctx, [L.P(into(wide * 0.5), floor, z0 + 0.1), L.P(into(wide * 0.5), floor, far - 0.2), L.P(into(wide * 2.6), floor, far - 0.2), L.P(into(wide * 2.6), floor, z0 + 0.1)], lit ? "rgba(74,20,24,0.75)" : "rgba(14,18,30,0.75)");
+    {
+      const tx0 = wide * 1.35, tx1 = wide * 2.05, zt = far - 0.06, th = tall * 0.34;
+      fill(ctx, [L.P(into(tx0), floor - th, zt), L.P(into(tx1), floor - th, zt), L.P(into(tx1), floor, zt), L.P(into(tx0), floor, zt)], lit ? "#22130a" : "#06080c");
+      const foot = L.P(into((tx0 + tx1) / 2), floor - th, zt), s = (tall * 0.012) / zt;
+      ctx.fillStyle = lit ? "#6a5226" : "#161a22";
+      ctx.fillRect(foot.x - 1.2 * s, foot.y - 16 * s, 2.4 * s, 16 * s);
+      ctx.fillStyle = lit ? "#ffe2a8" : "#222a3a";
+      ctx.beginPath(); ctx.moveTo(foot.x - 9 * s, foot.y - 16 * s); ctx.lineTo(foot.x + 9 * s, foot.y - 16 * s); ctx.lineTo(foot.x + 5.5 * s, foot.y - 30 * s); ctx.lineTo(foot.x - 5.5 * s, foot.y - 30 * s); ctx.closePath(); ctx.fill();
+      if (lit) soft(ctx, foot.x, foot.y - 22 * s, 46 * s, 46 * s, WARM, 0.75, "lighter");
+    }
+    // the lamp's light — or the moon's — on the wall and across the floor to the door
+    const lamp = L.P(into(wide * 1.7), floor - tall * 0.5, far);
+    soft(ctx, lamp.x, lamp.y, box.width * 1.3, box.height * 0.6, glow, lit ? 0.5 : 0.22, "lighter");
+    const pool = L.P(into(wide * 0.5), floor, (z0 + z1) / 2);
+    soft(ctx, pool.x, pool.y, box.width * 0.9, box.height * 0.16, glow, lit ? 0.5 : 0.2, "lighter");
+    // the thickness of the wall, seen in the far jamb; the sill
+    const T = wide * 0.18;
+    const jamb = ctx.createLinearGradient(L.P(X, 0, z1).x, 0, L.P(into(T), 0, z1).x, 0);
+    jamb.addColorStop(0, "#3a2414");
+    jamb.addColorStop(1, lit ? "#8a5c34" : "#1a1410");
+    fill(ctx, [L.P(X, top, z1), L.P(into(T), top, z1), L.P(into(T), floor, z1), L.P(X, floor, z1)], jamb);
+    fill(ctx, [L.P(X, floor, z0), L.P(X, floor, z1), L.P(into(T), floor, z1), L.P(into(T), floor, z0)], lit ? "#6a4426" : "#12100e");
+    // the dark along the head of the frame and down its near side
+    const head = ctx.createLinearGradient(0, d.box.y, 0, d.box.y + d.box.height * 0.2);
+    head.addColorStop(0, "rgba(0,0,0,0.65)");
+    head.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = head;
+    ctx.fillRect(box.x, box.y, box.width, box.height);
+    const near = d.quad[0].x, nearSide = ctx.createLinearGradient(near, 0, near + (mid - near) * 0.5, 0);
+    nearSide.addColorStop(0, "rgba(0,0,0,0.5)");
+    nearSide.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = nearSide;
+    ctx.fillRect(box.x, box.y, box.width, box.height);
+  });
+  // Preserve objects in front of the door, and the hall's original shade.
+  // They must not jump in brightness or move with the opening leaf.
+  const foreground = sheet((ctx) => {
+    if (L.worn) paintDecay(ctx, L);
+    for (const s of L.sconces) paintSconce(ctx, L, s);
+    paintThings(ctx, L);
+    if (L.upper) paintBulb(ctx, L);
+    paintGloom(ctx, L);
+    vignette(ctx, L.W, L.H, 0.75, "source-over");
+    grain(ctx, L.W, L.H, 0.035);
+  });
+  // Keep the wood, panels and carved number in a single material. Project
+  // that material instead of rasterizing hundreds of strokes per frame.
+  const face = sheet((ctx) => paintDoor(ctx, L, { ...d, hideHandle: true }));
+  const canvas = document.createElement("canvas");
+  canvas.width = room.width;
+  canvas.height = room.height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: false });
+  // This surface changes every frame. Keep it GPU-backed; the cached art
+  // above is CPU-painted once, but readback here would stall the animation.
+  const texture = addCanvasTexture(t, SWING, canvas);
+  let lastAngle = -1, lastHandle = -1, hidden = false;
+  const draw = (angle, handle = 0) => {
+    const shape = projectDoor(L, d, angle);
+    if ((angle === lastAngle && handle === lastHandle) || (hidden && shape.visible === 0)) return shape;
+    lastAngle = angle; lastHandle = handle;
+    hidden = shape.visible === 0;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(room, 0, 0);
+    ctx.save();
+    ctx.scale(resolution, resolution);
+    ctx.translate(-box.x, -box.y);
+    polygon(ctx, d.quad); ctx.clip();
+    const { quad, aperture } = shape;
+    if (shape.visible > 0) {
+      const Xf = into(wide * Math.sin(angle)), zf = z0 + DOOR_LEN * Math.cos(angle);
+      fill(ctx, [quad[3], quad[2], L.P(Xf + d.side * wide * 0.3, floor, zf + 0.05), L.P(X + d.side * wide * 0.3, floor, z0 + 0.05)], `rgba(0,0,0,${0.4 * aperture})`);
+      paintMovingDoorFace(ctx, face, box, resolution, d.quad, shape);
+      paintDoorHandle(ctx, L, { ...d, handle }, shape.surface);
+      fill(ctx, quad, `rgba(3,2,2,${0.32 * Math.sin(angle)})`);
+      // The oak has thickness; its moving edge catches the room's light.
+      fill(ctx, shape.edge, `rgba(${lit ? "112,73,36" : "48,52,63"},${aperture})`);
+      const edge = ctx.createLinearGradient(quad[1].x, 0, quad[1].x + (quad[0].x - quad[1].x) * 0.22, 0);
+      edge.addColorStop(0, `rgba(${glow},${(lit ? 0.32 : 0.16) * aperture})`);
+      edge.addColorStop(1, `rgba(${glow},0)`);
+      fill(ctx, quad, edge);
+      ctx.strokeStyle = `rgba(${glow},${(lit ? 0.65 : 0.35) * aperture})`;
+      ctx.lineWidth = Math.max(0.6, (1.5 * L.u) / d.z);
+      ctx.beginPath(); ctx.moveTo(quad[1].x, quad[1].y); ctx.lineTo(quad[2].x, quad[2].y); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.drawImage(foreground, 0, 0);
+    texture.refresh();
+    return shape;
+  };
+  draw(0);
+  return { box, key: SWING, draw, resolution };
+}
+
+// The projection is linear vertically and projective across the leaf.
+// Narrow affine strips preserve the original material and its perspective;
+// a subpixel overlap avoids seams, and the supersampled outline clips them.
+function paintMovingDoorFace(ctx, face, box, resolution, closed, shape) {
+  const [tl, tr, br, bl] = closed;
+  const columns = 48;
+  ctx.save();
+  polygon(ctx, shape.quad); ctx.clip();
+  for (let i = 0; i < columns; i++) {
+    const a0 = i / columns, a1 = (i + 1) / columns, mid = (a0 + a1) / 2;
+    const x0 = tl.x + (tr.x - tl.x) * a0, x1 = tl.x + (tr.x - tl.x) * a1;
+    const y0 = tl.y + (tr.y - tl.y) * a0, y1 = tl.y + (tr.y - tl.y) * a1;
+    const height = bl.y + (br.y - bl.y) * mid - (tl.y + (tr.y - tl.y) * mid);
+    const p = shape.surface(a0, 0), q = shape.surface(a1, 0);
+    const scaleY = (shape.surface(mid, 1).y - shape.surface(mid, 0).y) / height;
+    const scaleX = (q.x - p.x) / (x1 - x0);
+    const shear = (q.y - p.y - scaleY * (y1 - y0)) / (x1 - x0);
+    const left = Math.min(x0, x1) - 0.25 / resolution;
+    const width = Math.abs(x1 - x0) + 0.5 / resolution;
+    ctx.save();
+    ctx.transform(scaleX, shear, 0, scaleY, p.x - scaleX * x0, p.y - shear * x0 - scaleY * y0);
+    ctx.drawImage(face, (left - box.x) * resolution, 0, width * resolution, face.height,
+      left, box.y, width, face.height / resolution);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// the clock's pendulum, hanging straight: a brass rod and its bob — the scene swings it
+function paintPendulum(clock) {
+  const R = 3, w = Math.ceil(clock.bob * 2 * R) + 4, h = Math.ceil((clock.len + clock.bob) * R) + 2;
+  const c = makeCanvas(w, h);
+  const g = c.getContext("2d");
+  g.fillStyle = "#8a6c2c";
+  g.fillRect(w / 2 - Math.max(1, 0.5 * R), 0, Math.max(2, R), clock.len * R);
+  const bob = g.createRadialGradient(w / 2 - clock.bob * R * 0.35, clock.len * R - clock.bob * R * 0.35, 1, w / 2, clock.len * R, clock.bob * R);
+  bob.addColorStop(0, "#f0d890");
+  bob.addColorStop(0.55, "#b8923e");
+  bob.addColorStop(1, "#4a3812");
+  g.fillStyle = bob;
+  g.beginPath(); g.arc(w / 2, clock.len * R, clock.bob * R, 0, Math.PI * 2); g.fill();
+  return c;
+}
+
+// a bank of mist, soft-edged and uneven, for the scene to drift down the hall
+function paintFogBank() {
+  const w = 512, h = 192;
+  const c = makeCanvas(w, h);
+  const g = c.getContext("2d");
+  const rnd = lcg(3131);
+  for (let i = 0; i < 46; i++) {
+    soft(g, w * (0.12 + rnd() * 0.76), h * (0.3 + rnd() * 0.4), w * (0.07 + rnd() * 0.13), h * (0.12 + rnd() * 0.2), "186,196,214", 0.16);
+  }
+  return c;
 }
 
 export function releaseHallArt(textures) {
   for (const set of Object.values(KEYS)) for (const key of Object.values(set)) if (textures.exists(key)) textures.remove(key);
+  if (textures.exists(SWING)) textures.remove(SWING);
 }
 
 // One leaf of the gate across the foot of the stairs: wrought iron, black
@@ -274,9 +509,9 @@ function paintFloor(ctx, L) {
     ctx.fillStyle = col;
     ctx.fill();
   };
-  strip(rw, L.upper ? "#101a17" : "#2e0c10");
-  strip(rw * 0.9, L.upper ? "#4a4734" : "#6a5a3a");
-  strip(rw * 0.84, L.upper ? "#16261f" : "#3c1014");
+  strip(rw, L.worn ? "#101a17" : "#2e0c10");
+  strip(rw * 0.9, L.worn ? "#4a4734" : "#6a5a3a");
+  strip(rw * 0.84, L.worn ? "#16261f" : "#3c1014");
   // its pattern: a lozenge every stride, small flowers between
   for (let z = 0.8; z < END - 0.3; z += 0.22) {
     const p = P(0, floor, z);
@@ -318,7 +553,7 @@ function paintWall(ctx, L, side) {
     ctx.fill();
   };
   const dado = floor - H * 0.36;
-  band(ceil, floor, L.upper ? "#29221b" : "#1a2420", L.upper ? "#120e0a" : "#0c1210");
+  band(ceil, floor, L.worn ? "#29221b" : "#1a2420", L.worn ? "#120e0a" : "#0c1210");
   // the paper's stripe
   ctx.save();
   polygon(ctx, [P(X, ceil, 0.7), P(X, ceil, END), P(X, dado, END), P(X, dado, 0.7)]);
@@ -965,6 +1200,35 @@ function paintStairLight(ctx, L) {
 
 // A door in a wall: its architrave, a heavy leaf of dark oak in six panels, a
 // brass knob and keyhole, and under it a thread of light from the room behind.
+/** `leafOnly`: only the door itself — no architrave round it, no light at
+ *  its keyhole or under it — for a leaf that has left its frame. */
+// Lettering is rasterized once for a moving door, never during its swing.
+function paintDoorNumber(number) {
+  const R = 3, fw = 200, fh = 70;
+  const flat = makeCanvas(fw * R, fh * R);
+  const g = flat.getContext("2d");
+  g.scale(R, R);
+  g.font = '700 56px Georgia, "Times New Roman", serif';
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  const put = (dx, dy, fill) => {
+    g.fillStyle = fill;
+    g.fillText(ROMAN[number - 1], fw / 2 + dx, fh / 2 + 2 + dy);
+  };
+  put(1.3, 1.4, "rgba(255,214,170,0.22)");
+  put(0, 0, "#070403");
+  g.save();
+  g.globalCompositeOperation = "source-atop";
+  put(0.9, 1.1, "#b3a384");
+  const rnd = lcg(700 + number);
+  for (let i = 0; i < 60; i++) {
+    g.fillStyle = `rgba(20,12,6,${(0.15 + rnd() * 0.4).toFixed(2)})`;
+    g.fillRect(rnd() * fw, rnd() * fh, 1 + rnd() * 5, 0.6 + rnd() * 1.4);
+  }
+  g.restore();
+  return flat;
+}
+
 function paintDoor(ctx, L, d) {
   const { H, u } = L;
   const [tl, tr, br, bl] = d.quad; // near top, far top, far foot, near foot
@@ -1024,32 +1288,7 @@ function paintDoor(ctx, L, d) {
   // so it lies in the wood and runs away down the hall with it.
   {
     const R = 3, fw = 200, fh = 70;
-    const flat = makeCanvas(fw * R, fh * R);
-    const g = flat.getContext("2d");
-    g.scale(R, R);
-    const text = ROMAN[d.number - 1];
-    g.font = '700 56px Georgia, "Times New Roman", serif';
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    const put = (dx, dy, fill) => {
-      g.fillStyle = fill;
-      g.fillText(text, fw / 2 + dx, fh / 2 + 2 + dy);
-    };
-    // the wood's light catching the cut's lower-right edge
-    put(1.3, 1.4, "rgba(255,214,170,0.22)");
-    // the cut itself, dark where the chisel went in
-    put(0, 0, "#070403");
-    // the old paint lying in it, shadowed along the top and left of the cut
-    g.save();
-    g.globalCompositeOperation = "source-atop";
-    put(0.9, 1.1, "#b3a384");
-    // worn thin in places
-    const rnd2 = lcg(700 + d.number);
-    for (let i = 0; i < 60; i++) {
-      g.fillStyle = `rgba(20,12,6,${(0.15 + rnd2() * 0.4).toFixed(2)})`;
-      g.fillRect(rnd2() * fw, rnd2() * fh, 1 + rnd2() * 5, 0.6 + rnd2() * 1.4);
-    }
-    g.restore();
+    const flat = paintDoorNumber(d.number);
     // where on the door it goes: the middle of the top rail
     const X = d.side * L.wall;
     const span = [0.3, 0.7];
@@ -1061,19 +1300,10 @@ function paintDoor(ctx, L, d) {
       ctx.drawImage(flat, cx * R, 0, R, fh * R, Math.min(p.x, q.x), p.y, Math.abs(q.x - p.x) + 0.6, (tall * 0.09) / zAt((cx + 0.5) / fw));
     }
   }
-  // the knob and its plate, on the edge away from the hinges
-  const k = f(0.86, 0.53);
-  const kr = Math.max(2, (9 * u) / d.z);
-  ctx.fillStyle = "#3a2a10";
-  ctx.beginPath(); ctx.ellipse(k.x, k.y + kr * 1.6, kr * 0.5, kr * 2.4, 0, 0, Math.PI * 2); ctx.fill();
-  const kg = ctx.createRadialGradient(k.x - kr * 0.3, k.y - kr * 0.3, kr * 0.1, k.x, k.y, kr);
-  kg.addColorStop(0, "#fff0c0");
-  kg.addColorStop(0.5, "#c69a42");
-  kg.addColorStop(1, "#4a340e");
-  ctx.fillStyle = kg;
-  ctx.beginPath(); ctx.arc(k.x, k.y, kr, 0, Math.PI * 2); ctx.fill();
-  if (L.upper) return; // nobody is behind these: no light at the keyhole, none under the door
+  if (!d.hideHandle) paintDoorHandle(ctx, L, d, f);
+  if (L.worn) return; // nobody is behind these: no light at the keyhole, none under the door
   // light through the keyhole, and the thread of it under the door
+  const kr = Math.max(2, (9 * u) / d.z);
   const hole = f(0.86, 0.6);
   soft(ctx, hole.x, hole.y, kr * 0.9, kr * 1.2, WARM, 0.9, "lighter");
   ctx.strokeStyle = `rgba(${WARM},0.95)`;
@@ -1084,6 +1314,21 @@ function paintDoor(ctx, L, d) {
   ctx.stroke();
   // and where it falls on the boards before it
   soft(ctx, d.sill.x, d.sill.y, (L.wall * 0.16) / d.z, (H * 0.03) / d.z, WARM, 0.36, "lighter");
+}
+
+// The knob turns before the latch releases, then its spring returns it.
+function paintDoorHandle(ctx, L, d, f) {
+  const k = f(0.86, 0.53);
+  const kr = Math.max(2, (9 * L.u) / d.z);
+  ctx.fillStyle = "#3a2a10";
+  ctx.beginPath(); ctx.ellipse(k.x, k.y + kr * 1.6, kr * 0.5, kr * 2.4, 0, 0, Math.PI * 2); ctx.fill();
+  const turn = (d.handle ?? 0) * 0.65;
+  const kg = ctx.createRadialGradient(k.x - kr * 0.42 * Math.cos(Math.PI / 4 + turn), k.y - kr * 0.42 * Math.sin(Math.PI / 4 + turn), kr * 0.1, k.x, k.y, kr);
+  kg.addColorStop(0, "#fff0c0");
+  kg.addColorStop(0.5, "#c69a42");
+  kg.addColorStop(1, "#4a340e");
+  ctx.fillStyle = kg;
+  ctx.beginPath(); ctx.arc(k.x, k.y, kr, 0, Math.PI * 2); ctx.fill();
 }
 
 // a sconce: a brass arm, a candle in a glass, its light on the wall and floor
@@ -1131,7 +1376,7 @@ function paintThings(ctx, L) {
   // ── the chandelier: old bronze on a chain from a plaster rose — a turned
   // stem, eight arms sweeping out and up to their candle cups, a drop of cut
   // glass under each, the candles out; the moon from the stairwell on it
-  if (!L.upper) {
+  if (!L.worn) {
     const z = 1.9;
     const hub = P(0, ceil + H * 0.26, z);
     const top = P(0, ceil, z);
@@ -1244,7 +1489,7 @@ function paintThings(ctx, L) {
   };
   const shadow = (w) => soft(ctx, 0, 2, w, 7, "0,0,0", 0.7);
   // ── the long-case clock, left of the stairs
-  if (!L.upper) stand(-1, END - 0.12, wall * 0.26, () => {
+  if (!L.worn) stand(-1, END - 0.12, wall * 0.26, () => {
     shadow(40);
     const g = ctx.createLinearGradient(-26, 0, 26, 0);
     g.addColorStop(0, "#1c0f08"); g.addColorStop(0.5, "#3e2414"); g.addColorStop(1, "#140a05");
@@ -1259,9 +1504,7 @@ function paintThings(ctx, L) {
     ctx.beginPath(); ctx.moveTo(0, -296); ctx.lineTo(0, -313); ctx.moveTo(0, -296); ctx.lineTo(9, -290); ctx.stroke();
     ctx.fillStyle = "#0a0605";
     ctx.fillRect(-12, -236, 24, 170);
-    ctx.fillStyle = "#b8923e";
-    ctx.fillRect(-1.2, -230, 2.4, 120);
-    ctx.beginPath(); ctx.arc(0, -104, 9, 0, Math.PI * 2); ctx.fill();
+    // (its pendulum is the scene's, so that it can swing)
   });
   // ── the coat stand, right of the stairs: a coat and a hat on it
   stand(1, END - 0.12, wall * 0.26, () => {
@@ -1283,7 +1526,7 @@ function paintThings(ctx, L) {
     ctx.beginPath(); ctx.ellipse(30, -350, 15, 14, 0, Math.PI, 0); ctx.fill();
   });
   // ── between the first two doors, left: a little table, a fern in a pot
-  if (!L.upper) stand(-1, 2.01, 46, () => {
+  if (!L.worn) stand(-1, 2.01, 46, () => {
     shadow(52);
     ctx.fillStyle = dark;
     for (const x of [-30, 30]) ctx.fillRect(x - 3, -116, 6, 116);
@@ -1305,7 +1548,7 @@ function paintThings(ctx, L) {
     ctx.lineCap = "butt";
   });
   // ── and right: a hall chair, its tall carved back to the wall
-  if (!L.upper) stand(1, 2.01, 44, () => {
+  if (!L.worn) stand(1, 2.01, 44, () => {
     shadow(46);
     ctx.fillStyle = dark;
     for (const x of [-26, 22]) ctx.fillRect(x, -74, 6, 74);
@@ -1320,7 +1563,7 @@ function paintThings(ctx, L) {
     ctx.fillRect(-22, -176, 44, 76);
   });
   // ── between the last two doors, left: an umbrella stand; right: a trunk
-  if (!L.upper) stand(-1, 2.9, 40, () => {
+  if (!L.worn) stand(-1, 2.9, 40, () => {
     shadow(30);
     const g = ctx.createLinearGradient(-22, 0, 22, 0);
     g.addColorStop(0, "#2a1e0c"); g.addColorStop(0.5, "#7a5a22"); g.addColorStop(1, "#22180a");
@@ -1512,7 +1755,7 @@ function paintGloom(ctx, L) {
     for (let x = 0; x < W; x += step) {
       const d = Math.hypot((x + step / 2 - L.vp.x) / (W * 0.62), (y + step / 2 - L.vp.y) / (H * 0.74));
       // upstairs the dark comes in closer
-      const a = L.upper ? Math.min(0.9, Math.max(0, d - 0.24) * 1.3) : Math.min(0.8, Math.max(0, d - 0.34) * 1.05);
+      const a = L.worn ? Math.min(0.9, Math.max(0, d - 0.24) * 1.3) : Math.min(0.8, Math.max(0, d - 0.34) * 1.05);
       if (a <= 0.004) continue;
       ctx.fillStyle = `rgba(3,4,6,${a.toFixed(3)})`;
       ctx.fillRect(x, y, step, step);

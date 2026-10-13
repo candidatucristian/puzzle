@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
-import { drawLevelLabel, uiScale } from '../../shared/levelLabel.js';
+import { uiScale } from '../../shared/levelLabel.js';
 import { lcg } from '../../shared/paint.js';
 import { kineticRig, kineticLayout, polygonVertices, nurseryBreeze, readKinetic } from './puzzle.js';
 import { paintRoom, releaseRoomArt } from './room.js';
@@ -58,7 +58,6 @@ export default class KineticScene extends BasePuzzleScene {
       .setTint(0xffc884).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.42).setDepth(21);
     this.ambientTween({ targets: glow, alpha: { from: 0.42, to: 0.34 }, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this._drawClue(W, H);
-    this.levelText = drawLevelLabel(this, W, H, { color: '#afa0bc' }).setDepth(31);
     this._render();
   }
 

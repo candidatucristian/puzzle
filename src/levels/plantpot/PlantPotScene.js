@@ -1,5 +1,4 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { makeMoonTexture } from "../../shared/moon.js";
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
@@ -141,33 +140,16 @@ export default class PlantPotScene extends BasePuzzleScene {
     if (!this.skipFadeIn) {
       const { width, height } = this.cameras.main;
       const veil = this.add.rectangle(0, 0, width, height, 0x000000).setOrigin(0, 0).setDepth(100);
-      const title = this.add
-        .text(width / 2, height / 2, "Level " + this._levelNumber() + "...", {
-          fontFamily: '"Special Elite", monospace',
-          fontSize: "48px",
-          color: "#ffffff",
-        })
-        .setOrigin(0.5)
-        .setDepth(101);
       this.tweens.add({
-        targets: [veil, title],
+        targets: veil,
         alpha: 0,
         duration: 1000,
         delay: 500,
-        onComplete: () => {
-          veil.destroy();
-          title.destroy();
-        },
+        onComplete: () => veil.destroy(),
       });
     }
   }
 
-  _levelNumber() {
-    const i = this.services.levels.definitions
-      ? this.services.levels.definitions.findIndex((l) => l.key === this.scene.key)
-      : -1;
-    return i !== -1 ? i + 1 : "?";
-  }
 
   // ── construction ───────────────────────────────────────────────────────────
 
@@ -195,7 +177,6 @@ export default class PlantPotScene extends BasePuzzleScene {
     // the window we look out of, in front of everything in the garden
     this.add.image(0, 0, K.frame).setOrigin(0, 0).setDepth(17);
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
-    this._drawTexts(W, H);
     this._built = true;
   }
 
@@ -768,10 +749,6 @@ export default class PlantPotScene extends BasePuzzleScene {
     this.bucketGlints?.setVisible(false);
     // a small reward: a star falls
     if (!this._shoot) this._launchShootingStar();
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H, { y: 30, ease: "Power2" });
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

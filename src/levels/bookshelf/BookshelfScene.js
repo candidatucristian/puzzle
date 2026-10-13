@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst } from "../../shared/paint.js";
 import { layoutLibrary, paintLibrary, releaseLibraryArt } from "./library.js";
@@ -104,7 +103,6 @@ export default class BookshelfScene extends BasePuzzleScene {
       });
     }
     this._motes(L, k.glow);
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // dust turning slowly in the lamp's light

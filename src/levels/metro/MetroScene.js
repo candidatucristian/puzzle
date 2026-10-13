@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutStation, paintStation, releaseStationArt } from "./map.js";
 import { METRO_STATIONS } from "./puzzle.js";
@@ -136,7 +135,6 @@ export default class MetroScene extends BasePuzzleScene {
       .on("pointerdown", () => this._announce());
     this._scheduleStatic();
 
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // the station's own slow life: the signal changing, a train's lamps far

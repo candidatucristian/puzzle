@@ -1,5 +1,4 @@
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
-import { drawLevelLabel } from '../../shared/levelLabel.js';
 import { attachMovableSparkles } from '../../shared/movableSparkles.js';
 import { releaseTextures } from '../../shared/paint.js';
 import { adjustmentKeys } from '../../shared/windowLight.js';
@@ -40,7 +39,7 @@ export default class VenetianScene extends BasePuzzleScene {
     this.add.text(L.cordX, H * 0.854, 'TILT', {
       fontFamily: '"Special Elite", monospace', fontSize: Math.max(8, font * 0.58) + 'px', color: '#677685',
     }).setOrigin(0.5);
-    this.levelText = drawLevelLabel(this, W, H, { color: '#a1b2c6' }); this._render();
+ this._render();
   }
 
   _setTilt(value) { this.tilt = clampTilt(value); this._render(); }

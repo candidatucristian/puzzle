@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,7 +73,6 @@ export default class TapCodeScene extends BasePuzzleScene {
     this._makeDrip(L, k.glow);
     this._makeMotes(L, k.glow);
     this._makeFog(L, k.fog);
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // The weeping joint: a bead of water gathers under it, lets go, falls the

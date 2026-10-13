@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintStreet, paintFrame, releaseStreetArt } from "./street.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -153,7 +152,6 @@ export default class CrossingScene extends BasePuzzleScene {
     this._makeSteam(art.steam.x, art.steam.y, art.puff);
     this._makeWalkSignal(art);
     this._drawCat(W, H);
-    this._drawTexts(W, H);
   }
 
   // The street as a painting: its lit windows painted lit, and the frame
@@ -486,13 +484,6 @@ export default class CrossingScene extends BasePuzzleScene {
       });
     };
     this.time.delayedCall(2400, stroll);
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H, {
-      color: "#f0e6cc",
-      shadow: "rgba(4,6,14,0.9)",
-    });
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

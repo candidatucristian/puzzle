@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { CALCULATOR_DIGITS, createCalculator, pressKey } from "./puzzle.js";
 import { paintOffice, releaseOfficeArt, glyph } from "./office.js";
@@ -97,7 +96,6 @@ export default class OvertimeScene extends BasePuzzleScene {
 
     this._startColons(art.colons);
     this._startSteam(art);
-    this._drawTexts(W, H);
   }
 
   // A key is painted into the room; what lives here is its hit area (the
@@ -279,10 +277,6 @@ export default class OvertimeScene extends BasePuzzleScene {
   }
 
   // ── on top of everything ───────────────────────────────────────────────────
-
-  _drawTexts(W, H) {
-    drawLevelLabel(this, W, H);
-  }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 

@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutBench, paintBench, releaseBenchArt } from "./bench.js";
 import { RESISTORS, readFirstBands } from "./puzzle.js";
@@ -180,7 +179,6 @@ export default class ResistorsScene extends BasePuzzleScene {
     });
     this._looking = null;
 
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // the loupe comes down over a resistor, holds, and lifts; another tap

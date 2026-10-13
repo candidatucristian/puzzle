@@ -1,5 +1,5 @@
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
-import { drawLevelLabel, uiScale } from '../../shared/levelLabel.js';
+import { uiScale } from '../../shared/levelLabel.js';
 import { makeCanvas, addCanvasTexture, releaseTextures, soft, grain, vignette, lcg } from '../../shared/paint.js';
 import { FRAGMENT_TEXT, GENOME_FRAGMENT, genomeLayout } from './puzzle.js';
 
@@ -69,7 +69,6 @@ export default class GenomeScene extends BasePuzzleScene {
     this._clue = text(s.x + s.w / 2, s.y + s.h * 0.92,
       'The building blocks of life spell the answer.', Math.max(9, Math.min(18, s.w / 32, s.h * 0.065)), '#b4c7bf').setOrigin(0.5);
     this._lastFeed = -1;
-    this.levelText = drawLevelLabel(this, W, H, { color: '#a7c2bf' });
     this._render();
   }
 

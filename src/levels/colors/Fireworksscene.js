@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { layoutPark, paintPark, releaseParkArt } from "./park.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,7 +110,6 @@ export default class FireworksScene extends BasePuzzleScene {
       return { ...b, img, ph: b.i * 1.7 + 0.4 };
     });
 
-    this.levelText = drawLevelLabel(this, W, H);
     this._pose();
   }
 

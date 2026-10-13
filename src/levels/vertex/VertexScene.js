@@ -1,5 +1,5 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel, uiScale } from "../../shared/levelLabel.js";
+import { uiScale } from "../../shared/levelLabel.js";
 import { VERTEX_NODES, VERTEX_EDGES, VERTEX_MARKED, vertexLayout } from "./puzzle.js";
 
 export default class VertexScene extends BasePuzzleScene {
@@ -55,7 +55,6 @@ export default class VertexScene extends BasePuzzleScene {
     this.add.text(margin + 4 * k, 40 * k, "GEOMETRIC STUDY", {
       fontFamily: '"Special Elite", monospace', fontSize: Math.round(11 * k) + "px", color: "#aeb9c8", letterSpacing: 3,
     }).setAlpha(0.42);
-    this.levelText = drawLevelLabel(this, W, H, { color: "#c0c9d6" });
     this._render();
   }
 

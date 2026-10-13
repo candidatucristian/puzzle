@@ -44,7 +44,7 @@ export const CAR_LANES = [0, -1, 1, -0.5, 0.8, -0.8].map((k) => k * 0.46);
 const WARM = [1.0, 0.84, 0.64];
 const MOON = [0.6, 0.72, 1.0];
 const FINISH_LIGHT = 0.85; // the gravel at the line, in linear light
-const CAR_SIZE_SCALE = 1.44; // enlarge the moving cars and their effects for readability
+const CAR_SIZE_SCALE = 1.73; // enlarge the moving cars and their effects for readability
 const DEG = Math.PI / 180;
 
 // ── where everything is ─────────────────────────────────────────────────────

@@ -23,9 +23,9 @@ test("Rally door numbers in crossing order spell the configured answer", () => {
 });
 
 test("Rally runs the bunch schedule at 77% of base pace and never ties cars at the line", () => {
-  assert.deepEqual([...RALLY_CROSS_MS], [0, 3000, 3420, 6420, 7170, 7590].map((ms) => ms / 0.77));
+  assert.deepEqual([...RALLY_CROSS_MS], [0, 3000, 3506, 6506, 7256, 7762].map((ms) => ms / 0.77));
   const gaps = RALLY_CROSS_MS.slice(1).map((cross, i) => cross - RALLY_CROSS_MS[i]);
-  assert.deepEqual(gaps.map((gap) => Math.round(gap)), [3896, 545, 3896, 974, 545]);
+  assert.deepEqual(gaps.map((gap) => Math.round(gap)), [3896, 657, 3896, 974, 657]);
   assert.ok(gaps.every((gap) => gap > 0));
   assert.equal(RALLY_SPEED.length, RALLY_NUMBERS.length);
   assert.ok(new Set(RALLY_SPEED).size > 1);

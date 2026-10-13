@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { layoutCabin, paintCabin, releaseCabinArt, MAP_FONT } from "./cabin.js";
 import { COMPASS_BEARINGS } from "./puzzle.js";
@@ -192,7 +191,6 @@ export default class CompassScene extends BasePuzzleScene {
     }));
     this._zones = [glassZone, mapZone];
 
-    this.levelText = drawLevelLabel(this, W, H);
 
     this._steps = program();
     this._needle = this._needle || {

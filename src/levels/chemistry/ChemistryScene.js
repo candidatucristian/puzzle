@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutLab, paintLab, releaseLabArt } from "./lab.js";
@@ -151,7 +150,6 @@ export default class ChemistryScene extends BasePuzzleScene {
       .setAlpha(0.6)
       .setDepth(-5);
     this._buildLoupe(art);
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // The magnifying glass: lying on its cloth until it is picked up; then the

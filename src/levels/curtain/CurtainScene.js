@@ -1,5 +1,4 @@
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
-import { drawLevelLabel } from '../../shared/levelLabel.js';
 import { attachMovableSparkles } from '../../shared/movableSparkles.js';
 import { releaseTextures } from '../../shared/paint.js';
 import { adjustmentKeys } from '../../shared/windowLight.js';
@@ -50,7 +49,6 @@ export default class CurtainScene extends BasePuzzleScene {
     this.add.text(W * 0.07, H * 0.89, 'DRAW THE\nCURTAIN', {
       fontFamily: '"Special Elite", monospace', fontSize: Math.max(8, font * 0.64) + 'px', color: '#637182', lineSpacing: 4,
     }).setAlpha(0.8);
-    this.levelText = drawLevelLabel(this, W, H, { color: '#9fabbc', y: 7 });
     this._render();
   }
 

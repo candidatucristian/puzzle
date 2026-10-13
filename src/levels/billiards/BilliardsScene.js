@@ -20,7 +20,6 @@
 
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutPub, paintPub, releasePubArt } from "./pub.js";
@@ -117,7 +116,6 @@ export default class BilliardsScene extends BasePuzzleScene {
       });
     }
 
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   update(time, delta) {

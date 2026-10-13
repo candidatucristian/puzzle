@@ -324,7 +324,7 @@ const metadata = [
     "description": "Six numbered rally cars come round a floodlit gravel oval at night and cross the finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the floodlights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level. In the house the stage is watched on the drawing room's television.",
     "references": [
       "RALLY_NUMBERS = [19, 9, 12, 22, 5, 18] (puzzle.js) — the door numbers, in order of crossing",
-      "RALLY_CROSS_MS — original crossing times [0, 3000, 3420, 6420, 7170, 7590] and RALLY_CAR_MS are divided by RALLY_PACE (0.77), running at 77% of base pace while preserving their spacing; tight pairs cross about 545 ms apart",
+      "RALLY_CROSS_MS — original crossing times [0, 3000, 3506, 6506, 7256, 7762] and RALLY_CAR_MS are divided by RALLY_PACE (0.77), running at 77% of base pace while preserving their spacing; tight pairs cross about 657 ms apart",
       "RALLY_SPEED — each car runs a touch faster or slower; the crossing times stay exact",
       "track.js — the oval as one projection: a car's size follows from its height below the horizon, and it is never tilted",
       "cars.js — one 3D rally car rendered in software at every angle the drive needs (FRAME_COUNT views; side-on, exactly, at the line); paintPanel() puts the number on the white door panel",

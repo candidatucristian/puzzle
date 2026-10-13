@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintRootBox, releaseRootBoxArt } from "./rootbox.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,7 +63,6 @@ export default class BinaryTreeScene extends BasePuzzleScene {
     this._makeDrops();
     this._makeMotes(art);
     this.add.image(0, 0, art.keys.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
-    this._drawTexts(W, H);
     this._built = true;
   }
 
@@ -192,10 +190,6 @@ export default class BinaryTreeScene extends BasePuzzleScene {
         g.lineBetween(d.x, d.y0, d.x, y - 10 * d.img.scaleY);
       }
     }
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // ── what moves ─────────────────────────────────────────────────────────────

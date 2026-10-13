@@ -1,6 +1,5 @@
 import { playPaperTick, playPuzzleChime } from "../../shared/puzzleSounds.js";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { paintStudy, releaseStudyArt } from "./board.js";
 
@@ -114,7 +113,6 @@ export default class SequenceScene extends BasePuzzleScene {
     this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-14);
 
     this._drawNote();
-    this._drawTexts(W, H);
 
     // the fused number, written live on the paper strip beneath the row
     this._fusedText = this.add
@@ -323,10 +321,6 @@ export default class SequenceScene extends BasePuzzleScene {
         ease: "Quad.easeOut",
       });
     }
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // dust turning slowly in the lamplight

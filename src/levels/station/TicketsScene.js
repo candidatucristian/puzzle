@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { STATION_ROWS } from "./rows.js";
 import { paintTickets, releaseTicketArt } from "./tickets.js";
 
@@ -50,7 +49,6 @@ export default class TicketsScene extends BasePuzzleScene {
       .setAlpha(0.1)
       .setDepth(-9);
     this.ambientTween({ targets: light, alpha: { from: 0.07, to: 0.14 }, duration: 2600, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   _teardown() {

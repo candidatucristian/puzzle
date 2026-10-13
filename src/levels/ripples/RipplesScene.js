@@ -1,5 +1,4 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { makeCanvas, addCanvasTexture, releaseTextures, lcg } from "../../shared/paint.js";
 import { RIPPLE_STONES, RIPPLE_TARGETS, RIPPLE_ROUND_MS, RIPPLE_CYCLE_MS, rippleLayout, rippleFrame, convergence } from "./puzzle.js";
 import { RIPPLE_ART, STONE_FONT, paintStreet, neonReflection } from "./street.js";
@@ -37,7 +36,6 @@ export default class RipplesScene extends BasePuzzleScene {
         shadow: { offsetX: 0, offsetY: 0, color: "#ed565e", blur: 10, fill: true },
       }).setOrigin(0.5).setAlpha(0).setDepth(-3),
     }));
-    this.levelText = drawLevelLabel(this, W, H, { color: "#acb6c2" });
     this._waterAt = -Infinity;
     this._render();
   }

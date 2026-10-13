@@ -2,13 +2,11 @@ import { CALLER_NUMBER, CALLER_NAME, PHONE_COMMIT_MS, createPhoneInput, pressPho
 import DeskView from "./DeskView.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { PHONE_ART, phonePoint, preparePhoneArt } from "./art.js";
 
 // An old handset on the manor's desk. The caller number encodes GEORGE using
 // multi-tap input. All materials and geometry are drawn procedurally in Canvas.
-const MP_FONT = '"Special Elite", monospace';
 const MP_BUZZ_EVERY = 5000; // ms between two vibrations of the phone
 
 export default class MobilePhoneScene extends BasePuzzleScene {
@@ -65,11 +63,6 @@ export default class MobilePhoneScene extends BasePuzzleScene {
 
     this.desk.build(width, height, this._phoneLayout(width, height));
 
-    this.levelText = drawLevelLabel(this, width, height, {
-      y: 30,
-      font: MP_FONT,
-      ease: "Power2",
-    });
 
     // ── the phone ──────────────────────────────────────────────────────────
     this.phoneContainer = this.add.container(0, 0);
@@ -147,7 +140,6 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     // kept as a reference so shutdown() can remove it (otherwise every
     // restart of the level would add one more listener)
     this._onResize = (size) => {
-      this.levelText.setPosition(size.width - 30, 30);
       this.setPhoneScale();
       this.desk.build(size.width, size.height, this._phoneLayout(size.width, size.height));
     };
@@ -158,31 +150,12 @@ export default class MobilePhoneScene extends BasePuzzleScene {
         .rectangle(0, 0, width, height, 0x000000)
         .setOrigin(0, 0)
         .setDepth(100);
-      const nextLvlText = this.add
-        .text(
-          width / 2,
-          height / 2,
-          "Level " +
-            (this.services.levels.definitions.findIndex((l) => l.key === this.scene.key) +
-              1) +
-            "...",
-          {
-            fontFamily: MP_FONT,
-            fontSize: "48px",
-            color: "#ffffff",
-          },
-        )
-        .setOrigin(0.5)
-        .setDepth(101);
       this.tweens.add({
-        targets: [fadeOverlay, nextLvlText],
+        targets: fadeOverlay,
         alpha: 0,
         duration: 1000,
         delay: 500,
-        onComplete: () => {
-          fadeOverlay.destroy();
-          nextLvlText.destroy();
-        },
+        onComplete: () => fadeOverlay.destroy(),
       });
     }
   }

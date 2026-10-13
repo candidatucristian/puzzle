@@ -51,14 +51,18 @@ export const PLACES = Object.freeze([
       "One light still works up here, after a fashion. It is trying to say something.",
     ] },
   // Up again, by the stairs at the side of the upper hall: the top floor,
-  // the last — a round room under the dome. Five doors, XII to XVI, nothing
+  // the last — a round room under the dome. Three doors, XII to XIV, nothing
   // behind them yet; at its window the telescope, which is looked through
-  // as a room's puzzles are gone to.
-  { key: "Top", name: "The Top Floor", back: "Upper", holds: ["telescope"], doors: [null, null, null, null, null], first: 12,
+  // as a room's puzzles are gone to; and on the left an archway with an iron
+  // gate across it, and beyond the gate a passage with three doors more.
+  { key: "Top", name: "The Top Floor", back: "Upper", holds: ["telescope"], doors: [null, null, null], first: 12,
     story: [
       "The top of the house: a round room under the dome, its doors set about the wall. Nobody has been up here in years.",
       "Somebody carried a telescope all this way and set it at the window. It is still pointed at something.",
+      "On the left an iron gate shuts off a passage. It will not be the first thing to open up here.",
     ] },
+  { key: "TopHall", name: "The Top Passage", back: "Top", holds: [], doors: [null, null, null], first: 15,
+    story: ["A passage behind the gate, under the eaves: three doors more, and nothing behind them yet."] },
   { key: "Room5", name: "Room 5", back: "Hall", holds: ["tapcode", "pi", "rally"], needsKey: true, chest: "Room6",
     story: [
       "The drawing room. The fire has burned low, and somebody has left the trap in the floor standing open.",
@@ -90,7 +94,7 @@ export const WALK_MS = 1000;
 // swelling is even — each moment larger by the same proportion — so nothing
 // lurches or slides sideways on the way. Right up to it, it fills a good
 // part of the picture, however small it is.
-function aim(camera, box, k) {
+export function aimCameraAt(camera, box, k) {
   const W = camera.width, H = camera.height;
   const x = box.x + box.width / 2, y = box.y + box.height / 2;
   const reach = Math.min(3.4, Math.max(1.7, 0.62 * Math.min(W / box.width, H / box.height)));
@@ -106,7 +110,7 @@ function aim(camera, box, k) {
 export function zoomInto(scene, box) {
   if (scene.reducedMotion) return;
   const camera = scene.cameras.main;
-  scene.tweens.addCounter({ from: 0, to: 1, duration: WALK_MS, ease: "Sine.easeInOut", onUpdate: (tween) => aim(camera, box, tween.getValue()) });
+  scene.tweens.addCounter({ from: 0, to: 1, duration: WALK_MS, ease: "Sine.easeInOut", onUpdate: (tween) => aimCameraAt(camera, box, tween.getValue()) });
 }
 
 /** The same walk the other way: the scene opens right up against the thing
@@ -115,15 +119,15 @@ export function zoomInto(scene, box) {
 export function zoomOutFrom(scene, box) {
   if (scene.reducedMotion) return;
   const camera = scene.cameras.main;
-  aim(camera, box, 1);
+  aimCameraAt(camera, box, 1);
   scene.input.enabled = false;
   scene.tweens.addCounter({
     from: 1,
     to: 0,
     duration: WALK_MS,
     ease: "Sine.easeInOut",
-    onUpdate: (tween) => aim(camera, box, tween.getValue()),
-    onComplete: () => { aim(camera, box, 0); scene.input.enabled = true; },
+    onUpdate: (tween) => aimCameraAt(camera, box, tween.getValue()),
+    onComplete: () => { aimCameraAt(camera, box, 0); scene.input.enabled = true; },
   });
 }
 

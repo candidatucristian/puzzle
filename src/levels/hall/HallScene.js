@@ -1,10 +1,11 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { HOUSE_GO, HOUSE_SOLVED, zoomInto, zoomOutFrom } from "../../shared/house.js";
+import { HOUSE_GO, HOUSE_SOLVED, WALK_MS, aimCameraAt, zoomInto, zoomOutFrom } from "../../shared/house.js";
 import { buildMorseSteps } from "../lightswitch/puzzle.js";
 import { chime } from "../../shared/paint.js";
-import { layoutHall, paintHall, releaseHallArt } from "./hall.js";
+import { layoutHall, paintHall, paintDoorSwing, releaseHallArt } from "./hall.js";
+import { doorMotion, DOOR_WALK_START_MS } from "./doorMotion.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The hall: the ground floor of the manor, where the player stands on coming
@@ -25,7 +26,11 @@ import { layoutHall, paintHall, releaseHallArt } from "./hall.js";
 // flex, and the answer written in the box under the picture.
 //
 // The hall is painted (hall.js). Live over it: the sconces' candles, the
-// light under the doors, dust in the moonbeams, the glints.
+// light under the doors, dust in the moonbeams, the glints, a thin mist —
+// and, on the ground floor, the house itself: the clock's pendulum going,
+// the gate's bars shadowed down the runner, a moth at one of the candles, a
+// draught now and then, lightning a long way off. The chandelier is lit a
+// candle at a time, one for every room that has been finished.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // the gate across the stairs is remembered open under this name, with the keys
@@ -33,15 +38,21 @@ const GATES = "HallGates";
 
 export default class HallScene extends BasePuzzleScene {
   /** `key` is the hall's place in the house; `floor` which hall it is —
-   *  "ground" or "upper" (see hall.js). */
+   *  "ground", "upper", or "wing", the passage off the top floor (see hall.js). */
   constructor(key = "Hall", floor = "ground") {
     super({ key });
     this.upper = floor === "upper";
+    this.wing = floor === "wing";
+  }
+
+  preload() {
+    this.load.audio("doorhandle", "assets/sounds/global/doorhandle.mp3");
   }
 
   create(data) {
     this.beginScene();
     this._sparkles = [];
+    this._doorOpening = null;
     this._build(this.cameras.main.width, this.cameras.main.height);
     // come out of one of the rooms: draw back from its door
     const n = this.services.levels.rooms.findIndex((room) => room.key && room.key === data?.from?.place);
@@ -65,7 +76,7 @@ export default class HallScene extends BasePuzzleScene {
 
   _build(W, H) {
     // the bulb is painted dark: it is lit from here, when the switch is pressed
-    const L = (this._L = layoutHall(W, H, { upper: this.upper, bulbOn: false }));
+    const L = (this._L = layoutHall(W, H, { upper: this.upper, wing: this.wing, bulbOn: false }));
     const art = (this._art = paintHall(this, L));
     const k = art.keys;
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
@@ -111,7 +122,7 @@ export default class HallScene extends BasePuzzleScene {
         zone
           .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
           .setData("interactionLabel", room.completed ? "Open the door — completed" : "Open the door");
-        zone.on("pointerdown", () => this._go(d.box, { place: room.key }));
+        zone.on("pointerdown", () => this._open(d, room));
       }
       if (calling) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => d.box }));
     });
@@ -119,6 +130,14 @@ export default class HallScene extends BasePuzzleScene {
     if (L.gate) this._gate(L, k);
     if (L.thing && this.upper) this._light(L, k);
     if (L.up) this._stairsUp(L);
+
+    if (k.fog) this._fog(L, k.fog);
+    this._opening = Boolean(this._doorOpening);
+    this.input.enabled = !this._opening;
+    this._flames = [];
+    this._moth = this._bars = null;
+    this._gust = { v: 0 };
+    if (L.clock) this._alive(L, k, rooms);
 
     // dust turning in the moonlight down the middle of the hall
     for (let i = 0; i < 16; i++) {
@@ -144,6 +163,87 @@ export default class HallScene extends BasePuzzleScene {
         ease: "Sine.easeInOut",
       });
     }
+    if (this._doorOpening) this._mountDoor();
+  }
+
+  // A thin mist in the hall: banks of it lying low along the floor at
+  // different depths, each drifting slowly across and back, the nearest
+  // the faintest so that it never hides the doors; and a haze hanging at
+  // the far end, in the moon from the stairs.
+  _fog(L, key) {
+    const { H } = L;
+    for (const [i, z] of [1.15, 1.5, 2.0, 2.7, 3.6].entries()) {
+      const p = L.P(0, L.floor - H * 0.1, z), wide = (L.wall * 3) / z, side = i % 2 ? 1 : -1;
+      const bank = this.add
+        .image(p.x - side * wide * 0.14, p.y, key)
+        .setDisplaySize(wide, (H * 0.52) / z)
+        .setTint(0xa9b4c8)
+        .setAlpha(0.26 + i * 0.06)
+        .setDepth(-7.4);
+      this.ambientTween({ targets: bank, x: p.x + side * wide * 0.14, duration: 19000 + i * 4200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      this.ambientTween({ targets: bank, alpha: bank.alpha * 0.6, duration: 7000 + i * 1900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    }
+    const far = L.P(0, -H * 0.05, 4.4);
+    const haze = this.add.image(far.x, far.y, key).setDisplaySize(L.wall * 0.9, H * 0.34).setTint(0xb8c6e4).setAlpha(0.34).setDepth(-7.4);
+    this.ambientTween({ targets: haze, alpha: 0.2, scaleX: haze.scaleX * 1.12, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+  }
+
+  // What makes the ground floor's hall a place somebody lives in — or did.
+  _alive(L, k, rooms) {
+    const { W, H, u } = L;
+    const levels = this.services.levels;
+    // ── the clock: its pendulum, a tick at either end of every swing
+    const tick = () => chime(this, [[2100, 0.006], [1400, 0.004]], 0.035);
+    const pendulum = this.add.image(L.clock.x, L.clock.y, k.pendulum).setOrigin(0.5, 0).setDisplaySize(L.clock.bob * 2, L.clock.len + L.clock.bob).setAngle(-2.3).setDepth(-9);
+    this.ambientTween({ targets: pendulum, angle: 2.3, duration: 1000, yoyo: true, repeat: -1, ease: "Sine.easeInOut", onYoyo: tick, onRepeat: tick });
+    // ── the gate's bars, shadowed long down the runner by the moon behind them
+    if (!levels.hasKey(GATES)) {
+      const g = (this._bars = this.add.graphics().setDepth(-9.5));
+      for (const [a, b] of L.bars) {
+        for (let i = 0; i < 8; i++) {
+          const t0 = i / 8, t1 = (i + 1) / 8;
+          g.lineStyle(Math.max(1.5, (3 + i * 1.3) * u), 0x020306, 0.55 * (1 - t0));
+          g.lineBetween(a.x + (b.x - a.x) * t0, a.y + (b.y - a.y) * t0, a.x + (b.x - a.x) * t1, a.y + (b.y - a.y) * t1);
+        }
+      }
+    }
+    // ── the chandelier: a candle alight for every room that has been finished
+    const done = Math.min(L.wicks.length, rooms.filter((room) => room.completed).length);
+    for (const wick of L.wicks.slice(0, done)) {
+      const halo = this.add.image(wick.x, wick.y, k.glow).setDisplaySize(330 * wick.s, 330 * wick.s).setTint(0xffb860).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.42).setDepth(-8);
+      const flame = this.add.image(wick.x, wick.y, k.glow).setDisplaySize(24 * wick.s, 42 * wick.s).setTint(0xfff0c8).setBlendMode(Phaser.BlendModes.ADD).setDepth(-7.9);
+      this._flames.push({ halo, flame, x: wick.x, phase: Math.random() * 6 });
+    }
+    // ── a moth at the first candle on the left
+    const lamp = L.sconces.find((s) => !s.dead);
+    if (lamp) {
+      const moth = this.add.image(lamp.x, lamp.y, k.glow).setDisplaySize(5 * u, 4 * u).setTint(0xd8cfb8).setAlpha(0.75).setDepth(-7.8);
+      this.ambientObject(moth);
+      this._moth = { moth, x: lamp.x - (lamp.side * 20 * u) / lamp.z, y: lamp.y - (26 * u) / lamp.z, r: (26 * u) / lamp.z };
+    }
+    if (!this.ambientMotion || this.reducedMotion) return;
+    // ── a draught, now and then: every flame leans, and comes back
+    const draught = () => {
+      this.tweens.add({ targets: this._gust, v: 1, duration: 420, yoyo: true, hold: 260, ease: "Sine.easeInOut" });
+      this.time.delayedCall(15000 + Math.random() * 17000, draught);
+    };
+    this.time.delayedCall(9000 + Math.random() * 6000, draught);
+    // ── lightning, a long way off: the stairs' window white for an instant,
+    // the whole hall cold blue with it, twice; and the thunder a while after
+    const sky = this.add.rectangle(0, 0, W, H, 0xbcd0ff).setOrigin(0, 0).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(8);
+    const far = this.add.image(L.gate.x + L.gate.width / 2, L.gate.y + L.gate.height * 0.4, k.glow).setDisplaySize(L.gate.width * 4.2, L.gate.height * 2.6).setTint(0xdce8ff).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(8);
+    const lightning = () => {
+      const strike = (wait, level, fade) => this.time.delayedCall(wait, () => {
+        sky.setAlpha(level * 0.2);
+        far.setAlpha(level);
+        this.tweens.add({ targets: [sky, far], alpha: 0, duration: fade, ease: "Cubic.easeOut" });
+      });
+      strike(0, 0.7, 120);
+      strike(150, 1, 620);
+      this.time.delayedCall(1300 + Math.random() * 900, () => chime(this, [[52, 0.07], [39, 0.06], [66, 0.035], [31, 0.04]], 2.6));
+      this.time.delayedCall(26000 + Math.random() * 30000, lightning);
+    };
+    this.time.delayedCall(6000 + Math.random() * 5000, lightning);
   }
 
   // The gate across the stairs: its two leaves hang from the sides of the
@@ -188,6 +288,8 @@ export default class HallScene extends BasePuzzleScene {
       this.game.canvas.style.cursor = "";
       glint();
       levels.takeKey(GATES);
+      // the bars' shadows go with the gate
+      if (this._bars) this.tweens.add({ targets: this._bars, alpha: 0, duration: 900, onComplete: () => { this._bars?.destroy(); this._bars = null; } });
       // the latch, then the hinges
       chime(this, [[196, 0.05], [147, 0.04]], 0.5);
       this.time.delayedCall(260, () => chime(this, [[82, 0.05], [61, 0.04]], 1.6));
@@ -319,16 +421,91 @@ export default class HallScene extends BasePuzzleScene {
     this.time.delayedCall(700, () => { this._busy = false; this._lamp("idle"); });
   }
 
+  // A door is opened: the handle, and the leaf swings in on its hinges — the
+  // room's light coming out round it and across the hall's boards — and then
+  // we go through it.
+  _open(d, room) {
+    if (this._opening || !this.input.enabled) return;
+    this._opening = true;
+    this.input.enabled = false;
+    this.game.events.emit("puzzle:interaction", { label: "" });
+    this.game.canvas.style.cursor = "";
+    this._sparkles.forEach((off) => off());
+    this._sparkles = [];
+    this._latch();
+    if (this.reducedMotion) { this._go(d.box, { place: room.key }); return; }
+    this._doorOpening = { number: d.number, room, elapsed: 0, walking: false };
+    this._mountDoor();
+  }
+
+  // Rebuild the small painted doorway from its current pose after resize.
+  // The clock and navigation state live separately from these textures.
+  _mountDoor() {
+    const L = this._L, state = this._doorOpening;
+    const d = L.doors.find((door) => door.number === state.number);
+    const lit = !state.room.completed;
+    const art = paintDoorSwing(this, L, d, lit);
+    this.add.image(art.box.x, art.box.y, art.key).setOrigin(0, 0)
+      .setDisplaySize(art.box.width, art.box.height).setDepth(-9.7);
+    const spill = this.add
+      .image(d.sill.x, d.sill.y, this._art.keys.glow)
+      .setTint(lit ? 0xffc078 : 0x9fb6e8)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(-9.4);
+    this._doorArt = { ...art, d, spill, lit };
+    this._updateDoor(0);
+  }
+
+  _updateDoor(delta) {
+    const state = this._doorOpening, art = this._doorArt;
+    if (!state || !art) return;
+    state.elapsed += delta;
+    const pose = doorMotion(state.elapsed);
+    const { aperture } = art.draw(pose.angle, pose.handle);
+    const { d, spill, lit } = art, L = this._L;
+    spill.setDisplaySize((L.wall * (0.2 + aperture * 0.9)) / d.z, (L.H * (0.06 + aperture * 0.24)) / d.z)
+      .setAlpha(aperture * (lit ? 0.48 : 0.2));
+    // Match the normal walk's easing on the same clock as the leaf. A
+    // redraw cannot cancel or restart the movement toward the doorway.
+    if (state.elapsed >= DOOR_WALK_START_MS) {
+      const k = Math.min(1, (state.elapsed - DOOR_WALK_START_MS) / WALK_MS);
+      aimCameraAt(this.cameras.main, d.box, (1 - Math.cos(k * Math.PI)) / 2);
+      if (!state.walking) {
+        state.walking = true;
+        this.game.events.emit(HOUSE_GO, { place: state.room.key });
+      }
+    }
+  }
+
+  // the sound of it: the handle, recorded (assets/sounds/global/doorhandle.mp3)
+  _latch() {
+    this.services.audio.playSfx("doorhandle", 1, this);
+  }
+
   // walk up to what was clicked, and ask to be taken through it
   _go(box, where) {
     zoomInto(this, box);
     this.game.events.emit(HOUSE_GO, where);
   }
 
-  update(time) {
+  update(time, delta) {
+    // Opening a door is an interaction, including with ambient effects off.
+    this._updateDoor(delta);
     if (!this._L || !this.ambientMotion || this.reducedMotion) return;
     const t = time / 1000;
-    this._candles.forEach((g, i) => g.setAlpha(0.26 + 0.05 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.04));
+    const gust = this._gust?.v ?? 0;
+    this._candles.forEach((g, i) => g.setAlpha((0.26 + 0.05 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.04) * (1 - 0.55 * gust)));
+    // the chandelier's candles: never still, and leaning with every draught
+    for (const f of this._flames ?? []) {
+      const live = 0.9 + 0.08 * Math.sin(t * 11 + f.phase) + Math.random() * 0.05;
+      f.flame.setAlpha(live * (1 - 0.4 * gust)).setX(f.x + gust * 5 * this._L.u);
+      f.halo.setAlpha(0.42 * live * (1 - 0.5 * gust));
+    }
+    // the moth: round and round its candle, never the same way twice
+    if (this._moth) {
+      const m = this._moth, wob = 1 + 0.35 * Math.sin(t * 3.7) + 0.2 * Math.sin(t * 9.1);
+      m.moth.setPosition(m.x + Math.cos(t * 5.3) * m.r * wob, m.y + Math.sin(t * 6.9) * m.r * 0.7 * wob);
+    }
   }
 
   _teardown() {
@@ -337,6 +514,7 @@ export default class HallScene extends BasePuzzleScene {
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
+    this._doorArt = null;
     releaseHallArt(this.textures);
     this._L = null;
   }
@@ -348,8 +526,18 @@ export default class HallScene extends BasePuzzleScene {
     this._sparkles = [];
     this.tweens.killAll();
     this.time.removeAllEvents();
+    this._doorArt = null;
+    this._doorOpening = null;
+    this._opening = false;
     releaseHallArt(this.textures);
     this._L = null;
+  }
+}
+
+/** The passage off the top floor: three doors, XV to XVII. */
+export class TopWingScene extends HallScene {
+  constructor() {
+    super("TopHall", "wing");
   }
 }
 
@@ -360,6 +548,7 @@ export class UpperHallScene extends HallScene {
   }
 
   preload() {
+    super.preload();
     // the switch's click and the short's crackle, the puzzle's own
     this.load.audio("switchsound", "assets/sounds/Lightswitch/switchsound.mp3");
     this.load.audio("sparkle", "assets/sounds/Lightswitch/sparkle.mp3");

@@ -35,7 +35,7 @@ export function paintRoomTree(ctx, L) {
   const sx = (t.reach * s) / a.reach, sy = (t.tall * s) / (art.L.floorY - starTop);
   const at = (p) => ({ x: foot.x + (p.x - a.cx) * sx, y: foot.y + (p.y - art.L.floorY) * sy });
   soft(ctx, foot.x, foot.y, (t.reach + 16) * s, 10 * s, "0,0,0", 0.7);
-  const x0 = a.cx - a.reach * 1.3, y0 = starTop - 4, w = a.reach * 2.6, h = art.L.H - y0;
+  const x0 = a.cx - a.reach * 1.3, y0 = starTop - 4, w = a.reach * 2.9, h = art.L.H - y0;
   const p0 = at({ x: x0, y: y0 });
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(art.canvas, x0, y0, w, h, p0.x, p0.y, w * sx, h * sy);

@@ -1,7 +1,6 @@
 import Candle from "./Candle.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { paintStudy, paintLetter, releaseStudyArt } from "./study.js";
 
@@ -161,7 +160,6 @@ export default class CryptexScene extends BasePuzzleScene {
   }
 
   _buildTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H, { y: 30 });
   }
 
   // The disk turns, so its light can't be painted on it: it is painted evenly

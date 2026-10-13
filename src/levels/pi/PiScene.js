@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintCity, releaseCityArt } from "./City.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,7 +71,6 @@ export default class PiScene extends BasePuzzleScene {
     this._makeMoon(art.moon);
     this._makeWindows(art);
     this._makeBoat(W, art);
-    this._drawTexts(W, H);
   }
 
   // a scatter of stars, breathing at their own pace — only in open sky
@@ -341,10 +339,6 @@ export default class PiScene extends BasePuzzleScene {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintHarbour, releaseHarbourArt, FLAG_FRAMES } from "./harbour.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -124,7 +123,6 @@ export default class FlagsScene extends BasePuzzleScene {
       .setOrigin(0, 0)
       .setDisplaySize(W, H)
       .setDepth(18);
-    this._drawTexts(W, H);
     this._built = true;
   }
 
@@ -189,13 +187,6 @@ export default class FlagsScene extends BasePuzzleScene {
       speed: (18 + i * 7) * L.u,
       ph: i * 2.3,
     }));
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H, {
-      color: "#fff1dc",
-      shadow: "rgba(20,12,48,0.95)",
-    });
   }
 
   // ── what moves ─────────────────────────────────────────────────────────────

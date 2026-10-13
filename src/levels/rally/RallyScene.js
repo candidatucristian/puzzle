@@ -1,5 +1,4 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { drawLevelLabel } from "../../shared/levelLabel.js";
 import { paintStage, releaseStageArt, groundLight, CAR_LANES } from "./stage.js";
 import { paintCarsSteps, releaseCarArt, relativeYaw, frameAt, FRAME_COUNT } from "./cars.js";
 import { paintPeople, releasePeopleArt, FLAG_FRAMES } from "./people.js";
@@ -135,7 +134,6 @@ export default class RallyScene extends BasePuzzleScene {
     this._dim.push(this.add.image(0, art.frontY, K.front).setOrigin(0, 0).setDepth(5));
     this._light(this.add.image(0, 0, K.haze).setOrigin(0, 0).setDisplaySize(W, H).setDepth(8).setBlendMode("ADD"));
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
-    this._drawTexts(W, H);
     if (this._onTv) {
       // the set goes over and round everything, whatever is added after it
       this.add.image(W / 2, H / 2, paintTvFrame(this, W, H, TV_ZOOM)).setDepth(1000);
@@ -670,10 +668,6 @@ export default class RallyScene extends BasePuzzleScene {
   // the car crossing the line — assets/sounds/Rally/wroom.mp3; silent if absent
   _whoosh() {
     this.services.audio.playSfx("wroom", 1, this);
-  }
-
-  _drawTexts(W, H) {
-    this.levelText = drawLevelLabel(this, W, H);
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
