@@ -70,7 +70,7 @@ test("master scales all music and SFX once while channel sliders retain their ba
   audio.playClick();
 
   assert.equal(manager.volume, 0.25);
-  assert.equal(audio.state.bgmInstance.volume, 0.6 * 0.4);
+  assert.equal(audio.state.bgmInstance.volume, 0.6 * 0.2);
   assert.equal(ambience.volume, 0.4 * 0.35);
   assert.equal(manager.played.at(-1).volume, 0.4);
   assert.equal(saved.get("masterVol"), "0.25");

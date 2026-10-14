@@ -1,6 +1,7 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 import { gloom } from "../house/roomKit.js";
 import { paintNightWindow } from "../hall/hall.js";
+import { paintPassage } from "./doorway.js";
 
 /** The top floor of the manor: not a passage but a round room under a dome,
  *  and of a piece with the halls below — the same drab striped paper over
@@ -43,12 +44,12 @@ const WIN = { half: 20, sill: 104, tall: 1.04, shape: { ry: 0.495, moonY: 0.17, 
 // the well the stairs come up by: where in the room, and how wide
 const WELL = { x: 255, z: 380, r: 85 };
 // the doors, left to right: how far round each is, and its number
-const DOORS = [[-40, "XII"], [32, "XIII"], [53, "XIV"]];
+const DOORS = [[-34, "XII"], [32, "XIII"], [53, "XIV"]];
 // the archway on the left, and the passage beyond it: how far round, how wide
 // either way, how high to the spring of its arch and to its crown
-const PASS = { deg: -68, half: 9.5, spring: 196, tall: 238 };
+const PASS = { deg: -68, half: 8, spring: 215, tall: 215 };
 // the sconces: how far round each is, and whether its candle is still alight
-const SCONCES = [[-53.5, false], [-27.5, true], [42.5, true]];
+const SCONCES = [[-23, true], [42.5, true]];
 
 // ── where everything is ─────────────────────────────────────────────────────
 
@@ -66,9 +67,15 @@ export function layoutRotunda(W, H) {
     return { deg, number, quad, box: { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) } };
   });
   {
-    const quad = [L.on(PASS.deg - PASS.half, PASS.tall), L.on(PASS.deg + PASS.half, PASS.tall), L.on(PASS.deg + PASS.half, 0), L.on(PASS.deg - PASS.half, 0)];
+    const a = (PASS.deg - PASS.half) * Math.PI / 180, b = (PASS.deg + PASS.half) * Math.PI / 180;
+    const left = { x: R * Math.sin(a), z: ZC + R * Math.cos(a) }, right = { x: R * Math.sin(b), z: ZC + R * Math.cos(b) };
+    const width = Math.hypot(right.x - left.x, right.z - left.z);
+    const ux = (right.x - left.x) / width, uz = (right.z - left.z) / width;
+    const project = (x, y, depth = 0) => L.P((left.x + right.x) / 2 + ux * x - uz * depth, y, (left.z + right.z) / 2 + uz * x + ux * depth);
+    const half = width / 2;
+    const quad = [project(-half, PASS.tall), project(half, PASS.tall), project(half, 0), project(-half, 0)];
     const xs = quad.map((p) => p.x), ys = quad.map((p) => p.y);
-    L.passage = { quad, box: { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) } };
+    L.passage = { half, project, spring: PASS.spring, tall: PASS.tall, quad, box: { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) } };
   }
   L.sconces = SCONCES.map(([deg, lit]) => ({ deg, dead: !lit, ...L.on(deg, 196, R - 14) }));
   // the telescope, before the window
@@ -84,8 +91,7 @@ export function layoutRotunda(W, H) {
 
 // ── painting ────────────────────────────────────────────────────────────────
 
-/** `gateOpen`: whether the iron gate across the archway stands open. */
-export function paintRotunda(scene, L, gateOpen = false) {
+export function paintRotunda(scene, L) {
   const t = scene.textures;
   const { W, H } = L;
   const c = makeCanvas(W, H);
@@ -94,7 +100,8 @@ export function paintRotunda(scene, L, gateOpen = false) {
   ctx.fillRect(0, 0, W, H);
   paintDome(ctx, L);
   paintFloor(ctx, L);
-  paintWall(ctx, L, gateOpen);
+  paintWall(ctx, L);
+  paintPassage(ctx, L);
   {
     const v = L.win;
     paintNightWindow(ctx, W, H, { cx: v.x + v.width / 2, rx: v.width / 2, top: v.y, sill: v.y + v.height }, L.eye, WIN.shape);
@@ -111,7 +118,7 @@ export function paintRotunda(scene, L, gateOpen = false) {
     { x: well.x, y: well.y, rx: W * 0.2, ry: H * 0.34, k: 0.6 },
     ...L.sconces.filter((s) => !s.dead).map((s) => ({ x: s.x, y: s.y, rx: 200 * s.s, ry: 210 * s.s, k: 0.75 })),
     // what of the moon and the candles reaches the doors at the sides
-    { x: W * 0.08, y: H * 0.52, rx: W * 0.24, ry: H * 0.5, k: 0.62 },
+    { x: W * 0.12, y: H * 0.48, rx: W * 0.25, ry: H * 0.52, k: 0.88 },
     { x: W * 0.84, y: H * 0.42, rx: W * 0.2, ry: H * 0.4, k: 0.25 },
   ]);
   vignette(ctx, W, H, 0.7);
@@ -223,7 +230,7 @@ function paintFloor(ctx, L) {
 // away in places, the damp run down it — the cornice, the doors each in its
 // architrave with its number carved in its top rail, and the sconces. (The
 // window is put in afterwards, over the paper.)
-function wallFlat(gateOpen) {
+function wallFlat() {
   const fw = SWEEP * 2 * KX, fh = WALL * KY;
   const flat = makeCanvas(fw, fh);
   const g = flat.getContext("2d");
@@ -292,102 +299,6 @@ function wallFlat(gateOpen) {
   box(-SWEEP, 101, SWEEP, 102, "rgba(255,206,160,0.08)");
   box(-SWEEP, 0, SWEEP, 9, "#0c0704");
   // ── the doors
-  // ── the archway: an oak surround, the passage going away into the dark
-  // beyond it, and across it the iron gate — two leaves of upright bars
-  // under the arch, shut, or swung back against the passage's walls
-  {
-    const x0 = X(PASS.deg - PASS.half), x1 = X(PASS.deg + PASS.half), xm = (x0 + x1) / 2, hw = (x1 - x0) / 2;
-    const yf = Y(0), ys = Y(PASS.spring), rise = (PASS.tall - PASS.spring) * KY;
-    const arch = (out = 0) => {
-      g.beginPath();
-      g.moveTo(x0 - out, yf);
-      g.lineTo(x0 - out, ys);
-      g.ellipse(xm, ys, hw + out, rise + out, 0, Math.PI, 0);
-      g.lineTo(x1 + out, yf);
-      g.closePath();
-    };
-    arch(20);
-    g.fillStyle = "#2c1b10";
-    g.fill();
-    g.strokeStyle = "rgba(255,206,160,0.1)";
-    g.lineWidth = 2;
-    g.stroke();
-    arch();
-    g.fillStyle = "#030304";
-    g.fill();
-    g.save();
-    g.clip();
-    // the passage: its far end small in the middle, floor and walls drawn in to it
-    const k = 0.3, eye = Y(150);
-    const fx0 = xm - hw * k, fx1 = xm + hw * k, fy0 = eye - (eye - Y(PASS.tall)) * k, fy1 = eye + (yf - eye) * k;
-    const part = (pts, fill) => { g.beginPath(); pts.forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py))); g.closePath(); g.fillStyle = fill; g.fill(); };
-    const floor = g.createLinearGradient(0, yf, 0, fy1);
-    floor.addColorStop(0, "#2a1e14");
-    floor.addColorStop(1, "#0a0705");
-    part([[x0, yf], [x1, yf], [fx1, fy1], [fx0, fy1]], floor);
-    part([[xm - hw * 0.5, yf], [xm + hw * 0.5, yf], [xm + hw * 0.5 * k, fy1], [xm - hw * 0.5 * k, fy1]], "rgba(60,16,20,0.6)");
-    part([[x0, yf], [fx0, fy1], [fx0, fy0], [x0, Y(PASS.tall)]], "#17130f");
-    part([[x1, yf], [fx1, fy1], [fx1, fy0], [x1, Y(PASS.tall)]], "#0e0c0a");
-    part([[x0, Y(PASS.tall)], [x1, Y(PASS.tall)], [fx1, fy0], [fx0, fy0]], "#070606");
-    g.fillStyle = "#0a0d14";
-    g.fillRect(fx0, fy0, fx1 - fx0, fy1 - fy0);
-    // a boarded window at the far end, the moon between its boards; a door or two down the walls
-    soft(g, xm, (fy0 + fy1) / 2 - 6, hw * 0.16, (fy1 - fy0) * 0.3, MOON, 0.5, "lighter");
-    g.fillStyle = "#0a0806";
-    for (const f of [0.34, 0.5, 0.64]) g.fillRect(fx0 + (fx1 - fx0) * 0.2, fy0 + (fy1 - fy0) * f, (fx1 - fx0) * 0.6, 3);
-    for (const [side, f] of [[-1, 0.45], [1, 0.3], [1, 0.72]]) {
-      const ax = side < 0 ? x0 + (fx0 - x0) * f : x1 + (fx1 - x1) * f, bx = side < 0 ? x0 + (fx0 - x0) * (f + 0.2) : x1 + (fx1 - x1) * (f + 0.2);
-      const top = (px) => { const q = side < 0 ? (px - x0) / (fx0 - x0) : (px - x1) / (fx1 - x1); return [Y(PASS.tall) + (fy0 - Y(PASS.tall)) * q + (yf - Y(PASS.tall)) * 0.14 * (1 - q * (1 - k)), yf + (fy1 - yf) * q]; };
-      const [a0, a1] = top(ax), [b0, b1] = top(bx);
-      part([[ax, a0], [bx, b0], [bx, b1], [ax, a1]], "rgba(44,27,16,0.9)");
-    }
-    soft(g, xm, yf - 10, hw * 0.7, 26, MOON, 0.1, "lighter");
-    // ── the gate
-    const crown = (px) => ys - rise * Math.sqrt(Math.max(0, 1 - ((px - xm) / hw) ** 2));
-    const bar = (px, wide = 5) => {
-      const top = crown(px) + 8;
-      g.fillStyle = "#07080a";
-      g.fillRect(px - wide / 2, top, wide, yf - top);
-      g.fillStyle = "rgba(170,190,236,0.7)";
-      g.fillRect(px - wide / 2, top, 1.4, yf - top);
-      // its spear head
-      g.fillStyle = "#07080a";
-      g.beginPath(); g.moveTo(px, top - 12); g.lineTo(px + wide * 0.9, top); g.lineTo(px - wide * 0.9, top); g.closePath(); g.fill();
-    };
-    const rail = (a, b, y) => {
-      g.fillStyle = "#07080a";
-      g.fillRect(a, y - 4, b - a, 8);
-      g.fillStyle = "rgba(150,172,222,0.3)";
-      g.fillRect(a, y - 4, b - a, 1.4);
-    };
-    for (const side of [-1, 1]) {
-      // shut, a leaf reaches the middle; open, it is seen edge on against the wall
-      const hinge = side < 0 ? x0 + 4 : x1 - 4, reach = (gateOpen ? hw * 0.22 : hw - 4) * -side;
-      const n = gateOpen ? 4 : 6;
-      for (let i = 0; i <= n; i++) bar(hinge + (reach * i) / n, i === n || i === 0 ? 7 : gateOpen ? 3.4 : 5);
-      const a = Math.min(hinge, hinge + reach), b = Math.max(hinge, hinge + reach);
-      for (const y of [18, 112, PASS.spring - 22]) rail(a, b, Y(y));
-      if (!gateOpen) {
-        // a ring in each panel between the rails, as on the gate downstairs
-        for (let i = 0; i < n; i++) {
-          g.strokeStyle = "#07080a";
-          g.lineWidth = 3;
-          g.beginPath(); g.arc(hinge + (reach * (i + 0.5)) / n, Y(124), Math.abs(reach) / n / 2.6, 0, Math.PI * 2); g.stroke();
-        }
-      }
-    }
-    if (!gateOpen) {
-      // the lock, where the two leaves meet
-      g.fillStyle = "#0a0b0e";
-      g.fillRect(xm - 13, Y(118), 26, 34);
-      g.fillStyle = "rgba(150,172,222,0.35)";
-      g.fillRect(xm - 13, Y(118), 26, 1.6);
-      g.fillStyle = "#02020a";
-      g.beginPath(); g.arc(xm, Y(118) + 15, 3.4, 0, Math.PI * 2); g.fill();
-      g.fillRect(xm - 1.4, Y(118) + 15, 2.8, 10);
-    }
-    g.restore();
-  }
   for (const [deg, number] of DOORS) {
     const x0 = X(deg - DOOR.half), w = DOOR.half * 2 * KX, y0 = Y(DOOR.tall), h = DOOR.tall * KY;
     // the architrave, a keyblock over it
@@ -490,8 +401,8 @@ function wallFlat(gateOpen) {
   return flat;
 }
 
-function paintWall(ctx, L, gateOpen) {
-  const flat = wallFlat(gateOpen);
+function paintWall(ctx, L) {
+  const flat = wallFlat();
   const { W } = L;
   // the moon's light on the wall round the window goes on the unrolled wall's picture
   for (let c = 0; c < flat.width; c++) {

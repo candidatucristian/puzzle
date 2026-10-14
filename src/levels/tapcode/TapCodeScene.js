@@ -34,6 +34,10 @@ export default class TapCodeScene extends BasePuzzleScene {
     super({ key: "TapCode" });
   }
 
+  preload() {
+    this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
+  }
+
   init(data) {
     this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
@@ -76,13 +80,16 @@ export default class TapCodeScene extends BasePuzzleScene {
   }
 
   // The weeping joint: a bead of water gathers under it, lets go, falls the
-  // height of the cellar and rings the puddle — over and over.
+  // height of the cellar and rings the puddle — over and over, and each time
+  // it is heard (assets/sounds/global/waterdrop.mp3).
   _makeDrip(L, key) {
     const d = L.drip, u = L.u;
     const bead = this.add.image(d.x, d.y0, key).setTint(0xcfe0ff).setBlendMode(Phaser.BlendModes.ADD).setDepth(-5).setAlpha(0);
     this.ambientObject(bead);
+    const plink = () => this.services.audio.playSfx("waterdrop", 0.45 + Math.random() * 0.2, this);
     const fall = () => {
-      if (!this.ambientMotion || this.reducedMotion) return;
+      // with nothing moving, the drop is still heard
+      if (!this.ambientMotion || this.reducedMotion) { plink(); return; }
       bead.setPosition(d.x, d.y0).setDisplaySize(2 * u, 2 * u).setAlpha(0.9);
       this.tweens.add({
         targets: bead,
@@ -100,6 +107,7 @@ export default class TapCodeScene extends BasePuzzleScene {
             ease: "Quad.easeIn",
             onComplete: () => {
               bead.setAlpha(0);
+              plink();
               for (const wait of [0, 170]) {
                 const ring = this.add.ellipse(d.x, d.y1 + 3 * u, 12 * u, 3 * u).setStrokeStyle(Math.max(1, 1.2 * u), 0xc8d8f0, 0.55).setDepth(-5).setAlpha(0);
                 this.tweens.add({ targets: ring, scaleX: 7, scaleY: 5, alpha: { from: 0.8, to: 0 }, delay: wait, duration: 1100, ease: "Cubic.easeOut", onComplete: () => ring.destroy() });

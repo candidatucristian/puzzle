@@ -15,6 +15,14 @@ import { createMoonCanvas } from '../shared/moon.js';
 import { mountStartFilm } from './startFilm.js';
 import { mountStartManor } from './startManor.js';
 import { HOUSE_GO, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
+import { mountHouseMap } from './houseMap.js';
+import { mountNotebook } from './notebook.js';
+import { mountMagnifier } from './magnifier.js';
+import { mountAmbience } from './ambience.js';
+import { mountTooltips } from './tooltips.js';
+import { mountLookAround } from './lookAround.js';
+import { mountAhas } from './ahas.js';
+import { mountFootsteps } from './footsteps.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -79,9 +87,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   let sessionStart = null;
   const touch = isTouchDevice();
 
+  // in front of the house the index tells of the game, not of any room
+  const outside = on => document.body.classList.toggle('outside', on);
+  outside(!start.classList.contains('hidden'));
   function showGame() {
     if (!start.classList.contains('hidden')) film.stop();
     start.classList.add('hidden'); storage.setItem('hasPlayedBefore', 'true');
+    outside(false);
     progressUI.render();
     if (game.sound.context?.state === 'suspended') {
       game.sound.context.resume().catch(error => console.warn('Audio will resume after the next interaction.', error));
@@ -130,13 +142,17 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   // place is simply walked into from another. Walking up to something takes
   // the whole of `out`: the picture holds while the eye sets off toward it,
   // then darkens steadily for the rest of the way.
+  // From one place of the house to another the steps are heard, dying away
+  // as the new place comes up (`steps`); walking up to a puzzle, they are not.
+  const footsteps = mountFootsteps(scope, { game, audio });
   let walking = false;
-  function walk(arrive, out = 240, hold = 0) {
+  function walk(arrive, out = 240, hold = 0, steps = false) {
     if (walking) return;
-    if (hold) { walking = true; scope.later(() => { walking = false; walk(arrive, out); }, hold); return; }
+    if (hold) { walking = true; scope.later(() => { walking = false; walk(arrive, out, 0, steps); }, hold); return; }
     const canvas = game.canvas;
     const land = () => { completion.hide(); mobile?.close(); arrive(); walking = false; };
-    if (preferences?.reducedMotion || !canvas.animate) { land(); return; }
+    if (preferences?.reducedMotion || !canvas.animate) { if (steps) footsteps.walk(900); land(); return; }
+    if (steps) footsteps.walk(out + 520 + 450);
     walking = true;
     const leaving = canvas.animate([{ opacity: 1 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }],
       { duration: out, fill: 'forwards', easing: 'ease-in-out' });
@@ -151,7 +167,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const houseGo = ({ place, level } = {}) => {
     if (!levels.place || walking || transitions.busy || dialogs.isOpen) return;
     const index = levels.indexOf(level);
-    if (place) walk(() => levels.enterPlace(place), WALK_MS);
+    if (place) walk(() => levels.enterPlace(place), WALK_MS, 0, true);
     else if (levels.discover(index)) walk(() => levels.navigate(index), WALK_MS);
   };
   game.events.on(HOUSE_GO, houseGo);
@@ -162,6 +178,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     completion.hide(); mobile?.close();
     film = raiseFilm();
     start.classList.remove('hidden');
+    outside(true);
     started = false;
     progressUI.render();
   }
@@ -171,9 +188,44 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (!back) { if (levels.place) goOutside(); return; }
     // the place opens on what is being come away from, and draws back from it
     const from = levels.place ? { place: levels.place.key } : { level: levels.definitions[levels.currentIndex].id };
-    walk(() => levels.enterPlace(back.key, from));
+    walk(() => levels.enterPlace(back.key, from), 240, 0, true);
   });
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
+
+  // Straight to a place on the map: the walk, from wherever the player is.
+  function travel(key) {
+    if (walking || transitions.busy || levels.place?.key === key) return;
+    walk(() => levels.enterPlace(key), 260, 0, true);
+  }
+  const map = mountHouseMap(scope, { levels, dialogs, travel });
+  const notebook = mountNotebook(scope, { levels, dialogs, storage });
+  const glass = mountMagnifier(scope, game);
+  mountAmbience(scope, { game, levels, audio });
+  mountTooltips(scope);
+  mountLookAround(scope, game);
+  mountAhas(scope, { game, audio });
+  scope.on(byId('btn-map'), 'click', event => { if (!transitions.busy) map.open(event.currentTarget); });
+  scope.on(byId('btn-close-map'), 'click', () => dialogs.close());
+  scope.on(byId('btn-notebook'), 'click', event => { if (!transitions.busy) notebook.open(event.currentTarget); });
+  // M the map, N the notebook, Z the glass; Esc the way back. Never while
+  // something is being typed, nor before the house has been come into.
+  scope.on(window, 'keydown', event => {
+    // (an Esc that has just closed a dialog is spent)
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+    if (event.target.matches?.('input, textarea, select') || !start.classList.contains('hidden')) return;
+    if (dialogs.isOpen || transitions.busy || walking) return;
+    const key = event.key.toLowerCase();
+    if (key === 'm') { event.preventDefault(); map.open(byId('btn-map')); }
+    else if (key === 'n') { event.preventDefault(); notebook.open(byId('btn-notebook')); }
+    else if (key === 'z') { event.preventDefault(); glass.toggle(); }
+    else if (key === 'escape') {
+      if (glass.on) { glass.off(); return; }
+      // a puzzle that uses Esc itself keeps it
+      if (levels.activeScene?.usesEscape) return;
+      const leave = byId('btn-leave');
+      if (!leave.hidden) leave.click();
+    }
+  });
   mountFullscreenControl(scope, byId('btn-fullscreen'));
 
   scope.on(byId('btn-submit'), 'click', () => {
@@ -191,7 +243,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     const result = levels.submit(input.value);
     if (result.correct) {
       answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : home ? 'Answer accepted.' : 'Answer accepted. Opening the next room.', 'success');
-      input.classList.add('success-flash'); scope.later(() => input.classList.remove('success-flash'), 1200);
+      input.classList.add('success-flash', 'ink-sets'); scope.later(() => input.classList.remove('success-flash', 'ink-sets'), 1200);
       if (result.nextIndex === null) {
         completion.show();
         audio.playSuccess();
@@ -200,14 +252,16 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
         // a moment for the answer to be seen accepted, then back out to the
         // room, which opens on the thing just solved and draws back from it
         if (onStage) game.events.emit(HOUSE_SOLVED, solvedId); // nowhere to go back to: the place itself takes note
-        else if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, 700);
+        else if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, 700, true);
         else navigate(result.nextIndex, { caption: 'Answer accepted' });
       }
       input.value = '';
     } else {
       answerFeedback('Look again. That answer does not unlock this room.', 'error');
-      audio.playErrorSound(); input.classList.add('error-flash');
-      scope.later(() => input.classList.remove('error-flash'), 1000);
+      audio.playErrorSound();
+      input.classList.remove('error-flash', 'ink-runs'); void input.offsetWidth;
+      input.classList.add('error-flash', 'ink-runs');
+      scope.later(() => input.classList.remove('error-flash', 'ink-runs'), 1000);
     }
   });
   scope.on(input, 'input', () => {

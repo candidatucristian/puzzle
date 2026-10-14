@@ -142,7 +142,7 @@ export default class RoomScene extends BasePuzzleScene {
         .setDepth(5);
     }
     // not before the room has been walked back into
-    if (waiting) this.time.delayedCall(WALK_MS + 700, () => this._offerKey(waiting, k));
+    if (waiting) this.time.delayedCall(WALK_MS + 150, () => this._offerKey(waiting, k));
   }
 
   // The chest opens and offers its key: light gathers on it, the lid goes
@@ -155,8 +155,8 @@ export default class RoomScene extends BasePuzzleScene {
     const still = this.reducedMotion;
     const halo = this.add.image(m.x, m.y, k.glow).setBlendMode(Phaser.BlendModes.ADD).setTint(0xffd98a).setAlpha(0).setDepth(-5);
     halo.setDisplaySize(50 * u, 50 * u);
-    this.tweens.add({ targets: halo, alpha: 0.55, displayWidth: 120 * u, displayHeight: 120 * u, duration: still ? 1 : 700, ease: "Sine.easeOut" });
-    this.time.delayedCall(still ? 1 : 520, () => {
+    this.tweens.add({ targets: halo, alpha: 0.55, displayWidth: 120 * u, displayHeight: 120 * u, duration: still ? 1 : 420, ease: "Sine.easeOut" });
+    this.time.delayedCall(still ? 1 : 300, () => {
       this._chest.setTexture(k.open).clearTint();
       this._glints?.forEach((glint) => glint.destroy());
       chime(this, [[784, 0.05], [1175, 0.04], [1568, 0.03]], 1.1);
@@ -164,12 +164,12 @@ export default class RoomScene extends BasePuzzleScene {
       const item = this.add.image(m.x, m.y, k.key).setDepth(20).setAlpha(0);
       item.setDisplaySize(h * (96 / 220) * 0.3, h * 0.3);
       const up = m.y - 84 * u;
-      this.tweens.add({ targets: item, y: up, alpha: 1, displayWidth: h * (96 / 220), displayHeight: h, duration: still ? 1 : 1100, ease: "Cubic.easeOut" });
-      this.tweens.add({ targets: halo, y: up, duration: still ? 1 : 1100, ease: "Cubic.easeOut" });
+      this.tweens.add({ targets: item, y: up, alpha: 1, displayWidth: h * (96 / 220), displayHeight: h, duration: still ? 1 : 750, ease: "Cubic.easeOut" });
+      this.tweens.add({ targets: halo, y: up, duration: still ? 1 : 750, ease: "Cubic.easeOut" });
       const sway = still ? null : this.tweens.add({ targets: item, angle: { from: -6, to: 6 }, duration: 1300, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       this._sparkles.push(attachMovableSparkles(this, item, { padding: 6 }));
       // there to be taken, once it has come up
-      this.time.delayedCall(still ? 1 : 1100, () => {
+      this.time.delayedCall(still ? 1 : 750, () => {
         item.setInteractive({ useHandCursor: true }).setData("interactionLabel", "Take the key");
         item.once("pointerdown", () => {
           if (!levels.takeKey(key)) return;

@@ -194,22 +194,61 @@ function paintDeskItems(ctx, L) {
   ctx.restore();
 }
 
+// The chair pulled up to the desk, as it was left: turned to the desk, so it
+// is its back that is seen — the back legs running on up into the posts of
+// the back, a curved crest rail and a vase-shaped splat between them, a
+// leather seat nailed round in brass, stretchers low between the legs. It is
+// painted from the far side to the near, so the back stands in front of the
+// seat as it does in the room.
 function paintChair(ctx, L) {
   const { Q } = L, d = L.desk, x = d.x0 + (d.x1 - d.x0) * 0.56;
-  const wood = { side: "#271a11", top: "#826044", front: "#513922" };
-  soft(ctx, Q(x, 0, 430).x, Q(x, 0, 430).y, 58 * L.u, 18 * L.u, "0,0,0", 0.65);
-  for (const xx of [x - 19, x + 16]) for (const depth of [422, 457])
-    block(ctx, L, { x0: xx, x1: xx + 3, d0: depth, d1: depth + 3, y0: 1, y1: 48 }, wood);
-  for (const xx of [x - 20, x + 17])
-    block(ctx, L, { x0: xx, x1: xx + 3, d0: 456, d1: 460, y0: 47, y1: 112 }, wood);
-  for (const xx of [x - 11, x - 1, x + 9])
-    block(ctx, L, { x0: xx, x1: xx + 2, d0: 457, d1: 459, y0: 56, y1: 103 }, wood);
-  block(ctx, L, { x0: x - 21, x1: x + 21, d0: 455, d1: 462, y0: 104, y1: 113 }, wood);
-  block(ctx, L, { x0: x - 23, x1: x + 23, d0: 415, d1: 462, y0: 45, y1: 50 }, wood);
-  fillPoly(ctx, [Q(x - 20, 50.4, 418), Q(x + 20, 50.4, 418), Q(x + 19, 50.4, 458), Q(x - 19, 50.4, 458)], "#402a23");
-  for (let i = 0; i < 8; i++) {
-    const p = Q(x - 17 + i * 4.8, 49, 414.5);
-    ellipse(ctx, p.x, p.y, 0.43 * p.s, 0.43 * p.s, "#a08a5d");
+  const near = 418, far = 456; // the back of the chair (towards us), its front (towards the desk)
+  const seat = 45; // the seat's height
+  const wood = { side: "#221710", top: "#7c5c40", front: "#4a3420" };
+  const backWood = { side: "#2a1c12", top: "#8a6848", front: "#3c2a1a" };
+  // a shape drawn flat in the plane of the back
+  const inPlane = (pts, depth, fill) => fillPoly(ctx, pts.map(([px, py]) => Q(px, py, depth)), fill);
+  const shadow = Q(x, 0, (near + far) / 2);
+  soft(ctx, shadow.x, shadow.y, 46 * L.u, 13 * L.u, "0,0,0", 0.7);
+  // the front legs, by the desk, and the stretchers between all four
+  for (const side of [-1, 1]) block(ctx, L, { x0: x + side * 19 - 1.5, x1: x + side * 19 + 1.5, d0: far - 3, d1: far, y0: 0, y1: seat }, wood);
+  block(ctx, L, { x0: x - 18, x1: x + 18, d0: far - 2.5, d1: far - 1, y0: 13, y1: 15 }, wood);
+  for (const side of [-1, 1]) block(ctx, L, { x0: x + side * 19 - 0.8, x1: x + side * 19 + 0.8, d0: near + 2, d1: far - 2, y0: 10, y1: 12 }, wood);
+  // the seat: its frame, and the leather stretched over it
+  block(ctx, L, { x0: x - 22, x1: x + 22, d0: near - 1, d1: far + 1, y0: seat - 5, y1: seat }, wood);
+  fillPoly(ctx, [Q(x - 21, seat + 1.6, near), Q(x + 21, seat + 1.6, near), Q(x + 20, seat + 1.2, far), Q(x - 20, seat + 1.2, far)], "#3a241d");
+  fillPoly(ctx, [Q(x - 14, seat + 1.7, near + 6), Q(x + 10, seat + 1.7, near + 8), Q(x + 8, seat + 1.4, far - 10), Q(x - 12, seat + 1.4, far - 12)], "rgba(150,96,70,0.16)");
+  for (let i = 0; i < 9; i++) {
+    const p = Q(x - 20 + i * 5, seat - 0.8, near - 1.2);
+    ellipse(ctx, p.x, p.y, 0.45 * p.s, 0.45 * p.s, "#a8915f");
+  }
+  // the back: the back legs going on up as its posts
+  const top = 104;
+  for (const side of [-1, 1]) {
+    block(ctx, L, { x0: x + side * 20 - 1.8, x1: x + side * 20 + 1.8, d0: near - 3.5, d1: near, y0: 0, y1: top }, backWood);
+    // a finial on each, turned
+    const f = Q(x + side * 20, top + 2, near - 1.8);
+    ellipse(ctx, f.x, f.y, 2.3 * f.s, 2.6 * f.s, "#5a4029");
+    ellipse(ctx, f.x - 0.6 * f.s, f.y - 0.9 * f.s, 0.9 * f.s, 0.9 * f.s, "rgba(214,170,120,0.35)");
+  }
+  const plane = near - 2.2;
+  // the low rail just above the seat, and the crest rail, curved up in the middle
+  inPlane([[x - 18.5, 58], [x + 18.5, 58], [x + 18.5, 62], [x - 18.5, 62]], plane, "#3a2818");
+  const crest = [];
+  for (let i = 0; i <= 12; i++) { const k = i / 12, px = x - 19 + 38 * k; crest.push([px, 97 + Math.sin(k * Math.PI) * 5]); }
+  for (let i = 12; i >= 0; i--) { const k = i / 12, px = x - 19 + 38 * k; crest.push([px, 90 + Math.sin(k * Math.PI) * 3]); }
+  inPlane(crest, plane, "#43301e");
+  // the light along its top
+  const ridge = crest.slice(0, 13);
+  inPlane(ridge.concat([...ridge].reverse().map(([px, py]) => [px, py - 1.2])), plane - 0.2, "rgba(220,176,124,0.22)");
+  // the splat: a vase between the rails, waisted and swelling
+  inPlane([[x - 3.5, 62], [x - 6.5, 68], [x - 5.5, 76], [x - 2.6, 82], [x - 4.2, 87], [x - 5.2, 91], [x + 5.2, 91], [x + 4.2, 87], [x + 2.6, 82], [x + 5.5, 76], [x + 6.5, 68], [x + 3.5, 62]], plane, "#3f2c1b");
+  inPlane([[x - 1.2, 64], [x - 3.8, 69], [x - 3, 76], [x - 1, 81], [x - 0.2, 81], [x - 1.6, 76], [x - 2.2, 69], [x - 0.2, 64]], plane - 0.2, "rgba(214,168,118,0.16)");
+  // the lamp on the desk catches the near edge of each post
+  for (const side of [-1, 1]) {
+    const a = Q(x + side * 20 - side * 1.8, 2, near - 3.5), b = Q(x + side * 20 - side * 1.8, top, near - 3.5);
+    ctx.strokeStyle = "rgba(226,176,118,0.2)"; ctx.lineWidth = Math.max(0.6, 0.8 * a.s);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
 }
 

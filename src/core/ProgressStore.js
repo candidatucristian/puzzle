@@ -26,6 +26,8 @@ export class ProgressStore {
       completedLevelIds: [...this.#state.completedLevelIds],
       unlockedLevelIds: [...this.#state.unlockedLevelIds],
       keys: [...this.#state.keys],
+      usedKeys: [...this.#state.usedKeys],
+      visitedPlaces: [...this.#state.visitedPlaces],
     };
   }
 
@@ -74,6 +76,28 @@ export class ProgressStore {
     return true;
   }
 
+  /** A key that has been used to open its door: the door stays open, but the
+   *  key is gone — it is not kept. */
+  isKeyUsed(id) { return this.#state.usedKeys.includes(id); }
+
+  useKey(id) {
+    if (!this.hasKey(id) || this.isKeyUsed(id)) return false;
+    this.#state.usedKeys.push(id);
+    this.#save();
+    return true;
+  }
+
+  /** The places of the house that have been stood in: the map shows them,
+   *  and lets the player go back to any of them at once. */
+  hasVisitedPlace(key) { return this.#state.visitedPlaces.includes(key); }
+
+  visitPlace(key) {
+    if (typeof key !== "string" || !key || this.hasVisitedPlace(key)) return false;
+    this.#state.visitedPlaces.push(key);
+    this.#save();
+    return true;
+  }
+
   visit(index) {
     if (!this.canAccess(index)) return false;
     this.#state.lastPlayedLevelId = this.#definitions[index].id;
@@ -105,6 +129,8 @@ export class ProgressStore {
       unlockedLevelIds: [this.#definitions[0].id],
       lastPlayedLevelId: this.#definitions[0].id,
       keys: [],
+      usedKeys: [],
+      visitedPlaces: [],
     };
   }
 
@@ -139,6 +165,11 @@ export class ProgressStore {
             : (firstIncomplete || this.#definitions.at(-1)).id,
           // saves from before the house had keys simply have none
           keys: Array.isArray(parsed.keys) ? [...new Set(parsed.keys)].filter((id) => typeof id === "string") : [],
+          // and saves from before keys were used up have used none
+          usedKeys: Array.isArray(parsed.usedKeys) && Array.isArray(parsed.keys)
+            ? [...new Set(parsed.usedKeys)].filter((id) => typeof id === "string" && parsed.keys.includes(id))
+            : [],
+          visitedPlaces: Array.isArray(parsed.visitedPlaces) ? [...new Set(parsed.visitedPlaces)].filter((id) => typeof id === "string") : [],
         };
       } catch {
         // A damaged modern save must not resurrect stale legacy progress.
@@ -164,6 +195,8 @@ export class ProgressStore {
       unlockedLevelIds: this.#definitions.slice(0, index + 1).map(({ id }) => id),
       lastPlayedLevelId: this.#definitions[index].id,
       keys: [],
+      usedKeys: [],
+      visitedPlaces: [],
     };
   }
 

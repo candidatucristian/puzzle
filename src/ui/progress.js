@@ -1,6 +1,10 @@
 import { RoomPreviewStore } from '../core/RoomPreviewStore.js';
 import { toRoman } from './transitions.js';
 import { paintKey } from '../shared/keyArt.js';
+import { waxSeal } from './seal.js';
+
+// each seal sits a little askew, never twice the same way
+const tilt = n => `${((n * 37) % 23) - 11}deg`;
 
 export function mountProgress(scope, { game, levels, storage, navigate, canNavigate }) {
   const grid = document.getElementById('levels-grid');
@@ -8,7 +12,9 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
   const next = document.getElementById('room-next');
   const previews = new RoomPreviewStore(storage, levels.definitions);
   const tiles = [];
-  let captureTimer, captureGeneration = 0;
+  let captureTimer, captureGeneration = 0, shown = false;
+  // what was already sealed when last drawn: only a new seal is pressed
+  const sealedRooms = new Set();
   grid.replaceChildren();
   grid.setAttribute('role', 'list');
   scope.on(previous, 'click', () => {
@@ -29,19 +35,23 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     const name = document.createElement('span'); name.className = 'level-name';
     const status = document.createElement('span'); status.className = 'level-status';
     caption.append(name, status);
-    const check = document.createElement('span'); check.className = 'level-check'; check.textContent = '✓'; check.setAttribute('aria-hidden', 'true');
+    const check = document.createElement('span'); check.className = 'level-check'; check.setAttribute('aria-hidden', 'true');
+    check.append(waxSeal(index + 1)); check.style.setProperty('--tilt', tilt(index + 1));
     tile.append(preview, number, caption, check); grid.append(tile);
-    tiles.push({ tile, preview, check, name, status });
+    tiles.push({ tile, preview, check, name, status, sealed: false });
   });
 
   function render() {
     const near = levels.nearby;
     levels.definitions.forEach((level, index) => {
-      const { tile, preview, check, name, status } = tiles[index];
+      const item = tiles[index], { tile, preview, check, name, status } = item;
       const allowed = levels.canAccess(index), solved = levels.isCompleted(index), current = !levels.place && index === levels.currentIndex;
       tile.hidden = !near.indexes.includes(index);
       tile.className = `level-btn ${allowed ? current ? 'current' : 'unlocked' : 'locked'}`;
       tile.classList.toggle('solved', solved);
+      // solved just now: the seal is pressed on
+      if (solved && !item.sealed && shown) press(tile);
+      item.sealed = solved;
       name.textContent = allowed ? level.name : 'Locked';
       status.textContent = !allowed ? 'Locked' : solved ? 'Solved' : current ? 'Currently exploring' : 'Not solved yet';
       tile.setAttribute('aria-label', `Level ${index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
@@ -66,16 +76,21 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       const name = document.createElement('span'); name.className = 'level-name'; name.textContent = room.name;
       const status = document.createElement('span'); status.className = 'level-status'; status.textContent = room.locked ? 'Locked' : room.solved ? 'Solved' : 'Not solved yet';
       caption.append(name, status);
-      const check = document.createElement('span'); check.className = 'level-check'; check.textContent = '✓';
+      const check = document.createElement('span'); check.className = 'level-check';
       check.setAttribute('aria-hidden', 'true'); check.hidden = !room.solved;
+      check.append(waxSeal(n + 31)); check.style.setProperty('--tilt', tilt(n + 31));
       row.append(number, caption, check); grid.append(row);
+      if (room.solved && shown && !sealedRooms.has(room.name)) press(row);
+      if (room.solved) sealedRooms.add(room.name);
     });
     // under the list, the few lines of story for where the player is
     const story = document.getElementById('index-story');
     story.replaceChildren(...near.story.map(line => Object.assign(document.createElement('p'), { textContent: line })));
     // a finished room says so, in place of its story
     story.hidden = near.story.length === 0 || near.completed;
-    document.getElementById('index-done').hidden = !near.completed;
+    const finished = document.getElementById('index-done');
+    if (near.completed && finished.hidden && shown) press(finished);
+    finished.hidden = !near.completed;
     // under the story, the keys found so far, each with the door it is for
     const ring = document.getElementById('index-keys');
     const held = levels.keys;
@@ -93,6 +108,20 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       }));
     }
     ring.hidden = held.length === 0;
+    // outside: how far into the house the player has got, if anywhere
+    const far = document.getElementById('outside-progress');
+    if (far) {
+      const lines = [];
+      if (done) lines.push([`${done} ${done === 1 ? 'puzzle' : 'puzzles'} solved`, true]);
+      if (held.length) lines.push([`${held.length} ${held.length === 1 ? 'key' : 'keys'} in your pocket`, false]);
+      far.replaceChildren(...lines.map(([words, sealed]) => {
+        const line = document.createElement('p');
+        if (sealed) { const mark = document.createElement('span'); mark.className = 'outside-seal'; mark.append(waxSeal(3)); line.append(mark); }
+        line.append(words);
+        return line;
+      }));
+      far.hidden = lines.length === 0;
+    }
     const here = near.indexes.filter(index => levels.isCompleted(index)).length;
     // a count only where there is something to count
     document.getElementById('progress-count').hidden = near.indexes.length === 0;
@@ -108,10 +137,13 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     const leave = document.getElementById('btn-leave'), back = levels.back;
     // from the hall, back is outside
     leave.hidden = !back && !levels.place;
-    if (!back) { leave.setAttribute('aria-label', 'Back outside'); leave.title = 'Back outside'; }
+    // what is written on its tag: where it leads
+    document.getElementById('leave-to').textContent = back ? 'back to' : 'back';
+    document.getElementById('leave-name').textContent = back ? back.name.replace(/^The /, 'the ') : 'outside';
+    if (!back) { leave.setAttribute('aria-label', 'Back outside'); leave.dataset.tip = 'Back outside (Esc)'; }
     if (back) {
       leave.setAttribute('aria-label', `Back to ${back.name.replace(/^The /, 'the ')}`);
-      leave.title = leave.getAttribute('aria-label');
+      leave.dataset.tip = `${leave.getAttribute('aria-label')} (Esc)`;
     }
     document.getElementById('header-room').setAttribute('aria-label', `Current level: ${currentLevel.name}, level ${romanLevel}`);
     previous.disabled = levels.currentIndex <= 0;
@@ -130,7 +162,17 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     document.getElementById('btn-continue').textContent = returning && room ? `Continue to Room ${room.number}` : 'Get inside';
     // the title says nothing of how much is solved
     document.getElementById('start-progress').hidden = true;
+    shown = true;
   }
+
+  function press(node) {
+    node.classList.remove('sealing'); void node.offsetWidth;
+    node.classList.add('sealing');
+    scope.later(() => node.classList.remove('sealing'), 1400);
+  }
+  // the seal of a finished room, under its list
+  const mark = document.querySelector('#index-done .done-mark');
+  if (mark) { mark.replaceChildren(waxSeal(7)); mark.style.setProperty('--tilt', '-8deg'); }
 
   function scheduleCapture() {
     scope.cancel(captureTimer);

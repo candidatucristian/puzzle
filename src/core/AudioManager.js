@@ -6,7 +6,9 @@ export const AUDIO_ASSETS = Object.freeze({
   error: "assets/sounds/global/error.mp3",
 });
 
-const BGM_GAIN = 0.4;
+// the music sits well under everything else: at the slider's 50% it plays as
+// it once did at 25%
+const BGM_GAIN = 0.2;
 const EMPTY_STORAGE = { getItem: () => null, setItem: () => {} };
 
 function volume(value, fallback) {

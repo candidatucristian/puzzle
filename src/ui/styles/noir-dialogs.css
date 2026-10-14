@@ -728,17 +728,31 @@ body.in-place .room-step-button { visibility: hidden; }
 /* The index of a place only tells: what is here, and whether it is solved. */
 .level-btn[hidden] { display: none; }
 .level-btn { cursor: default; pointer-events: none; }
-/* The way back through the house — out of a puzzle, out of a room: a small
-   graphite plate in the corner of the picture, one with the rest of the
-   console (the same panel, border and type as its other buttons). */
-#btn-leave { position: absolute; top: 14px; left: 14px; z-index: 6; appearance: none; display: inline-flex; align-items: center; gap: 8px;
-  min-height: 34px; padding: 7px 14px 7px 10px; border: 1px solid var(--ui-border); border-radius: 5px; cursor: pointer;
-  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .04em; color: var(--ui-muted);
-  background: #151515e0; backdrop-filter: blur(6px); transition: color .15s, border-color .15s, background .15s; }
+/* The way back through the house — out of a puzzle, out of a room — at the
+   foot of the index: sketched in white like the pointers, its frame drawn by
+   hand with the lines run past the corners, a doorway with an arrow leaving
+   it, and where it leads written in pencil. */
+#btn-leave { position: relative; flex-shrink: 0; margin-top: auto; display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 12px;
+  width: 100%; min-height: 64px; padding: 12px 16px 12px 14px; appearance: none; border: 0; border-radius: 3px; background: transparent; color: #f1ece0; text-align: left;
+  transition: background .2s; }
 #btn-leave[hidden] { display: none; }
-#btn-leave .ui-icon { width: 14px; height: 14px; rotate: 180deg; }
-#btn-leave:hover { color: var(--ui-text); border-color: #4a4a47; background: #1b1b1bf0; }
-#btn-leave:active { transform: translateY(1px); }
+#btn-leave .leave-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+#btn-leave svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+#btn-leave .ink-dark { stroke: #0b0b0c; stroke-width: 2; stroke-opacity: .85; }
+#btn-leave .ink-white { stroke: #f1ece0; stroke-width: .8; transition: stroke .2s; }
+#btn-leave .ink-over { stroke: #fff; stroke-width: .4; stroke-opacity: .45; transform: translate(.6px, -.45px); }
+#btn-leave .leave-frame .ink-white { stroke: #cfcabd; }
+#btn-leave .leave-icon { width: 34px; height: 34px; overflow: visible; }
+#btn-leave .leave-arrow { transition: transform .25s cubic-bezier(.3, 1.5, .5, 1); }
+#btn-leave .leave-words { display: grid; gap: 1px; min-width: 0; }
+#btn-leave .leave-to { font: 400 calc(9.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .18em; text-transform: uppercase; color: #a9a59a; }
+#btn-leave .leave-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(19px * var(--reading-scale, 1))/1.15 "Architects Daughter", "Special Elite", cursive; color: #f1ece0; }
+#btn-leave:hover, #btn-leave:focus-visible { background: #ffffff08; }
+#btn-leave:hover .leave-frame .ink-white, #btn-leave:focus-visible .leave-frame .ink-white { stroke: #f6f2e8; }
+#btn-leave:hover .leave-arrow, #btn-leave:focus-visible .leave-arrow { transform: translateX(-3px); }
+#btn-leave:focus-visible { outline: none; }
+#btn-leave:active { translate: 0 1px; }
+[data-reduced-motion="true"] #btn-leave .leave-arrow { transition: none; }
 #room-progress[hidden], #progress-count[hidden] { display: none; }
 /* Under the index, a few lines of story: where we are, what there is to do. */
 #index-story { flex-shrink: 0; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--ui-border); }

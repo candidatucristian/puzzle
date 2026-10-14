@@ -1,0 +1,312 @@
+// The player's notebook. A working page for each puzzle (and each place of the
+// house), written on and drawn on in pencil and kept by itself from one visit
+// to the next; and beside it a shelf of folders — ten at most — to keep notes
+// in. Save puts a copy of the page into the folder that is open; a note taken
+// out of a folder is written on in place, and kept as it is written. Opened
+// with the Notebook button or N. Nothing is ever written in it but what the
+// player puts there.
+
+const PAGE = { w: 640, h: 300 }; // the sketch's own size, in its pixels
+const MAX_FOLDERS = 10;
+const SHELF = "notebook:folders"; // the folders and the notes in them
+const OPEN = "notebook:open-folder"; // the folder last opened
+
+const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+const when = (at) => new Date(at).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+export function mountNotebook(scope, { levels, dialogs, storage }) {
+  const $ = (id) => document.getElementById(id);
+  const title = $("notebook-title"), text = $("notebook-text"), sketch = $("notebook-sketch");
+  const tools = document.querySelectorAll("[data-notebook-tool]");
+  const folderList = $("notebook-folders"), folderCount = $("notebook-folder-count"), newFolder = $("notebook-new-folder");
+  const notesWrap = $("notebook-notes-wrap"), notesLabel = $("notebook-notes-label"), noteList = $("notebook-notes");
+  const back = $("notebook-back"), noteTitle = $("notebook-note-title"), saveButton = $("notebook-save");
+  const saveFolder = $("notebook-save-folder"), deleteNote = $("notebook-delete-note"), status = $("notebook-status");
+  if (!text || !sketch || !folderList) return { open() {} };
+  sketch.width = PAGE.w; sketch.height = PAGE.h;
+  const ctx = sketch.getContext("2d");
+  // `page` is what lies open: the working page of a puzzle or place, or a note
+  let page = null, tool = "pencil", drawing = null, saveTimer = null, statusTimer = null;
+  let folders = readShelf(), openId = storage.getItem(OPEN);
+
+  // ── keeping things ──
+  function readShelf() {
+    try {
+      const kept = JSON.parse(storage.getItem(SHELF) || "[]");
+      return Array.isArray(kept) ? kept.filter((f) => f && typeof f.id === "string").slice(0, MAX_FOLDERS)
+        .map((f) => ({ id: f.id, name: String(f.name || "Folder"), notes: Array.isArray(f.notes) ? f.notes : [] })) : [];
+    } catch { return []; }
+  }
+  function keepShelf() {
+    if (storage.setItem(SHELF, JSON.stringify(folders))) return true;
+    say("The browser has no more room — this is kept until the page is closed.", "warn");
+    return false;
+  }
+  const readPage = (key) => { try { return JSON.parse(storage.getItem(`notebook:${key}`) || "null"); } catch { return null; } };
+  const folder = (id = openId) => folders.find((f) => f.id === id) ?? null;
+  const note = () => (page?.kind === "note" ? folder(page.folderId)?.notes.find((n) => n.id === page.noteId) ?? null : null);
+  const picture = () => (page?.drawn ? sketch.toDataURL("image/png") : null);
+
+  // what is on the page, put away: a working page by its own key, a note in its folder
+  function save() {
+    clearTimeout(saveTimer);
+    if (!page) return;
+    if (page.kind === "note") {
+      const n = note();
+      if (!n) return;
+      n.text = text.value; n.sketch = picture(); n.title = noteTitle.value.trim() || n.title;
+      keepShelf();
+      return;
+    }
+    const blank = !text.value.trim() && !page.drawn;
+    if (blank) storage.removeItem(`notebook:${page.key}`);
+    else storage.setItem(`notebook:${page.key}`, JSON.stringify({ text: text.value, sketch: picture() }));
+  }
+  const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); };
+  scope.add(() => { save(); clearTimeout(statusTimer); });
+
+  function say(words, kind = "ok") {
+    status.textContent = words;
+    status.dataset.kind = kind;
+    status.classList.remove("shown"); void status.offsetWidth; status.classList.add("shown");
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => status.classList.remove("shown"), 3200);
+  }
+
+  // ── the page ──
+  function paint(content) {
+    text.value = content?.text ?? "";
+    ctx.clearRect(0, 0, PAGE.w, PAGE.h);
+    page.drawn = false;
+    if (content?.sketch) {
+      const img = new Image(), shown = page;
+      img.onload = () => { if (page !== shown) return; ctx.drawImage(img, 0, 0); page.drawn = true; };
+      img.src = content.sketch;
+    }
+  }
+  // the working page of the puzzle being played, or else of the place stood in
+  function working() {
+    if (levels.place && !levels.answering) return { kind: "page", key: `place:${levels.place.key}`, name: levels.place.name };
+    const level = levels.definitions[levels.currentIndex];
+    return { kind: "page", key: `level:${level.id}`, name: level.name };
+  }
+  function openWorking() {
+    save();
+    page = working();
+    paint(readPage(page.key));
+    noteTitle.value = "";
+    render();
+  }
+  function openNote(f, n) {
+    save();
+    page = { kind: "note", folderId: f.id, noteId: n.id, name: n.title };
+    paint(n);
+    noteTitle.value = n.title;
+    render();
+    text.focus();
+  }
+
+  // ── the shelf ──
+  function render() {
+    // the folders, the open one standing open
+    folderList.replaceChildren(...folders.map((f) => folderItem(f)));
+    folderCount.textContent = `${folders.length} / ${MAX_FOLDERS}`;
+    newFolder.disabled = folders.length >= MAX_FOLDERS;
+    newFolder.textContent = folders.length >= MAX_FOLDERS ? "The shelf is full" : "+ New folder";
+    // the notes in the open one
+    const open = folder();
+    notesWrap.hidden = !open;
+    if (open) {
+      notesLabel.textContent = `In “${open.name}”`;
+      const items = [...open.notes].sort((a, b) => b.at - a.at).map((n) => {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "shelf-note";
+        b.classList.toggle("open", page?.kind === "note" && page.noteId === n.id);
+        const name = document.createElement("span"); name.className = "note-name"; name.textContent = n.title;
+        const meta = document.createElement("span"); meta.className = "note-meta"; meta.textContent = `${n.from ? `${n.from} · ` : ""}${when(n.at)}`;
+        b.append(name, meta);
+        b.addEventListener("click", () => openNote(open, n));
+        li.append(b);
+        return li;
+      });
+      if (!items.length) {
+        const li = document.createElement("li"); li.className = "shelf-empty"; li.textContent = "Nothing kept here yet.";
+        items.push(li);
+      }
+      noteList.replaceChildren(...items);
+    }
+    // the page's own bar and the way to put it away
+    const onNote = page?.kind === "note";
+    title.textContent = onNote ? `${folder(page.folderId)?.name ?? ""} › ${note()?.title ?? ""}` : page?.name ?? "";
+    back.hidden = !onNote;
+    deleteNote.hidden = !onNote;
+    saveButton.hidden = onNote;
+    noteTitle.placeholder = onNote ? "The note's name" : `A name for this note (${page?.name ?? ""})`;
+    saveFolder.textContent = open ? `“${open.name}”` : "a new folder";
+    disarm(deleteNote, "Delete this note");
+  }
+
+  function folderItem(f) {
+    const li = document.createElement("li");
+    li.className = "shelf-folder";
+    li.classList.toggle("open", f.id === openId);
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "folder-tab";
+    b.setAttribute("aria-pressed", String(f.id === openId));
+    b.title = "Open — double-click to rename";
+    const name = document.createElement("span"); name.className = "folder-name"; name.textContent = f.name;
+    const count = document.createElement("span"); count.className = "folder-count"; count.textContent = String(f.notes.length);
+    b.append(name, count);
+    b.addEventListener("click", () => { openId = f.id; storage.setItem(OPEN, f.id); render(); });
+    b.addEventListener("dblclick", () => rename(li, f));
+    const bin = document.createElement("button");
+    bin.type = "button"; bin.className = "folder-bin"; bin.textContent = "×";
+    bin.setAttribute("aria-label", `Throw away the folder “${f.name}”`);
+    bin.title = "Throw away this folder";
+    bin.addEventListener("click", () => {
+      // asked twice: a folder thrown away takes its notes with it
+      if (!armed(bin, "Sure?")) return;
+      folders = folders.filter((x) => x.id !== f.id);
+      if (page?.kind === "note" && page.folderId === f.id) { page = null; openWorking(); }
+      if (openId === f.id) { openId = folders[0]?.id ?? null; storage.setItem(OPEN, openId ?? ""); }
+      keepShelf(); render();
+      say(`The folder “${f.name}” was thrown away.`);
+    });
+    li.append(b, bin);
+    return li;
+  }
+
+  // a name written in on the spot, for a new folder or an old one
+  function nameField(initial, done) {
+    const input = document.createElement("input");
+    input.type = "text"; input.className = "folder-input"; input.maxLength = 24; input.value = initial;
+    input.placeholder = "Folder name"; input.spellcheck = false; input.autocomplete = "off";
+    let finished = false;
+    const finish = (keep) => { if (finished) return; finished = true; done(keep ? input.value.trim() : null); };
+    input.addEventListener("keydown", (e) => {
+      // Esc here only lets go of the name, it does not close the notebook
+      if (e.key === "Escape") { e.stopPropagation(); e.preventDefault(); finish(false); }
+      if (e.key === "Enter") { e.preventDefault(); finish(true); }
+    });
+    input.addEventListener("blur", () => finish(true));
+    return input;
+  }
+  function rename(li, f) {
+    const input = nameField(f.name, (name) => {
+      if (name && name !== f.name) { f.name = name; keepShelf(); }
+      render();
+    });
+    li.replaceChildren(input);
+    input.focus(); input.select();
+  }
+  function makeFolder(name, then) {
+    if (folders.length >= MAX_FOLDERS) { say("Ten folders is all the shelf holds.", "warn"); return null; }
+    const f = { id: uid(), name: name || `Folder ${folders.length + 1}`, notes: [] };
+    folders.push(f);
+    openId = f.id; storage.setItem(OPEN, f.id);
+    keepShelf();
+    then?.(f);
+    render();
+    return f;
+  }
+  scope.on(newFolder, "click", () => {
+    if (folders.length >= MAX_FOLDERS) return;
+    const li = document.createElement("li");
+    li.className = "shelf-folder new";
+    const input = nameField("", (name) => { if (name === null) render(); else makeFolder(name); });
+    li.append(input);
+    folderList.append(li);
+    input.focus();
+  });
+
+  // a button pressed twice to be sure
+  function armed(button, ask) {
+    if (button.dataset.armed === "true") return true;
+    button.dataset.armed = "true";
+    button.dataset.label = button.textContent;
+    button.textContent = ask;
+    setTimeout(() => disarm(button), 2600);
+    return false;
+  }
+  function disarm(button, label) {
+    if (button.dataset.armed !== "true") return;
+    button.dataset.armed = "false";
+    button.textContent = label ?? button.dataset.label;
+  }
+
+  // ── putting a note away ──
+  scope.on(saveButton, "click", () => {
+    if (!page || page.kind === "note") return;
+    if (!text.value.trim() && !page.drawn) { say("There is nothing on the page to keep yet.", "warn"); return; }
+    save();
+    const into = folder() ?? makeFolder("Notes");
+    if (!into) return;
+    const n = { id: uid(), title: noteTitle.value.trim() || `${page.name}`, from: page.name, at: Date.now(), text: text.value, sketch: picture() };
+    into.notes.push(n);
+    const kept = keepShelf();
+    noteTitle.value = "";
+    render();
+    if (kept) say(`Kept in “${into.name}”.`);
+    noteList.querySelector(".shelf-note")?.classList.add("just-kept");
+  });
+  scope.on(deleteNote, "click", () => {
+    const f = folder(page?.folderId), n = note();
+    if (!f || !n || !armed(deleteNote, "Sure? Click again")) return;
+    f.notes = f.notes.filter((x) => x.id !== n.id);
+    keepShelf();
+    page = null;
+    openWorking();
+    say(`“${n.title}” was thrown away.`);
+  });
+  scope.on(back, "click", openWorking);
+  scope.on(noteTitle, "input", () => { if (page?.kind === "note") saveSoon(); });
+  scope.on(noteTitle, "change", () => { if (page?.kind === "note") { save(); render(); } });
+  scope.on(noteTitle, "keydown", (e) => { if (e.key === "Enter" && page?.kind !== "note") { e.preventDefault(); saveButton.click(); } });
+
+  // ── the pencil and the rubber ──
+  const pos = (e) => {
+    const box = sketch.getBoundingClientRect();
+    return { x: ((e.clientX - box.left) / box.width) * PAGE.w, y: ((e.clientY - box.top) / box.height) * PAGE.h };
+  };
+  scope.on(sketch, "pointerdown", (e) => {
+    sketch.setPointerCapture(e.pointerId);
+    drawing = pos(e);
+  });
+  scope.on(sketch, "pointermove", (e) => {
+    if (!drawing) return;
+    const p = pos(e);
+    ctx.save();
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    if (tool === "eraser") { ctx.globalCompositeOperation = "destination-out"; ctx.lineWidth = 18; }
+    else { ctx.strokeStyle = "rgba(38,34,28,0.9)"; ctx.lineWidth = 2.2; }
+    ctx.beginPath(); ctx.moveTo(drawing.x, drawing.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    ctx.restore();
+    drawing = p;
+    page.drawn = true;
+  });
+  const lift = () => { if (drawing) { drawing = null; saveSoon(); } };
+  scope.on(sketch, "pointerup", lift);
+  scope.on(sketch, "pointercancel", lift);
+  for (const button of tools) {
+    scope.on(button, "click", () => {
+      tool = button.dataset.notebookTool;
+      sketch.dataset.tool = tool;
+      for (const b of tools) b.setAttribute("aria-pressed", String(b === button));
+    });
+  }
+  scope.on($("notebook-clear"), "click", () => { ctx.clearRect(0, 0, PAGE.w, PAGE.h); page.drawn = false; saveSoon(); });
+  scope.on(text, "input", saveSoon);
+  scope.on($("btn-close-notebook"), "click", () => { save(); dialogs.close(); });
+
+  return {
+    open(trigger) {
+      if (!folder()) openId = folders[0]?.id ?? null;
+      page = null;
+      status.classList.remove("shown");
+      openWorking();
+      dialogs.open("notebook-modal", trigger);
+      text.focus();
+    },
+  };
+}

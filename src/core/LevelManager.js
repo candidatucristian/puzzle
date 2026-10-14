@@ -1,4 +1,4 @@
-import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN } from "../shared/house.js";
+import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN, STILL_LOCKED } from "../shared/house.js";
 
 /** Coordinates level selection and answers; scenes own their resources.
  * The player is either at a puzzle (a level) or standing somewhere in the
@@ -73,18 +73,20 @@ export class LevelManager {
 
   /** The rooms behind the doors of the place the player stands in, in the
    *  doors' order: its place key, whether it is locked (nothing behind it, or
-   *  its key not found yet), whether it can be gone into, and whether
-   *  everything in it has been solved. None at a puzzle or without doors. */
+   *  its key not found yet), whether it can be gone into, whether its key is
+   *  in hand and has not opened it yet, and whether everything in it has been
+   *  solved. None at a puzzle or without doors. */
   get rooms() {
     return (this.#place?.doors ?? []).map((key, n) => {
       const place = this.#places.find((item) => item.key === key);
-      if (!place) return { key: null, name: `Room ${n + (this.#place.first ?? 1)}`, locked: true, open: false, solved: false, completed: false };
+      if (!place) return { key: null, name: `Room ${n + (this.#place.first ?? 1)}`, locked: true, open: false, withKey: false, solved: false, completed: false };
       const locked = this.#locked(place);
       return {
         key: place.key,
         name: place.name,
         locked,
         open: !locked && !place.unbuilt,
+        withKey: Boolean(place.needsKey) && this.hasKey(place.key) && !this.#progress.isKeyUsed(place.key),
         solved: place.holds.length > 0 && place.holds.every((id) => this.isCompleted(this.indexOf(id))),
         completed: this.#finished(place),
       };
@@ -93,7 +95,7 @@ export class LevelManager {
 
   // A place whose door needs a key that has not been found yet.
   #locked(place) {
-    return Boolean(place.needsKey) && !ALL_DOORS_OPEN && !this.hasKey(place.key);
+    return Boolean(place.needsKey) && (!ALL_DOORS_OPEN || STILL_LOCKED.includes(place.key)) && !this.hasKey(place.key);
   }
 
   // Everything a place holds is solved, and the key in its chest taken.
@@ -108,7 +110,8 @@ export class LevelManager {
     const held = [];
     for (const place of this.#places) {
       (place.doors ?? []).forEach((key, n) => {
-        if (key && this.hasKey(key)) held.push({ key, door: n + (place.first ?? 1) });
+        // a key that has opened its door is gone
+        if (key && this.hasKey(key) && !this.#progress.isKeyUsed(key)) held.push({ key, door: n + (place.first ?? 1) });
       });
     }
     return held;
@@ -131,6 +134,15 @@ export class LevelManager {
 
   /** A key is named for the room it opens. */
   hasKey(key) { return this.#progress.hasKey(key); }
+
+  /** The door of `key`'s room is unlocked with its key, and the key is left
+   *  in the lock: it is not carried any more. */
+  unlockDoor(key) {
+    const place = this.#places.find((item) => item.key === key);
+    if (!place?.needsKey || !this.#progress.useKey(key)) return false;
+    this.#notify();
+    return true;
+  }
 
   /** The key a place's chest holds, once everything the place holds has
    *  been solved and until the key has been taken; null otherwise. */
@@ -185,6 +197,9 @@ export class LevelManager {
   enterPlace(key, from = null) {
     const place = this.#places.find((item) => item.key === key);
     if (!this.#game || !place || place.unbuilt || this.#locked(place)) return false;
+    // the first time a door is opened with its key, the key stays in the lock
+    if (place.needsKey && this.hasKey(place.key)) this.#progress.useKey(place.key);
+    this.#progress.visitPlace(place.key);
     this.#leaveEverything();
     this.#place = place;
     // a puzzle played in the place itself is the one in hand while we stand there
@@ -194,6 +209,24 @@ export class LevelManager {
     this.#game.scene.start(place.key, { from });
     this.#notify();
     return true;
+  }
+
+  /** What the map needs to know of a place of the house: whether it has
+   *  been stood in, whether it can be gone into now, whether everything in
+   *  it is done, and whether the player is standing in it. */
+  placeState(key) {
+    const place = this.#places.find((item) => item.key === key);
+    if (!place) return null;
+    const home = this.#place ?? this.homeOf(this.#currentIndex);
+    return {
+      key, name: place.name,
+      visited: this.#progress.hasVisitedPlace(key),
+      open: !place.unbuilt && !this.#locked(place),
+      finished: place.holds.length > 0 && this.#finished(place),
+      here: home?.key === key,
+      puzzles: place.holds.length,
+      solved: place.holds.filter((id) => this.isCompleted(this.indexOf(id))).length,
+    };
   }
 
   enterHall() { return this.enterPlace(this.#places[0].key); }

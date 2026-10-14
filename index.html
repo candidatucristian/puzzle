@@ -44,6 +44,8 @@
       <symbol id="icon-hint" viewBox="0 0 24 24"><path d="M8 16c0-3-3-3-3-7a7 7 0 0 1 14 0c0 4-3 4-3 7M8 17h8m-7 4h6m-3-5V9m-3 1 3 2 3-2"/></symbol>
       <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
       <symbol id="icon-notes" viewBox="0 0 24 24"><path d="M6 3h12v18H6zm3 5h6m-6 4h6m-6 4h4"/></symbol>
+      <symbol id="icon-map" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zm6-3v15m6-12v15"/></symbol>
+      <symbol id="icon-pencil" viewBox="0 0 24 24"><path d="M4 20l1-5L16 4l4 4L9 19zm10-14l4 4"/></symbol>
     </svg>
     <!-- Loading screen: rendered before the heavy scripts download.
          An inline script right below drives it; the Phaser BootScene
@@ -77,7 +79,9 @@
           <input type="range" id="vol-slider-ui" aria-label="Overall volume" min="0" max="1" step="0.01" />
           <output id="master-value" class="sr-only" for="vol-slider-ui"></output>
         </div>
-        <button id="btn-options" class="header-button" type="button" aria-label="Settings"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
+        <button id="btn-map" class="header-button" type="button" aria-label="Map of the house" title="Map of the house (M)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-map"/></svg><span>Map</span></button>
+        <button id="btn-notebook" class="header-button" type="button" aria-label="Notebook" title="Notebook (N)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-pencil"/></svg><span>Notebook</span></button>
+        <button id="btn-options" class="header-button" type="button" aria-label="Settings" data-tip="Settings: sound, comfort, how to play"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
         <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-label="Full screen" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
         <button id="compact-fullscreen" class="icon-button" type="button" aria-label="Full screen: hide the header"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg></button>
       </div>
@@ -102,11 +106,36 @@
         <div id="levels-grid"></div>
         <div id="index-story" aria-label="Story"></div>
         <div id="index-done" hidden>
-          <span class="done-mark" aria-hidden="true">✓</span>
+          <span class="done-mark" aria-hidden="true"></span>
           <p class="done-title">Completed</p>
           <p class="done-note">Nothing is left to find in this room.</p>
         </div>
         <div id="index-keys" aria-label="Keys" hidden></div>
+        <!-- Outside the house, the index has no rooms to list: only the game itself -->
+        <div id="index-outside" aria-label="About the game">
+          <p class="outside-eyebrow">Outside the house</p>
+          <div class="outside-story">
+            <p>The manor has been shut up for years, and everyone who lived in it left something behind.</p>
+            <p>Its doors are locked tonight. Every room hides its puzzles, and each keeps the key to another.</p>
+            <p>Look closely, listen, and write down what you find.</p>
+          </div>
+          <div id="outside-progress" class="outside-progress" hidden></div>
+          <div class="outside-tools">
+            <p class="outside-label">Carried with you</p>
+            <dl>
+              <div><dt><kbd>M</kbd></dt><dd>The map of the house</dd></div>
+              <div><dt><kbd>N</kbd></dt><dd>Your notebook</dd></div>
+              <div><dt><kbd>Z</kbd></dt><dd>The magnifying glass, or hold the right mouse button</dd></div>
+              <div><dt><kbd>Esc</kbd></dt><dd>Back the way you came</dd></div>
+            </dl>
+          </div>
+        </div>
+        <!-- The way back: sketched in white like the pointers, at the foot of the index -->
+        <button id="btn-leave" type="button" hidden>
+          <svg class="leave-frame" viewBox="0 0 200 64" preserveAspectRatio="none" aria-hidden="true"><path d="M3 4.5C60 3.2 140 5.4 197.5 3.8" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M3 4.5C60 3.2 140 5.4 197.5 3.8" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M3 4.5C60 3.2 140 5.4 197.5 3.8" class="ink-over" vector-effect="non-scaling-stroke"/><path d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5" class="ink-over" vector-effect="non-scaling-stroke"/><path d="M198 60.2C130 61.4 70 59.6 2 60.8" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M198 60.2C130 61.4 70 59.6 2 60.8" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M198 60.2C130 61.4 70 59.6 2 60.8" class="ink-over" vector-effect="non-scaling-stroke"/><path d="M4.4 63C3.4 42 4.8 20 3.6 1.2" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M4.4 63C3.4 42 4.8 20 3.6 1.2" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M4.4 63C3.4 42 4.8 20 3.6 1.2" class="ink-over" vector-effect="non-scaling-stroke"/></svg>
+          <svg class="leave-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M15 29V4h13v25M11 29h20" class="ink-dark"/><path d="M15 29V4h13v25M11 29h20" class="ink-white"/><path d="M15 29V4h13v25M11 29h20" class="ink-over"/><g class="leave-arrow"><path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-dark"/><path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-white"/><path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-over"/></g></svg>
+          <span class="leave-words"><span class="leave-to" id="leave-to">back to</span><span class="leave-name" id="leave-name">the Hall</span></span>
+        </button>
       </aside>
 
       <!-- Game Area -->
@@ -181,7 +210,6 @@
 
       <div id="game-viewport">
         <div id="game-container"></div>
-        <button id="btn-leave" type="button" hidden><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>Back</button>
         <div id="film-grain" aria-hidden="true"></div>
         <p id="interaction-cue" hidden></p>
         <span id="interaction-pulse" aria-hidden="true"></span>
@@ -205,12 +233,12 @@
               spellcheck="false"
               aria-describedby="answer-feedback"
             />
-            <button id="btn-submit" type="button"><span>Submit</span><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
+            <button id="btn-submit" type="button" data-tip="Try this answer (Enter)"><span>Submit</span><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
             <button id="btn-replay" class="icon-button replay-btn" type="button" title="Restart this room" aria-label="Restart this room"><svg class="ui-icon" aria-hidden="true"><use href="#icon-replay"/></svg></button>
           </div>
           <p id="answer-feedback" role="status" aria-live="polite"></p>
         </div>
-        <button id="btn-hint" class="text-button" type="button" aria-haspopup="dialog"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg>Hint</button>
+        <button id="btn-hint" class="text-button" type="button" aria-haspopup="dialog" data-tip="A nudge for this puzzle"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg>Hint</button>
       </div>
     </div>
 
@@ -238,12 +266,72 @@
       <p>The rooms were drawn wide. Hold your phone sideways to step in.</p>
     </div>
 
+    <!-- The map of the house: a plan in pencil, drawn by houseMap.js -->
+    <div id="map-modal" class="hidden tool-modal">
+      <div class="modal-content tool-sheet map-content">
+        <div class="options-heading">
+          <h2>The house</h2>
+          <button id="btn-close-map" class="icon-button" type="button" aria-label="Close the map" data-tip="Close the map (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+        </div>
+        <div id="house-map"></div>
+        <p id="map-keys" hidden></p>
+        <p class="tool-note">Click a place you have been to, to go straight back there. &nbsp;·&nbsp; M opens the map, Esc closes it.</p>
+      </div>
+    </div>
+
+    <!-- The notebook: a working page for each puzzle and each place, and up to
+         ten folders to keep notes in, drawn by notebook.js -->
+    <div id="notebook-modal" class="hidden tool-modal">
+      <div class="modal-content tool-sheet notebook-content">
+        <div class="options-heading">
+          <h2>Notebook</h2>
+          <button id="btn-close-notebook" class="icon-button" type="button" aria-label="Close the notebook" data-tip="Close the notebook (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+        </div>
+        <div class="notebook-body">
+          <aside class="notebook-shelf" aria-label="Folders">
+            <div class="shelf-head"><span class="shelf-label">Folders</span><span id="notebook-folder-count" class="shelf-count"></span></div>
+            <ul id="notebook-folders" class="shelf-folders"></ul>
+            <button id="notebook-new-folder" class="shelf-add" type="button" data-tip="A new folder: ten at most">+ New folder</button>
+            <div id="notebook-notes-wrap" class="shelf-notes" hidden>
+              <div class="shelf-head"><span id="notebook-notes-label" class="shelf-label"></span></div>
+              <ul id="notebook-notes"></ul>
+            </div>
+          </aside>
+          <section class="notebook-page" aria-labelledby="notebook-title">
+            <div class="page-bar">
+              <span id="notebook-title" class="page-name"></span>
+              <button id="notebook-back" class="page-back" type="button" hidden data-tip="The page you keep for the puzzle you are in">&larr; Back to this puzzle&rsquo;s page</button>
+            </div>
+            <label class="sr-only" for="notebook-text">Your notes</label>
+            <textarea id="notebook-text" rows="5" placeholder="Write anything down…" spellcheck="false"></textarea>
+            <div class="notebook-sketch-wrap">
+              <canvas id="notebook-sketch" aria-label="A page to draw on"></canvas>
+            </div>
+            <div class="notebook-tools">
+              <button class="menu-btn" type="button" data-notebook-tool="pencil" aria-pressed="true" data-tip="Draw on the page">Pencil</button>
+              <button class="menu-btn" type="button" data-notebook-tool="eraser" aria-pressed="false" data-tip="Rub out what is drawn">Rubber</button>
+              <button id="notebook-clear" class="menu-btn" type="button" data-tip="Wipe the whole drawing">Clear the drawing</button>
+            </div>
+            <div class="notebook-save">
+              <label class="sr-only" for="notebook-note-title">The note's name</label>
+              <input id="notebook-note-title" type="text" maxlength="60" placeholder="A name for this note" spellcheck="false" autocomplete="off" />
+              <button id="notebook-save" class="menu-btn notebook-save-btn" type="button" data-tip="Keep a copy of this page in the open folder (Enter)">Save to <span id="notebook-save-folder"></span></button>
+              <button id="notebook-delete-note" class="menu-btn notebook-delete-btn" type="button" hidden data-tip="Click twice to be sure">Delete this note</button>
+            </div>
+            <p id="notebook-status" class="notebook-status" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+        <p class="tool-note">The page is kept for this puzzle by itself; Save puts a copy in a folder. &nbsp;·&nbsp; Double-click a folder to rename it. &nbsp;·&nbsp; N opens the notebook. &nbsp;·&nbsp; Right mouse button or Z: the magnifying glass.</p>
+      </div>
+    </div>
+    </div>
+
     <!-- Settings: the controls scroll while the heading and actions stay in reach. -->
     <div id="options-modal" class="hidden">
       <div class="modal-content">
         <div class="options-heading">
           <h2>Settings</h2>
-          <button id="btn-close-options" class="icon-button" type="button" aria-label="Close settings"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+          <button id="btn-close-options" class="icon-button" type="button" aria-label="Close settings" data-tip="Close settings (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
         </div>
         <div class="options-body">
           <fieldset class="audio-settings">
@@ -291,12 +379,12 @@
           </fieldset>
           <div class="danger-zone">
             <p class="danger-note">Clear progress and return to the first room.</p>
-            <button id="btn-new" class="menu-btn danger-btn" type="button">Reset game</button>
+            <button id="btn-new" class="menu-btn danger-btn" type="button" data-tip="Forget everything and start the house again">Reset game</button>
           </div>
         </div>
         <div class="modal-actions">
-          <button id="btn-howto" class="menu-btn" type="button">How to play</button>
-          <button id="btn-mute" class="menu-btn" type="button">Mute all</button>
+          <button id="btn-howto" class="menu-btn" type="button" data-tip="How the game is played">How to play</button>
+          <button id="btn-mute" class="menu-btn" type="button" data-tip="Silence every sound">Mute all</button>
         </div>
       </div>
     </div>
@@ -372,7 +460,7 @@
       <div class="modal-content">
         <div class="hints-heading">
           <h2>Hints</h2>
-          <button id="btn-close-info" class="icon-button" type="button" aria-label="Close hints"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+          <button id="btn-close-info" class="icon-button" type="button" aria-label="Close hints" data-tip="Close hints (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
         </div>
         <p id="hint-room" class="modal-kicker"></p>
         <div id="info-requires"></div>

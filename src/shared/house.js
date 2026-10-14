@@ -62,7 +62,7 @@ export const PLACES = Object.freeze([
       "On the left an iron gate shuts off a passage. It will not be the first thing to open up here.",
     ] },
   { key: "TopHall", name: "The Top Passage", back: "Top", holds: [], doors: [null, null, null], first: 15,
-    story: ["A passage behind the gate, under the eaves: three doors more, and nothing behind them yet."] },
+    story: ["Through the doorway, a stone gallery under the roof, long given up to the rain: moss in every joint, stones come down from the vault, a pipe that never stops dripping — and three more doors."] },
   { key: "Room5", name: "Room 5", back: "Hall", holds: ["tapcode", "pi", "rally"], needsKey: true, chest: "Room6",
     story: [
       "The drawing room. The fire has burned low, and somebody has left the trap in the floor standing open.",
@@ -77,6 +77,9 @@ export const PLACES = Object.freeze([
  *  that each room can be walked into and looked at. Set this to false to
  *  have the keys matter again — nothing else needs changing. */
 export const ALL_DOORS_OPEN = true;
+/** Doors kept locked all the same while the house is being built, to see a
+ *  locked door as the player will. */
+export const STILL_LOCKED = ["Room6"];
 
 /** A place asks to go somewhere: `{ place: key }` or `{ level: id }`. */
 export const HOUSE_GO = "house:go";

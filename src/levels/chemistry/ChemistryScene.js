@@ -42,6 +42,8 @@ export default class ChemistryScene extends BasePuzzleScene {
     this.listenToResize(this._onResize);
     this.input.on("pointermove", (p) => this._follow(p));
     this.input.keyboard?.on("keydown-ESC", () => this._putDown());
+    // Esc puts the flask down here; it does not take the player out of the room
+    this.usesEscape = true;
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 

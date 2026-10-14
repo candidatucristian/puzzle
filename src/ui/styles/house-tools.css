@@ -1,0 +1,318 @@
+/* ── The house's tools: the map, the notebook, the magnifying glass ──────── */
+
+/* their sheets: old paper on the dark, lettered in pencil */
+.tool-modal {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; justify-content: center; align-items: center;
+  background: rgba(4, 5, 8, 0.72);
+  backdrop-filter: blur(8px) saturate(0.7); -webkit-backdrop-filter: blur(8px) saturate(0.7);
+  transition: opacity 0.3s ease;
+}
+.tool-modal.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
+.tool-sheet {
+  display: grid; gap: 14px; padding: 24px 30px 20px;
+  color: #2a241c;
+  background:
+    radial-gradient(ellipse 70% 50% at 85% 90%, #6b4a2030, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 10% 15%, #3a2a1422, transparent 70%),
+    linear-gradient(170deg, #ddd3b8, #cbbf9f 60%, #b9ad8d);
+  border: 0; border-radius: 3px;
+  box-shadow: 0 30px 80px #000c, inset 0 0 60px #5a46281f;
+}
+.tool-sheet h2 { color: #2a241c; font-family: "Architects Daughter", var(--font-display); letter-spacing: 1px; }
+.tool-sheet .icon-button { color: #3a3226; }
+.tool-sheet .icon-button:hover { color: #000; }
+.tool-note { margin: 0; font: 400 calc(11.5px * var(--reading-scale, 1)) var(--ui-font); color: #5a4e3c; letter-spacing: .03em; }
+
+/* ── the map: an architect's plan, inked on old paper (drawn by houseMap.js) ── */
+.map-content { width: min(1080px, calc(100vw - 60px)); }
+.map-content h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.map-content .options-heading { justify-content: flex-end; margin-bottom: -6px; }
+#house-map { width: 100%; }
+.map-sheet { display: block; width: 100%; height: auto; border-radius: 2px; box-shadow: 0 2px 10px #0006; font-family: "Architects Daughter", cursive; }
+.map-sheet .frame .rule, .map-sheet .compass .rule, .map-sheet .cartouche .rule { fill: none; stroke: #2a2118; stroke-width: .8; }
+.map-sheet .rule.thick { stroke-width: 2.2; }
+.map-sheet .rule.faint { stroke-opacity: .5; }
+.map-sheet .corner { fill: #d9cfb2; stroke: #2a2118; stroke-width: 1.4; }
+.map-sheet .corner-in { fill: #2a2118; }
+.map-sheet .floor-title { font: 600 15px Georgia, "Times New Roman", serif; letter-spacing: 4px; text-anchor: middle; fill: #2a2118; }
+.map-sheet .floor-roman { font: italic 400 12px Georgia, serif; text-anchor: middle; fill: #5a4a34; letter-spacing: 2px; }
+.map-sheet .floor-rule { fill: none; stroke: #2a2118; stroke-width: .9; }
+.map-sheet .floor-diamond { fill: #2a2118; }
+/* the walls: cut through, inked on both faces and hatched between */
+.map-sheet .wall-ink { fill: none; stroke: #2a2118; stroke-linejoin: miter; stroke-linecap: square; }
+.map-sheet .wall-cut { fill: none; stroke: url(#map-poche); stroke-linejoin: miter; stroke-linecap: square; }
+.map-sheet .pencil { fill: none; stroke: #2a211866; stroke-width: 1.1; stroke-dasharray: 5 3 1 3; }
+.map-sheet .floor { fill: url(#map-faint); stroke: none; transition: fill .2s; }
+.map-sheet .floor.known { fill: #fffaea2e; }
+.map-sheet .floor.hall.known, .map-sheet .floor.round.known, .map-sheet .floor.passage.known { fill: #e8dcbc66; }
+.map-sheet .floor.neck { fill: #fffaea2e; }
+.map-sheet .runner { fill: none; stroke: #6e2a2055; stroke-width: 1; stroke-dasharray: 2 2; }
+.map-sheet .inlay { fill: none; stroke: #2a211833; stroke-width: 1; }
+.map-sheet .leaf { stroke: #2a2118; stroke-width: 1.6; stroke-linecap: round; }
+.map-sheet .swing { fill: none; stroke: #2a2118; stroke-width: .7; stroke-dasharray: 2 2; }
+.map-sheet .window { stroke: #2a2118; stroke-width: 2.2; stroke-dasharray: 4 2; }
+.map-sheet .stairs .tread-edge { fill: #00000008; stroke: #2a2118; stroke-width: 1; }
+.map-sheet .stairs .tread { stroke: #2a2118; stroke-width: .7; }
+.map-sheet .stairs .climb { fill: none; stroke: #2a2118; stroke-width: 1; }
+.map-sheet .climb { fill: none; stroke: #2a2118; stroke-width: 1; }
+.map-sheet .climb-head { fill: none; stroke: #2a2118; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.map-sheet .stairs.pencil-set { opacity: .38; }
+.map-sheet .newel { fill: #2a2118; }
+/* lettering */
+.map-sheet .numeral { font: 600 13px Georgia, serif; text-anchor: middle; fill: #2a2118; }
+.map-sheet .numeral.small { font-size: 9.5px; }
+.map-sheet .tag-ring { fill: #e6dcbf; stroke: #2a2118; stroke-width: 1; }
+.map-sheet .name { font-size: 14px; text-anchor: middle; fill: #2a2118; }
+.map-sheet .note { font-size: 12px; fill: #4a3c2a; text-anchor: middle; }
+.map-sheet .note.small { font-size: 10px; }
+.map-sheet .note.faint { font-size: 10px; fill: #4a3c2a99; }
+/* the dots of the puzzles, in red ink once solved */
+.map-sheet .dot { fill: #e6dcbf; stroke: #2a2118; stroke-width: 1.1; }
+.map-sheet .dot.solved { fill: #8e2a20; stroke: #4a110c; }
+.map-sheet .map-seal { filter: drop-shadow(0 1px 1px #0008); }
+/* where the player stands: a red pin, its ring breathing */
+.map-sheet .here-pin { fill: #a3271c; stroke: #4a0f0a; stroke-width: 1; }
+.map-sheet .here-eye { fill: #f2e6c8; }
+.map-sheet .here-shadow { fill: #0000004d; }
+.map-sheet .here-pulse { fill: none; stroke: #a3271c; stroke-width: 1.6; transform-box: fill-box; transform-origin: center; animation: map-here 1.8s ease-out infinite; }
+@keyframes map-here { 0% { scale: .4; opacity: .9; } 100% { scale: 2.2; opacity: 0; } }
+[data-reduced-motion="true"] .map-sheet .here-pulse { animation: none; opacity: .5; }
+/* the foot of the sheet */
+.map-sheet .compass .point { fill: #e6dcbf; stroke: #2a2118; stroke-width: .7; }
+.map-sheet .compass .point.dark { fill: #2a2118; }
+.map-sheet .compass-n { font: 600 13px Georgia, serif; text-anchor: middle; fill: #2a2118; }
+.map-sheet .legend-text { font-size: 12.5px; fill: #3a2e20; }
+.map-sheet .cartouche-title { font: 600 18px Georgia, serif; letter-spacing: 6px; text-anchor: middle; fill: #2a2118; }
+.map-sheet .cartouche-sub { font: italic 400 12px Georgia, serif; text-anchor: middle; fill: #4a3c2a; }
+.map-sheet .scale .bar { fill: #e6dcbf; stroke: #2a2118; stroke-width: .8; }
+.map-sheet .scale .bar.dark { fill: #2a2118; }
+.map-sheet .scale-text { font: 400 9px Georgia, serif; text-anchor: middle; fill: #2a2118; }
+/* a place not yet stood in is only pencilled in */
+.map-place:not(.known) { opacity: .5; }
+.map-place.go { cursor: pointer; }
+.map-place.go:hover .floor, .map-place.go:focus-visible .floor { fill: #b8862e40; }
+.map-place.go:hover .tag-ring, .map-place.go:focus-visible .tag-ring { fill: #f4e6b8; stroke-width: 1.6; }
+.map-place.go:focus { outline: none; }
+#map-keys { margin: 0; font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; }
+#map-keys[hidden] { display: none; }
+
+/* ── the notebook: a shelf of folders beside the page ── */
+.notebook-content { width: min(1000px, calc(100vw - 60px)); }
+.notebook-body { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 22px; align-items: start; }
+/* the shelf */
+.notebook-shelf { display: grid; gap: 8px; padding: 12px 12px 14px; border-radius: 3px;
+  background: linear-gradient(180deg, #00000012, #0000000a); box-shadow: inset 0 0 0 1px #5a46282e, inset 0 2px 8px #3a2a1418; }
+.shelf-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
+.shelf-label { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .16em; text-transform: uppercase; color: #5a4e3c; }
+.shelf-count { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: #7a6a50; }
+.shelf-folders, #notebook-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+/* a folder: a manila one, its tab on top, the open one standing out and lighter */
+.shelf-folder { position: relative; display: flex; align-items: stretch; }
+.folder-tab { position: relative; flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 9px 30px 8px 36px; border: 0; border-radius: 2px 5px 5px 5px; cursor: pointer; text-align: left;
+  font: 400 calc(14.5px * var(--reading-scale, 1))/1.2 "Architects Daughter", cursive; color: #3a2a12;
+  background: linear-gradient(180deg, #d4b072, #c19a58); box-shadow: 0 1px 0 #6a4a1a66, 0 2px 4px #3a2a1426, inset 0 1px 0 #fff3d044;
+  transition: transform .15s, background .15s; }
+.folder-tab::before { content: ''; position: absolute; left: 11px; top: 50%; width: 17px; height: 13px; margin-top: -6.5px;
+  background: linear-gradient(180deg, #8a6430, #6a4a20); clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 100%, 0 100%); }
+.folder-tab:hover { background: linear-gradient(180deg, #dcba7c, #c9a260); transform: translateX(2px); }
+.folder-tab:focus-visible { outline: 2px solid #2a241c; outline-offset: 1px; }
+.shelf-folder.open .folder-tab { background: linear-gradient(180deg, #f0dfb4, #e2cc94); transform: translateX(6px);
+  box-shadow: 0 1px 0 #6a4a1a66, 0 4px 10px #3a2a1433, inset 3px 0 0 #8e2a20; }
+.shelf-folder.open .folder-tab::before { clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 38%, 18% 38%, 0 100%); }
+.folder-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-count { flex: none; min-width: 20px; padding: 1px 6px; border-radius: 9px; text-align: center;
+  font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: #f2e6c8; background: #3a2a12b0; }
+.folder-bin { position: absolute; right: 4px; top: 50%; translate: 0 -50%; z-index: 1; height: 22px; min-width: 22px; padding: 0 5px;
+  border: 0; border-radius: 11px; cursor: pointer; font: 400 14px/1 var(--ui-font); color: #5a1a12; background: transparent; opacity: 0; transition: opacity .15s, background .15s; }
+.shelf-folder.open .folder-bin { right: -2px; }
+.shelf-folder:hover .folder-bin, .folder-bin:focus-visible, .folder-bin[data-armed="true"] { opacity: 1; }
+.folder-bin:hover { background: #8e2a2022; }
+.folder-bin[data-armed="true"] { font-size: 11px; color: #f2e6c8; background: #8e2a20; }
+.folder-input { width: 100%; padding: 8px 12px; border: 1px dashed #5a4628; border-radius: 3px; outline: none;
+  font: 400 calc(14.5px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; background: #efe6cc; }
+.shelf-add { justify-self: start; padding: 6px 10px; border: 1px dashed #5a462888; border-radius: 3px; cursor: pointer;
+  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: #3a2e20; background: transparent; }
+.shelf-add:hover:not(:disabled) { background: #00000010; border-style: solid; }
+.shelf-add:disabled { cursor: default; opacity: .6; }
+/* the notes in the open folder: index cards, a red rule down their margin */
+.shelf-notes { display: grid; gap: 6px; margin-top: 8px; padding-top: 12px; border-top: 1px solid #5a46283a; }
+.shelf-notes[hidden] { display: none; }
+#notebook-notes { max-height: 236px; overflow-y: auto; padding: 2px 4px 4px 2px; }
+.shelf-note { width: 100%; display: grid; gap: 2px; padding: 7px 10px 7px 14px; border: 0; border-radius: 2px; cursor: pointer; text-align: left;
+  background: repeating-linear-gradient(180deg, #0000 0 15px, #5a6e9a26 15px 16px) 0 6px, #f3ecd6;
+  box-shadow: inset 2px 0 0 #b8443a99, 0 1px 3px #3a2a1430; transition: transform .15s; }
+.shelf-note:hover { transform: translateX(2px) rotate(-.4deg); }
+.shelf-note.open { box-shadow: inset 2px 0 0 #b8443a, 0 0 0 2px #2a241c, 0 2px 6px #3a2a1440; }
+.shelf-note.just-kept { animation: note-filed .8s cubic-bezier(.3, 1.3, .5, 1); }
+@keyframes note-filed { 0% { transform: translate(60px, -10px) rotate(6deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.note-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(14px * var(--reading-scale, 1))/1.25 "Architects Daughter", cursive; color: #2a241c; }
+.note-meta { font: 400 calc(10px * var(--reading-scale, 1)) var(--ui-font); color: #7a6a50; letter-spacing: .03em; }
+.shelf-empty { padding: 6px 4px; font: italic 400 calc(12px * var(--reading-scale, 1)) Georgia, serif; color: #7a6a50; }
+/* the page */
+.notebook-page { display: grid; gap: 10px; min-width: 0; }
+.page-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; min-height: 22px; }
+.page-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(17px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #3a2e20; }
+.page-back { flex: none; padding: 3px 8px; border: 0; border-radius: 3px; cursor: pointer; font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: #3a2e20; background: #00000012; }
+.page-back:hover { background: #00000022; }
+.page-back[hidden] { display: none; }
+#notebook-text {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 96px; padding: 10px 12px;
+  font: 400 calc(16px * var(--reading-scale, 1))/28px "Architects Daughter", cursive; color: #2a241c;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, #5a6e9a40 27px 28px), #ece4cc;
+  border: 1px solid #8a7a5a80; border-radius: 2px; outline: none;
+}
+#notebook-text:focus { border-color: #2a241c; }
+.notebook-sketch-wrap { border: 1px solid #8a7a5a80; background: #ece4cc; border-radius: 2px; line-height: 0; }
+#notebook-sketch { width: 100%; aspect-ratio: 640 / 300; cursor: crosshair; touch-action: none; }
+.notebook-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.notebook-tools .menu-btn, .notebook-save .menu-btn { color: #2a241c; background: #00000010; border-color: #2a241c55; }
+.notebook-tools .menu-btn[aria-pressed="true"] { background: #2a241c; color: #ece4cc; }
+/* putting it away: a name for it, and the button that files it */
+.notebook-save { display: flex; gap: 8px; align-items: stretch; padding-top: 10px; border-top: 1px dashed #5a462855; }
+#notebook-note-title { flex: 1; min-width: 0; padding: 8px 10px; border: 0; border-bottom: 1.5px solid #2a241c88; border-radius: 0; outline: none;
+  font: 400 calc(15px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; background: transparent; }
+#notebook-note-title:focus { border-bottom-color: #2a241c; background: #ffffff1c; }
+#notebook-note-title::placeholder { color: #7a6a5099; }
+.notebook-save .notebook-save-btn { color: #f2e6c8; background: #2a241c; border-color: #2a241c; white-space: nowrap; }
+.notebook-save .notebook-save-btn:hover { background: #3c3326; }
+.notebook-save .notebook-delete-btn { color: #8e2a20; border-color: #8e2a2088; white-space: nowrap; }
+.notebook-save .notebook-delete-btn[data-armed="true"] { color: #f2e6c8; background: #8e2a20; }
+.notebook-save [hidden] { display: none; }
+.notebook-status { margin: -2px 0 0; min-height: 18px; font: 400 calc(13px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2f5a2a;
+  opacity: 0; transition: opacity .3s; }
+.notebook-status[data-kind="warn"] { color: #8e2a20; }
+.notebook-status.shown { opacity: 1; }
+[data-reduced-motion="true"] .shelf-note.just-kept { animation: none; }
+
+/* ── the magnifying glass: the chemistry bench's own, painted by magnifier.js ── */
+#magnifier {
+  position: absolute; z-index: 7; width: 500px; height: 500px; pointer-events: none;
+  filter: drop-shadow(0 14px 22px #000b);
+}
+#magnifier[hidden] { display: none; }
+body.magnifying #game-container canvas { cursor: none !important; }
+
+/* ── an answer: wrong, the ink runs; right, it sets ── */
+#level-code.ink-runs { animation: ink-runs .7s ease-out; }
+@keyframes ink-runs {
+  0% { transform: translateX(0); filter: blur(0); }
+  15% { transform: translateX(-7px); }
+  30% { transform: translateX(6px); filter: blur(.6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(3px); filter: blur(1.4px); letter-spacing: 9px; }
+  100% { transform: translateX(0); filter: blur(0); }
+}
+#level-code.ink-sets { animation: ink-sets 1.1s ease-out; }
+@keyframes ink-sets {
+  0% { text-shadow: 0 0 0 #ffd890; }
+  30% { text-shadow: 0 0 14px #ffd890aa; color: #fff4d8; }
+  100% { text-shadow: 0 0 0 #ffd89000; }
+}
+[data-reduced-motion="true"] #level-code.ink-runs, [data-reduced-motion="true"] #level-code.ink-sets { animation: none; }
+
+/* ── the index: a solved line is sealed in oxblood wax ── */
+@media (min-width: 901px) and (min-height: 621px) { .level-btn { grid-template-columns: 25px minmax(0, 1fr) 26px; } }
+@media (max-width: 900px), (max-height: 620px) { .level-check { width: 18px; height: 18px; } .level-btn { grid-template-columns: 20px minmax(0, 1fr) 18px; } }
+.level-check { grid-column: 3; grid-row: 1; position: relative; display: block; width: 26px; height: 26px; color: inherit; rotate: var(--tilt, 0deg); }
+.level-check .wax-seal { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1.5px 1.5px #000c) drop-shadow(0 0 5px #6a1a1233); }
+.level-btn.solved .level-name { color: #e2ddd0; }
+.level-btn.solved .level-status { display: block; margin-top: 1px; font: 400 calc(9.5px * var(--reading-scale, 1))/1.3 var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: #b77f6e; }
+.level-btn.solved .level-number { color: #9a6c5e; }
+.level-btn.solved:not(.current) { background: linear-gradient(90deg, #00000000 30%, #5a1a1210); }
+/* pressed on: it comes down, squashes, settles; the wax spreads a ring of warmth */
+.sealing .level-check, .sealing .done-mark { animation: seal-press .75s cubic-bezier(.3, 1.4, .5, 1) both; }
+.sealing .level-check::after, .sealing .done-mark::after { content: ''; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid #c4574a; animation: seal-ring .9s .32s ease-out both; pointer-events: none; }
+.level-btn.sealing { animation: seal-glow 1.3s ease-out; }
+@keyframes seal-press {
+  0% { scale: 2.6; opacity: 0; translate: 0 -6px; }
+  45% { scale: .84; opacity: 1; translate: 0 0; }
+  65% { scale: 1.08; }
+  100% { scale: 1; }
+}
+@keyframes seal-ring { 0% { scale: .7; opacity: .8; } 100% { scale: 1.9; opacity: 0; } }
+@keyframes seal-glow { 0%, 30% { background-color: #6a221a00; } 45% { background-color: #6a221a40; } 100% { background-color: #6a221a00; } }
+[data-reduced-motion="true"] .sealing .level-check, [data-reduced-motion="true"] .sealing .done-mark,
+[data-reduced-motion="true"] .level-btn.sealing { animation: none; }
+[data-reduced-motion="true"] .sealing .level-check::after, [data-reduced-motion="true"] .sealing .done-mark::after { display: none; }
+/* a room with nothing left in it carries a larger one */
+#index-done .done-mark { position: relative; width: 44px; height: 44px; border: 0; border-radius: 0; rotate: var(--tilt, 0deg); }
+#index-done .done-mark .wax-seal { width: 100%; height: 100%; filter: drop-shadow(0 2px 2px #000c) drop-shadow(0 0 8px #6a1a1244); }
+@media (max-width: 650px) { .level-check { display: none; } .level-btn { grid-template-columns: 17px minmax(0, 1fr); } }
+
+/* ── a locked line: a small padlock, drawn whole, in the seal's place ── */
+.level-btn.locked::before { display: none; }
+.level-btn.locked::after { content: ''; grid-column: 3; grid-row: 1; justify-self: center; align-self: center; width: 11px; height: 13px;
+  border: 0; border-radius: 0; background: #77776f;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 14'%3E%3Cpath d='M3.2 6.6V4.4a2.8 2.8 0 0 1 5.6 0v2.2' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Cpath fill-rule='evenodd' d='M1.6 6.4h8.8a.9.9 0 0 1 .9.9v5.6a.9.9 0 0 1-.9.9H1.6a.9.9 0 0 1-.9-.9V7.3a.9.9 0 0 1 .9-.9zM6 8.3a1.1 1.1 0 0 0-.55 2.05v1.45h1.1v-1.45A1.1 1.1 0 0 0 6 8.3z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 14'%3E%3Cpath d='M3.2 6.6V4.4a2.8 2.8 0 0 1 5.6 0v2.2' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Cpath fill-rule='evenodd' d='M1.6 6.4h8.8a.9.9 0 0 1 .9.9v5.6a.9.9 0 0 1-.9.9H1.6a.9.9 0 0 1-.9-.9V7.3a.9.9 0 0 1 .9-.9zM6 8.3a1.1 1.1 0 0 0-.55 2.05v1.45h1.1v-1.45A1.1 1.1 0 0 0 6 8.3z'/%3E%3C/svg%3E") center / contain no-repeat; }
+@media (max-width: 650px) { .level-btn.locked::after { display: none; } }
+
+/* ── sketched pointers for the page around the picture (set by cursors.js) ── */
+:is(button, [role="button"], a[href], select, summary, label[for], input[type="checkbox"], input[type="range"]):not(:disabled) { cursor: var(--cursor-hand, pointer) !important; }
+#start-door { cursor: var(--cursor-door, pointer) !important; }
+.folder-tab { cursor: var(--cursor-hand, pointer) !important; }
+#notebook-sketch { cursor: var(--cursor-pencil, crosshair); }
+#notebook-sketch[data-tool="eraser"] { cursor: var(--cursor-rubber, crosshair); }
+
+/* ── a tooltip: a slip of the notebook's paper, in pencil, with its key ── */
+#tooltip { position: fixed; z-index: 1000; left: 0; top: 0; pointer-events: none; max-width: 280px;
+  display: flex; align-items: center; gap: 9px; padding: 6px 11px 5px;
+  font: 400 calc(14px * var(--reading-scale, 1))/1.25 "Architects Daughter", cursive; color: #2a241c;
+  background: radial-gradient(ellipse 80% 60% at 85% 100%, #6b4a2022, transparent 70%), linear-gradient(170deg, #ede5cd, #d6cbad);
+  border-radius: 2px; box-shadow: 0 8px 20px #000b, 0 0 0 1px #2a241c40;
+  opacity: 0; rotate: -.7deg; translate: 0 -4px; transition: opacity .16s ease, translate .2s ease; }
+#tooltip[hidden] { display: none; }
+#tooltip[data-side="above"] { translate: 0 4px; }
+#tooltip.shown { opacity: 1; translate: 0 0; }
+#tooltip::before { content: ''; position: absolute; left: var(--arrow, 50%); width: 9px; height: 9px; margin-left: -4.5px; rotate: 45deg; background: #e8dfc5; }
+#tooltip[data-side="below"]::before { top: -4.5px; box-shadow: -1px -1px 0 #2a241c30; }
+#tooltip[data-side="above"]::before { bottom: -4.5px; background: #d8cdaf; box-shadow: 1px 1px 0 #2a241c30; }
+#tooltip span { position: relative; }
+#tooltip kbd { position: relative; flex: none; min-width: 12px; padding: 1px 6px 0; text-align: center;
+  font: 600 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-mono, monospace); color: #2a241c;
+  background: #f7f0dc; border: 1px solid #2a241c66; border-bottom-width: 2px; border-radius: 3px; }
+#tooltip kbd[hidden] { display: none; }
+[data-reduced-motion="true"] #tooltip { transition: none; translate: 0 0; }
+
+/* ── outside the house: the index tells of the game, not of a room ── */
+#index-outside { display: none; }
+body.outside #sidebar > :not(#index-outside) { display: none !important; }
+body.outside #index-outside { display: grid; gap: 22px; align-content: start; overflow-y: auto; min-height: 0; padding-right: 6px; }
+body.outside .room-navigation, body.outside #input-area { visibility: hidden; }
+.outside-eyebrow, .outside-label { margin: 0; font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .18em; text-transform: uppercase; color: var(--ui-muted); }
+.outside-story { display: grid; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid var(--ui-border); }
+.outside-story p { margin: 0; font: 400 calc(13px * var(--reading-scale, 1))/1.7 var(--ui-font); color: var(--ui-text); }
+.outside-story p:first-child { font: italic 400 calc(16px * var(--reading-scale, 1))/1.5 Georgia, "Times New Roman", serif; color: #e6e2d6; }
+.outside-progress { display: grid; gap: 8px; }
+.outside-progress[hidden] { display: none; }
+.outside-progress p { margin: 0; display: flex; align-items: center; gap: 10px; font: 400 calc(12.5px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); }
+.outside-seal { display: block; width: 20px; height: 20px; rotate: -8deg; }
+.outside-seal .wax-seal { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1px 1px #000c); }
+.outside-tools { display: grid; gap: 10px; }
+.outside-tools dl { margin: 0; display: grid; gap: 9px; }
+.outside-tools dl > div { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.outside-tools dt { margin: 0; }
+.outside-tools dd { margin: 0; font: 400 calc(12px * var(--reading-scale, 1))/1.5 var(--ui-font); color: var(--ui-muted); }
+.outside-tools kbd { display: inline-block; min-width: 14px; padding: 1px 6px; text-align: center; font: 500 calc(10.5px * var(--reading-scale, 1))/1.6 var(--ui-mono, monospace);
+  color: #d8d6cc; background: #1c1c1b; border: 1px solid #3a3a37; border-bottom-width: 2px; border-radius: 4px; }
+
+/* ── standing in the house, the eye breathes: a slow rise and settle of the
+   whole picture, the faintest lean — felt more than seen. Only in the
+   house's own places, never over a puzzle; still when motion is reduced. ── */
+body.in-house #game-container canvas { transform-origin: 50% 62%; animation: breathe 4.8s ease-in-out infinite; }
+@keyframes breathe {
+  0%, 100% { transform: translateY(0) scale(1.002) rotate(0deg); }
+  42% { transform: translateY(-1.3px) scale(1.007) rotate(.035deg); }
+  70% { transform: translateY(-.5px) scale(1.004) rotate(.012deg); }
+}
+[data-reduced-motion="true"] body.in-house #game-container canvas,
+[data-ambient-motion="false"] body.in-house #game-container canvas { animation: none; }
+/* looking about (lookAround.js): the picture held a touch larger, so that as it
+   drifts after the pointer its edges never show */
+#game-container canvas { transition: scale .9s ease-in-out; }
+body.in-house #game-container canvas { scale: 1.028; }
+[data-reduced-motion="true"] body.in-house #game-container canvas,
+[data-ambient-motion="false"] body.in-house #game-container canvas { scale: none; }

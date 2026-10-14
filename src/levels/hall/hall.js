@@ -1,6 +1,8 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg, polygon } from "../../shared/paint.js";
 import { archGeo, paintSkyOn, paintWindowOn, openingPath } from "../telescope/window.js";
 import { projectDoor, DOOR_LENGTH as DOOR_LEN } from "./doorMotion.js";
+import { paintLeverMount } from "./ironLever.js";
+import { layoutGallery, paintGallery } from "../top/gallery.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
  *  length, three closed doors along either wall, and at its far end the
@@ -27,7 +29,7 @@ import { projectDoor, DOOR_LENGTH as DOOR_LEN } from "./doorMotion.js";
 // each floor's hall has its own pictures
 const KEYS = {
   ground: { room: "hl_hall", glow: "hl_glow", gateL: "hl_gate_l", gateR: "hl_gate_r", fog: "hl_fog", pendulum: "hl_pendulum" },
-  upper: { room: "hu_hall", glow: "hu_glow", rocker: "hu_rocker" },
+  upper: { room: "hu_hall", glow: "hu_glow" },
   wing: { room: "hw_hall", glow: "hw_glow" },
 };
 // Only the small doorway is uploaded while its leaf moves.
@@ -50,11 +52,10 @@ const STAIR = { half: 0.4, open: 0.5, run: 0.16, rise: 0.085, steps: 15, head: -
  *  doors VII to XII, a window where the stairs are below, one sconce still
  *  alight, and in place of the chandelier a bare bulb on a flex, which is
  *  `bulbOn` until its puzzle is solved. */
-/** `wing`: the passage that opens off the top floor — as far gone as the
- *  upper hall, and shorter of doors: one on the left, two on the right, XV
- *  to XVII; one sconce alight; a boarded window at its end. `worn` is true
- *  of both. */
+/** `wing`: the stone gallery off the top floor, gone to ruin, with doors
+ *  XV–XVII (top/gallery.js). */
 export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } = {}) {
+  if (wing) return layoutGallery(W, H);
   const u = Math.min(W / 1000, H / 700);
   const L = { W, H, u, upper, wing, worn: upper || wing, bulbOn };
   L.vp = { x: W * 0.5, y: H * 0.47 };
@@ -111,18 +112,15 @@ export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } 
     const b = L.P(0, L.ceil + H * 0.36, 1.9), top = L.P(0, L.ceil, 1.9), r = (36 * u) / 1.9;
     L.bulb = { x: b.x, y: b.y, r, top: top.y };
     // the switch that works it, on the right-hand wall between the stairs and the next door
-    const sw = L.P(L.wall, H * 0.06, 2.05), sr = (54 * u) / 2.05;
-    // The puzzle's own switch: a white plate with a rocker in it and a small
-    // lamp under it. It is on the side wall, so it is seen at a slant — `slant`
-    // of its width shows.
-    const slant = 0.5, ph = sr * 2.5, pw = ph * 0.64;
+    const sw = L.P(L.wall, H * 0.06, 2.05), sr = (38 * u) / 2.05;
+    // A compact iron lever on the wall, standing proud of its slanted mount.
+    const slant = 0.62, ph = sr * 2.45, pw = sr * 1.32;
     L.switch = {
       x: sw.x, y: sw.y, r: sr, slant,
       plate: { w: pw, h: ph },
-      rocker: { w: pw * 0.64, h: ph * 0.6 },
-      led: { x: sw.x, y: sw.y + ph * 0.5 + sr * 0.34, r: sr * 0.16 },
+      contact: { x: sw.x - sr * 0.12, y: sw.y + sr * 0.69 },
     };
-    L.thing = { level: "lightswitch", label: "Press the switch", box: { x: sw.x - pw * slant * 0.5 - sr * 0.5, y: sw.y - ph * 0.5 - sr * 0.3, width: pw * slant + sr, height: ph + sr * 1.1 } };
+    L.thing = { level: "lightswitch", label: "Pull the iron lever", box: { x: sw.x - Math.max(30, sr * 1.4), y: sw.y - ph * 0.5 - 5, width: Math.max(46, sr * 2.1), height: ph + 10 } };
     // the stairs going up to the right, where the first right-hand door is below
     L.stairs = { z0: 1.26, z1: 1.9 };
     // where they are on the screen, to be clicked: the way to the top floor
@@ -135,14 +133,10 @@ export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } 
 
 // ── painting ────────────────────────────────────────────────────────────────
 
-export function paintHall(scene, L) {
-  const t = scene.textures;
+/** The hall itself, onto a canvas the size of the screen: every floor's. */
+export function paintHallOn(ctx, L) {
   const { W, H } = L;
-  const K = L.wing ? KEYS.wing : L.upper ? KEYS.upper : KEYS.ground;
-  const c = makeCanvas(W, H);
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#050506";
-  ctx.fillRect(0, 0, W, H);
+  if (L.wing) { paintGallery(ctx, L, paintDoor); return; }
   paintCeiling(ctx, L);
   paintFloor(ctx, L);
   for (const side of [-1, 1]) paintWall(ctx, L, side);
@@ -155,11 +149,21 @@ export function paintHall(scene, L) {
   paintThings(ctx, L);
   if (L.upper) paintBulb(ctx, L);
   paintGloom(ctx, L);
-  vignette(ctx, W, H, 0.75);
+  vignette(ctx, W, H, L.wing ? 0.9 : 0.75);
   grain(ctx, W, H, 0.035);
+}
+
+export function paintHall(scene, L) {
+  const t = scene.textures;
+  const { W, H } = L;
+  const K = L.wing ? KEYS.wing : L.upper ? KEYS.upper : KEYS.ground;
+  const c = makeCanvas(W, H);
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#050506";
+  ctx.fillRect(0, 0, W, H);
+  paintHallOn(ctx, L);
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
-  if (L.switch) addCanvasTexture(t, K.rocker, paintRocker(L, true));
   if (L.gate) {
     addCanvasTexture(t, K.gateL, paintGateLeaf(L, -1));
     addCanvasTexture(t, K.gateR, paintGateLeaf(L, 1));
@@ -282,7 +286,8 @@ export function paintDoorSwing(scene, L, d, lit) {
   const ctx = canvas.getContext("2d", { willReadFrequently: false });
   // This surface changes every frame. Keep it GPU-backed; the cached art
   // above is CPU-painted once, but readback here would stall the animation.
-  const texture = addCanvasTexture(t, SWING, canvas);
+  const key = `${SWING}_${d.number}`;
+  const texture = addCanvasTexture(t, key, canvas);
   let lastAngle = -1, lastHandle = -1, hidden = false;
   const draw = (angle, handle = 0) => {
     const shape = projectDoor(L, d, angle);
@@ -318,7 +323,7 @@ export function paintDoorSwing(scene, L, d, lit) {
     return shape;
   };
   draw(0);
-  return { box, key: SWING, draw, resolution };
+  return { box, key, draw, resolution };
 }
 
 // The projection is linear vertically and projective across the leaf.
@@ -379,7 +384,7 @@ function paintFogBank() {
 
 export function releaseHallArt(textures) {
   for (const set of Object.values(KEYS)) for (const key of Object.values(set)) if (textures.exists(key)) textures.remove(key);
-  if (textures.exists(SWING)) textures.remove(SWING);
+  for (const key of textures.getTextureKeys()) if (key.startsWith(SWING)) textures.remove(key);
 }
 
 // One leaf of the gate across the foot of the stairs: wrought iron, black
@@ -983,10 +988,9 @@ function paintDecay(ctx, L) {
 // where the chandelier hangs on the floor below: a brass cap, a brown
 // bakelite holder with its skirt, the pear of glass with the filament
 // standing in it on its glass stem. On the right-hand wall, between the
-// stairs and the next door, the switch that works it — the puzzle's own: a
-// white plate with a rocker in it and a small lamp under it — and from it a
+// stairs and the next door, a little iron lever works it — and from it a
 // cloth-covered wire clipped up the wall and across the ceiling to the
-// rose. Painted off and dark: the scene rocks the switch and lights the bulb.
+// rose. Painted dark: the scene moves the lever and lights the bulb.
 function paintBulb(ctx, L) {
   const { P, wall, ceil, u } = L;
   const b = L.bulb, r = b.r;
@@ -1003,45 +1007,7 @@ function paintBulb(ctx, L) {
   for (const k of [0.3, 0.62, 0.9]) ctx.fillRect(sw.x - sr * 0.14, sw.y - sr * 0.9 + (up.y - sw.y + sr * 0.9) * k, sr * 0.28, Math.max(1, sr * 0.07));
   for (const k of [0.25, 0.5, 0.75]) { const x = up.x + (rose.x - up.x) * k, y = up.y + (rose.y - up.y) * k; ctx.fillRect(x - sr * 0.1, y - sr * 0.05, sr * 0.2, sr * 0.1); }
 
-  // ── the switch: the puzzle's own — a white plate, gone a little grey, two
-  // screws, a rocker (off: its lower half pressed in), and a small lamp under it
-  {
-    const pl = sw.plate;
-    ctx.save();
-    ctx.translate(sw.x, sw.y);
-    ctx.scale(sw.slant, 1);
-    // its shadow on the wall
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.beginPath(); ctx.roundRect(-pl.w / 2 - pl.w * 0.1, -pl.h / 2 + pl.h * 0.05, pl.w, pl.h, pl.w * 0.07); ctx.fill();
-    const plate = ctx.createLinearGradient(-pl.w / 2, -pl.h / 2, pl.w / 2, pl.h / 2);
-    plate.addColorStop(0, "#d2d0c6");
-    plate.addColorStop(1, "#8e8c84");
-    ctx.fillStyle = plate;
-    ctx.beginPath(); ctx.roundRect(-pl.w / 2, -pl.h / 2, pl.w, pl.h, pl.w * 0.07); ctx.fill();
-    ctx.strokeStyle = "rgba(60,58,52,0.9)";
-    ctx.lineWidth = Math.max(1, pl.w * 0.03);
-    ctx.stroke();
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
-    ctx.fillRect(-pl.w / 2 + pl.w * 0.06, -pl.h / 2 + pl.w * 0.03, pl.w * 0.88, Math.max(0.8, pl.h * 0.012));
-    // the screws, each with its slot
-    for (const [e, turn] of [[-1, 0.35], [1, -0.5]]) {
-      const cy = e * pl.h * 0.4;
-      ctx.fillStyle = "#a8a69c";
-      ctx.beginPath(); ctx.arc(0, cy, pl.w * 0.09, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "#5a5852";
-      ctx.lineWidth = Math.max(0.8, pl.w * 0.03);
-      ctx.beginPath(); ctx.moveTo(-Math.cos(turn) * pl.w * 0.07, cy - Math.sin(turn) * pl.w * 0.07); ctx.lineTo(Math.cos(turn) * pl.w * 0.07, cy + Math.sin(turn) * pl.w * 0.07); ctx.stroke();
-    }
-    ctx.restore();
-    // the rocker, off
-    const rk = paintRocker(L, false);
-    ctx.drawImage(rk, sw.x - (sw.rocker.w * sw.slant) / 2, sw.y - sw.rocker.h / 2, sw.rocker.w * sw.slant, sw.rocker.h);
-    // the lamp under it: a little dome in a dark ring, not alight in the painting
-    ctx.fillStyle = "#0a0b0c";
-    ctx.beginPath(); ctx.ellipse(sw.led.x, sw.led.y, sw.led.r * sw.slant * 1.5, sw.led.r * 1.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#1c2a20";
-    ctx.beginPath(); ctx.ellipse(sw.led.x, sw.led.y, sw.led.r * sw.slant, sw.led.r, 0, 0, Math.PI * 2); ctx.fill();
-  }
+  paintLeverMount(ctx, sw);
 
   // ── the rose on the ceiling, cracked across
   ctx.fillStyle = "#0c0c0d";
@@ -1137,39 +1103,6 @@ function paintBulb(ctx, L) {
   ctx.beginPath(); ctx.moveTo(b.x + r * 0.56, b.y - r * 0.26); ctx.quadraticCurveTo(b.x + r * 0.72, b.y, b.x + r * 0.64, b.y + r * 0.26); ctx.stroke();
   ctx.lineCap = "butt";
   soft(ctx, b.x + r * 0.2, b.y + r * 0.72, r * 0.4, r * 0.16, MOON, 0.3, "lighter");
-}
-
-// The switch's rocker, seen square on (it is laid on the wall at a slant):
-// two halves, the pressed one sunk and in shadow, the other standing proud
-// with a lit edge. Off, the lower half is pressed; on, the upper.
-function paintRocker(L, on) {
-  const R = 3, a = L.switch.rocker;
-  const w = Math.ceil(a.w * R), h = Math.ceil(a.h * R);
-  const c = makeCanvas(w, h);
-  const g = c.getContext("2d");
-  g.fillStyle = "#77756e";
-  g.beginPath(); g.roundRect(0, 0, w, h, w * 0.08); g.fill();
-  const half = (y0, pressed) => {
-    const grad = g.createLinearGradient(0, y0, 0, y0 + h / 2);
-    if (pressed) { grad.addColorStop(0, "#8a8880"); grad.addColorStop(1, "#a6a49c"); }
-    else { grad.addColorStop(0, "#dedcd2"); grad.addColorStop(1, "#c2c0b6"); }
-    g.fillStyle = grad;
-    g.fillRect(w * 0.06, y0 + h * 0.02, w * 0.88, h * 0.46);
-    if (pressed) {
-      // sunk: the shadow of the plate's edge along it
-      g.fillStyle = "rgba(0,0,0,0.3)";
-      g.fillRect(w * 0.06, y0 + h * 0.02, w * 0.88, h * 0.07);
-    } else {
-      // proud: its edge catches the light
-      g.fillStyle = "rgba(255,255,255,0.55)";
-      g.fillRect(w * 0.06, y0 + (y0 ? h * 0.44 : h * 0.02), w * 0.88, h * 0.035);
-    }
-  };
-  half(0, on);
-  half(h / 2, !on);
-  g.fillStyle = "rgba(40,38,34,0.6)";
-  g.fillRect(w * 0.06, h * 0.49, w * 0.88, h * 0.02);
-  return c;
 }
 
 // The moon down the stairwell: it spills out of the opening onto the runner
@@ -1755,7 +1688,7 @@ function paintGloom(ctx, L) {
     for (let x = 0; x < W; x += step) {
       const d = Math.hypot((x + step / 2 - L.vp.x) / (W * 0.62), (y + step / 2 - L.vp.y) / (H * 0.74));
       // upstairs the dark comes in closer
-      const a = L.worn ? Math.min(0.9, Math.max(0, d - 0.24) * 1.3) : Math.min(0.8, Math.max(0, d - 0.34) * 1.05);
+      const a = L.wing ? Math.min(0.92, 0.14 + Math.max(0, d - 0.2) * 1.35) : L.worn ? Math.min(0.9, Math.max(0, d - 0.24) * 1.3) : Math.min(0.8, Math.max(0, d - 0.34) * 1.05);
       if (a <= 0.004) continue;
       ctx.fillStyle = `rgba(3,4,6,${a.toFixed(3)})`;
       ctx.fillRect(x, y, step, step);
