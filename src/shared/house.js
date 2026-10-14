@@ -42,13 +42,19 @@ export const PLACES = Object.freeze([
       "Three things here still keep a word each, and each has a light of its own. Find the word, and the light can go out.",
       "When all three are dark, the room will give up what it has been keeping.",
     ] },
-  // Up the stairs from the hall: the upper hall. Its five doors — VII to XI —
-  // have nothing behind them yet. Its puzzle is not gone into, as a room's
-  // are: it `plays` there, in the hall itself, and is answered there.
-  { key: "Upper", name: "The Chemistry Hall", floor: "The Chemistry", storey: 2, back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: [null, null, null, null, null], first: 7,
+  // Up the stairs from the hall: the upper hall. Of its five doors — VII to
+  // XI — the first opens on the laboratory; the rest have nothing behind them
+  // yet. Its puzzle is not gone into, as a room's are: it `plays` there, in
+  // the hall itself, and is answered there.
+  { key: "Upper", name: "The Chemistry Hall", floor: "The Chemistry", storey: 2, back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: ["Room7", null, null, null, null], first: 7,
     story: [
       "The chemist's floor: a tiled passage lined with reagent cupboards, old glassware and the apparatus of experiments left unfinished. Copper pipes run above the doors.",
       "One light still works up here, after a fashion. It is trying to say something.",
+    ] },
+  { key: "Room7", name: "Room 7", back: "Upper", holds: ["chemistry"],
+    story: [
+      "The laboratory: the chemist's own bench, just as it was left — the lamp still lit, the burner still going under its flask.",
+      "Five bottles stand in a row along it, and a magnifying glass lies on its cloth at the front. One thing here still keeps a word.",
     ] },
   // Up again, by the stairs at the side of the upper hall: the top floor,
   // the last — a round room under the dome. Three doors, XII to XIV, nothing

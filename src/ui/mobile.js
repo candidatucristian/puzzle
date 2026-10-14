@@ -19,7 +19,7 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   const scrim = document.getElementById('drawer-scrim');
   const toast = document.getElementById('ui-toast');
   const drawers = {
-    menu: { panel: document.getElementById('right-sidebar-wrapper'), button: document.getElementById('compact-menu') },
+    menu: { panel: document.getElementById('right-sidebar-wrapper'), button: document.getElementById('btn-hint') },
   };
   // the one bar that slides away, up, on its handle
   const handle = document.getElementById('handle-top');

@@ -206,10 +206,7 @@
 
       <!-- Control Console -->
       <div id="input-area">
-        <div class="current-room">
-          <div class="room-title-line"><p id="current-level-number" class="eyebrow"></p></div>
-          <button id="compact-menu" class="text-button" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-notes"/></svg>Room notes</button>
-        </div>
+        <button id="btn-hint" class="text-button" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false" data-tip="A nudge for this puzzle"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg>Hint</button>
         <div class="input-container">
           <label class="panel-label sr-only" for="level-code">Your answer</label>
           <div class="input-wrapper">
@@ -227,23 +224,25 @@
           </div>
           <p id="answer-feedback" role="status" aria-live="polite"></p>
         </div>
-        <button id="btn-hint" class="text-button" type="button" aria-haspopup="dialog" data-tip="A nudge for this puzzle"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg>Hint</button>
       </div>
     </div>
 
-    <!-- Current level and settings -->
-    <aside id="right-sidebar-wrapper" aria-label="Room notes" role="dialog" aria-modal="true">
+    <!-- The hints for the puzzle in hand: slid out from the left by the Hint
+         button, one revealed at a time (hints.js) -->
+    <aside id="right-sidebar-wrapper" aria-label="Hints" role="dialog" aria-modal="true">
       <div id="right-sidebar">
         <section id="current-level-info" aria-labelledby="brief-level-name">
           <div class="drawer-heading">
-            <div><p class="eyebrow">Room notes</p><h2 id="brief-level-name"></h2></div>
-            <button class="icon-button" type="button" data-close-drawer aria-label="Close room notes"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+            <div><p class="eyebrow">Hints</p><h2 id="brief-level-name"></h2></div>
+            <button class="icon-button" type="button" data-close-drawer aria-label="Close hints" data-tip="Close hints (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
           </div>
-          <p id="current-level-summary"></p>
           <div id="current-requirements"></div>
         </section>
-        <p id="current-hint-count"></p>
-        <button id="btn-brief-hints" class="menu-btn" type="button">Ask for a hint <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
+        <ol id="hint-list"></ol>
+        <div class="hint-footer">
+          <p id="hint-count" role="status" aria-live="polite"></p>
+          <button id="btn-next-hint" class="menu-btn" type="button">Reveal hint 2</button>
+        </div>
       </div>
     </aside>
 
@@ -440,23 +439,6 @@
             <h3>On a phone or tablet</h3>
             <p>Hold your device sideways. Tap to interact and drag to move things. Full screen hides the top bar for more space; tap or pull the small handle to bring it back.</p>
           </section>
-        </div>
-      </div>
-    </div>
-
-    <!-- Info Modal -->
-    <div id="info-modal" class="hidden">
-      <div class="modal-content">
-        <div class="hints-heading">
-          <h2>Hints</h2>
-          <button id="btn-close-info" class="icon-button" type="button" aria-label="Close hints" data-tip="Close hints (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
-        </div>
-        <p id="hint-room" class="modal-kicker"></p>
-        <div id="info-requires"></div>
-        <ol id="hint-list"></ol>
-        <div class="modal-actions">
-          <p id="hint-count" role="status" aria-live="polite"></p>
-          <button id="btn-next-hint" class="menu-btn" type="button">Reveal hint 2</button>
         </div>
       </div>
     </div>

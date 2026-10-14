@@ -1,4 +1,5 @@
-import { COMPASS_BEARINGS } from "./puzzle.js";
+import { paintEnvelope } from "../../shared/envelope.js";
+import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
 
 /** The captain's cabin for COMPASS, seen whole as from its door, painted in
  *  the telescope's manner: dark as a storybook night, picked out in gold.
@@ -6,7 +7,7 @@ import { COMPASS_BEARINGS } from "./puzzle.js";
  *  line of gilt; the deck beams cross overhead; at the far end the stern
  *  window, in a gilded frame, stands open on the moonlit sea, its crimson
  *  curtains tied back with gold. A lantern swings near us. On the chart
- *  table, its top inlaid with a gold line, lie the folded map and a candle.
+ *  table, its top inlaid with a gold line, lie the sealed envelope with the map in it, and a candle.
  *  And hanging from the beam above, on a chain, its face to us, the ship's
  *  compass in its gilded gimbal ring.
  *
@@ -19,7 +20,7 @@ import { COMPASS_BEARINGS } from "./puzzle.js";
  *  Painted once per screen size: the cabin (`room`, the window left open);
  *  the night behind the window (it rolls with the ship), the compass, its
  *  needle and the needle's shadow, its glass (it swings, so they are apart),
- *  the lantern, the candle flame, the glows, the folded map (it leaves the
+ *  the lantern, the candle flame, the glows, the envelope (it leaves the
  *  table when opened) and the map unfolded. The scene moves them. */
 
 export const MAP_FONT = '"Architects Daughter", "Special Elite", cursive';
@@ -34,7 +35,8 @@ const K = {
   lantern: "cp_lantern",
   flame: "cp_flame",
   glow: "cp_glow",
-  sheet: "cp_sheet",
+  letter: "cp_letter",
+  marks: "cp_marks",
   folded: "cp_folded",
   beams: "cp_beams",
 };
@@ -79,7 +81,7 @@ export function layoutCabin(W, H) {
   L.win.spring = L.win.top;
   L.win.cy = (L.win.top + L.win.sill) / 2;
   const tw = L.table.hw;
-  // the folded map, front left on the table
+  // the envelope with the map in it, front left on the table
   const m = { x: -0.62 * tw, s: 0.88, w: 0.26 * H, d: 0.17 * H };
   const mz = L.f / m.s;
   const mn = P(L, m.x, L.topY, L.f / (mz - m.d / 2));
@@ -189,8 +191,6 @@ export function paintCabin(scene, L) {
       [1, 0],
     ]),
   );
-  const sheet = paintSheet(L);
-  add(t, K.sheet, sheet.canvas);
   add(t, K.beams, paintMoonbeams(L));
   return {
     keys: K,
@@ -198,7 +198,6 @@ export function paintCabin(scene, L) {
     body: { oy: body.oy },
     needle: { oy: needle.oy },
     lantern: { oy: lantern.oy, flameDrop: lantern.flameDrop },
-    sheet: { w: sheet.w, h: sheet.h, lines: sheet.lines, textX: sheet.textX },
   };
 }
 
@@ -1672,100 +1671,35 @@ function paintFlame() {
   return c;
 }
 
-// A ship's lantern on a short chain: a brass tank, a glass chimney full of
-// flame behind its wire guards, a ventilated cap and a ring.
+// The house's storm lantern (shared/hurricaneLantern.js) on a short chain,
+// hung by its bail; the scene swings it.
 function paintLantern(lan) {
   const s = lan.s;
   const chain = lan.len;
-  const bw = 34 * s;
-  const w = Math.ceil(bw * 1.6 * R);
-  const h = Math.ceil((chain + 80 * s) * R);
+  const u = 2.2 * s; // the house's storm lantern, a centimetre to u pixels
+  const w = Math.ceil(24 * u * R);
+  const h = Math.ceil((chain + 36 * u) * R);
   const c = makeCanvas(w, h);
   const g = c.getContext("2d");
   g.scale(R, R);
-  const cx = (bw * 1.6) / 2;
+  const cx = 12 * u;
+  // the chain down from the beam
   g.strokeStyle = "#2c2418";
   g.lineWidth = Math.max(1.2, 2 * s);
-  for (let y = 4 * s; y < chain - 4 * s; y += 7 * s) {
+  for (let y = 4 * s; y < chain - 2 * s; y += 7 * s) {
     g.beginPath();
     g.ellipse(cx, y, 2.2 * s, 3.6 * s, 0, 0, Math.PI * 2);
     g.stroke();
   }
-  const top = chain;
-  g.strokeStyle = "#5a4420";
-  g.lineWidth = 2.4 * s;
-  g.beginPath();
-  g.arc(cx, top + 2 * s, 5 * s, 0, Math.PI * 2);
-  g.stroke();
-  g.fillStyle = gold(g, cx - bw * 0.5, 0, cx + bw * 0.5, 0);
-  g.beginPath();
-  g.moveTo(cx - bw * 0.2, top + 6 * s);
-  g.lineTo(cx + bw * 0.2, top + 6 * s);
-  g.lineTo(cx + bw * 0.55, top + 18 * s);
-  g.lineTo(cx - bw * 0.55, top + 18 * s);
-  g.closePath();
-  g.fill();
-  const gy0 = top + 18 * s;
-  const gy1 = top + 56 * s;
-  const glass = g.createRadialGradient(
-    cx,
-    (gy0 + gy1) / 2,
-    1,
-    cx,
-    (gy0 + gy1) / 2,
-    bw * 0.6,
-  );
-  glass.addColorStop(0, "#fff6d8");
-  glass.addColorStop(0.35, "#ffcf7a");
-  glass.addColorStop(1, "#b0602a");
-  g.fillStyle = glass;
-  g.beginPath();
-  g.moveTo(cx - bw * 0.4, gy0);
-  g.bezierCurveTo(
-    cx - bw * 0.62,
-    gy0 + 10 * s,
-    cx - bw * 0.62,
-    gy1 - 10 * s,
-    cx - bw * 0.4,
-    gy1,
-  );
-  g.lineTo(cx + bw * 0.4, gy1);
-  g.bezierCurveTo(
-    cx + bw * 0.62,
-    gy1 - 10 * s,
-    cx + bw * 0.62,
-    gy0 + 10 * s,
-    cx + bw * 0.4,
-    gy0,
-  );
-  g.closePath();
-  g.fill();
-  g.fillStyle = "#fffdf0";
-  g.beginPath();
-  g.ellipse(cx, (gy0 + gy1) / 2 + 4 * s, 2.2 * s, 6 * s, 0, 0, Math.PI * 2);
-  g.fill();
-  g.strokeStyle = "#3a2a14";
-  g.lineWidth = 1.4 * s;
-  for (const f of [-0.42, 0, 0.42]) {
-    g.beginPath();
-    g.moveTo(cx + bw * f, gy0);
-    g.quadraticCurveTo(cx + bw * f * 1.45, (gy0 + gy1) / 2, cx + bw * f, gy1);
-    g.stroke();
-  }
-  g.fillStyle = gold(g, cx - bw * 0.55, 0, cx + bw * 0.55, 0);
-  g.beginPath();
-  g.moveTo(cx - bw * 0.48, gy1);
-  g.lineTo(cx + bw * 0.48, gy1);
-  g.lineTo(cx + bw * 0.55, gy1 + 14 * s);
-  g.lineTo(cx - bw * 0.55, gy1 + 14 * s);
-  g.closePath();
-  g.fill();
-  return { canvas: c, oy: 0, flameDrop: (gy0 + gy1) / 2 + 2 * s };
+  // and the lantern hung from it by its bail
+  const foot = chain + 32 * u;
+  paintHurricaneLantern(g, cx, foot, u, true, false);
+  return { canvas: c, oy: 0, flameDrop: foot - 11.6 * u };
 }
 
-// The map, folded in three, lying a little askew on the table: old
-// parchment, torn edges, a coast faint through it, a twine round it, a blob
-// of red wax. Painted flat, then laid down in the table's perspective.
+// The map, in its envelope — the house's envelope (shared/envelope.js),
+// sealed in red wax — lying a little askew on the table. Painted flat, then
+// laid down in the table's perspective.
 function paintFolded(L) {
   const m = L.map;
   const fw = m.flatW * 1.4;
@@ -1773,171 +1707,31 @@ function paintFolded(L) {
   const flat = makeCanvas(fw * R, fh * R);
   const g = flat.getContext("2d");
   g.scale(R, R);
-  const x = fw / 2;
-  const y = fh / 2;
-  const w = m.flatW;
-  const h = m.flatH;
-  const hw = w / 2;
-  const hh = h / 2;
-  const rnd = lcg(515);
-  soft(g, x + w * 0.05, y + h * 0.16, w * 0.62, h * 0.68, "0,0,0", 0.7);
-  g.save();
-  g.translate(x, y);
-  g.rotate(-0.07);
-  const piece = (xa, xb) => {
-    const pts = [];
-    const jag = () => (rnd() - 0.5) * h * 0.035;
-    for (let k = 0; k <= 10; k++)
-      pts.push([xa + ((xb - xa) * k) / 10, -hh + jag()]);
-    for (let k = 1; k <= 6; k++)
-      pts.push([xb + jag() * 0.5, -hh + (h * k) / 6]);
-    for (let k = 10; k >= 0; k--)
-      pts.push([xa + ((xb - xa) * k) / 10, hh + jag()]);
-    for (let k = 5; k >= 1; k--) pts.push([xa + jag(), -hh + (h * k) / 6]);
-    g.beginPath();
-    pts.forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py)));
-    g.closePath();
-  };
-  const parchment = (k) => {
-    const pg = g.createLinearGradient(-hw, -hh, hw, hh);
-    pg.addColorStop(0, rgb(226 * k, 200 * k, 148 * k));
-    pg.addColorStop(0.55, rgb(204 * k, 168 * k, 108 * k));
-    pg.addColorStop(1, rgb(156 * k, 118 * k, 66 * k));
-    return pg;
-  };
-  piece(-hw, hw);
-  g.fillStyle = parchment(1);
-  g.fill();
-  g.strokeStyle = "rgba(96,60,22,0.55)";
-  g.lineWidth = 1.2;
-  g.stroke();
-  g.save();
-  g.clip();
-  for (let k = 0; k < 6; k++)
-    soft(
-      g,
-      (rnd() - 0.5) * w,
-      (rnd() - 0.5) * h,
-      w * (0.08 + rnd() * 0.12),
-      h * (0.1 + rnd() * 0.2),
-      "110,70,24",
-      0.14,
-    );
-  g.strokeStyle = "rgba(80,48,18,0.16)";
-  g.lineWidth = 1.4;
-  g.beginPath();
-  for (let k = 0; k <= 20; k++) {
-    const a = (k / 20) * Math.PI * 2;
-    const rr = h * 0.24 * (0.8 + 0.2 * Math.sin(a * 3 + 2));
-    const px = -hw * 0.45 + Math.cos(a) * rr * 1.4;
-    const py = h * 0.08 + Math.sin(a) * rr;
-    if (k) g.lineTo(px, py);
-    else g.moveTo(px, py);
-  }
-  g.stroke();
-  g.strokeStyle = "rgba(90,56,20,0.4)";
-  g.beginPath();
-  g.moveTo(-hw / 3, -hh);
-  g.lineTo(-hw / 3 + 1, hh);
-  g.stroke();
-  g.restore();
-  soft(g, hw / 3 - w * 0.01, 0, w * 0.035, hh * 1.05, "40,20,4", 0.5);
-  piece(hw / 3, hw * 1.01);
-  g.fillStyle = parchment(1.06);
-  g.fill();
-  g.strokeStyle = "rgba(96,60,22,0.55)";
-  g.stroke();
-  g.strokeStyle = "#7a5a30";
-  g.lineWidth = Math.max(1.5, h * 0.03);
-  g.beginPath();
-  g.moveTo(-hw * 1.02, h * 0.02);
-  g.quadraticCurveTo(0, -h * 0.03, hw * 1.02, h * 0.01);
-  g.stroke();
-  const sr = Math.min(w, h) * 0.12;
-  const sx = hw / 3;
-  const sgr = g.createRadialGradient(sx - sr * 0.3, -sr * 0.3, 0, sx, 0, sr);
-  sgr.addColorStop(0, "#e04a38");
-  sgr.addColorStop(0.7, "#9a1c14");
-  sgr.addColorStop(1, "#4a0806");
-  g.fillStyle = sgr;
-  g.beginPath();
-  for (let i = 0; i <= 14; i++) {
-    const a = (i / 14) * Math.PI * 2;
-    const rr = sr * (0.92 + (i % 2) * 0.1);
-    if (i) g.lineTo(sx + Math.cos(a) * rr, Math.sin(a) * rr);
-    else g.moveTo(sx + Math.cos(a) * rr, Math.sin(a) * rr);
-  }
-  g.fill();
-  g.restore();
+  // the envelope in centimetres, 17 by 11, filling the map's place
+  const w = 17, d = 11, q = (m.flatW * 0.8) / w;
+  const rot = -0.07, cs = Math.cos(rot), sn = Math.sin(rot);
+  // set back a little from the table's near edge
+  const at = (a, b) => ({ x: fw / 2 + (a * cs + (b + 3) * sn) * q, y: fh / 2 + (a * sn - (b + 3) * cs) * q });
+  const seal = at(0, d * 0.14);
+  paintEnvelope(g, { w, d, at, k: q, seal: { x: seal.x, y: seal.y - 0.5 * q, rx: 1.7 * q, ry: 1.7 * q } }, {
+    left: "rgb(78,74,67)", right: "rgb(100,95,86)", wax: "rgb(84,16,12)", shadow: true, shine: true,
+  });
   const c = makeCanvas(fw * (m.w / m.flatW) * R, fh * (m.h / m.flatH) * R);
   c.getContext("2d").drawImage(flat, 0, 0, c.width, c.height);
   return c;
 }
 
-// The map, unfolded: old parchment with its fold creases and stains, an
-// island in the corner with a dotted way to an X, a north mark; the lines of
-// bearings are the scene's text, written where `lines` says.
-function paintSheet(L) {
-  const { W, H } = L;
-  const w = Math.min(W * 0.72, H * 1.05, 820);
-  const h = w * 0.68;
+// The map, written on the letter out of the envelope (shared/envelope.js
+// paints the paper): an island in the corner with a dotted way to an X, a
+// north mark. The bearings are the scene's text, written where MAP_LINES
+// says. Added to `textures`, sized to the sheet (w × h), at R times over.
+export const MAP_LINES = { x: 0.08, y: (i) => 0.17 + i * 0.13 };
+export function addMapMarks(textures, w, h) {
   const c = makeCanvas(w * R, h * R);
   const g = c.getContext("2d");
   g.scale(R, R);
-  const rnd = lcg(4242);
-  const edge = [];
-  const jag = () => (rnd() - 0.5) * w * 0.012;
-  for (let x = 0; x <= w; x += w / 40) edge.push([x, h * 0.02 + jag()]);
-  for (let y = 0; y <= h; y += h / 28) edge.push([w * 0.985 + jag(), y]);
-  for (let x = w; x >= 0; x -= w / 40) edge.push([x, h * 0.98 + jag()]);
-  for (let y = h; y >= 0; y -= h / 28) edge.push([w * 0.015 + jag(), y]);
-  g.beginPath();
-  edge.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
-  g.closePath();
-  const paper = g.createRadialGradient(
-    w * 0.45,
-    h * 0.45,
-    w * 0.1,
-    w * 0.5,
-    h * 0.5,
-    w * 0.62,
-  );
-  paper.addColorStop(0, "#f4e6c2");
-  paper.addColorStop(0.7, "#e2c995");
-  paper.addColorStop(1, "#b8955c");
-  g.fillStyle = paper;
-  g.fill();
-  g.save();
-  g.clip();
-  for (let i = 0; i < 14; i++)
-    soft(
-      g,
-      rnd() * w,
-      rnd() * h,
-      w * (0.04 + rnd() * 0.1),
-      h * (0.03 + rnd() * 0.08),
-      "140,96,40",
-      0.08 + rnd() * 0.07,
-    );
-  for (const [x0, y0, x1, y1] of [
-    [w / 2, 0, w / 2, h],
-    [0, h / 2, w, h / 2],
-  ]) {
-    g.strokeStyle = "rgba(110,76,34,0.35)";
-    g.lineWidth = 1.4;
-    g.beginPath();
-    g.moveTo(x0, y0);
-    g.lineTo(x1, y1);
-    g.stroke();
-    g.strokeStyle = "rgba(255,248,226,0.4)";
-    g.lineWidth = 1;
-    g.beginPath();
-    g.moveTo(x0 + 1.5, y0 + 1.5);
-    g.lineTo(x1 + 1.5, y1 + 1.5);
-    g.stroke();
-  }
-  const ix = w * 0.78;
-  const iy = h * 0.74;
+  const ix = w * 0.62;
+  const iy = h * 0.75;
   const ir = w * 0.13;
   g.fillStyle = "rgba(196,160,96,0.55)";
   g.strokeStyle = "rgba(70,44,18,0.85)";
@@ -2000,15 +1794,8 @@ function paintSheet(L) {
   g.textBaseline = "middle";
   g.fillStyle = "rgba(70,44,18,0.85)";
   g.fillText("N", nx, ny - nr * 1.75);
-  g.restore();
-  g.strokeStyle = "rgba(110,70,28,0.5)";
-  g.lineWidth = 2;
-  g.beginPath();
-  edge.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
-  g.closePath();
-  g.stroke();
-  const lines = COMPASS_BEARINGS.map((_, i) => ({ y: h * (0.17 + i * 0.13) }));
-  return { canvas: c, w, h, lines, textX: w * 0.08 };
+  add(textures, K.marks, c);
+  return { key: K.marks, res: R };
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────────

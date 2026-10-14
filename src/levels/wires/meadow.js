@@ -1,3 +1,5 @@
+import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
+
 /** The meadow for WIRES, painted as a real morning rather than a sketch: the
  *  minute before sunrise on a country hill. The sky climbs from the last deep
  *  blue, where a few stars and a thin moon are still out, down through rose
@@ -935,26 +937,11 @@ function paintPorch(ctx) {
   softEllipse(ctx, LANTERN.x, LANTERN.y, 110, 80, "255,176,96", 0.12, "lighter");
   softEllipse(ctx, 426, 170, 14, 60, "255,180,110", 0.18, "lighter");
 
-  // the lantern itself, on its chain
+  // the lantern itself — the house's storm lantern — on its chain
   ctx.strokeStyle = "#2a2622";
   ctx.lineWidth = 0.9;
-  line(ctx, LANTERN.x, 124, LANTERN.x, 129);
-  ctx.fillStyle = "#1e1c1b";
-  poly(ctx, [
-    [LANTERN.x - 6, 129],
-    [LANTERN.x + 6, 129],
-    [LANTERN.x + 4, 132],
-    [LANTERN.x - 4, 132],
-  ]);
-  ctx.fill();
-  const glass = ctx.createLinearGradient(0, 132, 0, 143);
-  glass.addColorStop(0, "#fff6d2");
-  glass.addColorStop(1, "#ffc46e");
-  ctx.fillStyle = glass;
-  ctx.fillRect(LANTERN.x - 4, 132, 8, 11);
-  ctx.fillStyle = "#1e1c1b";
-  ctx.fillRect(LANTERN.x - 0.5, 132, 1, 11);
-  ctx.fillRect(LANTERN.x - 5, 143, 10, 2.5);
+  line(ctx, LANTERN.x, 124, LANTERN.x, 127.5);
+  paintHurricaneLantern(ctx, LANTERN.x, 146, 0.58, true, false);
 }
 
 // the flag on the porch post, stirring, the sunrise showing through it

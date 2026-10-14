@@ -16,7 +16,7 @@ const BEDS = {
   Top: ["wind", "tone"],
   TopHall: ["rain", "tone"],
   Study: ["tone"], Room2: ["tone"], Room3: ["tone", "wind"],
-  Room4: ["tone", "fire"], Room5: ["tone", "fire"], Room6: ["tone", "fire"],
+  Room4: ["tone", "fire"], Room5: ["tone", "fire"], Room6: ["tone", "fire"], Room7: ["tone"],
   // puzzles that are found somewhere in particular
   level: { TapCode: ["tone"], Pi: ["fire", "tone"] },
 };

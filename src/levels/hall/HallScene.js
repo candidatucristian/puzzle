@@ -32,7 +32,7 @@ import { IronLever } from "./ironLever.js";
 // light under the doors, dust in the moonbeams, the glints, a thin mist —
 // and, on the ground floor, the house itself: the clock's pendulum going,
 // the gate's bars shadowed down the runner, a moth at one of the candles, a
-// draught now and then, lightning a long way off. The chandelier is lit a
+// draught now and then. The chandelier is lit a
 // candle at a time, one for every room that has been finished.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -255,7 +255,7 @@ export default class HallScene extends BasePuzzleScene {
 
   // What makes the ground floor's hall a place somebody lives in — or did.
   _alive(L, k, rooms) {
-    const { W, H, u } = L;
+    const { u } = L;
     const levels = this.services.levels;
     // ── the clock: its pendulum, a tick at either end of every swing
     const tick = () => chime(this, [[2100, 0.006], [1400, 0.004]], 0.035);
@@ -293,22 +293,6 @@ export default class HallScene extends BasePuzzleScene {
       this.time.delayedCall(15000 + Math.random() * 17000, draught);
     };
     this.time.delayedCall(9000 + Math.random() * 6000, draught);
-    // ── lightning, a long way off: the stairs' window white for an instant,
-    // the whole hall cold blue with it, twice; and the thunder a while after
-    const sky = this.add.rectangle(0, 0, W, H, 0xbcd0ff).setOrigin(0, 0).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(8);
-    const far = this.add.image(L.gate.x + L.gate.width / 2, L.gate.y + L.gate.height * 0.4, k.glow).setDisplaySize(L.gate.width * 4.2, L.gate.height * 2.6).setTint(0xdce8ff).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(8);
-    const lightning = () => {
-      const strike = (wait, level, fade) => this.time.delayedCall(wait, () => {
-        sky.setAlpha(level * 0.2);
-        far.setAlpha(level);
-        this.tweens.add({ targets: [sky, far], alpha: 0, duration: fade, ease: "Cubic.easeOut" });
-      });
-      strike(0, 0.7, 120);
-      strike(150, 1, 620);
-      this.time.delayedCall(1300 + Math.random() * 900, () => chime(this, [[52, 0.07], [39, 0.06], [66, 0.035], [31, 0.04]], 2.6));
-      this.time.delayedCall(26000 + Math.random() * 30000, lightning);
-    };
-    this.time.delayedCall(6000 + Math.random() * 5000, lightning);
   }
 
   // The gate across the stairs: its two leaves hang from the sides of the

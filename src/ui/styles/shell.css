@@ -80,7 +80,7 @@ body { display:flex; flex-direction:column; height:100dvh; background:var(--ui-b
 #btn-replay:hover { color:var(--ui-text); background:#1b1b1b; }
 #answer-feedback { position:absolute; top:100%; left:0; right:0; margin:8px 0 0; color:#b8b8b1; font:400 calc(11px * var(--reading-scale))/1.4 var(--ui-font); }
 #answer-feedback:empty { display:none; }
-#btn-hint { justify-self:end; gap:7px; min-height:40px; padding:8px 0 8px 8px; }
+#btn-hint { justify-self:start; gap:7px; min-height:40px; padding:8px 8px 8px 0; }
 
 /* An index rather than a stack of cards; one small rule marks the current room. */
 #sidebar { position:relative; order:1; display:flex; flex:0 0 var(--index-width); flex-direction:column; min-height:0; padding:24px 24px 28px 0; overflow:hidden; border:0; background:transparent; box-shadow:none; color:var(--ui-text); font-family:var(--ui-font); }

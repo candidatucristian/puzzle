@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { layoutCabin, paintCabin, releaseCabinArt, MAP_FONT } from "./cabin.js";
+import { layoutCabin, paintCabin, releaseCabinArt, addMapMarks, MAP_FONT, MAP_LINES } from "./cabin.js";
+import { letterOverlay } from "../../shared/envelope.js";
 import { COMPASS_BEARINGS } from "./puzzle.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11,7 +12,7 @@ import { COMPASS_BEARINGS } from "./puzzle.js";
 // picked out in gold, its timbers creaking. Over the chart table hangs the
 // ship's compass in its gilded gimbal ring, upright, its face to us, and its
 // needle has gone mad: it spins, stops dead on a bearing, jumps to the next,
-// spins again. On the table lies the map, folded and sealed; opened, it
+// spins again. On the table lies the map, in a sealed envelope; opened, it
 // shows four lines of bearings in the captain's hand:
 //
 //   180 180 90 · 270 180 180 90 90 0 0 270 · 270 270 180 90 90 180 270 270
@@ -79,11 +80,10 @@ export default class CompassScene extends BasePuzzleScene {
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(-11);
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
-    // the map lies in the dark, just catching the moon
+    // the envelope lies on the table as it does on the study desk
     this._folded = this.add
       .image(L.map.x, L.map.y, k.folded)
       .setScale(inv)
-      .setTint(0x9aa2b8)
       .setDepth(-9);
     // the moon's light through the window, and the dust turning in it
     this._beams = this.add
@@ -184,12 +184,19 @@ export default class CompassScene extends BasePuzzleScene {
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Open the map")
       .setDepth(5)
-      .on("pointerdown", () => this._openMap());
+      .on("pointerdown", () => this._letter.open());
     this._mapSparkleCleanups.push(attachMovableSparkles(this, mapZone, {
-      enabled: () => !this._sheet && !this.isSolved,
+      enabled: () => !this._letter?.isOpen && !this.isSolved,
       padding: 5,
     }));
     this._zones = [glassZone, mapZone];
+    // the envelope opened: the house's letter, and the map written on it
+    this._letter = letterOverlay(this, L.W, L.H, {
+      key: k.letter,
+      fill: (ov, box) => this._writeMap(ov, box),
+      onOpen: () => { for (const z of this._zones) z.disableInteractive(); },
+      onClose: () => { for (const z of this._zones) z.setInteractive(); },
+    });
 
 
     this._steps = program();
@@ -201,7 +208,6 @@ export default class CompassScene extends BasePuzzleScene {
       locked: false,
       shove: 0,
     };
-    this._sheet = null;
   }
 
   // motes of dust drifting slowly through the moonbeams, catching the light
@@ -360,43 +366,20 @@ export default class CompassScene extends BasePuzzleScene {
 
   // ── the map ────────────────────────────────────────────────────────────────
 
-  _openMap() {
-    if (this._sheet) return;
-    const L = this._L;
-    const art = this._art;
-    const sh = art.sheet;
-    const inv = 1 / art.res;
-    this._rustle();
-    // the room is out of reach while the map is open
-    for (const z of this._zones) z.disableInteractive();
-
-    const veil = this.add
-      .rectangle(0, 0, L.W, L.H, 0x050302, 0.7)
-      .setOrigin(0, 0)
-      .setAlpha(0)
-      .setDepth(30)
-      .setInteractive({ useHandCursor: true })
-      .setData("interactionLabel", "Fold the map");
-    const cont = this.add.container(L.W / 2, L.H * 0.47).setDepth(31);
-    cont.add(
-      this.add
-        .image(L.S * 0.008, L.S * 0.014, art.keys.sheet)
-        .setScale(inv)
-        .setTint(0x000000)
-        .setAlpha(0.5),
-    );
-    cont.add(this.add.image(0, 0, art.keys.sheet).setScale(inv));
-
-    // the bearings, a line for each letter, in the captain's hand
+  // On the letter out of the envelope: the island and its way to the X, and
+  // the bearings, a line for each letter, in the captain's hand
+  _writeMap(ov, box) {
+    const marks = addMapMarks(this.textures, box.w, box.h);
+    ov.add(this.add.image(box.x + box.w / 2, box.y + box.h / 2, marks.key).setScale(1 / marks.res));
     const lines = COMPASS_BEARINGS.map((line, i) =>
       this.add
         .text(
-          -sh.w / 2 + sh.textX,
-          -sh.h / 2 + sh.lines[i].y,
+          box.x + box.w * MAP_LINES.x,
+          box.y + box.h * MAP_LINES.y(i),
           line.map((b) => `${b}°`).join("  ·  "),
           {
             fontFamily: MAP_FONT,
-            fontSize: Math.round(sh.w * 0.05) + "px",
+            fontSize: Math.round(box.w * 0.05) + "px",
             color: "#3a2210",
           },
         )
@@ -404,68 +387,11 @@ export default class CompassScene extends BasePuzzleScene {
         .setAngle(i % 2 ? 0.6 : -0.8),
     );
     const widest = Math.max(...lines.map((t) => t.width));
-    if (widest > sh.w * 0.82) {
-      const size = Math.floor(sh.w * 0.05 * ((sh.w * 0.82) / widest));
+    if (widest > box.w * 0.82) {
+      const size = Math.floor(box.w * 0.05 * ((box.w * 0.82) / widest));
       for (const t of lines) t.setFontSize(size);
     }
-    cont.add(lines);
-
-    // it comes up off the table and unfolds
-    const from = { x: L.map.x, y: L.map.y };
-    this._folded.setVisible(false);
-    cont
-      .setPosition(from.x, from.y)
-      .setScale(0.28, 0.12)
-      .setAngle(-7)
-      .setAlpha(0.4);
-    this.tweens.add({ targets: veil, alpha: 1, duration: 360 });
-    this.tweens.add({
-      targets: cont,
-      x: L.W / 2,
-      y: L.H * 0.47,
-      angle: -1.2,
-      scaleX: 1,
-      alpha: 1,
-      duration: 420,
-      ease: "Cubic.easeOut",
-    });
-    this.tweens.add({
-      targets: cont,
-      scaleY: 1,
-      duration: 560,
-      delay: 80,
-      ease: "Back.easeOut",
-    });
-
-    veil.on("pointerdown", () => this._closeMap());
-    this._sheet = { veil, cont, from, closing: false };
-  }
-
-  _closeMap() {
-    const s = this._sheet;
-    if (!s || s.closing) return;
-    s.closing = true;
-    this._rustle();
-    this.tweens.add({ targets: s.veil, alpha: 0, duration: 320 });
-    this.tweens.add({
-      targets: s.cont,
-      x: s.from.x,
-      y: s.from.y,
-      scaleX: 0.28,
-      scaleY: 0.12,
-      angle: -7,
-      alpha: 0,
-      duration: 360,
-      ease: "Cubic.easeIn",
-      onComplete: () => {
-        s.veil.destroy();
-        s.cont.destroy();
-        if (this._sheet !== s) return;
-        this._sheet = null;
-        this._folded.setVisible(true);
-        for (const z of this._zones) z.setInteractive();
-      },
-    });
+    ov.add(lines);
   }
 
   // ── sounds ─────────────────────────────────────────────────────────────────
@@ -522,19 +448,6 @@ export default class CompassScene extends BasePuzzleScene {
     this._noise(0.04, "bandpass", 2600, 3, 0.09, (k) => Math.exp(-k * 9));
   }
 
-  // old paper, unfolded or folded
-  _rustle() {
-    this._noise(
-      0.42,
-      "highpass",
-      1800,
-      0.7,
-      0.16,
-      (k) =>
-        (0.35 + 0.65 * Math.random() * Math.random()) * Math.sin(k * Math.PI),
-    );
-  }
-
   // a fingernail on the compass glass
   _clink() {
     const a = this._ac();
@@ -568,7 +481,7 @@ export default class CompassScene extends BasePuzzleScene {
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
     releaseCabinArt(this.textures);
-    this._sheet = null;
+    this._letter = null;
     this._zones = [];
     this._view = this._glitter = this._beams = null;
     this._L = null;

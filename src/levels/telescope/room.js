@@ -1,3 +1,4 @@
+import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
 import { archGeo, paintSkyOn, paintWindowOn, openingPath } from "./window.js";
 
 /** The room with the telescope, painted like a storybook nursery at night:
@@ -596,11 +597,11 @@ function paintDesk(ctx, X, Y, S) {
   }
 }
 
-// on the sill: a lantern, lit, and a potted plant
+// on the sill: the storm lantern, lit (shared/hurricaneLantern.js), and a
+// potted plant
 function paintSillProps(ctx, X, geo, lantern, H, S) {
   const lx = lantern.x;
   const ly = lantern.y;
-  const lw = S * 0.016;
   const lh = H * 0.045;
   soft(
     ctx,
@@ -613,31 +614,8 @@ function paintSillProps(ctx, X, geo, lantern, H, S) {
     "lighter",
   );
   soft(ctx, lx, ly, S * 0.06, S * 0.012, "255,176,96", 0.4, "lighter");
-  const glass = ctx.createLinearGradient(0, ly - lh, 0, ly);
-  glass.addColorStop(0, "#ffd890");
-  glass.addColorStop(1, "#f09a48");
-  ctx.fillStyle = glass;
-  ctx.fillRect(lx - lw / 2, ly - lh * 0.85, lw, lh * 0.75);
-  ctx.fillStyle = "#fff2cc";
-  ctx.beginPath();
-  ctx.ellipse(lx, ly - lh * 0.42, lw * 0.12, lh * 0.14, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#1c1810";
-  ctx.fillRect(lx - lw * 0.6, ly - lh * 0.1, lw * 1.2, lh * 0.1);
-  ctx.fillRect(lx - lw * 0.6, ly - lh * 0.9, lw * 1.2, lh * 0.08);
-  for (const dx of [-0.5, 0.5])
-    ctx.fillRect(lx + dx * lw - 1, ly - lh * 0.9, 2, lh * 0.8);
-  ctx.beginPath();
-  ctx.moveTo(lx - lw * 0.55, ly - lh * 0.9);
-  ctx.lineTo(lx, ly - lh * 1.1);
-  ctx.lineTo(lx + lw * 0.55, ly - lh * 0.9);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = "#1c1810";
-  ctx.lineWidth = Math.max(1, S * 0.002);
-  ctx.beginPath();
-  ctx.arc(lx, ly - lh * 1.15, lw * 0.25, Math.PI, 0);
-  ctx.stroke();
+  // the house's storm lantern, its foot on the sill
+  paintHurricaneLantern(ctx, lx, ly, (lh * 1.2) / 32, true, false);
   // the plant
   const px = X(0.645);
   const py = ly;

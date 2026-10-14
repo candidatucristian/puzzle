@@ -1,3 +1,4 @@
+import { paintEnvelope as paintSharedEnvelope } from "../../shared/envelope.js";
 import { candleLayout, paintCandle } from "./candleArt.js";
 
 /** The study for CIPHER WHEEL, painted as a real room: a dark wall above a
@@ -85,113 +86,6 @@ export function paintStudy(scene, W, H, deskY) {
     },
     envelope: { quad: env.quad },
   };
-}
-
-/** The unfolded letter: aged paper, fold creases, the unmarked seal. The
- *  canvas carries a margin for the paper's shadow; the image goes centred. */
-export function paintLetter(textures, w, h) {
-  const m = Math.round(Math.min(w, h) * 0.06);
-  const cv = makeCanvas(w + 2 * m, h + 2 * m);
-  const g = cv.getContext("2d");
-  const rnd = lcg(909);
-  const edge = [];
-  const jag = () => (rnd() - 0.5) * 1.6;
-  for (let x = 0; x <= w; x += 12) edge.push([m + x, m + jag()]);
-  for (let y = 0; y <= h; y += 12) edge.push([m + w + jag(), m + y]);
-  for (let x = w; x >= 0; x -= 12) edge.push([m + x, m + h + jag()]);
-  for (let y = h; y >= 0; y -= 12) edge.push([m + jag(), m + y]);
-  const sheet = () => {
-    g.beginPath();
-    edge.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
-    g.closePath();
-  };
-  g.save();
-  g.shadowColor = "rgba(0,0,0,0.65)";
-  g.shadowBlur = m * 0.8;
-  g.shadowOffsetY = m * 0.25;
-  sheet();
-  g.fillStyle = "#000";
-  g.fill();
-  g.restore();
-
-  g.save();
-  sheet();
-  g.clip();
-  const base = g.createLinearGradient(m, 0, m + w, 0);
-  base.addColorStop(0, "#cdb994");
-  base.addColorStop(1, "#e6d4ad"); // the candle is off to the right
-  g.fillStyle = base;
-  g.fillRect(m, m, w, h);
-  // fibres
-  for (let i = 0; i < (w * h) / 60; i++) {
-    const x = m + rnd() * w;
-    const y = m + rnd() * h;
-    const a = rnd() * Math.PI;
-    const l = 2 + rnd() * 6;
-    g.strokeStyle =
-      rnd() < 0.5 ? "rgba(120,90,50,0.07)" : "rgba(255,248,230,0.1)";
-    g.lineWidth = 0.7;
-    g.beginPath();
-    g.moveTo(x, y);
-    g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
-    g.stroke();
-  }
-  // the four panels it was folded into lie at slightly different angles
-  const fx = m + w * 0.5;
-  const fy = m + h * 0.48;
-  g.fillStyle = "rgba(60,40,15,0.07)";
-  g.fillRect(m, m, fx - m, fy - m);
-  g.fillStyle = "rgba(255,250,235,0.06)";
-  g.fillRect(fx, fy, m + w - fx, m + h - fy);
-  g.fillStyle = "rgba(60,40,15,0.035)";
-  g.fillRect(m, fy, fx - m, m + h - fy);
-  const crease = (x0, y0, x1, y1, ox, oy) => {
-    g.lineWidth = 1.3;
-    g.strokeStyle = "rgba(90,65,35,0.28)";
-    g.beginPath();
-    g.moveTo(x0, y0);
-    g.lineTo(x1, y1);
-    g.stroke();
-    g.lineWidth = 1;
-    g.strokeStyle = "rgba(255,250,235,0.4)";
-    g.beginPath();
-    g.moveTo(x0 + ox, y0 + oy);
-    g.lineTo(x1 + ox, y1 + oy);
-    g.stroke();
-  };
-  crease(fx, m, fx, m + h, 1.3, 0);
-  crease(m, fy, m + w, fy, 0, 1.3);
-  // a coffee ring, long dried, and a tired edge
-  g.strokeStyle = "rgba(120,80,30,0.09)";
-  g.lineWidth = 3;
-  g.beginPath();
-  g.ellipse(
-    m + w * 0.2,
-    m + h * 0.22,
-    w * 0.07,
-    w * 0.065,
-    0.3,
-    0.4,
-    Math.PI * 1.8,
-  );
-  g.stroke();
-  const age = g.createRadialGradient(
-    m + w / 2,
-    m + h / 2,
-    Math.min(w, h) * 0.3,
-    m + w / 2,
-    m + h / 2,
-    Math.hypot(w, h) * 0.55,
-  );
-  age.addColorStop(0, "rgba(110,75,35,0)");
-  age.addColorStop(1, "rgba(110,75,35,0.32)");
-  g.fillStyle = age;
-  g.fillRect(m, m, w, h);
-  g.restore();
-
-  seal(g, m + w - 64, m + h - 60, 21);
-  addCanvas(textures, LETTER, cv);
-  return LETTER;
 }
 
 export function releaseStudyArt(textures) {
@@ -918,128 +812,28 @@ function envelopeGeom(cam, W, H, deskY) {
   };
 }
 
-// a cream envelope, back up, its flap sealed with red wax
+// the house's envelope (shared/envelope.js) on the desk, lit by the candle:
+// once into the room's own light, once into what the flame adds
 function paintEnvelope(rc, lc, cam, flame, env) {
-  const { w, d, at, world, quad } = env;
+  const { w, d, world } = env;
   const UP = { x: 0, y: 1, z: 0 };
-  const litAt = (a, b) => {
-    const p = world(a, b);
+  const litAt = (p, colour) => {
     const out = [0, 0, 0, 0];
     const lo = [0, 0, 0, 0];
-    shadePixel([224, 208, 178], p, UP, 0, 1, 1, flame, out, lo, 0, 1, WHITE);
+    shadePixel(colour, p, UP, 0, 1, 1, flame, out, lo, 0, 1, WHITE);
     return { base: out, add: lo };
   };
-  const L = litAt(-w / 2, 0);
-  const Rr = litAt(w / 2, 0);
-  const poly = (ctx, pts) => {
-    ctx.beginPath();
-    pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-    ctx.closePath();
-  };
-  const k = cam.kAt(env.c.z);
-  // it rests on the desk: a soft contact shadow round it
-  rc.save();
-  rc.shadowColor = "rgba(0,0,0,0.7)";
-  rc.shadowBlur = k * 0.6;
-  rc.shadowOffsetY = k * 0.12;
-  poly(rc, quad);
-  rc.fillStyle = "#000";
-  rc.fill();
-  rc.restore();
-  for (const [ctx, key] of [
-    [rc, "base"],
-    [lc, "add"],
-  ]) {
-    const gr = ctx.createLinearGradient(quad[0].x, 0, quad[1].x, 0);
-    gr.addColorStop(0, css(L[key]));
-    gr.addColorStop(1, css(Rr[key]));
-    poly(ctx, quad);
-    ctx.fillStyle = gr;
-    ctx.fill();
-  }
-  // the folds: side and bottom flaps meeting under the top flap's tip
-  const tip = at(0, d * 0.14);
-  const folds = [
-    [at(-w / 2, -d / 2), tip],
-    [at(w / 2, -d / 2), tip],
-  ];
-  const flap = [
-    [at(-w / 2, d / 2), tip],
-    [at(w / 2, d / 2), tip],
-  ];
-  for (const ctx of [rc, lc]) {
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "rgba(0,0,0,0.22)";
-    ctx.lineWidth = Math.max(0.8, k * 0.05);
-    for (const [a, b] of folds) {
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-    }
-    // the top flap sits a paper's thickness proud: a crisper edge
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.5)";
-    ctx.shadowBlur = k * 0.25;
-    ctx.shadowOffsetY = k * 0.06;
-    ctx.strokeStyle = "rgba(0,0,0,0.3)";
-    ctx.lineWidth = Math.max(1, k * 0.07);
-    for (const [a, b] of flap) {
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-  // the seal: a blob of wax, raised and glossy
+  const L = litAt(world(-w / 2, 0), [224, 208, 178]);
+  const Rr = litAt(world(w / 2, 0), [224, 208, 178]);
+  // the seal, raised half a centimetre off the paper
   const sp = world(0, d * 0.14, 0.5);
   const c = cam.P(sp.x, sp.y, sp.z);
   const rx = cam.kAt(sp.z) * 1.7;
-  const ry =
-    Math.abs(
-      cam.P(sp.x, sp.y, sp.z - 1.7).y - cam.P(sp.x, sp.y, sp.z + 1.7).y,
-    ) / 2;
-  const wax = (() => {
-    const out = [0, 0, 0, 0];
-    const lo = [0, 0, 0, 0];
-    shadePixel([150, 30, 22], sp, UP, 0, 1, 1, flame, out, lo, 0, 1, WHITE);
-    return { base: out, add: lo };
-  })();
-  for (const [ctx, key] of [
-    [rc, "base"],
-    [lc, "add"],
-  ]) {
-    ctx.save();
-    ctx.translate(c.x, c.y);
-    ctx.scale(1, ry / rx);
-    ctx.fillStyle = css(wax[key]);
-    for (const [ox, oy, rr] of [
-      [0, 0, 1],
-      [-0.7, 0.35, 0.36],
-      [0.76, -0.2, 0.3],
-      [0.42, 0.62, 0.32],
-    ]) {
-      ctx.beginPath();
-      ctx.arc(ox * rx, oy * rx, rr * rx, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.strokeStyle = "rgba(0,0,0,0.35)";
-    ctx.lineWidth = Math.max(1, rx * 0.08);
-    ctx.beginPath();
-    ctx.arc(0, 0, rx * 0.66, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-  softDot(
-    lc,
-    c.x + rx * 0.35,
-    c.y - ry * 0.3,
-    rx * 0.35,
-    ry * 0.25,
-    "255,210,170",
-    0.55,
-  );
+  const ry = Math.abs(cam.P(sp.x, sp.y, sp.z - 1.7).y - cam.P(sp.x, sp.y, sp.z + 1.7).y) / 2;
+  const wax = litAt(sp, [150, 30, 22]);
+  const flat = { w, d, at: env.at, k: cam.kAt(env.c.z), seal: { x: c.x, y: c.y, rx, ry } };
+  paintSharedEnvelope(rc, flat, { left: css(L.base), right: css(Rr.base), wax: css(wax.base), shadow: true });
+  paintSharedEnvelope(lc, flat, { left: css(L.add), right: css(Rr.add), wax: css(wax.add), shine: true });
 }
 
 // ── finishing ───────────────────────────────────────────────────────────────
@@ -1076,69 +870,6 @@ function finish(rc, lc, cam) {
   rc.fillStyle = rc.createPattern(noise, "repeat");
   rc.fillRect(0, 0, W, H);
   rc.restore();
-}
-
-function seal(g, x, y, r) {
-  g.fillStyle = "#6e150c";
-  for (const [ox, oy, rr] of [
-    [0, 0, 1],
-    [-0.72, 0.38, 0.38],
-    [0.76, -0.28, 0.31],
-    [0.42, 0.66, 0.33],
-  ]) {
-    g.beginPath();
-    g.arc(x + ox * r, y + oy * r, rr * r, 0, Math.PI * 2);
-    g.fill();
-  }
-  const body = g.createRadialGradient(
-    x - r * 0.3,
-    y - r * 0.35,
-    r * 0.1,
-    x,
-    y,
-    r * 0.85,
-  );
-  body.addColorStop(0, "#b3402c");
-  body.addColorStop(1, "#7a1a0f");
-  g.fillStyle = body;
-  g.beginPath();
-  g.arc(x - 1, y - 2, r * 0.82, 0, Math.PI * 2);
-  g.fill();
-  g.lineWidth = 1.5;
-  g.strokeStyle = "rgba(60,8,4,0.8)";
-  g.beginPath();
-  g.arc(x, y, r * 0.64, 0, Math.PI * 2);
-  g.stroke();
-  g.lineWidth = 1;
-  g.strokeStyle = "rgba(220,120,95,0.35)";
-  g.beginPath();
-  g.arc(x, y + 1, r * 0.64, 0, Math.PI * 2);
-  g.stroke();
-  g.fillStyle = "rgba(255,255,255,0.2)";
-  g.beginPath();
-  g.ellipse(
-    x - r * 0.32,
-    y - r * 0.45,
-    r * 0.26,
-    r * 0.1,
-    -0.3,
-    0,
-    Math.PI * 2,
-  );
-  g.fill();
-}
-
-function softDot(ctx, x, y, rx, ry, rgb, a) {
-  if (rx <= 0 || ry <= 0) return;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(rx, ry);
-  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-  g.addColorStop(0, `rgba(${rgb},${a})`);
-  g.addColorStop(1, `rgba(${rgb},0)`);
-  ctx.fillStyle = g;
-  ctx.fillRect(-1, -1, 2, 2);
-  ctx.restore();
 }
 
 // ── small helpers ───────────────────────────────────────────────────────────

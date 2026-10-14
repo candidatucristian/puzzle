@@ -109,7 +109,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const navigate = (index, options) => transitions.go(index, options);
   const progressUI = mountProgress(scope, { game, levels, storage });
   mountComfort(scope, preferences);
-  const hintUI = mountHints(scope, { levels, hints, dialogs });
+  const hintUI = mountHints(scope, { levels, hints });
   mountInteractionFeedback(scope, game);
   mobile = mountMobile(scope, {
     canOpenDrawer: () => !transitions.busy && !dialogs.isOpen,

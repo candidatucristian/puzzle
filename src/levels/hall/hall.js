@@ -94,7 +94,7 @@ export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } 
     // pendulum: where it hangs from, how long, how big its bob (the clock
     // is painted without it).
     const zc = END - 0.12, cf = L.P(-L.wall * 0.74, L.floor, zc), ck = H / 700 / zc;
-    L.clock = { x: cf.x, y: cf.y - 232 * ck, len: 124 * ck, bob: 7.5 * ck };
+    L.clock = { x: cf.x, y: cf.y - 262 * ck, len: 168 * ck, bob: 16 * ck };
     // the chandelier's eight wicks, the ones toward us first
     const hub = L.P(0, L.ceil + H * 0.26, 1.9), hk = H / 700 / 1.9;
     L.wicks = Array.from({ length: 8 }, (_, i) => (i / 8) * Math.PI * 2 + 0.32)
@@ -361,19 +361,29 @@ function paintMovingDoorFace(ctx, face, box, resolution, closed, shape) {
   ctx.restore();
 }
 
-// the clock's pendulum, hanging straight: a brass rod and its bob — the scene swings it
+// the clock's pendulum, hanging straight: a slim brass rod and a polished
+// disc, a ring turned in its face — the scene swings it
 function paintPendulum(clock) {
   const R = 3, w = Math.ceil(clock.bob * 2 * R) + 4, h = Math.ceil((clock.len + clock.bob) * R) + 2;
   const c = makeCanvas(w, h);
   const g = c.getContext("2d");
-  g.fillStyle = "#8a6c2c";
-  g.fillRect(w / 2 - Math.max(1, 0.5 * R), 0, Math.max(2, R), clock.len * R);
-  const bob = g.createRadialGradient(w / 2 - clock.bob * R * 0.35, clock.len * R - clock.bob * R * 0.35, 1, w / 2, clock.len * R, clock.bob * R);
-  bob.addColorStop(0, "#f0d890");
-  bob.addColorStop(0.55, "#b8923e");
-  bob.addColorStop(1, "#4a3812");
+  const cx = w / 2, cy = clock.len * R, r = clock.bob * R;
+  const rod = g.createLinearGradient(cx - R, 0, cx + R, 0);
+  rod.addColorStop(0, "#5a4418"); rod.addColorStop(0.5, "#e8c878"); rod.addColorStop(1, "#5a4418");
+  g.fillStyle = rod;
+  g.fillRect(cx - Math.max(1, 0.6 * R), 0, Math.max(2, 1.2 * R), cy);
+  g.fillStyle = "#3a2a0c";
+  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+  const bob = g.createRadialGradient(cx - r * 0.35, cy - r * 0.4, 1, cx, cy, r * 0.94);
+  bob.addColorStop(0, "#fff0b8");
+  bob.addColorStop(0.45, "#d4ae5a");
+  bob.addColorStop(1, "#6a4e1a");
   g.fillStyle = bob;
-  g.beginPath(); g.arc(w / 2, clock.len * R, clock.bob * R, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(cx, cy, r * 0.92, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "rgba(60,40,10,0.55)"; g.lineWidth = Math.max(1, r * 0.06);
+  g.beginPath(); g.arc(cx, cy, r * 0.62, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = "rgba(255,248,220,0.5)";
+  g.beginPath(); g.ellipse(cx - r * 0.38, cy - r * 0.42, r * 0.22, r * 0.12, -0.6, 0, Math.PI * 2); g.fill();
   return c;
 }
 
@@ -1443,21 +1453,59 @@ function paintThings(ctx, L) {
   };
   const shadow = (w) => soft(ctx, 0, 2, w, 7, "0,0,0", 0.7);
   // ── the long-case clock, left of the stairs
+  // A plain modern case in walnut, glazed the whole height: a big dial,
+  // two brass weights, and the pendulum's disc going behind the glass
   if (!L.worn) stand(-1, END - 0.12, wall * 0.26, () => {
-    shadow(40);
-    const g = ctx.createLinearGradient(-26, 0, 26, 0);
-    g.addColorStop(0, "#1c0f08"); g.addColorStop(0.5, "#3e2414"); g.addColorStop(1, "#140a05");
-    ctx.fillStyle = g;
-    ctx.fillRect(-26, -30, 52, 30);
-    ctx.fillRect(-20, -250, 40, 222);
-    ctx.fillRect(-30, -340, 60, 92);
-    ctx.beginPath(); ctx.moveTo(-34, -340); ctx.lineTo(0, -372); ctx.lineTo(34, -340); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#d8cdb0";
-    ctx.beginPath(); ctx.arc(0, -296, 22, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#1a120a"; ctx.lineWidth = 2.4;
-    ctx.beginPath(); ctx.moveTo(0, -296); ctx.lineTo(0, -313); ctx.moveTo(0, -296); ctx.lineTo(9, -290); ctx.stroke();
-    ctx.fillStyle = "#0a0605";
-    ctx.fillRect(-12, -236, 24, 170);
+    shadow(62);
+    const walnut = (x0, x1) => {
+      const g = ctx.createLinearGradient(x0, 0, x1, 0);
+      g.addColorStop(0, "#22130a"); g.addColorStop(0.12, "#6a4426"); g.addColorStop(0.5, "#4e3019"); g.addColorStop(0.9, "#2e1b0e"); g.addColorStop(1, "#160c06");
+      return g;
+    };
+    // the plinth, the case, the cap over it
+    ctx.fillStyle = walnut(-54, 54); ctx.fillRect(-54, -24, 108, 24);
+    ctx.fillStyle = "#0d0805"; ctx.fillRect(-50, -26, 100, 3);
+    ctx.fillStyle = walnut(-50, 50); ctx.fillRect(-50, -364, 100, 340);
+    ctx.fillStyle = walnut(-56, 56); ctx.fillRect(-56, -382, 112, 18);
+    ctx.fillStyle = "rgba(255,226,180,0.22)"; ctx.fillRect(-56, -382, 112, 2.5); ctx.fillRect(-54, -24, 108, 2);
+    // the glazed door: a dark inside, a slim brass frame
+    const gx = 38, gt = -352, gb = -40;
+    const inside = ctx.createLinearGradient(0, gt, 0, gb);
+    inside.addColorStop(0, "#1a120c"); inside.addColorStop(1, "#0a0705");
+    ctx.fillStyle = inside; ctx.fillRect(-gx, gt, gx * 2, gb - gt);
+    ctx.strokeStyle = "#a8853e"; ctx.lineWidth = 2.5; ctx.strokeRect(-gx, gt, gx * 2, gb - gt);
+    // the weights on their chains, either side of the pendulum
+    for (const x of [-25, 25]) {
+      ctx.strokeStyle = "rgba(170,140,80,0.6)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x, -262); ctx.lineTo(x, x < 0 ? -214 : -188); ctx.stroke();
+      const y0 = x < 0 ? -214 : -188;
+      const w = ctx.createLinearGradient(x - 6, 0, x + 6, 0);
+      w.addColorStop(0, "#5a4418"); w.addColorStop(0.4, "#f2d68c"); w.addColorStop(1, "#6a501c");
+      ctx.fillStyle = w; ctx.fillRect(x - 6, y0, 12, 64);
+      ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(x - 6, y0 + 4, 12, 1.5); ctx.fillRect(x - 6, y0 + 58, 12, 1.5);
+    }
+    // the dial: a brass bezel, a pale face, bold batons and slim hands at ten past ten
+    const dy = -304;
+    const bezel = ctx.createLinearGradient(-36, dy - 36, 36, dy + 36);
+    bezel.addColorStop(0, "#f4dc98"); bezel.addColorStop(0.5, "#a8823a"); bezel.addColorStop(1, "#4e3a14");
+    ctx.fillStyle = bezel; ctx.beginPath(); ctx.arc(0, dy, 35, 0, Math.PI * 2); ctx.fill();
+    const face = ctx.createRadialGradient(-8, dy - 10, 2, 0, dy, 31);
+    face.addColorStop(0, "#fbf6ea"); face.addColorStop(1, "#d6ccb4");
+    ctx.fillStyle = face; ctx.beginPath(); ctx.arc(0, dy, 31, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#1c1612"; ctx.lineCap = "round";
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2, r0 = i % 3 ? 24 : 20;
+      ctx.lineWidth = i % 3 ? 2 : 3.6;
+      ctx.beginPath(); ctx.moveTo(Math.sin(a) * r0, dy - Math.cos(a) * r0); ctx.lineTo(Math.sin(a) * 28, dy - Math.cos(a) * 28); ctx.stroke();
+    }
+    const hand = (a, r, w) => { ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(-Math.sin(a) * 4, dy + Math.cos(a) * 4); ctx.lineTo(Math.sin(a) * r, dy - Math.cos(a) * r); ctx.stroke(); };
+    hand((10 + 10 / 60) / 12 * Math.PI * 2, 16, 3.4);
+    hand((10 / 60) * Math.PI * 2, 25, 2.2);
+    ctx.lineCap = "butt";
+    ctx.fillStyle = "#a8823a"; ctx.beginPath(); ctx.arc(0, dy, 2.6, 0, Math.PI * 2); ctx.fill();
+    // the glass: a long cool streak of the moon down it
+    ctx.fillStyle = "rgba(190,210,240,0.07)";
+    ctx.beginPath(); ctx.moveTo(-30, gt); ctx.lineTo(-14, gt); ctx.lineTo(-30, gb); ctx.lineTo(-38, gb); ctx.lineTo(-38, gt + 20); ctx.closePath(); ctx.fill();
     // (its pendulum is the scene's, so that it can swing)
   });
   // ── the coat stand, right of the stairs: a coat and a hat on it

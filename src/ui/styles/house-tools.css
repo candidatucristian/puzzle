@@ -324,3 +324,19 @@ body.in-house #game-container canvas { scale: 1.028; }
 #header-floor .floor-number { font: 400 calc(9.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: #a9a59a; }
 #header-floor .floor-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw;
   font: 400 calc(21px * var(--reading-scale, 1))/1.1 "Architects Daughter", "Special Elite", cursive; color: #f1ece0; }
+
+/* ── the hints, in the drawer the Hint button slides out from the left
+   (hints.js): the puzzle's name, what may help, the hints revealed so far,
+   and the next one to ask for ── */
+#right-sidebar { display: flex; flex-direction: column; }
+#right-sidebar .drawer-heading { margin-bottom: 14px; }
+#current-requirements { display: flex; flex-wrap: wrap; gap: 14px; }
+#current-requirements[hidden] { display: none; }
+#current-requirements .info-badge { border: 0; padding: 0; background: none; color: #aaa9a2; font-size: calc(11px * var(--reading-scale, 1)); }
+#right-sidebar #hint-list { margin: 26px 0 20px; padding-right: 8px; }
+#right-sidebar #hint-list p { font-size: calc(15px * var(--reading-scale, 1)); line-height: 1.75; }
+.hint-footer { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 14px; border-top: 1px solid var(--ui-border, #2a2a27); }
+.hint-footer #btn-next-hint { flex: 0 0 auto; min-height: 40px; padding: 9px 14px; margin-right: -14px; border: 0; border-radius: 4px;
+  background: transparent; color: #deded6; font-size: calc(12px * var(--reading-scale, 1)); }
+.hint-footer #btn-next-hint:hover:not(:disabled) { background: #242423; }
+.hint-footer #btn-next-hint:disabled { visibility: hidden; }

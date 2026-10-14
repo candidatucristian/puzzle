@@ -2,7 +2,8 @@ import Candle from "./Candle.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { paintStudy, paintLetter, releaseStudyArt } from "./study.js";
+import { paintStudy, releaseStudyArt } from "./study.js";
+import { letterOverlay } from "../../shared/envelope.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CIPHER WHEEL"  ·  code: ROTOR  ·  very hard  ·  decipher
@@ -387,67 +388,45 @@ export default class CryptexScene extends BasePuzzleScene {
       padding: 5,
     }));
 
-    // ── reading overlay: the letter, unfolded under the candle ──
-    const ov = this.add.container(0, 0).setDepth(60).setVisible(false);
-    const dark = this.add
-      .rectangle(0, 0, W, H, 0x05030a, 0.78)
-      .setOrigin(0, 0)
-      .setInteractive();
-    dark.on("pointerdown", () => this._closeOverlay());
-    ov.add(dark);
-
-    const bw = Math.min(W * 0.62, 540);
-    const bhh = Math.min(H * 0.62, 430);
-    const oy = H / 2 - bhh / 2;
-    ov.add(this.add.image(W / 2, H / 2, paintLetter(this.textures, bw, bhh)));
-
-    const fs = Math.max(16, Math.round(Math.min(W, H) * 0.028));
-    const cipherText = this.add
-      .text(W / 2, oy + bhh * 0.4, CRYPTEX_CIPHER.join("\n"), {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: fs + "px",
-        color: "#2c2217",
-        align: "center",
-        lineSpacing: 12,
-        letterSpacing: 2,
-      })
-      .setOrigin(0.5)
-      .setAlpha(0.92);
-    ov.add(cipherText);
-
-    const closeHint = this.add
-      .text(W / 2, oy + bhh - 18, "click anywhere to put it down", {
-        fontFamily: '"Special Elite", monospace',
-        fontSize: "12px",
-        color: "#6b5a44",
-      })
-      .setOrigin(0.5)
-      .setAlpha(0.9);
-    ov.add(closeHint);
-
-    this._overlay = ov;
+    // ── reading overlay: the letter out of the envelope, unfolded (the
+    // house's letter: shared/envelope.js), the cipher written on it ──
+    this._letter = letterOverlay(this, W, H, {
+      key: "cx_letter",
+      fill: (ov, box) => {
+        const fs = Math.max(16, Math.round(Math.min(W, H) * 0.028));
+        ov.add(
+          this.add
+            .text(W / 2, box.y + box.h * 0.4, CRYPTEX_CIPHER.join("\n"), {
+              fontFamily: '"Special Elite", monospace',
+              fontSize: fs + "px",
+              color: "#2c2217",
+              align: "center",
+              lineSpacing: 12,
+              letterSpacing: 2,
+            })
+            .setOrigin(0.5)
+            .setAlpha(0.92),
+        );
+      },
+      onOpen: () => {
+        this._overlayOpen = true;
+        this._draggingWheel = false;
+      },
+      onClose: () => {
+        this._overlayOpen = false;
+      },
+    });
+    this._overlay = this._letter.container;
   }
 
   _openOverlay() {
     if (this._overlayOpen) return;
-    this._overlayOpen = true;
-    this._draggingWheel = false;
-    this.services.audio.playClick(this);
-    this._overlay.setVisible(true).setAlpha(0);
-    this.tweens.add({ targets: this._overlay, alpha: 1, duration: 220 });
+    this._letter.open();
   }
 
   _closeOverlay() {
     if (!this._overlayOpen) return;
-    this.tweens.add({
-      targets: this._overlay,
-      alpha: 0,
-      duration: 180,
-      onComplete: () => {
-        this._overlay.setVisible(false);
-        this._overlayOpen = false;
-      },
-    });
+    this._letter.close();
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

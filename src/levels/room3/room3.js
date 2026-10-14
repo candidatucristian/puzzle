@@ -1,4 +1,5 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
+import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
 import { paintKey } from "../../shared/keyArt.js";
 import { writingDesk, greenLamp, candle, gamesTable } from "../house/furniture.js";
 import {
@@ -10,7 +11,7 @@ import {
  *  home from the sea kept what he had brought back. Seen from just inside
  *  the door. On a table to the left a ship in a bottle — a big one, a
  *  three-master under full sail on a painted sea, the bottle lying in its
- *  cradle — and a brass ship's lantern burning beside it. In the middle of
+ *  cradle — and a red storm lantern burning beside it. In the middle of
  *  the room, in the moon from the window, a games table with a chess game
  *  left unfinished on it and a candle at its corner. To the right a writing
  *  desk: an old mobile telephone standing on it, its little green screen
@@ -253,7 +254,7 @@ function paintDesk(ctx, L) {
   if (on) soft(ctx, p.x, p.y - h * 0.72, 12 * s, 10 * s, "120,255,120", 0.2, "lighter");
 }
 
-// The oak table under the bottle, and the brass ship's lantern beside it.
+// The oak table under the bottle, and the red storm lantern beside it.
 function paintBottleTable(ctx, L) {
   const { Q } = L;
   const t = L.table, b = L.bottle, on = L.on.ship;
@@ -265,7 +266,7 @@ function paintBottleTable(ctx, L) {
   block(ctx, L, { x0: t.x0 + 3, x1: t.x1 - 3, d0: t.d0 + 1, d1: t.d1 - 1, y0: t.h - 14, y1: t.h - 4 }, oak);
   block(ctx, L, { ...t, x0: t.x0 - 3, x1: t.x1 + 3, d0: t.d0 - 3, d1: t.d1 + 3, y0: t.h - 4, y1: t.h }, oak);
 
-  // ── the lantern: a brass cage round a glass, a ring to hang it by
+  // ── the lantern: a hurricane lamp, red tin and a glass globe
   const ln = L.lantern, lp = Q(ln.x, ln.y, ln.d), u = lp.s;
   if (on) {
     const pool = Q(ln.x + 20, t.h, ln.d);
@@ -276,25 +277,8 @@ function paintBottleTable(ctx, L) {
     ctx.restore();
     soft(ctx, lp.x, lp.y - 13 * u, 150 * u, 120 * u, WARM, 0.15, "lighter");
   }
-  const brass = ctx.createLinearGradient(lp.x - 5 * u, 0, lp.x + 5 * u, 0);
-  brass.addColorStop(0, "#2a1e0c"); brass.addColorStop(0.4, on ? "#d0aa58" : "#6e5a2c"); brass.addColorStop(1, "#1e1408");
-  ctx.fillStyle = "#120c05";
-  ctx.beginPath(); ctx.ellipse(lp.x, lp.y, 5.6 * u, 1.7 * u, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = brass;
-  ctx.fillRect(lp.x - 5 * u, lp.y - 4 * u, 10 * u, 3.6 * u);
-  ctx.fillRect(lp.x - 4.4 * u, lp.y - 21 * u, 8.8 * u, 2.4 * u);
-  ctx.beginPath(); ctx.moveTo(lp.x - 4.4 * u, lp.y - 21 * u); ctx.lineTo(lp.x + 4.4 * u, lp.y - 21 * u); ctx.lineTo(lp.x + 1.6 * u, lp.y - 25 * u); ctx.lineTo(lp.x - 1.6 * u, lp.y - 25 * u); ctx.closePath(); ctx.fill();
-  const gl = ctx.createRadialGradient(lp.x, lp.y - 11 * u, 0.4 * u, lp.x, lp.y - 11 * u, 8 * u);
-  gl.addColorStop(0, on ? "#fff6d8" : "#2a2c30");
-  gl.addColorStop(0.5, on ? "#ffcf82" : "#1c1e22");
-  gl.addColorStop(1, on ? "#b8702a" : "#101114");
-  ctx.fillStyle = gl;
-  ctx.fillRect(lp.x - 3.6 * u, lp.y - 18.6 * u, 7.2 * u, 14.6 * u);
-  ctx.strokeStyle = on ? "#b89448" : "#5a4a26";
-  ctx.lineWidth = Math.max(0.8, 0.5 * u);
-  for (const dx of [-3.8, 0, 3.8]) { ctx.beginPath(); ctx.moveTo(lp.x + dx * u, lp.y - 18.6 * u); ctx.lineTo(lp.x + dx * u, lp.y - 4 * u); ctx.stroke(); }
-  ctx.beginPath(); ctx.arc(lp.x, lp.y - 27 * u, 2.2 * u, 0, Math.PI * 2); ctx.stroke();
-  if (on) soft(ctx, lp.x, lp.y - 11 * u, 30 * u, 30 * u, WARM, 0.45, "lighter");
+  soft(ctx, lp.x, lp.y + 0.5 * u, 9 * u, 2.6 * u, "0,0,0", 0.6);
+  paintHurricaneLantern(ctx, lp.x, lp.y, u, on);
 
   // The high-resolution bottle itself is a separate scene image, so the
   // approach keeps its rigging and glass crisp. Its contact shadow belongs
