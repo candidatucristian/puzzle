@@ -294,6 +294,7 @@ const metadata = [
     "id": "tapcode",
     "key": "TapCode",
     "name": "Marks in Stone",
+    "floor": "Basement",
     "summary": "Down in the cellar, someone has cut small marks into a smooth stone in the wall.",
     "code": "ESCAPE",
     "altCode": null,

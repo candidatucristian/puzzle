@@ -6,10 +6,8 @@ import { waxSeal } from './seal.js';
 // each seal sits a little askew, never twice the same way
 const tilt = n => `${((n * 37) % 23) - 11}deg`;
 
-export function mountProgress(scope, { game, levels, storage, navigate, canNavigate }) {
+export function mountProgress(scope, { game, levels, storage }) {
   const grid = document.getElementById('levels-grid');
-  const previous = document.getElementById('room-previous');
-  const next = document.getElementById('room-next');
   const previews = new RoomPreviewStore(storage, levels.definitions);
   const tiles = [];
   let captureTimer, captureGeneration = 0, shown = false;
@@ -17,12 +15,6 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
   const sealedRooms = new Set();
   grid.replaceChildren();
   grid.setAttribute('role', 'list');
-  scope.on(previous, 'click', () => {
-    if (canNavigate() && levels.currentIndex > 0) navigate(levels.currentIndex - 1);
-  });
-  scope.on(next, 'click', () => {
-    if (canNavigate() && levels.currentIndex < levels.unlockedIndex) navigate(levels.currentIndex + 1);
-  });
   levels.definitions.forEach((level, index) => {
     // a line of the index, not a control: it says what is here and whether
     // it is solved; the way to a puzzle is the thing itself, in its room
@@ -128,11 +120,17 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
     document.getElementById('room-progress').hidden = near.indexes.length === 0;
     document.getElementById('index-heading').textContent = near.name;
     document.getElementById('progress-count').textContent = `${here} / ${near.indexes.length} solved`;
-    const currentLevel = levels.definitions[levels.currentIndex];
-    const romanLevel = toRoman(levels.currentIndex + 1);
-    // in the house, the header names the place stood in, not a puzzle
-    document.getElementById('header-room-name').textContent = levels.place ? levels.place.name : currentLevel.name;
-    document.getElementById('header-progress').textContent = levels.place ? '' : romanLevel;
+    // the floor, in the middle of the header: its number small over its name, written
+    const floor = document.getElementById('header-floor');
+    const storey = `Floor ${String(levels.storey).padStart(2, '0')}`;
+    if (floor.dataset.shown !== `${storey} ${levels.floor}`) {
+      floor.dataset.shown = `${storey} ${levels.floor}`;
+      floor.replaceChildren(
+        Object.assign(document.createElement('span'), { className: 'floor-number', textContent: storey }),
+        Object.assign(document.createElement('span'), { className: 'floor-name', textContent: levels.floor }));
+    }
+    floor.setAttribute('aria-label', `Current floor: ${storey}, ${levels.floor}`);
+    centreFloor();
     // the way back: out of a puzzle to where it was found, out of a room to the hall
     const leave = document.getElementById('btn-leave'), back = levels.back;
     // from the hall, back is outside
@@ -145,12 +143,6 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       leave.setAttribute('aria-label', `Back to ${back.name.replace(/^The /, 'the ')}`);
       leave.dataset.tip = `${leave.getAttribute('aria-label')} (Esc)`;
     }
-    document.getElementById('header-room').setAttribute('aria-label', `Current level: ${currentLevel.name}, level ${romanLevel}`);
-    previous.disabled = levels.currentIndex <= 0;
-    next.disabled = levels.currentIndex >= levels.unlockedIndex;
-    next.setAttribute('aria-label', `Next room${next.disabled ? ' (locked)' : ''}`);
-    next.title = next.disabled ? 'Solve this room to unlock the next one' : 'Next room';
-    previous.setAttribute('aria-label', `Previous room${previous.disabled ? ' (first room)' : ''}`);
     const meter = document.getElementById('room-progress'); meter.max = near.indexes.length; meter.value = here;
     const save = document.getElementById('save-status');
     save.textContent = levels.saved ? 'Saved on this device' : 'Progress kept for this session only';
@@ -200,6 +192,20 @@ export function mountProgress(scope, { game, levels, storage, navigate, canNavig
       else game.renderer.snapshot(save);
     }
     captureTimer = scope.later(capture, 1800);
+  }
+  // the floor's name stands over the middle of the picture, not of the window
+  function centreFloor() {
+    const floor = document.getElementById('header-floor'), picture = document.getElementById('game-viewport');
+    const bar = floor?.offsetParent;
+    if (!floor || !picture || !bar) return;
+    const box = picture.getBoundingClientRect(), barBox = bar.getBoundingClientRect();
+    if (box.width) floor.style.left = `${box.left + box.width / 2 - barBox.left}px`;
+  }
+  scope.on(window, 'resize', centreFloor);
+  if (window.ResizeObserver) {
+    const watch = new ResizeObserver(centreFloor);
+    watch.observe(document.getElementById('game-viewport'));
+    scope.add(() => watch.disconnect());
   }
   scope.add(levels.subscribe(() => { render(); scheduleCapture(); }));
   scope.add(() => { captureGeneration++; });

@@ -13,7 +13,7 @@
  *  its list while the player stands there: where they are, and what there
  *  is to do — never how. No scene code lives here. */
 export const PLACES = Object.freeze([
-  { key: "Hall", name: "The Hall", back: null, holds: [], doors: ["Study", "Room2", "Room3", "Room4", "Room5", "Room6"],
+  { key: "Hall", name: "The Botany Hall", floor: "The Botany", storey: 1, back: null, holds: [], doors: ["Study", "Room2", "Room3", "Room4", "Room5", "Room6"],
     story: [
       "The manor has been shut up for years, and everyone who lived in it left something behind.",
       "Six doors open off this hall, and most of them are locked tonight. Each room keeps the key to another.",
@@ -45,9 +45,9 @@ export const PLACES = Object.freeze([
   // Up the stairs from the hall: the upper hall. Its five doors — VII to XI —
   // have nothing behind them yet. Its puzzle is not gone into, as a room's
   // are: it `plays` there, in the hall itself, and is answered there.
-  { key: "Upper", name: "The Upper Hall", back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: [null, null, null, null, null], first: 7,
+  { key: "Upper", name: "The Chemistry Hall", floor: "The Chemistry", storey: 2, back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: [null, null, null, null, null], first: 7,
     story: [
-      "The floor above has been shut up longer than the one below. The paper is coming off the walls, and nobody has swept.",
+      "The chemist's floor: a tiled passage lined with reagent cupboards, old glassware and the apparatus of experiments left unfinished. Copper pipes run above the doors.",
       "One light still works up here, after a fashion. It is trying to say something.",
     ] },
   // Up again, by the stairs at the side of the upper hall: the top floor,
@@ -55,9 +55,9 @@ export const PLACES = Object.freeze([
   // behind them yet; at its window the telescope, which is looked through
   // as a room's puzzles are gone to; and on the left an archway with an iron
   // gate across it, and beyond the gate a passage with three doors more.
-  { key: "Top", name: "The Top Floor", back: "Upper", holds: ["telescope"], doors: [null, null, null], first: 12,
+  { key: "Top", name: "The Physics Hall", floor: "The Physics", storey: 3, back: "Upper", holds: ["telescope"], doors: [null, null, null], first: 12,
     story: [
-      "The top of the house: a round room under the dome, its doors set about the wall. Nobody has been up here in years.",
+      "The physicist's floor: a quiet observatory under a celestial dome. A brass armillary and a small pendulum keep watch among the old instruments.",
       "Somebody carried a telescope all this way and set it at the window. It is still pointed at something.",
       "On the left an iron gate shuts off a passage. It will not be the first thing to open up here.",
     ] },

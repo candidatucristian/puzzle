@@ -1,5 +1,6 @@
 import RoomScene from "../house/RoomScene.js";
 import { layoutRoom4, paintRoom4, releaseRoom4Art } from "./room4.js";
+import { noiseBurst } from "../../shared/paint.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The counting room: the fourth room off the hall (see house/RoomScene.js for
@@ -49,6 +50,20 @@ export default class Room4Scene extends RoomScene {
       const lamp = glow(at, a);
       this.ambientTween({ targets: lamp, alpha: { from: a * 0.85, to: a * 1.2 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
+  }
+
+  // The top drawer, shut until it is pulled: it slides out of the chest, on
+  // its runners, and knocks to a stop.
+  open(thing, L, k, animate) {
+    const frames = k.drawer, last = frames.length - 1;
+    const drawer = this.add.image(L.drawerBox.x, L.drawerBox.y, frames[animate ? 0 : last]).setOrigin(0, 0).setDepth(-9);
+    if (!animate) return 0;
+    const ms = 650;
+    const pull = { t: 0 };
+    this.tweens.add({ targets: pull, t: 1, duration: ms, ease: "Cubic.easeOut", onUpdate: () => drawer.setTexture(frames[Math.round(pull.t * last)]) });
+    noiseBurst(this, { dur: ms / 1000, freq: 520, q: 0.9, gain: 0.32, env: (x) => Math.min(1, x / 0.08) * (1 - x) ** 1.6 * (0.75 + 0.25 * Math.sin(x * 90)) });
+    this.time.delayedCall(ms - 90, () => noiseBurst(this, { dur: 0.14, type: "lowpass", freq: 220, gain: 0.9, env: (x) => (1 - x) ** 3 }));
+    return ms;
   }
 
   tick(t) {

@@ -26,7 +26,11 @@ import { chime } from "../../shared/paint.js";
  *    tick(t)                optional: each frame, t in seconds
  *    dustIn(L)              optional: { x, y, width, height } the moonbeam's
  *                           dust turns in
- *    chestTint(L)           optional: a tint for the chest in a darkened room */
+ *    chestTint(L)           optional: a tint for the chest in a darkened room
+ *    open(thing, L, k, animate)
+ *                           for a thing with a `first`: shows it opened —
+ *                           animated or at once — and returns how long that
+ *                           takes, in ms */
 export default class RoomScene extends BasePuzzleScene {
   /** `place` is the room's key in the house (shared/house.js), and its scene's. */
   constructor(place) {
@@ -37,6 +41,8 @@ export default class RoomScene extends BasePuzzleScene {
   create(data) {
     this.beginScene();
     this._sparkles = [];
+    // what has been opened up in here: whatever was gone into is still open
+    this._opened = new Set(data?.from?.level ? [data.from.level] : []);
     this._build(this.cameras.main.width, this.cameras.main.height);
     // come back from one of the room's puzzles: draw back from the thing it was
     const left = this._L.things.find((thing) => thing.level === data?.from?.level);
@@ -66,22 +72,37 @@ export default class RoomScene extends BasePuzzleScene {
         .setDepth(-8);
     this.live?.(L, k, glow);
 
-    // the things that open puzzles; one already solved is only furniture
+    // the things that open puzzles; one already solved is only furniture. A
+    // thing with a `first` (a drawer, shut) is opened by a first click, and
+    // only then gone into
     for (const thing of L.things) {
       if (levels.isCompleted(levels.indexOf(thing.level))) continue;
-      const shape = new Phaser.Geom.Polygon(thing.quad.flatMap((p) => [p.x, p.y]));
+      const shut = () => thing.first && !this._opened.has(thing.level);
+      const now = () => (shut() ? thing.first : thing);
+      if (!shut() && thing.first) this.open(thing, L, k, false);
       const zone = this.add
         .zone(0, 0, W, H)
         .setOrigin(0, 0)
-        .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
-        .setData("interactionLabel", thing.label)
+        .setInteractive({ hitArea: new Phaser.Geom.Polygon(now().quad.flatMap((p) => [p.x, p.y])), hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
+        .setData("interactionLabel", now().label)
         .setDepth(5);
       zone.on("pointerdown", () => {
+        if (zone.getData("opening")) return;
+        if (shut()) {
+          // open it, and let it be gone into once it is open
+          this._opened.add(thing.level);
+          zone.setData("opening", true);
+          this.time.delayedCall(this.open(thing, L, k, !this.reducedMotion), () => {
+            zone.input.hitArea = new Phaser.Geom.Polygon(thing.quad.flatMap((p) => [p.x, p.y]));
+            zone.setData("interactionLabel", thing.label).setData("opening", false);
+          });
+          return;
+        }
         // walk up to it, and ask for its puzzle
         zoomInto(this, thing.box);
         this.game.events.emit(HOUSE_GO, { level: thing.level });
       });
-      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box }));
+      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => now().box }));
     }
 
     if (L.chest) this._setChest(L, k);

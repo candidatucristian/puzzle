@@ -35,6 +35,29 @@ export class LevelManager {
   /** Where in the house the player stands, or null while at a puzzle. */
   get place() { return this.#place; }
 
+  /** The current floor, inherited from the room or hall a puzzle belongs to. */
+  get floor() {
+    const level = this.definitions[this.#currentIndex];
+    if (!this.#place && level.floor) return level.floor;
+    return this.#floorPlace()?.floor ?? "The Botany";
+  }
+
+  /** Which floor that is, counted up from the ground: 1, 2, 3. */
+  get storey() {
+    return this.#floorPlace()?.storey ?? 1;
+  }
+
+  // the place that names the floor the player is on: where they stand, or the
+  // place their puzzle was found in, or the first going back from it that does
+  #floorPlace() {
+    let place = this.#place ?? this.homeOf(this.#currentIndex);
+    while (place) {
+      if (place.floor) return place;
+      place = this.#places.find((item) => item.key === place.back);
+    }
+    return this.#places[0] ?? null;
+  }
+
   /** True where the place stood in is itself a puzzle's stage, and that
    *  puzzle is not solved yet: there is something to answer here. */
   get answering() {

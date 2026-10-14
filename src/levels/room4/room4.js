@@ -19,7 +19,7 @@ import {
  *  On the left wall hangs a painting in a dull gilt frame —
  *  a street at night, and a pedestrian crossing — under a picture light of
  *  its own. Under the window stands a chest of three drawers, the top one
- *  pulled out, old tickets in it, and a candle on the chest.
+ *  shut until it is pulled out, old tickets in it, and a candle on the chest.
  *
  *  Three puzzles are found here — the cards, the painting, the drawer; in
  *  the room they are only themselves, small, enough to know them by. Each
@@ -67,7 +67,7 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
   const p = (L.painting = { d0: 448, d1: 582, y0: 120 });
   p.y1 = p.y0 + ((p.d1 - p.d0 - 10) * 9) / 16 + 10;
   p.quad = [Q(-hx, p.y1, p.d0), Q(-hx, p.y1, p.d1), Q(-hx, p.y0, p.d1), Q(-hx, p.y0, p.d0)];
-  // the chest of drawers under the window, its top drawer pulled out, a candle on it
+  // the chest of drawers under the window, its top drawer (as it is when pulled out), a candle on it
   const cb = (L.cabinet = { x0: 0.3 * hx, x1: 0.54 * hx, d0: 554, d1: 598, h: 88 });
   const dr = (L.drawer = { x0: cb.x0 + 3, x1: cb.x1 - 3, y0: cb.h - 26, y1: cb.h - 6, d0: cb.d0 - 16, d1: cb.d0 });
   L.cabinetCandle = { x: cb.x0 + 13, y: cb.h, d: 574 };
@@ -78,6 +78,14 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
     thingAt("crossing", "Look at the painting", p.quad),
     thingAt("station", "Look in the drawer", [Q(dr.x0, dr.y1 + 4, dr.d1), Q(dr.x1, dr.y1 + 4, dr.d1), Q(dr.x1, dr.y0, dr.d0), Q(dr.x0, dr.y0, dr.d0)]),
   ];
+  // the drawer is shut until it has been pulled out (see Room4Scene)
+  L.things[2].first = thingAt("station", "Open the drawer", [Q(dr.x0, dr.y1, cb.d0), Q(dr.x1, dr.y1, cb.d0), Q(dr.x1, dr.y0, cb.d0), Q(dr.x0, dr.y0, cb.d0)]);
+  // and the patch of the screen it comes out over
+  const out = [dr.x0, dr.x1].flatMap((x) => [dr.y0, dr.y1].flatMap((y) => [Q(x, y, dr.d0), Q(x, y, dr.d1)]));
+  const xs = out.map((p) => p.x), ys = out.map((p) => p.y);
+  L.drawerBox = { x: Math.floor(Math.min(...xs) - 3), y: Math.floor(Math.min(...ys) - 3) };
+  L.drawerBox.width = Math.ceil(Math.max(...xs) + 3) - L.drawerBox.x;
+  L.drawerBox.height = Math.ceil(Math.max(...ys) + 3) - L.drawerBox.y;
   // what burns, for the scene to keep alive
   const dp = Q(L.deskLamp.x, L.deskLamp.y + 22, L.deskLamp.d);
   const pp = Q((b.x0 + b.x1) / 2, b.y1 + 8, BACK - 9);
@@ -120,11 +128,12 @@ export function paintRoom4(scene, L) {
   addCanvasTexture(t, K.shut, paintChest(L, false));
   addCanvasTexture(t, K.open, paintChest(L, true));
   addCanvasTexture(t, K.key, paintKey());
-  return { keys: K };
+  if (L.on.drawer) DRAWER.forEach((key, i) => addCanvasTexture(t, key, drawerFrame(L, ((L.drawer.d1 - L.drawer.d0) * (i + 1)) / DRAWER.length)));
+  return { keys: { ...K, drawer: DRAWER } };
 }
 
 export function releaseRoom4Art(textures) {
-  for (const key of Object.values(K)) if (textures.exists(key)) textures.remove(key);
+  for (const key of [...Object.values(K), ...DRAWER]) if (textures.exists(key)) textures.remove(key);
 }
 
 // The board: a long strip of cork in an oak frame, six slots ruled on it in
@@ -354,11 +363,38 @@ function paintCabinet(ctx, L) {
     face(c.x0 + 3, y0, c.x1 - 3, y0 + 0.7, c.d0, "rgba(255,206,160,0.1)");
     knobs((y0 + y1) / 2, c.d0);
   }
-  // the top one: the dark it has come out of, the drawer, what is in it
+  // the top one: shut while its puzzle waits, out once it has been solved
+  topDrawer(ctx, L, on ? 0 : dr.d1 - dr.d0);
+  candle(ctx, L, L.cabinetCandle, on);
+}
+
+// The top drawer, `pull` centimetres out of the chest: shut, or the dark it
+// has come out of, the drawer, and the old tickets in it.
+function topDrawer(ctx, L, pull) {
+  const { Q } = L;
+  const c = L.cabinet, on = L.on.drawer;
+  const dr = { ...L.drawer, d0: c.d0 - pull, d1: c.d0 };
+  const face = (x0, y0, x1, y1, d, col) => fillPoly(ctx, [Q(x0, y1, d), Q(x1, y1, d), Q(x1, y0, d), Q(x0, y0, d)], col);
+  const knobs = (y, d) => {
+    for (const k of [0.24, 0.76]) {
+      const q = Q(c.x0 + (c.x1 - c.x0) * k, y, d);
+      ctx.fillStyle = "#120c05";
+      ctx.beginPath(); ctx.arc(q.x, q.y, 2.3 * q.s, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = on ? "#b08c44" : "#5e5028";
+      ctx.beginPath(); ctx.arc(q.x - 0.4 * q.s, q.y - 0.4 * q.s, 1.6 * q.s, 0, Math.PI * 2); ctx.fill();
+    }
+  };
+  if (pull <= 0) {
+    face(dr.x0, dr.y0, dr.x1, dr.y1, c.d0, "#2e1b0f");
+    face(dr.x0, dr.y1 - 0.9, dr.x1, dr.y1, c.d0, "rgba(4,2,1,0.8)");
+    face(dr.x0, dr.y0, dr.x1, dr.y0 + 0.7, c.d0, "rgba(255,206,160,0.1)");
+    knobs((dr.y0 + dr.y1) / 2, c.d0);
+    return;
+  }
   face(dr.x0, dr.y0, dr.x1, dr.y1 + 1, c.d0, "#040302");
   block(ctx, L, dr, { side: "#1c1109", top: "#0b0705", front: "#2e1b0f" });
   const n = 8, step = (dr.x1 - dr.x0 - 6) / n;
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; pull > 4 && i < n; i++) {
     const x = dr.x0 + 3 + i * step;
     const points = [Q(x, dr.y1, dr.d0 + 2.5), Q(x + step, dr.y1, dr.d0 + 2.5), Q(x + step, dr.y1, dr.d1 - 1), Q(x, dr.y1, dr.d1 - 1)];
     fillPoly(ctx, points, on ? "#c7b994" : "#46473f");
@@ -370,7 +406,30 @@ function paintCabinet(ctx, L) {
   }
   face(dr.x0, dr.y1 - 0.8, dr.x1, dr.y1, dr.d0, "rgba(255,206,160,0.16)");
   knobs((dr.y0 + dr.y1) / 2, dr.d0);
-  candle(ctx, L, L.cabinetCandle, on);
+}
+
+// The drawer coming out, a frame at a time, each only the patch of the
+// screen it covers — lit, darkened and grained as the room is under it.
+const DRAWER = Array.from({ length: 10 }, (_, i) => "r4_drawer_" + i);
+function drawerFrame(L, pull) {
+  const b = L.drawerBox;
+  const c = makeCanvas(b.width, b.height), ctx = c.getContext("2d");
+  ctx.translate(-b.x, -b.y);
+  topDrawer(ctx, L, pull);
+  // the candle's light on its foot spills on to the drawer's front
+  const lit = makeCanvas(b.width, b.height), g = lit.getContext("2d");
+  const cn = L.Q(L.cabinetCandle.x, L.cabinetCandle.y, L.cabinetCandle.d);
+  g.translate(-b.x, -b.y);
+  soft(g, cn.x, cn.y, 44 * cn.s, 12 * cn.s, WARM, 0.3);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = "destination-in";
+  g.drawImage(c, 0, 0);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = "lighter"; ctx.drawImage(lit, 0, 0); ctx.restore();
+  ctx.globalCompositeOperation = "source-atop";
+  paintGloom(ctx, L);
+  vignette(ctx, L.W, L.H, 0.7);
+  grain(ctx, L.W, L.H, 0.035);
+  return c;
 }
 
 

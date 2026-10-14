@@ -17,17 +17,17 @@ const W = 1000, H = 610;
 
 // the plan, in the map's own units; each floor drawn in its own column
 const PLAN = [
-  { title: "Ground Floor", roman: "I", x: 10, hall: { key: "Hall", x: 132, y: 130, w: 56, h: 340 },
+  { title: "The Botany", roman: "I", x: 10, hall: { key: "Hall", x: 132, y: 130, w: 56, h: 340 },
     rooms: [
       { key: "Study", n: 1, x: 40, y: 357, w: 92, h: 113, side: -1 }, { key: "Room2", n: 2, x: 40, y: 243, w: 92, h: 114, side: -1 }, { key: "Room3", n: 3, x: 40, y: 130, w: 92, h: 113, side: -1 },
       { key: "Room4", n: 4, x: 188, y: 357, w: 92, h: 113, side: 1 }, { key: "Room5", n: 5, x: 188, y: 243, w: 92, h: 114, side: 1 }, { key: "Room6", n: 6, x: 188, y: 130, w: 92, h: 113, side: 1 },
     ], stairs: { x: 138, y: 136, w: 44, h: 48, dir: "up" }, entrance: true },
-  { title: "First Floor", roman: "II", x: 330, hall: { key: "Upper", x: 132, y: 130, w: 56, h: 340 },
+  { title: "The Chemistry", roman: "II", x: 330, hall: { key: "Upper", x: 132, y: 130, w: 56, h: 340 },
     rooms: [
       { n: 7, x: 40, y: 357, w: 92, h: 113, side: -1 }, { n: 8, x: 40, y: 243, w: 92, h: 114, side: -1 }, { n: 9, x: 40, y: 130, w: 92, h: 113, side: -1 },
       { n: 10, x: 188, y: 243, w: 92, h: 114, side: 1 }, { n: 11, x: 188, y: 130, w: 92, h: 113, side: 1 },
     ], stairs: { x: 194, y: 363, w: 80, h: 101, dir: "up", well: true }, well: { x: 188, y: 357, w: 92, h: 113 }, landing: { x: 138, y: 136, w: 44, h: 48 } },
-  { title: "Top Floor", roman: "III", x: 650, round: { key: "Top", cx: 180, cy: 345, r: 78 },
+  { title: "The Physics", roman: "III", x: 650, round: { key: "Top", cx: 180, cy: 345, r: 78 },
     rooms: [
       { n: 12, x: 200, y: 165, w: 62, h: 62, door: [231, 227, "h"], neck: { x: 223, y: 227, w: 16, h: 62, along: "v", open: [225, 276, 12, 22] } },
       { n: 13, x: 270, y: 262, w: 52, h: 58, door: [270, 302, "v"], neck: { x: 245, y: 294, w: 25, h: 16, along: "h", open: [238, 296, 16, 12] } },

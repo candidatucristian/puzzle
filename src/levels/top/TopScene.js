@@ -16,7 +16,8 @@ import { layoutRotunda, paintRotunda, releaseRotundaArt } from "./rotunda.js";
 // gone to ruin, with three doors more; a click goes down it.
 //
 // The room is painted (rotunda.js). Live over it: the candles, the light
-// under a door that calls, dust in the moonlight, the glints.
+// under a door that calls, dust in the moonlight, the glints, and the slow
+// rotation of the armillary's inner rings.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class TopScene extends BasePuzzleScene {
@@ -40,16 +41,18 @@ export default class TopScene extends BasePuzzleScene {
     else if (data?.from?.place === "TopHall") zoomOutFrom(this, this._L.passage.box);
 
     this._onResize = ({ width, height }) => {
+      const phase = this._armillary?.phase ?? 0;
       this._teardown();
-      this._build(width, height);
+      this._build(width, height, phase);
     };
     this.listenToResize(this._onResize);
     this.cameras.main.fadeIn(800, 0, 0, 0);
   }
 
-  _build(W, H) {
+  _build(W, H, armillaryPhase = 0) {
     const L = (this._L = layoutRotunda(W, H));
-    const k = paintRotunda(this, L).keys;
+    const art = paintRotunda(this, L, armillaryPhase), k = art.keys;
+    this._armillary = art.armillary;
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
 
     // the candles in the sconces, never quite still
@@ -152,8 +155,9 @@ export default class TopScene extends BasePuzzleScene {
     this.game.events.emit(HOUSE_GO, where);
   }
 
-  update(time) {
+  update(time, delta) {
     if (!this._L || !this.ambientMotion || this.reducedMotion) return;
+    this._armillary?.update(delta);
     const t = time / 1000;
     this._candles.forEach((g, i) => g.setAlpha(0.17 + 0.04 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.03));
   }
@@ -165,6 +169,7 @@ export default class TopScene extends BasePuzzleScene {
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
     releaseRotundaArt(this.textures);
+    this._armillary = null;
     this._L = null;
   }
 
@@ -175,6 +180,7 @@ export default class TopScene extends BasePuzzleScene {
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseRotundaArt(this.textures);
+    this._armillary = null;
     this._L = null;
   }
 }

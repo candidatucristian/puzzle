@@ -723,8 +723,7 @@
 /* In the hall there is no room to answer for: the console and the room
    notes wait, without the layout moving. */
 body.in-house #input-area,
-body.in-house #right-sidebar-wrapper,
-body.in-place .room-step-button { visibility: hidden; }
+body.in-house #right-sidebar-wrapper { visibility: hidden; }
 /* The index of a place only tells: what is here, and whether it is solved. */
 .level-btn[hidden] { display: none; }
 .level-btn { cursor: default; pointer-events: none; }
@@ -746,7 +745,7 @@ body.in-place .room-step-button { visibility: hidden; }
 #btn-leave .leave-arrow { transition: transform .25s cubic-bezier(.3, 1.5, .5, 1); }
 #btn-leave .leave-words { display: grid; gap: 1px; min-width: 0; }
 #btn-leave .leave-to { font: 400 calc(9.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .18em; text-transform: uppercase; color: #a9a59a; }
-#btn-leave .leave-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(19px * var(--reading-scale, 1))/1.15 "Architects Daughter", "Special Elite", cursive; color: #f1ece0; }
+#btn-leave .leave-name { overflow-wrap: anywhere; font: 400 calc(19px * var(--reading-scale, 1))/1.1 "Architects Daughter", "Special Elite", cursive; color: #f1ece0; }
 #btn-leave:hover, #btn-leave:focus-visible { background: #ffffff08; }
 #btn-leave:hover .leave-frame .ink-white, #btn-leave:focus-visible .leave-frame .ink-white { stroke: #f6f2e8; }
 #btn-leave:hover .leave-arrow, #btn-leave:focus-visible .leave-arrow { transform: translateX(-3px); }

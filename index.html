@@ -62,17 +62,7 @@
     </div>
 
     <header id="compact-bar" class="app-header">
-      <div class="room-navigation" aria-label="Room navigation">
-        <button id="room-previous" class="room-step-button" type="button" aria-label="Previous room" title="Previous room">
-          <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>
-        </button>
-        <div id="header-room" aria-label="Current room">
-          <span id="header-room-name"></span><span id="header-progress" class="header-count"></span>
-        </div>
-        <button id="room-next" class="room-step-button" type="button" aria-label="Next room" title="Next room">
-          <svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg>
-        </button>
-      </div>
+      <div id="header-floor" role="status" aria-label="Current floor"></div>
       <div class="header-actions">
         <div class="volume-widget">
           <button id="vol-icon-ui" class="icon-button" type="button" aria-label="Mute all audio"><svg class="ui-icon" data-audio-icon aria-hidden="true"><use href="#icon-sound"/></svg></button>
@@ -211,7 +201,6 @@
       <div id="game-viewport">
         <div id="game-container"></div>
         <div id="film-grain" aria-hidden="true"></div>
-        <p id="interaction-cue" hidden></p>
         <span id="interaction-pulse" aria-hidden="true"></span>
       </div>
 

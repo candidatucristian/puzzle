@@ -2,6 +2,7 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
 import { gloom } from "../house/roomKit.js";
 import { paintNightWindow } from "../hall/hall.js";
 import { paintPassage } from "./doorway.js";
+import { paintPlanetarium, paintArmillaryBase, createArmillaryArt, paintPendulum } from "./observatory.js";
 
 /** The top floor of the manor: not a passage but a round room under a dome,
  *  and of a piece with the halls below — the same drab striped paper over
@@ -16,8 +17,10 @@ import { paintPassage } from "./doorway.js";
  *  — the very one its puzzle is played at: wide and low-arched, its sheer
  *  curtains tied back, the moon over the valley — and before it the
  *  telescope on its tripod. The floor is parquet, laid in zigzag, dull now
- *  and dusty. Above the cornice the dome begins: plaster, stained and
- *  cracked, between dark ribs. At our right hand, the stairs we came up by:
+ *  and dusty. Above the cornice a celestial chart follows the blue dome,
+ *  between dark ribs; a small brass armillary stands by the left wall and
+ *  a small demonstration pendulum hangs between the right-hand doors.
+ *  At our right hand, the stairs we came up by:
  *  a round well in the floor, the steps winding down it about a post, and a
  *  balustrade of turned oak round its rim.
  *
@@ -28,7 +31,7 @@ import { paintPassage } from "./doorway.js";
  *
  *  Painted once per screen size: the room; a glow. */
 
-const K = { room: "tp_room", glow: "tp_glow" };
+const K = { room: "tp_room", glow: "tp_glow", armillary: "tp_armillary" };
 const WARM = "255,190,120";
 const MOON = "150,178,232";
 const EYE = 150; // how high we look from
@@ -82,6 +85,10 @@ export function layoutRotunda(W, H) {
   const foot = L.P(34, 0, ZC + R - 118), h = 172 * foot.s;
   L.scope = { x: foot.x, y: foot.y, h };
   L.thing = { level: "telescope", label: "Look through the telescope", box: { x: foot.x - h * 0.5, y: foot.y - h * 1.04, width: h * 0.86, height: h * 1.06 } };
+  // Tucked against the wall between the passage and door XII, well clear
+  // of both openings. The smaller pedestal sits just inside the skirting.
+  const armillary = L.on(-51, 0, R - 26);
+  L.armillary = { ...armillary, s: armillary.s * 0.62 };
   // the window is flat in the wall, which is as good as flat there
   L.eye = { x: cx, y: cy };
   const rx = L.on(WIN.half, 0).x - cx, sill = L.on(0, WIN.sill).y;
@@ -91,7 +98,7 @@ export function layoutRotunda(W, H) {
 
 // ── painting ────────────────────────────────────────────────────────────────
 
-export function paintRotunda(scene, L) {
+export function paintRotunda(scene, L, armillaryPhase = 0) {
   const t = scene.textures;
   const { W, H } = L;
   const c = makeCanvas(W, H);
@@ -107,12 +114,23 @@ export function paintRotunda(scene, L) {
     paintNightWindow(ctx, W, H, { cx: v.x + v.width / 2, rx: v.width / 2, top: v.y, sill: v.y + v.height }, L.eye, WIN.shape);
   }
   paintMoonlight(ctx, L);
+  paintArmillaryBase(ctx, L);
   paintTelescope(ctx, L.scope.x, L.scope.y, L.scope.h);
   paintStairs(ctx, L);
+  paintShade(ctx, L);
+  addCanvasTexture(t, K.room, c);
+  addCanvasTexture(t, K.glow, glowCanvas());
+  const armillary = createArmillaryArt(scene, L, K.armillary, paintShade, armillaryPhase);
+  return { keys: K, armillary };
+}
+
+function paintShade(ctx, L) {
+  const { W, H } = L;
   // the dark, lifted by the window and by each candle
   const w = L.win;
   const well = L.P(WELL.x, 40, WELL.z);
   gloom(ctx, L, [
+    { x: W * 0.5, y: H * 0.08, rx: W * 0.65, ry: H * 0.31, k: 0.78 },
     { x: w.x + w.width / 2, y: w.y + w.height * 0.5, rx: w.width * 1.3, ry: w.height * 1.7, k: 0.85 },
     { x: w.x + w.width / 2, y: H * 0.84, rx: W * 0.55, ry: H * 0.36, k: 0.6 },
     { x: well.x, y: well.y, rx: W * 0.2, ry: H * 0.34, k: 0.6 },
@@ -121,11 +139,8 @@ export function paintRotunda(scene, L) {
     { x: W * 0.12, y: H * 0.48, rx: W * 0.25, ry: H * 0.52, k: 0.88 },
     { x: W * 0.84, y: H * 0.42, rx: W * 0.2, ry: H * 0.4, k: 0.25 },
   ]);
-  vignette(ctx, W, H, 0.7);
+  vignette(ctx, W, H, 0.7, "source-over");
   grain(ctx, W, H, 0.035);
-  addCanvasTexture(t, K.room, c);
-  addCanvasTexture(t, K.glow, glowCanvas());
-  return { keys: K };
 }
 
 export function releaseRotundaArt(textures) {
@@ -140,7 +155,7 @@ const fill = (ctx, pts, style) => {
   ctx.fill();
 };
 
-// the dome: plaster, grey in the moon, stained and cracked, between dark ribs
+// The observatory dome: midnight-blue plaster and a quiet celestial chart.
 function paintDome(ctx, L) {
   const rnd = lcg(808);
   const at = (deg, lift) => { const k = (lift * Math.PI) / 180; return L.on(deg, WALL + 200 * Math.sin(k), R * Math.cos(k)); };
@@ -149,7 +164,7 @@ function paintDome(ctx, L) {
     for (let d = -SWEEP; d <= SWEEP; d += 4) pts.push(at(d, lift));
     for (let d = SWEEP; d >= -SWEEP; d -= 4) pts.push(at(d, lift + 5));
     const v = lift / 70;
-    fill(ctx, pts, `rgb(${Math.round(30 - v * 12)},${Math.round(30 - v * 12)},${Math.round(34 - v * 12)})`);
+    fill(ctx, pts, `rgb(${Math.round(26 - v * 10)},${Math.round(35 - v * 13)},${Math.round(52 - v * 17)})`);
   }
   // the damp in it, spreading up from the cornice
   for (let i = 0; i < 9; i++) {
@@ -169,6 +184,7 @@ function paintDome(ctx, L) {
     }
     ctx.stroke();
   }
+  paintPlanetarium(ctx, L, at);
   // the ribs: dark oak, a little light along each
   for (let d = -90; d <= 90; d += 22.5) {
     for (const [w, col] of [[6, "#160e09"], [1.2, "rgba(170,186,220,0.16)"]]) {
@@ -378,6 +394,7 @@ function wallFlat() {
     g.beginPath(); g.ellipse(x, y - 42, 5, 12, 0, 0, Math.PI * 2); g.fill();
     soft(g, x, y - 42, 34, 40, WARM, 0.6, "lighter");
   }
+  paintPendulum(g, X(42.5), Y(180));
   // ── cobwebs: across the corners over the doors, and one in the window's head
   const web = (x, y, r, dir) => {
     g.strokeStyle = "rgba(200,206,218,0.2)";

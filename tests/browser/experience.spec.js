@@ -78,9 +78,9 @@ test('the display font preview loads DM Serif Display and keeps the title compac
   await expect(page.locator('.app-signature')).toHaveCount(0);
   const headerPositions = await page.evaluate(() => ({
     actions: document.querySelector('.header-actions').getBoundingClientRect().left,
-    navigation: document.querySelector('.room-navigation').getBoundingClientRect().left,
+    floor: document.querySelector('#header-floor').getBoundingClientRect().left,
   }));
-  expect(headerPositions.actions).toBeGreaterThan(headerPositions.navigation);
+  expect(headerPositions.actions).toBeGreaterThan(headerPositions.floor);
 });
 
 test('hints reveal individually, remember each room, and reset with the game', async ({ page }) => {
@@ -144,38 +144,41 @@ test('progress, solved rooms, thumbnails and Continue survive reload', async ({ 
   await expect(page.locator('#current-level-state')).toHaveCount(0);
 });
 
-test('header arrows navigate unlocked rooms and the footer shows only the room number', async ({ page }) => {
-  await open(page, { unlocked: 1 });
+test('the header shows the current floor through rooms and puzzles without level navigation', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await open(page, { unlocked: true });
+  const floor = page.locator('#header-floor');
+  await expect(floor).toHaveText('Ground Floor');
+  await expect(floor).toHaveAttribute('aria-label', 'Current floor: Ground Floor');
+  await expect(page.locator('#room-previous, #room-next, #header-room-name, #header-progress')).toHaveCount(0);
+  await navigate(page, 'PlantPot');
+  await expect(floor).toHaveText('Ground Floor');
   await expect(page.locator('.room-title-line')).toHaveText('ROOM 02');
-  await expect(page.locator('#current-level-state')).toHaveCount(0);
-  await expect(page.locator('#sidebar h2')).toHaveCount(0);
-  await expect(page.locator('#header-room')).toHaveAttribute('aria-label', 'Current level: The Moonlit Garden, level II');
-  await expect(page.locator('#header-room-name')).toHaveText('The Moonlit Garden');
-  await expect(page.locator('#header-progress')).toHaveText('II');
-  expect(await page.locator('#header-progress').evaluate(el => getComputedStyle(el).fontFamily))
-    .toBe(await page.locator('#header-room').evaluate(el => getComputedStyle(el).fontFamily));
-  expect(await page.locator('#header-progress').evaluate(el => getComputedStyle(el).fontSize))
-    .toBe(await page.locator('#header-room').evaluate(el => getComputedStyle(el).fontSize));
   expect(await page.locator('#current-level-number').evaluate(el => getComputedStyle(el).fontVariantNumeric))
     .toContain('lining-nums');
-  await expect(page.locator('#room-previous')).toBeEnabled();
-  await expect(page.locator('#room-next')).toBeDisabled();
-  await page.locator('#room-previous').click();
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(0);
-  await expect(page.locator('.room-title-line')).toHaveText('ROOM 01');
-  await expect(page.locator('#header-room')).toHaveAttribute('aria-label', 'Current level: The Old Tree, level I');
-  await expect(page.locator('#header-room-name')).toHaveText('The Old Tree');
-  await expect(page.locator('#header-progress')).toHaveText('I');
-  await expect(page.locator('#room-previous')).toBeDisabled();
-  await page.locator('#room-next').click();
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(1);
-  await page.setViewportSize({ width: 390, height: 844 });
-  const roomLabel = await page.locator('#current-level-number').evaluate(element => ({
-    size: Number.parseFloat(getComputedStyle(element).fontSize),
-    wrapping: getComputedStyle(element.closest('.room-title-line')).whiteSpace,
-  }));
-  expect(roomLabel.size).toBeGreaterThanOrEqual(10);
-  expect(roomLabel.wrapping).toBe('nowrap');
+  for (const [place, label] of [['Hall', 'Ground Floor'], ['Upper', 'First Floor'], ['Top', 'Top Floor'], ['TopHall', 'Top Floor']]) {
+    expect(await evaluateApp(page, ({ services }, place) => services.levels.enterPlace(place), place)).toBe(true);
+    await expect(floor).toHaveText(label);
+    await expect(floor).toHaveAttribute('aria-label', `Current floor: ${label}`);
+  }
+  await navigate(page, 'Telescope');
+  await expect(floor).toHaveText('Top Floor');
+  await page.locator('#btn-leave').click();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.place?.key)).toBe('Top');
+  await expect(floor).toHaveText('Top Floor');
+  await navigate(page, 'TapCode');
+  await expect(floor).toHaveText('Basement');
+  await expect(floor).toHaveAttribute('aria-label', 'Current floor: Basement');
+  await screenshot(page, 'floor-basement');
+  await page.locator('#btn-leave').click();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.place?.key)).toBe('Room5');
+  await expect(floor).toHaveText('Ground Floor');
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(floor).toBeInViewport();
+  expect(await floor.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await screenshot(page, 'floor-compact');
+  expect(errors).toEqual([]);
 });
 
 test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page }) => {

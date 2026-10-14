@@ -281,7 +281,7 @@ body.magnifying #game-container canvas { cursor: none !important; }
 #index-outside { display: none; }
 body.outside #sidebar > :not(#index-outside) { display: none !important; }
 body.outside #index-outside { display: grid; gap: 22px; align-content: start; overflow-y: auto; min-height: 0; padding-right: 6px; }
-body.outside .room-navigation, body.outside #input-area { visibility: hidden; }
+body.outside #header-floor, body.outside #input-area { visibility: hidden; }
 .outside-eyebrow, .outside-label { margin: 0; font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .18em; text-transform: uppercase; color: var(--ui-muted); }
 .outside-story { display: grid; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid var(--ui-border); }
 .outside-story p { margin: 0; font: 400 calc(13px * var(--reading-scale, 1))/1.7 var(--ui-font); color: var(--ui-text); }
@@ -316,3 +316,11 @@ body.in-house #game-container canvas { transform-origin: 50% 62%; animation: bre
 body.in-house #game-container canvas { scale: 1.028; }
 [data-reduced-motion="true"] body.in-house #game-container canvas,
 [data-ambient-motion="false"] body.in-house #game-container canvas { scale: none; }
+
+/* ── the floor, in the middle of the header: its number small, its name
+   written by hand as the way back is (progress.js) ── */
+#header-floor { position: absolute; left: 50%; top: 50%; translate: -50% -50%; margin: 0; max-width: 40vw;
+  display: grid; justify-items: center; gap: 0; text-align: center; overflow: visible; pointer-events: none; }
+#header-floor .floor-number { font: 400 calc(9.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: #a9a59a; }
+#header-floor .floor-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw;
+  font: 400 calc(21px * var(--reading-scale, 1))/1.1 "Architects Daughter", "Special Elite", cursive; color: #f1ece0; }

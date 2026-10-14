@@ -107,10 +107,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   });
   const transitions = createTransitions({ levels, showGame, preferences, onNavigate() { completion.hide(); mobile?.close(); } });
   const navigate = (index, options) => transitions.go(index, options);
-  const progressUI = mountProgress(scope, {
-    game, levels, storage, navigate,
-    canNavigate: () => !transitions.busy && !dialogs.isOpen,
-  });
+  const progressUI = mountProgress(scope, { game, levels, storage });
   mountComfort(scope, preferences);
   const hintUI = mountHints(scope, { levels, hints, dialogs });
   mountInteractionFeedback(scope, game);

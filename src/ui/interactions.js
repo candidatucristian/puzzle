@@ -1,20 +1,10 @@
+// Nothing in the picture is labelled: what a thing is for is left to the
+// pointer drawn over it. A press is only acknowledged, with a small ring.
 export function mountInteractionFeedback(scope, game) {
   const stage = document.getElementById('game-container');
-  const cue = document.getElementById('interaction-cue');
   const pulse = document.getElementById('interaction-pulse');
-  let timer, cueTimer, hoveredDom;
-  // A finger has no hover: on a touch screen a cue appears at the tap and
-  // goes away on its own a moment later, instead of waiting for pointerout.
-  const coarse = matchMedia('(pointer: coarse)');
-  function feedback({ label, pressed, x, y }) {
-    scope.cancel(cueTimer);
-    if (!label && coarse.matches && !cue.hidden && !pressed) {
-      cueTimer = scope.later(() => { cue.hidden = true; }, 1400);
-    } else {
-      cue.textContent = label;
-      cue.hidden = !label;
-      if (label && coarse.matches) cueTimer = scope.later(() => { cue.hidden = true; }, 2200);
-    }
+  let timer, hoveredDom;
+  function feedback({ pressed, x, y }) {
     if (pressed) {
       pulse.style.left = `${x}px`; pulse.style.top = `${y}px`;
       pulse.classList.remove('visible');
@@ -37,16 +27,16 @@ export function mountInteractionFeedback(scope, game) {
     if (!target || target.disabled) return;
     hoveredDom = target;
     target.classList.add('scene-interactive');
-    feedback({ label: target.dataset.interaction || target.getAttribute('aria-label') || 'Click to interact' });
+    feedback({});
   });
   scope.on(stage, 'pointerout', e => {
     const target = interactive(e);
-    if (target && !target.contains(e.relatedTarget)) { hoveredDom = null; feedback({ label: '' }); }
+    if (target && !target.contains(e.relatedTarget)) hoveredDom = null;
   });
   scope.on(stage, 'pointerdown', e => {
     const target = interactive(e);
     if (!target || target.disabled) return;
     const box = stage.getBoundingClientRect();
-    feedback({ label: target.dataset.interaction || target.getAttribute('aria-label') || 'Click to interact', pressed: true, x: e.clientX - box.left, y: e.clientY - box.top });
+    feedback({ pressed: true, x: e.clientX - box.left, y: e.clientY - box.top });
   });
 }

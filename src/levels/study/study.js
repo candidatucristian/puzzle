@@ -88,6 +88,7 @@ export function paintStudy(scene, L) {
   ctx.fillRect(0, 0, W, H);
   paintShell(ctx, L);
   paintWindowWall(ctx, L);
+  paintPlate(ctx, L);
   paintWheel(ctx, L);
   paintPot(ctx, L);
   paintShelves(ctx, L);
@@ -153,6 +154,270 @@ function paintShelves(ctx, L) {
   g.fillStyle = "#2e1c10";
   g.fillRect(0, 0, fw, 7 * R);
   onWall(ctx, L, -1, at, flat);
+}
+
+// On the back wall, left of the window, over the lamp: a botanist's plate
+// pinned up — a whole plant drawn the way a textbook draws one, in sepia ink
+// on paper gone cream: its flower and a bud, its leaves up the stem, the line
+// of the ground drawn through it and the earth below in section, and the root
+// going down, branching, fine hairs on its ends. Beside it the flower cut in
+// half and a seed, each in its own ring; a ruled border; leader lines out to
+// the margin where the parts were once labelled, too small now to be read.
+function paintPlate(ctx, L) {
+  const hx = L.half;
+  // wide and low: hung under the picture rail, well clear of the case on the table below
+  const cx = -0.5 * hx, w = 140, h = 98, y0 = 146;
+  const a = L.Q(cx - w / 2, y0 + h, BACK), b = L.Q(cx + w / 2, y0, BACK);
+  const flat = plantPlate();
+  // its shadow on the wall, then the sheet, curling a little off it at the foot
+  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  ctx.fillRect(a.x + 3 * a.s, a.y + 4 * a.s, b.x - a.x, b.y - a.y);
+  ctx.drawImage(flat, a.x, a.y, b.x - a.x, b.y - a.y);
+  // the lamp's light across its lower half, the room's dark over the top
+  const g = ctx.createLinearGradient(0, a.y, 0, b.y);
+  g.addColorStop(0, "rgba(16,11,6,0.6)");
+  g.addColorStop(0.6, "rgba(16,11,6,0.38)");
+  g.addColorStop(1, "rgba(16,11,6,0.18)");
+  ctx.fillStyle = g;
+  ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
+  if (L.lampOn) soft(ctx, (a.x + b.x) / 2, b.y, (b.x - a.x) * 0.9, (b.y - a.y) * 0.6, WARM, 0.14, "lighter");
+  // two brass pins at its top corners
+  for (const x of [a.x + 4 * a.s, b.x - 4 * a.s]) {
+    const y = a.y + 4 * a.s;
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.beginPath(); ctx.arc(x + 1.2 * a.s, y + 1.5 * a.s, 1.6 * a.s, 0, Math.PI * 2); ctx.fill();
+    const pg = ctx.createRadialGradient(x - 0.5 * a.s, y - 0.5 * a.s, 0.2 * a.s, x, y, 1.7 * a.s);
+    pg.addColorStop(0, "#f4dc9a"); pg.addColorStop(1, "#6a4a16");
+    ctx.fillStyle = pg;
+    ctx.beginPath(); ctx.arc(x, y, 1.7 * a.s, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// the plate itself, drawn flat, 1000 by 700: the plant down the left of it,
+// the details in their rings to the right
+function plantPlate() {
+  const W = 1000, H = 700;
+  const c = makeCanvas(W, H);
+  const g = c.getContext("2d");
+  const rnd = lcg(1871);
+  // the paper: cream, gone brown at its edges, foxed here and there
+  g.fillStyle = "#e4d8b8";
+  g.fillRect(0, 0, W, H);
+  const edge = g.createRadialGradient(W / 2, H / 2, W * 0.3, W / 2, H / 2, W * 0.8);
+  edge.addColorStop(0, "rgba(120,84,40,0)");
+  edge.addColorStop(1, "rgba(120,84,40,0.4)");
+  g.fillStyle = edge;
+  g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 26; i++) {
+    g.fillStyle = `rgba(140,96,48,${(0.04 + rnd() * 0.08).toFixed(3)})`;
+    g.beginPath(); g.arc(rnd() * W, rnd() * H, 3 + rnd() * 14, 0, Math.PI * 2); g.fill();
+  }
+  // the curl at the bottom right corner
+  g.fillStyle = "rgba(0,0,0,0.12)";
+  g.beginPath(); g.moveTo(W, H - 70); g.quadraticCurveTo(W - 30, H - 30, W - 70, H); g.lineTo(W, H); g.closePath(); g.fill();
+
+  const ink = (alpha = 0.85) => `rgba(66,44,24,${alpha})`;
+  // drawn a little heavier than a real plate, so it holds at the size it is seen at
+  const line = (wd, alpha) => { g.strokeStyle = ink(alpha); g.lineWidth = wd * 1.9; g.lineCap = "round"; g.lineJoin = "round"; };
+  // the ruled border, two lines
+  line(2.2, 0.8); g.strokeRect(26, 26, W - 52, H - 52);
+  line(0.9, 0.7); g.strokeRect(34, 34, W - 68, H - 68);
+  // the title: a plate number, and a line of fine script under it
+  g.fillStyle = ink(0.85);
+  g.font = 'italic 26px Georgia, "Times New Roman", serif';
+  g.textAlign = "center";
+  g.fillText("Plate I.", W / 2, 76);
+  const scribble = (x, y, len, seed) => {
+    // a line of handwriting, too small to read: little loops along a baseline
+    const r = lcg(seed);
+    line(1, 0.7);
+    g.beginPath(); g.moveTo(x, y);
+    for (let px = x; px < x + len; px += 4) g.lineTo(px + 2, y - 2 - r() * 4), g.lineTo(px + 4, y + r() * 1.5);
+    g.stroke();
+  };
+  scribble(W / 2 - 110, 102, 220, 3);
+
+  // the plant is drawn in its own measure, 600 by 806, set into the left of the sheet
+  g.save();
+  g.translate(150, 26);
+  g.scale(0.8, 0.8);
+  const ground = 470; // the line of the ground
+  const sx = 250; // the stem
+  // the earth, in section: the ground's line, stippled below it, fading down
+  line(1.8, 0.85);
+  g.beginPath(); g.moveTo(60, ground); g.bezierCurveTo(160, ground - 6, 340, ground + 6, 450, ground - 2); g.stroke();
+  for (let i = 0; i < 900; i++) {
+    const x = 62 + rnd() * 386, y = ground + 4 + Math.pow(rnd(), 1.6) * 230;
+    g.fillStyle = ink(0.12 + (1 - (y - ground) / 240) * 0.35);
+    g.fillRect(x, y, 1.6, 1.6);
+  }
+  for (let i = 0; i < 9; i++) {
+    // pebbles
+    const x = 80 + rnd() * 360, y = ground + 20 + rnd() * 150, r = 4 + rnd() * 6;
+    line(1, 0.5); g.beginPath(); g.ellipse(x, y, r, r * 0.7, rnd(), 0, Math.PI * 2); g.stroke();
+  }
+  // the root: a taproot going down and tapering, laterals off it, each branching, fine hairs
+  const root = (x, y, angle, len, width, depth) => {
+    const ex = x + Math.sin(angle) * len, ey = y + Math.cos(angle) * len;
+    const cxp = x + Math.sin(angle + (rnd() - 0.5) * 0.6) * len * 0.5, cyp = y + Math.cos(angle) * len * 0.5;
+    line(width, 0.85);
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(cxp, cyp, ex, ey); g.stroke();
+    if (depth > 0) {
+      const n = depth === 3 ? 7 : 3;
+      for (let i = 1; i <= n; i++) {
+        const t = i / (n + 1), mt = 1 - t;
+        const px = mt * mt * x + 2 * mt * t * cxp + t * t * ex, py = mt * mt * y + 2 * mt * t * cyp + t * t * ey;
+        const side = i % 2 ? 1 : -1;
+        root(px, py, angle + side * (0.7 + rnd() * 0.5), len * (0.45 + rnd() * 0.2) * (1 - t * 0.4), width * 0.55, depth - 1);
+      }
+    } else {
+      // the hairs near the tip
+      line(0.5, 0.45);
+      for (let k = 0; k < 6; k++) {
+        const t = 0.5 + k * 0.08, px = x + (ex - x) * t, py = y + (ey - y) * t;
+        g.beginPath(); g.moveTo(px, py); g.lineTo(px + (rnd() - 0.5) * 10, py + 3 + rnd() * 5); g.stroke();
+      }
+    }
+  };
+  root(sx, ground, 0.02, 250, 3.4, 3);
+  // the stem: up from the ground, a slight lean, drawn with both its edges
+  const stemTop = 170;
+  const stemAt = (t) => ({ x: sx + Math.sin(t * Math.PI) * 14 - t * 6, y: ground - (ground - stemTop) * t });
+  line(1.6, 0.9);
+  for (const off of [-4, 4]) {
+    g.beginPath();
+    for (let t = 0; t <= 1.001; t += 0.05) { const p = stemAt(t); const w = off * (1 - t * 0.45); if (t) g.lineTo(p.x + w, p.y); else g.moveTo(p.x + w, p.y); }
+    g.stroke();
+  }
+  // leaves up it, alternate: each an outline with its midrib and veins, hatched on its shaded half
+  const leaf = (x, y, angle, len, wd) => {
+    g.save(); g.translate(x, y); g.rotate(angle);
+    g.beginPath(); g.moveTo(0, 0);
+    g.bezierCurveTo(len * 0.3, -wd, len * 0.75, -wd * 0.8, len, 0);
+    g.bezierCurveTo(len * 0.75, wd * 0.8, len * 0.3, wd, 0, 0);
+    g.fillStyle = "rgba(120,140,90,0.12)"; g.fill();
+    line(1.4, 0.88); g.stroke();
+    line(0.9, 0.75); g.beginPath(); g.moveTo(0, 0); g.lineTo(len * 0.96, 0); g.stroke();
+    line(0.6, 0.55);
+    for (let k = 1; k < 7; k++) {
+      const t = k / 7;
+      for (const d of [-1, 1]) { g.beginPath(); g.moveTo(len * t, 0); g.quadraticCurveTo(len * (t + 0.05), d * wd * 0.35, len * (t + 0.1), d * wd * 0.62 * Math.sin(Math.PI * t)); g.stroke(); }
+    }
+    // hatching on the lower half
+    g.save();
+    g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(len * 0.75, wd * 0.8, len * 0.3, wd, 0, 0); g.lineTo(len, 0); g.closePath();
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(len, 0); g.bezierCurveTo(len * 0.75, wd * 0.8, len * 0.3, wd, 0, 0); g.clip();
+    line(0.5, 0.35);
+    for (let k = -wd; k < len; k += 5) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + wd, wd); g.stroke(); }
+    g.restore();
+    g.restore();
+  };
+  [[0.18, -1, 92, 26], [0.34, 1, 100, 28], [0.5, -1, 84, 24], [0.66, 1, 70, 20], [0.8, -1, 52, 15]].forEach(([t, d, len, wd]) => {
+    const p = stemAt(t);
+    leaf(p.x + d * 4, p.y, d < 0 ? Math.PI + 0.45 : -0.45, len, wd);
+  });
+  // a bud, closed, on a short stalk
+  const bp = stemAt(0.72);
+  line(1.2, 0.85);
+  g.beginPath(); g.moveTo(bp.x + 4, bp.y); g.quadraticCurveTo(bp.x + 40, bp.y - 20, bp.x + 52, bp.y - 50); g.stroke();
+  g.beginPath(); g.ellipse(bp.x + 54, bp.y - 62, 9, 15, 0.3, 0, Math.PI * 2); g.stroke();
+  for (const d of [-1, 1]) { g.beginPath(); g.moveTo(bp.x + 50, bp.y - 52); g.quadraticCurveTo(bp.x + 54 + d * 12, bp.y - 60, bp.x + 56 + d * 4, bp.y - 74); g.stroke(); }
+  // the flower: petals round a disc, the disc stippled
+  const fp = stemAt(1);
+  for (let k = 0; k < 9; k++) {
+    const a = (k / 9) * Math.PI * 2;
+    g.save(); g.translate(fp.x, fp.y - 18); g.rotate(a);
+    g.beginPath(); g.moveTo(0, -10); g.bezierCurveTo(-14, -30, -10, -52, 0, -56); g.bezierCurveTo(10, -52, 14, -30, 0, -10);
+    g.fillStyle = "rgba(220,190,120,0.18)"; g.fill();
+    line(1.3, 0.85); g.stroke();
+    line(0.5, 0.45); g.beginPath(); g.moveTo(0, -14); g.lineTo(0, -50); g.stroke();
+    g.restore();
+  }
+  g.beginPath(); g.arc(fp.x, fp.y - 18, 13, 0, Math.PI * 2); g.fillStyle = "rgba(90,60,30,0.25)"; g.fill(); line(1.3, 0.85); g.stroke();
+  for (let i = 0; i < 70; i++) { const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 11; g.fillStyle = ink(0.6); g.fillRect(fp.x + Math.cos(a) * r, fp.y - 18 + Math.sin(a) * r, 1.4, 1.4); }
+  // the details, each in a ring: the flower cut through, and a seed
+  // (the details stand out to the right, in the sheet's wide margin)
+  g.save();
+  g.translate(250, -40);
+  const ring = (x, y, r) => { line(1, 0.7); g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); };
+  ring(470, 230, 62);
+  line(1.2, 0.85);
+  g.beginPath(); g.moveTo(440, 270); g.quadraticCurveTo(470, 280, 500, 270); g.lineTo(492, 210); g.quadraticCurveTo(470, 196, 448, 210); g.closePath(); g.stroke();
+  for (const x of [458, 470, 482]) { g.beginPath(); g.moveTo(x, 262); g.lineTo(x + (x - 470) * 0.2, 214); g.stroke(); g.beginPath(); g.arc(x + (x - 470) * 0.2, 211, 3, 0, Math.PI * 2); g.stroke(); }
+  g.beginPath(); g.ellipse(470, 250, 9, 6, 0, 0, Math.PI * 2); g.stroke();
+  ring(470, 400, 44);
+  g.beginPath(); g.ellipse(470, 400, 14, 22, 0.4, 0, Math.PI * 2); g.stroke();
+  line(0.6, 0.5); g.beginPath(); g.moveTo(462, 384); g.quadraticCurveTo(470, 400, 476, 418); g.stroke();
+  g.restore();
+  // the leader lines out to the margins, and the labels on them
+  const label = (fx, fy, tx, ty, seed) => {
+    line(0.8, 0.65);
+    g.beginPath(); g.moveTo(fx, fy); g.lineTo(tx, ty); g.stroke();
+    g.beginPath(); g.arc(fx, fy, 1.8, 0, Math.PI * 2); g.fillStyle = ink(0.8); g.fill();
+    const left = tx < 300;
+    scribble(left ? tx - 64 : tx + 4, ty + 3, 60, seed);
+  };
+  label(fp.x - 30, fp.y - 40, 110, 150, 11);
+  label(stemAt(0.34).x + 60, stemAt(0.34).y - 4, 380, 330, 12);
+  label(stemAt(0.5).x - 50, stemAt(0.5).y + 4, 110, 300, 13);
+  label(sx + 4, ground + 100, 110, 560, 14);
+  label(sx + 70, ground + 120, 390, 600, 15);
+  label(60 + 30, ground + 2, 110, 470 - 30, 16);
+  // the figure numbers by the details
+  g.font = 'italic 16px Georgia, serif';
+  g.fillStyle = ink(0.8);
+  g.fillText("2.", 670, 132);
+  g.fillText("3.", 682, 322);
+  g.fillText("1.", sx - 70, 720);
+  g.restore();
+
+  // and along the foot of the right half, how it began: the seed in the earth,
+  // its first root, the shoot come up with its two seed-leaves, the seedling
+  const gy = 560;
+  line(1.4, 0.85);
+  g.beginPath(); g.moveTo(560, gy); g.bezierCurveTo(680, gy - 4, 820, gy + 4, 960, gy - 1); g.stroke();
+  for (let i = 0; i < 420; i++) {
+    const x = 562 + rnd() * 396, y = gy + 3 + Math.pow(rnd(), 1.5) * 80;
+    g.fillStyle = ink(0.1 + (1 - (y - gy) / 84) * 0.3);
+    g.fillRect(x, y, 1.6, 1.6);
+  }
+  const seed = (x, y) => { line(1.3, 0.85); g.beginPath(); g.ellipse(x, y, 9, 6, -0.3, 0, Math.PI * 2); g.stroke(); line(0.6, 0.5); g.beginPath(); g.moveTo(x - 5, y + 1); g.quadraticCurveTo(x, y - 3, x + 5, y - 2); g.stroke(); };
+  const rootling = (x, y, len, side) => {
+    line(1.2, 0.85); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 4, y + len * 0.5, x - 2, y + len); g.stroke();
+    line(0.7, 0.6);
+    for (let k = 1; k <= side; k++) { const py = y + (len * k) / (side + 1); for (const d of [-1, 1]) { g.beginPath(); g.moveTo(x + 1, py); g.lineTo(x + d * (8 + k * 2), py + 7); g.stroke(); } }
+  };
+  const seedLeaves = (x, y, s) => {
+    line(1.2, 0.85);
+    for (const d of [-1, 1]) { g.beginPath(); g.ellipse(x + d * 9 * s, y - 3 * s, 10 * s, 5 * s, d * -0.4, 0, Math.PI * 2); g.stroke(); }
+  };
+  // 1: the seed
+  seed(610, gy + 24);
+  // 2: split, its root going down, the shoot hooked over still under the ground
+  seed(700, gy + 22);
+  rootling(704, gy + 27, 34, 0);
+  line(1.2, 0.85); g.beginPath(); g.moveTo(700, gy + 17); g.quadraticCurveTo(702, gy + 4, 712, gy + 8); g.stroke();
+  // 3: through the ground, its two seed-leaves opening
+  line(1.3, 0.85); g.beginPath(); g.moveTo(790, gy + 20); g.lineTo(790, gy - 34); g.stroke();
+  seedLeaves(790, gy - 34, 1);
+  rootling(790, gy + 20, 46, 2);
+  // 4: the seedling, its first true leaves over the seed-leaves
+  line(1.4, 0.85); g.beginPath(); g.moveTo(900, gy + 18); g.quadraticCurveTo(904, gy - 40, 900, gy - 92); g.stroke();
+  seedLeaves(902, gy - 46, 1.1);
+  for (const d of [-1, 1]) {
+    line(1.2, 0.85);
+    g.beginPath(); g.moveTo(900, gy - 90);
+    g.bezierCurveTo(900 + d * 10, gy - 110, 900 + d * 30, gy - 112, 900 + d * 36, gy - 100);
+    g.bezierCurveTo(900 + d * 26, gy - 92, 900 + d * 12, gy - 90, 900, gy - 90); g.stroke();
+  }
+  rootling(900, gy + 18, 62, 3);
+  // arrows between them, and their numbers
+  line(1, 0.7);
+  for (const x of [640, 735, 838]) { g.beginPath(); g.moveTo(x, gy - 60); g.lineTo(x + 30, gy - 60); g.moveTo(x + 24, gy - 64); g.lineTo(x + 30, gy - 60); g.lineTo(x + 24, gy - 56); g.stroke(); }
+  g.font = 'italic 15px Georgia, serif';
+  g.fillStyle = ink(0.8);
+  ["4.", "5.", "6.", "7."].forEach((n, i) => g.fillText(n, [610, 704, 790, 900][i], gy + 112));
+  return c;
 }
 
 // on the window's sill, against the night: a terracotta pot, and in it a

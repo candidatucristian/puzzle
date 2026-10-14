@@ -29,17 +29,7 @@ body { display:flex; flex-direction:column; height:100dvh; background:var(--ui-b
 .primary-action { background:var(--ui-accent); color:#181818; border-color:var(--ui-accent); }
 .primary-action:hover:not(:disabled) { background:#e5e5df; }
 :is(.app-header,#input-area,#sidebar,#right-sidebar-wrapper,.modal-content,.completion-card,#start-screen) :is(button,input,select,a):focus-visible { outline:2px solid #c7c7c0; outline-offset:3px; }
-.room-navigation { display:flex; align-items:center; gap:12px; margin-left:auto; }
-#header-room { display:flex; align-items:baseline; min-width:0; max-width:min(33vw,430px); white-space:nowrap; font:400 calc(13px * var(--reading-scale))/1.4 var(--ui-font); }
-#header-room-name { overflow:hidden; text-overflow:ellipsis; }
-.header-count { flex-shrink:0; margin-left:12px; font:inherit; color:var(--ui-muted); }
-.header-count::before { content:'/'; margin-right:12px; color:#51514e; }
-.header-count:empty { display:none; }
-.room-step-button { appearance:none; width:34px; height:34px; padding:0; display:grid; place-items:center; border:0; border-radius:4px; color:var(--ui-muted); background:transparent; cursor:pointer; }
-#room-previous .ui-icon { rotate:180deg; }
-.room-step-button .ui-icon { width:16px; height:16px; }
-.room-step-button:hover:not(:disabled) { color:var(--ui-text); background:#1c1c1c; }
-.room-step-button:disabled { color:#454542; cursor:default; }
+#header-floor { min-width:0; max-width:min(33vw,430px); margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:400 calc(13px * var(--reading-scale))/1.4 var(--ui-font); }
 .volume-widget { display:flex; align-items:center; gap:3px; }
 #vol-icon-ui { width:34px; min-height:36px; border:0; color:var(--ui-muted); }
 #vol-icon-ui[data-muted='true']::after { content:''; position:absolute; width:22px; height:1px; background:currentColor; rotate:-45deg; }
@@ -156,9 +146,8 @@ body { display:flex; flex-direction:column; height:100dvh; background:var(--ui-b
   :root { --index-width:160px; --console-height:92px; }
   .app-header { height:48px; gap:12px; padding-inline:16px; }
   .app-wordmark,.volume-widget,#btn-fullscreen { display:none; }
-  .room-navigation { margin-left:0; gap:6px; }
   #compact-fullscreen { display:inline-flex; min-height:36px; height:36px; border:0; }
-  #header-room { max-width:45vw; font-size:12px; } .room-step-button { width:30px; height:34px; }
+  #header-floor { margin-left:0; max-width:45vw; font-size:12px; }
   #game-wrapper { margin:4px 12px 0; }
   #input-area { grid-template-columns:minmax(0,1fr) minmax(240px,1.8fr) minmax(0,1fr); gap:10px; padding-inline:4px; }
   .room-title-line .eyebrow { font-size:11px; } #compact-menu { font-size:10px; }
@@ -187,8 +176,7 @@ body { display:flex; flex-direction:column; height:100dvh; background:var(--ui-b
 }
 @media (max-width:650px) {
   :root { --index-width:112px; }
-  .app-header { gap:8px; padding-inline:10px; } #header-room { max-width:46vw; font-size:11px; }
-  .header-count { margin-left:7px; } .header-count::before { margin-right:7px; } .room-navigation { gap:2px; }
+  .app-header { gap:8px; padding-inline:10px; } #header-floor { max-width:46vw; font-size:11px; }
   #btn-options > span { display:none; }
   #input-area { grid-template-columns:minmax(0,1fr) minmax(200px,1.8fr) minmax(0,1fr); gap:6px; padding-inline:0; }
   .room-title-line .eyebrow { font-size:10px; } #compact-menu { font-size:9px; white-space:nowrap; }
