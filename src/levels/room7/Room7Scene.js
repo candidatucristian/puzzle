@@ -1,6 +1,7 @@
 import PlainRoomScene from "../house/plainRoom.js";
-import { soft, lcg, makeCanvas } from "../../shared/paint.js";
-import { BACK, WARM, block, fillPoly, footShadow, onWall, thingAt } from "../house/roomKit.js";
+import { soft, lcg } from "../../shared/paint.js";
+import { BACK, WARM, block, fillPoly, footShadow, thingAt } from "../house/roomKit.js";
+import { LAB_FIXTURES, paintGlassCabinet, paintTestTubeRack, paintWashingStation } from "../chemistry/glassware.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The laboratory: the first room off the chemist's hall, behind door VII
@@ -32,13 +33,17 @@ export default class Room7Scene extends PlainRoomScene {
         wall: "plaster", near: "#1f2725", far: "#0f1413", back: "#151c1a", rail: 0,
         dado: { kind: "boards", h: 92, near: "#1c2622", far: "#0d1311", back: "#131b18", rail: "#3a2c1c", railFar: "#1a130c", railBack: "#2c2216" },
         skirt: "#0e1210", skirtBack: "#080a09",
-        floor: "flags", floorNear: "#2a2c2b", floorFar: "#121414", ceiling: "beams", ceilingCol: "#0c0d0d", window: "arch",
+        floor: "flags", floorNear: "#2a2c2b", floorFar: "#121414", ceiling: "beams", ceilingCol: "#0c0d0d", window: "custom",
       },
-      window: { x: 0.44, hw: 0.13, top: 272, sill: 118 },
+      window: { x: 0.5, hw: 0.28, top: 244, sill: 116 },
       hearth: null,
       chest: null,
       rug: ["#121614", "#2a302b", "#171c19"],
     });
+  }
+
+  preload() {
+    for (const { key, url } of Object.values(LAB_FIXTURES)) this.load.image(key, url);
   }
 
   layout(W, H, levels) {
@@ -54,7 +59,16 @@ export default class Room7Scene extends PlainRoomScene {
     L.burner = { x: b.x0 + span * 0.88, d: 562 };
     L.bottleRow = BOTTLES.map((bt, i) => ({ x: b.x0 + span * (0.46 + i * 0.075), d: 556, shape: bt }));
     L.loupe = { x: b.x0 + span * 0.62, d: 540 };
-    L.sinks = { x0: 0.2 * hx, x1: 0.66 * hx, d0: 536, h: 90 };
+    L.sinks = { x0: 0.17 * hx, x1: 0.83 * hx, d0: 536, h: 90 };
+    const sinkLeft = Q(L.sinks.x0, 0, L.sinks.d0), sinkRight = Q(L.sinks.x1, 0, L.sinks.d0);
+    const stationWidth = sinkRight.x - sinkLeft.x, stationHeight = stationWidth * 1392 / 1012;
+    L.washing = { x: sinkLeft.x, y: sinkLeft.y - stationHeight, width: stationWidth, height: stationHeight };
+    // Keep the light and floor reflection aligned to the actual window panes.
+    Object.assign(L.win, {
+      cx: sinkLeft.x + stationWidth * 0.5, rx: stationWidth * 0.418,
+      top: L.washing.y, sill: L.washing.y + stationHeight * 0.458,
+      hw: stationWidth * 0.418 / Q(0, 0, BACK).s,
+    });
     L.stool = { x: b.x0 + span * 0.3, d: 470, h: 64 };
     // the bottles open the puzzle
     const r0 = L.bottleRow[0], r4 = L.bottleRow[4];
@@ -67,9 +81,9 @@ export default class Room7Scene extends PlainRoomScene {
       { x: bp.x, y: bp.y, rx: 90 * bp.s, ry: 70 * bp.s, k: L.on ? 0.8 : 0.2 },
     ];
     // the shelves of glassware on the left wall, in what the lamp spills
-    L.wallShelves = { d0: 430, d1: 575, y0: 100, y1: 224 };
+    L.wallShelves = { d0: 410, d1: 575, y0: 98, y1: 238 };
     const sp = Q(-hx, 160, 505);
-    L.detailLights.push({ x: sp.x, y: sp.y, rx: 120 * sp.s, ry: 90 * sp.s, k: 0.55 });
+    L.detailLights.push({ x: sp.x, y: sp.y, rx: 180 * sp.s, ry: 135 * sp.s, k: 0.82 });
     // and the sinks under the window, in the moon
     const sk = Q((L.sinks.x0 + L.sinks.x1) / 2, 100, 570);
     L.detailLights.push({ x: sk.x, y: sk.y, rx: 150 * sk.s, ry: 70 * sk.s, k: 0.55 });
@@ -77,14 +91,15 @@ export default class Room7Scene extends PlainRoomScene {
   }
 
   paintDetails(ctx, L) {
-    paintWallShelves(ctx, L);
+    const sources = Object.fromEntries(Object.entries(LAB_FIXTURES).map(([name, asset]) => [name, this.textures.get(asset.key).getSourceImage()]));
+    paintGlassCabinet(ctx, L, sources.cabinet);
     paintPoster(ctx, L);
     paintShelf(ctx, L);
     paintGasPipe(ctx, L);
+    paintWashingStation(ctx, L, sources.washing);
     paintCabinet(ctx, L);
-    paintSinks(ctx, L);
     paintBench(ctx, L);
-    paintBenchTop(ctx, L);
+    paintBenchTop(ctx, L, sources.rack);
     paintStool(ctx, L);
   }
 
@@ -160,72 +175,6 @@ function paintPoster(ctx, L) {
       ctx.fillStyle = "#a8853e"; ctx.beginPath(); ctx.arc(x, y, 0.9, 0, Math.PI * 2); ctx.fill();
     }
   });
-}
-
-// Open shelves on the left wall, glassware on them: flasks and retorts,
-// stoppered bottles, a mortar, a row of notebooks. Painted flat, then laid
-// on the wall so that it runs away into the room with it.
-function paintWallShelves(ctx, L) {
-  const at = L.wallShelves, PX = 2; // pixels to the centimetre, flat
-  const w = Math.round((at.d1 - at.d0) * PX), h = Math.round((at.y1 - at.y0) * PX);
-  const flat = makeCanvas(w, h), g = flat.getContext("2d");
-  const rnd = lcg(5150);
-  g.scale(PX, PX);
-  const W = w / PX, H = h / PX;
-  // the uprights and three boards
-  g.fillStyle = "rgba(0,0,0,0.35)"; g.fillRect(2, 2, W - 2, H - 2);
-  const wood = (x, y, ww, hh) => { const gr = g.createLinearGradient(0, y, 0, y + hh); gr.addColorStop(0, "#5a3a20"); gr.addColorStop(1, "#24160b"); g.fillStyle = gr; g.fillRect(x, y, ww, hh); };
-  wood(0, 0, 3, H); wood(W - 3, 0, 3, H);
-  const boards = [H * 0.32, H * 0.64, H - 3];
-  for (const y of boards) wood(0, y, W, 3);
-  // on each board, from the left
-  const glass = ["150,96,40", "70,110,80", "190,200,205", "110,60,30", "60,80,110", "140,40,40"];
-  boards.forEach((y, row) => {
-    for (let x = 6; x < W - 10;) {
-      const kind = rnd();
-      if (row === 2 && x < 40) {
-        // notebooks, upright
-        const bw = 2.6 + rnd() * 1.5, bh = 22 + rnd() * 8;
-        g.fillStyle = ["#3a2418", "#2a3a2c", "#4a3a20", "#2a2a3a"][Math.floor(rnd() * 4)];
-        g.fillRect(x, y - bh, bw, bh);
-        g.fillStyle = "rgba(220,200,150,0.35)"; g.fillRect(x + 0.4, y - bh * 0.8, bw - 0.8, 1);
-        x += bw + 0.4; continue;
-      }
-      const col = glass[Math.floor(rnd() * glass.length)];
-      if (kind < 0.35) {
-        // a stoppered bottle with a label
-        const bw = 7 + rnd() * 4, bh = 14 + rnd() * 10;
-        g.fillStyle = `rgba(${col},0.8)`; g.beginPath(); g.roundRect(x, y - bh, bw, bh, 1.2); g.fill();
-        g.fillStyle = "#1a120a"; g.fillRect(x + bw * 0.25, y - bh - 2.4, bw * 0.5, 2.6);
-        g.fillStyle = "rgba(226,214,180,0.7)"; g.fillRect(x + bw * 0.15, y - bh * 0.6, bw * 0.7, bh * 0.28);
-        g.fillStyle = "rgba(255,255,255,0.25)"; g.fillRect(x + 1, y - bh + 1, 0.8, bh - 2);
-        x += bw + 2 + rnd() * 3;
-      } else if (kind < 0.6) {
-        // a round flask, something left in it
-        const r = 5 + rnd() * 2.5;
-        g.fillStyle = "rgba(200,225,235,0.16)"; g.beginPath(); g.arc(x + r, y - r, r, 0, Math.PI * 2); g.fill();
-        g.fillRect(x + r - 1.3, y - r * 2 - 8, 2.6, 9);
-        g.fillStyle = `rgba(${col},0.75)`; g.beginPath(); g.arc(x + r, y - r, r - 0.4, 0.3, Math.PI - 0.3); g.fill();
-        g.strokeStyle = "rgba(225,240,240,0.45)"; g.lineWidth = 0.35; g.beginPath(); g.arc(x + r, y - r, r, 0, Math.PI * 2); g.stroke();
-        x += r * 2 + 3 + rnd() * 3;
-      } else if (kind < 0.8) {
-        // a conical flask
-        const fw = 9 + rnd() * 3, fh = 13 + rnd() * 4;
-        g.fillStyle = "rgba(200,225,235,0.16)";
-        g.beginPath(); g.moveTo(x + fw * 0.38, y - fh); g.lineTo(x + fw * 0.62, y - fh); g.lineTo(x + fw * 0.62, y - fh * 0.62); g.lineTo(x + fw, y); g.lineTo(x, y); g.lineTo(x + fw * 0.38, y - fh * 0.62); g.closePath(); g.fill();
-        g.fillStyle = `rgba(${col},0.7)`;
-        g.beginPath(); g.moveTo(x + fw * 0.2, y - fh * 0.3); g.lineTo(x + fw * 0.8, y - fh * 0.3); g.lineTo(x + fw, y); g.lineTo(x, y); g.closePath(); g.fill();
-        x += fw + 3 + rnd() * 3;
-      } else {
-        // a stoneware mortar and its pestle
-        g.fillStyle = "#b8b0a0"; g.beginPath(); g.moveTo(x, y - 7); g.lineTo(x + 12, y - 7); g.quadraticCurveTo(x + 11, y, x + 6, y); g.quadraticCurveTo(x + 1, y, x, y - 7); g.fill();
-        g.fillStyle = "#8a8274"; g.fillRect(x, y - 7.6, 12, 1.2);
-        g.save(); g.translate(x + 8, y - 7); g.rotate(0.5); g.fillStyle = "#9a9284"; g.fillRect(-1, -10, 2.2, 11); g.restore();
-        x += 16 + rnd() * 3;
-      }
-    }
-  });
-  onWall(ctx, L, -1, at, flat);
 }
 
 // A shelf on brackets over the right end of the bench, apothecary jars on it.
@@ -309,107 +258,6 @@ function paintCabinet(ctx, L) {
   }
 }
 
-// Under the window, the sinks: two deep white fireclay basins set in a slate
-// counter on oak cupboards, their fronts showing; white tiles behind them, a
-// brass swan-neck tap over each; and by the window a draining rack on the
-// wall, flasks and tubes upturned on its pegs to dry.
-function paintSinks(ctx, L) {
-  const { Q } = L, s = L.sinks, h = s.h;
-  const face = (x0, x1, y0, y1, d, col) => fillPoly(ctx, [Q(x0, y1, d), Q(x1, y1, d), Q(x1, y0, d), Q(x0, y0, d)], col);
-  // the tiles behind, up to the sill
-  face(s.x0, s.x1, h, 116, BACK - 0.5, "#8e9691");
-  ctx.strokeStyle = "rgba(40,50,46,0.55)"; ctx.lineWidth = Math.max(0.5, 0.3 * Q(0, 0, BACK).s);
-  for (let y = h; y <= 116; y += 7.5) { const p = Q(s.x0, y, BACK - 0.6), q = Q(s.x1, y, BACK - 0.6); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
-  for (let x = s.x0; x <= s.x1; x += 15) { const p = Q(x, h, BACK - 0.6), q = Q(x, 116, BACK - 0.6); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
-  face(s.x0, s.x1, 115, 117, BACK - 1, "#7d857f");
-  paintDryingRack(ctx, L);
-  // the cupboards and the counter
-  footShadow(ctx, L, { x0: s.x0, x1: s.x1, d0: s.d0, d1: BACK }, 0.7);
-  block(ctx, L, { x0: s.x0 + 2, x1: s.x1 - 2, y0: 0, y1: h - 4, d0: s.d0 + 3, d1: BACK }, { side: "#1c1109", top: "#3a2414", front: "#2a190d" });
-  const d = s.d0 + 2.8;
-  face(s.x0 + 2, s.x1 - 2, 0, 8, d, "#100904");
-  const n = 3, w = (s.x1 - s.x0 - 10) / n;
-  for (let i = 0; i < n; i++) {
-    const x0 = s.x0 + 5 + i * w, x1 = x0 + w - 3;
-    face(x0, x1, 12, 58, d, "#2e1b0f");
-    face(x0 + 4, x1 - 4, 18, 52, d, "rgba(0,0,0,0.22)");
-    const k = Q(i % 2 ? x0 + 4 : x1 - 4, 46, d - 0.6);
-    ctx.fillStyle = "#7a5c26"; ctx.beginPath(); ctx.arc(k.x, k.y, 1.3 * k.s, 0, Math.PI * 2); ctx.fill();
-  }
-  block(ctx, L, { x0: s.x0, x1: s.x1, y0: h - 4, y1: h, d0: s.d0, d1: BACK }, { side: "#0c0e0f", top: "#2a3032", front: "#16191a" });
-  fillPoly(ctx, [Q(s.x0, h, s.d0), Q(s.x1, h, s.d0), Q(s.x1, h - 0.6, s.d0), Q(s.x0, h - 0.6, s.d0)], "rgba(200,220,230,0.14)");
-  // the two basins
-  const mid = (s.x0 + s.x1) / 2, bw = (s.x1 - s.x0) * 0.32;
-  for (const cx of [mid - (s.x1 - s.x0) * 0.22, mid + (s.x1 - s.x0) * 0.22]) {
-    const x0 = cx - bw / 2, x1 = cx + bw / 2, b0 = s.d0 - 2, b1 = BACK - 10;
-    // its front, white, standing proud of the cupboards
-    const fa = Q(x0, h, b0), fb = Q(x0, h - 20, b0);
-    ctx.fillStyle = grad(ctx, 0, fa.y, 0, fb.y, [[0, "#b9bfbb"], [0.15, "#a3aaa6"], [1, "#6f7672"]]);
-    ctx.fillRect(fa.x, fa.y, Q(x1, h, b0).x - fa.x, fb.y - fa.y);
-    face(x0, x1, h - 20, h - 19, b0, "rgba(0,0,0,0.4)");
-    face(x0, x0 + 1, h - 20, h, b0, "rgba(255,255,255,0.12)");
-    face(x0, x1, h - 1, h, b0, "rgba(255,255,255,0.5)");
-    // the rim, and the deep inside of it
-    const rim = [Q(x0, h + 0.2, b0), Q(x1, h + 0.2, b0), Q(x1, h + 0.2, b1), Q(x0, h + 0.2, b1)];
-    fillPoly(ctx, rim, "#b8beba");
-    const inner = [Q(x0 + 3, h + 0.3, b0 + 3), Q(x1 - 3, h + 0.3, b0 + 3), Q(x1 - 3, h + 0.3, b1 - 3), Q(x0 + 3, h + 0.3, b1 - 3)];
-    ctx.save();
-    ctx.beginPath(); inner.forEach((p, j) => (j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath(); ctx.clip();
-    fillPoly(ctx, inner, "#aeb4b0");
-    // the floor of it, deep down, and its drain
-    fillPoly(ctx, [Q(x0 + 4, h - 20, b0 + 4), Q(x1 - 4, h - 20, b0 + 4), Q(x1 - 4, h - 20, b1 - 4), Q(x0 + 4, h - 20, b1 - 4)], "#878e8a");
-    const dr = Q(cx, h - 20, (b0 + b1) / 2), dr2 = Q(cx, h - 20, (b0 + b1) / 2 + 2);
-    ctx.fillStyle = "#2a2e2c"; ctx.beginPath(); ctx.ellipse(dr.x, dr.y, 2.2 * dr.s, Math.max(0.8, Math.abs(dr2.y - dr.y)), 0, 0, Math.PI * 2); ctx.fill();
-    // shadow under the near lip
-    ctx.fillStyle = grad(ctx, 0, inner[0].y - 6 * inner[0].s, 0, inner[0].y, [[0, "rgba(20,24,22,0)"], [1, "rgba(20,24,22,0.55)"]]);
-    ctx.fillRect(inner[0].x, inner[0].y - 6 * inner[0].s, inner[1].x - inner[0].x, 6 * inner[0].s);
-    ctx.restore();
-    // the tap: out of the tiles, up, over and down into the basin
-    const pts = [Q(cx, h + 8, BACK - 1), Q(cx, h + 34, BACK - 1), Q(cx, h + 38, BACK - 6), Q(cx, h + 34, BACK - 13), Q(cx, h + 24, BACK - 15)];
-    for (const [lw, col] of [[2.2, "#4a3612"], [1.3, "#c8a050"], [0.4, "rgba(255,240,200,0.7)"]]) {
-      ctx.strokeStyle = col; ctx.lineWidth = lw * pts[0].s; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y);
-      ctx.quadraticCurveTo(pts[2].x, pts[2].y, pts[3].x, pts[3].y); ctx.lineTo(pts[4].x, pts[4].y); ctx.stroke();
-    }
-    ctx.lineCap = "butt";
-    // and its two cross-handles, either side of the foot
-    for (const side of [-1, 1]) {
-      const p = Q(cx + side * 6, h + 14, BACK - 2);
-      ctx.fillStyle = "#a8853e"; ctx.fillRect(p.x - 2.4 * p.s, p.y - 0.5 * p.s, 4.8 * p.s, 1 * p.s); ctx.fillRect(p.x - 0.5 * p.s, p.y - 2.4 * p.s, 1 * p.s, 4.8 * p.s);
-      ctx.beginPath(); ctx.arc(p.x, p.y, 1 * p.s, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-}
-
-// A draining rack on the wall by the window: a board of pegs, glassware
-// upturned on them to dry.
-function paintDryingRack(ctx, L) {
-  const hx = L.half, x0 = 0.6 * hx, x1 = 0.72 * hx, y0 = 122, y1 = 186;
-  at(ctx, L, x0, y1, BACK - 0.5, () => {
-    const w = x1 - x0, hh = y1 - y0;
-    ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(1.2, 1.4, w, hh);
-    ctx.fillStyle = grad(ctx, 0, 0, w, 0, [[0, "#3a2414"], [0.5, "#5a3a20"], [1, "#2a190d"]]);
-    ctx.fillRect(0, 0, w, hh);
-    ctx.fillStyle = "#24160b"; ctx.fillRect(0, hh - 4, w, 4);
-    const rnd = lcg(321);
-    for (let row = 0; row < 3; row++) {
-      for (let i = 0; i < 4; i++) {
-        // a peg, and the glass hung mouth-down over it
-        const px = 5 + i * ((w - 10) / 3), py = 14 + row * 18;
-        ctx.fillStyle = "#1a0f08"; ctx.fillRect(px - 0.6, py - 2, 1.2, 6);
-        const kind = rnd();
-        ctx.fillStyle = "rgba(200,225,235,0.3)"; ctx.strokeStyle = "rgba(225,240,240,0.55)"; ctx.lineWidth = 0.3;
-        ctx.beginPath();
-        if (kind < 0.4) ctx.rect(px - 0.9, py - 12, 1.8, 14); // a test tube
-        else if (kind < 0.75) { ctx.moveTo(px - 1, py + 2); ctx.lineTo(px + 1, py + 2); ctx.lineTo(px + 1, py - 3); ctx.lineTo(px + 4, py - 11); ctx.lineTo(px - 4, py - 11); ctx.lineTo(px - 1, py - 3); ctx.closePath(); } // a conical flask
-        else { ctx.rect(px - 0.9, py - 4, 1.8, 6); ctx.moveTo(px + 3.6, py - 7.5); ctx.arc(px, py - 7.5, 3.6, 0, Math.PI * 2); } // a round flask
-        ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.fillRect(px - 0.6, py - 9, 0.4, 5);
-      }
-    }
-  });
-}
-
 // The bench: oak cupboards under a black slate top, a row of drawers.
 function paintBench(ctx, L) {
   const { Q } = L, b = L.bench;
@@ -443,7 +291,7 @@ function paintBench(ctx, L) {
 // What stands on the bench, from the left: the oil lamp, the retort on its
 // stand, the rack of tubes, the five bottles, the burner under its flask;
 // the magnifying glass on its cloth at the front.
-function paintBenchTop(ctx, L) {
+function paintBenchTop(ctx, L, rack) {
   const b = L.bench, on = L.on, h = b.h;
   // ── the oil lamp
   at(ctx, L, L.lamp.x, h, L.lamp.d, () => {
@@ -482,18 +330,7 @@ function paintBenchTop(ctx, L) {
   });
   // ── the rack of test tubes
   const tx = b.x0 + (b.x1 - b.x0) * 0.3;
-  at(ctx, L, tx, h, 574, () => {
-    ctx.fillStyle = "#5a3a20"; ctx.fillRect(-13, -2, 26, 2); ctx.fillRect(-13, -10, 26, 2);
-    ctx.fillStyle = "#2a190d"; ctx.fillRect(-13, -10, 1.6, 10); ctx.fillRect(11.4, -10, 1.6, 10);
-    const cols = ["220,90,70", "140,196,250", "240,200,80", "120,200,120", "200,120,200", "230,230,220"];
-    cols.forEach((col, i) => {
-      const x = -10 + i * 4;
-      const top = -16 - (i % 2) * 1.5;
-      ctx.fillStyle = "rgba(210,230,235,0.2)"; ctx.fillRect(x - 0.9, top, 1.8, -top - 1);
-      ctx.fillStyle = `rgba(${col},0.75)`; ctx.fillRect(x - 0.8, top + 7, 1.6, -top - 8);
-      ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.fillRect(x - 0.6, top + 0.5, 0.4, 5);
-    });
-  });
+  at(ctx, L, tx, h, 574, () => paintTestTubeRack(ctx, rack, 0, 0, 40));
   // ── the five bottles
   for (const bt of L.bottleRow) at(ctx, L, bt.x, h, bt.d, () => bottle(ctx, bt.shape));
   // ── the magnifying glass on its green cloth, lying at the front

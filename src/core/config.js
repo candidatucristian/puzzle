@@ -7,7 +7,7 @@ import Room2Scene from '../levels/room2/Room2Scene.js';
 import Room3Scene from '../levels/room3/Room3Scene.js';
 import Room4Scene from '../levels/room4/Room4Scene.js';
 import Room5Scene from '../levels/room5/Room5Scene.js';
-import { Room6Scene } from '../levels/house/emptyRooms.js';
+import Room6Scene from '../levels/room6/Room6Scene.js';
 import Room7Scene from '../levels/room7/Room7Scene.js';
 
 export function gameConfig(services, definitions) {

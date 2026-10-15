@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 import { ProgressStore } from '../../src/core/ProgressStore.js';
 import { PLOTTER_BLOCKS, pathSegments, formatPath, plotterLayout } from '../../src/levels/plotter/puzzle.js';
-import { KINETIC_FORMS, polygonVertices, kineticPose, kineticRig, kineticLayout, readKinetic } from '../../src/levels/kinetic/puzzle.js';
-import { nurseryLayout } from '../../src/levels/kinetic/nurseryGeometry.js';
+import { GAME_LIDS, polygonVertices, cupboardLayout, readKinetic } from '../../src/levels/kinetic/puzzle.js';
 import { STANDARD_CODE, GENOME_FRAGMENT, FRAGMENT_TEXT, aminoAcid, translateFragment, genomeLayout } from '../../src/levels/genome/puzzle.js';
 
 // Sample the actual line geometry onto a small bitmap, with positive Y up.
@@ -38,20 +37,16 @@ test('Plotter instructions actually draw P, I, N and G in that order', () => {
   assert.equal(LEVEL_METADATA[27].code, 'PING');
 });
 
-test('the four moving silhouettes preserve their side counts and top-to-bottom order', () => {
-  assert.deepEqual(KINETIC_FORMS.map(f => f.sides), [3, 0, 7, 5]);
-  assert.deepEqual(KINETIC_FORMS.map(f => f.rimCount), [3, 1, 7, 5]);
+test('the four game pieces keep their side counts and left-to-right order', () => {
+  assert.deepEqual(GAME_LIDS.map(f => f.sides), [3, 0, 7, 5]);
+  assert.deepEqual(GAME_LIDS.map(f => f.rimCount), [3, 1, 7, 5]);
   assert.equal(readKinetic(), 'CAGE');
-  for (const time of [0, 15000, 45000, 90000, 160000]) {
-    const forms = kineticPose(time);
-    for (const [i, form] of forms.entries()) {
-      const points = polygonVertices(form.sides, form.radius, form.angle);
-      assert.equal(points.length, form.sides);
-      if (points.length) {
-        const edges = points.map((p, n) => Math.hypot(p.x - points[(n + 1) % points.length].x, p.y - points[(n + 1) % points.length].y));
-        assert.ok(edges.every(edge => Math.abs(edge - edges[0]) < 1e-10));
-      }
-      if (i) assert.ok(forms[i - 1].y + forms[i - 1].radius < form.y - form.radius);
+  for (const lid of GAME_LIDS) {
+    const points = polygonVertices(lid.sides, 1);
+    assert.equal(points.length, lid.sides);
+    if (points.length) {
+      const edges = points.map((p, n) => Math.hypot(p.x - points[(n + 1) % points.length].x, p.y - points[(n + 1) % points.length].y));
+      assert.ok(edges.every(edge => Math.abs(edge - edges[0]) < 1e-10));
     }
   }
   assert.equal(LEVEL_METADATA[28].code, readKinetic());
@@ -73,32 +68,19 @@ test('the standard genetic code translates the displayed coding DNA and correspo
   assert.equal(LEVEL_METADATA[29].hint.tool, true);
 });
 
-test('the nursery mobile stays connected, readable and inside the room throughout its sway', () => {
+test('the games cupboard keeps every lid on its shelf, apart, in order and inside the picture', () => {
   for (const [W, H] of [[910, 876], [1440, 900], [568, 220], [360, 640]]) {
-    const L = kineticLayout(W, H), room = nurseryLayout(W, H);
-    const head = room.head;
-    assert.ok(head.x > 0 && head.x < W && head.y > 0 && head.y < H);
-    for (let time = 0; time < 180000; time += 1337) {
-      const rig = kineticRig(time);
-      assert.deepEqual(rig.forms.map(form => form.rimCount), [3, 1, 7, 5], 'wind must never reorder the answer');
-      assert.equal(rig.rods.length, 3);
-      for (const [index, form] of rig.forms.entries()) {
-        const r = form.radius * L.size;
-        const x = L.x + form.x * L.size, y = L.y + form.y * L.size;
-        assert.ok(x - r > 0 && x + r < W && y - r > 0 && y + r < H);
-        assert.ok(y + r < head.y, 'the mobile must hang above the sleeping baby');
-        assert.ok(Math.cos(form.yaw) > 0.95, 'no polygon turns edge-on and loses countable sides');
-        if (index) {
-          const prior = rig.forms[index - 1];
-          assert.ok(prior.y + prior.radius < form.y - form.radius, 'silhouettes remain vertically separate');
-        }
-        const holeX = form.x + Math.sin(form.rotation) * form.radius * 0.85;
-        const holeY = form.y - Math.cos(form.rotation) * form.radius * 0.85;
-        assert.ok(Math.hypot(holeX - form.attachment.x, holeY - form.attachment.y) < 1e-12);
-        assert.ok(rig.strings.some(string => Math.hypot(string.x2 - holeX, string.y2 - holeY) < 1e-12),
-          'every toy is tied at its painted attachment hole');
-      }
+    const L = cupboardLayout(W, H);
+    assert.deepEqual(L.lids.map(lid => lid.rimCount), [3, 1, 7, 5], 'the shelf reads left to right');
+    for (const [index, lid] of L.lids.entries()) {
+      assert.ok(lid.x > L.inner.x0 && lid.x + lid.w < L.inner.x1, 'inside the cupboard');
+      assert.ok(Math.abs(lid.y + lid.h - L.shelves[1]) < 1e-9, 'standing on the middle shelf');
+      assert.ok(lid.y > L.shelves[0], 'under the shelf above');
+      assert.ok(lid.cx - lid.r > lid.x && lid.cx + lid.r < lid.x + lid.w && lid.cy - lid.r > lid.y && lid.cy + lid.r < lid.y + lid.h, 'the piece is on its lid');
+      if (index) assert.ok(L.lids[index - 1].x + L.lids[index - 1].w < lid.x, 'the boxes stand apart');
     }
+    const c = L.card;
+    assert.ok(c.x > 0 && c.y > 0 && c.x + c.w < W && c.y + c.h < H, 'the card can be read');
   }
 });
 
@@ -112,10 +94,8 @@ test('new clues fit desktop, small landscape phones and portrait layouts', () =>
       assert.ok(lines.every(line => line.length * plot.font * 0.61 <= block.w - 16));
       assert.ok(plot.font * (1.25 + lines.length * 1.25) < block.h);
     }
-    const kinetic = kineticLayout(W, H);
-    for (const form of kineticPose(0)) {
-      const x = kinetic.x + form.x * kinetic.size, y = kinetic.y + form.y * kinetic.size, r = form.radius * kinetic.size;
-      assert.ok(x - r > 0 && x + r < W && y - r > 0 && y + r < H);
+    for (const lid of cupboardLayout(W, H).lids) {
+      assert.ok(lid.cx - lid.r > 0 && lid.cx + lid.r < W && lid.cy - lid.r > 0 && lid.cy + lid.r < H);
     }
     const genome = genomeLayout(W, H);
     assert.ok(genome.font >= 10);

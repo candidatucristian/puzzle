@@ -1,5 +1,6 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { makeMoonTexture } from "../../shared/moon.js";
+import { GARDEN_TREES } from "./matureTrees.js";
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
   paintPlantArt,
@@ -84,6 +85,7 @@ export default class PlantPotScene extends BasePuzzleScene {
 
   preload() {
     this.load.image("leaf", "assets/images/PlantPot/leaf.png");
+    this.load.image(GARDEN_TREES.key, GARDEN_TREES.url);
     this.load.audio("wateringplant", "assets/sounds/PlantPot/wateringplant.mp3");
   }
 

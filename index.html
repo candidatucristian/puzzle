@@ -12,7 +12,10 @@
     <meta name="theme-color" content="#0c0c0c" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="Descipher" />
 
     <link
@@ -20,7 +23,10 @@
       href="assets/images/favicon/favicon-32x32.png"
       type="image/x-icon"
     />
-    <link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png" />
+    <link
+      rel="apple-touch-icon"
+      href="assets/images/favicon/apple-touch-icon.png"
+    />
     <link rel="manifest" href="assets/images/favicon/site.webmanifest" />
 
     <!-- CRT shader web-component used by the TV level -->
@@ -33,31 +39,66 @@
     />
   </head>
   <body>
-    <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20.8 14.3A9 9 0 0 1 9.7 3.2 9 9 0 1 0 20.8 14.3Z"/></symbol>
-      <symbol id="icon-index" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 3v18m4-13h3m-3 4h3m-3 4h3"/></symbol>
-      <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></symbol>
-      <symbol id="icon-fullscreen" viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></symbol>
-      <symbol id="icon-sound" viewBox="0 0 24 24"><path d="m11 4-5 5H3v6h3l5 5V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
-      <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
-      <symbol id="icon-replay" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 0 5m0-11v6h6"/></symbol>
-      <symbol id="icon-hint" viewBox="0 0 24 24"><path d="M8 16c0-3-3-3-3-7a7 7 0 0 1 14 0c0 4-3 4-3 7M8 17h8m-7 4h6m-3-5V9m-3 1 3 2 3-2"/></symbol>
-      <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
-      <symbol id="icon-notes" viewBox="0 0 24 24"><path d="M6 3h12v18H6zm3 5h6m-6 4h6m-6 4h4"/></symbol>
-      <symbol id="icon-map" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zm6-3v15m6-12v15"/></symbol>
-      <symbol id="icon-pencil" viewBox="0 0 24 24"><path d="M4 20l1-5L16 4l4 4L9 19zm10-14l4 4"/></symbol>
+    <svg
+      class="icon-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="icon-moon" viewBox="0 0 24 24">
+        <path d="M20.8 14.3A9 9 0 0 1 9.7 3.2 9 9 0 1 0 20.8 14.3Z" />
+      </symbol>
+      <symbol id="icon-index" viewBox="0 0 24 24">
+        <rect x="4" y="3" width="16" height="18" rx="1" />
+        <path d="M9 3v18m4-13h3m-3 4h3m-3 4h3" />
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 17h16" />
+        <circle cx="9" cy="7" r="3" />
+        <circle cx="15" cy="17" r="3" />
+      </symbol>
+      <symbol id="icon-fullscreen" viewBox="0 0 24 24">
+        <path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5" />
+      </symbol>
+      <symbol id="icon-sound" viewBox="0 0 24 24">
+        <path
+          d="m11 4-5 5H3v6h3l5 5V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"
+        />
+      </symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24">
+        <path d="M4 12h15m-6-6 6 6-6 6" />
+      </symbol>
+      <symbol id="icon-replay" viewBox="0 0 24 24">
+        <path d="M4 10a8 8 0 1 1 0 5m0-11v6h6" />
+      </symbol>
+      <symbol id="icon-hint" viewBox="0 0 24 24">
+        <path
+          d="M8 16c0-3-3-3-3-7a7 7 0 0 1 14 0c0 4-3 4-3 7M8 17h8m-7 4h6m-3-5V9m-3 1 3 2 3-2"
+        />
+      </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M6 18 18 6" />
+      </symbol>
+      <symbol id="icon-notes" viewBox="0 0 24 24">
+        <path d="M6 3h12v18H6zm3 5h6m-6 4h6m-6 4h4" />
+      </symbol>
+      <symbol id="icon-map" viewBox="0 0 24 24">
+        <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zm6-3v15m6-12v15" />
+      </symbol>
+      <symbol id="icon-pencil" viewBox="0 0 24 24">
+        <path d="M4 20l1-5L16 4l4 4L9 19zm10-14l4 4" />
+      </symbol>
     </svg>
     <!-- Loading screen: rendered before the heavy scripts download.
          An inline script right below drives it; the Phaser BootScene
          reports audio progress and removes it when the game is ready. -->
     <div id="loading-screen">
       <div class="loading-card">
-        <svg class="loading-moon ui-icon" aria-hidden="true"><use href="#icon-moon"/></svg>
+        <svg class="loading-moon ui-icon" aria-hidden="true">
+          <use href="#icon-moon" />
+        </svg>
         <h1>The Descipher</h1>
         <div class="loading-bar"><div id="loading-fill"></div></div>
-        <p id="loading-label">
-          Loading <span id="loading-pct">0%</span>
-        </p>
+        <p id="loading-label">Loading <span id="loading-pct">0%</span></p>
       </div>
     </div>
 
@@ -65,21 +106,107 @@
       <div id="header-floor" role="status" aria-label="Current floor"></div>
       <div class="header-actions">
         <div class="volume-widget">
-          <button id="vol-icon-ui" class="icon-button" type="button" aria-label="Mute all audio"><svg class="ui-icon" data-audio-icon aria-hidden="true"><use href="#icon-sound"/></svg></button>
-          <input type="range" id="vol-slider-ui" aria-label="Overall volume" min="0" max="1" step="0.01" />
-          <output id="master-value" class="sr-only" for="vol-slider-ui"></output>
+          <button
+            id="vol-icon-ui"
+            class="icon-button"
+            type="button"
+            aria-label="Mute all audio"
+          >
+            <svg class="ui-icon" data-audio-icon aria-hidden="true">
+              <use href="#icon-sound" />
+            </svg>
+          </button>
+          <input
+            type="range"
+            id="vol-slider-ui"
+            aria-label="Overall volume"
+            min="0"
+            max="1"
+            step="0.01"
+          />
+          <output
+            id="master-value"
+            class="sr-only"
+            for="vol-slider-ui"
+          ></output>
         </div>
-        <button id="btn-map" class="header-button" type="button" aria-label="Map of the house" title="Map of the house (M)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-map"/></svg><span>Map</span></button>
-        <button id="btn-notebook" class="header-button" type="button" aria-label="Notebook" title="Notebook (N)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-pencil"/></svg><span>Notebook</span></button>
-        <button id="btn-options" class="header-button" type="button" aria-label="Settings" data-tip="Settings: sound, comfort, how to play"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button>
-        <button id="btn-fullscreen" class="header-button fullscreen-button" type="button" aria-label="Full screen" aria-pressed="false"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg><span data-fullscreen-label>Full screen</span></button>
-        <button id="compact-fullscreen" class="icon-button" type="button" aria-label="Full screen: hide the header"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fullscreen"/></svg></button>
+        <button
+          id="btn-map"
+          class="header-button"
+          type="button"
+          aria-label="Map of the house"
+          title="Map of the house (M)"
+        >
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-map" /></svg
+          ><span>Map</span>
+        </button>
+        <button
+          id="btn-notebook"
+          class="header-button"
+          type="button"
+          aria-label="Notebook"
+          title="Notebook (N)"
+        >
+          <svg class="ui-icon" aria-hidden="true">
+            <use href="#icon-pencil" /></svg
+          ><span>Notebook</span>
+        </button>
+        <button
+          id="btn-casefile"
+          class="header-button"
+          type="button"
+          aria-label="Case file"
+          title="Case file: letters and clues (C)"
+        >
+          <svg class="ui-icon" aria-hidden="true">
+            <use href="#icon-notes" /></svg
+          ><span>Case file</span>
+        </button>
+        <button
+          id="btn-options"
+          class="header-button"
+          type="button"
+          aria-label="Settings"
+          data-tip="Settings: sound, comfort, how to play"
+        >
+          <svg class="ui-icon" aria-hidden="true">
+            <use href="#icon-settings" /></svg
+          ><span>Settings</span>
+        </button>
+        <button
+          id="btn-fullscreen"
+          class="header-button fullscreen-button"
+          type="button"
+          aria-label="Full screen"
+          aria-pressed="false"
+        >
+          <svg class="ui-icon" aria-hidden="true">
+            <use href="#icon-fullscreen" /></svg
+          ><span data-fullscreen-label>Full screen</span>
+        </button>
+        <button
+          id="compact-fullscreen"
+          class="icon-button"
+          type="button"
+          aria-label="Full screen: hide the header"
+        >
+          <svg class="ui-icon" aria-hidden="true">
+            <use href="#icon-fullscreen" />
+          </svg>
+        </button>
       </div>
     </header>
     <div id="drawer-scrim" hidden></div>
     <!-- the handle the top bar slides on: tap to toggle, pull up to hide,
          pull down to show -->
-    <button id="handle-top" class="ui-handle" type="button" aria-controls="compact-bar" aria-expanded="true" aria-label="Hide the top bar"></button>
+    <button
+      id="handle-top"
+      class="ui-handle"
+      type="button"
+      aria-controls="compact-bar"
+      aria-expanded="true"
+      aria-label="Hide the top bar"
+    ></button>
     <p id="ui-toast" role="status" hidden></p>
 
     <div id="play-area">
@@ -90,7 +217,11 @@
         </div>
         <div class="progress-summary">
           <span id="progress-count"></span>
-          <progress id="room-progress" value="0" aria-label="Rooms solved"></progress>
+          <progress
+            id="room-progress"
+            value="0"
+            aria-label="Rooms solved"
+          ></progress>
           <span id="save-status" role="status" aria-live="polite"></span>
         </div>
         <div id="levels-grid"></div>
@@ -103,215 +234,571 @@
         <div id="index-keys" aria-label="Keys" hidden></div>
         <!-- Outside the house, the index has no rooms to list: only the game itself -->
         <div id="index-outside" aria-label="About the game">
-          <p class="outside-eyebrow">Outside the house</p>
+          <p class="outside-eyebrow">Outside Ashcombe House</p>
           <div class="outside-story">
-            <p>The manor has been shut up for years, and everyone who lived in it left something behind.</p>
-            <p>Its doors are locked tonight. Every room hides its puzzles, and each keeps the key to another.</p>
-            <p>Look closely, listen, and write down what you find.</p>
+            <p>
+              Locked since the night of the 13th of October 1961, when the
+              three Ashcombes went away and told no one why.
+            </p>
+            <p>
+              Its doors are locked tonight. Every room hides its puzzles, and
+              each keeps the key to another.
+            </p>
+            <p>Look closely, listen, and keep what you find in the case file.</p>
           </div>
           <div id="outside-progress" class="outside-progress" hidden></div>
           <div class="outside-tools">
             <p class="outside-label">Carried with you</p>
             <dl>
-              <div><dt><kbd>M</kbd></dt><dd>The map of the house</dd></div>
-              <div><dt><kbd>N</kbd></dt><dd>Your notebook</dd></div>
-              <div><dt><kbd>Z</kbd></dt><dd>The magnifying glass, or hold the right mouse button</dd></div>
-              <div><dt><kbd>Esc</kbd></dt><dd>Back the way you came</dd></div>
+              <div>
+                <dt><kbd>M</kbd></dt>
+                <dd>The map of the house</dd>
+              </div>
+              <div>
+                <dt><kbd>N</kbd></dt>
+                <dd>Your notebook</dd>
+              </div>
+              <div>
+                <dt><kbd>C</kbd></dt>
+                <dd>The case file: letters and clues</dd>
+              </div>
+              <div>
+                <dt><kbd>Z</kbd></dt>
+                <dd>The magnifying glass, or hold the right mouse button</dd>
+              </div>
+              <div>
+                <dt><kbd>Esc</kbd></dt>
+                <dd>Back the way you came</dd>
+              </div>
             </dl>
           </div>
         </div>
         <!-- The way back: sketched in white like the pointers, at the foot of the index -->
         <button id="btn-leave" type="button" hidden>
-          <svg class="leave-frame" viewBox="0 0 200 64" preserveAspectRatio="none" aria-hidden="true"><path d="M3 4.5C60 3.2 140 5.4 197.5 3.8" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M3 4.5C60 3.2 140 5.4 197.5 3.8" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M3 4.5C60 3.2 140 5.4 197.5 3.8" class="ink-over" vector-effect="non-scaling-stroke"/><path d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5" class="ink-over" vector-effect="non-scaling-stroke"/><path d="M198 60.2C130 61.4 70 59.6 2 60.8" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M198 60.2C130 61.4 70 59.6 2 60.8" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M198 60.2C130 61.4 70 59.6 2 60.8" class="ink-over" vector-effect="non-scaling-stroke"/><path d="M4.4 63C3.4 42 4.8 20 3.6 1.2" class="ink-dark" vector-effect="non-scaling-stroke"/><path d="M4.4 63C3.4 42 4.8 20 3.6 1.2" class="ink-white" vector-effect="non-scaling-stroke"/><path d="M4.4 63C3.4 42 4.8 20 3.6 1.2" class="ink-over" vector-effect="non-scaling-stroke"/></svg>
-          <svg class="leave-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M15 29V4h13v25M11 29h20" class="ink-dark"/><path d="M15 29V4h13v25M11 29h20" class="ink-white"/><path d="M15 29V4h13v25M11 29h20" class="ink-over"/><g class="leave-arrow"><path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-dark"/><path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-white"/><path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-over"/></g></svg>
-          <span class="leave-words"><span class="leave-to" id="leave-to">back to</span><span class="leave-name" id="leave-name">the Hall</span></span>
+          <svg
+            class="leave-frame"
+            viewBox="0 0 200 64"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 4.5C60 3.2 140 5.4 197.5 3.8"
+              class="ink-dark"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M3 4.5C60 3.2 140 5.4 197.5 3.8"
+              class="ink-white"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M3 4.5C60 3.2 140 5.4 197.5 3.8"
+              class="ink-over"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5"
+              class="ink-dark"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5"
+              class="ink-white"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5"
+              class="ink-over"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M198 60.2C130 61.4 70 59.6 2 60.8"
+              class="ink-dark"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M198 60.2C130 61.4 70 59.6 2 60.8"
+              class="ink-white"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M198 60.2C130 61.4 70 59.6 2 60.8"
+              class="ink-over"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M4.4 63C3.4 42 4.8 20 3.6 1.2"
+              class="ink-dark"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M4.4 63C3.4 42 4.8 20 3.6 1.2"
+              class="ink-white"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d="M4.4 63C3.4 42 4.8 20 3.6 1.2"
+              class="ink-over"
+              vector-effect="non-scaling-stroke"
+            />
+          </svg>
+          <svg class="leave-icon" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M15 29V4h13v25M11 29h20" class="ink-dark" />
+            <path d="M15 29V4h13v25M11 29h20" class="ink-white" />
+            <path d="M15 29V4h13v25M11 29h20" class="ink-over" />
+            <g class="leave-arrow">
+              <path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-dark" />
+              <path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-white" />
+              <path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-over" />
+            </g>
+          </svg>
+          <span class="leave-words"
+            ><span class="leave-to" id="leave-to">back to</span
+            ><span class="leave-name" id="leave-name">the Hall</span></span
+          >
         </button>
       </aside>
 
       <!-- Game Area -->
       <div id="game-wrapper">
-      <!-- The opening title card -->
-      <div id="start-screen">
-        <!-- the manor at night: a silent film, two copies taking turns so its
+        <!-- The opening title card -->
+        <div id="start-screen">
+          <!-- the manor at night: a silent film, two copies taking turns so its
              end dissolves into its beginning -->
-        <div id="start-film" aria-hidden="true">
-          <video class="start-reel" src="assets/video/manor.mp4" muted playsinline preload="auto" tabindex="-1"></video>
-          <video class="start-reel" src="assets/video/manor.mp4" muted playsinline preload="auto" tabindex="-1"></video>
-        </div>
-        <!-- the front door in the film: it glints, and a click on it goes in -->
-        <div id="start-door" aria-hidden="true"><canvas id="start-door-glint"></canvas></div>
-        <canvas id="start-moon" class="start-moon" aria-hidden="true"></canvas>
-        <div id="start-card">
-          <div id="start-title">
-            <h1>The<br><span>Descipher</span></h1>
+          <div id="start-film" aria-hidden="true">
+            <video
+              class="start-reel"
+              src="assets/video/manor.mp4"
+              muted
+              playsinline
+              preload="auto"
+              tabindex="-1"
+            ></video>
+            <video
+              class="start-reel"
+              src="assets/video/manor.mp4"
+              muted
+              playsinline
+              preload="auto"
+              tabindex="-1"
+            ></video>
           </div>
-          <div id="start-bottom">
-            <p id="start-progress"></p>
-            <button id="btn-continue" class="menu-btn primary-action start-continue" type="button">Get inside</button>
-            <p id="start-prompt">Press any key to begin</p>
+          <!-- the front door in the film: it glints, and a click on it goes in -->
+          <div id="start-door" aria-hidden="true">
+            <canvas id="start-door-glint"></canvas>
           </div>
-        </div>
-      </div>
-
-      <!-- Intro Sequence Overlay -->
-      <div id="intro-screen" class="hidden">
-        <p id="intro-line"></p>
-        <div id="intro-title">
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-          <h1>The Descipher</h1>
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-        </div>
-        <p id="intro-skip">PRESS ANY KEY TO SKIP</p>
-      </div>
-
-      <!-- Completion Screen -->
-      <div id="completion-screen" class="hidden" aria-live="polite">
-        <div class="completion-card">
-          <p class="completion-kicker">Case file closed</p>
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-          <h1>Deciphered</h1>
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-          <p class="completion-message">
-            Every chamber yielded its word. The room is quiet again.
-          </p>
-          <div class="completion-stats" aria-label="Completion statistics">
-            <div><span id="completion-chambers">18 / 18</span><small>CHAMBERS CLEARED</small></div>
-            <div><span id="completion-time">0m 00s</span><small>SESSION TIME</small></div>
-          </div>
-          <p class="completion-credits">THE DESCIPHER &mdash; THANK YOU FOR PLAYING</p>
-          <div class="completion-actions">
-            <button id="btn-completion-replay" class="menu-btn">REPLAY CHAMBER</button>
-            <button id="btn-completion-first" class="menu-btn primary-action">BEGIN AGAIN</button>
-            <button id="btn-completion-close" class="menu-btn">VIEW LEVELS</button>
+          <canvas
+            id="start-moon"
+            class="start-moon"
+            aria-hidden="true"
+          ></canvas>
+          <div id="start-card">
+            <div id="start-title">
+              <h1>The<br /><span>Descipher</span></h1>
+            </div>
+            <div id="start-bottom">
+              <p id="start-progress"></p>
+              <button
+                id="btn-continue"
+                class="menu-btn primary-action start-continue"
+                type="button"
+              >
+                Get inside
+              </button>
+              <p id="start-prompt">Press any key to begin</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Level Transition Veil -->
-      <div id="level-veil">
-        <div class="veil-content">
-          <p id="veil-caption">Code Accepted</p>
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-          <p class="veil-chamber">Chamber</p>
-          <h2 id="veil-numeral">I</h2>
-          <div class="ornate-rule wide"><span></span><i>◆</i><span></span></div>
-        </div>
-      </div>
-
-      <div id="game-viewport">
-        <div id="game-container"></div>
-        <div id="film-grain" aria-hidden="true"></div>
-        <span id="interaction-pulse" aria-hidden="true"></span>
-      </div>
-
-      <!-- Control Console -->
-      <div id="input-area">
-        <button id="btn-hint" class="text-button" type="button" aria-controls="right-sidebar-wrapper" aria-expanded="false" data-tip="A nudge for this puzzle"><svg class="ui-icon" aria-hidden="true"><use href="#icon-hint"/></svg>Hint</button>
-        <div class="input-container">
-          <label class="panel-label sr-only" for="level-code">Your answer</label>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="level-code"
-              placeholder="Your answer"
-              autocomplete="off"
-              autocapitalize="characters"
-              spellcheck="false"
-              aria-describedby="answer-feedback"
-            />
-            <button id="btn-submit" type="button" data-tip="Try this answer (Enter)"><span>Submit</span><svg class="ui-icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
-            <button id="btn-replay" class="icon-button replay-btn" type="button" title="Restart this room" aria-label="Restart this room"><svg class="ui-icon" aria-hidden="true"><use href="#icon-replay"/></svg></button>
+        <!-- Intro Sequence Overlay -->
+        <div id="intro-screen" class="hidden">
+          <p id="intro-line"></p>
+          <div id="intro-title">
+            <div class="ornate-rule wide">
+              <span></span><i>◆</i><span></span>
+            </div>
+            <h1>The Descipher</h1>
+            <div class="ornate-rule wide">
+              <span></span><i>◆</i><span></span>
+            </div>
           </div>
-          <p id="answer-feedback" role="status" aria-live="polite"></p>
+          <p id="intro-skip">PRESS ANY KEY TO SKIP</p>
+        </div>
+
+        <!-- Completion Screen -->
+        <div id="completion-screen" class="hidden" aria-live="polite">
+          <div class="completion-card">
+            <p class="completion-kicker">Case file closed</p>
+            <div class="ornate-rule wide">
+              <span></span><i>◆</i><span></span>
+            </div>
+            <h1>Deciphered</h1>
+            <div class="ornate-rule wide">
+              <span></span><i>◆</i><span></span>
+            </div>
+            <p class="completion-message">
+              Every chamber yielded its word. The room is quiet again.
+            </p>
+            <div class="completion-stats" aria-label="Completion statistics">
+              <div>
+                <span id="completion-chambers">18 / 18</span
+                ><small>CHAMBERS CLEARED</small>
+              </div>
+              <div>
+                <span id="completion-time">0m 00s</span
+                ><small>SESSION TIME</small>
+              </div>
+            </div>
+            <p class="completion-credits">
+              THE DESCIPHER &mdash; THANK YOU FOR PLAYING
+            </p>
+            <div class="completion-actions">
+              <button id="btn-completion-replay" class="menu-btn">
+                REPLAY CHAMBER
+              </button>
+              <button id="btn-completion-first" class="menu-btn primary-action">
+                BEGIN AGAIN
+              </button>
+              <button id="btn-completion-close" class="menu-btn">
+                VIEW LEVELS
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level Transition Veil -->
+        <div id="level-veil">
+          <div class="veil-content">
+            <p id="veil-caption">Code Accepted</p>
+            <div class="ornate-rule wide">
+              <span></span><i>◆</i><span></span>
+            </div>
+            <p class="veil-chamber">Chamber</p>
+            <h2 id="veil-numeral">I</h2>
+            <div class="ornate-rule wide">
+              <span></span><i>◆</i><span></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="game-viewport">
+          <div id="game-container"></div>
+          <div id="film-grain" aria-hidden="true"></div>
+          <span id="interaction-pulse" aria-hidden="true"></span>
+        </div>
+
+        <!-- Control Console -->
+        <div id="input-area">
+          <button
+            id="btn-hint"
+            class="text-button"
+            type="button"
+            aria-controls="right-sidebar-wrapper"
+            aria-expanded="false"
+            data-tip="A nudge for this puzzle"
+          >
+            <svg class="ui-icon" aria-hidden="true">
+              <use href="#icon-hint" /></svg
+            >Hint
+          </button>
+          <div class="input-container">
+            <label class="panel-label sr-only" for="level-code"
+              >Your answer</label
+            >
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="level-code"
+                placeholder="Your answer"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                aria-describedby="answer-feedback"
+              />
+              <button
+                id="btn-submit"
+                type="button"
+                data-tip="Try this answer (Enter)"
+              >
+                <span>Submit</span
+                ><svg class="ui-icon" aria-hidden="true">
+                  <use href="#icon-arrow" />
+                </svg>
+              </button>
+              <button
+                id="btn-replay"
+                class="icon-button replay-btn"
+                type="button"
+                title="Restart this room"
+                aria-label="Restart this room"
+              >
+                <svg class="ui-icon" aria-hidden="true">
+                  <use href="#icon-replay" />
+                </svg>
+              </button>
+            </div>
+            <p id="answer-feedback" role="status" aria-live="polite"></p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- The hints for the puzzle in hand: slid out from the left by the Hint
+      <!-- The hints for the puzzle in hand: slid out from the left by the Hint
          button, one revealed at a time (hints.js) -->
-    <aside id="right-sidebar-wrapper" aria-label="Hints" role="dialog" aria-modal="true">
-      <div id="right-sidebar">
-        <section id="current-level-info" aria-labelledby="brief-level-name">
-          <div class="drawer-heading">
-            <div><p class="eyebrow">Hints</p><h2 id="brief-level-name"></h2></div>
-            <button class="icon-button" type="button" data-close-drawer aria-label="Close hints" data-tip="Close hints (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
-          </div>
-          <div id="current-requirements"></div>
-        </section>
-        <ol id="hint-list"></ol>
-        <div class="hint-footer">
-          <p id="hint-count" role="status" aria-live="polite"></p>
-          <button id="btn-next-hint" class="menu-btn" type="button">Reveal hint 2</button>
-        </div>
-      </div>
-    </aside>
-
-    <!-- A phone held upright: the rooms are drawn wide (CSS shows this only
-         in portrait on small screens) -->
-    <div id="rotate-prompt" role="status">
-      <div class="rotate-icon" aria-hidden="true"></div>
-      <h2>Turn your phone</h2>
-      <p>The rooms were drawn wide. Hold your phone sideways to step in.</p>
-    </div>
-
-    <!-- The map of the house: a plan in pencil, drawn by houseMap.js -->
-    <div id="map-modal" class="hidden tool-modal">
-      <div class="modal-content tool-sheet map-content">
-        <div class="options-heading">
-          <h2>The house</h2>
-          <button id="btn-close-map" class="icon-button" type="button" aria-label="Close the map" data-tip="Close the map (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
-        </div>
-        <div id="house-map"></div>
-        <p id="map-keys" hidden></p>
-        <p class="tool-note">Click a place you have been to, to go straight back there. &nbsp;·&nbsp; M opens the map, Esc closes it.</p>
-      </div>
-    </div>
-
-    <!-- The notebook: a working page for each puzzle and each place, and up to
-         ten folders to keep notes in, drawn by notebook.js -->
-    <div id="notebook-modal" class="hidden tool-modal">
-      <div class="modal-content tool-sheet notebook-content">
-        <div class="options-heading">
-          <h2>Notebook</h2>
-          <button id="btn-close-notebook" class="icon-button" type="button" aria-label="Close the notebook" data-tip="Close the notebook (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
-        </div>
-        <div class="notebook-body">
-          <aside class="notebook-shelf" aria-label="Folders">
-            <div class="shelf-head"><span class="shelf-label">Folders</span><span id="notebook-folder-count" class="shelf-count"></span></div>
-            <ul id="notebook-folders" class="shelf-folders"></ul>
-            <button id="notebook-new-folder" class="shelf-add" type="button" data-tip="A new folder: ten at most">+ New folder</button>
-            <div id="notebook-notes-wrap" class="shelf-notes" hidden>
-              <div class="shelf-head"><span id="notebook-notes-label" class="shelf-label"></span></div>
-              <ul id="notebook-notes"></ul>
+      <aside
+        id="right-sidebar-wrapper"
+        aria-label="Hints"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div id="right-sidebar">
+          <section id="current-level-info" aria-labelledby="brief-level-name">
+            <div class="drawer-heading">
+              <div>
+                <p class="eyebrow">Hints</p>
+                <h2 id="brief-level-name"></h2>
+              </div>
+              <button
+                class="icon-button"
+                type="button"
+                data-close-drawer
+                aria-label="Close hints"
+                data-tip="Close hints (Esc)"
+              >
+                <svg class="ui-icon" aria-hidden="true">
+                  <use href="#icon-close" />
+                </svg>
+              </button>
             </div>
-          </aside>
-          <section class="notebook-page" aria-labelledby="notebook-title">
-            <div class="page-bar">
-              <span id="notebook-title" class="page-name"></span>
-              <button id="notebook-back" class="page-back" type="button" hidden data-tip="The page you keep for the puzzle you are in">&larr; Back to this puzzle&rsquo;s page</button>
-            </div>
-            <label class="sr-only" for="notebook-text">Your notes</label>
-            <textarea id="notebook-text" rows="5" placeholder="Write anything down…" spellcheck="false"></textarea>
-            <div class="notebook-sketch-wrap">
-              <canvas id="notebook-sketch" aria-label="A page to draw on"></canvas>
-            </div>
-            <div class="notebook-tools">
-              <button class="menu-btn" type="button" data-notebook-tool="pencil" aria-pressed="true" data-tip="Draw on the page">Pencil</button>
-              <button class="menu-btn" type="button" data-notebook-tool="eraser" aria-pressed="false" data-tip="Rub out what is drawn">Rubber</button>
-              <button id="notebook-clear" class="menu-btn" type="button" data-tip="Wipe the whole drawing">Clear the drawing</button>
-            </div>
-            <div class="notebook-save">
-              <label class="sr-only" for="notebook-note-title">The note's name</label>
-              <input id="notebook-note-title" type="text" maxlength="60" placeholder="A name for this note" spellcheck="false" autocomplete="off" />
-              <button id="notebook-save" class="menu-btn notebook-save-btn" type="button" data-tip="Keep a copy of this page in the open folder (Enter)">Save to <span id="notebook-save-folder"></span></button>
-              <button id="notebook-delete-note" class="menu-btn notebook-delete-btn" type="button" hidden data-tip="Click twice to be sure">Delete this note</button>
-            </div>
-            <p id="notebook-status" class="notebook-status" role="status" aria-live="polite"></p>
+            <div id="current-requirements"></div>
           </section>
+          <ol id="hint-list"></ol>
+          <div class="hint-footer">
+            <p id="hint-count" role="status" aria-live="polite"></p>
+            <button id="btn-next-hint" class="menu-btn" type="button">
+              Reveal hint 2
+            </button>
+          </div>
         </div>
-        <p class="tool-note">The page is kept for this puzzle by itself; Save puts a copy in a folder. &nbsp;·&nbsp; Double-click a folder to rename it. &nbsp;·&nbsp; N opens the notebook. &nbsp;·&nbsp; Right mouse button or Z: the magnifying glass.</p>
+      </aside>
+
+      <!-- A phone held upright: the rooms are drawn wide (CSS shows this only
+         in portrait on small screens) -->
+      <div id="rotate-prompt" role="status">
+        <div class="rotate-icon" aria-hidden="true"></div>
+        <h2>Turn your phone</h2>
+        <p>The rooms were drawn wide. Hold your phone sideways to step in.</p>
       </div>
-    </div>
+
+      <!-- The map of the house: a plan in pencil, drawn by houseMap.js -->
+      <div id="map-modal" class="hidden tool-modal">
+        <div class="modal-content tool-sheet map-content">
+          <div class="options-heading">
+            <h2>The house</h2>
+            <button
+              id="btn-close-map"
+              class="icon-button"
+              type="button"
+              aria-label="Close the map"
+              data-tip="Close the map (Esc)"
+            >
+              <svg class="ui-icon" aria-hidden="true">
+                <use href="#icon-close" />
+              </svg>
+            </button>
+          </div>
+          <div id="house-map"></div>
+          <p id="map-keys" hidden></p>
+          <p class="tool-note">
+            Click a place you have been to, to go straight back there.
+            &nbsp;·&nbsp; M opens the map, Esc closes it.
+          </p>
+        </div>
+      </div>
+
+      <!-- The case file: an old leather police dossier, opened like a book —
+         the index on the left page, the letter or the evidence on the right,
+         index tabs down its edge; drawn by caseFile.js -->
+      <div id="casefile-modal" class="hidden casefile-modal" data-tab="letters">
+        <div class="dossier">
+          <span class="dossier-corner is-tl" aria-hidden="true"></span>
+          <span class="dossier-corner is-tr" aria-hidden="true"></span>
+          <span class="dossier-corner is-bl" aria-hidden="true"></span>
+          <span class="dossier-corner is-br" aria-hidden="true"></span>
+          <header class="dossier-head">
+            <p class="dossier-ref">Devon &amp; Cornwall Constabulary · File 61/1013</p>
+            <h2 class="dossier-title">The Ashcombe Case</h2>
+            <button id="btn-close-casefile" class="dossier-close" type="button" aria-label="Close the case file" data-tip="Close the case file (Esc)">
+              <svg class="ui-icon" aria-hidden="true"><use href="#icon-close" /></svg>
+            </button>
+          </header>
+          <div class="dossier-pages">
+            <section class="dossier-page is-left">
+              <p class="dossier-stamp" aria-hidden="true">Confidential</p>
+              <div class="dossier-index is-letters">
+                <p class="page-head">Letters</p>
+                <ol id="casefile-letter-list" class="dossier-slips"></ol>
+              </div>
+              <div class="dossier-index is-clues">
+                <p class="page-head">The rooms</p>
+                <ul id="casefile-room-list" class="dossier-rooms"></ul>
+              </div>
+            </section>
+            <span class="dossier-spine" aria-hidden="true"></span>
+            <section class="dossier-page is-right">
+              <div id="casefile-reader" class="dossier-reader"></div>
+              <div class="dossier-evidence">
+                <p id="casefile-clue-count" class="page-head"></p>
+                <ul id="casefile-clue-list" class="evidence-tags"></ul>
+              </div>
+            </section>
+          </div>
+          <nav class="dossier-tabs" role="tablist" aria-label="Case file">
+            <button type="button" role="tab" data-casefile-tab="letters" aria-selected="true">Letters</button>
+            <button type="button" role="tab" data-casefile-tab="clues" aria-selected="false">Evidence</button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- The notebook: a working page for each puzzle and each place, and up to
+         ten folders to keep notes in, drawn by notebook.js -->
+      <div id="notebook-modal" class="hidden tool-modal">
+        <div class="modal-content tool-sheet notebook-content">
+          <div class="options-heading">
+            <h2>Notebook</h2>
+            <button
+              id="btn-close-notebook"
+              class="icon-button"
+              type="button"
+              aria-label="Close the notebook"
+              data-tip="Close the notebook (Esc)"
+            >
+              <svg class="ui-icon" aria-hidden="true">
+                <use href="#icon-close" />
+              </svg>
+            </button>
+          </div>
+          <div class="notebook-body">
+            <aside class="notebook-shelf" aria-label="Folders">
+              <div class="shelf-head">
+                <span class="shelf-label">Folders</span
+                ><span id="notebook-folder-count" class="shelf-count"></span>
+              </div>
+              <ul id="notebook-folders" class="shelf-folders"></ul>
+              <button
+                id="notebook-new-folder"
+                class="shelf-add"
+                type="button"
+                data-tip="A new folder: ten at most"
+              >
+                + New folder
+              </button>
+              <div id="notebook-notes-wrap" class="shelf-notes" hidden>
+                <div class="shelf-head">
+                  <span id="notebook-notes-label" class="shelf-label"></span>
+                </div>
+                <ul id="notebook-notes"></ul>
+              </div>
+            </aside>
+            <section class="notebook-page" aria-labelledby="notebook-title">
+              <div class="page-bar">
+                <span id="notebook-title" class="page-name"></span>
+                <button
+                  id="notebook-back"
+                  class="page-back"
+                  type="button"
+                  hidden
+                  data-tip="The page you keep for the puzzle you are in"
+                >
+                  &larr; Back to this puzzle&rsquo;s page
+                </button>
+              </div>
+              <label class="sr-only" for="notebook-text">Your notes</label>
+              <textarea
+                id="notebook-text"
+                rows="5"
+                placeholder="Write anything down…"
+                spellcheck="false"
+              ></textarea>
+              <div class="notebook-sketch-wrap">
+                <canvas
+                  id="notebook-sketch"
+                  aria-label="A page to draw on"
+                ></canvas>
+              </div>
+              <div class="notebook-tools">
+                <button
+                  class="menu-btn"
+                  type="button"
+                  data-notebook-tool="pencil"
+                  aria-pressed="true"
+                  data-tip="Draw on the page"
+                >
+                  Pencil
+                </button>
+                <button
+                  class="menu-btn"
+                  type="button"
+                  data-notebook-tool="eraser"
+                  aria-pressed="false"
+                  data-tip="Rub out what is drawn"
+                >
+                  Rubber
+                </button>
+                <button
+                  id="notebook-clear"
+                  class="menu-btn"
+                  type="button"
+                  data-tip="Wipe the whole drawing"
+                >
+                  Clear the drawing
+                </button>
+              </div>
+              <div class="notebook-save">
+                <label class="sr-only" for="notebook-note-title"
+                  >The note's name</label
+                >
+                <input
+                  id="notebook-note-title"
+                  type="text"
+                  maxlength="60"
+                  placeholder="A name for this note"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+                <button
+                  id="notebook-save"
+                  class="menu-btn notebook-save-btn"
+                  type="button"
+                  data-tip="Keep a copy of this page in the open folder (Enter)"
+                >
+                  Save to <span id="notebook-save-folder"></span>
+                </button>
+                <button
+                  id="notebook-delete-note"
+                  class="menu-btn notebook-delete-btn"
+                  type="button"
+                  hidden
+                  data-tip="Click twice to be sure"
+                >
+                  Delete this note
+                </button>
+              </div>
+              <p
+                id="notebook-status"
+                class="notebook-status"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </section>
+          </div>
+          <p class="tool-note">
+            The page is kept for this puzzle by itself; Save puts a copy in a
+            folder. &nbsp;·&nbsp; Double-click a folder to rename it.
+            &nbsp;·&nbsp; N opens the notebook. &nbsp;·&nbsp; Right mouse button
+            or Z: the magnifying glass.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Settings: the controls scroll while the heading and actions stay in reach. -->
@@ -319,19 +806,43 @@
       <div class="modal-content">
         <div class="options-heading">
           <h2>Settings</h2>
-          <button id="btn-close-options" class="icon-button" type="button" aria-label="Close settings" data-tip="Close settings (Esc)"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+          <button
+            id="btn-close-options"
+            class="icon-button"
+            type="button"
+            aria-label="Close settings"
+            data-tip="Close settings (Esc)"
+          >
+            <svg class="ui-icon" aria-hidden="true">
+              <use href="#icon-close" />
+            </svg>
+          </button>
         </div>
         <div class="options-body">
           <fieldset class="audio-settings">
             <legend>Sound</legend>
             <div class="slider-group">
               <label for="music-slider">Music</label>
-              <input type="range" id="music-slider" min="0" max="1" step="0.01" value="0.5" />
+              <input
+                type="range"
+                id="music-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+              />
               <output id="music-value" for="music-slider">50%</output>
             </div>
             <div class="slider-group">
               <label for="sfx-slider">Sound effects</label>
-              <input type="range" id="sfx-slider" min="0" max="1" step="0.01" value="0.8" />
+              <input
+                type="range"
+                id="sfx-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.8"
+              />
               <output id="sfx-value" for="sfx-slider">80%</output>
             </div>
           </fieldset>
@@ -340,7 +851,14 @@
             <div class="comfort-row grain-row">
               <label for="grain-slider">Film grain</label>
               <output id="grain-value" for="grain-slider">Off</output>
-              <input id="grain-slider" type="range" min="0" max="100" step="5" value="0" />
+              <input
+                id="grain-slider"
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value="0"
+              />
             </div>
             <div class="comfort-row">
               <label for="reading-size">Text size</label>
@@ -357,7 +875,9 @@
                 <option value="system">Follow device</option>
                 <option value="reduced">Reduced</option>
               </select>
-              <p id="motion-note">Puzzle signals and essential movement remain available.</p>
+              <p id="motion-note">
+                Puzzle signals and essential movement remain available.
+              </p>
             </div>
             <label class="comfort-checkbox" for="ambient-effects">
               <span>Ambient effects</span>
@@ -366,13 +886,36 @@
             <p class="comfort-caption">Dust, smoke and background movement.</p>
           </fieldset>
           <div class="danger-zone">
-            <p class="danger-note">Clear progress and return to the first room.</p>
-            <button id="btn-new" class="menu-btn danger-btn" type="button" data-tip="Forget everything and start the house again">Reset game</button>
+            <p class="danger-note">
+              Clear progress and return to the first room.
+            </p>
+            <button
+              id="btn-new"
+              class="menu-btn danger-btn"
+              type="button"
+              data-tip="Forget everything and start the house again"
+            >
+              Reset game
+            </button>
           </div>
         </div>
         <div class="modal-actions">
-          <button id="btn-howto" class="menu-btn" type="button" data-tip="How the game is played">How to play</button>
-          <button id="btn-mute" class="menu-btn" type="button" data-tip="Silence every sound">Mute all</button>
+          <button
+            id="btn-howto"
+            class="menu-btn"
+            type="button"
+            data-tip="How the game is played"
+          >
+            How to play
+          </button>
+          <button
+            id="btn-mute"
+            class="menu-btn"
+            type="button"
+            data-tip="Silence every sound"
+          >
+            Mute all
+          </button>
         </div>
       </div>
     </div>
@@ -382,12 +925,31 @@
       <div class="modal-content howto-content">
         <div class="howto-heading">
           <h2>How to play</h2>
-          <button id="btn-close-howto" class="icon-button" type="button" aria-label="Back to settings" title="Back to settings"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+          <button
+            id="btn-close-howto"
+            class="icon-button"
+            type="button"
+            aria-label="Back to settings"
+            title="Back to settings"
+          >
+            <svg class="ui-icon" aria-hidden="true">
+              <use href="#icon-close" />
+            </svg>
+          </button>
         </div>
-        <div class="howto-body" tabindex="0" role="region" aria-label="How to play instructions">
+        <div
+          class="howto-body"
+          tabindex="0"
+          role="region"
+          aria-label="How to play instructions"
+        >
           <section class="howto-section">
             <h3>Find the answer</h3>
-            <p>Each room hides an answer. Look, listen and interact with the scene. Enter what you find in the answer field below the room. Wrong answers carry no penalty.</p>
+            <p>
+              Each room hides an answer. Look, listen and interact with the
+              scene. Enter what you find in the answer field below the room.
+              Wrong answers carry no penalty.
+            </p>
           </section>
 
           <section class="howto-section">
@@ -399,7 +961,10 @@
               </div>
               <div class="howto-row">
                 <dt>Restart</dt>
-                <dd>The circular arrow beside Submit starts the current room again. Your progress is kept.</dd>
+                <dd>
+                  The circular arrow beside Submit starts the current room
+                  again. Your progress is kept.
+                </dd>
               </div>
               <div class="howto-row">
                 <dt>Hint</dt>
@@ -407,18 +972,28 @@
               </div>
               <div class="howto-row">
                 <dt>Room notes</dt>
-                <dd>Read a short description of the room and see whether sound or a reference may help.</dd>
+                <dd>
+                  Read a short description of the room and see whether sound or
+                  a reference may help.
+                </dd>
               </div>
               <div class="howto-row">
                 <dt>Settings</dt>
-                <dd>Adjust sound, text size, motion and effects. Reset game clears all progress after a second click to confirm.</dd>
+                <dd>
+                  Adjust sound, text size, motion and effects. Reset game clears
+                  all progress after a second click to confirm.
+                </dd>
               </div>
             </dl>
           </section>
 
           <section class="howto-section">
             <h3>Moving between rooms</h3>
-            <p>Solve a room to unlock the next. Revisit unlocked rooms from the list on the right or use the arrows above the scene. Progress is saved automatically in this browser.</p>
+            <p>
+              Solve a room to unlock the next. Revisit unlocked rooms from the
+              list on the right or use the arrows above the scene. Progress is
+              saved automatically in this browser.
+            </p>
           </section>
 
           <section class="howto-section">
@@ -426,18 +1001,28 @@
             <dl class="howto-controls">
               <div class="howto-row">
                 <dt>Listening</dt>
-                <dd>Sound is part of the puzzle. Check the volume in Settings and listen carefully.</dd>
+                <dd>
+                  Sound is part of the puzzle. Check the volume in Settings and
+                  listen carefully.
+                </dd>
               </div>
               <div class="howto-row">
                 <dt>Reference may help</dt>
-                <dd>You may need to look up an alphabet, cipher or notation to decode the clue.</dd>
+                <dd>
+                  You may need to look up an alphabet, cipher or notation to
+                  decode the clue.
+                </dd>
               </div>
             </dl>
           </section>
 
           <section class="howto-section howto-touch">
             <h3>On a phone or tablet</h3>
-            <p>Hold your device sideways. Tap to interact and drag to move things. Full screen hides the top bar for more space; tap or pull the small handle to bring it back.</p>
+            <p>
+              Hold your device sideways. Tap to interact and drag to move
+              things. Full screen hides the top bar for more space; tap or pull
+              the small handle to bring it back.
+            </p>
           </section>
         </div>
       </div>

@@ -23,6 +23,11 @@ import { mountTooltips } from './tooltips.js';
 import { mountLookAround } from './lookAround.js';
 import { mountAhas } from './ahas.js';
 import { mountFootsteps } from './footsteps.js';
+import { mountCaseFile } from './caseFile.js';
+import { playPrologue } from './prologue.js';
+import { mountCinema } from './cinema.js';
+import { mountPaperSounds } from './paperSounds.js';
+import { ARRIVAL } from '../shared/story.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -121,7 +126,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   function begin(event) {
     if (event?.type === 'keydown' && ['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) return;
     if (event?.type === 'keydown' && event.target !== document.body && !start.contains(event.target)) return;
-    if (started || transitions.busy || dialogs.isOpen || start.classList.contains('hidden')) return;
+    if (started || prologueOn || transitions.busy || dialogs.isOpen || start.classList.contains('hidden')) return;
     started = true; sessionStart = Date.now();
     // a phone's first tap is the one gesture that may take the whole screen
     if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
@@ -196,6 +201,28 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   }
   const map = mountHouseMap(scope, { levels, dialogs, travel });
   const notebook = mountNotebook(scope, { levels, dialogs, storage });
+  const cinema = mountCinema(scope, { levels, storage, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => dialogs.isOpen });
+  const paperSounds = mountPaperSounds({ game, audio });
+  const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || cinema.busy });
+  // The case begins at the Inspector's desk, with the letter; then the
+  // screen goes dark — the next night — and the manor comes up out of it,
+  // a car's lights sweeping across its front: he has arrived, and goes in by
+  // its door himself.
+  let prologueOn = false;
+  function openCase() {
+    if (prologueOn || caseFile.has('invitation')) return;
+    prologueOn = true;
+    playPrologue(scope, {
+      reducedMotion: preferences?.reducedMotion,
+      onDone: async () => {
+        caseFile.unlock('invitation');
+        await cinema.card(ARRIVAL, { hold: 1700 });
+        cinema.headlights();
+        prologueOn = false;
+      },
+    });
+  }
+  openCase();
   const glass = mountMagnifier(scope, game);
   mountAmbience(scope, { game, levels, audio });
   mountTooltips(scope);
@@ -204,7 +231,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   scope.on(byId('btn-map'), 'click', event => { if (!transitions.busy) map.open(event.currentTarget); });
   scope.on(byId('btn-close-map'), 'click', () => dialogs.close());
   scope.on(byId('btn-notebook'), 'click', event => { if (!transitions.busy) notebook.open(event.currentTarget); });
-  // M the map, N the notebook, Z the glass; Esc the way back. Never while
+  scope.on(byId('btn-casefile'), 'click', event => { if (!transitions.busy) caseFile.open(event.currentTarget); });
+  // M the map, N the notebook, C the case file, Z the glass; Esc the way back. Never while
   // something is being typed, nor before the house has been come into.
   scope.on(window, 'keydown', event => {
     // (an Esc that has just closed a dialog is spent)
@@ -214,6 +242,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     const key = event.key.toLowerCase();
     if (key === 'm') { event.preventDefault(); map.open(byId('btn-map')); }
     else if (key === 'n') { event.preventDefault(); notebook.open(byId('btn-notebook')); }
+    else if (key === 'c') { event.preventDefault(); caseFile.open(byId('btn-casefile')); }
     else if (key === 'z') { event.preventDefault(); glass.toggle(); }
     else if (key === 'escape') {
       if (glass.on) { glass.off(); return; }
@@ -287,10 +316,10 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       hintUI.reset();
       progressUI.reset();
       levels.reset();
-      started = true;
-      sessionStart = Date.now();
-      showGame();
-      transitions.enter('Hall');
+      caseFile.reset();
+      cinema.reset();
+      goOutside();
+      openCase();
     },
   });
   scope.on(byId('btn-howto'), 'click', event => { reset.disarm(); dialogs.open('howto-modal', event.currentTarget, { nested: true }); });

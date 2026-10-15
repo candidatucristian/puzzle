@@ -87,7 +87,7 @@ export const HINT_DETAILS = {
     "Give each block a sheet of its own and join its points in order. Each one draws something you can read.",
   ],
   kinetic: [
-    "Count the straight sides of each; the label says how a curve counts. The numbers are small enough to be letters.",
+    "Count the straight sides of each piece; the card says how a curve counts. The numbers are small enough to be letters.",
   ],
   genome: [
     "Each group of three stands for something in life's own code — and those things have one-letter names.",

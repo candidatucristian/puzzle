@@ -275,19 +275,19 @@ const metadata = [
   {
     "id": "flags",
     "key": "Flags",
-    "name": "Harbor at Dusk",
-    "summary": "Colourful flags stir in the breeze along a sunlit harbour.",
+    "name": "The Trophy Wall",
+    "summary": "Five flags hang over the cups and medals on a trophy wall.",
     "code": "DEBRIEFING",
     "altCode": null,
     "hint": {
-      "text": "DRESS THE SHIP.\nThe flags along the line, left to right.",
+      "text": "THE TROPHY WALL.\nThe flags along the rod, left to right.",
       "sound": false,
       "tool": true
     },
-    "description": "In a harbour on a sunny day, five national flags hang pegged to a line strung between two harbour lamps on the quay, left to right: Germany, Brazil, Ireland, Finland, Nigeria — none of them labeled by name, only by their actual colors/pattern. Concatenating each country's ISO two-letter code in hanging order — DE + BR + IE + FI + NG — spells DEBRIEFING.",
+    "description": "In a quiet room of the house at night, over a long walnut sideboard of cups and a shelf of small cups, a shield and medals on their ribbons, five national flags hang on rings from a brass rod across the wall, left to right: Germany, Brazil, Ireland, Finland, Nigeria — none of them labeled by name, only by their actual colors/pattern. Concatenating each country's ISO two-letter code in hanging order — DE + BR + IE + FI + NG — spells DEBRIEFING.",
     "references": [
-      "FL_FLAGS = [\"DE\",\"BR\",\"IE\",\"FI\",\"NG\"] — hanging order = code order",
-      "harbour.js paintDesign() — per-flag colored geometry, no text labels drawn; paintFlagFrames() makes them flutter"
+      "FLAG_CODES = [\"DE\",\"BR\",\"IE\",\"FI\",\"NG\"] (flags/flagDesigns.js) — hanging order = code order",
+      "flagDesigns.js paintDesign() — per-flag colored geometry, no text labels drawn; trophies.js paintFlagFrames() makes them stir; the cups and medals carry no writing"
     ]
   },
   {
@@ -561,21 +561,21 @@ const metadata = [
   {
     "id": "kinetic",
     "key": "Kinetic",
-    "name": "The Nursery at Rest",
-    "summary": "A baby sleeps beneath a gently swaying mobile in a moonlit purple nursery.",
+    "name": "The Games Cupboard",
+    "summary": "Four old board games stand face out on the middle shelf of a cupboard.",
     "code": "CAGE",
     "altCode": null,
     "hint": {
-      "text": "A STUDY OF BOUNDARIES.\nThe wooden shapes hanging over the cot, from highest to lowest.",
+      "text": "A STUDY OF BOUNDARIES.\nThe pieces on the lids, from left to right.",
       "sound": false,
       "tool": false
     },
-    "description": "A baby sleeps in a pale wooden crib seen from its long side and a little from above, in a small, dark purple nursery whose side walls close in at either hand. The one warm light is a floor lamp in the far corner: it lights the wall behind it and the crib, lays the far rail’s slats in stripes across the sheet and throws the crib’s shadow forward onto the rug. The baby, its pillow, the quilt over its legs and a plush bunny are modelled in three dimensions and seen between the near slats; a small window with the moon in it stands over a dresser, toys lie on the floor. The mobile is small and brightly painted — a coral triangle, a yellow circle, a sea-green heptagon, a blue pentagon. A draft gently moves a wooden mobile above the baby. From highest to lowest, its forms are a triangle, a circle, a heptagon and a pentagon. Count the straight sides of each polygon; the label defines the circle's single unbroken curved rim as one for this puzzle. The counts 3, 1, 7, 5 map through A=1 to C A G E. Connected threads, gentle sway and restrained rotation preserve readable shapes and their vertical order. Reduced motion freezes the nursery while leaving every clue visible.",
+    "description": "In the games room (Room 6), a tall oak cupboard stands with both doors open, lit by a lamp out of the picture. Games are stacked flat on its top and bottom shelves, only their plain spines showing, with a box of chessmen and a pack of cards. On the middle shelf four board-game boxes stand face out, side by side, each lid painted with one big wooden game piece: left to right a coral triangle, a yellow disc, a sea-green heptagon and a blue pentagon. A card pinned inside the right-hand door reads \"One unbroken curve counts as one.\" Count each piece's sides — the disc's single curved rim counts as one — and read them left to right: 3, 1, 7, 5, which map through A=1 to C A G E. A click on a box only rocks it on the shelf.",
     "references": [
-      "kinetic/puzzle.js KINETIC_FORMS — triangle, circle, heptagon and pentagon with explicit rim counts",
-      "polygonVertices() / kineticPose() — genuine polygon outlines and slow movement that keeps their order",
-      "readKinetic() — read 3, 1, 7, 5 as CAGE",
-      "KineticScene / room.js / baby.js — a moonlit nursery, a sleeping baby and a connected wooden mobile above the crib"
+      "kinetic/puzzle.js GAME_LIDS — triangle, circle, heptagon and pentagon with explicit rim counts, in shelf order",
+      "polygonVertices() — genuine polygon outlines for the pieces; cupboardLayout() — where the lids stand",
+      "readKinetic() — read 3, 1, 7, 5, left to right, as CAGE",
+      "KineticScene / cupboard.js — the open cupboard, the stacked games, the four lids and the card inside the door"
     ]
   },
   {

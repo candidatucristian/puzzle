@@ -3,6 +3,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutLab, paintLab, releaseLabArt } from "./lab.js";
+import { LAB_FIXTURES } from "./glassware.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CHEMISTRY"  ·  code: FOCUS  ·  atomic numbers → symbols
@@ -30,6 +31,10 @@ export default class ChemistryScene extends BasePuzzleScene {
 
   init(data) {
     this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+  }
+
+  preload() {
+    this.load.image(LAB_FIXTURES.rack.key, LAB_FIXTURES.rack.url);
   }
 
   create() {

@@ -340,3 +340,301 @@ body.in-house #game-container canvas { scale: 1.028; }
   background: transparent; color: #deded6; font-size: calc(12px * var(--reading-scale, 1)); }
 .hint-footer #btn-next-hint:hover:not(:disabled) { background: #242423; }
 .hint-footer #btn-next-hint:disabled { visibility: hidden; }
+
+/* ── the case file: the letters Inspector Wren gathers and the words the
+   puzzles give up (caseFile.js) ── */
+.casefile-content { width: min(1040px, calc(100vw - 60px)); max-height: calc(100dvh - 40px); grid-template-rows: auto auto minmax(0, 1fr); }
+.casefile-year { font-size: .7em; opacity: .7; }
+.casefile-tabs { display: flex; gap: 6px; border-bottom: 1px solid #8a7a5a66; }
+.casefile-tabs button { border: 0; background: none; padding: 6px 14px 8px; color: #5a4e3c; cursor: var(--cursor-hand, pointer);
+  font: 400 calc(15px * var(--reading-scale, 1)) "Architects Daughter", var(--ui-font); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.casefile-tabs button[aria-selected="true"] { color: #2a241c; border-bottom-color: #2a241c; }
+.casefile-letters { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; min-height: 0; }
+.casefile-letters[hidden], .casefile-clues[hidden] { display: none; }
+.casefile-letter-list { list-style: none; margin: 0; padding: 0; display: grid; align-content: start; gap: 6px; overflow-y: auto; }
+.casefile-letter { position: relative; width: 100%; text-align: left; display: grid; gap: 2px; padding: 9px 12px; border: 1px solid #8a7a5a55;
+  border-radius: 3px; background: #efe6cc66; color: #2a241c; cursor: var(--cursor-hand, pointer); }
+.casefile-letter:hover { background: #efe6ccaa; }
+.casefile-letter[aria-current="true"] { background: #f4ecd4; border-color: #2a241c; }
+.casefile-letter-title { font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", var(--ui-font); }
+.casefile-letter-where { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); color: #6a5c46; }
+.casefile-new { position: absolute; right: 8px; top: 8px; padding: 1px 6px; border-radius: 2px; background: #8a2a20; color: #f4ecd4;
+  font: 400 10px var(--ui-font); letter-spacing: .08em; text-transform: uppercase; }
+.casefile-unfound { padding: 8px 12px; color: #6a5c46; font: italic 400 calc(11px * var(--reading-scale, 1)) var(--ui-font); }
+/* the reader: the letter lying on the dark of a desk */
+.casefile-reader { overflow-y: auto; min-height: 0; max-height: calc(100dvh - 190px); padding: 34px 30px 40px; border-radius: 3px;
+  background: radial-gradient(ellipse at 50% 30%, #3a2a1c, #1a120c); display: flex; justify-content: center; align-items: flex-start; }
+
+/* a letter on the house's letter paper: the paper is painted to fit behind
+   the words (shared/envelope.js letterSheet) */
+.letter-page { position: relative; width: min(560px, 100%); padding: 44px 50px 78px; color: #2c2217;
+  font: 400 calc(14.5px * var(--reading-scale, 1)) / 1.75 "Special Elite", "Courier New", monospace; }
+.letter-paper { position: absolute; z-index: 0; pointer-events: none; }
+.letter-words { position: relative; z-index: 1; }
+.letter-words p { margin: 0 0 14px; }
+.letter-note { font: italic 400 calc(11px * var(--reading-scale, 1)) var(--ui-font); color: #8a2a20; letter-spacing: .04em; }
+.letter-dateline { font-size: .82em; color: #5a4a36; text-align: right; }
+.letter-salutation { margin-top: 18px !important; }
+.letter-signature { margin-top: 22px !important; text-align: right; }
+.letter-ps { margin-top: 18px !important; font-size: .9em; color: #4a3a28; }
+
+/* the clues: each word kept like an evidence tag, with where it was found */
+.casefile-clues { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; min-height: 0; }
+.casefile-clue-count { margin: 0; font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: #5a4e3c; }
+.casefile-clue-list { list-style: none; margin: 0; padding: 4px 2px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px; overflow-y: auto; max-height: calc(100dvh - 220px); align-content: start; }
+.casefile-clue { position: relative; display: grid; gap: 4px; padding: 14px 14px 12px 30px; border-radius: 2px 10px 10px 2px;
+  background: linear-gradient(170deg, #e8d9b0, #d4c08e); box-shadow: 0 3px 8px #0004; transform: rotate(-.6deg); }
+.casefile-clue:nth-child(even) { transform: rotate(.5deg); }
+.casefile-clue::before { content: ""; position: absolute; left: 11px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%;
+  background: #2a241c55; box-shadow: inset 0 1px 1px #0006; }
+.casefile-word { font: 400 calc(19px * var(--reading-scale, 1)) "Special Elite", "Courier New", monospace; letter-spacing: .18em; color: #2a241c; }
+.casefile-where { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); color: #5a4a36; }
+.casefile-clue.is-missing { background: #cbbf9f55; box-shadow: none; outline: 1px dashed #8a7a5a88; outline-offset: -4px; }
+.casefile-clue.is-missing .casefile-word { color: #8a7a5a; }
+
+/* ── the prologue: the Inspector's desk, the letter (prologue.js) ── */
+#prologue { position: fixed; inset: 0; z-index: 560; background: #060504; opacity: 0; transition: opacity .7s ease; }
+#prologue.is-shown { opacity: 1; }
+.prologue-desk { position: absolute; inset: 0; width: 100%; height: 100%; }
+.prologue-caption { position: absolute; left: clamp(20px, 4vw, 60px); top: clamp(18px, 4vh, 44px); color: #e8dcc0; text-shadow: 0 2px 8px #000; }
+.prologue-caption p { margin: 0; }
+.prologue-name { font: 400 clamp(22px, 2.4vw, 34px) "Architects Daughter", var(--ui-font); }
+.prologue-where { font: 400 clamp(11px, 1vw, 14px) var(--ui-font); color: #b8ab90; letter-spacing: .06em; margin-top: 4px !important; }
+.prologue-envelope { position: absolute; border: 0; padding: 0; background: transparent; cursor: var(--cursor-hand, pointer); }
+/* a soft glow over the envelope and round it, coming and going */
+.prologue-envelope::after { content: ""; position: absolute; inset: -35% -25%; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(closest-side, #ffd08a30, #ffd08a10 60%, transparent); animation: prologue-call 2.6s ease-in-out infinite; }
+.prologue-envelope:hover::after, .prologue-envelope:focus-visible::after { animation: none; opacity: 1; background: radial-gradient(closest-side, #ffe2b048, #ffd08a18 60%, transparent); }
+.prologue-envelope:focus-visible { outline: none; }
+@keyframes prologue-call { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+.prologue-prompt { position: absolute; left: 0; right: 0; bottom: clamp(22px, 5vh, 50px); margin: 0; text-align: center; color: #e8dcc0;
+  font: 400 clamp(15px, 1.4vw, 20px) "Architects Daughter", var(--ui-font); text-shadow: 0 2px 8px #000; }
+.prologue-reading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: 30px 16px; overflow-y: auto; background: rgba(5, 3, 10, 0.78); opacity: 0; transition: opacity .3s ease; }
+.prologue-reading.is-shown { opacity: 1; }
+.prologue-reading[hidden] { display: none; }
+.prologue-sheet { display: flex; justify-content: center; width: 100%; }
+.prologue-go { border: 1px solid #f1ece099; background: transparent; color: #f1ece0; padding: 10px 22px; border-radius: 3px; cursor: var(--cursor-hand, pointer);
+  font: 400 clamp(14px, 1.2vw, 17px) "Architects Daughter", var(--ui-font); }
+.prologue-go:hover, .prologue-go:focus-visible { background: #f1ece01a; outline: none; }
+[data-reduced-motion="true"] #prologue, [data-reduced-motion="true"] .prologue-reading { transition: none; }
+[data-reduced-motion="true"] .prologue-envelope::after { animation: none; }
+
+/* ── the story's moments between the puzzles (cinema.js) ── */
+/* a card: black, lines typed on it as on the Inspector's typewriter */
+.cinema-card { position: fixed; inset: 0; z-index: 570; display: flex; align-items: center; justify-content: center; background: #050403;
+  opacity: 0; transition: opacity .6s ease; cursor: var(--cursor-hand, pointer); }
+.cinema-card.is-shown { opacity: 1; }
+.cinema-card-text { text-align: center; color: #e8dcc0; }
+.cinema-line { margin: 0; min-height: 1.3em; font: 400 clamp(18px, 2vw, 28px) / 1.5 "Special Elite", "Courier New", monospace; letter-spacing: .06em; }
+.cinema-line.is-first { color: #b8ab90; font-size: clamp(14px, 1.4vw, 19px); letter-spacing: .14em; margin-bottom: .5em; }
+.cinema-line:last-child:not(:empty)::after { content: "▌"; margin-left: .1em; animation: cinema-caret 1s steps(1) infinite; color: #b8ab90; }
+.cinema-card.is-typed .cinema-line::after { animation-duration: 1.2s; }
+@keyframes cinema-caret { 50% { opacity: 0; } }
+/* a thought: one line under the picture, like a subtitle */
+.cinema-thought { position: absolute; left: 50%; bottom: clamp(18px, 4%, 40px); z-index: 20; translate: -50% 0; width: min(760px, 86%); margin: 0;
+  padding: 10px 22px 12px; text-align: center; color: #f1ece0; pointer-events: none;
+  font: italic 400 calc(16px * var(--reading-scale, 1)) / 1.55 Georgia, "Times New Roman", serif; text-shadow: 0 2px 6px #000;
+  background: radial-gradient(ellipse at 50% 60%, rgba(5, 4, 3, 0.72), rgba(5, 4, 3, 0) 72%);
+  opacity: 0; transition: opacity .7s ease; }
+.cinema-thought.is-shown { opacity: 1; }
+/* a car drawing up: its lights sweeping the front of the manor */
+.cinema-headlights { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; mix-blend-mode: screen; }
+.cinema-headlights span { position: absolute; left: 0; bottom: 4%; width: 75%; height: 80%;
+  background: radial-gradient(ellipse 42% 46% at 50% 68%, rgba(255, 240, 205, 0.75), rgba(255, 232, 185, 0.26) 42%, transparent 72%);
+  transform: translateX(-90%); opacity: 0; animation: cinema-sweep 3.8s ease-in-out forwards; }
+@keyframes cinema-sweep {
+  0% { transform: translateX(-90%); opacity: 0; }
+  15% { opacity: 1; }
+  80% { opacity: .9; }
+  100% { transform: translateX(150%); opacity: 0; }
+}
+[data-reduced-motion="true"] .cinema-card, [data-reduced-motion="true"] .cinema-thought { transition: none; }
+/* the prologue as a film, when there is one (prologue.js FILM) */
+.prologue-film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0; transition: opacity 1.2s ease; }
+.prologue-film.is-playing { opacity: 1; }
+.prologue-film.is-done { opacity: .25; }
+.prologue-begin { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; gap: 14px; justify-items: center;
+  border: 0; background: none; color: #e8dcc0; cursor: var(--cursor-hand, pointer); }
+.prologue-begin-who { font: 400 clamp(12px, 1.1vw, 15px) var(--ui-font); letter-spacing: .14em; text-transform: uppercase; color: #b8ab90; }
+.prologue-begin-play { padding: 12px 30px; border: 1px solid #f1ece099; border-radius: 3px; font: 400 clamp(18px, 1.8vw, 24px) "Architects Daughter", var(--ui-font); }
+.prologue-begin:hover .prologue-begin-play, .prologue-begin:focus-visible .prologue-begin-play { background: #f1ece01a; }
+.prologue-begin:focus-visible { outline: none; }
+.prologue-skip { position: absolute; right: clamp(16px, 3vw, 40px); bottom: clamp(16px, 4vh, 40px); border: 1px solid #f1ece055; border-radius: 3px;
+  background: #0008; color: #e8dcc0; padding: 7px 16px; cursor: var(--cursor-hand, pointer); font: 400 13px var(--ui-font); letter-spacing: .08em; }
+.prologue-skip:hover { background: #000c; }
+.prologue-skip[hidden], .prologue-begin[hidden] { display: none; }
+
+/* ══ The case file as an old leather police dossier (caseFile.js) ═════════ */
+.casefile-modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; perspective: 1600px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(26, 16, 8, 0.72), rgba(4, 3, 2, 0.94)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: opacity .3s ease; }
+.casefile-modal.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
+.casefile-modal:not(.hidden) .dossier { animation: dossier-in .6s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes dossier-in { from { transform: translateY(46px) rotateX(16deg) scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+/* the leather: oxblood, grained, worn paler at its edges, stitched round */
+.dossier { position: relative; width: min(1080px, calc(100vw - 110px)); height: min(700px, calc(100dvh - 60px));
+  display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 18px 26px 26px; border-radius: 12px;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 80% 70% at 50% 45%, #4a2016, #2e130c 70%, #1c0b06);
+  box-shadow: 0 40px 90px #000e, 0 0 0 1px #0008, inset 0 0 0 1px #6a3a2a66, inset 0 0 50px #0009; }
+.dossier::before { content: ""; position: absolute; inset: 9px; border: 1.5px dashed #c8a07a70; border-radius: 9px; pointer-events: none; }
+/* brass corners */
+.dossier-corner { position: absolute; z-index: 2; width: 44px; height: 44px; pointer-events: none;
+  background: linear-gradient(135deg, #f6dc98, #b8903e 45%, #6a4c1a); clip-path: polygon(0 0, 100% 0, 0 100%); filter: drop-shadow(0 2px 2px #000a); }
+.dossier-corner.is-tl { left: -3px; top: -3px; }
+.dossier-corner.is-tr { right: -3px; top: -3px; transform: scaleX(-1); }
+.dossier-corner.is-bl { left: -3px; bottom: -3px; transform: scaleY(-1); }
+.dossier-corner.is-br { right: -3px; bottom: -3px; transform: scale(-1, -1); }
+/* the cover's lettering, pressed in gold */
+.dossier-head { position: relative; display: grid; justify-items: center; gap: 2px; padding: 4px 60px 14px; }
+.dossier-ref { margin: 0; font: 400 10.5px var(--ui-font); letter-spacing: .26em; text-transform: uppercase; color: #c8a07acc; }
+.dossier-title { margin: 0; font: 600 clamp(22px, 2.4vw, 30px) Georgia, "Times New Roman", serif; font-variant: small-caps; letter-spacing: .16em;
+  color: #e2c27a; background: linear-gradient(180deg, #f8e3a8, #c89a46 55%, #9a7030); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 #0009) drop-shadow(0 -1px 0 #ffe9b026); }
+.dossier-close { position: absolute; right: 6px; top: 2px; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #c8a07a55;
+  border-radius: 50%; background: #1a0a06aa; color: #e2c27a; cursor: var(--cursor-hand, pointer); }
+.dossier-close:hover, .dossier-close:focus-visible { background: #3a1a10; outline: none; }
+/* the two pages, a shadowed fold between them */
+.dossier-pages { display: grid; grid-template-columns: minmax(0, .82fr) 22px minmax(0, 1.18fr); min-height: 0; border-radius: 4px; box-shadow: 0 2px 10px #000a; }
+.dossier-page { position: relative; min-height: 0; overflow-y: auto; padding: 22px 26px 26px; color: #2a2016; scrollbar-width: thin; scrollbar-color: #8a7a5a55 transparent; }
+.dossier-page.is-left { background: linear-gradient(90deg, #d4c49c, #e6d9b6 70%, #d8c9a2); border-radius: 4px 0 0 4px; }
+.dossier-page.is-right { background: linear-gradient(90deg, #d8c9a2, #ebdfbf 20%, #e3d6b2); border-radius: 0 4px 4px 0; }
+.dossier-spine { background: linear-gradient(90deg, #d8c9a2, #8a7552 40%, #5a4a30 50%, #8a7552 60%, #d8c9a2); }
+.page-head { margin: 0 0 14px; padding-bottom: 6px; border-bottom: 1px solid #5a4a3044; font: 400 11px var(--ui-font); letter-spacing: .3em;
+  text-transform: uppercase; color: #6a5434; }
+.dossier-stamp { position: absolute; right: 16px; bottom: 18px; margin: 0; padding: 4px 12px; border: 2.5px solid #9a2a2088; border-radius: 3px;
+  color: #9a2a2088; font: 700 15px "Special Elite", "Courier New", monospace; letter-spacing: .2em; text-transform: uppercase; transform: rotate(-11deg); pointer-events: none; }
+/* which side shows what */
+.casefile-modal[data-tab="letters"] .is-clues, .casefile-modal[data-tab="letters"] .dossier-evidence,
+.casefile-modal[data-tab="clues"] .is-letters, .casefile-modal[data-tab="clues"] .dossier-reader { display: none; }
+/* the letters, clipped slips in the order they came */
+.dossier-slips { list-style: none; margin: 0; padding: 0 0 50px; display: grid; gap: 12px; }
+.dossier-slip { position: relative; width: 100%; display: grid; gap: 1px; text-align: left; padding: 12px 14px 11px 30px; border: 0; border-radius: 2px;
+  background: linear-gradient(170deg, #f6eed8, #ece0c2); color: #2a2016; box-shadow: 0 2px 5px #0003; transform: rotate(-.5deg);
+  transition: transform .2s ease, box-shadow .2s ease; cursor: var(--cursor-hand, pointer); }
+li:nth-child(even) > .dossier-slip { transform: rotate(.6deg); }
+.dossier-slip:hover { transform: translateX(4px) rotate(0); box-shadow: 0 4px 10px #0004; }
+.dossier-slip.is-current { transform: translateX(8px) rotate(0); box-shadow: 0 6px 14px #0005, inset 3px 0 0 #8a2a20; }
+.slip-clip { position: absolute; left: 10px; top: -7px; width: 10px; height: 30px; border: 2px solid #9aa2aa; border-radius: 6px;
+  box-shadow: inset 0 0 0 2px #e6d9b6, 0 1px 1px #0004; }
+.slip-no { font: 400 10px "Special Elite", "Courier New", monospace; letter-spacing: .14em; color: #8a2a20; }
+.slip-title { font: 400 calc(16px * var(--reading-scale, 1)) / 1.25 "Architects Daughter", var(--ui-font); }
+.slip-where { font: italic 400 calc(11px * var(--reading-scale, 1)) Georgia, serif; color: #6a5434; }
+.dossier-slip.is-unread::after { content: ""; position: absolute; right: 10px; top: 10px; width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d8584a, #8a1a12); box-shadow: 0 0 8px #c8382a88; animation: alert-pulse 1.8s ease-in-out infinite; }
+li.dossier-slip.is-missing { padding: 12px 14px 11px 30px; display: grid; outline: 1px dashed #6a543466; outline-offset: -2px; color: #8a7a5a; background: none; box-shadow: none; transform: none; }
+/* the rooms: how much of each has given up its word */
+.dossier-rooms { list-style: none; margin: 0; padding: 0 0 50px; display: grid; gap: 2px; }
+.dossier-room { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: baseline; padding: 7px 4px; border-bottom: 1px dotted #6a543455;
+  font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", var(--ui-font); }
+.room-dots { color: #8a2a20; letter-spacing: .1em; font-size: 12px; }
+.room-count { font: 400 11px "Special Elite", monospace; color: #6a5434; }
+.dossier-room.is-done .room-name { text-decoration: line-through; text-decoration-color: #8a2a20aa; }
+/* the letter being read, on its own paper on the page */
+.dossier-reader { display: flex; justify-content: center; padding: 14px 6px 10px; }
+.dossier-reader .letter-page { width: min(520px, 100%); }
+.dossier-empty { margin: 40px 0; color: #6a5434; font: italic 400 15px Georgia, serif; }
+/* the evidence: a typed tag for every word */
+.evidence-tags { list-style: none; margin: 0; padding: 4px 2px 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px 12px; }
+.evidence-tag { position: relative; display: grid; gap: 3px; padding: 13px 12px 11px 34px; transform: rotate(-.7deg);
+  background: linear-gradient(170deg, #e9d6a2, #d6bf86); clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+  filter: drop-shadow(0 2px 3px #0004); }
+.evidence-tag:nth-child(even) { transform: rotate(.6deg); }
+.evidence-tag::before { content: ""; position: absolute; left: 12px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%;
+  background: #6a5434; box-shadow: 0 0 0 2.5px #f0dfae, 0 0 0 3.5px #8a7552; }
+.tag-word { font: 400 calc(19px * var(--reading-scale, 1)) "Special Elite", "Courier New", monospace; letter-spacing: .2em; color: #2a2016; }
+.tag-where { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); color: #5a4a30; }
+.evidence-tag.is-missing { background: linear-gradient(170deg, #ddd0ae, #cfc19c); }
+.evidence-tag.is-missing .tag-word { color: #9a8a68; font-size: 13px; letter-spacing: .3em; }
+.evidence-tag.is-new::after { content: "New"; position: absolute; right: 8px; top: 6px; padding: 1px 6px; border: 2px solid #a82a1e; color: #a82a1e;
+  font: 700 10px "Special Elite", monospace; letter-spacing: .14em; text-transform: uppercase; transform: rotate(8deg); animation: stamp-in .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes stamp-in { from { transform: rotate(8deg) scale(2.4); opacity: 0; } to { transform: rotate(8deg) scale(1); opacity: 1; } }
+/* the index tabs down the dossier's edge */
+.dossier-tabs { position: absolute; right: -40px; top: 110px; display: flex; flex-direction: column; gap: 8px; }
+.dossier-tabs button { writing-mode: vertical-rl; padding: 16px 9px; border: 0; border-radius: 0 8px 8px 0; cursor: var(--cursor-hand, pointer);
+  background: linear-gradient(90deg, #3a1a10, #5a2e1e); color: #e2c27a; box-shadow: 3px 3px 8px #0008;
+  font: 400 12px var(--ui-font); letter-spacing: .24em; text-transform: uppercase; transition: transform .2s ease, background .2s ease; }
+.dossier-tabs button:hover { transform: translateX(3px); }
+.dossier-tabs button[aria-selected="true"] { background: linear-gradient(90deg, #d8c9a2, #ebdfbf); color: #2a2016; transform: translateX(-4px); }
+
+/* ── the red mark on the Case file button: something not yet looked at ── */
+#btn-casefile { position: relative; }
+.casefile-alert { display: none; position: absolute; top: -2px; left: 18px; width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e8604e, #a01c14); color: #fff6ec; font: 700 11px/17px Georgia, serif; text-align: center;
+  box-shadow: 0 0 0 2px var(--ui-bg, #0d0d0d), 0 0 14px #ff4a3a99; }
+#btn-casefile.has-news .casefile-alert { display: block; animation: alert-pulse 1.8s ease-in-out infinite; }
+#btn-casefile.is-popping .casefile-alert { animation: alert-pop .55s cubic-bezier(.3, 1.8, .5, 1), alert-pulse 1.8s ease-in-out .55s infinite; }
+#btn-casefile.is-receiving { animation: file-receive .7s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes alert-pulse { 0%, 100% { box-shadow: 0 0 0 2px var(--ui-bg, #0d0d0d), 0 0 6px #ff4a3a55; } 50% { box-shadow: 0 0 0 2px var(--ui-bg, #0d0d0d), 0 0 18px #ff4a3acc; } }
+@keyframes alert-pop { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes file-receive { 0% { transform: none; } 30% { transform: scale(1.18) rotate(-4deg); color: #f1ece0; } 60% { transform: scale(.95) rotate(2deg); } 100% { transform: none; } }
+
+/* ══ A letter arriving (letterArrival.js) ═══════════════════════════════ */
+.arrival { position: fixed; inset: 0; z-index: 575; }
+.arrival-veil { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(18, 11, 5, 0.7), rgba(3, 2, 1, 0.92));
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; transition: opacity .5s ease; }
+.arrival.is-shown .arrival-veil { opacity: 1; }
+.arrival-caption { position: absolute; left: 0; right: 0; top: 12vh; text-align: center; color: #e8dcc0; opacity: 0; transform: translateY(-8px);
+  transition: opacity .6s ease .35s, transform .6s ease .35s; pointer-events: none; }
+.arrival.is-shown .arrival-caption { opacity: 1; transform: none; }
+.arrival-caption.is-away { opacity: 0 !important; transition-delay: 0s; }
+.arrival-caption p { margin: 0; }
+.arrival-eyebrow { font: 700 11px var(--ui-font); letter-spacing: .4em; text-transform: uppercase; color: #d8584a; }
+.arrival-title { margin-top: 8px !important; font: 400 clamp(24px, 2.6vw, 36px) "Architects Daughter", var(--ui-font); text-shadow: 0 2px 10px #000; }
+.arrival-where { margin-top: 4px !important; font: italic 400 clamp(13px, 1.1vw, 16px) Georgia, serif; color: #b8ab90; }
+.arrival-stage { position: absolute; left: 50%; top: 54%; translate: -50% -50%; perspective: 1100px; display: grid; justify-items: center; gap: 26px; }
+.env { position: relative; outline: none; transform-style: preserve-3d; filter: drop-shadow(0 18px 24px #000c); }
+.env > canvas, .env > .env-letter, .env > .env-flap { position: absolute; left: 0; top: 0; }
+.env-inside { z-index: 0; }
+.env-letter { z-index: 1; border-radius: 1px; background:
+  repeating-linear-gradient(180deg, transparent 0 13px, #5a4a3026 13px 14px) 14% 18% / 72% 70% no-repeat,
+  linear-gradient(170deg, #f3e9cf, #e4d5b0); box-shadow: 0 1px 4px #0005; }
+.env-pocket { z-index: 2; }
+.env-flap { z-index: 3; transform-origin: 50% 0; transform-style: preserve-3d; }
+.env-flap > canvas { position: absolute; left: 0; top: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.env-flap-in { transform: rotateX(180deg); }
+.env-seal { z-index: 4; position: absolute; }
+.env-shard { position: absolute; z-index: 5; background: radial-gradient(circle at 35% 30%, #c8402e, #7a140c 70%, #4a0a06); pointer-events: none; filter: drop-shadow(0 1px 1px #0008); }
+.arrival.is-waiting .env { cursor: var(--cursor-hand, pointer); animation: env-breathe 2.4s ease-in-out infinite; }
+.arrival.is-waiting .env-seal { animation: seal-glow 1.6s ease-in-out infinite; }
+@keyframes env-breathe { 0%, 100% { filter: drop-shadow(0 18px 24px #000c) drop-shadow(0 0 0 #ffd08a00); } 50% { filter: drop-shadow(0 18px 24px #000c) drop-shadow(0 0 22px #ffd08a55); } }
+@keyframes seal-glow { 0%, 100% { filter: drop-shadow(0 0 0 #ff6a4a00); transform: scale(1); } 50% { filter: drop-shadow(0 0 10px #ff6a4acc); transform: scale(1.06); } }
+.env-hint { margin: 0; font: 400 clamp(16px, 1.5vw, 21px) "Architects Daughter", var(--ui-font); color: #e8dcc0; opacity: 0; transition: opacity .4s ease; }
+.arrival.is-waiting .env-hint { opacity: 1; animation: hint-breathe 2.4s ease-in-out infinite; }
+@keyframes hint-breathe { 50% { opacity: .55; } }
+.arrival-later { position: absolute; right: clamp(16px, 3vw, 40px); bottom: clamp(16px, 4vh, 40px); border: 1px solid #f1ece055; border-radius: 3px; background: #0006;
+  color: #b8ab90; padding: 7px 16px; cursor: var(--cursor-hand, pointer); font: 400 13px var(--ui-font); letter-spacing: .06em; opacity: 0; transition: opacity .4s ease; }
+.arrival.is-waiting .arrival-later { opacity: 1; }
+.arrival-later[hidden] { display: none; }
+.arrival-reading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px 16px;
+  opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+.arrival-reading.is-shown { opacity: 1; pointer-events: auto; }
+.arrival-page { width: min(560px, 92vw); max-height: calc(100dvh - 130px); overflow-y: auto; padding: 22px 18px; transform-origin: 50% 50%; scrollbar-width: thin; }
+.arrival-file { border: 1px solid #e2c27aaa; background: linear-gradient(180deg, #3a1a10, #24100a); color: #e2c27a; padding: 11px 24px; border-radius: 3px;
+  cursor: var(--cursor-hand, pointer); font: 400 clamp(14px, 1.2vw, 17px) "Architects Daughter", var(--ui-font); box-shadow: 0 6px 18px #000a; }
+.arrival-file:hover, .arrival-file:focus-visible { background: linear-gradient(180deg, #4a2214, #2e140c); outline: none; }
+[data-reduced-motion="true"] .arrival *, [data-reduced-motion="true"] .casefile-modal .dossier { animation: none !important; transition: none !important; }
+
+/* ══ A thought, as a film puts it (cinema.js say): the wide screen's bars ══ */
+.cinema-frame { position: absolute; inset: 0; z-index: 20; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.cinema-bar { position: absolute; left: 0; right: 0; display: flex; align-items: center; background: #030202;
+  transition: transform .95s cubic-bezier(.65, 0, .25, 1); }
+.cinema-bar.is-top { top: 0; height: clamp(40px, 9%, 74px); justify-content: space-between; padding: 0 clamp(18px, 3%, 40px);
+  transform: translateY(-101%); box-shadow: 0 6px 18px #0009; }
+.cinema-bar.is-bottom { bottom: 0; height: clamp(64px, 15%, 120px); justify-content: center; padding: 0 clamp(20px, 6%, 90px);
+  transform: translateY(101%); box-shadow: 0 -6px 18px #0009; }
+.cinema-frame.is-on .cinema-bar { transform: none; }
+.cinema-where, .cinema-time { font: 400 clamp(10px, .8vw, 12px) "Special Elite", "Courier New", monospace; letter-spacing: .32em; text-transform: uppercase;
+  color: #b8ab90; opacity: 0; transition: opacity .8s ease .7s; }
+.cinema-where::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 12px; border-radius: 50%; background: #c8382a;
+  box-shadow: 0 0 8px #ff4a3a; vertical-align: 1px; animation: alert-pulse 1.4s ease-in-out infinite; }
+.cinema-frame.is-on .cinema-where, .cinema-frame.is-on .cinema-time { opacity: 1; }
+.cinema-thought-line { margin: 0; max-width: 980px; text-align: center; color: #f1ece0; min-height: 1.4em;
+  font: italic 400 clamp(17px, 1.75vw, 25px) / 1.45 Georgia, "Times New Roman", serif; letter-spacing: .01em; text-shadow: 0 0 18px #000; }
+.cinema-thought-line:not(:empty)::after { content: "▌"; margin-left: .12em; font-style: normal; font-size: .8em; color: #b8ab90; animation: cinema-caret .9s steps(1) infinite; }
+.cinema-frame.is-typed .cinema-thought-line::after { opacity: 0; animation: none; }
+.cinema-frame:not(.is-on) .cinema-where, .cinema-frame:not(.is-on) .cinema-time { transition-delay: 0s; }
+[data-reduced-motion="true"] .cinema-bar, [data-reduced-motion="true"] .cinema-where, [data-reduced-motion="true"] .cinema-time { transition: none; }

@@ -1,12 +1,15 @@
 import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
+import { paintTurfBase, paintGrass } from "./turf.js";
+import { paintShrub, paintHedge, paintFern } from "./foliage.js";
+import { GARDEN_TREES, paintMatureTree } from "./matureTrees.js";
 
 /** The garden for PLANT POT, seen from the study's window: we are indoors,
  *  leaning on the sill and looking out and down. The window's own woodwork
  *  frames the picture — the sill along the bottom, a jamb and the edge of a
  *  curtain at either hand. Below us is the garden by moonlight, half of it
  *  a wood: a mown lawn running away to a hedge, a gravel path across it,
- *  round-headed trees and tall cypresses standing about on it and in a
- *  close rank at its far end, all throwing long shadows; bushes, a
+ *  mature oaks and chestnuts in loose groups around its sides, their
+ *  broad crowns throwing long shadows; bushes, a
  *  birdbath; beyond the hedge, a
  *  little of the far ridge and of the sky, the moon low in it. Right under
  *  the window stands the potting bench, and on its left end a storm lantern
@@ -78,7 +81,7 @@ export function paintGarden(scene, W, H) {
   const L = layoutGarden(W, H);
   const t = scene.textures;
   addCanvas(t, K.sky, paintSky(L));
-  addCanvas(t, K.land, paintLand(L));
+  addCanvas(t, K.land, paintLand(L, t.get(GARDEN_TREES.key).getSourceImage()));
   addCanvas(t, K.veil, paintVeil(L));
   addCanvas(
     t,
@@ -156,13 +159,13 @@ function paintSky(L) {
 
 // ── the land ────────────────────────────────────────────────────────────────
 
-function paintLand(L) {
+function paintLand(L, trees) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
   const rnd = lcg(2718);
   paintFar(ctx, L, rnd);
-  paintGround(ctx, L, rnd);
+  paintGround(ctx, L, rnd, trees);
   paintBench(ctx, L);
   paintLantern(ctx, L);
   grain(ctx, W, H, 0.03, true);
@@ -195,7 +198,7 @@ function paintFar(ctx, L, rnd) {
   ]) {
     hs.forEach((h, j) => {
       const x = W * fx + j * S * 0.009;
-      cypress(ctx, x, far(x) + S * 0.003, S * h, S * h * 0.22, "#0a1122");
+      crown(ctx, x, far(x) + S * 0.003, S * h * 0.3, "#0a1122");
     });
   }
   const mist = ctx.createLinearGradient(0, horizonY - H * 0.02, 0, horizonY + H * 0.03);
@@ -210,8 +213,8 @@ function paintFar(ctx, L, rnd) {
 // the hedge at its far end, the mower's stripes drawing together as they go;
 // a gravel path coming across it from the right; round bushes and a stone
 // birdbath, each with its shadow lying toward us and to the left, away from
-// the moon; cypresses along the sides, their shadows long on the grass.
-function paintGround(ctx, L, rnd) {
+// the moon; mature trees along the sides, their shadows long on the grass.
+function paintGround(ctx, L, rnd, treeImage) {
   const { W, H, S, lw, near, cm } = L;
   const top = H * 0.232;
   const ng = ctx.createLinearGradient(0, top, 0, H);
@@ -241,6 +244,7 @@ function paintGround(ctx, L, rnd) {
   }
   // the moon lying on it
   softEllipse(ctx, W * 0.6, H * 0.47, W * 0.46, H * 0.2, "96,124,170", 0.17, "lighter");
+  paintTurfBase(ctx, L);
   // the gravel path: wide under the window, a thread at the hedge
   const at = (k) => {
     const y = H + 4 - (H + 4 - top) * Math.pow(k, 0.72);
@@ -265,20 +269,7 @@ function paintGround(ctx, L, rnd) {
     ctx.fillRect(p.x + (rnd() * 2 - 1) * p.w, p.y + (rnd() - 0.5) * 6, (0.6 + d * 1.6) * lw, (0.5 + d * 0.9) * lw);
   }
   ctx.restore();
-  // the grass itself: short strokes, finer and fainter the further off
-  const blades = Math.round((W * H) / 520);
-  for (let i = 0; i < blades; i++) {
-    const y = top + Math.pow(rnd(), 0.7) * (H - top);
-    const x = rnd() * W;
-    const d = 1 - away(y);
-    const len = (1.5 + d * 6) * lw;
-    ctx.strokeStyle = rnd() < 0.55 ? `rgba(2,6,8,${(0.2 + d * 0.25).toFixed(3)})` : `rgba(120,160,150,${(0.05 + d * 0.07).toFixed(3)})`;
-    ctx.lineWidth = Math.max(0.5, (0.5 + d * 0.5) * lw);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + (rnd() - 0.5) * len * 0.5, y - len);
-    ctx.stroke();
-  }
+  paintGrass(ctx, L, at);
   // something standing on the lawn throws its shadow toward us and leftward
   const shadow = (x, y, w, len) => {
     ctx.save();
@@ -293,26 +284,13 @@ function paintGround(ctx, L, rnd) {
     ctx.fill();
     ctx.restore();
   };
-  // round bushes, seen from above: a dark dome, the moon along its far right
-  const bush = (x, y, r) => {
+  // Low shrubs have woody stems and uneven, overlapping sprays of leaves.
+  const shrubs = [[0.29, 0.31, 0.02], [0.36, 0.285, 0.015], [0.78, 0.33, 0.022], [0.24, 0.52, 0.036], [0.815, 0.61, 0.038]];
+  for (const [i, [fx, fy, fr]] of shrubs.entries()) {
+    const x = W * fx, y = H * fy, r = S * fr;
     shadow(x, y + r * 0.2, r * 1.7, r * 1.6);
-    const g = ctx.createRadialGradient(x + r * 0.42, y - r * 0.5, r * 0.08, x, y - r * 0.1, r * 1.1);
-    g.addColorStop(0, "#27384a");
-    g.addColorStop(0.4, "#0f1a22");
-    g.addColorStop(1, "#04080c");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.ellipse(x, y - r * 0.3, r, r * 0.74, 0, 0, Math.PI * 2);
-    ctx.fill();
-    for (let i = 0; i < 26; i++) {
-      const a = rnd() * Math.PI * 2, q = Math.sqrt(rnd()) * 0.9;
-      ctx.fillStyle = rnd() < 0.5 ? "rgba(0,0,0,0.3)" : "rgba(150,176,214,0.1)";
-      ctx.beginPath();
-      ctx.arc(x + Math.cos(a) * q * r, y - r * 0.3 + Math.sin(a) * q * r * 0.74, r * (0.08 + rnd() * 0.08), 0, Math.PI * 2);
-      ctx.fill();
-    }
-  };
-  for (const [fx, fy, fr] of [[0.29, 0.31, 0.02], [0.36, 0.285, 0.015], [0.78, 0.33, 0.022], [0.24, 0.52, 0.036], [0.875, 0.6, 0.042]]) bush(W * fx, H * fy, S * fr);
+    paintShrub(ctx, x, y, r, 419 + i * 83);
+  }
   // the birdbath: a stone bowl on its stem, the moon in the water
   {
     const x = W * 0.655, y = H * 0.415, r = S * 0.024;
@@ -332,117 +310,37 @@ function paintGround(ctx, L, rnd) {
   // the lantern's warmth on the grass beyond the bench
   softEllipse(ctx, L.flame.x + W * 0.02, L.bench.y - 22 * cm, W * 0.2, H * 0.09, "255,160,80", 0.12, "lighter");
   ctx.restore();
-  // the hedge at the far end, clipped square, the moon along its top
-  ridge(ctx, L, near, 0);
-  ctx.strokeStyle = "#060b10";
-  ctx.lineWidth = H * 0.022;
-  ctx.stroke();
-  ridge(ctx, L, near, -H * 0.011);
-  ctx.strokeStyle = "rgba(128,150,205,0.22)";
-  ctx.lineWidth = lw;
-  ctx.stroke();
-  // The trees: the garden is half a wood. A close rank of them stands in
-  // front of the hedge, more come down either side and stand about on the
-  // lawn, round-headed ones among the cypresses — each with its shadow on
-  // the grass. The furthest are painted first.
-  const round = (x, y, r) => {
-    // the trunk, then the head: a heap of dark masses, the moon on the upper right of each
-    ctx.fillStyle = "#04070a";
-    ctx.fillRect(x - r * 0.09, y - r * 0.9, r * 0.18, r * 0.9);
-    const cy = y - r * 1.55;
-    for (const [dx, dy, k] of [[-0.55, 0.25, 0.62], [0.5, 0.3, 0.6], [0, 0.42, 0.7], [-0.32, -0.2, 0.7], [0.36, -0.22, 0.66], [0, -0.52, 0.6], [0, 0, 0.8]]) {
-      const bx = x + dx * r, by = cy + dy * r, br = k * r;
-      const g = ctx.createRadialGradient(bx + br * 0.4, by - br * 0.45, br * 0.05, bx, by, br);
-      g.addColorStop(0, "#24364a");
-      g.addColorStop(0.45, "#0e1922");
-      g.addColorStop(1, "#04080c");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(bx, by, br, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // leaves catching the light, and the dark between them
-    for (let i = 0; i < 36; i++) {
-      const an = rnd() * Math.PI * 2, q = Math.sqrt(rnd()) * 1.05;
-      ctx.fillStyle = rnd() < 0.55 ? "rgba(0,0,0,0.28)" : "rgba(150,178,220,0.1)";
-      ctx.beginPath();
-      ctx.arc(x + Math.cos(an) * q * r, cy + Math.sin(an) * q * r * 0.95, r * (0.05 + rnd() * 0.07), 0, Math.PI * 2);
-      ctx.fill();
-    }
-  };
-  // [kind, across, foot, size (and for a cypress, its width)]
+  paintHedge(ctx, L, at(1));
+  // Mature trees enclose the lawn in loose, overlapping groups. Their
+  // crowns fill the sides of the window, leaving the central garden open.
+  // [across, foot, height, species, moonlight]; furthest first.
   const trees = [
-    ["cypress", 0.185, 0.3, 0.17, 0.03], ["cypress", 0.125, 0.36, 0.25, 0.042], ["cypress", 0.235, 0.275, 0.12, 0.022],
-    ["cypress", 0.895, 0.35, 0.23, 0.04], ["cypress", 0.845, 0.29, 0.15, 0.028],
-    ["cypress", 0.385, 0.268, 0.1, 0.018], ["cypress", 0.545, 0.262, 0.085, 0.016], ["cypress", 0.735, 0.272, 0.11, 0.02],
-    ["cypress", 0.28, 0.44, 0.2, 0.034], ["cypress", 0.76, 0.4, 0.16, 0.03],
-    ["round", 0.3, 0.36, 0.034], ["round", 0.43, 0.315, 0.028], ["round", 0.5, 0.29, 0.022], ["round", 0.775, 0.31, 0.026],
-    ["round", 0.17, 0.47, 0.05], ["round", 0.885, 0.47, 0.046], ["round", 0.115, 0.66, 0.075], ["round", 0.35, 0.3, 0.024],
+    [0.42, 0.285, 0.19, 0, 0.68],
+    [0.565, 0.282, 0.145, 1, 0.66],
+    [0.785, 0.30, 0.21, 0, 0.76],
+    [0.21, 0.335, 0.27, 1, 0.76],
+    [0.335, 0.39, 0.30, 0, 0.86],
+    [0.94, 0.425, 0.34, 0, 0.87],
+    [0.09, 0.455, 0.37, 1, 0.84],
+    [0.79, 0.61, 0.51, 1, 1],
+    [0.165, 0.655, 0.59, 0, 1.06],
   ];
-  // the rank along the hedge, leaving the gap the path goes out by
-  for (let i = 0; i < 16; i++) {
-    const fx = 0.11 + i * 0.053 + (rnd() - 0.5) * 0.016;
-    if (fx > 0.565 && fx < 0.66) continue;
-    trees.push(["round", fx, 0.262 + rnd() * 0.012, 0.016 + rnd() * 0.009]);
-  }
-  trees.sort((p, q) => p[2] - q[2]);
+  trees.sort((p, q) => p[1] - q[1]);
   ctx.save();
   ridge(ctx, L, near, 0);
   ctx.lineTo(W + 4, H + 4);
   ctx.lineTo(-4, H + 4);
   ctx.closePath();
   ctx.clip();
-  for (const [kind, fx, fy, fs, fw] of trees) {
-    if (kind === "cypress") shadow(W * fx, H * fy, S * fw, H * fs * 1.15);
-    else shadow(W * fx, H * fy, S * fs * 1.5, S * fs * 3);
+  for (const [fx, fy, height] of trees) {
+    shadow(W * fx, H * fy, H * height * 0.6, H * height * 0.8);
   }
   ctx.restore();
-  for (const [kind, fx, fy, fs, fw] of trees) {
-    if (kind === "cypress") tallCypress(ctx, L, W * fx, H * fy, H * fs, S * fw, rnd);
-    else round(W * fx, H * fy, S * fs);
+  for (const [fx, fy, height, kind, light] of trees) {
+    paintMatureTree(ctx, treeImage, W * fx, H * fy, H * height, kind, light);
   }
-}
-
-// A tall cypress, close: a column of dark foliage with a rounded shoulder
-// and a soft point, its edge feathered with sprays of leaves, the side
-// toward the moon faintly lit and a sliver of moonlight down that edge.
-function tallCypress(ctx, L, x, base, h, w, rnd) {
-  const N = 60;
-  const ph = rnd() * 10;
-  const lean = (rnd() - 0.5) * w * 0.25;
-  // half its width at t (0 its foot, 1 its tip): a column swelling a little
-  // a quarter of the way up, then drawing in round to the point
-  const b55 = 0.86 + 0.14 * Math.sin(0.9 * Math.PI);
-  const half = (t) =>
-    (w / 2) * (t < 0.55 ? 0.86 + 0.14 * Math.sin((t / 0.55) * 0.9 * Math.PI) : b55 * Math.pow(Math.cos(((t - 0.55) / 0.45) * (Math.PI / 2)), 0.72));
-  const feather = (t, s) => 1 + 0.045 * Math.sin(t * 29 + ph + s * 2.1) + 0.03 * Math.sin(t * 63 + ph * 1.7 + s) + (rnd() - 0.5) * 0.025;
-  const left = [];
-  const right = [];
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const y = base - t * h;
-    const cx = x + lean * t * t;
-    left.push([cx - half(t) * feather(t, 0), y]);
-    right.push([cx + half(t) * feather(t, 1), y]);
-  }
-  const shape = new Path2D();
-  shape.moveTo(left[0][0], left[0][1]);
-  for (const [px, py] of left) shape.lineTo(px, py);
-  for (let i = right.length - 1; i >= 0; i--) shape.lineTo(right[i][0], right[i][1]);
-  shape.closePath();
-  const d = Math.max(1.2, L.S * 0.0024);
-  ctx.save();
-  ctx.clip(shape);
-  ctx.fillStyle = "rgba(128,150,205,0.34)";
-  ctx.fillRect(x - w * 2, base - h - 4, w * 4, h + 8);
-  ctx.translate(-d, d * 0.6);
-  const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
-  g.addColorStop(0, "#03050a");
-  g.addColorStop(0.6, "#060a13");
-  g.addColorStop(1, "#0c1322");
-  ctx.fillStyle = g;
-  ctx.fill(shape);
-  ctx.restore();
+  paintFern(ctx, W * 0.14, H * 0.67, S * 0.022, 71);
+  paintFern(ctx, W * 0.799, H * 0.632, S * 0.017, 53);
 }
 
 // ── the bench, and the lantern on it ────────────────────────────────────────
@@ -748,16 +646,6 @@ function land(ctx, L, f, style) {
   ctx.lineTo(-4, L.H + 4);
   ctx.closePath();
   ctx.fillStyle = style;
-  ctx.fill();
-}
-
-function cypress(ctx, x, base, h, w, color) {
-  ctx.beginPath();
-  ctx.moveTo(x - w * 0.5, base);
-  ctx.bezierCurveTo(x - w * 0.62, base - h * 0.45, x - w * 0.28, base - h * 0.85, x, base - h);
-  ctx.bezierCurveTo(x + w * 0.28, base - h * 0.85, x + w * 0.62, base - h * 0.45, x + w * 0.5, base);
-  ctx.closePath();
-  ctx.fillStyle = color;
   ctx.fill();
 }
 

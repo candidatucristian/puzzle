@@ -1,4 +1,5 @@
 import { paintLens } from "../../shared/loupe.js";
+import { LAB_FIXTURES, paintTestTubeRack } from "./glassware.js";
 import { BOTTLES, ELEMENTS, cellOf, familyOf } from "./puzzle.js";
 import {
   soft,
@@ -102,7 +103,7 @@ export function paintLab(scene, L) {
   paintPoster(ctx, L);
   paintShelf(ctx, L);
   paintBench(ctx, L);
-  paintFarThings(ctx, L);
+  paintFarThings(ctx, L, t.get(LAB_FIXTURES.rack.key).getSourceImage());
   paintNearThings(ctx, L);
   paintLight(ctx, L);
   // the chart keeps a little of the lamp, enough to be read in the gloom
@@ -424,42 +425,12 @@ function paintBench(ctx, L) {
 }
 
 // at the back of the bench: a rack of test tubes, a retort on its stand
-function paintFarThings(ctx, L) {
+function paintFarThings(ctx, L, rack) {
   const { u } = L;
   const tw = L.bench.hw;
-  // the test-tube rack
-  const r = P(L, -0.5 * tw, L.topY, 0.6);
-  const k = r.s * u;
-  soft(ctx, r.x, r.y, 70 * k, 8 * k, "0,0,0", 0.6);
-  ctx.fillStyle = "#6a4222";
-  ctx.fillRect(r.x - 62 * k, r.y - 10 * k, 124 * k, 10 * k);
-  ctx.fillRect(r.x - 62 * k, r.y - 46 * k, 124 * k, 8 * k);
-  ctx.fillRect(r.x - 62 * k, r.y - 46 * k, 6 * k, 46 * k);
-  ctx.fillRect(r.x + 56 * k, r.y - 46 * k, 6 * k, 46 * k);
-  const tubes = [
-    [230, 80, 90],
-    [90, 170, 230],
-    [240, 200, 80],
-    [120, 220, 140],
-    [200, 120, 220],
-  ];
-  tubes.forEach(([cr, cg, cb], i) => {
-    const tx = r.x - 44 * k + i * 22 * k;
-    const top = r.y - 82 * k;
-    ctx.fillStyle = "rgba(200,230,240,0.2)";
-    ctx.beginPath();
-    ctx.roundRect(tx - 6 * k, top, 12 * k, 80 * k, [0, 0, 6 * k, 6 * k]);
-    ctx.fill();
-    const lvl = (0.35 + (i % 3) * 0.15) * 80 * k;
-    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.8)`;
-    ctx.beginPath();
-    ctx.roundRect(tx - 5 * k, top + 80 * k - lvl, 10 * k, lvl - 1 * k, [0, 0, 5 * k, 5 * k]);
-    ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
-    ctx.fillRect(tx - 4 * k, top + 4 * k, 2 * k, 60 * k);
-  });
-  ctx.fillStyle = "#7a4c28";
-  ctx.fillRect(r.x - 62 * k, r.y - 46 * k, 124 * k, 4 * k);
+  // The same photographic glassware as the rack seen from the room.
+  const r = P(L, -0.5 * tw, L.topY, 0.6), k = r.s * u;
+  paintTestTubeRack(ctx, rack, r.x, r.y, 150 * k);
   // the retort: a glass belly on a ring, its long neck reaching out
   const rt = P(L, 0.3 * tw, L.topY, 0.58);
   const q = rt.s * u;

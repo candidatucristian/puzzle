@@ -1,6 +1,7 @@
 import { soft, grain, makeCanvas, lcg } from '../shared/paint.js';
 import { createMoonCanvas } from '../shared/moon.js';
 import { glint } from './startFilm.js';
+import { loadManorArchitecture, paintManorMaterial, paintManorWindow, paintManorEntrance } from './manorArchitecture.js';
 
 /** The manor behind the title, painted — by the same hand as the hall and the
  *  rooms inside it — instead of filmed. Deep night, and seen from close to.
@@ -55,16 +56,18 @@ export function mountStartManor(scope, preferences) {
     base.className = 'start-painting'; live.className = 'start-painting';
     film.append(base, live);
   }
-  let scene = null, stopped = false, frame = 0;
+  let scene = null, stopped = false, frame = 0, details = null, paintedDetails = null, disposed = false;
+  film.dataset.architecture = 'loading';
 
   function layout() {
     const box = film.getBoundingClientRect();
     if (!box.width || !box.height) return;
     const ratio = Math.min(1.5, window.devicePixelRatio || 1);
     const W = Math.round(box.width * ratio), H = Math.round(box.height * ratio);
-    if (scene && scene.W === W && scene.H === H) return;
+    if (scene && scene.W === W && scene.H === H && paintedDetails === details) return;
     for (const c of [base, live]) { c.width = W; c.height = H; }
-    scene = paintManor(base.getContext('2d'), W, H);
+    scene = paintManor(base.getContext('2d'), W, H, details);
+    paintedDetails = details;
     // the front door's place in the picture, in screen pixels
     if (door) {
       const d = scene.door;
@@ -79,6 +82,15 @@ export function mountStartManor(scope, preferences) {
     drawLive(live.getContext('2d'), scene, time / 1000, false);
   }
   layout();
+  loadManorArchitecture().then(art => {
+    if (disposed || stopped) return;
+    details = art;
+    layout();
+    film.dataset.architecture = 'ready';
+  }).catch(() => {
+    if (!disposed && !stopped) film.dataset.architecture = 'fallback';
+  });
+  scope.add(() => { disposed = true; });
   scope.on(window, 'resize', layout);
   if (typeof ResizeObserver === 'function') {
     const watch = new ResizeObserver(layout);
@@ -97,7 +109,7 @@ export function mountStartManor(scope, preferences) {
 
 // ── the house, painted ──────────────────────────────────────────────────────
 
-function paintManor(ctx, W, H) {
+function paintManor(ctx, W, H, details = null) {
   // a unit, in pixels: the house takes most of the width
   const s0 = Math.min(H / 74, W / 118);
   const cx = W * 0.53, gy = H * (GROUND / 100);
@@ -244,6 +256,7 @@ function paintManor(ctx, W, H) {
       for (let k = 0; k < 9 && y > y0; k++) { x += (rnd() - 0.5) * 1.6; y -= 0.6 + rnd() * 1.5; ctx.lineTo(X(x), Y(y)); }
       ctx.stroke();
     }
+    paintManorMaterial(ctx, details, 'stone', X(x0), Y(y1), (x1 - x0) * s, (y1 - y0) * s, s, 0.55 * tone);
     ctx.restore();
   };
   // ivy over a stretch of wall: thick at the foot, thinning as it climbs
@@ -314,6 +327,7 @@ function paintManor(ctx, W, H) {
       const x = x0 + rnd() * (x1 - x0), y = y0 + Math.floor(rnd() * ((y1 - y0) / 0.75)) * 0.75;
       box(x, y, x + 0.9, y + 0.7, rnd() < 0.5 ? 'rgba(0,0,0,0.2)' : 'rgba(150,172,222,0.08)');
     }
+    paintManorMaterial(ctx, details, 'slate', X(x0 - 1), Y(y1), (x1 - x0 + 2) * s, (y1 - y0) * s, s, 0.72);
     // the moon lying on it
     const m = ctx.createLinearGradient(0, Y(y1), 0, Y(y0));
     m.addColorStop(0, 'rgba(150,178,232,0.12)');
@@ -359,6 +373,9 @@ function paintManor(ctx, W, H) {
     const x0 = x - w / 2;
     // what has become of it: under 0.13 a pane is out, under 0.19 it is boarded
     const fate = lit ? 1 : rnd();
+    // Keep the seeded weather and later landscape identical while using
+    // the detailed window in place of the original painted outline.
+    if (details) { ctx.save(); ctx.globalAlpha = 0; }
     box(x0 - 0.5, y - 0.3, x0 + w + 0.5, y + h + (arch ? 0 : 0.5), '#4a5466');
     if (arch) { ctx.fillStyle = '#4a5466'; ctx.beginPath(); ctx.arc(X(x), Y(y + h), (w / 2 + 0.5) * s, Math.PI, 0); ctx.fill(); }
     box(x0 - 0.8, y - 0.8, x0 + w + 0.8, y - 0.3, '#5a667a');
@@ -486,6 +503,27 @@ function paintManor(ctx, W, H) {
       for (let k = 0.5; k < h; k += 0.6) ctx.fillRect(e > 0 ? 0.1 * s : (-w * 0.5 + 0.1) * s, k * s, (w * 0.5 - 0.2) * s, 0.12 * s);
       ctx.restore();
     }
+    if (details) {
+      ctx.restore();
+      const rise = arch ? w / 2 : 0;
+      paintManorWindow(ctx, details, X(x0 - 0.9), Y(y + h + rise + 1), (w + 1.8) * s, (h + rise + 2.2) * s, arch, lit);
+      if (!lit && fate < 0.13) {
+        poly([[x - w * 0.2, y + h * 0.24], [x + w * 0.15, y + h * 0.32], [x + w * 0.24, y + h * 0.62], [x - w * 0.08, y + h * 0.55]], '#020407');
+      } else if (!lit && fate < 0.19) {
+        for (const height of [0.37, 0.62]) {
+          const wood = ctx.createLinearGradient(0, Y(y + h * height + 0.65), 0, Y(y + h * height));
+          wood.addColorStop(0, '#4f4232'); wood.addColorStop(0.22, '#62523d'); wood.addColorStop(1, '#211c16');
+          box(x0 - 0.3, y + h * height, x0 + w + 0.3, y + h * height + 0.65, wood);
+        }
+      }
+      if (lit && who === 'scope') {
+        ctx.strokeStyle = '#1a0f08'; ctx.lineCap = 'round'; ctx.lineWidth = 0.42 * s;
+        ctx.beginPath(); ctx.moveTo(X(x - 1), Y(y + 1.6)); ctx.lineTo(X(x + 1.1), Y(y + 3.6)); ctx.stroke();
+        ctx.lineWidth = 0.16 * s;
+        for (const dx of [-0.8, 0, 0.8]) { ctx.beginPath(); ctx.moveTo(X(x), Y(y + 2.5)); ctx.lineTo(X(x + dx), Y(y)); ctx.stroke(); }
+        ctx.lineCap = 'butt';
+      }
+    }
   };
   // hardly a window in the house is alight
   const lit = () => false;
@@ -524,6 +562,7 @@ function paintManor(ctx, W, H) {
   poly([[42, 30.6], [56, 30.6], [49, 46]]);
   ctx.clip();
   for (let y = 31.4; y < 46; y += 0.8) box(41, y, 57, y + 0.08, 'rgba(0,0,0,0.4)');
+  paintManorMaterial(ctx, details, 'slate', X(42), Y(46), 14 * s, 15.4 * s, s, 0.68);
   ctx.restore();
   ctx.strokeStyle = 'rgba(176,198,246,0.55)';
   ctx.lineWidth = Math.max(1, 0.16 * s);
@@ -622,6 +661,12 @@ function paintManor(ctx, W, H) {
   // its pediment, a round window in it
   poly([[-10.4, 30.4], [10.4, 30.4], [0, 37.6]], '#3c4658');
   poly([[-8.4, 31.2], [8.4, 31.2], [0, 36.6]], '#2a3342');
+  if (details) {
+    ctx.save();
+    poly([[-10.4, 30.4], [10.4, 30.4], [0, 37.6]]); ctx.clip();
+    paintManorMaterial(ctx, details, 'stone', X(-10.4), Y(37.6), 20.8 * s, 7.2 * s, s, 0.48);
+    ctx.restore();
+  }
   box(-10.6, 30, 10.6, 31, '#566278');
   box(-10.6, 30.84, 10.6, 31, 'rgba(180,198,240,0.5)');
   ctx.strokeStyle = 'rgba(176,198,246,0.5)';
@@ -645,6 +690,7 @@ function paintManor(ctx, W, H) {
 
   ivy(-22, -17, 13, 130);
   // ── the porch: four columns, the door between them, a balcony over
+  if (details) { ctx.save(); ctx.globalAlpha = 0; }
   const porch = ctx.createLinearGradient(0, Y(10.4), 0, Y(0));
   porch.addColorStop(0, '#08090c');
   porch.addColorStop(1, '#1a1612');
@@ -685,7 +731,7 @@ function paintManor(ctx, W, H) {
     box(e * 3.3 - 0.5, 6.7, e * 3.3 + 0.5, 6.95, '#1a120a');
     box(e * 3.3 - 0.5, 5.35, e * 3.3 + 0.5, 5.55, '#1a120a');
     // only the right-hand one still burns
-    if (e > 0) lights.push({ x: X(e * 3.3), y: Y(6.1), w: 1.6 * s, h: 2 * s, ph: e, sp: 1.3, lamp: true });
+    if (e > 0) lights.push({ x: X(details ? 4.1 : e * 3.3), y: Y(details ? 5.9 : 6.1), w: 1.6 * s, h: 2 * s, ph: e, sp: 1.3, lamp: true });
   }
   // the lanterns' light inside the porch and out over its floor
   soft(ctx, X(3), Y(5), 6 * s, 6 * s, WARM, 0.2, 'lighter');
@@ -710,6 +756,10 @@ function paintManor(ctx, W, H) {
   box(-8.6, 13.9, 2.6, 14.3, '#7a88a2');
   box(4.6, 13.9, 8.6, 14.3, '#7a88a2');
   for (const x of [-8.3, 8.3]) box(x - 0.4, 12.25, x + 0.4, 14.5, '#66738c');
+  if (details) {
+    ctx.restore();
+    paintManorEntrance(ctx, details, X(-9.5), Y(14.6), 19 * s, 14.6 * s);
+  }
 
   const doorAt = { x: X(-2.5), y: Y(10.7), w: 5 * s, h: 10.7 * s };
   s = s0; lift = 0;

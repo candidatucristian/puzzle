@@ -18,6 +18,7 @@ import { makeCanvas, lcg } from "./paint.js";
  *    wax            the wax's colour (css)
  *    shadow         its soft contact shadow on what it lies on
  *    shine          the light's glint on the wax
+ *    noSeal         leave the seal off (to be painted apart, and broken)
  *  A scene that lights in two layers paints it once into each. */
 export function paintEnvelope(ctx, env, look) {
   const { w, d, at, k, seal } = env;
@@ -69,7 +70,13 @@ export function paintEnvelope(ctx, env, look) {
     ctx.stroke();
   }
   ctx.restore();
-  // the seal: a blob of wax, raised and glossy
+  if (!look.noSeal) paintSeal(ctx, seal, look);
+}
+
+/** The envelope's seal on its own: a blob of wax, raised and glossy, a ring
+ *  pressed into it — at seal { x, y, rx, ry }, in look.wax, glinting if
+ *  look.shine. */
+export function paintSeal(ctx, seal, look) {
   const { rx, ry } = seal;
   ctx.save();
   ctx.translate(seal.x, seal.y);
@@ -106,6 +113,15 @@ export function paintEnvelope(ctx, env, look) {
  *  unmarked seal. The canvas carries a margin for the paper's shadow; the
  *  image goes centred. Added to `textures` as `key`. */
 export function paintLetter(textures, key, w, h) {
+  const cv = letterSheet(w, h);
+  if (textures.exists(key)) textures.remove(key);
+  textures.addCanvas(key, cv);
+  return key;
+}
+
+/** The same letter as a plain canvas — w × h of paper inside its margin —
+ *  for pages outside the game's scenes (the case file). */
+export function letterSheet(w, h) {
   const m = Math.round(Math.min(w, h) * 0.06);
   const cv = makeCanvas(w + 2 * m, h + 2 * m);
   const g = cv.getContext("2d");
@@ -206,9 +222,7 @@ export function paintLetter(textures, key, w, h) {
   g.restore();
 
   seal(g, m + w - 64, m + h - 60, 21);
-  if (textures.exists(key)) textures.remove(key);
-  textures.addCanvas(key, cv);
-  return key;
+  return cv;
 }
 
 // the wax on the letter, where the envelope was sealed

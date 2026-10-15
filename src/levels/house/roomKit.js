@@ -320,7 +320,7 @@ export const STYLE = {
   floor: "boards", // "boards", "herringbone" parquet, "deck" wide planks, "flags" of stone
   floorNear: "#2c1d13", floorFar: "#150e09",
   ceiling: "plain", ceilingCol: "#0b0a0c", // "plain", "coffers", "beams"
-  window: "arch", // "arch" the tall one, "sash" with curtains, "round" a port, "leaded" small and high
+  window: "arch", // "arch", "sash", "round", "leaded", or "custom" supplied by the room's fixtures
 };
 
 /** A room's own build: the house's, with what it changes. */
@@ -668,7 +668,7 @@ export function paintWindowWall(ctx, L) {
   if (st.window === "sash") sashWindow(ctx, L);
   else if (st.window === "round") roundWindow(ctx, L);
   else if (st.window === "leaded") leadedWindow(ctx, L);
-  else paintNightWindow(ctx, W, H, w, L.vp);
+  else if (st.window !== "custom") paintNightWindow(ctx, W, H, w, L.vp);
   // what stands in front of the wall's foot runs on under the sill
   wallLower(ctx, L, M, -hx, hx, tone, true);
   // the corners, where the walls meet

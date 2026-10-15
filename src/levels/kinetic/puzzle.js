@@ -1,10 +1,12 @@
-// All lengths belong to the mobile, in normalized coordinates. Projection
-// into the room happens once, in the scene, after the connected rig is posed.
-export const KINETIC_FORMS = Object.freeze([
-  { id: 'ki_triangle', kind: 'triangle', sides: 3, rimCount: 3, radius: 0.045 },
-  { id: 'ki_circle', kind: 'circle', sides: 0, rimCount: 1, radius: 0.038 },
-  { id: 'ki_heptagon', kind: 'heptagon', sides: 7, rimCount: 7, radius: 0.043 },
-  { id: 'ki_pentagon', kind: 'pentagon', sides: 5, rimCount: 5, radius: 0.041 },
+// The games cupboard: four board-game boxes standing face out on its middle
+// shelf, left to right, and on each lid one big painted game piece. Count
+// each piece's straight sides — one unbroken curve counts as one — and read
+// the counts as letters: 3, 1, 7, 5 → C A G E.
+export const GAME_LIDS = Object.freeze([
+  { id: 'gl_triangle', kind: 'triangle', sides: 3, rimCount: 3, piece: '#e8735a', box: '#5a1e22' },
+  { id: 'gl_circle', kind: 'circle', sides: 0, rimCount: 1, piece: '#f2c53d', box: '#1e2e5a' },
+  { id: 'gl_heptagon', kind: 'heptagon', sides: 7, rimCount: 7, piece: '#3fae94', box: '#4a2a14' },
+  { id: 'gl_pentagon', kind: 'pentagon', sides: 5, rimCount: 5, piece: '#4a74c8', box: '#1e4030' },
 ].map(Object.freeze));
 
 export function polygonVertices(sides, radius, angle = -Math.PI / 2) {
@@ -15,63 +17,36 @@ export function polygonVertices(sides, radius, angle = -Math.PI / 2) {
   }));
 }
 
-/** A shared, slow draft for the hanging wood, voile and suspended dust. */
-export function nurseryBreeze(time) {
-  return Math.sin(time * 0.00047) * 0.64 + Math.sin(time * 0.00079 + 0.6) * 0.36;
+/** Where everything is: the cupboard in the middle of the picture, its three
+ *  shelves, the four lids standing on the middle one with their pieces, and
+ *  the card pinned inside the right-hand door. */
+export function cupboardLayout(W, H) {
+  const u = Math.min(W / 1000, H / 700);
+  const cw = Math.min(W * 0.6, H * 0.86);
+  const x0 = W / 2 - cw / 2, x1 = W / 2 + cw / 2;
+  const y0 = H * 0.07, y1 = H * 0.93, ch = y1 - y0;
+  const frame = cw * 0.045;
+  const inner = { x0: x0 + frame, x1: x1 - frame, y0: y0 + frame * 1.6, y1: y1 - frame * 1.4 };
+  const ih = inner.y1 - inner.y0, iw = inner.x1 - inner.x0;
+  const shelves = [inner.y0 + ih * 0.3, inner.y0 + ih * 0.68];
+  // the lids: as tall as the middle compartment lets them be, side by side
+  const gap = iw * 0.03;
+  const lw = Math.min((iw - gap * 5) / 4, (shelves[1] - shelves[0]) * 0.86 * 0.78);
+  const lh = lw / 0.78;
+  const row = lw * 4 + gap * 3, lx0 = W / 2 - row / 2;
+  const lids = GAME_LIDS.map((lid, i) => {
+    const x = lx0 + i * (lw + gap);
+    const y = shelves[1] - lh;
+    return { ...lid, x, y, w: lw, h: lh, cx: x + lw / 2, cy: y + lh * 0.52, r: lw * 0.3 };
+  });
+  // the doors stand open either side; the card is pinned inside the right one
+  const door = { w: cw * 0.22 };
+  const card = { x: x1 + door.w * 0.12, y: y0 + ch * 0.34, w: door.w * 0.76, h: door.w * 0.5 };
+  return { W, H, u, x0, x1, y0, y1, frame, inner, shelves, lids, door, card };
 }
 
-export function kineticRig(time = 0) {
-  const rods = [], strings = [], forms = [];
-  const t = time * 0.00035;
-  const hang = (start, length, phase) => {
-    const angle = nurseryBreeze(time - phase * 420) * 0.035 + Math.sin(t + phase) * 0.008;
-    const end = { x: start.x + Math.sin(angle) * length, y: start.y + Math.cos(angle) * length };
-    strings.push({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
-    return end;
-  };
-  const rod = (pivot, left, right, phase) => {
-    const tilt = Math.sin(t + phase) * 0.022;
-    const a = { x: pivot.x - Math.cos(tilt) * left, y: pivot.y - Math.sin(tilt) * left };
-    const b = { x: pivot.x + Math.cos(tilt) * right, y: pivot.y + Math.sin(tilt) * right };
-    rods.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, cx: pivot.x, cy: pivot.y });
-    return [a, b];
-  };
-  const form = (start, length, index) => {
-    const spec = KINETIC_FORMS[index];
-    const attachment = hang(start, length, index + 1);
-    const rotation = nurseryBreeze(time - index * 230) * 0.045;
-    const yaw = Math.sin(t * 0.65 + index * 1.6) * 0.25;
-    // The actual hole in the painted form, including its rotation and yaw,
-    // meets the end of its thread at every frame.
-    forms.push({ ...spec,
-      x: attachment.x - Math.sin(rotation) * spec.radius * 0.85,
-      y: attachment.y + Math.cos(rotation) * spec.radius * 0.85,
-      angle: -Math.PI / 2 + rotation, rotation, yaw, attachment,
-    });
-  };
-  const [a, b] = rod(hang({ x: 0, y: 0 }, 0.048, 0), 0.22, 0.22, 0.2);
-  form(a, 0.082, 0);
-  const [c, d] = rod(hang(b, 0.095, 1), 0.294, 0.126, 1.2);
-  form(d, 0.12, 1);
-  const [e, f] = rod(hang(c, 0.10, 2), 0.18, 0.18, 2.4);
-  form(e, 0.142, 2);
-  form(f, 0.278, 3);
-  forms.sort((a, b) => a.y - b.y);
-  return { rods, strings, forms };
-}
-
-/** Reading order is spatial; neither IDs nor alphabetical order encode it. */
-export function kineticPose(time = 0) { return kineticRig(time).forms; }
-
+/** Reading order is spatial — left to right along the shelf. */
 export function readKinetic() {
-  return kineticPose(0).map(form => String.fromCharCode(64 + form.rimCount)).join('');
-}
-
-export function kineticLayout(width, height) {
-  return {
-    width, height,
-    size: Math.min(width * 0.72, height * 0.5),
-    x: width * 0.5,
-    y: height * 0.045,
-  };
+  return [...cupboardLayout(1000, 700).lids].sort((a, b) => a.x - b.x)
+    .map(lid => String.fromCharCode(64 + lid.rimCount)).join('');
 }
