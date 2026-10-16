@@ -1,264 +1,207 @@
-import { paintSeal } from "../shared/envelope.js";
-import { renderLetter } from "./letterPage.js";
+import { Scope } from '../shared/Scope.js';
+import { paintSeal } from '../shared/envelope.js';
+import { renderLetter } from './letterPage.js';
+import { loadArrivalArt, paintDocumentSeal } from './documentArt.js';
+import { paintEnvelopePart, fractureWax } from './arrivalEnvelope.js';
+import { letterFolds } from './letterFolds.js';
 
-// A letter arriving: the moment a page left by the Ashcombes is found. The
-// room dims; the house's envelope comes spinning in and lands; a click breaks
-// its seal — the wax cracks and flies apart — the flap lifts, the letter is
-// drawn out, and opens out to be read. "File it" folds it away: it flies up
-// into the case file in the header, which takes it with a jolt. Put off with
-// "Later" (or Esc) before it is opened, it goes into the case file unread.
-//
-// The envelope is built in layers, so it can open: its inside, the letter,
-// the front pocket, the flap (outside and inside), the seal.
-// Resolves "read" or "later".
-
-const PAPER = ["#d6c49e", "#ecdfbf"]; // the envelope's cream, left to right in the light
-const INSIDE = ["#a8956f", "#c4b18a"];
-
-export function playArrival(scope, { letter, sounds, target, reducedMotion = false }) {
+// A physical envelope, attached pieces of wax and a letter with two hinges.
+// Text and filing use the same case-file documents.
+export async function playArrival(scope, { letter, sounds, target, reducedMotion = false }) {
+  const art = await loadArrivalArt();
+  if (scope.closed) return 'later';
   const still = reducedMotion;
-  return new Promise((resolve) => {
-    const W = Math.round(Math.min(440, window.innerWidth * 0.4)), H = Math.round(W * 11 / 17), TIP = Math.round(H * 0.56);
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const root = el("div", "arrival");
-    root.setAttribute("role", "dialog");
-    root.setAttribute("aria-label", `A letter found: ${letter.title}`);
-    const veil = el("div", "arrival-veil");
-    const caption = el("div", "arrival-caption");
-    caption.append(el("p", "arrival-eyebrow", "A letter found"), el("p", "arrival-title", letter.title), el("p", "arrival-where", letter.found));
-    const stage = el("div", "arrival-stage");
-    const env = el("div", "env");
+  return new Promise(resolve => {
+    const life = new Scope(), animations = new Set();
+    const previousFocus = document.activeElement;
+    const W = Math.round(Math.min(560, innerWidth * .7, innerHeight * .52 * 1.65));
+    const H = Math.round(W / 1.65), TIP = Math.round(H * .7);
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const root = el('div', 'arrival');
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', `A letter found: ${letter.title}`); root.tabIndex = -1;
+    root.dataset.material = art.envelope ? 'ready' : 'fallback';
+    const caption = el('div', 'arrival-caption');
+    caption.append(el('p', 'arrival-eyebrow', 'A letter found'), el('p', 'arrival-title', letter.title));
+    const stage = el('div', 'arrival-stage'), rest = el('div', 'arrival-rest');
+    Object.assign(rest.style, { width: `${W}px`, height: `${H}px` });
+    const shadow = el('div', 'env-contact-shadow'), env = el('div', 'env');
     Object.assign(env.style, { width: `${W}px`, height: `${H}px` });
-    const inside = layer("env-inside", W, H, dpr, (g) => paintInside(g, W, H));
-    const sheet = el("div", "env-letter");
-    Object.assign(sheet.style, { left: `${W * 0.06}px`, width: `${W * 0.88}px`, top: `${H * 0.08}px`, height: `${H * 0.86}px` });
-    const pocket = layer("env-pocket", W, H, dpr, (g) => paintPocket(g, W, H, TIP));
-    const flap = el("div", "env-flap");
+    env.tabIndex = -1; env.setAttribute('role', 'button'); env.setAttribute('aria-label', 'Break the seal');
+    const inside = layer('env-inside', W, H, dpr, g => paintEnvelopePart(g, art, 'inside', W, H, TIP));
+    const sheet = el('div', 'env-letter');
+    Object.assign(sheet.style, { left: `${W * .06}px`, width: `${W * .88}px`, top: `${H * .08}px`, height: `${H * .72}px` });
+    const pocket = layer('env-pocket', W, H, dpr, g => paintEnvelopePart(g, art, 'pocket', W, H, TIP));
+    const flap = el('div', 'env-flap');
     Object.assign(flap.style, { width: `${W}px`, height: `${TIP + 2}px` });
-    flap.append(layer("env-flap-out", W, TIP + 2, dpr, (g) => paintFlap(g, W, TIP, PAPER, true)),
-      layer("env-flap-in", W, TIP + 2, dpr, (g) => paintFlap(g, W, TIP, INSIDE, false)));
-    const r = W * 0.075;
-    const seal = layer("env-seal", r * 3, r * 3, dpr, (g) => paintSeal(g, { x: r * 1.5, y: r * 1.5, rx: r, ry: r }, { wax: "rgb(150,30,22)", shine: true }));
-    Object.assign(seal.style, { left: `${W / 2 - r * 1.5}px`, top: `${TIP - r * 1.6}px` });
-    const hint = el("p", "env-hint", "Break the seal");
-    env.append(inside, sheet, pocket, flap, seal);
-    stage.append(env, hint);
-    const later = el("button", "arrival-later", "Later");
-    later.type = "button";
-    const reading = el("div", "arrival-reading");
-    const page = el("div", "arrival-page");
-    const file = el("button", "arrival-file", "File it in the case file  ›");
-    file.type = "button";
-    reading.append(page, file);
-    root.append(veil, caption, stage, later, reading);
-    document.body.append(root);
-
-    let state = "coming";
-    const wait = (ms) => new Promise((done) => scope.later(done, still ? 0 : ms));
-    const anim = (node, frames, opts) => (still ? null : node.animate(frames, { fill: "forwards", ...opts }));
-    const finished = (a) => (a ? a.finished.catch(() => {}) : Promise.resolve());
-
-    // ── in it comes ──
-    requestAnimationFrame(() => root.classList.add("is-shown"));
-    sounds?.whoosh();
-    const flight = anim(env, [
-      { transform: "translate(70vw, 30vh) rotate(38deg) scale(.55)", opacity: 0 },
-      { transform: "translate(8vw, -6vh) rotate(-9deg) scale(1.04)", opacity: 1, offset: 0.72 },
-      { transform: "translate(0, 0) rotate(-2.5deg) scale(1)", opacity: 1 },
-    ], { duration: 900, easing: "cubic-bezier(.2,.75,.25,1)" });
-    finished(flight).then(() => {
-      if (state !== "coming") return;
-      sounds?.land();
-      anim(env, [{ transform: "translate(0,0) rotate(-2.5deg) scale(1)" }, { transform: "translate(0,3px) rotate(-2.5deg) scale(.985, .97)" }, { transform: "translate(0,0) rotate(-2.5deg) scale(1)" }], { duration: 220, easing: "ease-out" });
-      state = "waiting";
-      root.classList.add("is-waiting");
-      env.focus({ preventScroll: true });
+    const flapOut = layer('env-flap-out', W, TIP + 2, dpr, g => paintEnvelopePart(g, art, 'flap-out', W, H, TIP));
+    const flapIn = layer('env-flap-in', W, TIP + 2, dpr, g => {
+      g.translate(0, TIP + 2); g.scale(1, -1);
+      paintEnvelopePart(g, art, 'flap-in', W, H, TIP);
     });
-    env.tabIndex = 0;
-    env.setAttribute("role", "button");
-    env.setAttribute("aria-label", "Break the seal");
+    flap.append(flapOut, flapIn);
+    const r = W * .071;
+    const seal = layer('env-seal', r * 3, r * 3, dpr, g => {
+      const shape = { x: r * 1.5, y: r * 1.5, rx: r, ry: r };
+      if (!paintDocumentSeal(g, shape)) paintSeal(g, shape, { wax: '#a4251b', shine: true });
+    });
+    Object.assign(seal.style, { left: `${W / 2 - r * 1.5}px`, top: `${TIP - r * 1.6}px` });
+    const hint = el('button', 'env-hint', 'Break the seal'); hint.type = 'button'; hint.disabled = true;
+    env.append(inside, sheet, pocket, flap, seal); rest.append(shadow, env); stage.append(rest, hint);
+    const later = el('button', 'arrival-later', 'Later'); later.type = 'button'; later.disabled = true;
+    const reading = el('div', 'arrival-reading'), page = el('div', 'arrival-page');
+    page.tabIndex = 0; page.setAttribute('aria-label', letter.title);
+    const file = el('button', 'arrival-file', 'File it in the case file'); file.type = 'button'; file.disabled = true;
+    reading.append(page, file);
+    root.append(el('div', 'arrival-veil'), caption, stage, later, reading); document.body.append(root);
 
-    // ── opened: the seal breaks, the flap lifts, the letter comes out and opens ──
+    let state;
+    const setState = value => { state = value; root.dataset.state = value; };
+    const alive = () => !life.closed;
+    const wait = ms => new Promise(done => life.later(done, still ? 0 : ms));
+    const animate = (node, frames, options) => {
+      if (still || !alive()) { Object.assign(node.style, frames[frames.length - 1]); return null; }
+      const animation = node.animate(frames, { fill: 'forwards', ...options });
+      animations.add(animation); return animation;
+    };
+    const finished = animation => animation?.finished.catch(() => {}) ?? Promise.resolve();
+    const finish = how => {
+      if (!alive()) return;
+      setState('gone');
+      for (const animation of animations) animation.cancel();
+      life.dispose(); root.remove(); scope.cleanups.delete(parentCleanup);
+      (target?.isConnected ? target : previousFocus)?.focus?.({ preventScroll: true });
+      resolve(how);
+    };
+    const parentCleanup = scope.add(() => finish('later'));
+
+    const unfold = async from => {
+      const article = renderLetter(page, letter);
+      page.style.visibility = 'hidden'; reading.classList.add('is-shown');
+      // Paint the canvases before making the matching panel copies.
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      if (!alive()) return;
+      if (still) { page.style.visibility = 'visible'; return; }
+      const folds = letterFolds(article, root, true), { rig, box } = folds;
+      const area = page.getBoundingClientRect();
+      const fit = Math.min(1, (area.height - 44) / box.height);
+      const dx = from.left + from.width / 2 - box.left - box.width / 2;
+      const dy = from.top + from.height / 2 - box.top - box.height / 2;
+      const lift = area.top + area.height / 2 - box.top - box.height / 2;
+      const restPose = `translate(0,${lift}px) scale(${fit})`;
+      sheet.style.visibility = 'hidden';
+      await finished(animate(rig, [
+        { transform: `translate(${dx}px,${dy}px) scale(${from.width / box.width}) rotate(-2deg)` },
+        { transform: restPose },
+      ], { duration: 540, easing: 'cubic-bezier(.22,.65,.3,1)' }));
+      if (!alive()) return;
+      setState('unfolding'); sounds?.unfold();
+      const top = animate(folds.top, [{ transform: 'rotateX(-179deg)' }, { transform: 'rotateX(-78deg)', offset: .55 }, { transform: 'rotateX(0deg)' }], { duration: 780, easing: 'cubic-bezier(.25,.55,.25,1)' });
+      await wait(380);
+      if (!alive()) return;
+      const bottom = animate(folds.bottom, [{ transform: 'rotateX(179deg)' }, { transform: 'rotateX(65deg)', offset: .65 }, { transform: 'rotateX(0deg)' }], { duration: 740, easing: 'cubic-bezier(.25,.55,.25,1)' });
+      await Promise.all([finished(top), finished(bottom)]);
+      if (!alive()) return;
+      await finished(animate(rig, [{ transform: restPose }, { transform: 'translate(0,0) scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3,.65,.3,1)' }));
+      page.style.visibility = 'visible'; rig.remove();
+    };
+
     const open = async () => {
-      if (state !== "waiting") return;
-      state = "opening";
-      root.classList.remove("is-waiting");
-      later.hidden = true;
-      // the seal strains, and breaks
-      await finished(anim(seal, [{ transform: "scale(1)" }, { transform: "scale(1.08) rotate(-4deg)" }, { transform: "scale(.96) rotate(3deg)" }, { transform: "scale(1)" }], { duration: 220 }));
-      sounds?.crack();
-      caption.classList.add("is-away");
-      shatter(env, seal, r, still);
-      seal.style.visibility = "hidden";
-      await wait(260);
-      // the flap lifts back on its fold
-      sounds?.open();
-      env.classList.add("is-open");
-      await finished(anim(flap, [{ transform: "rotateX(0deg)" }, { transform: "rotateX(180deg)" }], { duration: 620, easing: "cubic-bezier(.4,.1,.3,1)" }));
-      flap.style.zIndex = "0";
-      // the letter drawn out
-      await finished(anim(sheet, [{ transform: "translateY(0)" }, { transform: `translateY(${-H * 0.82}px)` }], { duration: 650, easing: "cubic-bezier(.3,.1,.2,1)" }));
-      // the envelope falls away; the letter opens out to be read
-      anim(env, [{ opacity: 1, transform: "translate(0,0) rotate(-2.5deg)" }, { opacity: 0, transform: "translate(0, 60px) rotate(4deg)" }], { duration: 500, easing: "ease-in" });
-      caption.classList.add("is-away");
-      await wait(220);
-      renderLetter(page, letter);
-      reading.classList.add("is-shown");
-      sounds?.unfold();
-      await finished(anim(page, [
-        { transform: "perspective(900px) rotateX(58deg) scaleY(.34)", clipPath: "inset(33% 0 33% 0)", opacity: 0.4 },
-        { transform: "perspective(900px) rotateX(22deg) scaleY(.68)", clipPath: "inset(12% 0 12% 0)", opacity: 1, offset: 0.55 },
-        { transform: "perspective(900px) rotateX(0deg) scaleY(1)", clipPath: "inset(0 0 0 0)", opacity: 1 },
-      ], { duration: 760, easing: "cubic-bezier(.3,.1,.2,1)" }));
-      state = "reading";
-      file.focus({ preventScroll: true });
+      if (state !== 'waiting') return;
+      setState('breaking'); hint.disabled = true; later.hidden = true; env.tabIndex = -1;
+      root.classList.remove('is-waiting'); root.focus({ preventScroll: true });
+      await finished(animate(flap, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-5deg)' }, { transform: 'rotateX(-2deg)' }], { duration: 310, easing: 'ease-in-out' }));
+      if (!alive()) return;
+      sounds?.crack(); fractureWax(seal, flap, env, animate);
+      caption.classList.add('is-away'); hint.classList.add('is-away');
+      await wait(170);
+      if (!alive()) return;
+      setState('opening'); sounds?.open();
+      animate(flapOut, [{ opacity: 1 }, { opacity: .72, offset: .5 }, { opacity: .9 }], { duration: 880 });
+      await finished(animate(flap, [{ transform: 'rotateX(-2deg)' }, { transform: 'rotateX(-100deg)', offset: .62 }, { transform: 'rotateX(-168deg)' }], { duration: 880, easing: 'cubic-bezier(.3,.55,.3,1)' }));
+      if (!alive()) return;
+      flap.style.zIndex = '0'; setState('drawing'); sounds?.open();
+      await finished(animate(sheet, [{ transform: 'translateY(0)' }, { transform: `translateY(${-H * .95}px) rotate(-1deg)` }], { duration: 700, easing: 'cubic-bezier(.3,.2,.2,1)' }));
+      if (!alive()) return;
+      const from = sheet.getBoundingClientRect();
+      animate(env, [{ transform: resting, opacity: 1 }, { transform: 'translate(12px,90px) rotateX(8deg) rotate(2deg)', opacity: 0 }], { duration: 600, easing: 'ease-in' });
+      animate(shadow, [{ opacity: .65 }, { opacity: 0 }], { duration: 600 });
+      await unfold(from);
+      if (!alive()) return;
+      setState('reading'); file.disabled = false;
+      (page.scrollHeight > page.clientHeight ? page : file).focus({ preventScroll: true });
     };
 
-    // ── filed: the letter folds up and flies into the case file ──
-    const away = async (how) => {
-      if (state === "gone" || state === "opening") return;
-      const wasReading = state === "reading";
-      state = "gone";
-      const into = target?.getBoundingClientRect();
-      const node = wasReading ? page : env;
-      const from = node.getBoundingClientRect();
+    const away = async how => {
+      if (!['waiting', 'reading'].includes(state)) return;
+      const wasReading = state === 'reading'; setState('filing');
+      file.disabled = hint.disabled = later.disabled = true; env.tabIndex = -1;
+      caption.classList.add('is-away'); hint.classList.add('is-away');
       sounds?.file();
+      let node = env, from = env.getBoundingClientRect();
+      if (wasReading && !still) {
+        const folds = letterFolds(page.querySelector('.letter-page'), root);
+        node = folds.rig; from = folds.box; page.style.visibility = 'hidden';
+        const top = animate(folds.top, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-179deg)' }], { duration: 600, easing: 'ease-in-out' });
+        const bottom = animate(folds.bottom, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(179deg)' }], { duration: 650, delay: 110, easing: 'ease-in-out' });
+        await Promise.all([finished(top), finished(bottom)]);
+      } else if (wasReading) node = page;
+      if (!alive()) return;
+      const into = target?.getBoundingClientRect();
       if (into && from.width) {
-        const dx = into.left + into.width / 2 - (from.left + from.width / 2);
-        const dy = into.top + into.height / 2 - (from.top + from.height / 2);
-        const k = Math.max(0.04, (into.height * 0.9) / from.height);
-        await finished(anim(node, [
-          { transform: "translate(0,0) scale(1) rotate(0deg)", opacity: 1 },
-          { transform: `translate(${dx * 0.3}px, ${dy * 0.15}px) scale(${0.5 + k * 0.5}) rotate(-6deg)`, opacity: 1, offset: 0.35 },
-          { transform: `translate(${dx}px, ${dy}px) scale(${k}) rotate(-14deg)`, opacity: 0.2 },
-        ], { duration: 720, easing: "cubic-bezier(.5,0,.75,.4)" }));
+        const dx = into.left + into.width / 2 - from.left - from.width / 2;
+        const dy = into.top + into.height / 2 - from.top - from.height / 2;
+        const scale = Math.max(.035, into.height / from.width);
+        await finished(animate(node, [
+          { transform: 'translate(0,0) scale(1)', opacity: 1 },
+          { transform: `translate(${dx * .38}px,${dy * .28}px) scale(.6) rotate(-3deg)`, opacity: 1, offset: .45 },
+          { transform: `translate(${dx}px,${dy}px) scale(${scale}) rotate(-2deg)`, opacity: .15 },
+        ], { duration: 760, easing: 'cubic-bezier(.45,.1,.55,1)' }));
       }
-      node.style.visibility = "hidden";
-      target?.classList.add("is-receiving");
-      scope.later(() => target?.classList.remove("is-receiving"), 700);
-      root.classList.remove("is-shown");
-      scope.later(() => { root.remove(); resolve(how); }, still ? 0 : 500);
+      if (!alive()) return;
+      node.style.visibility = 'hidden'; root.classList.remove('is-shown');
+      target?.classList.add('is-receiving'); scope.later(() => target?.classList.remove('is-receiving'), 700);
+      await wait(220); finish(how);
     };
 
-    scope.on(env, "click", open);
-    scope.on(later, "click", () => away("later"));
-    scope.on(file, "click", () => away("read"));
-    const onKey = (e) => {
-      if (!root.isConnected) return;
-      if ((e.key === "Enter" || e.key === " ") && state === "waiting") { e.preventDefault(); e.stopPropagation(); open(); }
-      else if (e.key === "Escape" && (state === "waiting" || state === "reading")) { e.preventDefault(); e.stopPropagation(); away(state === "reading" ? "read" : "later"); }
-    };
-    window.addEventListener("keydown", onKey, true);
-    scope.add(() => window.removeEventListener("keydown", onKey, true));
+    life.on(env, 'click', open); life.on(hint, 'click', open);
+    life.on(later, 'click', () => away('later')); life.on(file, 'click', () => away('read'));
+    life.on(window, 'keydown', event => {
+      if (event.key === 'Escape' && ['waiting', 'reading'].includes(state)) { event.preventDefault(); event.stopPropagation(); away(state === 'reading' ? 'read' : 'later'); }
+      else if (['Enter', ' '].includes(event.key) && event.target === env && state === 'waiting') { event.preventDefault(); event.stopPropagation(); open(); }
+      else if (event.key === 'Tab') {
+        const focusable = state === 'waiting' ? [env, hint, later] : state === 'reading' ? [page, file] : [root];
+        const index = focusable.indexOf(document.activeElement);
+        event.preventDefault(); focusable[(index + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length].focus({ preventScroll: true });
+      }
+    }, true);
+
+    const resting = 'translate(0,0) rotateX(3deg) rotate(-2deg)';
+    setState('arriving'); requestAnimationFrame(() => root.classList.add('is-shown'));
+    sounds?.whoosh();
+    animate(shadow, [{ opacity: 0, transform: 'translate(22px,30px) scale(.82)' }, { opacity: .65, transform: 'translate(0,0) scale(1)' }], { duration: 1050, easing: 'ease-out' });
+    finished(animate(env, [
+      { transform: 'translate(45px,110px) rotateX(22deg) rotate(-7deg)', opacity: 0 },
+      { transform: 'translate(0,-3px) rotateX(2deg) rotate(-2deg)', opacity: 1, offset: .78 },
+      { transform: resting, opacity: 1 },
+    ], { duration: 1050, easing: 'cubic-bezier(.2,.65,.3,1)' })).then(() => {
+      if (!alive() || state !== 'arriving') return;
+      sounds?.land(); setState('waiting'); root.classList.add('is-waiting');
+      env.tabIndex = 0; hint.disabled = later.disabled = false; env.focus({ preventScroll: true });
+    });
   });
 }
 
-// ── the parts of it ──
-
-function el(tag, cls, text) {
-  const node = document.createElement(tag);
-  if (cls) node.className = cls;
+function el(tag, className, text) {
+  const node = document.createElement(tag); node.className = className;
   if (text) node.textContent = text;
   return node;
 }
-function layer(cls, w, h, dpr, paint) {
-  const c = document.createElement("canvas");
-  c.className = cls;
-  c.width = Math.ceil(w * dpr); c.height = Math.ceil(h * dpr);
-  Object.assign(c.style, { width: `${w}px`, height: `${h}px` });
-  const g = c.getContext("2d");
-  g.scale(dpr, dpr);
-  paint(g);
-  return c;
-}
-const grad = (g, x0, y0, x1, y1, stops) => {
-  const r = g.createLinearGradient(x0, y0, x1, y1);
-  stops.forEach((c, i) => r.addColorStop(i / (stops.length - 1), c));
-  return r;
-};
-function fibres(g, w, h, n) {
-  for (let i = 0; i < n; i++) {
-    const x = Math.random() * w, y = Math.random() * h, a = Math.random() * Math.PI, l = 2 + Math.random() * 5;
-    g.strokeStyle = Math.random() < 0.5 ? "rgba(120,90,50,0.07)" : "rgba(255,248,230,0.1)";
-    g.lineWidth = 0.6;
-    g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
-  }
-}
-
-// the envelope's inside: darker paper, shadowed under its top edge
-function paintInside(g, W, H) {
-  g.fillStyle = grad(g, 0, 0, W, 0, INSIDE);
-  g.fillRect(0, 0, W, H);
-  g.fillStyle = grad(g, 0, 0, 0, H * 0.5, ["rgba(40,26,10,0.45)", "rgba(40,26,10,0)"]);
-  g.fillRect(0, 0, W, H * 0.5);
-}
-
-// the front pocket: the side and bottom flaps folded in, a V cut out of its
-// top where the flap closes over it
-function paintPocket(g, W, H, tip) {
-  const shape = () => { g.beginPath(); g.moveTo(0, 0); g.lineTo(W / 2, tip); g.lineTo(W, 0); g.lineTo(W, H); g.lineTo(0, H); g.closePath(); };
-  shape();
-  g.fillStyle = grad(g, 0, 0, W, 0, PAPER);
-  g.fill();
-  g.save(); shape(); g.clip();
-  fibres(g, W, H, (W * H) / 90);
-  // the bottom flap, a shade lighter, and the side flaps' folds under it
-  g.fillStyle = "rgba(255,250,235,0.1)";
-  g.beginPath(); g.moveTo(0, H); g.lineTo(W / 2, H * 0.5); g.lineTo(W, H); g.closePath(); g.fill();
-  g.strokeStyle = "rgba(60,40,15,0.22)"; g.lineWidth = 1.2;
-  g.beginPath(); g.moveTo(0, H); g.lineTo(W / 2, H * 0.5); g.lineTo(W, H); g.stroke();
-  // the light on it, warmer toward the right; its age at the edges
-  const age = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) * 0.6);
-  age.addColorStop(0, "rgba(110,75,35,0)"); age.addColorStop(1, "rgba(110,75,35,0.28)");
-  g.fillStyle = age; g.fillRect(0, 0, W, H);
-  g.restore();
-  g.strokeStyle = "rgba(60,40,15,0.35)"; g.lineWidth = 1; shape(); g.stroke();
-}
-
-// the flap: outside (cream, its edges a paper's thickness proud) or inside.
-// The inside is drawn point up: it is turned over on its own middle, and the
-// flap turns over on its fold, so that open it stands up behind the
-// envelope, point to the sky, its inside to us.
-function paintFlap(g, W, tip, colours, outside) {
-  g.beginPath();
-  if (outside) { g.moveTo(0, 0); g.lineTo(W, 0); g.lineTo(W / 2, tip); }
-  else { g.moveTo(0, tip); g.lineTo(W, tip); g.lineTo(W / 2, 0); }
-  g.closePath();
-  g.fillStyle = grad(g, 0, 0, W, 0, colours);
-  g.fill();
-  g.save(); g.clip(); fibres(g, W, tip, (W * tip) / 140);
-  if (!outside) { g.fillStyle = "rgba(40,26,10,0.18)"; g.fillRect(0, 0, W, tip); }
-  g.restore();
-  if (outside) {
-    g.save();
-    g.shadowColor = "rgba(0,0,0,0.35)"; g.shadowBlur = 4; g.shadowOffsetY = 2;
-    g.strokeStyle = "rgba(60,40,15,0.3)"; g.lineWidth = 1.3;
-    g.beginPath(); g.moveTo(0, 0); g.lineTo(W / 2, tip); g.lineTo(W, 0); g.stroke();
-    g.restore();
-  }
-}
-
-// the seal flying apart: shards of wax spun out and falling
-function shatter(env, seal, r, still) {
-  if (still) return;
-  const cx = parseFloat(seal.style.left) + r * 1.5, cy = parseFloat(seal.style.top) + r * 1.5;
-  for (let i = 0; i < 11; i++) {
-    const shard = document.createElement("span");
-    shard.className = "env-shard";
-    const s = r * (0.5 + Math.random() * 0.55);
-    Object.assign(shard.style, { left: `${cx - s / 2}px`, top: `${cy - s / 2}px`, width: `${s}px`, height: `${s}px` });
-    const pts = Array.from({ length: 5 }, (_, k) => {
-      const a = (k / 5) * Math.PI * 2 + Math.random() * 0.8, d = 30 + Math.random() * 20;
-      return `${50 + Math.cos(a) * d}% ${50 + Math.sin(a) * d}%`;
-    });
-    shard.style.clipPath = `polygon(${pts.join(",")})`;
-    env.append(shard);
-    const a = (i / 11) * Math.PI * 2 + Math.random() * 0.5, dist = r * (2.2 + Math.random() * 2.2);
-    const dx = Math.cos(a) * dist, dy = Math.sin(a) * dist * 0.7;
-    shard.animate([
-      { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
-      { transform: `translate(${dx}px, ${dy - r}px) rotate(${(Math.random() - 0.5) * 360}deg)`, opacity: 1, offset: 0.45 },
-      { transform: `translate(${dx * 1.3}px, ${dy + r * 4}px) rotate(${(Math.random() - 0.5) * 720}deg)`, opacity: 0 },
-    ], { duration: 900 + Math.random() * 300, easing: "cubic-bezier(.2,.6,.4,1)", fill: "forwards" });
-  }
+function layer(className, width, height, dpr, paint) {
+  const canvas = el('canvas', className);
+  canvas.width = Math.ceil(width * dpr); canvas.height = Math.ceil(height * dpr);
+  Object.assign(canvas.style, { width: `${width}px`, height: `${height}px` });
+  canvas.setAttribute('aria-hidden', 'true');
+  const g = canvas.getContext('2d'); g.scale(dpr, dpr); paint(g);
+  return canvas;
 }

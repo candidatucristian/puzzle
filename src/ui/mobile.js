@@ -29,13 +29,12 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   const standalone = isStandalone();
   const fullscreenButton = document.getElementById('compact-fullscreen');
   if (isIOS() && !standalone) {
-    fullscreenButton.title = 'Add Descipher to your Home Screen for full-screen play';
+    fullscreenButton.title = 'Add Ashcombe Manor to your Home Screen for full-screen play';
     fullscreenButton.setAttribute('aria-label', 'How to play full screen on iPhone');
   }
 
   // the words on the start screen and the intro: a phone has no keys
   if (touch) {
-    document.getElementById('start-prompt').textContent = 'Tap to begin';
     document.getElementById('intro-skip').textContent = 'TAP TO SKIP';
   }
 
@@ -88,7 +87,7 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   // the game controls available and explain how to launch the installed app.
   async function immersive() {
     if (isIOS() && !isStandalone()) {
-      say('Safari on iPhone cannot hide its browser bars. For full-screen play, tap Share → Add to Home Screen → Add, then open Descipher from the new Home Screen icon.', 12000);
+      say('Safari on iPhone cannot hide its browser bars. For full-screen play, tap Share → Add to Home Screen → Add, then open Ashcombe Manor from the new Home Screen icon.', 12000);
       return;
     }
     if (topAway) { restore(); return; }

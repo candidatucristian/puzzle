@@ -1,6 +1,7 @@
 import { soft, lcg } from "../../shared/paint.js";
 import { BACK, thingAt } from "../house/roomKit.js";
 import { paintTreeAlone } from "../pi/tree.js";
+import { spreadLit } from "../pi/lamps.js";
 
 /** The Christmas tree in the drawing room: the puzzle's own tree (pi/tree.js)
  *  — its tub, its nine tiers of boughs, its star, its glass balls, its
@@ -42,7 +43,7 @@ export function paintRoomTree(ctx, L) {
   if (!t.on) return;
   // the lamps that are alight, here and there along each string
   for (const [i, row] of art.L.rows.entries()) {
-    const lit = row.map((_, j) => j).sort(() => rnd() - 0.5).slice(0, ALIGHT[i]);
+    const lit = spreadLit(row.length, ALIGHT[i], rnd);
     for (const j of lit) {
       const p = at(row[j]);
       soft(ctx, p.x, p.y, 8 * s, 8 * s, "255,184,96", 0.55, "lighter");

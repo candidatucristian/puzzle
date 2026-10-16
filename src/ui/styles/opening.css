@@ -14,12 +14,10 @@
 #start-title h1 span { color:inherit; font-style:normal; }
 #start-bottom { position:relative; z-index:2; align-self:flex-start; margin-top:16px; }
 #start-progress { color:var(--ui-muted); margin:0 0 20px; font:400 calc(12px * var(--reading-scale))/1.6 var(--ui-font); }
-#btn-continue { min-height:46px; padding:12px 20px; min-width:205px; justify-content:space-between; border-radius:5px; font-size:calc(13px * var(--reading-scale)); }
-#btn-continue::after { content:'→'; margin-left:28px; font-size:18px; position:static; background:none; }
 #start-prompt { display:block; margin:14px 0 0; font:400 11px/1.5 var(--ui-font); color:var(--ui-muted); letter-spacing:0; animation:none; text-transform:none; }
 .start-moon { position:absolute; width:min(27vw,340px); aspect-ratio:1; right:9%; top:24%; opacity:.48; filter:grayscale(1); animation:none; }
 @media (max-width:900px),(max-height:620px) { #start-screen { padding:30px 38px; } #start-title h1 { font-size:clamp(36px,5vw,52px); } .start-moon { right:6%; top:25%; } }
-@media (max-height:560px) { #start-screen { padding:22px 30px; } #start-title h1 { font-size:clamp(32px,9vh,42px); margin-bottom:8px; } #start-bottom { margin-top:6px; } #start-progress { font-size:10px; margin-bottom:10px; } #btn-continue { min-height:38px; padding:8px 14px; font-size:12px; min-width:180px; } #start-prompt { display:inline-block; margin:0 0 0 12px; font-size:10px; } .start-moon { width:140px; top:16%; } }
+@media (max-height:560px) { #start-screen { padding:22px 30px; } #start-title h1 { font-size:clamp(32px,9vh,42px); margin-bottom:8px; } #start-bottom { margin-top:6px; } #start-progress { font-size:10px; margin-bottom:10px; } #start-prompt { display:inline-block; margin:0 0 0 12px; font-size:10px; } .start-moon { width:140px; top:16%; } }
 @media (max-width:650px) { #start-screen { padding-inline:22px; } #start-prompt { display:none; } }
 
 /* The title stands before the manor: the film fills the screen behind it,

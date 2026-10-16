@@ -285,7 +285,7 @@ body.outside #header-floor, body.outside #input-area { visibility: hidden; }
 .outside-eyebrow, .outside-label { margin: 0; font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .18em; text-transform: uppercase; color: var(--ui-muted); }
 .outside-story { display: grid; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid var(--ui-border); }
 .outside-story p { margin: 0; font: 400 calc(13px * var(--reading-scale, 1))/1.7 var(--ui-font); color: var(--ui-text); }
-.outside-story p:first-child { font: italic 400 calc(16px * var(--reading-scale, 1))/1.5 Georgia, "Times New Roman", serif; color: #e6e2d6; }
+.outside-story p:first-child { font: 400 calc(10.5px * var(--reading-scale, 1))/1.9 var(--ui-font); letter-spacing: .18em; text-transform: uppercase; color: var(--ui-muted); }
 .outside-progress { display: grid; gap: 8px; }
 .outside-progress[hidden] { display: none; }
 .outside-progress p { margin: 0; display: flex; align-items: center; gap: 10px; font: 400 calc(12.5px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); }
@@ -393,33 +393,74 @@ body.in-house #game-container canvas { scale: 1.028; }
 .casefile-clue.is-missing { background: #cbbf9f55; box-shadow: none; outline: 1px dashed #8a7a5a88; outline-offset: -4px; }
 .casefile-clue.is-missing .casefile-word { color: #8a7a5a; }
 
-/* ── the prologue: the Inspector's desk, the letter (prologue.js) ── */
-#prologue { position: fixed; inset: 0; z-index: 560; background: #060504; opacity: 0; transition: opacity .7s ease; }
+/* The Inspector's photographic opening: a moving close frame, rain, and the
+   real envelope selected on the desk. Story text remains live DOM. */
+#prologue { position: fixed; inset: 0; z-index: 560; overflow: hidden; background: #070806; color: #eee8da; opacity: 0;
+  transition: opacity 1.1s ease; isolation: isolate; }
 #prologue.is-shown { opacity: 1; }
-.prologue-desk { position: absolute; inset: 0; width: 100%; height: 100%; }
-.prologue-caption { position: absolute; left: clamp(20px, 4vw, 60px); top: clamp(18px, 4vh, 44px); color: #e8dcc0; text-shadow: 0 2px 8px #000; }
-.prologue-caption p { margin: 0; }
-.prologue-name { font: 400 clamp(22px, 2.4vw, 34px) "Architects Daughter", var(--ui-font); }
-.prologue-where { font: 400 clamp(11px, 1vw, 14px) var(--ui-font); color: #b8ab90; letter-spacing: .06em; margin-top: 4px !important; }
-.prologue-envelope { position: absolute; border: 0; padding: 0; background: transparent; cursor: var(--cursor-hand, pointer); }
-/* a soft glow over the envelope and round it, coming and going */
-.prologue-envelope::after { content: ""; position: absolute; inset: -35% -25%; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
-  background: radial-gradient(closest-side, #ffd08a30, #ffd08a10 60%, transparent); animation: prologue-call 2.6s ease-in-out infinite; }
-.prologue-envelope:hover::after, .prologue-envelope:focus-visible::after { animation: none; opacity: 1; background: radial-gradient(closest-side, #ffe2b048, #ffd08a18 60%, transparent); }
-.prologue-envelope:focus-visible { outline: none; }
-@keyframes prologue-call { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
-.prologue-prompt { position: absolute; left: 0; right: 0; bottom: clamp(22px, 5vh, 50px); margin: 0; text-align: center; color: #e8dcc0;
-  font: 400 clamp(15px, 1.4vw, 20px) "Architects Daughter", var(--ui-font); text-shadow: 0 2px 8px #000; }
-.prologue-reading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
-  padding: 30px 16px; overflow-y: auto; background: rgba(5, 3, 10, 0.78); opacity: 0; transition: opacity .3s ease; }
+#prologue.is-leaving { opacity: 0; transition-duration: .85s; }
+.prologue-camera { position: absolute; z-index: 0; inset: 0; overflow: hidden; transform-origin: 55% 68%; animation: prologue-dolly 28s ease-in-out infinite alternate; }
+.prologue-camera::after { content: ""; position: absolute; z-index: 2; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, #07080535 0%, transparent 36%, #0907061a 75%, #0907068a 100%),
+    radial-gradient(ellipse 82% 82% at 50% 48%, transparent 53%, #03030291 100%); }
+.prologue-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+  filter: saturate(.82) contrast(1.06) brightness(.91); }
+.prologue-rain { position: absolute; z-index: 1; inset: 0; pointer-events: none; }
+@keyframes prologue-dolly { from { transform: scale(1.025) translate3d(0, .12%, 0); } to { transform: scale(1.09) translate3d(-.5%, -.7%, 0); } }
+@keyframes prologue-caption-in { from { opacity: 0; translate: 0 9px; filter: blur(3px); } to { opacity: 1; translate: 0 0; filter: blur(0); } }
+.prologue-folder-label { position: absolute; z-index: 3; display: grid; place-items: center; transform: rotate(-1.7deg); overflow: hidden;
+  border: 1px solid #684d30a8; background: linear-gradient(130deg, #e0cda8, #cbb58e 68%, #ddc9a2); color: #493a2b;
+  box-shadow: inset 0 0 0 2px #f2e2c287, 0 1px 3px #160e0a88; font: 400 clamp(7px, .68vw, 9px)/1 'Special Elite', 'Courier New', monospace;
+  letter-spacing: .12em; white-space: nowrap; }
+.prologue-folder-label::after { content: ""; position: absolute; right: 8%; top: 50%; width: 5px; height: 5px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d8a18c, #8c2923 56%, #43120f); box-shadow: 0 0 0 1px #6f4930; }
+.prologue-desk-nameplate { position: absolute; z-index: 3; overflow: hidden; pointer-events: none;
+  clip-path: polygon(0 0, 100% 0, 100% 88%, 0 82%); }
+.prologue-nameplate-image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: fill;
+  filter: drop-shadow(1px 3px 3px #0806049e); }
+.prologue-nameplate-inscription { position: absolute; left: 23%; top: 40%; width: 54%; height: 10%; display: grid; place-items: center;
+  color: #17120c; font: 700 clamp(11px, 1vw, 15px)/1 'Cormorant Garamond', Georgia, serif; letter-spacing: .035em; white-space: nowrap;
+  text-shadow: 0 1px #f1dfa5b8, 0 -1px 1px #392916a8; }
+.prologue-envelope { position: absolute; z-index: 3; border: 0; padding: 0; border-radius: 2px; background: transparent;
+  cursor: var(--cursor-hand, pointer); transition: box-shadow .35s ease, background .35s ease; }
+.prologue-envelope:hover { box-shadow: inset 0 0 0 1px #e0c18679, 0 0 28px #ebba6a20; background: #eacb8510; }
+.prologue-envelope:focus-visible { outline: 1px solid #e4c58dce; outline-offset: 3px; background: #eacb8510; }
+.prologue-envelope:disabled { cursor: default; }
+.prologue-envelope:disabled:hover { box-shadow: none; background: transparent; }
+/* once the letter is read, the file beside it draws the eye — a slow warm breath on its leather */
+.prologue-dossier { border-radius: 6px; }
+#prologue[data-step="file"] .prologue-dossier { animation: dossier-call 2.8s ease-in-out infinite; }
+#prologue[data-step="file"] .prologue-dossier:hover, #prologue[data-step="file"] .prologue-dossier:focus-visible { animation: none; }
+@keyframes dossier-call { 50% { box-shadow: inset 0 0 0 1px #e0c18640, 0 0 36px #ebba6a1c; background: #eacb850a; } }
+[data-reduced-motion="true"] #prologue .prologue-dossier { animation: none; }
+.prologue-prompt { position: absolute; z-index: 4; left: 0; right: 0; bottom: clamp(27px, 5vh, 52px); margin: 0; display: grid; justify-items: center; gap: 10px;
+  color: #e4d6bb; font: 400 clamp(13px, 1.25vw, 16px) "Cormorant Garamond", Georgia, serif; letter-spacing: .12em;
+  text-shadow: 0 2px 12px #000; pointer-events: none; animation: prologue-caption-in .9s .75s both; transition: opacity .35s ease; }
+.prologue-prompt::before { content: ""; width: 1px; height: 26px; background: linear-gradient(transparent, #d1b77fbd); }
+.prologue-prompt.is-away { opacity: 0; }
+.prologue-reading { position: absolute; z-index: 10; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: 30px 16px; overflow: hidden auto; background: radial-gradient(ellipse at 50% 46%, #080705a1, #040403e8 88%); opacity: 0;
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); transition: opacity .8s ease; }
 .prologue-reading.is-shown { opacity: 1; }
 .prologue-reading[hidden] { display: none; }
-.prologue-sheet { display: flex; justify-content: center; width: 100%; }
-.prologue-go { border: 1px solid #f1ece099; background: transparent; color: #f1ece0; padding: 10px 22px; border-radius: 3px; cursor: var(--cursor-hand, pointer);
-  font: 400 clamp(14px, 1.2vw, 17px) "Architects Daughter", var(--ui-font); }
-.prologue-go:hover, .prologue-go:focus-visible { background: #f1ece01a; outline: none; }
-[data-reduced-motion="true"] #prologue, [data-reduced-motion="true"] .prologue-reading { transition: none; }
-[data-reduced-motion="true"] .prologue-envelope::after { animation: none; }
+.prologue-sheet { display: flex; justify-content: center; width: 100%; flex-shrink: 0; }
+.prologue-sheet .letter-page { animation: prologue-letter-in .95s cubic-bezier(.2,.75,.24,1) both; }
+@keyframes prologue-letter-in { from { opacity: 0; transform: translateY(25px) scale(.96) rotateX(5deg); } to { opacity: 1; transform: none; } }
+.prologue-go { border: 1px solid #c5aa736d; background: linear-gradient(180deg, #352719db, #1c1510e8); color: #e7d6b6; padding: 12px 28px;
+  box-shadow: 0 8px 30px #0007, inset 0 1px #e7d6b621; border-radius: 2px; cursor: var(--cursor-hand, pointer);
+  font: 400 14px 'Cormorant Garamond', Georgia, serif; letter-spacing: .08em; flex-shrink: 0; transition: border-color .3s, background .3s; }
+.prologue-go:hover, .prologue-go:focus-visible { background: linear-gradient(180deg, #493623ed, #2a1e13ed); border-color: #dec391; outline: none; }
+#prologue.is-leaving .prologue-reading { opacity: 0; transition-duration: .5s; }
+#prologue.is-still *, #prologue.is-still { animation: none !important; transition-duration: .01s !important; transition-delay: 0s !important; }
+@media (max-width: 650px) {
+  .prologue-folder-label { font-size: 7px; }
+  .prologue-prompt { bottom: 28px; font-size: 14px; }
+  .prologue-reading { gap: 12px; padding: 16px 8px; }
+  .prologue-go { padding: 10px 20px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #prologue, #prologue *, .prologue-camera { animation: none !important; transition: none !important; }
+}
 
 /* ── the story's moments between the puzzles (cinema.js) ── */
 /* a card: black, lines typed on it as on the Inspector's typewriter */
@@ -432,25 +473,7 @@ body.in-house #game-container canvas { scale: 1.028; }
 .cinema-line:last-child:not(:empty)::after { content: "▌"; margin-left: .1em; animation: cinema-caret 1s steps(1) infinite; color: #b8ab90; }
 .cinema-card.is-typed .cinema-line::after { animation-duration: 1.2s; }
 @keyframes cinema-caret { 50% { opacity: 0; } }
-/* a thought: one line under the picture, like a subtitle */
-.cinema-thought { position: absolute; left: 50%; bottom: clamp(18px, 4%, 40px); z-index: 20; translate: -50% 0; width: min(760px, 86%); margin: 0;
-  padding: 10px 22px 12px; text-align: center; color: #f1ece0; pointer-events: none;
-  font: italic 400 calc(16px * var(--reading-scale, 1)) / 1.55 Georgia, "Times New Roman", serif; text-shadow: 0 2px 6px #000;
-  background: radial-gradient(ellipse at 50% 60%, rgba(5, 4, 3, 0.72), rgba(5, 4, 3, 0) 72%);
-  opacity: 0; transition: opacity .7s ease; }
-.cinema-thought.is-shown { opacity: 1; }
-/* a car drawing up: its lights sweeping the front of the manor */
-.cinema-headlights { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; mix-blend-mode: screen; }
-.cinema-headlights span { position: absolute; left: 0; bottom: 4%; width: 75%; height: 80%;
-  background: radial-gradient(ellipse 42% 46% at 50% 68%, rgba(255, 240, 205, 0.75), rgba(255, 232, 185, 0.26) 42%, transparent 72%);
-  transform: translateX(-90%); opacity: 0; animation: cinema-sweep 3.8s ease-in-out forwards; }
-@keyframes cinema-sweep {
-  0% { transform: translateX(-90%); opacity: 0; }
-  15% { opacity: 1; }
-  80% { opacity: .9; }
-  100% { transform: translateX(150%); opacity: 0; }
-}
-[data-reduced-motion="true"] .cinema-card, [data-reduced-motion="true"] .cinema-thought { transition: none; }
+[data-reduced-motion="true"] .cinema-card { transition: none; }
 /* the prologue as a film, when there is one (prologue.js FILM) */
 .prologue-film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0; transition: opacity 1.2s ease; }
 .prologue-film.is-playing { opacity: 1; }
@@ -618,23 +641,252 @@ li.dossier-slip.is-missing { padding: 12px 14px 11px 30px; display: grid; outlin
 .arrival-file:hover, .arrival-file:focus-visible { background: linear-gradient(180deg, #4a2214, #2e140c); outline: none; }
 [data-reduced-motion="true"] .arrival *, [data-reduced-motion="true"] .casefile-modal .dossier { animation: none !important; transition: none !important; }
 
-/* ══ A thought, as a film puts it (cinema.js say): the wide screen's bars ══ */
-.cinema-frame { position: absolute; inset: 0; z-index: 20; pointer-events: none; overflow: hidden; border-radius: inherit; }
-.cinema-bar { position: absolute; left: 0; right: 0; display: flex; align-items: center; background: #030202;
-  transition: transform .95s cubic-bezier(.65, 0, .25, 1); }
-.cinema-bar.is-top { top: 0; height: clamp(40px, 9%, 74px); justify-content: space-between; padding: 0 clamp(18px, 3%, 40px);
-  transform: translateY(-101%); box-shadow: 0 6px 18px #0009; }
-.cinema-bar.is-bottom { bottom: 0; height: clamp(64px, 15%, 120px); justify-content: center; padding: 0 clamp(20px, 6%, 90px);
-  transform: translateY(101%); box-shadow: 0 -6px 18px #0009; }
-.cinema-frame.is-on .cinema-bar { transform: none; }
-.cinema-where, .cinema-time { font: 400 clamp(10px, .8vw, 12px) "Special Elite", "Courier New", monospace; letter-spacing: .32em; text-transform: uppercase;
-  color: #b8ab90; opacity: 0; transition: opacity .8s ease .7s; }
-.cinema-where::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 12px; border-radius: 50%; background: #c8382a;
-  box-shadow: 0 0 8px #ff4a3a; vertical-align: 1px; animation: alert-pulse 1.4s ease-in-out infinite; }
-.cinema-frame.is-on .cinema-where, .cinema-frame.is-on .cinema-time { opacity: 1; }
-.cinema-thought-line { margin: 0; max-width: 980px; text-align: center; color: #f1ece0; min-height: 1.4em;
-  font: italic 400 clamp(17px, 1.75vw, 25px) / 1.45 Georgia, "Times New Roman", serif; letter-spacing: .01em; text-shadow: 0 0 18px #000; }
-.cinema-thought-line:not(:empty)::after { content: "▌"; margin-left: .12em; font-style: normal; font-size: .8em; color: #b8ab90; animation: cinema-caret .9s steps(1) infinite; }
-.cinema-frame.is-typed .cinema-thought-line::after { opacity: 0; animation: none; }
-.cinema-frame:not(.is-on) .cinema-where, .cinema-frame:not(.is-on) .cinema-time { transition-delay: 0s; }
-[data-reduced-motion="true"] .cinema-bar, [data-reduced-motion="true"] .cinema-where, [data-reduced-motion="true"] .cinema-time { transition: none; }
+/* ── less on the screen: the header's tools by their icons alone (their names
+   in the tooltips), the place's lines folded under "Notes" ── */
+.header-button > span { display: none; }
+.header-button { padding: 8px 9px; }
+.header-button .ui-icon { width: 19px; height: 19px; }
+.index-notes { margin-top: 14px; }
+.index-notes[hidden] { display: none; }
+.index-notes > summary { list-style: none; display: inline-flex; align-items: center; gap: 7px; cursor: var(--cursor-hand, pointer); user-select: none;
+  font: 400 11px var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: var(--ui-muted, #8a8a84); }
+.index-notes > summary::-webkit-details-marker { display: none; }
+.index-notes > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform .2s ease; }
+.index-notes[open] > summary::before { transform: rotate(45deg); }
+.index-notes > summary:hover { color: var(--ui-text, #e8e8e2); }
+.index-notes > #index-story { margin-top: 10px; }
+.outside-tools[hidden] { display: none; }
+
+/* ── the story's words come up as a film's titles do: whole, out of the
+   dark and out of focus, the letters drawing together (cinema.js) ── */
+.cinema-line:last-child:not(:empty)::after { content: none; }
+.cinema-line { --ls: .08em; opacity: 0; animation: title-rise 1.7s cubic-bezier(.2, .6, .2, 1) both; }
+.cinema-line.is-first { --ls: .2em; }
+.cinema-card.is-all .cinema-line { animation-duration: .6s; animation-delay: 0s !important; }
+@keyframes title-rise {
+  from { opacity: 0; filter: blur(9px); transform: translateY(12px); letter-spacing: calc(var(--ls) + .25em); }
+  to { opacity: 1; filter: blur(0); transform: none; letter-spacing: var(--ls); }
+}
+.cinema-card { transition: opacity .9s ease; }
+[data-reduced-motion="true"] .cinema-line { animation: none; opacity: 1; }
+.cinema-line { text-wrap: balance; }
+
+/* ══ One face for everything: IBM Plex Sans, the face of the index's small
+   capitals — titles, buttons, the dossier, the cards, the map.
+   Only the letters keep their typewriter. (The scenes paint their own
+   lettering into their pictures; this is the page around them.) ══ */
+body, body *, body svg text { font-family: var(--ui-font) !important; }
+.letter-page, .letter-page * { font-family: "Special Elite", "Courier New", monospace !important; }
+
+/* ══ The cold open (coldOpen.js): black with grain on it, and the story so far
+   told on it a paragraph at a time, the words coming up out of focus; then
+   where we are, and the black lifts onto his desk ══ */
+#cold-open { position: fixed; inset: 0; z-index: 590; overflow: hidden; background: #040303; color: #efe6d3;
+  transition: opacity 2.2s ease; cursor: default; }
+#cold-open.is-lifting { opacity: 0; pointer-events: none; }
+
+/* the projector: the dark at the edges, grain, the light not quite steady */
+.co-vignette { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 45%, rgba(0,0,0,.55) 80%, rgba(0,0,0,.9) 100%); }
+.co-grain { position: absolute; inset: -60px; pointer-events: none; background: var(--co-grain-img); background-size: 256px;
+  opacity: .085; mix-blend-mode: screen; animation: co-grain .42s steps(1) infinite; }
+@keyframes co-grain {
+  0% { transform: translate(0, 0); } 17% { transform: translate(-23px, 31px); } 33% { transform: translate(41px, -12px); }
+  50% { transform: translate(-37px, -44px); } 67% { transform: translate(18px, 48px); } 83% { transform: translate(52px, 9px); }
+}
+.co-flicker { position: absolute; inset: 0; pointer-events: none; background: #fff3dc; opacity: 0; animation: co-flicker 5.3s steps(1) infinite; }
+@keyframes co-flicker { 0%, 100% { opacity: 0; } 11% { opacity: .012; } 12% { opacity: 0; } 47% { opacity: .008; } 49% { opacity: .018; } 50% { opacity: 0; } 83% { opacity: .01; } 84% { opacity: 0; } }
+/* the stage: one beat at a time, in the middle of the dark */
+.co-stage { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; pointer-events: none; }
+.co-beat { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; text-align: center; max-width: min(1000px, 84vw);
+  animation: co-drift 14s linear forwards; }
+@keyframes co-drift { from { scale: 1; } to { scale: 1.045; } }
+.co-l { margin: 0; text-wrap: balance; }
+.co-l.is-label { font: 500 11.5px var(--ui-font); letter-spacing: .55em; text-transform: uppercase; color: #a8946f; margin-bottom: 26px; }
+.co-l.is-mid { font: 300 clamp(17px, 1.55vw, 25px)/1.45 var(--ui-font); letter-spacing: .005em; color: #e9dfca; max-width: 26em; }
+.co-l.is-name + .co-l.is-mid { margin-top: 26px; color: #bfb29a; font-size: clamp(15px, 1.2vw, 19px); }
+/* his name: the label's own face and gold, a size up */
+.co-l.is-name { font: 500 clamp(15px, 1.2vw, 19px) var(--ui-font); letter-spacing: .5em; margin-right: -.5em; text-transform: uppercase; color: #a8946f; }
+.co-l.is-label + .co-l.is-name { margin-top: -8px; }
+
+/* words: out of the dark and out of focus, one after another */
+.co-w { display: inline-block; opacity: 0; filter: blur(12px); transform: translateY(.28em);
+  transition: opacity 1.3s ease, filter 1.5s ease, transform 1.8s cubic-bezier(.2, .7, .2, 1);
+  transition-delay: calc(var(--d, 0ms) + var(--i) * 70ms); }
+.co-beat.is-in .co-w { opacity: 1; filter: blur(0); transform: none; }
+.co-beat.is-out { opacity: 0; filter: blur(8px); transition: opacity .9s ease, filter .9s ease; }
+.co-beat.is-out-slow { opacity: 0; filter: blur(10px); transition: opacity 1.6s ease, filter 1.6s ease; }
+
+/* the gate, and the way out */
+.co-gate { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  background: #040303; cursor: var(--cursor-hand, pointer); opacity: 0; transition: opacity 1.4s ease; }
+.co-gate.is-in { opacity: 1; }
+.co-gate.is-out { opacity: 0; transition-duration: .8s; pointer-events: none; }
+.co-gate-rule { width: 0; height: 1px; background: linear-gradient(90deg, transparent, #a8946f, transparent); transition: width 2.4s cubic-bezier(.2, .6, .2, 1) .3s; }
+.co-gate.is-in .co-gate-rule { width: 160px; }
+.co-gate-go { border: 0; background: none; padding: 6px 10px; cursor: inherit; font: 500 12px var(--ui-font); letter-spacing: .55em; margin-right: -.55em;
+  text-transform: uppercase; color: #e9dfca; animation: co-breathe 3.2s ease-in-out infinite; }
+.co-gate-go:focus-visible { outline: 1px solid #a8946f; outline-offset: 6px; }
+@keyframes co-breathe { 50% { opacity: .45; } }
+.co-gate-note { margin: 0; font: 400 11px var(--ui-font); letter-spacing: .2em; color: #6f6656; }
+.co-skip { position: absolute; right: 28px; bottom: 28px; z-index: 4; border: 0; background: none; padding: 6px 4px;
+  cursor: var(--cursor-hand, pointer); font: 500 11px var(--ui-font); letter-spacing: .35em; text-transform: uppercase; color: #8a7f6c;
+  opacity: 0; transition: opacity 1.2s ease, color .3s ease; }
+.co-skip::after { content: " ›"; letter-spacing: 0; }
+.co-skip.is-in { opacity: .7; }
+.co-skip:hover, .co-skip:focus-visible { color: #efe6d3; opacity: 1; outline: none; }
+
+#cold-open.is-still *, #cold-open.is-still { animation: none !important; transition-duration: .01s !important; transition-delay: 0s !important; }
+
+/* ══ Settings (index.html #options-modal, audioControls.js, comfort.js): one
+   compact sheet. Sound channel by channel, each a thin track filled as far
+   as its level; the picture's settings as a slider, three buttons and two
+   switches; and at the foot the guide and the reset. Written to stand on
+   its own over the older dialog rules. ══ */
+#options-modal .modal-content.settings-panel {
+  width: min(430px, calc(100vw - 32px)); height: auto; max-height: calc(100dvh - 40px);
+  padding: 22px 26px 18px; gap: 0; overflow-y: auto; overflow-x: hidden;
+  border: 1px solid #ffffff12; border-radius: 10px; background: #131312; box-shadow: 0 30px 90px #000a;
+}
+#options-modal .settings-panel .st-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; }
+#options-modal .settings-panel h2 { margin: 0; font: 400 calc(21px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: -.02em; color: #e6e3db; }
+#options-modal #btn-close-options { width: 34px; min-height: 34px; margin: 0 -8px 0 0; padding: 8px; border: 0; border-radius: 6px; background: transparent; color: #9c9a92; }
+#options-modal #btn-close-options:hover, #options-modal #btn-close-options:focus-visible { background: #ffffff0d; color: #f0eee7; outline: none; }
+
+#options-modal .settings-panel .st-group { padding: 12px 0 10px; border-top: 1px solid #ffffff10; }
+#options-modal .settings-panel .st-group-head { display: flex; align-items: center; justify-content: space-between; min-height: 26px; margin-bottom: 4px; }
+#options-modal .settings-panel h3 { margin: 0; font: 500 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .22em; text-transform: uppercase; color: #8d8a80; }
+
+/* a row: its name, its control, its value */
+#options-modal .settings-panel .st-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 40px; align-items: center; gap: 12px; min-height: 34px; }
+#options-modal .settings-panel .st-row > label, #options-modal .settings-panel .st-label {
+  font: 400 calc(13px * var(--reading-scale, 1))/1.3 var(--ui-font); color: #d8d5cc; }
+#options-modal .settings-panel .st-row output { font: 400 calc(11.5px * var(--reading-scale, 1)) var(--ui-font); color: #8f8c83; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* the tracks: thin, filled as far as the level */
+#options-modal .settings-panel input[type="range"] {
+  --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0; padding: 0;
+  background: transparent; cursor: var(--cursor-hand, pointer); }
+#options-modal .settings-panel input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px; border-radius: 2px; background: linear-gradient(90deg, #d8d2c3 var(--fill), #393935 var(--fill)); }
+#options-modal .settings-panel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 13px; height: 13px; margin-top: -5px; border: 0; border-radius: 50%;
+  background: #f1ece1; box-shadow: 0 0 0 3px #131312; transition: transform .15s ease; }
+#options-modal .settings-panel input[type="range"]::-moz-range-track { height: 3px; border-radius: 2px; background: #393935; }
+#options-modal .settings-panel input[type="range"]::-moz-range-progress { height: 3px; border-radius: 2px; background: #d8d2c3; }
+#options-modal .settings-panel input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: #f1ece1; box-shadow: 0 0 0 3px #131312; }
+#options-modal .settings-panel input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.18); }
+#options-modal .settings-panel input[type="range"]:focus-visible { outline: none; }
+#options-modal .settings-panel input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #131312, 0 0 0 5px #d8d2c380; }
+#options-modal .settings-panel input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px #131312, 0 0 0 5px #d8d2c380; }
+/* muted: the levels are kept, but greyed */
+#options-modal.is-muted .settings-panel .st-sound .st-row { opacity: .38; }
+
+/* mute all: a small pill beside "Sound" */
+#options-modal .settings-panel #btn-mute { min-height: 0; padding: 4px 11px; border: 1px solid #ffffff1c; border-radius: 99px; background: transparent;
+  font: 400 calc(11px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .02em; color: #b6b3aa; cursor: var(--cursor-hand, pointer); }
+#options-modal .settings-panel #btn-mute:hover, #options-modal .settings-panel #btn-mute:focus-visible { border-color: #ffffff3a; color: #f0ede6; outline: none; }
+#options-modal .settings-panel #btn-mute[aria-pressed="true"] { border-color: #d8d2c3; background: #d8d2c3; color: #141413; }
+
+/* text size: three buttons, one pressed */
+#options-modal .settings-panel .st-choice { grid-template-columns: 92px minmax(0, 1fr); }
+#options-modal .settings-panel .st-seg { display: grid; grid-template-columns: repeat(3, 1fr); padding: 2px; border-radius: 7px; background: #1e1e1c; }
+#options-modal .settings-panel .st-seg button { min-height: 0; padding: 5px 4px; border: 0; border-radius: 5px; background: transparent;
+  font: 400 calc(11.5px * var(--reading-scale, 1)) var(--ui-font); color: #9f9c93; cursor: var(--cursor-hand, pointer); transition: background .15s, color .15s; }
+#options-modal .settings-panel .st-seg button:hover { color: #e9e6de; }
+#options-modal .settings-panel .st-seg button[aria-checked="true"] { background: #36352f; color: #f2efe7; }
+#options-modal .settings-panel .st-seg button:focus-visible { outline: 1px solid #d8d2c380; outline-offset: -1px; }
+
+/* the switches: the whole row toggles; the knob slides */
+#options-modal .settings-panel .st-switch { position: relative; grid-template-columns: minmax(0, 1fr) 34px; padding: 4px 0; cursor: var(--cursor-hand, pointer); }
+#options-modal .settings-panel .st-switch .st-label small { display: block; margin-top: 1px; font-size: calc(11px * var(--reading-scale, 1)); color: #7f7c74; }
+#options-modal .settings-panel .st-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
+#options-modal .settings-panel .st-knob { position: relative; width: 34px; height: 19px; border-radius: 99px; background: #393935; transition: background .2s; pointer-events: none; }
+#options-modal .settings-panel .st-knob::after { content: ""; position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%;
+  background: #a9a69d; transition: transform .2s cubic-bezier(.3, .7, .3, 1), background .2s; }
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob { background: #d8d2c3; }
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob::after { transform: translateX(15px); background: #141413; }
+#options-modal .settings-panel .st-switch input:focus-visible ~ .st-knob { box-shadow: 0 0 0 2px #131312, 0 0 0 4px #d8d2c380; }
+#options-modal .settings-panel .st-switch:has(input:disabled) { cursor: default; }
+#options-modal .settings-panel .st-switch.is-off { opacity: .45; }
+
+/* the foot: the guide, and the reset that asks twice */
+#options-modal .settings-panel .st-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid #ffffff10; }
+#options-modal .settings-panel #btn-howto, #options-modal .settings-panel #btn-new {
+  min-height: 0; margin: 0; padding: 7px 12px; border: 1px solid transparent; border-radius: 6px; background: transparent;
+  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: #b9b6ad; cursor: var(--cursor-hand, pointer); }
+#options-modal .settings-panel #btn-howto { margin-left: -12px; }
+#options-modal .settings-panel #btn-howto:hover, #options-modal .settings-panel #btn-howto:focus-visible { background: #ffffff0b; color: #f0ede6; outline: none; }
+#options-modal .settings-panel #btn-new { margin-right: -2px; border-color: #ffffff14; color: #c9a59c; }
+#options-modal .settings-panel #btn-new:hover, #options-modal .settings-panel #btn-new:focus-visible { border-color: #c9837555; background: #c9837512; color: #f0c8bd; outline: none; }
+#options-modal .settings-panel #btn-new.armed { border-color: #c98375; background: #8f3a2c; color: #fff1ec; }
+
+@media (max-height: 640px) {
+  #options-modal .modal-content.settings-panel { padding: 16px 22px 12px; }
+  #options-modal .settings-panel .st-row { min-height: 30px; }
+}
+
+/* the three tabs over the sheet, and the panel each shows; the sheet keeps
+   one height whichever is open, so it does not jump */
+#options-modal .settings-panel .st-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 3px; margin: 0 0 14px;
+  border-radius: 8px; background: #1c1c1a; }
+#options-modal .settings-panel .st-tabs [role="tab"] { min-height: 0; padding: 7px 6px; border: 0; border-radius: 6px; background: transparent;
+  font: 400 calc(12.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .01em; color: #9f9c93; cursor: var(--cursor-hand, pointer);
+  transition: background .15s, color .15s; }
+#options-modal .settings-panel .st-tabs [role="tab"]:hover { color: #e9e6de; }
+#options-modal .settings-panel .st-tabs [role="tab"][aria-selected="true"] { background: #33322d; color: #f2efe7; }
+#options-modal .settings-panel .st-tabs [role="tab"]:focus-visible { outline: 1px solid #d8d2c380; outline-offset: -1px; }
+#options-modal .settings-panel .st-panel { min-height: calc(6 * 34px + 8px); padding: 2px 0 4px; }
+#options-modal .settings-panel .st-panel[hidden] { display: none; }
+#options-modal .settings-panel .st-mute-row { grid-template-columns: minmax(0, 1fr) auto; margin-top: 6px; padding-top: 8px; border-top: 1px solid #ffffff10; }
+#options-modal.is-muted .settings-panel .st-sound .st-mute-row { opacity: 1; }
+#options-modal .settings-panel .st-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #ffffff10; }
+#options-modal .settings-panel .st-note { margin: 8px 0 0; font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font); color: #7f7c74; }
+#options-modal .settings-panel #btn-howto { margin-left: 0; border-color: #ffffff14; }
+
+/* the cold open's drawings (introSketches.js): the game's thin white pencil
+   on dark paper — each line in three passes, drawn from its start — on the
+   right, and on the left the paragraph told beside each drawing */
+#cold-open { background: radial-gradient(ellipse 70% 75% at 66% 48%, #1a1917, #0b0a09 70%, #050404); }
+#cold-open .co-sketch { position: absolute; left: 40vw; top: 6vh; width: 56vw; height: 88vh; z-index: 1; overflow: visible; pointer-events: none; }
+:is(#cold-open, #loading-screen, .cinema-card) .co-sketch path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+:is(#cold-open, #loading-screen, .cinema-card) .co-sketch .ink-dark { stroke: #000; stroke-opacity: .75; }
+:is(#cold-open, #loading-screen, .cinema-card) .co-sketch .ink-white { stroke: #ebe5d7; }
+:is(#cold-open, #loading-screen, .cinema-card) .co-sketch .ink-over { stroke: #fff; stroke-opacity: .45; transform: translate(.7px, -.5px); }
+#cold-open .co-sketch-label { font: 500 13px var(--ui-font); letter-spacing: .32em; fill: #b39d76; }
+#cold-open .co-sketch-label.is-tab { font-size: 12px; letter-spacing: .18em; fill: #cfc6b3; }
+#cold-open .co-stamp-edge { fill: none; stroke: #c4392e; stroke-width: 5; }
+#cold-open .co-stamp-inner { fill: none; stroke: #c4392e; stroke-width: 1.6; }
+#cold-open .co-stamp-word { font: 700 60px var(--ui-font); letter-spacing: 14px; fill: #c4392e; }
+#cold-open .co-stamp-why { font: 600 13px var(--ui-font); letter-spacing: 6px; fill: #c4392e; }
+#cold-open.is-shake .co-sketch { animation: co-shake .42s cubic-bezier(.3, .7, .4, 1); }
+@keyframes co-shake { 15% { translate: -7px 5px; } 32% { translate: 6px -4px; } 50% { translate: -4px 2px; } 70% { translate: 2px -1px; } }
+
+#cold-open .co-caption { position: absolute; z-index: 2; left: clamp(40px, 7vw, 130px); top: 50%; translate: 0 -50%; width: min(31vw, 460px); margin: 0;
+  text-align: left; text-wrap: pretty; font: 300 clamp(17px, 1.45vw, 23px)/1.7 var(--ui-font); letter-spacing: .005em; color: #e6dcc6; }
+#cold-open .co-caption .co-w { transition-delay: calc(var(--d, 0ms) + var(--i) * 38ms); }
+#cold-open .co-caption.is-in .co-w { opacity: 1; filter: blur(0); transform: none; }
+#cold-open .co-caption.is-out { opacity: 0; filter: blur(6px); transition: opacity .9s ease, filter .9s ease; }
+
+/* the loading screen: the house drawn as the game loads, its name under it */
+#loading-screen .co-sketch { display: block; width: min(620px, 80vw); height: auto; aspect-ratio: 1000 / 540; margin: 0 auto 10px; overflow: visible; }
+#loading-screen .loading-bar { display: none; }
+#loading-screen .loading-card h1 { margin: 0 0 6px; font: 300 calc(15px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .5em; margin-right: -.5em; text-transform: uppercase; color: #cfc8b8; }
+
+/* the chapter card's emblem: drawn over its words, in the pencil */
+.cinema-card .cinema-emblem { display: block; width: clamp(150px, 15vw, 210px); height: auto; aspect-ratio: 1; margin: 0 auto 26px; overflow: visible; }
+
+/* the glint on the thing to open on his desk (prologue.js, the start door's glint) */
+.prologue-envelope { overflow: visible; }
+.prologue-glint { position: absolute; left: -40px; top: -40px; pointer-events: none; mix-blend-mode: screen; }
+
+/* the letter, or the report, never taller than the screen leaves room for:
+   a long one scrolls within its own sheet, its foot fading to say there is
+   more, and the button under it always stays in sight */
+#prologue .prologue-reading { overflow: hidden; justify-content: center; padding-block: clamp(14px, 3.5vh, 36px); }
+#prologue .prologue-sheet { flex: 0 1 auto; min-height: 0; max-height: calc(100dvh - clamp(110px, 16vh, 150px)); align-items: flex-start;
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+#prologue .prologue-sheet.is-long { -webkit-mask-image: linear-gradient(#000 calc(100% - 26px), transparent); mask-image: linear-gradient(#000 calc(100% - 26px), transparent); }
+#prologue .prologue-sheet::-webkit-scrollbar { display: none; }
+#prologue .prologue-go { flex: 0 0 auto; }

@@ -100,6 +100,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
       badge();
     }
     reader.scrollTop = 0;
+    reader.closest(".dossier-page")?.scrollTo(0, 0);
     renderLetters();
   }
 
@@ -138,6 +139,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     tab = name;
     for (const t of tabs) t.setAttribute("aria-selected", String(t.dataset.casefileTab === name));
     modal.dataset.tab = name;
+    for (const page of modal.querySelectorAll(".dossier-page")) page.scrollTop = 0;
     // the letter's paper is painted to the size it is shown at: again, now it shows
     if (name === "letters" && current) showLetter(current);
     if (name === "clues") {

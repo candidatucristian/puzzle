@@ -27,7 +27,7 @@ export const HINT_DETAILS = {
     "Four different worlds, one missing thing. Look for the single word each programme circles around.",
   ],
   modem: [
-    "Two lights carry the message, the rest keep count. Two states are all a machine needs — group what you see.",
+    "Eight lights carry the message, five keep count. On or off is all a machine needs — read a row at a time.",
   ],
   telescope: [
     "Some stars sit in tidy little groups, all the same frame, only some places lit. A pattern like that is meant to be felt as much as seen.",
@@ -48,7 +48,7 @@ export const HINT_DETAILS = {
     "Each flag stands for a country, and every country has a short name of just two letters.",
   ],
   tapcode: [
-    "Every line is two counts. Look at the window: something there is divided the same way, and someone began to number it.",
+    "Every line is two counts. Something against the wall is divided the same way — and someone scratched a letter where it ends.",
   ],
   rally: [
     "Mind the numbers on the doors and the order they finish in. None of them is bigger than the alphabet.",

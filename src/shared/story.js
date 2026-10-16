@@ -23,7 +23,7 @@ export const LETTERS = Object.freeze([
       "Forty years ago this October, my brothers and I locked every door of Ashcombe House and went away in the night. You have read the file. You know that nobody was hurt, that nothing was taken, and that nobody ever understood why.",
       "You were the only one who kept asking. So you are the one we chose.",
       "We did not leave because we were afraid. We left to keep a promise, and the house has kept it for us ever since. Every room holds something we could not say out loud. Every door opens with a key from the room before it. Nothing in there will explain itself: it was built for someone patient.",
-      "The gate is unlocked. Start in the hall, and put the lights out, one by one.",
+      "Take your file out once more before you come, and look at what the constables wrote about our table. Then come. The gate is unlocked. Start in the hall, and put the lights out, one by one.",
     ],
     signature: "— I. A.",
   },
@@ -87,31 +87,46 @@ export const LETTERS = Object.freeze([
   },
 ].map(Object.freeze));
 
-/** The card that comes up after the letter, before the house is seen. */
+/** The game's cold open, before anything else (ui/coldOpen.js): the story
+ *  so far, told on the black a paragraph at a time; then where we are — at
+ *  Inspector Wren's, the night a letter comes from the house. */
+export const INTRO = Object.freeze({
+  story: [
+    "On the night of 13 October 1961, the Ashcombes — Ivy, Silas and Orion, a sister and her two brothers — locked every door of their house in Devon and walked out into the dark.",
+    "All three were scientists, and well known: Ivy kept the tropical glasshouses at Kew, Silas ran a chemistry laboratory at Cambridge, and Orion worked the great telescopes of the Royal Observatory at Herstmonceux.",
+    "Nothing was taken. Nobody was hurt. Nobody ever learned why.",
+    "The police searched for a year. Then they closed the file: insufficient evidence.",
+    "One detective never let it go. For his whole career, the Ashcombe file has waited in the bottom drawer of his desk.",
+  ],
+  where: ["Exeter · October 2001", "At Inspector Wren's residence", "Tonight, after forty years, a letter came from Ashcombe House."],
+});
+
+/** What is in the file on his desk, opened in the prologue once the letter
+ *  has sent him to it: the report the case was closed on, and the one line
+ *  he has added to it since. */
+export const CASE_REPORT = Object.freeze({
+  dateline: "Devon & Cornwall Constabulary · Case 61/1013",
+  salutation: "The disappearance of Ivy, Silas and Orion Ashcombe",
+  body: [
+    "Ashcombe House, Devon. The three occupants last seen on the evening of 13 October 1961.",
+    "All doors found locked from the outside; no keys recovered. No sign of a struggle. Nothing missing from the house.",
+    "In the dining room, the table laid for four.",
+    "No debts, no quarrel, no letter left behind. Enquiries at the ports and along the coast without result.",
+  ],
+  signature: "Closed, November 1962: insufficient evidence.",
+  postscript: "Pencilled under it, in his hand: Four places laid. Three Ashcombes. Who was the fourth? — A. W.",
+});
+
+/** The card that comes up after the letter and the file, before the house
+ *  is seen. */
 export const ARRIVAL = Object.freeze(["The next night.", "Ashcombe House."]);
 
 /** A card for each floor, the first time he stands on it: whose floor it
  *  was. Keyed by the floor's storey. */
 export const CHAPTERS = Object.freeze({
-  1: ["Chapter I", "The Botanist"],
-  2: ["Chapter II", "The Chemist"],
-  3: ["Chapter III", "The Astronomer"],
-});
-
-/** What the Inspector thinks, the first time he stands in each place: one
- *  line, said and gone. Never how a puzzle works. */
-export const FIRST_THOUGHTS = Object.freeze({
-  Hall: "Forty years of dust, and not one thing out of place. Someone meant me to see it like this.",
-  Study: "Ivy's study. She pressed everything she loved between the pages of a book.",
-  Room2: "The library. The accounts kept to the last penny — right up to the night they stopped.",
-  Room3: "Their grandfather's things. A man who brought the whole sea home, and could not put it down.",
-  Room4: "The counting room. Everything in here was counted once, and some of it more than once.",
-  Room5: "The drawing room. Nobody took the tree down. Nobody came back to.",
-  Room6: "A child's room, once. Someone kept the games, and the flags, and the stairs to somewhere.",
-  Upper: "Silas's floor. Everything labelled, everything measured — and one light that will not behave.",
-  Room7: "His bench, just as he left it. He meant to come back to this.",
-  Top: "Orion's dome. The whole sky from up here, and the telescope still pointed at one part of it.",
-  TopHall: "Rain in the roof, and three more doors. The house goes further than the plans say.",
+  1: ["Chapter I", "Ivy"],
+  2: ["Chapter II", "Silas"],
+  3: ["Chapter III", "Orion"],
 });
 
 /** A letter by its id. */

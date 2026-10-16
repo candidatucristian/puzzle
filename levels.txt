@@ -1,4 +1,4 @@
-The Descipher - niveluri, coduri și rezolvări pe scurt
+Ashcombe Manor - niveluri, coduri și rezolvări pe scurt
 
 01. Binary Tree | Cod: CABBAGE | Urmează traseele de pe bilet (L=stânga, R=dreapta) și citește literele frunzelor în ordinea traseelor.
 02. Plant Pot | Cod: FIBO / FIBONACCI | Udă planta de 5 ori; frunzele apar în grupuri de 1, 1, 2, 3, 5: șirul Fibonacci.

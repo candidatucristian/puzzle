@@ -1,5 +1,5 @@
 import { TAP_WORD, tapPair } from "./puzzle.js";
-import { paintSkeleton } from "./skeleton.js";
+import { paintMaps } from "./maps.js";
 import { soft, grain, vignette, glowCanvas, rgb, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 
 /** The cellar for TAPCODE, under the house: no window, and no light but what
@@ -9,14 +9,13 @@ import { soft, grain, vignette, glowCanvas, rgb, makeCanvas, addCanvasTexture, l
  *  the room's light falling through. A water pipe comes in on the right,
  *  runs along under the joists and turns down to the floor; one of its
  *  joints weeps, and there is a puddle under it. Barrels, a crate of empty
- *  bottles in straw, and against the wall the bones of whoever was kept
- *  down here, one wrist still in its shackle (skeleton.js).
+ *  bottles in straw, and against the wall a tub of old rolled charts, put
+ *  away down here and forgotten (maps.js).
  *
  *  Let into the brick, in the candle's light, a smooth stone no bigger than
  *  it needs to be, and cut into it the message: six lines of tally marks,
  *  two clusters in each. On the right a bottle rack, five holes by five,
- *  empty; someone began numbering it in chalk — a 1 over its first column,
- *  a 1 beside its first row — and stopped.
+ *  empty.
  *
  *  Painted once per screen size: the cellar. The candle's flame, a glow, the
  *  drip and the damp air are live in the scene. */
@@ -48,11 +47,11 @@ export function layoutCellar(W, H) {
   L.pipe = { y: py, r, turn: W * 0.4, leak: W * 0.47 };
   L.drip = { x: L.pipe.leak, y0: py + r * 1.5, y1: L.floorY + 20 * u };
   L.puddle = { x: L.pipe.leak + 8 * u, y: L.floorY + 26 * u, rx: 96 * u, ry: 17 * u };
-  L.stool = { x: W * 0.765, s: u };
+  L.stool = { x: W * 0.72, s: u };
   L.candle = { x: L.stool.x, y: L.floorY - 104 * u, s: u };
   const rw = Math.min(W * 0.125, H * 0.24);
-  L.skel = { x: W * 0.342, s: u * 1.05 };
-  L.rack = { x0: W * 0.972 - rw, y0: L.floorY - rw - 14 * u, w: rw };
+  L.maps = { x: W * 0.342, s: u * 1.05 };
+  L.rack = { x0: W * 0.905 - rw, y0: L.floorY - rw - 14 * u, w: rw };
   return L;
 }
 
@@ -73,7 +72,7 @@ export function paintCellar(scene, L) {
   paintBarrel(ctx, L, W * 0.05, L.floorY + 16 * L.u, 92 * L.u, 128 * L.u);
   paintBarrel(ctx, L, W * 0.112, L.floorY + 4 * L.u, 80 * L.u, 112 * L.u);
   paintCrate(ctx, L);
-  paintSkeleton(ctx, L);
+  paintMaps(ctx, L);
   paintLadder(ctx, L);
   paintPuddle(ctx, L);
   paintStool(ctx, L);
@@ -544,6 +543,25 @@ function paintRack(ctx, L) {
   ctx.fillStyle = "#050404";
   ctx.fillRect(x0, y0, w, w);
   for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) soft(ctx, x0 + (c + 0.5) * cell, y0 + (r + 0.62) * cell, cell * 0.4, cell * 0.3, "70,46,36", 0.16);
+  // on the wall past the end of its bottom row, scratched into the brick:
+  // the Z there was no hole left for
+  {
+    const zx = x0 + 5.5 * cell, zy = y0 + 4.5 * cell, z = cell * 0.3;
+    const strokes = [[-z, -z * 0.9, z * 0.95, -z * 1.02], [z * 0.95, -z * 1.02, -z * 0.9, z * 0.96], [-z * 0.9, z * 0.96, z * 1.04, z * 0.88]];
+    ctx.lineCap = "round";
+    for (const [tone, dx, dy, lw] of [["rgba(0,0,0,0.75)", 0.9, 0.9, 2.8], ["rgba(222,212,190,0.72)", 0, 0, 1.6]]) {
+      ctx.strokeStyle = tone;
+      ctx.lineWidth = Math.max(1, lw * u);
+      for (const [ax, ay, bx, by] of strokes) {
+        ctx.beginPath();
+        ctx.moveTo(zx + ax + dx * u, zy + ay + dy * u);
+        ctx.lineTo(zx + (ax + bx) / 2 + 0.6 * u + dx * u, zy + (ay + by) / 2 - 0.5 * u + dy * u);
+        ctx.lineTo(zx + bx + dx * u, zy + by + dy * u);
+        ctx.stroke();
+      }
+    }
+    ctx.lineCap = "butt";
+  }
   // its bars
   const wood = (x, y, bw, bhh, upright) => {
     const g = upright ? ctx.createLinearGradient(x, 0, x + bw, 0) : ctx.createLinearGradient(0, y, 0, y + bhh);
@@ -563,13 +581,6 @@ function paintRack(ctx, L) {
   const wx = x0 + w - bar / 2, wy = y0 + bar / 2;
   for (let i = 0; i <= 3; i++) { const a = (i / 3) * (Math.PI / 2); ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx - Math.cos(a) * cell * 0.9, wy + Math.sin(a) * cell * 0.9); ctx.stroke(); }
   for (const k of [0.4, 0.7]) { ctx.beginPath(); ctx.arc(wx, wy, cell * 0.9 * k, Math.PI / 2, Math.PI); ctx.stroke(); }
-  // the two chalked 1s
-  ctx.fillStyle = "rgba(226,222,206,0.6)";
-  ctx.font = `${Math.round(cell * 0.56)}px "Special Elite", "Courier New", monospace`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("1", x0 + cell * 0.5, y0 - cell * 0.52);
-  ctx.fillText("1", x0 - cell * 0.5, y0 + cell * 0.5);
 }
 
 // a barrel standing on its end: staves, three iron hoops, the light from the hatch on it

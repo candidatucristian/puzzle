@@ -1,13 +1,28 @@
 import { Scope } from '../shared/Scope.js';
+import { sketchLayer, houseByProgress } from './introSketches.js';
+
+// While the game loads, the house is drawn in the white pencil, line by line
+// as far as the loading has got; when it is ready, its moon and its three
+// lights come up, and the screen goes.
 
 export function createLoadingScreen() {
   const scope = new Scope(), screen = document.getElementById('loading-screen');
   const fill = document.getElementById('loading-fill'), label = document.getElementById('loading-label');
   const percent = document.getElementById('loading-pct');
-  let current = 0, target = 6, text = 'Loading', done = false, failed = false;
+  const card = screen.querySelector('.loading-card');
+  const sketch = sketchLayer(card);
+  card.prepend(sketch);
+  const house = houseByProgress(sketch);
+  let current = 0, target = 6, text = 'Loading', done = false, failed = false, lit = false;
   const paint = () => {
     current += (target - current) * .09;
     fill.style.width = current + '%'; percent.textContent = Math.round(current) + '%';
+    house.set(current / 100);
+    // drawn to the end: the lights come up, and a moment later it is gone
+    if (done && !lit && current > 99.4) {
+      lit = true; house.set(1); house.light();
+      scope.later(() => { screen.classList.add('fade-out'); scope.later(() => { screen.remove(); scope.dispose(); }, 750); }, 1100);
+    }
     label.childNodes[0].nodeValue = text + '\u00a0';
     scope.later(paint, 80);
   };
@@ -20,11 +35,10 @@ export function createLoadingScreen() {
     ready() {
       if (done || failed) return;
       done = true; target = 100; text = 'Ready';
-      scope.later(() => { screen.classList.add('fade-out'); scope.later(() => { screen.remove(); scope.dispose(); }, 750); }, 500);
     },
     fail(error) {
       if (done || failed) return;
-      failed = true; console.error('The Descipher could not start:', error);
+      failed = true; console.error('Ashcombe Manor could not start:', error);
       text = 'Unable to load the game. Please try again.'; retry.hidden = false;
       label.setAttribute('role', 'alert');
     },

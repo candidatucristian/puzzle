@@ -1,7 +1,7 @@
 // The sound of each place, under everything else: made, not recorded — noise
 // shaped into weather and fire, and small struck sounds scattered through
 // it. Walking from one place to another, the old sound sinks away and the
-// new one rises. It plays at the music's volume, under the master and mute.
+// new one rises. It plays at the ambience's volume, under the master and mute.
 //
 //   the house's halls   the house settling: a low room tone, a board now and then
 //   the upper hall      the same, and the wind finding the gaps
@@ -107,11 +107,11 @@ export function mountAmbience(scope, { game, levels, audio }) {
     }
     volume();
   }
-  // the music slider sets how loud the places are
+  // the ambience slider sets how loud the places are
   function volume() {
     if (!out) return;
     const state = audio?.state;
-    out.gain.setTargetAtTime(state ? state.musicVol * 1.6 : 0.8, ac.currentTime, 0.3);
+    out.gain.setTargetAtTime(state ? (state.ambienceVol ?? 0.7) * 1.6 : 0.8, ac.currentTime, 0.3);
   }
   function choose() {
     const place = levels.place;
@@ -121,10 +121,10 @@ export function mountAmbience(scope, { game, levels, audio }) {
     apply();
   }
   scope.add(levels.subscribe(choose));
-  // the context may only start on a gesture; and the music slider may move
+  // the context may only start on a gesture; and the volume may change
   const wake = () => { if (ac?.state === "suspended") ac.resume().catch(() => {}); choose(); };
   scope.on(window, "pointerdown", wake);
   scope.on(window, "keydown", wake);
-  scope.on(document.getElementById("music-slider"), "input", volume);
+  if (audio?.subscribe) scope.add(audio.subscribe(volume));
   scope.add(() => { for (const bed of beds.values()) bed.stop(); beds.clear(); out?.disconnect(); });
 }

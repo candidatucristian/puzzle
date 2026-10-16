@@ -1,0 +1,110 @@
+/* The found letter: a quiet close view of paper, pressed wax and folds. */
+.arrival { isolation: isolate; perspective: 1800px; overflow: hidden; outline: none; }
+.arrival-veil {
+  background: radial-gradient(ellipse at 50% 48%, #33271a70, #100b07c9 58%, #030202f2);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+}
+.arrival-caption { top: clamp(28px, 10vh, 104px); left: 5%; right: 5%; z-index: 3; }
+.arrival-eyebrow { color: #c6b79c; font: 400 11px 'Special Elite', monospace; letter-spacing: .36em; }
+.arrival-eyebrow::before, .arrival-eyebrow::after {
+  content: ''; display: inline-block; width: 34px; margin: 0 18px 3px;
+  height: 1px; background: linear-gradient(90deg, transparent, #bca17d70);
+}
+.arrival-eyebrow::after { transform: scaleX(-1); }
+.arrival-title {
+  margin-top: 14px !important; color: #eee4ce;
+  font: 400 clamp(25px, 2.8vw, 40px)/1.2 Georgia, 'Times New Roman', serif;
+  letter-spacing: .015em; text-shadow: 0 2px 12px #000a;
+}
+.arrival-stage { top: 55%; gap: 30px; z-index: 2; perspective: 1600px; }
+.arrival-rest { position: relative; perspective: 1600px; }
+.env-contact-shadow {
+  position: absolute; inset: 12px 5px -12px; border-radius: 9px;
+  background: #080502; filter: blur(16px); box-shadow: 0 18px 30px #0008;
+  pointer-events: none; opacity: 0;
+}
+.arrival .env { z-index: 1; filter: none; transform-style: preserve-3d; }
+.arrival.is-waiting .env { animation: none; filter: none; }
+.arrival .env-inside { border-radius: 6px; }
+.arrival .env-pocket { filter: drop-shadow(0 1px 1px #4c331c50); }
+.arrival .env-flap-out { filter: drop-shadow(0 1px 1px #4c331c50); }
+.arrival .env-letter {
+  background: #eee8d7 url('/assets/images/CaseFile/letter-paper-v2.png') center 25% / cover;
+  border: 1px solid #b4a17b55; border-radius: 2px;
+  box-shadow: 0 2px 0 #d6c6a5, 0 3px 0 #a79371, 0 8px 12px #31200d40;
+}
+.arrival .env-letter::after {
+  content: ''; position: absolute; left: 3%; right: 3%; top: 48%; height: 2px;
+  background: linear-gradient(#a18b6033, #fff9e470); pointer-events: none;
+}
+.arrival .env-seal, .arrival.is-waiting .env-seal { animation: none; filter: drop-shadow(0 2px 1px #410d0850); }
+.env-wax-piece { position: absolute; z-index: 5; backface-visibility: hidden; filter: drop-shadow(1px 1px .6px #460e0980); pointer-events: none; }
+.arrival .env-hint {
+  display: block; margin: 0; padding: 13px 27px 11px; border: 0; border-bottom: 1px solid #ae937267;
+  background: linear-gradient(0deg, #9275550d, transparent); border-radius: 0;
+  color: #e2d2b4; font: 400 13px 'Special Elite', monospace; letter-spacing: .13em;
+  cursor: var(--cursor-hand, pointer); animation: none; opacity: 0;
+  transition: color .2s ease, border-color .2s ease, opacity .3s ease;
+}
+.arrival.is-waiting .env-hint { opacity: 1; animation: none; }
+.arrival .env-hint:hover { color: #fff3da; border-bottom-color: #dec6a1; }
+.arrival .env-hint.is-away { opacity: 0; }
+.arrival .env-hint:focus-visible, .arrival .arrival-file:focus-visible, .arrival .arrival-later:focus-visible {
+  outline: 1px solid #e5cba3; outline-offset: 5px;
+}
+.arrival .env:focus-visible .env-seal { filter: drop-shadow(0 2px 1px #410d0850) drop-shadow(0 0 4px #e0b17b60); }
+.arrival .arrival-later {
+  border: 0; border-bottom: 1px solid #bba88a48; border-radius: 0; background: none;
+  color: #c2b394; font: 400 12px 'Special Elite', monospace; padding: 8px 4px;
+}
+.arrival-reading { z-index: 4; }
+.arrival-page {
+  width: min(620px, 92vw); max-height: calc(100dvh - 140px); min-height: 0;
+  padding: 14px 18px 20px; outline: none;
+}
+.arrival .letter-page {
+  width: 100%; aspect-ratio: 3 / 4; padding: 46px 50px 112px;
+  font-size: calc(15px * var(--reading-scale, 1)); line-height: 1.78;
+}
+.arrival .letter-wax { right: 42px; bottom: 36px; }
+.arrival .arrival-file {
+  border: 1px solid #b3996c80; border-radius: 2px; padding: 13px 28px;
+  background: linear-gradient(180deg, #392c1e, #21180f); color: #e5d2ac;
+  font: 400 12px 'Special Elite', monospace; letter-spacing: .06em;
+  box-shadow: 0 2px 1px #090604, inset 0 1px #d6bc8c12, 0 8px 20px #0006;
+}
+.arrival .arrival-file:hover { background: linear-gradient(180deg, #493925, #302215); }
+.arrival .arrival-file:disabled { opacity: .35; cursor: default; }
+.letter-folds { position: fixed; z-index: 6; transform-style: preserve-3d; pointer-events: none; }
+.letter-fold-panel { position: absolute; left: 0; right: 0; transform-style: preserve-3d; }
+.letter-fold-panel.fold-0 { transform-origin: 50% 100%; }
+.letter-fold-panel.fold-2 { transform-origin: 50% 0; }
+.letter-fold-face, .letter-fold-back {
+  position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.letter-fold-back {
+  transform: rotateX(180deg); border: 1px solid #b6a17a30;
+  background: #eee8d7 url('/assets/images/CaseFile/letter-paper-v2.png') center 25% / 100% 300%;
+  box-shadow: 0 2px 8px #26180c50; border-radius: 2px;
+}
+.fold-0 .letter-fold-back { background-position: center 10%; }
+.fold-2 .letter-fold-back { background-position: center 80%; }
+@media (max-height: 850px) {
+  /* Let shorter letters fit the screen instead of scrolling through blank paper. */
+  .arrival .letter-page {
+    aspect-ratio: auto; padding: 32px 48px 94px;
+    font-size: calc(14.5px * var(--reading-scale, 1)); line-height: 1.65;
+  }
+}
+@media (max-height: 650px) {
+  .arrival-caption { top: 20px; }
+  .arrival-title { font-size: 25px; margin-top: 9px !important; }
+  .arrival-stage { gap: 16px; top: 56%; }
+  .arrival .env-hint { padding: 8px 20px; font-size: 12px; }
+  .arrival .letter-page { padding: 32px 38px 100px; font-size: calc(14px * var(--reading-scale, 1)); }
+  .arrival-reading { padding: 12px; gap: 12px; }
+  .arrival-page { max-height: calc(100dvh - 95px); }
+  .arrival .arrival-file { padding: 10px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .arrival * { transition: none !important; } }

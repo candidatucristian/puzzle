@@ -168,10 +168,10 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "An old router on a desk in a lamplit room at night blinks two LEDs to transmit the word HTTPS as ASCII binary, letter by letter — one LED flashes for each 0 bit, the other for each 1 bit. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
+    "description": "An old router on a desk in a lamplit room at night shows the word HTTPS as ASCII binary, one letter at a time across its eight right-hand LEDs — each letter's byte at once, an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
     "references": [
       "modem/puzzle.js: MODEM_WORD = \"HTTPS\", planTransmission() — ASCII binary LED schedule",
-      "_startAnimation() — LED 5 = bit 0, LED 6 = bit 1, LED[i] turns red per completed letter",
+      "_startAnimation() — LEDs 5–12 show each letter's byte (lit = 1), LED[i] turns red per completed letter",
       "room.js paintRouter() — the maker's name \"W. LEIBNIZ\" printed on the router's front, the binary-notation flavor clue"
     ]
   },
@@ -246,7 +246,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A Christmas tree stands in the drawing room with a string of lamps along each of its nine tiers. The count of lamps alight per tier, top to bottom, is 3, 1, 4, 1, 5, 9, 2, 6, 5 — the digits of π. Which holders are alight within a tier is randomized and irrelevant; only the count per tier matters (clicking a lit lamp puts it out and lights the nearest dark one on the same string, preserving the count). Hovering the moon in the window draws a line straight across it.",
+    "description": "A Christmas tree stands in the drawing room with a string of lamps along each of its nine tiers. The count of lamps alight per tier, top to bottom, is 3, 1, 4, 1, 5, 9, 2, 6, 5 — the digits of π. Which holders are alight within a tier is spread along the string (seeded) and irrelevant; only the count per tier matters. The lit lamps twinkle but never go out. Hovering the moon in the window draws a line straight across it.",
     "references": [
       "PI_DIGITS = [3,1,4,1,5,9,2,6,5] (pi/TreeScene.js) — lit-lamp count per tier, top to bottom",
       "_makeLamps() — lights PI_DIGITS[tier] of each tier's holders",
@@ -303,9 +303,9 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "In the cellar, a smooth stone let into the brick carries 6 lines of tally marks, two clusters per line, following the classic 5×5 prisoner's tap code (K folded into C's square). Each letter of ESCAPE becomes a (row, column) pair rendered as that many carved marks: E=(1,5), S=(4,3), C=(1,3), A=(1,1), P=(3,5), E=(1,5). The empty bottle rack is five holes by five, and two small chalked \"1\" labels — over its first column, beside its first row — are the only nudge toward counting rows-then-columns from 1.",
+    "description": "In the cellar, a smooth stone let into the brick carries 6 lines of tally marks, two clusters per line, following a 5×5 prisoner's tap code: the alphabet A–Y row by row, Z spilling past the end of the last row. Each letter of ESCAPE becomes a (row, column) pair rendered as that many carved marks: E=(1,5), S=(4,4), C=(1,3), A=(1,1), P=(4,1), E=(1,5). The empty bottle rack, five holes by five, is the grid; a Z scratched on the wall just past the end of its bottom row says the letters run through it in order.",
     "references": [
-      "TAP_WORD = \"ESCAPE\", TAP_GRID = 5×5 tap-code grid (K→C)",
+      "TAP_WORD = \"ESCAPE\", TAP_GRID = A–Y in a 5×5 grid, Z past the end of row 5",
       "tapPair() — converts a letter to its (row, col) grid position",
       "paintSlab() (tapcode/cellar.js) — carves row marks, a gap, then column marks per letter"
     ]

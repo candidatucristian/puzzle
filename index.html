@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>The Descipher</title>
+    <title>Ashcombe Manor</title>
     <!-- Phones: real device width, no pinch zoom over the puzzles, the
          on-screen keyboard shrinks the page instead of covering the code box -->
     <meta
@@ -16,7 +16,7 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="apple-mobile-web-app-title" content="Descipher" />
+    <meta name="apple-mobile-web-app-title" content="Ashcombe Manor" />
 
     <link
       rel="icon"
@@ -96,7 +96,7 @@
         <svg class="loading-moon ui-icon" aria-hidden="true">
           <use href="#icon-moon" />
         </svg>
-        <h1>The Descipher</h1>
+        <h1>Ashcombe Manor</h1>
         <div class="loading-bar"><div id="loading-fill"></div></div>
         <p id="loading-label">Loading <span id="loading-pct">0%</span></p>
       </div>
@@ -225,7 +225,10 @@
           <span id="save-status" role="status" aria-live="polite"></span>
         </div>
         <div id="levels-grid"></div>
-        <div id="index-story" aria-label="Story"></div>
+        <details id="index-notes" class="index-notes">
+          <summary>Notes</summary>
+          <div id="index-story" aria-label="Story"></div>
+        </details>
         <div id="index-done" hidden>
           <span class="done-mark" aria-hidden="true"></span>
           <p class="done-title">Completed</p>
@@ -236,18 +239,10 @@
         <div id="index-outside" aria-label="About the game">
           <p class="outside-eyebrow">Outside Ashcombe House</p>
           <div class="outside-story">
-            <p>
-              Locked since the night of the 13th of October 1961, when the
-              three Ashcombes went away and told no one why.
-            </p>
-            <p>
-              Its doors are locked tonight. Every room hides its puzzles, and
-              each keeps the key to another.
-            </p>
-            <p>Look closely, listen, and keep what you find in the case file.</p>
+            <p>Locked since the night of the 13th of October 1961.</p>
           </div>
           <div id="outside-progress" class="outside-progress" hidden></div>
-          <div class="outside-tools">
+          <div class="outside-tools" hidden>
             <p class="outside-label">Carried with you</p>
             <dl>
               <div>
@@ -274,89 +269,6 @@
           </div>
         </div>
         <!-- The way back: sketched in white like the pointers, at the foot of the index -->
-        <button id="btn-leave" type="button" hidden>
-          <svg
-            class="leave-frame"
-            viewBox="0 0 200 64"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M3 4.5C60 3.2 140 5.4 197.5 3.8"
-              class="ink-dark"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M3 4.5C60 3.2 140 5.4 197.5 3.8"
-              class="ink-white"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M3 4.5C60 3.2 140 5.4 197.5 3.8"
-              class="ink-over"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5"
-              class="ink-dark"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5"
-              class="ink-white"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M195.8 1.5C196.6 22 195.2 44 196.4 62.5"
-              class="ink-over"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M198 60.2C130 61.4 70 59.6 2 60.8"
-              class="ink-dark"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M198 60.2C130 61.4 70 59.6 2 60.8"
-              class="ink-white"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M198 60.2C130 61.4 70 59.6 2 60.8"
-              class="ink-over"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M4.4 63C3.4 42 4.8 20 3.6 1.2"
-              class="ink-dark"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M4.4 63C3.4 42 4.8 20 3.6 1.2"
-              class="ink-white"
-              vector-effect="non-scaling-stroke"
-            />
-            <path
-              d="M4.4 63C3.4 42 4.8 20 3.6 1.2"
-              class="ink-over"
-              vector-effect="non-scaling-stroke"
-            />
-          </svg>
-          <svg class="leave-icon" viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M15 29V4h13v25M11 29h20" class="ink-dark" />
-            <path d="M15 29V4h13v25M11 29h20" class="ink-white" />
-            <path d="M15 29V4h13v25M11 29h20" class="ink-over" />
-            <g class="leave-arrow">
-              <path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-dark" />
-              <path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-white" />
-              <path d="M24 17H3.5M8.5 12l-5 5 5 5" class="ink-over" />
-            </g>
-          </svg>
-          <span class="leave-words"
-            ><span class="leave-to" id="leave-to">back to</span
-            ><span class="leave-name" id="leave-name">the Hall</span></span
-          >
-        </button>
       </aside>
 
       <!-- Game Area -->
@@ -392,22 +304,6 @@
             class="start-moon"
             aria-hidden="true"
           ></canvas>
-          <div id="start-card">
-            <div id="start-title">
-              <h1>The<br /><span>Descipher</span></h1>
-            </div>
-            <div id="start-bottom">
-              <p id="start-progress"></p>
-              <button
-                id="btn-continue"
-                class="menu-btn primary-action start-continue"
-                type="button"
-              >
-                Get inside
-              </button>
-              <p id="start-prompt">Press any key to begin</p>
-            </div>
-          </div>
         </div>
 
         <!-- Intro Sequence Overlay -->
@@ -417,7 +313,7 @@
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
             </div>
-            <h1>The Descipher</h1>
+            <h1>Ashcombe Manor</h1>
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
             </div>
@@ -450,7 +346,7 @@
               </div>
             </div>
             <p class="completion-credits">
-              THE DESCIPHER &mdash; THANK YOU FOR PLAYING
+              ASHCOMBE MANOR &mdash; THANK YOU FOR PLAYING
             </p>
             <div class="completion-actions">
               <button id="btn-completion-replay" class="menu-btn">
@@ -485,6 +381,24 @@
           <div id="game-container"></div>
           <div id="film-grain" aria-hidden="true"></div>
           <span id="interaction-pulse" aria-hidden="true"></span>
+          <!-- the way back: drawn in the white ink over the picture, bottom right -->
+          <button id="btn-leave" type="button" hidden>
+            <svg class="leave-icon" viewBox="0 0 44 22" aria-hidden="true">
+              <g class="leave-arrow">
+                <path d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2" class="ink-dark" />
+                <path d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2" class="ink-white" />
+                <path d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2" class="ink-over" />
+                <path d="M3.4 6.4L4.3 13.4L11 12.1" class="ink-dark" />
+                <path d="M3.4 6.4L4.3 13.4L11 12.1" class="ink-white" />
+                <path d="M3.4 6.4L4.3 13.4L11 12.1" class="ink-over" />
+              </g>
+            </svg>
+            <span class="leave-word">Back<svg class="leave-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" class="ink-dark" />
+              <path d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" class="ink-white" />
+              <path d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" class="ink-over" />
+            </svg></span>
+          </button>
         </div>
 
         <!-- Control Console -->
@@ -801,11 +715,12 @@
       </div>
     </div>
 
-    <!-- Settings: the controls scroll while the heading and actions stay in reach. -->
+    <!-- Settings: one compact sheet — the sound, channel by channel; the
+         picture; and the two ways out of it. -->
     <div id="options-modal" class="hidden">
-      <div class="modal-content">
-        <div class="options-heading">
-          <h2>Settings</h2>
+      <div class="modal-content settings-panel" aria-labelledby="settings-title">
+        <header class="st-head">
+          <h2 id="settings-title">Settings</h2>
           <button
             id="btn-close-options"
             class="icon-button"
@@ -817,106 +732,83 @@
               <use href="#icon-close" />
             </svg>
           </button>
+        </header>
+
+        <div class="st-tabs" role="tablist" aria-label="Settings">
+          <button type="button" role="tab" id="st-tab-video" aria-controls="st-panel-video" aria-selected="true" tabindex="0">Video</button>
+          <button type="button" role="tab" id="st-tab-sounds" aria-controls="st-panel-sounds" aria-selected="false" tabindex="-1">Sounds</button>
+          <button type="button" role="tab" id="st-tab-options" aria-controls="st-panel-options" aria-selected="false" tabindex="-1">Options</button>
         </div>
-        <div class="options-body">
-          <fieldset class="audio-settings">
-            <legend>Sound</legend>
-            <div class="slider-group">
-              <label for="music-slider">Music</label>
-              <input
-                type="range"
-                id="music-slider"
-                min="0"
-                max="1"
-                step="0.01"
-                value="0.5"
-              />
-              <output id="music-value" for="music-slider">50%</output>
-            </div>
-            <div class="slider-group">
-              <label for="sfx-slider">Sound effects</label>
-              <input
-                type="range"
-                id="sfx-slider"
-                min="0"
-                max="1"
-                step="0.01"
-                value="0.8"
-              />
-              <output id="sfx-value" for="sfx-slider">80%</output>
-            </div>
-          </fieldset>
-          <fieldset class="comfort-settings">
-            <legend>Display</legend>
-            <div class="comfort-row grain-row">
-              <label for="grain-slider">Film grain</label>
-              <output id="grain-value" for="grain-slider">Off</output>
-              <input
-                id="grain-slider"
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                value="0"
-              />
-            </div>
-            <div class="comfort-row">
-              <label for="reading-size">Text size</label>
-              <select id="reading-size" aria-describedby="reading-note">
-                <option value="1">Standard</option>
-                <option value="1.15">Larger</option>
-                <option value="1.3">Largest</option>
-              </select>
-              <p id="reading-note">Menus and hints.</p>
-            </div>
-            <div class="comfort-row">
-              <label for="motion-setting">Motion</label>
-              <select id="motion-setting" aria-describedby="motion-note">
-                <option value="system">Follow device</option>
-                <option value="reduced">Reduced</option>
-              </select>
-              <p id="motion-note">
-                Puzzle signals and essential movement remain available.
-              </p>
-            </div>
-            <label class="comfort-checkbox" for="ambient-effects">
-              <span>Ambient effects</span>
-              <input id="ambient-effects" type="checkbox" checked />
-            </label>
-            <p class="comfort-caption">Dust, smoke and background movement.</p>
-          </fieldset>
-          <div class="danger-zone">
-            <p class="danger-note">
-              Clear progress and return to the first room.
-            </p>
-            <button
-              id="btn-new"
-              class="menu-btn danger-btn"
-              type="button"
-              data-tip="Forget everything and start the house again"
-            >
-              Reset game
+
+        <section class="st-panel" role="tabpanel" id="st-panel-video" aria-labelledby="st-tab-video">
+          <div class="st-row">
+            <label for="grain-slider">Film grain</label>
+            <input id="grain-slider" type="range" min="0" max="100" step="5" value="0" />
+            <output id="grain-value" for="grain-slider">Off</output>
+          </div>
+          <label class="st-row st-switch" for="motion-setting">
+            <span class="st-label">Reduce motion<small id="motion-note">Puzzle signals stay.</small></span>
+            <input id="motion-setting" type="checkbox" role="switch" />
+            <span class="st-knob" aria-hidden="true"></span>
+          </label>
+          <label class="st-row st-switch" for="ambient-effects">
+            <span class="st-label">Ambient effects<small>Dust, smoke, flicker, drifting light.</small></span>
+            <input id="ambient-effects" type="checkbox" role="switch" checked />
+            <span class="st-knob" aria-hidden="true"></span>
+          </label>
+        </section>
+
+        <section class="st-panel st-sound" role="tabpanel" id="st-panel-sounds" aria-labelledby="st-tab-sounds" hidden>
+          <div class="st-row">
+            <label for="master-slider">Master</label>
+            <input type="range" id="master-slider" min="0" max="1" step="0.01" value="1" />
+            <output id="master-slider-value" for="master-slider">100%</output>
+          </div>
+          <div class="st-row">
+            <label for="music-slider">Music</label>
+            <input type="range" id="music-slider" min="0" max="1" step="0.01" value="0.5" />
+            <output id="music-value" for="music-slider">50%</output>
+          </div>
+          <div class="st-row">
+            <label for="ambience-slider">Ambience</label>
+            <input type="range" id="ambience-slider" min="0" max="1" step="0.01" value="0.7" />
+            <output id="ambience-value" for="ambience-slider">70%</output>
+          </div>
+          <div class="st-row">
+            <label for="sfx-slider">Effects</label>
+            <input type="range" id="sfx-slider" min="0" max="1" step="0.01" value="0.8" />
+            <output id="sfx-value" for="sfx-slider">80%</output>
+          </div>
+          <div class="st-row">
+            <label for="ui-slider">Interface</label>
+            <input type="range" id="ui-slider" min="0" max="1" step="0.01" value="0.6" />
+            <output id="ui-value" for="ui-slider">60%</output>
+          </div>
+          <div class="st-row st-mute-row">
+            <span class="st-label">Everything</span>
+            <button id="btn-mute" class="st-mute" type="button" aria-pressed="false" data-tip="Silence every sound">
+              <span data-audio-label>Mute all</span>
             </button>
           </div>
-        </div>
-        <div class="modal-actions">
-          <button
-            id="btn-howto"
-            class="menu-btn"
-            type="button"
-            data-tip="How the game is played"
-          >
-            How to play
-          </button>
-          <button
-            id="btn-mute"
-            class="menu-btn"
-            type="button"
-            data-tip="Silence every sound"
-          >
-            Mute all
-          </button>
-        </div>
+        </section>
+
+        <section class="st-panel" role="tabpanel" id="st-panel-options" aria-labelledby="st-tab-options" hidden>
+          <div class="st-row st-choice">
+            <span class="st-label" id="st-size-label">Text size</span>
+            <div id="reading-size" class="st-seg" role="radiogroup" aria-labelledby="st-size-label">
+              <button type="button" role="radio" data-scale="1" aria-checked="true">Standard</button>
+              <button type="button" role="radio" data-scale="1.15" aria-checked="false">Larger</button>
+              <button type="button" role="radio" data-scale="1.3" aria-checked="false">Largest</button>
+            </div>
+          </div>
+          <div class="st-actions">
+            <button id="btn-howto" class="st-link" type="button" data-tip="How the game is played">How to play</button>
+            <button id="btn-new" class="st-danger" type="button" data-tip="Forget everything and start the house again">
+              <span data-reset-label>Reset game</span>
+            </button>
+          </div>
+          <p class="st-note">Reset clears all progress and starts the house again.</p>
+        </section>
       </div>
     </div>
 
@@ -971,10 +863,11 @@
                 <dd>Use Hint below the room to reveal one clue at a time.</dd>
               </div>
               <div class="howto-row">
-                <dt>Room notes</dt>
+                <dt>Keys</dt>
                 <dd>
-                  Read a short description of the room and see whether sound or
-                  a reference may help.
+                  M the map of the house · N your notebook · C the case file ·
+                  Z the magnifying glass, or hold the right mouse button ·
+                  Esc back the way you came.
                 </dd>
               </div>
               <div class="howto-row">

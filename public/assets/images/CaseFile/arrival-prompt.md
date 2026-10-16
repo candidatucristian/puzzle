@@ -1,0 +1,7 @@
+# [envelope-back.png](envelope-back.png)
+
+Generated with the built-in imagegen tool, generate mode, transparent background. Original PNG preserved. The envelope is split into matching animated paper layers in canvas; all interface and letter text stays live HTML.
+
+Use case: historical-scene. Asset type: one isolated envelope material for an animated detective game, not a whole scene or interface.
+Subject: the BACK of a closed, unsealed vintage English correspondence envelope, horizontal 1.6 to 1 rectangle, exactly perpendicular top-down orthographic view. Beautiful realistic ivory cotton paper with tiny fibres, restrained age, fine natural wrinkles and slightly softened rounded corners, believable paper thickness and layered folded edges. The triangular top flap extends from the two upper corners down to a point exactly at the horizontal center, 57 percent of the envelope height from top. Below it, subtle diagonal side folds and an overlapping bottom flap, with soft physical contact shadows and fine raised edges. Realistic painted material with photographic precision and quietly tactile craft detail, soft broad warm-neutral light from upper left. Keep the writing surface clean and natural, not excessively distressed. Entire envelope must be visible, parallel straight edges, fill the frame with only 2 percent transparent margin. No seal, no wax, no ink, no writing, no stamps, no ribbon, no loose papers, no hands, no desk, no scene, no background. Genuine transparent background.
+

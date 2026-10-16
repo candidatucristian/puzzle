@@ -1,8 +1,9 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { HOUSE_GO, WALK_MS, zoomInto, zoomOutFrom } from "../../shared/house.js";
+import { HOUSE_GO, WALK_MS, zoomInto, zoomOutFrom, PLACES } from "../../shared/house.js";
 import { chime } from "../../shared/paint.js";
+import { GOLD_CHEST, GOLD_CHEST_URL } from './chestArt.js';
 
 /** A room off the hall. Not a level, and with no code of its own: it is where
  *  some of them are found. Each thing that opens a puzzle glints until the
@@ -38,6 +39,12 @@ export default class RoomScene extends BasePuzzleScene {
     this.place = place;
   }
 
+  preload() {
+    if (PLACES.some(place => place.key === this.place && place.chest) && !this.textures.exists(GOLD_CHEST)) {
+      this.load.image(GOLD_CHEST, GOLD_CHEST_URL);
+    }
+  }
+
   create(data) {
     this.beginScene();
     this._sparkles = [];
@@ -58,6 +65,7 @@ export default class RoomScene extends BasePuzzleScene {
   _build(W, H) {
     const levels = this.services.levels;
     const L = (this._L = this.layout(W, H, levels));
+    if (L.chest && this.textures.exists(GOLD_CHEST)) L.chest.art = this.textures.get(GOLD_CHEST).getSourceImage();
     const k = this.paint(L);
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
 
@@ -141,7 +149,8 @@ export default class RoomScene extends BasePuzzleScene {
     const waiting = levels.keyWaitingIn(this.place);
     const c = L.chest;
     const taken = !waiting && L.things.every((thing) => levels.isCompleted(levels.indexOf(thing.level)));
-    this._chest = this.add.image(c.box.x, c.box.y, taken ? k.open : k.shut).setOrigin(0, 0).setDepth(-6);
+    this._chest = this.add.image(c.box.x, c.box.y, taken ? k.open : k.shut)
+      .setOrigin(0, 0).setDisplaySize(c.box.width, c.box.height).setDepth(-6);
     const tint = this.chestTint?.(L);
     if (tint) this._chest.setTint(tint);
     if (!taken) {

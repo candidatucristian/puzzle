@@ -14,15 +14,20 @@ const sketch = (path) =>
   `<path d='${path}' stroke='#0b0b0c' stroke-width='2.9' stroke-opacity='.85'/>` +
   `<path d='${path}' stroke='#f1ece0' stroke-width='1.2'/>` +
   `<path d='${path}' transform='translate(.6 -.45)' stroke='#ffffff' stroke-width='.55' stroke-opacity='.5'/>`;
+// A short, slim filled arrow in the same warm white ink as the Back arrow.
+const filledArrow = (path, highlight) =>
+  `<path d='${path}' fill='#0b0b0c' stroke='#0b0b0c' stroke-width='2' stroke-opacity='.8'/>` +
+  `<path d='${path}' fill='#ece7db'/>` +
+  `<path d='${highlight}' transform='translate(.6 -.45)' stroke='#fff' stroke-opacity='.45' stroke-width='.4'/>`;
 
 const SHAPES = {
-  // an empty doorway, its frame and sill, and an arrow going in through it
-  door: ["M15 29V4h13v25M11 29h20M2.5 17H22M17 12l5 5-5 5", 21, 17],
+  // an empty doorway; the gold arrow is added below
+  door: ["M15 29V4h13v25M11 29h20", 22, 17],
   // the door already open: only the arrow, going on in
-  enter: ["M4 16H27M20.5 9.5L27 16l-6.5 6.5", 16, 16],
+  enter: ["", 26, 16],
   // the same two for a door on the left-hand wall: the way in points left
-  doorLeft: ["M17 29V4H4v25M21 29H1M29.5 17H10M15 12l-5 5 5 5", 11, 17],
-  enterLeft: ["M28 16H5M11.5 9.5L5 16l6.5 6.5", 16, 16],
+  doorLeft: ["M17 29V4H4v25M21 29H1", 10, 17],
+  enterLeft: ["", 5, 16],
   stairs: ["M3.5 28h6.5v-6h6.5v-6h6.5v-6h6M5 14.5l8-8M7.6 6.5H13v5.4", 16, 16],
   ladder: ["M10 3v26M22 3v26M10 8h12M10 14h12M10 20h12M10 26h12", 16, 16],
   passage: ["M4 29.5V13a12 12 0 0 1 24 0v16.5M11.5 29.5V16.5a4.5 4.5 0 0 1 9 0v13M3 29.5h26M16 25v2", 16, 18],
@@ -33,9 +38,18 @@ const SHAPES = {
   rubber: ["M5 21.5L16.5 10l7.5 7.5L12.5 29h-4zM10.5 16l7.5 7.5M12.5 29H27", 7, 27],
 };
 const FALLBACK = { locked: "not-allowed", pencil: "crosshair", rubber: "crosshair" };
+const ARROWS = {
+  door: ["M4.7 16.15H14.8V12.3L22.2 17l-7.4 4.7v-3.85H4.7z", "M5.3 16.45h9.5"],
+  doorLeft: ["M27.3 16.15H17.2V12.3L9.8 17l7.4 4.7v-3.85H27.3z", "M26.7 16.45h-9.5"],
+  enter: ["M5 15.15h13.8V11.8L27 16l-8.2 4.2v-4.35H5z", "M5.7 15.5h12.8"],
+  enterLeft: ["M27 15.15H13.2V11.8L5 16l8.2 4.2v-4.35H27z", "M26.3 15.5H13.5"],
+};
 
-export const CURSORS = Object.fromEntries(Object.entries(SHAPES).map(([name, [path, x, y]]) =>
-  [name, `${svg(sketch(path), x, y)}, ${FALLBACK[name] ?? "pointer"}`]));
+export const CURSORS = Object.fromEntries(Object.entries(SHAPES).map(([name, [path, x, y]]) => {
+  const [arrow, highlight] = ARROWS[name] ?? [];
+  const body = sketch(path) + (arrow ? filledArrow(arrow, highlight) : "");
+  return [name, `${svg(body, x, y)}, ${FALLBACK[name] ?? "pointer"}`];
+}));
 
 /** The pointer for something that says, when hovered, `label`: the way
  *  through for a door, a stair, a passage — and the hand for all the rest.

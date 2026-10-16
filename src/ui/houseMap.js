@@ -190,7 +190,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel }) {
   function room(f, layers, room, { stateful = true, small = false } = {}) {
     const state = stateful && room.key ? levels.placeState(room.key) : null;
     const known = Boolean(state?.visited);
-    const g = placeNode(layers.places, state, state?.name ?? `Room ${room.n}`);
+    const g = placeNode(layers.places, state, state?.name ?? `Room ${ROMAN[room.n - 1]}`);
     el("path", { d: rect(room.x, room.y, room.w, room.h), class: known ? "floor known" : "floor" }, g);
     wall(layers.walls, rect(room.x, room.y, room.w, room.h), INNER, known);
     const cx = room.x + room.w / 2, cy = room.y + room.h / 2;

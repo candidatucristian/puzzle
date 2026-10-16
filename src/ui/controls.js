@@ -24,10 +24,11 @@ import { mountLookAround } from './lookAround.js';
 import { mountAhas } from './ahas.js';
 import { mountFootsteps } from './footsteps.js';
 import { mountCaseFile } from './caseFile.js';
-import { playPrologue } from './prologue.js';
+import { playPrologue, preloadPrologueDesk } from './prologue.js';
 import { mountCinema } from './cinema.js';
 import { mountPaperSounds } from './paperSounds.js';
 import { ARRIVAL } from '../shared/story.js';
+import { playColdOpen } from './coldOpen.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -42,6 +43,20 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const filmed = new URLSearchParams(location.search).get('start') === 'video';
   const raiseFilm = () => (filmed ? mountStartFilm(scope, preferences) : mountStartManor(scope, preferences));
   let film = raiseFilm();
+  // Phaser hears the mouse on the whole window, not only on its canvas: a
+  // press on anything laid over the picture — a letter arriving, the case
+  // file, a card — would also reach whatever in the room lies under it, and
+  // open it. Such a press is marked handled before Phaser hears it (it skips
+  // handled events), and so is its release; form fields keep theirs.
+  let overlaid = false;
+  const overPicture = (event) => {
+    const canvas = game.canvas, t = event.target;
+    if (!canvas || t === canvas || !(t instanceof Element) || t.closest('input, textarea, select, [contenteditable]')) return false;
+    const box = canvas.getBoundingClientRect();
+    return event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+  };
+  scope.on(window, 'mousedown', (event) => { overlaid = overPicture(event); if (overlaid) event.preventDefault(); }, true);
+  scope.on(window, 'mouseup', (event) => { if (overlaid) { overlaid = false; event.preventDefault(); } }, true);
   const input = byId('level-code');
   const feedback = byId('answer-feedback');
   let mobile, suspendedInput;
@@ -130,14 +145,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     started = true; sessionStart = Date.now();
     // a phone's first tap is the one gesture that may take the whole screen
     if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
-    // the way in leads to the hall; its doors lead to the rooms
+    // the way in — the door, or any key — leads to the hall; its doors lead
+    // to the rooms
     completion.hide(); mobile?.close();
-    // the button takes someone coming back on to their room; the door, or
-    // any key, leads into the hall
-    const returning = storage.getItem('hasPlayedBefore') === 'true';
-    const room = returning && event?.target?.closest?.('#btn-continue') ? levels.resumeRoom : null;
-    showGame();
-    if (!room?.open || !levels.enterPlace(room.key)) levels.enterHall();
+    cinema.enterHouse(() => {
+      showGame();
+      levels.enterHall();
+    });
   }
   // Walking through the house: the picture dissolves to black, what is
   // behind it changes, and it comes softly back. No veil, no title — one
@@ -169,7 +183,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const houseGo = ({ place, level } = {}) => {
     if (!levels.place || walking || transitions.busy || dialogs.isOpen) return;
     const index = levels.indexOf(level);
-    if (place) walk(() => levels.enterPlace(place), WALK_MS, 0, true);
+    // a floor not yet been on: its chapter first, the hall behind the black
+    if (place && cinema.chapterBefore(place, () => levels.enterPlace(place))) footsteps.walk(WALK_MS + 900);
+    else if (place) walk(() => levels.enterPlace(place), WALK_MS, 0, true);
     else if (levels.discover(index)) walk(() => levels.navigate(index), WALK_MS);
   };
   game.events.on(HOUSE_GO, houseGo);
@@ -190,37 +206,44 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (!back) { if (levels.place) goOutside(); return; }
     // the place opens on what is being come away from, and draws back from it
     const from = levels.place ? { place: levels.place.key } : { level: levels.definitions[levels.currentIndex].id };
-    walk(() => levels.enterPlace(back.key, from), 240, 0, true);
+    if (!cinema.chapterBefore(back.key, () => levels.enterPlace(back.key, from))) walk(() => levels.enterPlace(back.key, from), 240, 0, true);
   });
   scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
 
   // Straight to a place on the map: the walk, from wherever the player is.
   function travel(key) {
     if (walking || transitions.busy || levels.place?.key === key) return;
-    walk(() => levels.enterPlace(key), 260, 0, true);
+    if (!cinema.chapterBefore(key, () => levels.enterPlace(key))) walk(() => levels.enterPlace(key), 260, 0, true);
   }
   const map = mountHouseMap(scope, { levels, dialogs, travel });
   const notebook = mountNotebook(scope, { levels, dialogs, storage });
-  const cinema = mountCinema(scope, { levels, storage, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => dialogs.isOpen });
+  const cinema = mountCinema(scope, { storage, reducedMotion: () => Boolean(preferences?.reducedMotion) });
   const paperSounds = mountPaperSounds({ game, audio });
   const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || cinema.busy });
-  // The case begins at the Inspector's desk, with the letter; then the
-  // screen goes dark — the next night — and the manor comes up out of it,
-  // a car's lights sweeping across its front: he has arrived, and goes in by
-  // its door himself.
+  // The case begins with the cold open — who he is, the night of 1961, the
+  // file he never closed; then at the Inspector's desk, with the letter —
+  // laid out behind the film's black, so that it lifts straight onto it;
+  // then the screen goes dark — the next night — and the manor comes up out
+  // of it: he has arrived, and goes in by its door himself.
   let prologueOn = false;
   function openCase() {
     if (prologueOn || caseFile.has('invitation')) return;
     prologueOn = true;
-    playPrologue(scope, {
+    const prologue = () => playPrologue(scope, {
       reducedMotion: preferences?.reducedMotion,
       onDone: async () => {
         caseFile.unlock('invitation');
         await cinema.card(ARRIVAL, { hold: 1700 });
-        cinema.headlights();
         prologueOn = false;
       },
     });
+    // not until the loading screen is gone, or it starts unseen
+    const film = () => {
+      if (document.getElementById('loading-screen')) { scope.later(film, 120); return; }
+      void preloadPrologueDesk();
+      playColdOpen(scope, { game, audio, reducedMotion: Boolean(preferences?.reducedMotion), onUnder: prologue });
+    };
+    film();
   }
   openCase();
   const glass = mountMagnifier(scope, game);

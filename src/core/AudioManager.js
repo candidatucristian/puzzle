@@ -35,10 +35,14 @@ export class AudioManager {
     this._levelMusic = null;
     this._pendingSounds = new Set();
     this._unlockHandlers = new Map();
+    this._listeners = new Set();
     this.state = {
       masterVol: volume(this._read("masterVol"), 1),
       musicVol: volume(this._read("musicVol"), 0.5),
       sfxVol: volume(this._read("sfxVol"), 0.8),
+      // the places' own sound — rain, wind, the house — and the interface's clicks
+      ambienceVol: volume(this._read("ambienceVol"), 0.7),
+      uiVol: volume(this._read("uiVol"), 0.6),
       muted: this._read("muted") === "true",
       bgmInstance: null,
     };
@@ -115,16 +119,17 @@ export class AudioManager {
     return sound;
   }
 
-  playSfx(key, gain = 1, scene = this.scene) {
-    if (this.state.muted || this.state.masterVol === 0 || this.state.sfxVol === 0 ||
+  playSfx(key, gain = 1, scene = this.scene, level = this.state.sfxVol) {
+    if (this.state.muted || this.state.masterVol === 0 || level === 0 ||
         !this._hasAsset(key, scene)) return false;
     return this._try(`play:${key}`, () => scene.sound.play(key, {
-      volume: this.state.sfxVol * volume(gain, 1),
+      volume: level * volume(gain, 1),
     })) ?? false;
   }
 
-  playClick(scene = this.scene) { return this.playSfx("click", 1, scene); }
-  playUIClick() { return this.playSfx("ui_click"); }
+  // the interface's clicks have a volume of their own
+  playClick(scene = this.scene) { return this.playSfx("click", 1, scene, this.state.uiVol); }
+  playUIClick() { return this.playSfx("ui_click", 1, this.scene, this.state.uiVol); }
   playErrorSound() { return this.playSfx("error"); }
   playSuccess(scene = this.scene) { return this.playSfx("nextlevel", 1, scene); }
 
@@ -151,6 +156,24 @@ export class AudioManager {
     this.refreshSfxVolume();
     return this.state.sfxVol;
   }
+
+  setAmbienceVolume(value) {
+    this.state.ambienceVol = volume(value, this.state.ambienceVol);
+    this._write("ambienceVol", this.state.ambienceVol);
+    this._notify();
+    return this.state.ambienceVol;
+  }
+
+  setUiVolume(value) {
+    this.state.uiVol = volume(value, this.state.uiVol);
+    this._write("uiVol", this.state.uiVol);
+    this._notify();
+    return this.state.uiVol;
+  }
+
+  /** Told whenever a volume or the mute changes (for sounds made outside
+   *  Phaser, such as the places' ambience). Returns how to stop being told. */
+  subscribe(listener) { this._listeners.add(listener); return () => this._listeners.delete(listener); }
 
   toggleMute() {
     this.state.muted = !this.state.muted;
@@ -180,11 +203,16 @@ export class AudioManager {
     this.refreshSfxVolume();
   }
 
+  _notify() {
+    for (const listener of this._listeners) this._try("audio-listener", () => listener(this.state));
+  }
+
   refreshBgmVolume() {
     if (this._isAlive(this.state.bgmInstance)) {
       this._try("volume:bgm", () => this.state.bgmInstance.setVolume(this.state.musicVol * BGM_GAIN));
     }
     this._refreshOwnedSounds("music");
+    this._notify();
     // Compatibility for scene-specific synthesizers during gradual extraction.
     if (this.scene?.refreshMusicVolume) {
       this._try("scene-music-volume", () => this.scene.refreshMusicVolume());
@@ -193,6 +221,7 @@ export class AudioManager {
 
   refreshSfxVolume() {
     this._refreshOwnedSounds("sfx");
+    this._notify();
     if (this.scene?.refreshSfxVolume) {
       this._try("scene-sfx-volume", () => this.scene.refreshSfxVolume());
     }

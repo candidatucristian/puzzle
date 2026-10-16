@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { layoutTree, paintTree, releaseTreeArt } from "./tree.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
+import { spreadLit } from "./lamps.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PI"  ·  code: PI   ·  count the lamps
@@ -13,10 +14,9 @@ import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 //
 //   3 · 1 · 4 · 1 · 5 · 9 · 2 · 6 · 5
 //
-// Which holders are alight on a tier is chance (seeded), so the tree just
-// looks half lit — until someone counts. Click a lamp that is alight and it
-// goes out, and the nearest dark one on the same string comes on: the count
-// never changes. Hover the moon in the window and a line is drawn straight
+// Which holders are alight on a tier is spread along it by chance (seeded),
+// so the tree just looks half lit — until someone counts. The lamps that are
+// alight stay alight, twinkling as old lamps do. Hover the moon in the window and a line is drawn straight
 // across it. One parcel under the tree can be opened: a click, and out of it
 // jump a ruler, a protractor and a pair of compasses. Nothing on screen
 // explains anything; the access code is the name of the number:  PI
@@ -61,15 +61,14 @@ export default class TreeScene extends BasePuzzleScene {
 
   // ── the lamps ──────────────────────────────────────────────────────────────
 
-  // Every holder gets its light — a lamp alight, and its glow on the boughs
-  // round it — shown only while that holder is alight; and a place to click.
+  // The holders alight on each tier, spread along its string: a lamp and its
+  // glow on the boughs round it. They never go out — they twinkle, each in
+  // its own time: a quick dip and back, now and then, never down to dark.
   _makeLamps(L, k) {
     const rnd = this._rng(31415);
-    this._rows = L.rows.map((row, tier) => {
-      // which of this tier's holders start alight
-      const order = row.map((_, j) => j).sort(() => rnd() - 0.5);
-      const lit = new Set(order.slice(0, PI_DIGITS[tier]));
-      return row.map((p, j) => {
+    L.rows.forEach((row, tier) => {
+      for (const j of spreadLit(row.length, PI_DIGITS[tier], rnd)) {
+        const p = row[j];
         const glow = this.add
           .image(p.x, p.y, k.glow)
           .setDisplaySize(L.lamp.h * 6.4, L.lamp.h * 6.4)
@@ -77,39 +76,15 @@ export default class TreeScene extends BasePuzzleScene {
           .setBlendMode(Phaser.BlendModes.ADD)
           .setDepth(-8);
         const lamp = this.add.image(p.x, p.y, k.lamp).setDisplaySize(L.lamp.w * 1.5, L.lamp.h * 1.4).setDepth(-7);
-        const hit = this.add.circle(p.x, p.y, L.lamp.h * 1.05, 0xffffff, 0.001).setDepth(-6);
-        hit.on("pointerdown", () => this._move(tier, j));
-        // a lamp's light is never quite steady
-        const level = 0.84 + rnd() * 0.16;
-        this.ambientTween({ targets: [lamp, glow], alpha: { from: level, to: level - 0.16 }, duration: 1800 + rnd() * 2400, delay: rnd() * 1600, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-        const holder = { lit: false, glow, lamp, hit };
-        this._set(holder, lit.has(j));
-        return holder;
-      });
+        const level = 0.9 + rnd() * 0.1;
+        lamp.setAlpha(level); glow.setAlpha(level);
+        this.ambientTween({
+          targets: [lamp, glow], alpha: { from: level, to: level * (0.62 + rnd() * 0.14) },
+          duration: 110 + rnd() * 260, delay: rnd() * 2400, yoyo: true, repeat: -1,
+          repeatDelay: 500 + rnd() * 2600, ease: "Sine.easeInOut",
+        });
+      }
     });
-  }
-
-  _set(holder, lit) {
-    holder.lit = lit;
-    holder.glow.setVisible(lit);
-    holder.lamp.setVisible(lit);
-    if (lit) holder.hit.setInteractive({ useHandCursor: true });
-    else holder.hit.disableInteractive();
-  }
-
-  // A lamp that is alight goes out, and the nearest dark one on the same
-  // string comes on — either side, if two are as near.
-  _move(tier, j) {
-    const row = this._rows[tier];
-    if (!row[j].lit) return;
-    const dark = row.map((holder, i) => i).filter((i) => !row[i].lit);
-    if (!dark.length) return;
-    const nearest = Math.min(...dark.map((i) => Math.abs(i - j)));
-    const choice = dark.filter((i) => Math.abs(i - j) === nearest);
-    this._set(row[j], false);
-    this._set(row[choice[Math.floor(Math.random() * choice.length)]], true);
-    this.game.canvas.style.cursor = "";
-    this.services.audio.playClick(this);
   }
 
   // ── the parcel ─────────────────────────────────────────────────────────────
@@ -214,7 +189,6 @@ export default class TreeScene extends BasePuzzleScene {
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
     releaseTreeArt(this.textures);
-    this._rows = null;
     this._moonPinned = false;
   }
 
@@ -224,6 +198,5 @@ export default class TreeScene extends BasePuzzleScene {
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseTreeArt(this.textures);
-    this._rows = null;
   }
 }

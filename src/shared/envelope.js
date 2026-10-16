@@ -121,10 +121,20 @@ export function paintLetter(textures, key, w, h) {
 
 /** The same letter as a plain canvas — w × h of paper inside its margin —
  *  for pages outside the game's scenes (the case file). */
-export function letterSheet(w, h) {
+export function letterSheet(w, h, { paper = null, noSeal = false } = {}) {
   const m = Math.round(Math.min(w, h) * 0.06);
   const cv = makeCanvas(w + 2 * m, h + 2 * m);
   const g = cv.getContext("2d");
+  if (paper) {
+    g.save();
+    g.shadowColor = "rgba(30,18,8,0.4)";
+    g.shadowBlur = m * 0.6;
+    g.shadowOffsetY = m * 0.18;
+    g.drawImage(paper, m, m, w, h);
+    g.restore();
+    if (!noSeal) seal(g, m + w - 64, m + h - 60, 21);
+    return cv;
+  }
   const rnd = lcg(909);
   const edge = [];
   const jag = () => (rnd() - 0.5) * 1.6;
@@ -221,7 +231,7 @@ export function letterSheet(w, h) {
   g.fillRect(m, m, w, h);
   g.restore();
 
-  seal(g, m + w - 64, m + h - 60, 21);
+  if (!noSeal) seal(g, m + w - 64, m + h - 60, 21);
   return cv;
 }
 

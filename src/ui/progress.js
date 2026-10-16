@@ -30,13 +30,17 @@ export function mountProgress(scope, { game, levels, storage }) {
     const check = document.createElement('span'); check.className = 'level-check'; check.setAttribute('aria-hidden', 'true');
     check.append(waxSeal(index + 1)); check.style.setProperty('--tilt', tilt(index + 1));
     tile.append(preview, number, caption, check); grid.append(tile);
-    tiles.push({ tile, preview, check, name, status, sealed: false });
+    tiles.push({ tile, preview, check, number, name, status, sealed: false });
   });
 
   function render() {
     const near = levels.nearby;
+    // the puzzles are numbered as they stand in the place, from 01
+    const order = levels.definitions.map((_, index) => index).filter((index) => near.indexes.includes(index));
     levels.definitions.forEach((level, index) => {
-      const item = tiles[index], { tile, preview, check, name, status } = item;
+      const item = tiles[index], { tile, preview, check, number, name, status } = item;
+      const place = order.indexOf(index) + 1;
+      if (place) number.textContent = String(place).padStart(2, '0');
       const allowed = levels.canAccess(index), solved = levels.isCompleted(index), current = !levels.place && index === levels.currentIndex;
       tile.hidden = !near.indexes.includes(index);
       tile.className = `level-btn ${allowed ? current ? 'current' : 'unlocked' : 'locked'}`;
@@ -46,7 +50,7 @@ export function mountProgress(scope, { game, levels, storage }) {
       item.sealed = solved;
       name.textContent = allowed ? level.name : 'Locked';
       status.textContent = !allowed ? 'Locked' : solved ? 'Solved' : current ? 'Currently exploring' : 'Not solved yet';
-      tile.setAttribute('aria-label', `Level ${index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
+      tile.setAttribute('aria-label', `Puzzle ${place || index + 1}: ${allowed ? level.name : 'Locked'}${solved ? ' — solved' : ''}${current ? ' — current' : ''}`);
       if (current) tile.setAttribute('aria-current', 'step'); else tile.removeAttribute('aria-current');
       tile.title = allowed ? `${level.name}${solved ? ' · Solved' : ''}` : 'Solve the previous room to unlock';
       check.hidden = !solved;
@@ -80,6 +84,7 @@ export function mountProgress(scope, { game, levels, storage }) {
     story.replaceChildren(...near.story.map(line => Object.assign(document.createElement('p'), { textContent: line })));
     // a finished room says so, in place of its story
     story.hidden = near.story.length === 0 || near.completed;
+    document.getElementById('index-notes').hidden = story.hidden;
     const finished = document.getElementById('index-done');
     if (near.completed && finished.hidden && shown) press(finished);
     finished.hidden = !near.completed;
@@ -135,9 +140,7 @@ export function mountProgress(scope, { game, levels, storage }) {
     const leave = document.getElementById('btn-leave'), back = levels.back;
     // from the hall, back is outside
     leave.hidden = !back && !levels.place;
-    // what is written on its tag: where it leads
-    document.getElementById('leave-to').textContent = back ? 'back to' : 'back';
-    document.getElementById('leave-name').textContent = back ? back.name.replace(/^The /, 'the ') : 'outside';
+    // it says only "Back"; where it leads is in its tooltip
     if (!back) { leave.setAttribute('aria-label', 'Back outside'); leave.dataset.tip = 'Back outside (Esc)'; }
     if (back) {
       leave.setAttribute('aria-label', `Back to ${back.name.replace(/^The /, 'the ')}`);
@@ -148,12 +151,6 @@ export function mountProgress(scope, { game, levels, storage }) {
     save.textContent = levels.saved ? 'Saved on this device' : 'Progress kept for this session only';
     save.dataset.state = levels.saved ? 'saved' : 'temporary';
     save.title = levels.saved ? 'Progress is saved in this browser. Clearing site data removes it.' : 'Browser storage is unavailable. Progress may be lost when this page closes.';
-    const returning = storage.getItem('hasPlayedBefore') === 'true' || done > 0;
-    // someone coming back is taken on to the room they had got to
-    const room = levels.resumeRoom;
-    document.getElementById('btn-continue').textContent = returning && room ? `Continue to Room ${room.number}` : 'Get inside';
-    // the title says nothing of how much is solved
-    document.getElementById('start-progress').hidden = true;
     shown = true;
   }
 

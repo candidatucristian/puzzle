@@ -1016,13 +1016,16 @@ function paintManor(ctx, W, H, details = null) {
   ctx.drawImage(disc, moon.x - moon.r / 0.72, moon.y - moon.r / 0.72, (moon.r * 2) / 0.72, (moon.r * 2) / 0.72);
   ctx.globalAlpha = 1;
 
-  // ── the moon's light coming down through the air, in shafts
+  // ── the moon's light coming down through the air: one broad, faint fall
+  // of it toward the house, its edges lost in the haze — not a fan of rays
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  ctx.filter = `blur(${Math.round(1.2 * s)}px)`;
-  for (const [a0, a1, len, al] of [[1.93, 2.14, 130, 0.17], [2.22, 2.36, 145, 0.15], [2.48, 2.64, 160, 0.13], [1.66, 1.82, 120, 0.14], [1.38, 1.52, 110, 0.1], [2.76, 2.88, 160, 0.09], [1.12, 1.22, 100, 0.07]]) {
+  ctx.filter = `blur(${Math.round(7 * s)}px)`;
+  {
+    const [a0, a1, len] = [1.78, 2.38, 190];
     const g = ctx.createRadialGradient(moon.x, moon.y, moon.r, moon.x, moon.y, len * s);
-    g.addColorStop(0, `rgba(${MOON},${al * 2.2})`);
+    g.addColorStop(0, `rgba(${MOON},0.34)`);
+    g.addColorStop(0.45, `rgba(${MOON},0.16)`);
     g.addColorStop(1, `rgba(${MOON},0)`);
     ctx.fillStyle = g;
     ctx.beginPath();

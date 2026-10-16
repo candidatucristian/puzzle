@@ -1453,59 +1453,112 @@ function paintThings(ctx, L) {
   };
   const shadow = (w) => soft(ctx, 0, 2, w, 7, "0,0,0", 0.7);
   // ── the long-case clock, left of the stairs
-  // A plain modern case in walnut, glazed the whole height: a big dial,
-  // two brass weights, and the pendulum's disc going behind the glass
+  // An old walnut longcase with a carved bonnet, glazed body, detailed dial,
+  // brass weights and the animated pendulum behind its glass.
   if (!L.worn) stand(-1, END - 0.12, wall * 0.26, () => {
-    shadow(62);
+    shadow(66);
     const walnut = (x0, x1) => {
       const g = ctx.createLinearGradient(x0, 0, x1, 0);
-      g.addColorStop(0, "#22130a"); g.addColorStop(0.12, "#6a4426"); g.addColorStop(0.5, "#4e3019"); g.addColorStop(0.9, "#2e1b0e"); g.addColorStop(1, "#160c06");
+      g.addColorStop(0, "#180d07"); g.addColorStop(0.08, "#56351d"); g.addColorStop(0.2, "#80552e");
+      g.addColorStop(0.34, "#3f2514"); g.addColorStop(0.53, "#644326"); g.addColorStop(0.76, "#382111");
+      g.addColorStop(0.92, "#76502a"); g.addColorStop(1, "#160b06");
       return g;
     };
-    // the plinth, the case, the cap over it
-    ctx.fillStyle = walnut(-54, 54); ctx.fillRect(-54, -24, 108, 24);
-    ctx.fillStyle = "#0d0805"; ctx.fillRect(-50, -26, 100, 3);
-    ctx.fillStyle = walnut(-50, 50); ctx.fillRect(-50, -364, 100, 340);
-    ctx.fillStyle = walnut(-56, 56); ctx.fillRect(-56, -382, 112, 18);
-    ctx.fillStyle = "rgba(255,226,180,0.22)"; ctx.fillRect(-56, -382, 112, 2.5); ctx.fillRect(-54, -24, 108, 2);
-    // the glazed door: a dark inside, a slim brass frame
-    const gx = 38, gt = -352, gb = -40;
-    const inside = ctx.createLinearGradient(0, gt, 0, gb);
-    inside.addColorStop(0, "#1a120c"); inside.addColorStop(1, "#0a0705");
-    ctx.fillStyle = inside; ctx.fillRect(-gx, gt, gx * 2, gb - gt);
-    ctx.strokeStyle = "#a8853e"; ctx.lineWidth = 2.5; ctx.strokeRect(-gx, gt, gx * 2, gb - gt);
-    // the weights on their chains, either side of the pendulum
-    for (const x of [-25, 25]) {
-      ctx.strokeStyle = "rgba(170,140,80,0.6)"; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.moveTo(x, -262); ctx.lineTo(x, x < 0 ? -214 : -188); ctx.stroke();
-      const y0 = x < 0 ? -214 : -188;
-      const w = ctx.createLinearGradient(x - 6, 0, x + 6, 0);
-      w.addColorStop(0, "#5a4418"); w.addColorStop(0.4, "#f2d68c"); w.addColorStop(1, "#6a501c");
-      ctx.fillStyle = w; ctx.fillRect(x - 6, y0, 12, 64);
-      ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(x - 6, y0 + 4, 12, 1.5); ctx.fillRect(x - 6, y0 + 58, 12, 1.5);
+    // A stepped plinth and splayed feet, with a long, inset lower case.
+    ctx.fillStyle = walnut(-58, 58);
+    ctx.beginPath(); ctx.moveTo(-45, 0); ctx.lineTo(-52, -5); ctx.lineTo(-55, -20); ctx.lineTo(-51, -28);
+    ctx.lineTo(-48, -39); ctx.lineTo(-43, -43); ctx.lineTo(43, -43); ctx.lineTo(48, -39);
+    ctx.lineTo(51, -28); ctx.lineTo(55, -20); ctx.lineTo(52, -5); ctx.lineTo(45, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#140a05"; ctx.fillRect(-48, -7, 96, 3);
+    ctx.fillStyle = "rgba(235,194,127,0.36)"; ctx.fillRect(-52, -22, 104, 1.8); ctx.fillRect(-47, -40, 94, 1.5);
+    ctx.fillStyle = walnut(-48, 48); ctx.fillRect(-43, -254, 86, 211);
+    ctx.fillStyle = walnut(-54, 54); ctx.fillRect(-51, -264, 102, 12); ctx.fillRect(-47, -53, 94, 10);
+    ctx.fillStyle = "rgba(13,7,4,0.72)"; ctx.fillRect(-40, -239, 80, 178);
+    ctx.strokeStyle = "#805a30"; ctx.lineWidth = 1.5; ctx.strokeRect(-40, -239, 80, 178);
+    ctx.strokeStyle = "rgba(239,202,144,0.42)"; ctx.lineWidth = 0.7; ctx.strokeRect(-37.5, -236.5, 75, 173);
+    // A deep glazed door, darker at the edges; the swinging pendulum sits over it.
+    const gt = -258, gb = -57;
+    const inside = ctx.createLinearGradient(-34, gt, 34, gb);
+    inside.addColorStop(0, "#100b07"); inside.addColorStop(0.42, "#21180f"); inside.addColorStop(0.7, "#0b0806"); inside.addColorStop(1, "#1d140c");
+    ctx.fillStyle = inside; ctx.fillRect(-33, gt, 66, gb - gt);
+    ctx.strokeStyle = "#725126"; ctx.lineWidth = 2; ctx.strokeRect(-34, gt, 68, gb - gt);
+    ctx.strokeStyle = "rgba(235,203,151,0.45)"; ctx.lineWidth = 0.8; ctx.strokeRect(-31.5, gt + 2.5, 63, gb - gt - 5);
+    // Fine linked chains and turned brass weights inside the case.
+    for (const [x, y0] of [[-23, -212], [23, -190]]) {
+      ctx.strokeStyle = "rgba(208,174,102,0.82)"; ctx.lineWidth = 0.85;
+      for (let y = -258, i = 0; y < y0; y += 4.2, i++) {
+        ctx.beginPath(); ctx.ellipse(x + (i % 2 ? 0.55 : -0.55), y + 2, 0.85, 2.1, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      const w = ctx.createLinearGradient(x - 7, 0, x + 7, 0);
+      w.addColorStop(0, "#513b17"); w.addColorStop(0.18, "#b18a3d"); w.addColorStop(0.43, "#f0d58e"); w.addColorStop(0.72, "#8d692b"); w.addColorStop(1, "#3b2b12");
+      ctx.fillStyle = w;
+      ctx.beginPath(); ctx.moveTo(x - 4.5, y0); ctx.quadraticCurveTo(x, y0 - 3, x + 4.5, y0); ctx.lineTo(x + 6.2, y0 + 4);
+      ctx.lineTo(x + 5.2, y0 + 55); ctx.quadraticCurveTo(x, y0 + 62, x - 5.2, y0 + 55); ctx.lineTo(x - 6.2, y0 + 4); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "rgba(255,231,170,0.65)"; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.fillStyle = "rgba(53,36,12,0.52)"; ctx.fillRect(x - 5, y0 + 7, 10, 1.2); ctx.fillRect(x - 4.8, y0 + 51, 9.6, 1.2);
     }
-    // the dial: a brass bezel, a pale face, bold batons and slim hands at ten past ten
+    // The shaped bonnet rises around the dial with a soft arch and carved shoulders.
+    ctx.fillStyle = walnut(-56, 56);
+    ctx.beginPath(); ctx.moveTo(-45, -254); ctx.lineTo(-49, -269); ctx.lineTo(-49, -334);
+    ctx.quadraticCurveTo(-49, -369, -27, -379); ctx.quadraticCurveTo(0, -397, 27, -379);
+    ctx.quadraticCurveTo(49, -369, 49, -334); ctx.lineTo(49, -269); ctx.lineTo(45, -254); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#17100a"; ctx.lineWidth = 2.4; ctx.stroke();
+    ctx.strokeStyle = "rgba(237,197,128,0.62)"; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(-45, -266); ctx.lineTo(-45, -333); ctx.quadraticCurveTo(-45, -364, -26, -373);
+    ctx.quadraticCurveTo(0, -389, 26, -373); ctx.quadraticCurveTo(45, -364, 45, -333); ctx.lineTo(45, -266); ctx.stroke();
+    // Fine carved reeds down the case and two small botanical leaves in the crest.
+    for (const x of [-42, -39, 39, 42]) {
+      ctx.strokeStyle = x < 0 ? "rgba(229,190,124,0.3)" : "rgba(15,8,4,0.56)"; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(x, -251); ctx.lineTo(x, -61); ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(231,190,123,0.16)"; ctx.lineWidth = 0.7;
+    for (const x of [-47, -44, 44, 47]) { ctx.beginPath(); ctx.moveTo(x, -32); ctx.lineTo(x, -250); ctx.stroke(); }
+    ctx.strokeStyle = "#b18a48"; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(0, -387); ctx.quadraticCurveTo(0, -378, 0, -370);
+    ctx.moveTo(0, -380); ctx.quadraticCurveTo(-7, -385, -10, -381); ctx.quadraticCurveTo(-6, -376, 0, -378);
+    ctx.moveTo(0, -380); ctx.quadraticCurveTo(7, -385, 10, -381); ctx.quadraticCurveTo(6, -376, 0, -378);
+    ctx.moveTo(0, -376); ctx.quadraticCurveTo(-5, -381, -7, -378); ctx.quadraticCurveTo(-4, -374, 0, -375);
+    ctx.moveTo(0, -376); ctx.quadraticCurveTo(5, -381, 7, -378); ctx.quadraticCurveTo(4, -374, 0, -375); ctx.stroke();
+    // The dial: a stepped brass bezel, aged enamel, minute track and Roman numerals.
     const dy = -304;
-    const bezel = ctx.createLinearGradient(-36, dy - 36, 36, dy + 36);
-    bezel.addColorStop(0, "#f4dc98"); bezel.addColorStop(0.5, "#a8823a"); bezel.addColorStop(1, "#4e3a14");
-    ctx.fillStyle = bezel; ctx.beginPath(); ctx.arc(0, dy, 35, 0, Math.PI * 2); ctx.fill();
-    const face = ctx.createRadialGradient(-8, dy - 10, 2, 0, dy, 31);
-    face.addColorStop(0, "#fbf6ea"); face.addColorStop(1, "#d6ccb4");
+    const bezel = ctx.createLinearGradient(-39, dy - 38, 39, dy + 38);
+    bezel.addColorStop(0, "#f1da9d"); bezel.addColorStop(0.18, "#9e7833"); bezel.addColorStop(0.36, "#e5c274");
+    bezel.addColorStop(0.68, "#73521f"); bezel.addColorStop(1, "#34250f");
+    ctx.fillStyle = "#21160b"; ctx.beginPath(); ctx.arc(0, dy, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = bezel; ctx.beginPath(); ctx.arc(0, dy, 36, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,235,178,0.72)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(0, dy, 33.5, 0, Math.PI * 2); ctx.stroke();
+    const face = ctx.createRadialGradient(-10, dy - 12, 2, 0, dy, 31);
+    face.addColorStop(0, "#fff9e9"); face.addColorStop(0.68, "#e9dfc8"); face.addColorStop(1, "#bcb095");
     ctx.fillStyle = face; ctx.beginPath(); ctx.arc(0, dy, 31, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#1c1612"; ctx.lineCap = "round";
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2, r0 = i % 3 ? 24 : 20;
-      ctx.lineWidth = i % 3 ? 2 : 3.6;
-      ctx.beginPath(); ctx.moveTo(Math.sin(a) * r0, dy - Math.cos(a) * r0); ctx.lineTo(Math.sin(a) * 28, dy - Math.cos(a) * 28); ctx.stroke();
+    ctx.strokeStyle = "rgba(68,49,25,0.75)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(0, dy, 29, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "#302319"; ctx.lineCap = "round";
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2, major = i % 5 === 0;
+      const r0 = major ? 25 : 27.2, r1 = major ? 29 : 29;
+      ctx.lineWidth = major ? 1.15 : 0.45; ctx.globalAlpha = major ? 0.9 : 0.62;
+      ctx.beginPath(); ctx.moveTo(Math.sin(a) * r0, dy - Math.cos(a) * r0); ctx.lineTo(Math.sin(a) * r1, dy - Math.cos(a) * r1); ctx.stroke();
     }
+    ctx.globalAlpha = 1; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#332519"; ctx.font = "6px Georgia, serif";
+    for (const [label, a] of [["XII", 0], ["III", Math.PI / 2], ["VI", Math.PI], ["IX", Math.PI * 1.5]]) {
+      ctx.fillText(label, Math.sin(a) * 20, dy - Math.cos(a) * 20);
+    }
+    ctx.font = "4px Georgia, serif"; ctx.fillStyle = "#725632"; ctx.fillText("EXETER", 0, dy + 10);
     const hand = (a, r, w) => { ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(-Math.sin(a) * 4, dy + Math.cos(a) * 4); ctx.lineTo(Math.sin(a) * r, dy - Math.cos(a) * r); ctx.stroke(); };
     hand((10 + 10 / 60) / 12 * Math.PI * 2, 16, 3.4);
-    hand((10 / 60) * Math.PI * 2, 25, 2.2);
+    hand((10 / 60) * Math.PI * 2, 25, 1.65);
     ctx.lineCap = "butt";
-    ctx.fillStyle = "#a8823a"; ctx.beginPath(); ctx.arc(0, dy, 2.6, 0, Math.PI * 2); ctx.fill();
-    // the glass: a long cool streak of the moon down it
-    ctx.fillStyle = "rgba(190,210,240,0.07)";
-    ctx.beginPath(); ctx.moveTo(-30, gt); ctx.lineTo(-14, gt); ctx.lineTo(-30, gb); ctx.lineTo(-38, gb); ctx.lineTo(-38, gt + 20); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#47310f"; ctx.beginPath(); ctx.arc(0, dy, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#e4c270"; ctx.beginPath(); ctx.arc(0, dy, 1.7, 0, Math.PI * 2); ctx.fill();
+    // Brass hinges and the cool reflection running down the glass.
+    for (const y of [-221, -92]) {
+      const hinge = ctx.createLinearGradient(-42, 0, -35, 0);
+      hinge.addColorStop(0, "#4e3917"); hinge.addColorStop(0.45, "#d2ac5e"); hinge.addColorStop(1, "#664b20");
+      ctx.fillStyle = hinge; ctx.fillRect(-39.5, y, 5, 11); ctx.fillRect(34.5, y, 5, 11);
+      ctx.fillStyle = "rgba(255,235,185,0.72)"; ctx.fillRect(-38, y + 2, 0.7, 7); ctx.fillRect(36, y + 2, 0.7, 7);
+    }
+    ctx.fillStyle = "rgba(190,210,240,0.075)";
+    ctx.beginPath(); ctx.moveTo(-29, gt + 5); ctx.lineTo(-21, gt + 5); ctx.lineTo(-31, gb - 6); ctx.lineTo(-33, gb - 6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(255,238,194,0.18)"; ctx.fillRect(-29, gt + 5, 0.8, gb - gt - 15);
     // (its pendulum is the scene's, so that it can swing)
   });
   // ── the coat stand, right of the stairs: a coat and a hat on it

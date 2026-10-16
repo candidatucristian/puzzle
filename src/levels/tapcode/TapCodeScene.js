@@ -8,25 +8,25 @@ import { layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
 // The cellar under the house, down an iron ladder: brick, joists overhead,
 // no window. A little light falls through the hatch; the rest is a candle
 // on a stool, warm on a smooth stone let into the wall where somebody cut
-// a message in the old prisoners' tap code — a 5×5 grid of letters (K
-// borrows C's square), each letter two numbers: the row in marks, then the
-// column in marks.
+// a message in a prisoner's tap code — a 5×5 grid of letters, A to Y,
+// with the Z it has no room for past the end of the last row; each letter
+// two numbers: the row in marks, then the column in marks.
 //
 //        1 2 3 4 5
 //     1  A B C D E
 //     2  F G H I J
-//     3  L M N O P
-//     4  Q R S T U
-//     5  V W X Y Z
+//     3  K L M N O
+//     4  P Q R S T
+//     5  U V W X Y  Z
 //
-//   (1,5)(4,3)(1,3)(1,1)(3,5)(1,5)   →   E S C A P E
+//   (1,5)(4,4)(1,3)(1,1)(4,1)(1,5)   →   E S C A P E
 //
 // Six lines, two clusters of marks each. Nothing names the cipher; the
 // longest cluster is five, and the bottle rack against the wall is a grid of
-// five by five that someone began numbering in chalk — a 1 over the first
-// column, a 1 beside the first row — and stopped. A water pipe runs along
+// five by five, empty, with a Z scratched on the wall past the end of its
+// bottom row. A water pipe runs along
 // under the joists and weeps at one joint into a puddle; barrels, a crate,
-// and the bones of whoever cut the marks, still chained to the wall.
+// and a tub of old rolled charts against the wall.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class TapCodeScene extends BasePuzzleScene {

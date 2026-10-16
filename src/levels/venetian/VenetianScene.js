@@ -34,10 +34,10 @@ export default class VenetianScene extends BasePuzzleScene {
     this._pull.on('dragend', () => { this._dragStart = null; });
     const font = Math.max(10, Math.min(16, H * 0.024));
     this._clue = this.add.text(W / 2, H * 0.954, 'Focus through the noise.', {
-      fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: font + 'px', color: '#aebcca',
+      fontFamily: '"IBM Plex Sans", sans-serif', fontStyle: 'italic', fontSize: font + 'px', color: '#aebcca',
     }).setOrigin(0.5);
     this.add.text(L.cordX, H * 0.854, 'TILT', {
-      fontFamily: '"Special Elite", monospace', fontSize: Math.max(8, font * 0.58) + 'px', color: '#677685',
+      fontFamily: '"IBM Plex Sans", sans-serif', fontSize: Math.max(8, font * 0.58) + 'px', color: '#677685',
     }).setOrigin(0.5);
  this._render();
   }

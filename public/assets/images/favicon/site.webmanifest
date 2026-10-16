@@ -1,6 +1,6 @@
 {
-  "name": "The Descipher",
-  "short_name": "Descipher",
+  "name": "Ashcombe Manor",
+  "short_name": "Ashcombe",
   "description": "A puzzle game of hand-drawn rooms. Every level hides a word.",
   "icons": [
     { "src": "android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },

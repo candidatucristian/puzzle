@@ -15,7 +15,7 @@ export default class TheSillScene extends BasePuzzleScene {
     this._L = sillLayout(W, H); paintSill(this.textures, this._L);
     this.add.image(0, 0, SILL_ART.room).setOrigin(0).setDisplaySize(W, H);
     this._clue = this.add.text(W / 2, H * 0.963, 'Read the light, not the dark.', {
-      fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: Math.max(10, Math.min(16, H * 0.024)) + 'px', color: '#aebcca',
+      fontFamily: '"IBM Plex Sans", sans-serif', fontStyle: 'italic', fontSize: Math.max(10, Math.min(16, H * 0.024)) + 'px', color: '#aebcca',
     }).setOrigin(0.5);
   }
 

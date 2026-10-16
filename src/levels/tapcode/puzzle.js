@@ -1,12 +1,13 @@
-// One-based row/column counts carved into the cell wall. K shares C's square.
-export const TAP_GRID = Object.freeze(["ABCDE", "FGHIJ", "LMNOP", "QRSTU", "VWXYZ"]);
+// One-based row/column counts carved into the cell wall. The alphabet runs
+// through the five-by-five rack, A to Y; the Z it has no room for is
+// scratched on the wall past the end of the last row — the sixth place of it.
+export const TAP_GRID = Object.freeze(["ABCDE", "FGHIJ", "KLMNO", "PQRST", "UVWXYZ"]);
 export const TAP_WORD = "ESCAPE";
 
 export function tapPair(letter) {
   if (typeof letter !== "string" || !/^[A-Z]$/.test(letter)) return null;
-  const character = letter === "K" ? "C" : letter;
   for (let row = 0; row < TAP_GRID.length; row++) {
-    const column = TAP_GRID[row].indexOf(character);
+    const column = TAP_GRID[row].indexOf(letter);
     if (column >= 0) return [row + 1, column + 1];
   }
   return null;

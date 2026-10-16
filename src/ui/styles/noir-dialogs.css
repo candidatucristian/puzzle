@@ -731,25 +731,29 @@ body.in-house #right-sidebar-wrapper { visibility: hidden; }
    foot of the index: sketched in white like the pointers, its frame drawn by
    hand with the lines run past the corners, a doorway with an arrow leaving
    it, and where it leads written in pencil. */
-#btn-leave { position: relative; flex-shrink: 0; margin-top: auto; display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 12px;
-  width: 100%; min-height: 64px; padding: 12px 16px 12px 14px; appearance: none; border: 0; border-radius: 3px; background: transparent; color: #f1ece0; text-align: left;
-  transition: background .2s; }
+/* the way back: over the picture at its bottom right, drawn in the thin white
+   ink — an arrow curving back from right to left, and the word, underlined */
+#btn-leave { position: absolute; right: clamp(34px, 3.4vw, 52px); bottom: clamp(26px, 3.4vh, 40px); z-index: 30;
+  display: inline-flex; align-items: center; gap: 10px; padding: 8px 10px 10px 6px;
+  appearance: none; border: 0; border-radius: 4px; background: transparent; color: #ece7db;
+  cursor: var(--cursor-hand, pointer); filter: drop-shadow(0 1px 3px #000c); transition: background .2s; }
 #btn-leave[hidden] { display: none; }
-#btn-leave .leave-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+#btn-leave svg { overflow: visible; }
 #btn-leave svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-#btn-leave .ink-dark { stroke: #0b0b0c; stroke-width: 2; stroke-opacity: .85; }
-#btn-leave .ink-white { stroke: #f1ece0; stroke-width: .8; transition: stroke .2s; }
+#btn-leave .ink-dark { stroke: #0b0b0c; stroke-width: 2; stroke-opacity: .8; }
+#btn-leave .ink-white { stroke: #ece7db; stroke-width: 1; transition: stroke .2s; }
 #btn-leave .ink-over { stroke: #fff; stroke-width: .4; stroke-opacity: .45; transform: translate(.6px, -.45px); }
-#btn-leave .leave-frame .ink-white { stroke: #cfcabd; }
-#btn-leave .leave-icon { width: 34px; height: 34px; overflow: visible; }
-#btn-leave .leave-arrow { transition: transform .25s cubic-bezier(.3, 1.5, .5, 1); }
-#btn-leave .leave-words { display: grid; gap: 1px; min-width: 0; }
-#btn-leave .leave-to { font: 400 calc(9.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .18em; text-transform: uppercase; color: #a9a59a; }
-#btn-leave .leave-name { overflow-wrap: anywhere; font: 400 calc(19px * var(--reading-scale, 1))/1.1 "Architects Daughter", "Special Elite", cursive; color: #f1ece0; }
-#btn-leave:hover, #btn-leave:focus-visible { background: #ffffff08; }
-#btn-leave:hover .leave-frame .ink-white, #btn-leave:focus-visible .leave-frame .ink-white { stroke: #f6f2e8; }
-#btn-leave:hover .leave-arrow, #btn-leave:focus-visible .leave-arrow { transform: translateX(-3px); }
-#btn-leave:focus-visible { outline: none; }
+#btn-leave .leave-icon { width: 32px; height: 16px; flex-shrink: 0; }
+#btn-leave .leave-arrow { transform-origin: 80% 70%; transition: transform .3s cubic-bezier(.3, 1.5, .5, 1); }
+#btn-leave .leave-word { position: relative; display: inline-block; padding-bottom: 5px;
+  font: 300 calc(17px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .02em; color: #ece7db; transition: color .2s; }
+#btn-leave .leave-line { position: absolute; left: -3px; right: -5px; bottom: -2px; width: calc(100% + 8px); height: 5px; }
+#btn-leave .leave-line .ink-white, #btn-leave .leave-line .ink-dark { vector-effect: non-scaling-stroke; }
+#btn-leave:hover, #btn-leave:focus-visible { background: #0000002e; }
+#btn-leave:hover .ink-white, #btn-leave:focus-visible .ink-white { stroke: #fff; }
+#btn-leave:hover .leave-word, #btn-leave:focus-visible .leave-word { color: #fff; }
+#btn-leave:hover .leave-arrow, #btn-leave:focus-visible .leave-arrow { transform: translateX(-4px) rotate(-5deg); }
+#btn-leave:focus-visible { outline: 1px solid #ece7db55; outline-offset: 2px; }
 #btn-leave:active { translate: 0 1px; }
 [data-reduced-motion="true"] #btn-leave .leave-arrow { transition: none; }
 #room-progress[hidden], #progress-count[hidden] { display: none; }

@@ -50,10 +50,10 @@ export default class VertexScene extends BasePuzzleScene {
     // quiet halos identify which four degrees the player needs to count.
     this._pulses = this.add.graphics().setDepth(1);
     this.add.text(margin + 4 * k, H - 42 * k, "Degree of connection", {
-      fontFamily: '"Special Elite", monospace', fontSize: Math.round(18 * k) + "px", color: "#c2cbd6",
+      fontFamily: '"IBM Plex Sans", sans-serif', fontSize: Math.round(18 * k) + "px", color: "#c2cbd6",
     }).setAlpha(0.76);
     this.add.text(margin + 4 * k, 40 * k, "GEOMETRIC STUDY", {
-      fontFamily: '"Special Elite", monospace', fontSize: Math.round(11 * k) + "px", color: "#aeb9c8", letterSpacing: 3,
+      fontFamily: '"IBM Plex Sans", sans-serif', fontSize: Math.round(11 * k) + "px", color: "#aeb9c8", letterSpacing: 3,
     }).setAlpha(0.42);
     this._render();
   }

@@ -47,7 +47,6 @@
 .level-btn.locked .level-number { position: absolute; left: 9px; bottom: 7px; font-size: 13px; }
 .level-btn.locked::after { right: 9px; top: 8px; font-size: 12px; }
 #start-progress { color: var(--bone-dim); margin: 0; font-size: calc(13px * var(--reading-scale)); text-align: center; line-height: 1.7; }
-#btn-continue { padding: 17px 28px; border-color: var(--pencil-dim); font-size: calc(14px * var(--reading-scale)); background: #202228; }
 #start-prompt { font-size: 10px; letter-spacing: 2px; opacity: .65; animation: none; }
 
 /* Reading panels grow and scroll without moving the puzzle geometry. */

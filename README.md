@@ -1,4 +1,4 @@
-# The Descipher
+# Ashcombe Manor
 
 A browser puzzle game with hand-drawn environments, independent Phaser scenes, and an HTML/CSS interface, played in desktop browsers (phones and tablets are shown a desktop-only page; the compact phone layout is kept for a future store app). Phaser remains at **3.60.0**; the project uses JavaScript ES modules and Vite for development and production builds.
 

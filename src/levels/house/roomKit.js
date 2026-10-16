@@ -1,5 +1,6 @@
 import { soft, makeCanvas, lcg, polygon } from "../../shared/paint.js";
 import { paintNightWindow } from "../hall/hall.js";
+import { paintGoldChest } from './chestArt.js';
 
 /** What the rooms off the hall are all made of: the way a room is measured
  *  and seen, its shell — boards, papered walls over an oak dado, a ceiling —
@@ -51,6 +52,14 @@ export function thingAt(level, label, pts) {
 export function chestAt(L) {
   const { Q } = L;
   const c = L.chest, pts = [];
+  // A slightly larger coffer, still centred on the same spot on the desk.
+  // Size the physical geometry once so the lid, key and hit area follow it.
+  if (!c.box) {
+    const scale = 1.4, x = (c.x0 + c.x1) / 2, d = (c.d0 + c.d1) / 2;
+    c.x0 = x + (c.x0 - x) * scale; c.x1 = x + (c.x1 - x) * scale;
+    c.d0 = d + (c.d0 - d) * scale; c.d1 = d + (c.d1 - d) * scale;
+    c.y1 = c.y0 + (c.y1 - c.y0) * scale; c.lid *= scale;
+  }
   for (const x of [c.x0, c.x1]) for (const d of [c.d0, c.d1 + 12]) for (const y of [c.y0, c.y1 + c.lid + 22]) pts.push(Q(x, y, d));
   const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y), pad = 6;
   c.box = { x: Math.floor(Math.min(...xs) - pad), y: Math.floor(Math.min(...ys) - pad) };
@@ -107,9 +116,14 @@ export function gloom(ctx, L, lights) {
 // The candle is on its right: it is brightest there.
 export function paintChest(L, open) {
   const c = L.chest, box = c.box;
-  const cv = makeCanvas(box.width, box.height);
+  // Keep the fine metalwork at three samples per displayed pixel, instead
+  // of baking the photograph into a tiny low-resolution intermediate image.
+  const resolution = 3;
+  const cv = makeCanvas(box.width * resolution, box.height * resolution);
   const ctx = cv.getContext("2d");
+  ctx.scale(resolution, resolution);
   ctx.translate(-box.x, -box.y);
+  if (paintGoldChest(ctx, L, open)) return cv;
   const Q = L.Q;
   const s = Q(0, 0, c.d0).s;
   const r = (c.d1 - c.d0) / 2;

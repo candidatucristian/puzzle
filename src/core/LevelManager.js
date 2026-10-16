@@ -1,4 +1,4 @@
-import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN, STILL_LOCKED } from "../shared/house.js";
+import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN, STILL_LOCKED, roman } from "../shared/house.js";
 
 /** Coordinates level selection and answers; scenes own their resources.
  * The player is either at a puzzle (a level) or standing somewhere in the
@@ -102,7 +102,7 @@ export class LevelManager {
   get rooms() {
     return (this.#place?.doors ?? []).map((key, n) => {
       const place = this.#places.find((item) => item.key === key);
-      if (!place) return { key: null, name: `Room ${n + (this.#place.first ?? 1)}`, locked: true, open: false, withKey: false, solved: false, completed: false };
+      if (!place) return { key: null, name: `Room ${roman(n + (this.#place.first ?? 1))}`, locked: true, open: false, withKey: false, solved: false, completed: false };
       const locked = this.#locked(place);
       return {
         key: place.key,
@@ -138,21 +138,6 @@ export class LevelManager {
       });
     }
     return held;
-  }
-
-  /** The room to go on with: the first along the hall whose door is unlocked
-   *  and which is not finished yet — or, all of them finished, the last. Its
-   *  place, the number on its door, and whether it can be gone into. */
-  get resumeRoom() {
-    let last = null;
-    for (const [n, key] of (this.#places[0].doors ?? []).entries()) {
-      const place = this.#places.find((item) => item.key === key);
-      if (!place || this.#locked(place)) continue;
-      const room = { key: place.key, number: n + 1, open: !place.unbuilt };
-      if (!this.#finished(place)) return room;
-      last = room;
-    }
-    return last;
   }
 
   /** A key is named for the room it opens. */

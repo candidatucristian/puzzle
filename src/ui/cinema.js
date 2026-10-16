@@ -1,27 +1,33 @@
-import { CHAPTERS, FIRST_THOUGHTS } from "../shared/story.js";
+import { CHAPTERS } from "../shared/story.js";
+import { PLACES } from "../shared/house.js";
+import { sketchLayer, drawEmblem } from "./introSketches.js";
 
 // The story's moments between the puzzles, told the way a film would:
-//   card(lines)       the screen goes black and the lines are typed onto it,
-//                     held a moment, and the black lifts — a click hurries it
-//   say(text)         one line of the Inspector's thoughts, typed under the
-//                     picture like a subtitle, and gone
-//   headlights()      a car's lights sweeping the front of the manor, as he
-//                     draws up on the drive
-// and, watching the house: a chapter card the first time he stands on each
-// floor, and his first thought the first time he stands in each place.
+//   card(lines)       the screen goes black and the lines come up out of it,
+//                     one after another; held, and the black lifts — a click
+//                     hurries it
+// and a chapter card the first time he goes up into each floor's hall — put
+// up before the hall is seen, which is gone into behind its black — with the
+// emblem of whose floor it is drawn on it in the pencil of the cold open.
 // While anything is showing, `busy` is true — the case file waits for it.
 
-const SEEN = "story:seen"; // the chapters and the places he has had his first thought in
+const SEEN = "story:seen"; // the chapters already shown
+// whose floor each is: the emblem drawn on its chapter card
+const EMBLEM = { 1: "ivy", 2: "silas", 3: "orion" };
 
-export function mountCinema(scope, { levels, storage, reducedMotion = () => false, isBusy = () => false }) {
-  let seen = read(), busy = 0, lastPlace = null, active = false;
+export function mountCinema(scope, { storage, reducedMotion = () => false }) {
+  let seen = read(), busy = 0;
   function read() {
     try { const kept = JSON.parse(storage.getItem(SEEN) || "[]"); return Array.isArray(kept) ? kept : []; } catch { return []; }
   }
   const mark = (id) => { if (!seen.includes(id)) { seen.push(id); storage.setItem(SEEN, JSON.stringify(seen)); } };
 
-  // ── a card: black, the lines typed, held, lifted ──
-  function card(lines, { hold = 1500 } = {}) {
+  // ── a card: black; its lines come up out of the dark one after another,
+  // as a film's titles do; held, and the black lifts ──
+  const LINE = 900; // ms between one line coming up and the next
+  const RISE = 1700; // ms a line takes to come up
+  // `sketch`: one of the three emblems, drawn in the pencil over the words
+  function card(lines, { hold = 1500, onDark = null, sketch = null } = {}) {
     busy++;
     return new Promise((resolve) => {
       const root = document.createElement("div");
@@ -29,131 +35,75 @@ export function mountCinema(scope, { levels, storage, reducedMotion = () => fals
       root.setAttribute("role", "status");
       const text = document.createElement("div");
       text.className = "cinema-card-text";
-      const rows = lines.map((_, i) => { const p = document.createElement("p"); p.className = i ? "cinema-line" : "cinema-line is-first"; text.append(p); return p; });
+      if (sketch) {
+        const svg = sketchLayer(text);
+        svg.classList.add("cinema-emblem");
+        drawEmblem(svg, sketch, 150);
+      }
+      lines.forEach((line, i) => {
+        const p = document.createElement("p");
+        p.className = i ? "cinema-line" : "cinema-line is-first";
+        p.textContent = line;
+        p.style.animationDelay = `${500 + i * LINE}ms`;
+        text.append(p);
+      });
       root.append(text);
       document.body.append(root);
       const still = reducedMotion();
-      let done = false, timer = null;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        scope.cancel(timer);
-        rows.forEach((p, i) => { p.textContent = lines[i]; });
-        root.classList.add("is-typed");
-        timer = scope.later(lift, still ? 600 : hold);
-      };
+      let timer = null, lifting = false;
       const lift = () => {
+        if (lifting) return;
+        lifting = true;
+        scope.cancel(timer);
         root.classList.remove("is-shown");
-        scope.later(() => { root.remove(); busy--; resolve(); }, still ? 0 : 700);
+        scope.later(() => { root.remove(); busy--; resolve(); }, still ? 0 : 900);
       };
-      // a click or a key hurries it on: the first finishes the typing, the next lifts it
-      const hurry = () => { if (!done) finish(); else { scope.cancel(timer); lift(); } };
+      // a click or a key: the first brings every line up at once, the next lifts it
+      let hurried = false;
+      const hurry = () => {
+        if (!hurried) { hurried = true; root.classList.add("is-all"); scope.cancel(timer); timer = scope.later(lift, 900); }
+        else lift();
+      };
       root.addEventListener("click", hurry);
       const onKey = (e) => { if (root.isConnected && (e.key === "Enter" || e.key === " " || e.key === "Escape")) { e.preventDefault(); e.stopPropagation(); hurry(); } };
       window.addEventListener("keydown", onKey, true);
       scope.add(() => window.removeEventListener("keydown", onKey, true));
       requestAnimationFrame(() => root.classList.add("is-shown"));
-      if (still) { finish(); return; }
-      // type it, a letter at a time, a pause between the lines
-      let line = 0, ch = 0;
-      const tick = () => {
-        if (done) return;
-        if (line >= lines.length) { finish(); return; }
-        ch++;
-        rows[line].textContent = lines[line].slice(0, ch);
-        if (ch >= lines[line].length) { line++; ch = 0; timer = scope.later(tick, 420); return; }
-        timer = scope.later(tick, 55 + Math.random() * 45);
-      };
-      timer = scope.later(tick, 650);
+      // what is behind it changes only once the screen has gone black
+      if (onDark) scope.later(onDark, still ? 0 : 950);
+      if (still) { root.classList.add("is-all"); timer = scope.later(lift, 1800); return; }
+      timer = scope.later(lift, 500 + (lines.length - 1) * LINE + RISE + hold);
     });
   }
 
-  // ── a thought, as a film would put it: the black bars of the wide screen
-  // close in over the picture, a stamp in the top one says where he stands
-  // and when, and in the bottom one his thought is typed out; held, and the
-  // bars draw back ──
-  function say(text, { where = "" } = {}) {
-    const host = document.getElementById("game-viewport");
-    if (!host) return Promise.resolve();
-    busy++;
-    return new Promise((resolve) => {
-      const still = reducedMotion();
-      const frame = document.createElement("div");
-      frame.className = "cinema-frame";
-      frame.setAttribute("role", "status");
-      frame.innerHTML = `<div class="cinema-bar is-top"><span class="cinema-where"></span><span class="cinema-time"></span></div>
-        <div class="cinema-bar is-bottom"><p class="cinema-thought-line"></p></div>`;
-      frame.querySelector(".cinema-where").textContent = where ? `Ashcombe House — ${where}` : "Ashcombe House";
-      frame.querySelector(".cinema-time").textContent = clock();
-      const line = frame.querySelector(".cinema-thought-line");
-      host.append(frame);
-      requestAnimationFrame(() => requestAnimationFrame(() => frame.classList.add("is-on")));
-      let ch = still ? text.length : 0;
-      const end = () => {
-        frame.classList.remove("is-on", "is-typed");
-        scope.later(() => { frame.remove(); busy--; resolve(); }, still ? 0 : 1000);
-      };
-      const tick = () => {
-        ch++;
-        line.textContent = text.slice(0, ch);
-        if (ch < text.length) scope.later(tick, 30 + Math.random() * 26);
-        else { frame.classList.add("is-typed"); scope.later(end, 4400); }
-      };
-      if (still) { line.textContent = text; frame.classList.add("is-typed"); scope.later(end, 5000); }
-      else scope.later(tick, 1100);
-    });
-  }
-  // the night going on: a few minutes later for every place he comes to
-  function clock() {
-    const minutes = 23 * 60 + 38 + seen.filter((id) => id.startsWith("thought:")).length * 4;
-    const h = Math.floor(minutes / 60) % 24, m = minutes % 60;
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  // ── the floors: a chapter card before each floor's hall is first seen ──
+  const chapterOf = (key) => {
+    const storey = PLACES.find((p) => p.key === key)?.storey;
+    return storey && CHAPTERS[storey] && !seen.includes(`chapter:${storey}`) ? storey : null;
+  };
+  /** Going into a place: if its floor's chapter has not been shown, the card
+   *  comes up first and the place is gone into behind it (`go`) — true. If
+   *  not, nothing happens here and the caller goes in its own way — false. */
+  function chapterBefore(key, go) {
+    const storey = chapterOf(key);
+    if (!storey) return false;
+    mark(`chapter:${storey}`);
+    card(CHAPTERS[storey], { hold: 2200, onDark: go, sketch: EMBLEM[storey] });
+    return true;
   }
 
-  // ── the car drawing up: its lights across the front of the manor ──
-  function headlights() {
-    const start = document.getElementById("start-screen");
-    if (!start || reducedMotion()) return;
-    const sweep = document.createElement("div");
-    sweep.className = "cinema-headlights";
-    sweep.innerHTML = "<span></span>";
-    start.append(sweep);
-    scope.later(() => sweep.remove(), 4200);
+  /** Into the house by its door: the first time, the screen goes straight
+   *  to the first chapter's card, and the house is gone into behind it
+   *  (`goIn`) — the hall is first seen as the card lifts. */
+  function enterHouse(goIn) {
+    if (seen.includes("chapter:1")) { goIn(); return; }
+    mark("chapter:1");
+    card(CHAPTERS[1], { hold: 2200, onDark: goIn, sketch: EMBLEM[1] });
   }
-
-  // ── watching the house: a chapter card for each floor, a first thought
-  // in each place, once each ──
-  async function arrive(place) {
-    active = true;
-    // once the walk in has brought the picture up
-    await new Promise((r) => scope.later(r, 500));
-    const storey = place.storey;
-    if (storey && CHAPTERS[storey] && !seen.includes(`chapter:${storey}`)) {
-      mark(`chapter:${storey}`);
-      await card(CHAPTERS[storey], { hold: 1300 });
-    }
-    const thought = FIRST_THOUGHTS[place.key];
-    if (thought && !seen.includes(`thought:${place.key}`) && levels.place?.key === place.key) {
-      mark(`thought:${place.key}`);
-      await new Promise((r) => scope.later(r, 700));
-      if (levels.place?.key === place.key) await say(thought, { where: place.name });
-    }
-    active = false;
-  }
-  scope.add(levels.subscribe(() => {
-    const place = levels.place;
-    const key = place?.key ?? null;
-    if (key === lastPlace) return;
-    lastPlace = key;
-    if (!place || active || isBusy()) return;
-    const story = place.storey && !seen.includes(`chapter:${place.storey}`);
-    const thought = FIRST_THOUGHTS[key] && !seen.includes(`thought:${key}`);
-    if (story || thought) arrive(place);
-  }));
 
   return {
-    card, say, headlights,
-    get busy() { return busy > 0 || active; },
-    reset() { seen = []; storage.setItem(SEEN, "[]"); lastPlace = null; },
+    card, enterHouse, chapterBefore,
+    get busy() { return busy > 0; },
+    reset() { seen = []; storage.setItem(SEEN, "[]"); },
   };
 }
