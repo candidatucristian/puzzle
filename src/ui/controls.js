@@ -29,6 +29,7 @@ import { mountCinema } from './cinema.js';
 import { mountPaperSounds } from './paperSounds.js';
 import { ARRIVAL } from '../shared/story.js';
 import { playColdOpen } from './coldOpen.js';
+import { taskCard } from './tasks.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -148,6 +149,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     // the way in — the door, or any key — leads to the hall; its doors lead
     // to the rooms
     completion.hide(); mobile?.close();
+    doorTask.tick('enter');
     cinema.enterHouse(() => {
       showGame();
       levels.enterHall();
@@ -194,6 +196,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   // from the drive. The hall waits behind it as it was left.
   function goOutside() {
     completion.hide(); mobile?.close();
+    doorTask.reset();
     film = raiseFilm();
     start.classList.remove('hidden');
     outside(true);
@@ -219,6 +222,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const notebook = mountNotebook(scope, { levels, dialogs, storage });
   const cinema = mountCinema(scope, { storage, reducedMotion: () => Boolean(preferences?.reducedMotion) });
   const paperSounds = mountPaperSounds({ game, audio });
+  // in front of the manor, tonight's one task, bottom right — ticked on the way in
+  const doorTask = taskCard([['enter', 'Enter the manor']], { sounds: paperSounds, className: 'is-outside' });
+  start.append(doorTask.node);
   const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || cinema.busy });
   // The case begins with the cold open — who he is, the night of 1961, the
   // file he never closed; then at the Inspector's desk, with the letter —
@@ -231,19 +237,21 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     prologueOn = true;
     const prologue = () => playPrologue(scope, {
       reducedMotion: preferences?.reducedMotion,
-      onDone: async () => {
+      sounds: paperSounds,
+      // the next night's card comes up over the desk; the desk goes once it is black
+      onDone: async (dismiss) => {
         caseFile.unlock('invitation');
-        await cinema.card(ARRIVAL, { hold: 1700 });
+        await cinema.card(ARRIVAL, { hold: 1700, onDark: dismiss });
         prologueOn = false;
       },
     });
     // not until the loading screen is gone, or it starts unseen
-    const film = () => {
-      if (document.getElementById('loading-screen')) { scope.later(film, 120); return; }
+    const roll = () => {
+      if (document.getElementById('loading-screen')) { scope.later(roll, 120); return; }
       void preloadPrologueDesk();
       playColdOpen(scope, { game, audio, reducedMotion: Boolean(preferences?.reducedMotion), onUnder: prologue });
     };
-    film();
+    roll();
   }
   openCase();
   const glass = mountMagnifier(scope, game);

@@ -31,7 +31,9 @@ import { GOLD_CHEST, GOLD_CHEST_URL } from './chestArt.js';
  *    open(thing, L, k, animate)
  *                           for a thing with a `first`: shows it opened —
  *                           animated or at once — and returns how long that
- *                           takes, in ms */
+ *                           takes, in ms; for a thing marked `before`, plays
+ *                           what it does as it is taken (a book drawn out of
+ *                           its shelf) before its puzzle is gone into */
 export default class RoomScene extends BasePuzzleScene {
   /** `place` is the room's key in the house (shared/house.js), and its scene's. */
   constructor(place) {
@@ -106,9 +108,15 @@ export default class RoomScene extends BasePuzzleScene {
           });
           return;
         }
-        // walk up to it, and ask for its puzzle
-        zoomInto(this, thing.box);
-        this.game.events.emit(HOUSE_GO, { level: thing.level });
+        // walk up to it, and ask for its puzzle — once what it does as it is
+        // taken has been seen, for a thing that does something
+        const go = () => { zoomInto(this, thing.box); this.game.events.emit(HOUSE_GO, { level: thing.level }); };
+        if (thing.before) {
+          zone.setData("opening", true);
+          this.time.delayedCall(this.open(thing, L, k, !this.reducedMotion) + 120, go);
+          return;
+        }
+        go();
       });
       this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => now().box }));
     }

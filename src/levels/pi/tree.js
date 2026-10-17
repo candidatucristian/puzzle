@@ -1,5 +1,6 @@
 import { createMoonCanvas } from "../../shared/moon.js";
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
+import { drawingRoomMaterials, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
 
 /** The Christmas tree for PI, in the drawing room at night: a tall fir in a
  *  wooden tub, nine tiers of boughs, a brass star on its top, glass balls
@@ -69,7 +70,7 @@ export function paintTree(scene, L) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  paintRoom(ctx, L);
+  paintRoom(ctx, L, drawingRoomMaterials(scene));
   paintWindow(ctx, L);
   paintParcels(ctx, L, false);
   paintTub(ctx, L);
@@ -123,7 +124,7 @@ export function releaseTreeArt(textures) {
 }
 
 // the drawing room behind it: red paper over a dark dado, parquet
-function paintRoom(ctx, L) {
+function paintRoom(ctx, L, materials) {
   const { W, H, u, floorY } = L;
   const rnd = lcg(55);
   const wall = ctx.createLinearGradient(0, 0, 0, floorY);
@@ -131,6 +132,7 @@ function paintRoom(ctx, L) {
   wall.addColorStop(1, "#22101a");
   ctx.fillStyle = wall;
   ctx.fillRect(0, 0, W, floorY);
+  paintFlatMaterial(ctx, materials?.paper, 0, 0, W, H * 0.66, u, 0.38);
   ctx.fillStyle = "rgba(230,170,170,0.03)";
   for (let x = 0; x < W; x += 26 * u) ctx.fillRect(x, 0, 9 * u, floorY);
   // the dado and its rail, the skirting
@@ -155,6 +157,7 @@ function paintRoom(ctx, L) {
   floor.addColorStop(1, "#33200f");
   ctx.fillStyle = floor;
   ctx.fillRect(0, floorY, W, H - floorY);
+  paintFlatMaterial(ctx, materials?.wood, 0, floorY, W, H - floorY, u, 0.2, "soft-light");
   const vx = W * 0.5, vy = H * 0.4, k = (H - vy) / (floorY - vy);
   for (let i = -16; i <= 16; i++) {
     const xb = vx + i * W * 0.05;

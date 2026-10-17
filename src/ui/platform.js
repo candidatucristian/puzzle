@@ -1,4 +1,4 @@
-/** Detects touch-first devices for responsive browser and interaction tests. */
+/** Classifies phone and tablet browsers independently of screen orientation. */
 export function isHandheld({ userAgent = "", maxTouchPoints = 0, media = () => false }) {
   if (/Android|iPhone|iPad|iPod|Mobi|Silk|Kindle|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) return true;
   if (/Macintosh/i.test(userAgent) && maxTouchPoints > 1) return true;

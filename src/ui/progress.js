@@ -3,6 +3,7 @@ import { toRoman } from './transitions.js';
 import { paintKey } from '../shared/keyArt.js';
 import { waxSeal } from './seal.js';
 
+
 // each seal sits a little askew, never twice the same way
 const tilt = n => `${((n * 37) % 23) - 11}deg`;
 
@@ -123,19 +124,26 @@ export function mountProgress(scope, { game, levels, storage }) {
     // a count only where there is something to count
     document.getElementById('progress-count').hidden = near.indexes.length === 0;
     document.getElementById('room-progress').hidden = near.indexes.length === 0;
-    document.getElementById('index-heading').textContent = near.name;
     document.getElementById('progress-count').textContent = `${here} / ${near.indexes.length} solved`;
-    // the floor, in the middle of the header: its number small over its name, written
+    // where you are, at the head of the side panel, as a film's lower third:
+    // the floor's numeral in a fine square, a hairline, the place's name over
+    // its floor's; a light passing once over it as it comes
     const floor = document.getElementById('header-floor');
     const storey = `Floor ${String(levels.storey).padStart(2, '0')}`;
-    if (floor.dataset.shown !== `${storey} ${levels.floor}`) {
-      floor.dataset.shown = `${storey} ${levels.floor}`;
-      floor.replaceChildren(
-        Object.assign(document.createElement('span'), { className: 'floor-number', textContent: storey }),
-        Object.assign(document.createElement('span'), { className: 'floor-name', textContent: levels.floor }));
+    if (floor.dataset.shown !== `${near.name} ${storey} ${levels.floor}`) {
+      floor.dataset.shown = `${near.name} ${storey} ${levels.floor}`;
+      const el = (tag, className, textContent = '') => Object.assign(document.createElement(tag), { className, textContent });
+      const below = /basement|cellar/i.test(levels.floor);
+      const words = el('span', 'floor-words');
+      words.append(el('span', 'floor-name', near.name));
+      // the floor's name under it — but not in its own hall, named for it
+      if (!near.name.toLowerCase().includes(String(levels.floor).toLowerCase())) words.append(el('span', 'floor-where', levels.floor));
+      floor.replaceChildren(el('span', 'floor-numeral', below ? 'B' : toRoman(levels.storey)), el('span', 'floor-rule'), words);
+      floor.classList.remove('is-arriving');
+      void floor.offsetWidth; // so the arrival plays again
+      floor.classList.add('is-arriving');
     }
-    floor.setAttribute('aria-label', `Current floor: ${storey}, ${levels.floor}`);
-    centreFloor();
+    floor.setAttribute('aria-label', `${near.name}, ${storey}, ${levels.floor}`);
     // the way back: out of a puzzle to where it was found, out of a room to the hall
     const leave = document.getElementById('btn-leave'), back = levels.back;
     // from the hall, back is outside
@@ -191,19 +199,6 @@ export function mountProgress(scope, { game, levels, storage }) {
     captureTimer = scope.later(capture, 1800);
   }
   // the floor's name stands over the middle of the picture, not of the window
-  function centreFloor() {
-    const floor = document.getElementById('header-floor'), picture = document.getElementById('game-viewport');
-    const bar = floor?.offsetParent;
-    if (!floor || !picture || !bar) return;
-    const box = picture.getBoundingClientRect(), barBox = bar.getBoundingClientRect();
-    if (box.width) floor.style.left = `${box.left + box.width / 2 - barBox.left}px`;
-  }
-  scope.on(window, 'resize', centreFloor);
-  if (window.ResizeObserver) {
-    const watch = new ResizeObserver(centreFloor);
-    watch.observe(document.getElementById('game-viewport'));
-    scope.add(() => watch.disconnect());
-  }
   scope.add(levels.subscribe(() => { render(); scheduleCapture(); }));
   scope.add(() => { captureGeneration++; });
   render();

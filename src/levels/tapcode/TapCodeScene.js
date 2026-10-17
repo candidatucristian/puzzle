@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
+import { CELLAR_MATERIALS_KEY, CELLAR_MATERIALS_URL, layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "TAPCODE"  ·  code: ESCAPE   ·  count the knocks
@@ -36,6 +36,7 @@ export default class TapCodeScene extends BasePuzzleScene {
 
   preload() {
     this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
+    if (!this.textures.exists(CELLAR_MATERIALS_KEY)) this.load.image(CELLAR_MATERIALS_KEY, CELLAR_MATERIALS_URL);
   }
 
   init(data) {

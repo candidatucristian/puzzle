@@ -17,7 +17,7 @@
   display: none;
 }
 
-:root[data-desktop-only="true"] body > :not(#desktop-only):not(#film-grain) {
+:root[data-desktop-only="true"] body > :not(#desktop-only) {
   display: none !important;
 }
 

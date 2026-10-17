@@ -1,4 +1,5 @@
 import { lcg, soft, polygon, makeCanvas, addCanvasTexture } from "../../shared/paint.js";
+import { paintFlatMaterial } from "../house/drawingRoomMaterials.js";
 
 // A small collection for the physicist: a celestial ceiling, one brass
 // armillary sphere and a wall-mounted demonstration pendulum. The sphere's
@@ -80,7 +81,7 @@ export function paintPlanetarium(g, L, at) {
 
 // Lathed walnut and brass: several narrow highlights describe the rounded
 // surface, with fine wear instead of an outline around the entire object.
-function lathe(g, y0, y1, profile, metal = false) {
+function lathe(g, y0, y1, profile, metal = false, wood = null) {
   const width = Math.max(...profile.map(([, r]) => r));
   const points = profile.map(([t, r]) => ({ x: -r, y: y0 + (y1 - y0) * t }));
   for (const [t, r] of [...profile].reverse()) points.push({ x: r, y: y0 + (y1 - y0) * t });
@@ -89,17 +90,22 @@ function lathe(g, y0, y1, profile, metal = false) {
     ? [[0, "#302a1c"], [0.18, "#8a794d"], [0.36, "#c1af79"], [0.46, "#9b8759"], [0.7, "#615233"], [1, "#211c15"]]
     : [[0, "#130e0b"], [0.24, "#403121"], [0.4, "#634c32"], [0.53, "#4a3724"], [0.8, "#271d14"], [1, "#120e0b"]]);
   g.fill();
+  if (wood) {
+    g.save(); g.clip();
+    paintFlatMaterial(g, wood, -width, Math.min(y0, y1), width * 2, Math.abs(y1 - y0), 0.14, 0.8, "soft-light");
+    g.restore();
+  }
 }
 
 export function paintArmillaryBase(g, L) {
-  const foot = L.armillary, k = foot.s;
+  const foot = L.armillary, k = foot.s, wood = L.physicsMaterials?.oak;
   g.save(); g.translate(foot.x, foot.y); g.scale(k, k);
   soft(g, 7, 3, 49, 8, "0,0,0", 0.67);
   // A narrow turned pedestal, keeping the doors and the window clear.
   ellipse(g, 0, -2, 32, 9, "#130e0a");
-  lathe(g, -4, -17, [[0, 30], [0.14, 30], [0.3, 25], [0.72, 24], [1, 17]]);
-  lathe(g, -16, -69, [[0, 17], [0.1, 17], [0.17, 11], [0.27, 8], [0.65, 7], [0.84, 11], [0.93, 15], [1, 15]]);
-  lathe(g, -69, -80, [[0, 23], [0.22, 27], [0.35, 27], [0.72, 30], [1, 30]]);
+  lathe(g, -4, -17, [[0, 30], [0.14, 30], [0.3, 25], [0.72, 24], [1, 17]], false, wood);
+  lathe(g, -16, -69, [[0, 17], [0.1, 17], [0.17, 11], [0.27, 8], [0.65, 7], [0.84, 11], [0.93, 15], [1, 15]], false, wood);
+  lathe(g, -69, -80, [[0, 23], [0.22, 27], [0.35, 27], [0.72, 30], [1, 30]], false, wood);
   ellipse(g, 0, -80, 30, 8, "#4d3b27");
   ellipse(g, 0, -80.3, 27, 6.5, "#33291d");
   lathe(g, -81, -100, [[0, 11], [0.13, 12], [0.24, 8], [0.4, 5], [0.76, 4], [1, 8]], true);

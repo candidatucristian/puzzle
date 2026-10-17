@@ -1,6 +1,7 @@
 import { CASE_REPORT, letterById } from "../shared/story.js";
 import { renderLetter } from "./letterPage.js";
 import { glint } from "./startFilm.js";
+import { taskCard } from "./tasks.js";
 
 const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk.png`;
 const NAMEPLATE_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-nameplate-v2.png`;
@@ -29,9 +30,11 @@ export function playPrologue(scope, options) {
 // A moving, rain-swept frame: his desk, the night the letter comes. Two
 // things on it, opened in turn: the letter first — why tonight — and then,
 // as it asks, the Ashcombe file — the report the case was closed on, and the
-// question he pencilled under it — with the way to the house. Both are live
-// text, on the same paper used throughout the case file.
-function playDesk(scope, { onDone, reducedMotion = false } = {}) {
+// question he pencilled under it. Both are live text, on the same paper used
+// throughout the case file. Bottom right, tonight's tasks — one at a time:
+// the next shows only once the last is ticked in the pencil; with both done,
+// bottom right, the way to the house.
+function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) {
   const root = document.createElement("div");
   root.id = "prologue";
   root.setAttribute("role", "dialog");
@@ -93,19 +96,35 @@ function playDesk(scope, { onDone, reducedMotion = false } = {}) {
     canvas.className = "prologue-glint";
     canvas.setAttribute("aria-hidden", "true");
     thing.append(canvas);
-    glint(scope, thing, () => reducedMotion, () => !root.isConnected || root.dataset.step !== step, canvas);
+    glint(scope, thing, () => reducedMotion, () => !root.isConnected || root.dataset.step !== step, canvas, { scale: 2, sparks: 22 });
   };
 
-  const prompt = document.createElement("p");
-  prompt.className = "prologue-prompt";
-  prompt.textContent = "A letter has come. Open it.";
+  // tonight's tasks (tasks.js): the second not shown until the first is done
+  const tasks = taskCard([
+    ["letter", "Read the letter"],
+    ["file", "Open the case file", { later: true }],
+    ["house", "Go to Ashcombe Manor", { later: true }],
+  ], { sounds });
 
-  root.append(camera, prompt);
+  // with both done: the way on, drawn as the way back is, its arrow turned
+  const onward = document.createElement("button");
+  onward.type = "button";
+  onward.className = "prologue-onward";
+  onward.hidden = true;
+  onward.innerHTML = `<span class="onward-word">Go to Ashcombe Manor<svg class="onward-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
+      ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" />`).join("")}
+    </svg></span><svg class="onward-icon" viewBox="0 0 44 22" aria-hidden="true"><g class="onward-arrow">
+      ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M3 18.5C5.5 8.2 16.5 3.6 26 4.6C32.4 5.3 36.8 8.6 39.6 13.2" /><path class="${c}" d="M40.6 6.4L39.7 13.4L33 12.1" />`).join("")}
+    </g></svg>`;
+
+  root.append(camera, tasks.node, onward);
   const reading = readingStage(scope, root);
   root.dataset.step = "letter";
   sparkle(envelope, "letter");
 
   document.body.append(root);
+  // while the desk is up, the header stands over it with only what the opening needs
+  document.body.classList.add("prologue-on");
   requestAnimationFrame(() => root.classList.add("is-shown"));
   void preloadPrologueDesk().then(image => {
     if (!image || !root.isConnected) return;
@@ -174,17 +193,18 @@ function playDesk(scope, { onDone, reducedMotion = false } = {}) {
   if (!reducedMotion) frame = requestAnimationFrame(animateRain);
   scope.add(() => cancelAnimationFrame(frame));
 
-  // the letter, then the file it sends him to, then the house
-  const say = (text) => { prompt.textContent = text; prompt.classList.remove("is-away"); };
+  // the letter, then the file it sends him to — each ticked once it is put
+  // down — then the house
   const openLetter = () => {
     if (root.dataset.step !== "letter" || reading.open) return;
     envelope.disabled = true;
-    prompt.classList.add("is-away");
     reading.show(letterById("invitation"), {}, "Put it down", () => {
       reading.hide();
       root.dataset.step = "file";
+      tasks.tick("letter");
+      // a moment after the tick, the next task
+      scope.later(() => tasks.show("file"), reducedMotion ? 0 : 700);
       dossier.disabled = false;
-      say("The Ashcombe file. Open it.");
       sparkle(dossier, "file");
       dossier.focus({ preventScroll: true });
     });
@@ -193,22 +213,41 @@ function playDesk(scope, { onDone, reducedMotion = false } = {}) {
     if (root.dataset.step !== "file" || reading.open) return;
     root.dataset.step = "read";
     dossier.disabled = true;
-    prompt.classList.add("is-away");
-    reading.show(CASE_REPORT, { seal: false }, "Go to Ashcombe House →", () => {
-      root.dataset.step = "gone";
-      onDone?.();
-      root.classList.add("is-leaving");
-      scope.later(() => root.remove(), reducedMotion ? 20 : 950);
+    reading.show(CASE_REPORT, { seal: false }, "Put it down", () => {
+      reading.hide();
+      root.dataset.step = "done";
+      tasks.tick("file");
+      // the last task, and the way on, a moment after the second tick
+      scope.later(() => {
+        tasks.show("house");
+        onward.hidden = false;
+        requestAnimationFrame(() => onward.classList.add("is-in"));
+        onward.focus({ preventScroll: true });
+      }, reducedMotion ? 0 : 650);
     });
+  };
+  const leave = () => {
+    if (root.dataset.step !== "done") return;
+    root.dataset.step = "gone";
+    tasks.tick("house");
+    // the desk stays until what comes next has covered it: `onDone` is given
+    // the way to take it down, and calls it once the screen has gone black —
+    // so the house is never glimpsed between the two
+    const dismiss = () => { document.body.classList.remove("prologue-on"); root.remove(); };
+    if (onDone) { onDone(dismiss); return; }
+    root.classList.add("is-leaving");
+    scope.later(dismiss, reducedMotion ? 20 : 950);
   };
   scope.on(envelope, "click", openLetter);
   scope.on(dossier, "click", openFile);
+  scope.on(onward, "click", leave);
   scope.on(window, "keydown", event => {
     if (reading.open || !root.isConnected || !["Enter", " "].includes(event.key)) return;
     if (event.target instanceof HTMLButtonElement && root.contains(event.target)) return;
     event.preventDefault();
     if (root.dataset.step === "letter") openLetter();
     else if (root.dataset.step === "file") openFile();
+    else if (root.dataset.step === "done") leave();
   });
 }
 

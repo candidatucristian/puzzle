@@ -2,27 +2,17 @@ import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
 import { paintTurfBase, paintGrass } from "./turf.js";
 import { paintShrub, paintHedge, paintFern } from "./foliage.js";
 import { GARDEN_TREES, paintMatureTree } from "./matureTrees.js";
+import { gardenPhotographs, paintGardenPhotograph, paintPhotographicBench } from "./photographicGarden.js";
 
-/** The garden for PLANT POT, seen from the study's window: we are indoors,
- *  leaning on the sill and looking out and down. The window's own woodwork
- *  frames the picture — the sill along the bottom, a jamb and the edge of a
- *  curtain at either hand. Below us is the garden by moonlight, half of it
- *  a wood: a mown lawn running away to a hedge, a gravel path across it,
- *  mature oaks and chestnuts in loose groups around its sides, their
- *  broad crowns throwing long shadows; bushes, a
- *  birdbath; beyond the hedge, a
- *  little of the far ridge and of the sky, the moon low in it. Right under
- *  the window stands the potting bench, and on its left end a storm lantern
- *  — the one warm light in the picture, so the pot, the bucket and the plant
- *  that grows are the brightest things in it.
+/** The outdoor botanical garden for PLANT POT: photographed trees, flower
+ *  beds and paths behind an oak potting bench. There is no indoor window
+ *  frame. The older procedural landscape remains a missing-asset fallback.
  *
- *  Painted once per screen size: the sky behind (the moon and the stars
- *  that twinkle sit on top of it); everything in front of the sky, with the
- *  sky left clear; and the window's frame, which goes over all of it. The
- *  lantern's flame and the fireflies are the scene's; the pot, the bucket
- *  and the plant are plant.js's. The bench is laid out in centimetres
- *  (`cm` pixels each), so the pot, the bucket and the lantern are the size
- *  such things are. */
+ *  The moon and stars, fireflies and lantern flame remain live. The pot,
+ *  bucket and growing plant belong to plant.js and keep their existing art.
+ *  The bench photograph follows the original tabletop in centimetres so
+ *  those objects retain their size, positions and interaction coordinates.
+ *  The landscape and bench canvases are painted once per screen size. */
 
 const K = {
   sky: "pp_sky",
@@ -32,7 +22,6 @@ const K = {
   firefly: "pp_firefly",
   star: "pp_star",
   sparkle: "pp_sparkle",
-  frame: "pp_frame",
 };
 
 // the lantern, standing on the bench's left end (cm from the bench-top
@@ -80,8 +69,17 @@ function layoutGarden(W, H) {
 export function paintGarden(scene, W, H) {
   const L = layoutGarden(W, H);
   const t = scene.textures;
-  addCanvas(t, K.sky, paintSky(L));
-  addCanvas(t, K.land, paintLand(L, t.get(GARDEN_TREES.key).getSourceImage()));
+  const photos = gardenPhotographs(scene);
+  L.photographic = Boolean(photos.garden);
+  L.benchPhoto = photos.bench;
+  if (L.photographic) {
+    const openSky = L.inSky;
+    // Keep animated stars in the opening between the photographed canopies.
+    L.inSky = (x, y) => x > W * 0.58 && x < W * 0.86 && openSky(x, y);
+  }
+  addCanvas(t, K.sky, photos.garden ? paintGardenPhotograph(L, photos.garden) : paintSky(L));
+  const trees = t.exists(GARDEN_TREES.key) ? t.get(GARDEN_TREES.key).getSourceImage() : null;
+  addCanvas(t, K.land, paintLand(L, trees));
   addCanvas(t, K.veil, paintVeil(L));
   addCanvas(
     t,
@@ -113,7 +111,6 @@ export function paintGarden(scene, W, H) {
     ]),
   );
   addCanvas(t, K.sparkle, paintSparkle());
-  addCanvas(t, K.frame, paintFrame(L));
   return { L, keys: K };
 }
 
@@ -164,8 +161,10 @@ function paintLand(L, trees) {
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
   const rnd = lcg(2718);
-  paintFar(ctx, L, rnd);
-  paintGround(ctx, L, rnd, trees);
+  if (!L.photographic) {
+    paintFar(ctx, L, rnd);
+    paintGround(ctx, L, rnd, trees);
+  }
   paintBench(ctx, L);
   paintLantern(ctx, L);
   grain(ctx, W, H, 0.03, true);
@@ -337,7 +336,7 @@ function paintGround(ctx, L, rnd, treeImage) {
   }
   ctx.restore();
   for (const [fx, fy, height, kind, light] of trees) {
-    paintMatureTree(ctx, treeImage, W * fx, H * fy, H * height, kind, light);
+    if (treeImage) paintMatureTree(ctx, treeImage, W * fx, H * fy, H * height, kind, light);
   }
   paintFern(ctx, W * 0.14, H * 0.67, S * 0.022, 71);
   paintFern(ctx, W * 0.799, H * 0.632, S * 0.017, 53);
@@ -349,6 +348,13 @@ function paintGround(ctx, L, rnd, treeImage) {
 // its receding ends and separate front edge give the objects a firm surface.
 function paintBench(ctx, L) {
   const { H, cm, bench, at, flame } = L;
+  if (paintPhotographicBench(ctx, L, BENCH.depth)) {
+    const surface = at(POT_X, 0);
+    softEllipse(ctx, surface.x, surface.y, 12.5 * cm, 5 * cm, "0,0,0", 0.55);
+    softEllipse(ctx, surface.x + 12 * cm, surface.y - 1.6 * cm, 22 * cm, 5.6 * cm, "0,0,0", 0.45);
+    softEllipse(ctx, at(LANTERN.x, 0).x, surface.y - LANTERN.back * cm, 8 * cm, 3.4 * cm, "0,0,0", 0.5);
+    return;
+  }
   const X0 = at(bench.x0 - 3, 0).x;
   const X1 = at(bench.x1 + 2, 0).x;
   const back = at(0, -BENCH.depth / 2).y;

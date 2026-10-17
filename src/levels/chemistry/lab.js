@@ -1,6 +1,9 @@
 import { paintLens } from "../../shared/loupe.js";
 import { LAB_FIXTURES, paintTestTubeRack } from "./glassware.js";
 import { BOTTLES, ELEMENTS, cellOf, familyOf } from "./puzzle.js";
+import { laboratoryArt } from "../room7/laboratoryArt.js";
+import { chemistryDetails, photographicBottle, photographicLoupe, photographicNearThings, photoProp } from "./photographicLab.js";
+import { paintFlatMaterial, paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 import {
   soft,
   grain,
@@ -13,8 +16,8 @@ import {
   polygon,
 } from "../../shared/paint.js";
 
-/** The old laboratory for CHEMISTRY, painted like the game's storybook
- *  nights: stone walls, a faded periodic table pinned up, a shelf of jars,
+/** The old laboratory for CHEMISTRY: photographic plaster and timber,
+ *  a faded periodic table pinned up, a shelf of real reagent jars,
  *  and the workbench seen in perspective, lit by a Bunsen burner's blue flame
  *  and an oil lamp. Across the bench stand five graduated bottles of coloured
  *  liquid, each with a fine printed scale; a magnifying glass lies on its
@@ -96,6 +99,13 @@ function P(L, x, y, s) {
 
 export function paintLab(scene, L) {
   const t = scene.textures;
+  L.labArt = laboratoryArt(scene);
+  L.photoDetails = chemistryDetails(scene);
+  if (L.photoDetails && L.labArt) {
+    const bu = L.burner, s = bu.s * L.u;
+    bu.mouth.y = bu.y - 79 * s;
+    L.flask = { x: bu.x, y: bu.y - 108 * s, r: 11 * s, steamY: bu.y - 190 * s };
+  }
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
@@ -114,15 +124,15 @@ export function paintLab(scene, L) {
   grain(ctx, W, H, 0.03);
   addCanvasTexture(t, K.room, c);
   const bottles = L.bottles.map((b) => {
-    const art = paintBottle(L, b, 2);
+    const art = photographicBottle(L, b, 2) ?? paintBottle(L, b, 2);
     addCanvasTexture(t, bottleKey(b.i), art.canvas);
     // the same vessel as the lens shows it
-    addCanvasTexture(t, zoomKey(b.i), paintBottle(L, b, ZOOM).canvas);
-    return { key: bottleKey(b.i), zoomKey: zoomKey(b.i), ...art };
+    addCanvasTexture(t, zoomKey(b.i), (photographicBottle(L, b, ZOOM) ?? paintBottle(L, b, ZOOM)).canvas);
+    return { key: bottleKey(b.i), zoomKey: zoomKey(b.i), i: b.i, ...art };
   });
-  const loupe = paintLoupe(L);
+  const loupe = photographicLoupe(L) ?? paintLoupe(L);
   addCanvasTexture(t, K.loupe, loupe.canvas);
-  addCanvasTexture(t, K.lens, paintLens(L.loupe.r));
+  addCanvasTexture(t, K.lens, photographicLoupe(L, true)?.canvas ?? paintLens(L.loupe.r));
   addCanvasTexture(t, K.blue, paintBlueFlame());
   addCanvasTexture(t, K.flame, paintFlame());
   addCanvasTexture(t, K.bubble, paintBubble());
@@ -140,6 +150,18 @@ export function releaseLabArt(textures) {
 // old stone, a timber beam along the top, the wall's foot behind the bench
 function paintWall(ctx, L) {
   const { W, H, u } = L;
+  if (L.labArt) {
+    const m = L.labArt.materials;
+    ctx.fillStyle = "#1a2320"; ctx.fillRect(0, 0, W, H);
+    paintFlatMaterial(ctx, m.wallPlaster, 0, 0, W, H, 0.7 * u, 1);
+    paintFlatMaterial(ctx, m.dado, 0, H * 0.46, W, H * 0.28, 0.8 * u, 1);
+    paintFlatMaterial(ctx, m.beamWood, 0, H * 0.45, W, H * 0.018, 0.5 * u, 1);
+    paintFlatMaterial(ctx, m.beamWood, 0, 0, W, H * 0.035, 0.5 * u, 1);
+    const shadow = ctx.createLinearGradient(0, H * 0.035, 0, H * 0.095);
+    shadow.addColorStop(0, "rgba(0,0,0,0.65)"); shadow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = shadow; ctx.fillRect(0, H * 0.035, W, H * 0.06);
+    return;
+  }
   const g = ctx.createLinearGradient(0, 0, 0, H * 0.7);
   g.addColorStop(0, "#141c22");
   g.addColorStop(1, "#24302e");
@@ -201,6 +223,7 @@ function paintPoster(ctx, L) {
   ctx.fill();
   ctx.save();
   ctx.clip();
+  if (L.photoDetails) ctx.drawImage(L.photoDetails.paper, 0, 0, w, h);
   // the title
   const m = w * 0.03;
   ctx.fillStyle = "rgba(60,48,30,0.55)";
@@ -289,6 +312,11 @@ function paintShelf(ctx, L) {
   const { H, u } = L;
   const s = L.shelf;
   const y = s.y;
+  if (L.photoDetails) {
+    const image = L.photoDetails.shelf, w = s.x1 - s.x0 + 20 * u, h = w * image.height / image.width;
+    ctx.drawImage(image, s.x0 - 10 * u, y - h * 0.71, w, h);
+    return;
+  }
   // jars
   const rnd = lcg(919);
   let x = s.x0 + 10 * u;
@@ -382,9 +410,10 @@ function paintBench(ctx, L) {
   ctx.fill();
   ctx.save();
   ctx.clip();
+  if (L.labArt) paintProjectedMaterial(ctx, L.labArt.materials.slate, (u, v) => P(L, -b.hw + b.hw * 2 * u, y, b.farS + (b.nearS - b.farS) * v), 1, 8, 8);
   const rnd = lcg(515);
   const n = 8;
-  for (let i = 1; i < n; i++) {
+  for (let i = 1; !L.labArt && i < n; i++) {
     const x = -b.hw + (2 * b.hw * i) / n;
     const a = P(L, x, y, b.nearS);
     const c = P(L, x, y, b.farS);
@@ -420,6 +449,7 @@ function paintBench(ctx, L) {
   fg.addColorStop(1, "#24140a");
   ctx.fillStyle = fg;
   ctx.fillRect(nl.x, nl.y, nr.x - nl.x, th);
+  if (L.labArt) paintFlatMaterial(ctx, L.labArt.materials.slate, nl.x, nl.y, nr.x - nl.x, th, 0.5 * u, 0.9);
   ctx.fillStyle = "#0e0804";
   ctx.fillRect(nl.x, nl.y + th, nr.x - nl.x, H);
 }
@@ -434,6 +464,7 @@ function paintFarThings(ctx, L, rack) {
   // the retort: a glass belly on a ring, its long neck reaching out
   const rt = P(L, 0.3 * tw, L.topY, 0.58);
   const q = rt.s * u;
+  if (L.labArt) { photoProp(ctx, L.labArt.apparatus[1], rt.x, rt.y, 150 * q); return; }
   soft(ctx, rt.x, rt.y, 50 * q, 6 * q, "0,0,0", 0.6);
   ctx.fillStyle = "#1e1a16";
   ctx.fillRect(rt.x - 36 * q, rt.y - 6 * q, 72 * q, 6 * q);
@@ -477,6 +508,7 @@ function paintFarThings(ctx, L, rack) {
 // at the front: the oil lamp, a mortar and pestle, the magnifying glass's cloth,
 // the burner with its tripod and the flask boiling on it
 function paintNearThings(ctx, L) {
+  if (photographicNearThings(ctx, L)) return;
   const { u } = L;
   const tw = L.bench.hw;
   // the oil lamp: a brass foot and stem, a round font of oil, the burner's

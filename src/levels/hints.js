@@ -12,7 +12,7 @@ export const HINT_DETAILS = {
     "Smallest first. Then read each card the way the corner note reads its own example — aloud, as a count.",
   ],
   cryptex: [
-    "Count what it takes to put the flame out. Every letter in the envelope has moved by the same amount.",
+    "Count the candles. Every letter in the envelope has moved by the same amount.",
   ],
   chessboard: [
     "One piece on every row. The edge of the board names each square; read the rows from the bottom up.",
@@ -64,6 +64,18 @@ export const HINT_DETAILS = {
   ],
   bookshelf: [
     "Each has a title and a bookmark with a number. The number points somewhere inside its own title.",
+  ],
+  balance: [
+    "Weigh each phial until the beam lies level, and add up the weights on the other pan. Small numbers of grams can stand for letters.",
+  ],
+  equations: [
+    "Count the atoms of each element on both sides of the arrow; the boxes must make them equal. Read the numbers in order.",
+  ],
+  measures: [
+    "Nothing measures 400 ml for you: only the brims of the two bottles are sure. What is left in the larger after it fills the smaller?",
+  ],
+  molecules: [
+    "Name the element each molecule is made of; every one of them has a symbol of a single letter. Read the pages in their order.",
   ],
   chemistry: [
     "Each level meets a number. The faded chart on the wall gives every such number a short name of its own.",

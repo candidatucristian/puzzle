@@ -9,7 +9,7 @@ import { createCalculatorView } from "./calculatorView.js";
 // Level — "OVERTIME"  ·  code: SOIL  ·  add up the hours
 //
 // A small office late at night, seen from the chair: a desk against the wall,
-// one desk lamp for light, a window onto the city. Four digital clocks, each
+// one desk lamp for light, an old mirror on the wall. Four digital clocks, each
 // a real kind of clock and each stopped on its own time (the colon blinks,
 // the hours do not move): an LED clock on the wall, a clock radio on the
 // shelf, an alarm clock and a folding travel clock on the desk. In the lamp's
@@ -28,6 +28,8 @@ import { createCalculatorView } from "./calculatorView.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LCD_INK = 0x1f2a1a; // the calculator's dark digits
+const BOTANICAL_PHOTO_KEY = "ot_botanical_photo";
+const DESK_PROPS_KEY = "ot_desk_props";
 
 export default class OvertimeScene extends BasePuzzleScene {
   constructor() {
@@ -37,6 +39,13 @@ export default class OvertimeScene extends BasePuzzleScene {
   init(data) {
     this.skipFadeIn =
       data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+  }
+
+  preload() {
+    if (!this.textures.exists(BOTANICAL_PHOTO_KEY))
+      this.load.image(BOTANICAL_PHOTO_KEY, "/assets/images/Overtime/after-hours-botanical.png");
+    if (!this.textures.exists(DESK_PROPS_KEY))
+      this.load.image(DESK_PROPS_KEY, "/assets/images/Overtime/after-hours-desk-props.png");
   }
 
   create() {

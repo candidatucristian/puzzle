@@ -1,7 +1,12 @@
 import { playPaperTick, playPuzzleChime } from "../../shared/puzzleSounds.js";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { paintStudy, releaseStudyArt } from "./board.js";
+import {
+  paintStudy,
+  releaseStudyArt,
+  STUDY_BACKGROUND,
+  STUDY_CARD,
+} from "./board.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "SEQUENCE"  ·  code: 19334488111   ·  sort, then read
@@ -32,10 +37,20 @@ const SEQ_START = [23, 31, 11, 28, 19, 24];
 const SEQ_INK = "#2b2118"; // pencil-and-ink on paper
 const SEQ_RED = "#8e2a1c"; // the answer, written in red
 const SEQ_FONT = '"Special Elite", monospace';
+const CARD_FONT = '"Architects Daughter", "Segoe Print", "Comic Sans MS", cursive';
 
 export default class SequenceScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Sequence" });
+  }
+
+  preload() {
+    if (!this.textures.exists(STUDY_BACKGROUND)) {
+      this.load.image(STUDY_BACKGROUND, "assets/images/Sequence/study-background.png");
+    }
+    if (!this.textures.exists(STUDY_CARD)) {
+      this.load.image(STUDY_CARD, "assets/images/Sequence/sticky-note-cutout.png");
+    }
   }
 
   init(data) {
@@ -72,8 +87,8 @@ export default class SequenceScene extends BasePuzzleScene {
     const compact = H < 450;
     const deskY = H * (compact ? 0.68 : 0.74);
     // the row of slots
-    const cw = Math.min(W * 0.09, 124, compact ? H * 0.22 : Infinity);
-    const chh = cw * 0.72;
+    const cw = Math.min(W * 0.065, 124, compact ? H * 0.22 : Infinity);
+    const chh = cw * (2 / 3);
     const gap = cw * 0.26;
     const total = 6 * cw + 5 * gap;
     this._slots = [];
@@ -90,14 +105,35 @@ export default class SequenceScene extends BasePuzzleScene {
     }
     this._slotRow = { x: x0, y: sy - chh / 2, w: total, h: chh };
 
-    // the note on the desk — kept on screen however narrow it is
-    const nw = Math.min(240, W * 0.42);
-    const nh = Math.round(Math.min(nw * 0.38, compact ? H * 0.28 : Infinity));
-    // Reserve the bottom-right corner for Inspect, including larger text.
-    const edge = Math.max(12, W * 0.04);
-    const nx = Math.max(edge, Math.min(W * 0.79, W - nw - edge - (compact ? 160 : 0)));
-    const ny = Math.min(deskY + (H - deskY) / 2 - nh / 2, H - nh - 12);
-    this._note = { x: nx, y: ny, w: nw, h: nh, angle: -0.035 };
+    // The clue sits at the upper-right of the cork frame, above the card row.
+    const noteY = Math.max(12, H * 0.055);
+    const maxNoteW = Math.max(82, (this._slotRow.y - noteY - 10) * 1.48);
+    const nw = Math.min(205, W * 0.17, maxNoteW);
+    const noteW = Math.min(nw, 165);
+    const nx = Math.max(
+      12,
+      Math.min(W * 0.75 - noteW - W * 0.015, W - noteW - 12),
+    );
+    this._note = {
+      x: nx,
+      y: noteY,
+      w: noteW,
+      h: noteW / 1.5,
+      angle: -0.035,
+    };
+    const noteRight = this._slotRow.x + this._slotRow.w;
+    const orderW = Math.min(
+      132,
+      Math.min(W, H) * 0.16,
+      Math.max(48, W - noteRight - 24),
+    );
+    this._orderNote = {
+      x: noteRight + 8,
+      y: this._slotRow.y + this._slotRow.h + 10,
+      w: orderW,
+      h: orderW / 1.5,
+      angle: 0.025,
+    };
 
     const art = paintStudy(this, W, H, {
       W,
@@ -108,6 +144,7 @@ export default class SequenceScene extends BasePuzzleScene {
       slotRow: this._slotRow,
       fused: { y: fusedY },
       note: this._note,
+      orderNote: this._orderNote,
     });
     this._art = art;
     this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-14);
@@ -142,22 +179,26 @@ export default class SequenceScene extends BasePuzzleScene {
       x: cx - Math.sin(n.angle) * dy,
       y: cy + Math.cos(n.angle) * dy,
     });
-    const a = at(-n.h * 0.12);
+    const a = at(-n.h * 0.13);
     this.add
       .text(a.x, a.y, "25 → 55", {
         fontFamily: SEQ_FONT,
-        fontSize: Math.round(n.h * 0.28) + "px",
+        fontSize:
+          Math.max(8, Math.round(Math.min(n.h * 0.28, n.w * 0.18))) + "px",
         color: SEQ_INK,
+        fontStyle: "bold",
       })
       .setOrigin(0.5)
       .setAngle(deg)
       .setDepth(-5);
-    const b = at(n.h * 0.26);
+    const b = at(n.h * 0.23);
     this.add
-      .text(b.x, b.y, "how many, then what", {
+      .text(b.x, b.y, "how many,\nthen what", {
         fontFamily: SEQ_FONT,
-        fontSize: Math.max(10, Math.round(n.h * 0.15)) + "px",
+        fontSize:
+          Math.max(7, Math.round(Math.min(n.h * 0.105, n.w * 0.07))) + "px",
         color: "#4a3a2a",
+        align: "center",
       })
       .setOrigin(0.5)
       .setAngle(deg)
@@ -185,7 +226,7 @@ export default class SequenceScene extends BasePuzzleScene {
       const shadow = this.add
         .image(lift, lift * 1.4, art.shadow)
         .setDisplaySize(s.w * 1.5, s.h + s.w * 0.5)
-        .setAlpha(0.7);
+        .setAlpha(0.22);
       const card = this.add.image(0, 0, art.card).setDisplaySize(s.w, s.h);
       cont.add([shadow, card]);
       cont.shadow = shadow;
@@ -193,11 +234,12 @@ export default class SequenceScene extends BasePuzzleScene {
 
       const txt = this.add
         .text(0, s.h * 0.1, String(value), {
-          fontFamily: SEQ_FONT,
-          fontSize: Math.round(s.h * 0.5) + "px",
-          color: SEQ_INK,
+          fontFamily: CARD_FONT,
+          fontSize: Math.round(s.h * 0.48) + "px",
+          color: "#302319",
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setAlpha(0.92);
       cont.add(txt);
       cont.numText = txt;
 
@@ -219,7 +261,7 @@ export default class SequenceScene extends BasePuzzleScene {
         cont.setDepth(16);
         cont.setScale(1.07);
         cont.setAngle(0);
-        shadow.setPosition(lift * 3, lift * 4.5).setAlpha(0.5); // lifted off the cork
+        shadow.setPosition(lift * 3, lift * 4.5).setAlpha(0.38); // lifted off the cork
         cont.dragOffX = cont.x - p.worldX;
         cont.dragOffY = cont.y - p.worldY;
         playPaperTick(this, 0.1);
@@ -233,7 +275,7 @@ export default class SequenceScene extends BasePuzzleScene {
         if (this._solved) return;
         cont.setDepth(10);
         cont.setScale(1);
-        shadow.setPosition(lift, lift * 1.4).setAlpha(0.7);
+        shadow.setPosition(lift, lift * 1.4).setAlpha(0.22);
         const target = this._slotAt(p.x, p.y);
         if (target !== -1 && target !== cont.slotIndex) {
           this._swap(cont.slotIndex, target);

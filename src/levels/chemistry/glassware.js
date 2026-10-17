@@ -2,7 +2,7 @@ import { makeCanvas, soft } from "../../shared/paint.js";
 import { BACK, footShadow, onWall } from "../house/roomKit.js";
 
 export const LAB_FIXTURES = {
-  cabinet: { key: "lab_glassware_cabinet", url: "assets/images/Room7/glassware-cabinet.png" },
+  cabinet: { key: "lab_glassware_cabinet_photo", url: "assets/images/Room7/glassware-cabinet.png?v=2" },
   rack: { key: "lab_test_tube_rack", url: "assets/images/Room7/test-tube-rack.png" },
   washing: { key: "lab_washing_station", url: "assets/images/Room7/washing-station.png" },
 };
@@ -23,7 +23,7 @@ function cutout(source, name, box, brightness = 0.8) {
 }
 
 export function paintGlassCabinet(ctx, L, source) {
-  const flat = cutout(source, "cabinet", [116, 12, 1304, 996], 0.9);
+  const flat = cutout(source, "cabinet", [116, 12, 1304, 996], 1.02);
   // The cupboard front stands a little proud of the left wall.
   onWall(ctx, { ...L, half: L.half - 12 }, -1, L.wallShelves, flat);
 }

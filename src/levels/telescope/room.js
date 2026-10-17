@@ -19,7 +19,7 @@ import { archGeo, paintSkyOn, paintWindowOn, openingPath } from "./window.js";
 const ROOM = "tele_room";
 const GLOW = "tele_room_glow";
 
-export function drawRoom(scene, sk, W, H) {
+export function drawRoom(scene, sk, W, H, telescopePhoto) {
   const geo = roomWindow(W, H);
   const lantern = { x: W * 0.6, y: geo.sillY + geo.stool.depth * 0.5 };
   const cv = makeCanvas(W, H);
@@ -36,7 +36,7 @@ export function drawRoom(scene, sk, W, H) {
   paintCharts(ctx, X, Y, W, H, S);
   paintDesk(ctx, X, Y, S);
   paintSillProps(ctx, X, geo, lantern, H, S);
-  paintTelescope(ctx, X, Y, W, S);
+  paintTelescope(ctx, X, Y, W, H, S, telescopePhoto);
   finish(ctx, W, H);
 
   addCanvas(scene.textures, ROOM, cv);
@@ -639,7 +639,17 @@ function paintSillProps(ctx, X, geo, lantern, H, S) {
 
 // the telescope: a navy tube with brass bands on a wooden tripod, aimed out
 // of the window — exactly where the scene's click test finds it
-function paintTelescope(ctx, X, Y, W, S) {
+function paintTelescope(ctx, X, Y, W, H, S, photo) {
+  if (photo) {
+    const sourceW = photo.naturalWidth || photo.width;
+    const sourceH = photo.naturalHeight || photo.height;
+    const scale = Math.min((W * 0.205) / sourceW, (H * 0.56) / sourceH);
+    const width = sourceW * scale;
+    const height = sourceH * scale;
+    ctx.drawImage(photo, W * 0.54 - width / 2, H * 0.62 - height / 2, width, height);
+    return;
+  }
+
   const eye = { x: X(0.472), y: Y(0.505) };
   const obj = { x: X(0.615), y: Y(0.345) };
   const dx = obj.x - eye.x;

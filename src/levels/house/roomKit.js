@@ -1,6 +1,7 @@
 import { soft, makeCanvas, lcg, polygon } from "../../shared/paint.js";
 import { paintNightWindow } from "../hall/hall.js";
 import { paintGoldChest } from './chestArt.js';
+import { paintWallpaperMaterial, paintParquetMaterial, paintParquetBlockMaterial, paintWallMaterial, paintProjectedMaterial, paintFlatMaterial } from "./drawingRoomMaterials.js";
 
 /** What the rooms off the hall are all made of: the way a room is measured
  *  and seen, its shell — boards, papered walls over an oak dado, a ceiling —
@@ -301,10 +302,25 @@ export function paintChest(L, open) {
 export function block(ctx, L, b, tone) {
   const { Q } = L;
   const { x0, x1, y0, y1, d0, d1 } = b;
-  if (x1 < 0) fillPoly(ctx, [Q(x1, y0, d0), Q(x1, y0, d1), Q(x1, y1, d1), Q(x1, y1, d0)], tone.side);
-  if (x0 > 0) fillPoly(ctx, [Q(x0, y0, d0), Q(x0, y0, d1), Q(x0, y1, d1), Q(x0, y1, d0)], tone.side);
-  if (y1 < EYE) fillPoly(ctx, [Q(x0, y1, d0), Q(x1, y1, d0), Q(x1, y1, d1), Q(x0, y1, d1)], tone.top);
+  const wood = L.furnitureMaterial;
+  const side = x => {
+    fillPoly(ctx, [Q(x, y0, d0), Q(x, y0, d1), Q(x, y1, d1), Q(x, y1, d0)], tone.side);
+    paintProjectedMaterial(ctx, wood, (u, v) => Q(x, y1 - (y1 - y0) * v, d1 - (d1 - d0) * u), 0.58, 3, 1);
+  };
+  if (x1 < 0) side(x1);
+  if (x0 > 0) side(x0);
+  if (y1 < EYE) {
+    fillPoly(ctx, [Q(x0, y1, d0), Q(x1, y1, d0), Q(x1, y1, d1), Q(x0, y1, d1)], tone.top);
+    paintProjectedMaterial(ctx, wood, (u, v) => Q(x0 + (x1 - x0) * u, y1, d1 - (d1 - d0) * v), 0.92, 2, 4);
+  }
   fillPoly(ctx, [Q(x0, y0, d0), Q(x1, y0, d0), Q(x1, y1, d0), Q(x0, y1, d0)], tone.front);
+  paintProjectedMaterial(ctx, wood, (u, v) => Q(x0 + (x1 - x0) * u, y1 - (y1 - y0) * v, d0), 0.78);
+  if (wood) {
+    const a = Q(x0, y1, d0), z = Q(x1, y1, d0);
+    ctx.strokeStyle = "rgba(215,174,120,0.22)";
+    ctx.lineWidth = Math.max(0.45, 0.4 * a.s);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(z.x, z.y); ctx.stroke();
+  }
 }
 
 // Something flat on a side wall — made as a flat picture first, then laid on
@@ -360,7 +376,9 @@ function wallUpper(ctx, L, M, a0, a1, tone, rnd) {
   const foot = st.dado ? st.dado.h : 0;
   if (st.wall === "paper") {
     for (let a = a0; a < a1; a += 11) line(a, foot, top, st.mark, 2.2);
+    paintWallpaperMaterial(ctx, L, M, a0, a1, foot, top);
   } else if (st.wall === "planks") {
+    paintWallMaterial(ctx, L.surfaceMaterials?.wallBoards, M, a0, a1, foot, top, 0.92);
     // boards up and down, no two quite the same, the limewash thin on them
     for (let a = a0; a < a1; a += 15) {
       fillPoly(ctx, [M(a, foot), M(Math.min(a1, a + 15), foot), M(Math.min(a1, a + 15), top), M(a, top)], rnd() < 0.5 ? `rgba(0,0,0,${(rnd() * 0.16).toFixed(3)})` : `rgba(210,224,236,${(rnd() * 0.05).toFixed(3)})`);
@@ -382,6 +400,7 @@ function wallUpper(ctx, L, M, a0, a1, tone, rnd) {
     for (let i = 0; i < (a1 - a0) * 0.5; i++) line(a0 + rnd() * (a1 - a0), foot, top, rnd() < 0.6 ? "rgba(0,0,0,0.07)" : "rgba(255,210,170,0.02)", 0.6 + rnd() * 1.4);
   } else {
     // bare plaster: patched, stained, cracked here and there
+    paintWallMaterial(ctx, L.surfaceMaterials?.wallPlaster, M, a0, a1, foot, top, 0.9);
     for (let i = 0; i < (a1 - a0) * 0.2; i++) {
       const p = M(a0 + rnd() * (a1 - a0), rnd() * top);
       soft(ctx, p.x, p.y, (10 + rnd() * 40) * p.s, (8 + rnd() * 30) * p.s, rnd() < 0.6 ? "0,0,0" : "150,146,128", 0.1 + rnd() * 0.1);
@@ -403,12 +422,23 @@ function wallLower(ctx, L, M, a0, a1, tone, isBack) {
   const band = (y0, y1, fill) => fillPoly(ctx, [M(a0, y0), M(a1, y0), M(a1, y1), M(a0, y1)], fill);
   if (d) {
     band(0, d.h, isBack ? d.back : tone(d.near, d.far));
+    if (L.surfaceMaterials?.detailed) paintWallMaterial(ctx, L.surfaceMaterials.dado ?? L.surfaceMaterials.wood, M, a0, a1, 0, d.h, 0.78);
     if (d.kind === "panels") {
-      ctx.strokeStyle = "rgba(4,2,1,0.7)";
       for (let a = a0 + 8; a < a1 - 30; a += 62) {
-        polygon(ctx, [M(a + 6, d.h - 10), M(a + 56, d.h - 10), M(a + 56, 18), M(a + 6, 18)]);
+        const pts = [M(a + 6, d.h - 10), M(a + 56, d.h - 10), M(a + 56, 18), M(a + 6, 18)];
+        polygon(ctx, pts);
+        if (L.surfaceMaterials?.detailed) {
+          ctx.fillStyle = "rgba(6,3,1,0.18)";
+          ctx.fill();
+        }
+        ctx.strokeStyle = "rgba(4,2,1,0.7)";
         ctx.lineWidth = Math.max(0.8, 0.7 * M(a, 0).s);
         ctx.stroke();
+        if (L.surfaceMaterials?.detailed) {
+          ctx.strokeStyle = "rgba(220,170,108,0.18)";
+          ctx.lineWidth = Math.max(0.5, 0.35 * pts[0].s);
+          ctx.beginPath(); ctx.moveTo(pts[1].x, pts[1].y); ctx.lineTo(pts[2].x, pts[2].y); ctx.lineTo(pts[3].x, pts[3].y); ctx.stroke();
+        }
       }
     } else {
       // match-boarding: narrow boards up and down
@@ -420,6 +450,7 @@ function wallLower(ctx, L, M, a0, a1, tone, isBack) {
       }
     }
     band(d.h - 3, d.h + 3, isBack ? d.railBack : tone(d.rail, d.railFar));
+    if (L.surfaceMaterials?.detailed) band(d.h + 2.3, d.h + 3, "rgba(206,164,108,0.2)");
   }
   band(0, 10, isBack ? st.skirtBack : tone(st.skirt, st.skirtBack));
 }
@@ -431,11 +462,14 @@ export function paintShell(ctx, L) {
   const rnd = lcg(311);
   // ── the ceiling
   fillPoly(ctx, [Q(-hx, top, NEAR), Q(hx, top, NEAR), Q(hx, top, BACK), Q(-hx, top, BACK)], st.ceilingCol);
+  paintProjectedMaterial(ctx, L.surfaceMaterials?.plaster, (u, v) => Q(-hx + hx * 2 * u, top, BACK - (BACK - NEAR) * v), 0.92, 8, 8);
   if (st.ceiling === "beams") {
     // heavy timbers across it, the furthest first: the underside, then the face toward us
     for (let d = BACK - 40; d > NEAR; d -= 78) {
       fillPoly(ctx, [Q(-hx, top - 16, d), Q(hx, top - 16, d), Q(hx, top - 16, d + 20), Q(-hx, top - 16, d + 20)], "#120c08");
+      paintProjectedMaterial(ctx, L.surfaceMaterials?.beamWood, (u, v) => Q(-hx + hx * 2 * u, top - 16, d + 20 * v), 0.46, 8, 2);
       fillPoly(ctx, [Q(-hx, top, d), Q(hx, top, d), Q(hx, top - 16, d), Q(-hx, top - 16, d)], "#22160e");
+      paintProjectedMaterial(ctx, L.surfaceMaterials?.beamWood, (u, v) => Q(-hx + hx * 2 * u, top - 16 * v, d), 0.76, 8, 1);
       const p = Q(-hx, top - 16, d), q = Q(hx, top - 16, d);
       ctx.strokeStyle = "rgba(255,206,160,0.08)";
       ctx.lineWidth = Math.max(0.8, 0.6 * p.s);
@@ -457,15 +491,17 @@ export function paintShell(ctx, L) {
   ctx.save();
   ctx.clip();
   const tint = () => { const k = rnd(); return k < 0.5 ? `rgba(0,0,0,${(k * 0.3).toFixed(3)})` : `rgba(255,214,170,${((k - 0.5) * 0.07).toFixed(3)})`; };
+  paintParquetMaterial(ctx, L, NEAR, BACK, hx);
   if (st.floor === "herringbone") {
     // parquet laid in zigzag: short blocks, each column leaning the other way
     const cw = 30, bh = 10;
     for (let c = 0, x = -hx; x < hx; x += cw, c++) {
       for (let d = NEAR - cw; d < BACK; d += bh) {
         const up = c % 2 === 0;
+        paintParquetBlockMaterial(ctx, L, x, up ? d : d + cw, cw, bh, up ? cw : -cw, c * 37 + Math.round((d - NEAR) / bh) * 3);
         fillPoly(ctx, [Q(x, 0, up ? d : d + cw), Q(x + cw, 0, up ? d + cw : d), Q(x + cw, 0, (up ? d + cw : d) + bh), Q(x, 0, (up ? d : d + cw) + bh)], tint());
         ctx.strokeStyle = "rgba(4,2,1,0.6)";
-        ctx.lineWidth = Math.max(0.6, 0.8 * u);
+        ctx.lineWidth = L.surfaceMaterials?.detailed ? Math.max(0.4, 0.45 * u) : Math.max(0.6, 0.8 * u);
         ctx.stroke();
       }
     }
@@ -473,6 +509,7 @@ export function paintShell(ctx, L) {
     // stone flags in courses, each course shifted, worn hollow in the middle
     for (let r = 0, d = NEAR; d < BACK; d += 58, r++) {
       for (let x = -hx - (r % 2 ? 36 : 0); x < hx; x += 72) {
+        paintProjectedMaterial(ctx, L.surfaceMaterials?.flagstone, (u, v) => Q(x + 1 + 70 * u, 0, d + 57 - 56 * v), 0.94, 2, 2);
         fillPoly(ctx, [Q(x + 1, 0, d + 1), Q(x + 71, 0, d + 1), Q(x + 71, 0, d + 57), Q(x + 1, 0, d + 57)], rnd() < 0.5 ? `rgba(0,0,0,${(rnd() * 0.3).toFixed(3)})` : `rgba(170,176,186,${(rnd() * 0.09).toFixed(3)})`);
         polygon(ctx, [Q(x, 0, d), Q(x + 72, 0, d), Q(x + 72, 0, d + 58), Q(x, 0, d + 58)]);
         ctx.strokeStyle = "rgba(2,3,4,0.85)";
@@ -485,10 +522,12 @@ export function paintShell(ctx, L) {
     const n = st.floor === "deck" ? 11 : 18;
     for (let i = 0; i <= n; i++) {
       const x = -hx + (2 * hx * i) / n, x2 = x + (2 * hx) / n;
+      const deck = L.surfaceMaterials?.deckPlanks;
+      if (i < n && deck) paintProjectedMaterial(ctx, deck[i % deck.length], (u, v) => Q(x + (x2 - x) * u, 0, BACK - (BACK - NEAR) * v), 0.95, 1, 12);
       if (i < n) fillPoly(ctx, [Q(x, 0, NEAR), Q(x2, 0, NEAR), Q(x2, 0, BACK), Q(x, 0, BACK)], tint());
       const a = Q(x, 0, NEAR), b = Q(x, 0, BACK);
       ctx.strokeStyle = "rgba(4,2,1,0.75)";
-      ctx.lineWidth = Math.max(1, (st.floor === "deck" ? 2.4 : 1.4) * u);
+      ctx.lineWidth = deck ? Math.max(0.65, u) : Math.max(1, (st.floor === "deck" ? 2.4 : 1.4) * u);
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       if (st.floor === "deck" && i < n) {
         // where one plank ends and the next begins, and the pegs that hold them
@@ -592,6 +631,7 @@ function sashWindow(ctx, L) {
     ctx.fill();
     ctx.save();
     ctx.clip();
+    paintFlatMaterial(ctx, L.surfaceMaterials?.velvet, Math.min(out, inn) - 6 * s, w.top - 12 * s, Math.abs(inn - out) + 12 * s, foot - w.top + 12 * s, s * 0.35, 0.88);
     for (let i = 0; i < 6; i++) {
       const x = out - e * (4 + i * 6) * s;
       ctx.strokeStyle = i % 2 ? "rgba(0,0,0,0.45)" : "rgba(170,150,200,0.1)";
@@ -605,6 +645,7 @@ function sashWindow(ctx, L) {
   // the pelmet over them, its fringe
   ctx.fillStyle = "#2a0a10";
   ctx.fillRect(x0 - 30 * s, w.top - 26 * s, w.rx * 2 + 60 * s, 16 * s);
+  paintFlatMaterial(ctx, L.surfaceMaterials?.velvet, x0 - 30 * s, w.top - 26 * s, w.rx * 2 + 60 * s, 16 * s, s * 0.35, 0.76);
   ctx.fillStyle = "#8a6a2a";
   ctx.fillRect(x0 - 30 * s, w.top - 11 * s, w.rx * 2 + 60 * s, 1.6 * s);
   ctx.fillStyle = "rgba(255,206,160,0.1)";
@@ -618,6 +659,14 @@ function roundWindow(ctx, L) {
   const cy = (w.top + w.sill) / 2, r = w.rx;
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.beginPath(); ctx.arc(w.cx + 2 * s, cy + 3 * s, r + 7 * s, 0, Math.PI * 2); ctx.fill();
+  if (L.surfaceMaterials?.porthole) {
+    const radius = r + 7 * s;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(w.cx, cy, radius, 0, Math.PI * 2); ctx.clip();
+    ctx.drawImage(L.surfaceMaterials.porthole, w.cx - radius, cy - radius, radius * 2, radius * 2);
+    ctx.restore();
+    return;
+  }
   const brass = ctx.createLinearGradient(w.cx - r, cy - r, w.cx + r, cy + r);
   brass.addColorStop(0, "#3a2a10");
   brass.addColorStop(0.5, "#8a6c34");

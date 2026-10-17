@@ -3,13 +3,15 @@ import { gloom } from "../house/roomKit.js";
 import { paintNightWindow } from "../hall/hall.js";
 import { paintPassage } from "./doorway.js";
 import { paintPlanetarium, paintArmillaryBase, createArmillaryArt, paintPendulum } from "./observatory.js";
+import { physicsMaterials, paintPhysicsWindow, paintPhysicsTelescope } from "./materials.js";
+import { paintFlatMaterial, paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
 /** The top floor of the manor: not a passage but a round room under a dome,
  *  and of a piece with the halls below — the same drab striped paper over
  *  the same oak dado, the same oak doors — and as long shut up. We stand
  *  just inside it, in very little light. Its wall goes round in front of us,
- *  and in it three doors, numbered XII to XIV, set round the curve — one to
- *  the left, two to the right — with sconces between them, of which two
+ *  and in it one door, numbered XI, on the right of the curve — with a
+ *  sconce either side of the window, of which two
  *  still have a candle alight. Further round on the left an archway opens
  *  on a passage, and an iron gate hangs across it. The paper has come away in places and the
  *  damp has run down from the cornice; there are cobwebs over the doors. In
@@ -19,7 +21,7 @@ import { paintPlanetarium, paintArmillaryBase, createArmillaryArt, paintPendulum
  *  telescope on its tripod. The floor is parquet, laid in zigzag, dull now
  *  and dusty. Above the cornice a celestial chart follows the blue dome,
  *  between dark ribs; a small brass armillary stands by the left wall and
- *  a small demonstration pendulum hangs between the right-hand doors.
+ *  a small demonstration pendulum hangs beside the door.
  *  At our right hand, the stairs we came up by:
  *  a round well in the floor, the steps winding down it about a post, and a
  *  balustrade of turned oak round its rim.
@@ -47,7 +49,7 @@ const WIN = { half: 20, sill: 104, tall: 1.04, shape: { ry: 0.495, moonY: 0.17, 
 // the well the stairs come up by: where in the room, and how wide
 const WELL = { x: 255, z: 380, r: 85 };
 // the doors, left to right: how far round each is, and its number
-const DOORS = [[-34, "XII"], [32, "XIII"], [53, "XIV"]];
+const DOORS = [[32, "XI"]];
 // the archway on the left, and the passage beyond it: how far round, how wide
 // either way, how high to the spring of its arch and to its crown
 const PASS = { deg: -68, half: 8, spring: 215, tall: 215 };
@@ -85,8 +87,8 @@ export function layoutRotunda(W, H) {
   const foot = L.P(34, 0, ZC + R - 118), h = 172 * foot.s;
   L.scope = { x: foot.x, y: foot.y, h };
   L.thing = { level: "telescope", label: "Look through the telescope", box: { x: foot.x - h * 0.5, y: foot.y - h * 1.04, width: h * 0.86, height: h * 1.06 } };
-  // Tucked against the wall between the passage and door XII, well clear
-  // of both openings. The smaller pedestal sits just inside the skirting.
+  // Tucked against the wall between the passage and the window, well clear
+  // of the opening. The smaller pedestal sits just inside the skirting.
   const armillary = L.on(-51, 0, R - 26);
   L.armillary = { ...armillary, s: armillary.s * 0.62 };
   // the window is flat in the wall, which is as good as flat there
@@ -100,6 +102,7 @@ export function layoutRotunda(W, H) {
 
 export function paintRotunda(scene, L, armillaryPhase = 0) {
   const t = scene.textures;
+  L.physicsMaterials = physicsMaterials(scene);
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
@@ -111,11 +114,11 @@ export function paintRotunda(scene, L, armillaryPhase = 0) {
   paintPassage(ctx, L);
   {
     const v = L.win;
-    paintNightWindow(ctx, W, H, { cx: v.x + v.width / 2, rx: v.width / 2, top: v.y, sill: v.y + v.height }, L.eye, WIN.shape);
+    if (!paintPhysicsWindow(ctx, L)) paintNightWindow(ctx, W, H, { cx: v.x + v.width / 2, rx: v.width / 2, top: v.y, sill: v.y + v.height }, L.eye, WIN.shape);
   }
   paintMoonlight(ctx, L);
   paintArmillaryBase(ctx, L);
-  paintTelescope(ctx, L.scope.x, L.scope.y, L.scope.h);
+  if (!paintPhysicsTelescope(ctx, L)) paintTelescope(ctx, L.scope.x, L.scope.y, L.scope.h);
   paintStairs(ctx, L);
   paintShade(ctx, L);
   addCanvasTexture(t, K.room, c);
@@ -165,6 +168,9 @@ function paintDome(ctx, L) {
     for (let d = SWEEP; d >= -SWEEP; d -= 4) pts.push(at(d, lift + 5));
     const v = lift / 70;
     fill(ctx, pts, `rgb(${Math.round(26 - v * 10)},${Math.round(35 - v * 13)},${Math.round(52 - v * 17)})`);
+    if (L.physicsMaterials) for (let d = -SWEEP; d < SWEEP; d += 8) {
+      paintProjectedMaterial(ctx, L.physicsMaterials.dome, (u, v) => at(d + Math.min(8, SWEEP - d) * u, lift + 5 * v), 0.82, 2, 2);
+    }
   }
   // the damp in it, spreading up from the cornice
   for (let i = 0; i < 9; i++) {
@@ -188,7 +194,7 @@ function paintDome(ctx, L) {
   // the ribs: dark oak, a little light along each
   for (let d = -90; d <= 90; d += 22.5) {
     for (const [w, col] of [[6, "#160e09"], [1.2, "rgba(170,186,220,0.16)"]]) {
-      ctx.strokeStyle = col;
+      ctx.strokeStyle = w === 6 && L.physicsMaterials ? ctx.createPattern(L.physicsMaterials.oak, "repeat") : col;
       ctx.lineWidth = Math.max(1, w * L.u);
       ctx.beginPath();
       for (let lift = 0; lift <= 70; lift += 5) { const p = at(d, lift); if (lift) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }
@@ -222,6 +228,8 @@ function paintFloor(ctx, L) {
     for (let z = 236; z < 730; z += bh) {
       const z0 = c % 2 ? z + cw : z, z1 = c % 2 ? z : z + cw;
       const k = rnd();
+      const plank = L.physicsMaterials?.planks[(c * 7 + Math.round(z / bh)) % 8];
+      if (plank) paintProjectedMaterial(ctx, plank, (u, v) => L.P(x + cw * u, 0, z0 + (z1 - z0) * u + bh * v), 1);
       fill(ctx, [L.P(x, 0, z0), L.P(x + cw, 0, z1), L.P(x + cw, 0, z1 + bh), L.P(x, 0, z0 + bh)], k < 0.5 ? `rgba(0,0,0,${(k * 0.34).toFixed(3)})` : `rgba(255,206,160,${((k - 0.5) * 0.1).toFixed(3)})`);
       ctx.lineWidth = Math.max(0.5, 0.26 * L.P(x, 0, z0).s);
       ctx.stroke();
@@ -246,11 +254,12 @@ function paintFloor(ctx, L) {
 // away in places, the damp run down it — the cornice, the doors each in its
 // architrave with its number carved in its top rail, and the sconces. (The
 // window is put in afterwards, over the paper.)
-function wallFlat() {
+function wallFlat(L) {
   const fw = SWEEP * 2 * KX, fh = WALL * KY;
   const flat = makeCanvas(fw, fh);
   const g = flat.getContext("2d");
   const rnd = lcg(515);
+  const materials = L.physicsMaterials;
   const X = (deg) => (deg + SWEEP) * KX, Y = (y) => (WALL - y) * KY;
   const box = (d0, y0, d1, y1, style) => { g.fillStyle = style; g.fillRect(X(d0), Y(y1), (d1 - d0) * KX, (y1 - y0) * KY); };
   // the paper: drab, faintly striped, gone brown with the years
@@ -259,6 +268,7 @@ function wallFlat() {
   paper.addColorStop(1, "#2b241c");
   g.fillStyle = paper;
   g.fillRect(0, 0, fw, fh);
+  paintFlatMaterial(g, materials?.paper, 0, 0, fw, Y(98), 0.72, 1);
   g.fillStyle = "rgba(255,226,180,0.04)";
   for (let d = -SWEEP; d < SWEEP; d += 1.6) g.fillRect(X(d), 0, KX * 0.5, Y(100));
   // the damp, run down from the cornice
@@ -297,6 +307,7 @@ function wallFlat() {
   }
   // the cornice: a deep moulding, dark
   box(-SWEEP, 302, SWEEP, WALL, "#17100b");
+  paintFlatMaterial(g, materials?.across, 0, 0, fw, (WALL - 302) * KY, 0.55, 0.8);
   box(-SWEEP, 300, SWEEP, 303, "#2e1e12");
   box(-SWEEP, 316, SWEEP, 317, "rgba(255,206,160,0.08)");
   // the dado: oak panels under a rail
@@ -304,14 +315,22 @@ function wallFlat() {
   dado.addColorStop(0, "#2a1a10");
   dado.addColorStop(1, "#120a06");
   box(-SWEEP, 0, SWEEP, 98, dado);
+  paintFlatMaterial(g, materials?.oak, 0, Y(98), fw, 98 * KY, 0.6, 1);
   for (let d = -SWEEP + 1; d < SWEEP; d += 9) {
     g.strokeStyle = "rgba(4,2,1,0.75)";
     g.lineWidth = 2;
     g.strokeRect(X(d + 1), Y(86), 7 * KX, 68 * KY);
     g.strokeStyle = "rgba(255,206,160,0.07)";
     g.strokeRect(X(d + 1) + 2, Y(86) + 2, 7 * KX, 68 * KY);
+    if (materials) {
+      const x = X(d + 1), y = Y(86), w = 7 * KX, h = 68 * KY;
+      g.fillStyle = "rgba(0,0,0,0.24)"; g.fillRect(x + 3, y + 3, w - 6, h - 6);
+      g.fillStyle = "rgba(0,0,0,0.4)"; g.fillRect(x, y, w, 3);
+      g.fillStyle = "rgba(205,168,119,0.16)"; g.fillRect(x, y + h - 2, w, 2);
+    }
   }
   box(-SWEEP, 96, SWEEP, 102, "#3e2616");
+  paintFlatMaterial(g, materials?.across, 0, Y(102), fw, 6 * KY, 0.42, 0.85);
   box(-SWEEP, 101, SWEEP, 102, "rgba(255,206,160,0.08)");
   box(-SWEEP, 0, SWEEP, 9, "#0c0704");
   // ── the doors
@@ -320,6 +339,7 @@ function wallFlat() {
     // the architrave, a keyblock over it
     g.fillStyle = "#2c1b10";
     g.fillRect(x0 - 18, y0 - 22, w + 36, h + 22);
+    paintFlatMaterial(g, materials?.frame, x0 - 18, y0 - 22, w + 36, h + 22, 0.4, 1);
     g.fillStyle = "rgba(255,206,160,0.08)";
     g.fillRect(x0 - 18, y0 - 22, w + 36, 2.4);
     g.fillStyle = "#0a0605";
@@ -331,6 +351,7 @@ function wallFlat() {
     leaf.addColorStop(1, "#1e120a");
     g.fillStyle = leaf;
     g.fillRect(x0, y0, w, h);
+    paintFlatMaterial(g, materials?.oak, x0, y0, w, h, 0.65, 1);
     for (let i = 0; i < 26; i++) {
       g.fillStyle = rnd() < 0.6 ? "rgba(6,3,1,0.16)" : "rgba(255,200,150,0.05)";
       g.fillRect(x0 + rnd() * w, y0, 1 + rnd() * 2, h);
@@ -378,6 +399,17 @@ function wallFlat() {
   // them, a cold stub in the others
   for (const [deg, lit] of SCONCES) {
     const x = X(deg), y = Y(196);
+    if (materials) {
+      if (lit) soft(g, x, y - 20, 150, 200, WARM, 0.3, "lighter");
+      const image = materials.sconce, h = 80, w = h * image.width / image.height;
+      g.drawImage(image, x - w * 0.68, y - 30, w, h);
+      if (lit) {
+        g.fillStyle = "#fff4cc";
+        g.beginPath(); g.ellipse(x, y - 42, 4, 12, 0, 0, Math.PI * 2); g.fill();
+        soft(g, x, y - 42, 34, 40, WARM, 0.6, "lighter");
+      }
+      continue;
+    }
     if (lit) soft(g, x, y - 20, 150, 200, WARM, 0.3, "lighter");
     g.strokeStyle = "#5a4418";
     g.lineWidth = 5;
@@ -394,7 +426,8 @@ function wallFlat() {
     g.beginPath(); g.ellipse(x, y - 42, 5, 12, 0, 0, Math.PI * 2); g.fill();
     soft(g, x, y - 42, 34, 40, WARM, 0.6, "lighter");
   }
-  paintPendulum(g, X(42.5), Y(180));
+  if (materials) g.drawImage(materials.pendulum, X(42.5) - 33, Y(180) - 3, 66, 171);
+  else paintPendulum(g, X(42.5), Y(180));
   // ── cobwebs: across the corners over the doors, and one in the window's head
   const web = (x, y, r, dir) => {
     g.strokeStyle = "rgba(200,206,218,0.2)";
@@ -412,14 +445,13 @@ function wallFlat() {
       g.stroke();
     }
   };
-  web(X(DOORS[0][0] + DOOR.half) + 18, Y(DOOR.tall) - 22, 56, -1);
-  web(X(DOORS[2][0] - DOOR.half) - 18, Y(DOOR.tall) - 22, 64, 1);
+  web(X(DOORS[0][0] + DOOR.half) + 18, Y(DOOR.tall) - 22, 64, -1);
   web(X(PASS.deg - PASS.half) - 16, Y(PASS.spring + 30), 60, 1);
   return flat;
 }
 
 function paintWall(ctx, L) {
-  const flat = wallFlat();
+  const flat = wallFlat(L);
   const { W } = L;
   // the moon's light on the wall round the window goes on the unrolled wall's picture
   for (let c = 0; c < flat.width; c++) {
@@ -515,7 +547,7 @@ function paintTelescope(ctx, x, y, h) {
 // Turned wood standing on the floor: `foot` and `top` are where its two ends
 // are on the screen, `profile` how thick it is on the way up — pairs of how
 // far up (0 to 1) and half its thickness in centimetres. Lit from the left.
-function turned(ctx, foot, top, profile) {
+function turned(ctx, foot, top, profile, wood = null) {
   const s = foot.s, widest = Math.max(...profile.map(([, hw]) => hw)) * s;
   const at = (t) => ({ x: foot.x + (top.x - foot.x) * t, y: foot.y + (top.y - foot.y) * t });
   ctx.beginPath();
@@ -529,6 +561,11 @@ function turned(ctx, foot, top, profile) {
   g.addColorStop(1, "#0b0604");
   ctx.fillStyle = g;
   ctx.fill();
+  if (wood) {
+    ctx.save(); ctx.clip();
+    paintFlatMaterial(ctx, wood, foot.x - widest, Math.min(foot.y, top.y), widest * 2, Math.abs(top.y - foot.y), Math.max(0.04, foot.s * 0.14), 0.85, "soft-light");
+    ctx.restore();
+  }
 }
 
 const BALUSTER = [[0, 3.4], [0.07, 3.4], [0.09, 2], [0.16, 2.4], [0.3, 4], [0.42, 3.2], [0.56, 1.7], [0.8, 1.5], [0.88, 2.4], [0.93, 1.8], [1, 2.6]];
@@ -566,6 +603,11 @@ function paintStairs(ctx, L) {
     const lit = Math.max(0, 1 - i / 12);
     const tone = (r, g, b) => `rgb(${Math.round(8 + r * lit)},${Math.round(6 + g * lit)},${Math.round(5 + b * lit)})`;
     fill(ctx, [at(a1, y, 9), at(a1, y), at((a0 + a1) / 2, y), at(a0, y), at(a0, y, 9)], tone(112, 96, 84));
+    if (L.physicsMaterials) {
+      ctx.save(); ctx.clip();
+      paintProjectedMaterial(ctx, L.physicsMaterials.stone, (u, v) => at(a0 + (a1 - a0) * u, y, 9 + (WELL.r - 9) * v), lit * 0.8, 3, 2);
+      ctx.restore();
+    }
     fill(ctx, [at(a1, y, 9), at(a1, y), at(a1, y + RISE), at(a1, y + RISE, 9)], tone(44, 34, 26));
     // the nose of the tread above, catching the light
     const p = at(a1, y + RISE, 9), q = at(a1, y + RISE);
@@ -574,7 +616,7 @@ function paintStairs(ctx, L) {
     ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
   }
   // the post they wind about
-  turned(ctx, L.P(WELL.x, -300, WELL.z), mid, [[0, 9], [1, 9]]);
+  turned(ctx, L.P(WELL.x, -300, WELL.z), mid, [[0, 9], [1, 9]], L.physicsMaterials?.oak);
   ctx.restore();
   // the edge of the floor round the well
   trace(ring(0, WELL.r));
@@ -589,7 +631,7 @@ function paintStairs(ctx, L) {
   const from = Math.PI + GAP, span = Math.PI * 2 - GAP * 2, n = 30;
   for (let i = 1; i < n; i++) {
     const a = from + (span * i) / n;
-    parts.push({ z: WELL.z + WELL.r * Math.sin(a), draw: () => turned(ctx, at(a, 0), at(a, RAIL), BALUSTER) });
+    parts.push({ z: WELL.z + WELL.r * Math.sin(a), draw: () => turned(ctx, at(a, 0), at(a, RAIL), BALUSTER, L.physicsMaterials?.oak) });
   }
   const ball = (p, r) => {
     const g = ctx.createRadialGradient(p.x - r * 0.35, p.y - r * 0.35, r * 0.1, p.x, p.y, r);
@@ -598,17 +640,20 @@ function paintStairs(ctx, L) {
     g.addColorStop(1, "#0e0805");
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.clip();
+    paintFlatMaterial(ctx, L.physicsMaterials?.oak, p.x - r, p.y - r, r * 2, r * 2, Math.max(0.04, r * 0.015), 0.75, "soft-light");
+    ctx.restore();
   };
   for (const a of [from, from + span]) {
     parts.push({ z: WELL.z + WELL.r * Math.sin(a) + 0.4, draw: () => {
       const top = at(a, 112);
-      turned(ctx, at(a, 0), top, POST);
+      turned(ctx, at(a, 0), top, POST, L.physicsMaterials?.oak);
       ball({ x: top.x, y: top.y - 5.5 * top.s }, 6.5 * top.s);
     } });
   }
   parts.push({ z: WELL.z, draw: () => {
     const top = L.P(WELL.x, 124, WELL.z);
-    turned(ctx, mid, top, [[0, 9], [0.9, 9], [0.92, 11], [0.97, 11], [0.98, 6], [1, 6]]);
+    turned(ctx, mid, top, [[0, 9], [0.9, 9], [0.92, 11], [0.97, 11], [0.98, 6], [1, 6]], L.physicsMaterials?.oak);
     ball({ x: top.x, y: top.y - 7 * top.s }, 8.5 * top.s);
   } });
   const m = 44;
@@ -619,6 +664,10 @@ function paintStairs(ctx, L) {
       fill(ctx, [at(a, RAIL - 1, WELL.r + 4.5), at(b, RAIL - 1, WELL.r + 4.5), at(b, RAIL + 6, WELL.r + 4.5), at(a, RAIL + 6, WELL.r + 4.5)], "#24150c");
       fill(ctx, [at(a, RAIL - 1, WELL.r - 4.5), at(b, RAIL - 1, WELL.r - 4.5), at(b, RAIL + 6, WELL.r - 4.5), at(a, RAIL + 6, WELL.r - 4.5)], "#1c1009");
       fill(ctx, [at(a, RAIL + 6, WELL.r - 4.5), at(b, RAIL + 6, WELL.r - 4.5), at(b, RAIL + 6, WELL.r + 4.5), at(a, RAIL + 6, WELL.r + 4.5)], "#553a25");
+      if (L.physicsMaterials) {
+        paintProjectedMaterial(ctx, L.physicsMaterials.across, (u, v) => at(a + (b - a) * u, RAIL + 6, WELL.r - 4.5 + 9 * v), 0.8);
+        paintProjectedMaterial(ctx, L.physicsMaterials.across, (u, v) => at(a + (b - a) * u, RAIL + 6 - 7 * v, WELL.r + 4.5), 0.45);
+      }
       const p = at(a, RAIL + 6, WELL.r - 1.5), q = at(b, RAIL + 6, WELL.r - 1.5);
       ctx.strokeStyle = "rgba(220,228,246,0.22)";
       ctx.lineWidth = Math.max(0.7, 1.1 * p.s);

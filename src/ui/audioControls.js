@@ -50,5 +50,7 @@ export function mountAudioControls(audio, scope) {
   };
   scope.on(document.body, 'mousedown', click);
   scope.on(document.body, 'click', e => { if (e.detail === 0) click(e); });
+  // changed from elsewhere (the cold open's own control): shown here too
+  if (audio.subscribe) scope.add(audio.subscribe(sync));
   sync();
 }

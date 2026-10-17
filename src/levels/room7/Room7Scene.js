@@ -1,7 +1,12 @@
 import PlainRoomScene from "../house/plainRoom.js";
-import { soft, lcg } from "../../shared/paint.js";
-import { BACK, WARM, block, fillPoly, footShadow, thingAt } from "../house/roomKit.js";
+import { soft, lcg, noiseBurst } from "../../shared/paint.js";
+import { BACK, WARM, block, fillPoly, footShadow, thingAt, onWall } from "../house/roomKit.js";
+import { paintWallBookcase } from "../house/wallBookcase.js";
 import { LAB_FIXTURES, paintGlassCabinet, paintTestTubeRack, paintWashingStation } from "../chemistry/glassware.js";
+import { loadLaboratoryArt, laboratoryArt, paintLaboratoryObjects } from "./laboratoryArt.js";
+import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
+import { loadRoom7DepthArt, room7DepthArt, paintDeepGlassCabinet, paintDeepWashingStation, paintDeepLaboratoryBench } from "./depthArt.js";
+import { loadChemistryDetails, chemistryDetails } from "../chemistry/photographicLab.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The laboratory: the first room off the chemist's hall, behind door VII
@@ -10,9 +15,11 @@ import { LAB_FIXTURES, paintGlassCabinet, paintTestTubeRack, paintWashingStation
 // retort on its stand, a rack of test tubes, five graduated bottles of
 // coloured liquid in a row, a Bunsen burner under a flask, the magnifying
 // glass on its green cloth at the front. Over the bench the faded periodic
-// table and a shelf of jars; a glazed cupboard of reagents on the right
-// wall; the window and the moon; a stool. The bottles are the puzzle —
-// and the lamp and the burner burn until it is solved.
+// table and a shelf of jars; against the right wall his bookcase, shelf on
+// shelf of old books, and among them his notebook; the window and the moon;
+// a stool. The bottles are one puzzle, the notebook the other — a click
+// draws it a little way out of its shelf, and it is opened — and the lamp
+// and the burner burn until the bottles are solved.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BLUE = "120,160,255";
@@ -44,22 +51,34 @@ export default class Room7Scene extends PlainRoomScene {
 
   preload() {
     for (const { key, url } of Object.values(LAB_FIXTURES)) this.load.image(key, url);
+    loadLaboratoryArt(this);
+    loadRoom7DepthArt(this);
+    loadChemistryDetails(this);
   }
 
   layout(W, H, levels) {
     const L = super.layout(W, H);
+    L.labArt = laboratoryArt(this);
+    L.labDetails = chemistryDetails(this);
+    if (L.labDetails && L.labArt) L.labArt = { ...L.labArt, vessels: L.labDetails.vessels };
+    L.surfaceMaterials = L.labArt?.materials;
+    L.depthArt = room7DepthArt(this);
+    L.glassCabinetDepth = 42;
+    L.bookcaseDepth = L.depthArt ? 34 : 0;
     const { Q, half: hx } = L;
     L.on = !levels.isCompleted(levels.indexOf("chemistry"));
-    const b = (L.bench = { x0: -0.6 * hx, x1: 0.12 * hx, d0: 532, d1: 590, h: 90 });
+    const b = (L.bench = { x0: -0.6 * hx, x1: 0.12 * hx, d0: 484, d1: 590, h: 90 });
     const span = b.x1 - b.x0;
     L.poster = { x0: -0.52 * hx, x1: -0.15 * hx, y0: 156, y1: 232 };
     L.shelf = { x0: -0.08 * hx, x1: 0.2 * hx, y: 178 };
-    L.cabinet = { x0: hx - 46, x1: hx, d0: 420, d1: 528, h: 208 };
+    // his bookcase on the right wall, as the library's (house/wallBookcase.js)
+    L.bookcase = { d0: 396, d1: 546, y0: 0, y1: 232 };
+    L.notebookGap = { row: 2, at: 0.46, w: 0.075 };
     L.lamp = { x: b.x0 + span * 0.06, d: 566 };
     L.burner = { x: b.x0 + span * 0.88, d: 562 };
     L.bottleRow = BOTTLES.map((bt, i) => ({ x: b.x0 + span * (0.46 + i * 0.075), d: 556, shape: bt }));
     L.loupe = { x: b.x0 + span * 0.62, d: 540 };
-    L.sinks = { x0: 0.17 * hx, x1: 0.83 * hx, d0: 536, h: 90 };
+    L.sinks = { x0: 0.17 * hx, x1: 0.83 * hx, d0: L.depthArt ? 484 : 536, h: 90 };
     const sinkLeft = Q(L.sinks.x0, 0, L.sinks.d0), sinkRight = Q(L.sinks.x1, 0, L.sinks.d0);
     const stationWidth = sinkRight.x - sinkLeft.x, stationHeight = stationWidth * 1392 / 1012;
     L.washing = { x: sinkLeft.x, y: sinkLeft.y - stationHeight, width: stationWidth, height: stationHeight };
@@ -69,10 +88,31 @@ export default class Room7Scene extends PlainRoomScene {
       top: L.washing.y, sill: L.washing.y + stationHeight * 0.458,
       hw: stationWidth * 0.418 / Q(0, 0, BACK).s,
     });
+    if (L.depthArt) {
+      const left = Q(L.sinks.x0 + 3, 241, BACK + 10), right = Q(L.sinks.x1 - 3, 119, BACK + 10);
+      Object.assign(L.win, { cx: (left.x + right.x) / 2, rx: (right.x - left.x) / 2, top: left.y, sill: right.y, hw: (L.sinks.x1 - L.sinks.x0 - 6) / 2 });
+    }
     L.stool = { x: b.x0 + span * 0.3, d: 470, h: 64 };
     // the bottles open the puzzle
     const r0 = L.bottleRow[0], r4 = L.bottleRow[4];
     L.things = [thingAt("chemistry", "Look at the bottles", [Q(r0.x - 9, b.h - 1, 556), Q(r4.x + 9, b.h - 1, 556), Q(r4.x + 9, b.h + 36, 556), Q(r0.x - 9, b.h + 36, 556)])];
+    // his notebook in the bookcase's middle shelf, in the place kept for it:
+    // a click draws it a little way out, as the library's books stand out, and
+    // it is opened (its place on the wall, in cm, from the bookcase's rows)
+    {
+      const bc = L.bookcase, len = bc.d1 - bc.d0, rows = 5, R = 3;
+      const rh = ((bc.y1 - bc.y0) * R - 20 * R) / rows / R;
+      const base = 9 + (L.notebookGap.row + 1) * rh - 2.6; // from the top of the case
+      const fx0 = len * L.notebookGap.at, fx1 = fx0 + len * L.notebookGap.w;
+      const nb = (L.notebook = {
+        // on the right wall the flat's left is the far end
+        d0: bc.d1 - fx1 + 0.6, d1: bc.d1 - fx0 - 0.6,
+        y0: bc.y1 - base, y1: bc.y1 - base + (rh - 6) * 0.9, pull: 4,
+      });
+      const x = hx - L.bookcaseDepth - 1;
+      L.things.push(Object.assign(thingAt("molecules", "Take out his notebook", [Q(x, nb.y0 - 3, nb.d0 - 4), Q(x, nb.y0 - 3, nb.d1 + 4), Q(x, nb.y1 + 4, nb.d1 + 4), Q(x, nb.y1 + 4, nb.d0 - 4)]), { before: true }));
+    }
+
     // where the room's lights are, for the dark and for the scene
     const lp = Q(L.lamp.x, b.h + 28, L.lamp.d), bp = Q(L.burner.x, b.h + 14, L.burner.d);
     L.glows = { lamp: { x: lp.x, y: lp.y, r: 110 * lp.s }, burner: { x: bp.x, y: bp.y, r: 60 * bp.s } };
@@ -81,30 +121,72 @@ export default class Room7Scene extends PlainRoomScene {
       { x: bp.x, y: bp.y, rx: 90 * bp.s, ry: 70 * bp.s, k: L.on ? 0.8 : 0.2 },
     ];
     // the shelves of glassware on the left wall, in what the lamp spills
-    L.wallShelves = { d0: 410, d1: 575, y0: 98, y1: 238 };
-    const sp = Q(-hx, 160, 505);
+    // The photographed glassware cupboard is clearly visible on the left wall.
+    L.wallShelves = { d0: 356, d1: 592, y0: 74, y1: 254 };
+    const sp = Q(-hx + L.glassCabinetDepth, 170, 490);
     L.detailLights.push({ x: sp.x, y: sp.y, rx: 180 * sp.s, ry: 135 * sp.s, k: 0.82 });
+    // his bookcase on the right wall, enough in the light to be made out
+    const bk = Q(hx - L.bookcaseDepth, 110, (L.bookcase.d0 + L.bookcase.d1) / 2);
+    L.detailLights.push({ x: bk.x, y: bk.y, rx: 150 * bk.s, ry: 170 * bk.s, k: 0.7 });
     // and the sinks under the window, in the moon
     const sk = Q((L.sinks.x0 + L.sinks.x1) / 2, 100, 570);
     L.detailLights.push({ x: sk.x, y: sk.y, rx: 150 * sk.s, ry: 70 * sk.s, k: 0.55 });
+    // A soft bounce keeps the carved cabinet fronts readable below the slab.
+    const face = Q((b.x0 + b.x1) / 2, 47, b.d0);
+    L.detailLights.push({ x: face.x, y: face.y, rx: 130 * face.s, ry: 72 * face.s, k: L.on ? 0.52 : 0.38 });
     return L;
+  }
+
+  // His notebook taken from the shelf: it slides a little way toward the
+  // room on the shelf's board, and stops — and then it is opened.
+  open(thing, L, k, animate) {
+    if (!animate) { this._drawNotebook(L, 1); return 0; }
+    const ms = 420, pull = { t: 0 };
+    this.tweens.add({ targets: pull, t: 1, duration: ms, ease: "Cubic.easeOut", onUpdate: () => this._drawNotebook(L, pull.t) });
+    noiseBurst(this, { dur: ms / 1000, type: "lowpass", freq: 1400, q: 0.7, gain: 0.26, env: (x) => Math.min(1, x / 0.05) * (1 - x) ** 1.7 * (0.8 + 0.2 * Math.sin(x * 64)) });
+    this.time.delayedCall(ms - 60, () => noiseBurst(this, { dur: 0.1, type: "lowpass", freq: 300, gain: 0.45, env: (x) => (1 - x) ** 3 }));
+    return ms;
+  }
+
+  // the notebook, `f` of its little way out of the shelf (0 to 1): its spine
+  // laid on the wall as the library's books are, standing proud of the row by
+  // that much — its near side and the top of its leaves showing as it comes
+  _drawNotebook(L, f) {
+    const { Q, W, H } = L, nb = L.notebook, out = nb.pull * f, hx = L.half - L.bookcaseDepth;
+    if (!this._nb?.img?.scene) {
+      if (this.textures.exists("r7_notebook")) this.textures.remove("r7_notebook");
+      const tex = this.textures.createCanvas("r7_notebook", W, H);
+      this._nb = { tex, img: this.add.image(0, 0, "r7_notebook").setOrigin(0, 0).setDepth(-9) };
+    }
+    const { tex } = this._nb, g = tex.getContext();
+    g.clearRect(0, 0, W, H);
+    if (out > 0.05) {
+      // its near side, and the top of its leaves, between the wall and where it stands
+      fillPoly(g, [Q(hx - out, nb.y0, nb.d0), Q(hx, nb.y0, nb.d0), Q(hx, nb.y1, nb.d0), Q(hx - out, nb.y1, nb.d0)], "#16231a");
+      fillPoly(g, [Q(hx - out, nb.y1, nb.d0), Q(hx, nb.y1, nb.d0), Q(hx, nb.y1, nb.d1), Q(hx - out, nb.y1, nb.d1)], "#c8b994");
+    }
+    onWall(g, { ...L, half: hx - out }, 1, { d0: nb.d0, d1: nb.d1, y0: nb.y0, y1: nb.y1 }, notebookSpine(nb, f));
+    tex.refresh();
   }
 
   paintDetails(ctx, L) {
     const sources = Object.fromEntries(Object.entries(LAB_FIXTURES).map(([name, asset]) => [name, this.textures.get(asset.key).getSourceImage()]));
-    paintGlassCabinet(ctx, L, sources.cabinet);
+    if (!paintDeepGlassCabinet(ctx, L)) paintGlassCabinet(ctx, L, sources.cabinet);
     paintPoster(ctx, L);
     paintShelf(ctx, L);
-    paintGasPipe(ctx, L);
-    paintWashingStation(ctx, L, sources.washing);
-    paintCabinet(ctx, L);
+    if (!paintDeepWashingStation(ctx, L, sources.washing, "window")) paintWashingStation(ctx, L, sources.washing);
+    paintWallBookcase(ctx, L, { at: L.bookcase, side: 1, seed: 733, gap: L.notebookGap, detail: true, depth: L.bookcaseDepth, bindings: L.labDetails?.bindings });
+    if (L.depthArt) paintDeepWashingStation(ctx, L, sources.washing, "furniture");
     paintBench(ctx, L);
+    paintGasPipe(ctx, L);
     paintBenchTop(ctx, L, sources.rack);
     paintStool(ctx, L);
   }
 
   live(L, k, glow) {
     super.live(L, k);
+    // his notebook in the bookcase, back in its place on the shelf
+    this._drawNotebook(L, 0);
     if (!L.on) return;
     // the lamp and the burner, breathing very slightly
     for (const [at, a, tint] of [[L.glows.lamp, 0.2, 0xffc078], [L.glows.burner, 0.28, 0x7aa0ff]]) {
@@ -145,6 +227,7 @@ function paintPoster(ctx, L) {
     ctx.fillRect(1.5, 1.8, w, h);
     ctx.fillStyle = grad(ctx, 0, 0, w, h, [[0, "#b0a37e"], [0.6, "#9e9070"], [1, "#857854"]]);
     ctx.fillRect(0, 0, w, h);
+    if (L.labDetails) ctx.drawImage(L.labDetails.paper, 0, 0, w, h);
     // the title
     ctx.fillStyle = "rgba(60,44,28,0.55)";
     ctx.fillRect(w * 0.3, 3, w * 0.4, 2.4);
@@ -180,6 +263,11 @@ function paintPoster(ctx, L) {
 // A shelf on brackets over the right end of the bench, apothecary jars on it.
 function paintShelf(ctx, L) {
   const s = L.shelf, d = BACK - 14;
+  if (L.labDetails) {
+    const image = L.labDetails.shelf, h = (s.x1 - s.x0) * image.height / image.width;
+    paintProjectedMaterial(ctx, image, (u, v) => L.Q(s.x0 + (s.x1 - s.x0) * u, s.y + h * (0.71 - v), d), 1, 4, 2);
+    return;
+  }
   block(ctx, L, { x0: s.x0, x1: s.x1, y0: s.y - 3, y1: s.y, d0: d, d1: BACK }, { side: "#1a0f08", top: "#4a301c", front: "#2c1a0e" });
   for (const x of [s.x0 + 8, s.x1 - 8]) {
     at(ctx, L, x, s.y - 3, BACK - 1, () => { ctx.fillStyle = "#120b06"; ctx.beginPath(); ctx.moveTo(-1, 0); ctx.lineTo(1, 0); ctx.lineTo(1, 12); ctx.closePath(); ctx.fill(); });
@@ -220,52 +308,44 @@ function paintGasPipe(ctx, L) {
   ctx.lineCap = "butt";
 }
 
-// The reagent cupboard against the right wall: tall, its glazed doors facing
-// into the room, bottles on its shelves behind the glass.
-function paintCabinet(ctx, L) {
-  const { Q } = L, c = L.cabinet;
-  footShadow(ctx, L, c, 0.6);
-  block(ctx, L, { x0: c.x0, x1: c.x1, y0: 0, y1: c.h, d0: c.d0, d1: c.d1 }, { side: "#24170d", top: "#3a2616", front: "#1a0f08" });
-  const face = (d0, d1, y0, y1, col, x = c.x0 - 0.2) => fillPoly(ctx, [Q(x, y0, d0), Q(x, y0, d1), Q(x, y1, d1), Q(x, y1, d0)], col);
-  // the plinth and the cornice
-  face(c.d0, c.d1, 0, 12, "#120a05");
-  face(c.d0 - 2, c.d1, c.h - 10, c.h, "#2e1d10", c.x0 - 2);
-  // two glazed doors, two panes high each, a dark inside with bottles in it
-  const rnd = lcg(907);
-  const dm = (c.d0 + c.d1) / 2;
-  for (const [d0, d1] of [[c.d0 + 5, dm - 1.5], [dm + 1.5, c.d1 - 5]]) {
-    face(d0, d1, 18, c.h - 16, "#0a0705");
-    for (const y of [60, 108, 156]) {
-      face(d0 + 2, d1 - 2, y - 1.6, y, "#2a1a0e", c.x0 + 8);
-      for (let d = d0 + 4; d < d1 - 6;) {
-        const w = 5 + rnd() * 5, h = 12 + rnd() * 18;
-        const col = ["150,96,40", "70,110,80", "190,200,205", "110,60,30"][Math.floor(rnd() * 4)];
-        fillPoly(ctx, [Q(c.x0 + 10, y, d), Q(c.x0 + 10, y, d + w), Q(c.x0 + 10, y + h, d + w), Q(c.x0 + 10, y + h, d)], `rgba(${col},0.7)`);
-        fillPoly(ctx, [Q(c.x0 + 10, y + h * 0.4, d + 1), Q(c.x0 + 10, y + h * 0.4, d + w - 1), Q(c.x0 + 10, y + h * 0.7, d + w - 1), Q(c.x0 + 10, y + h * 0.7, d + 1)], "rgba(220,206,170,0.5)");
-        d += w + 2 + rnd() * 4;
-      }
-    }
-    // the frame and glazing bars, and the moon in the glass
-    ctx.strokeStyle = "#3e2716";
-    const frame = (pts) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke(); };
-    ctx.lineWidth = 2.4 * Q(c.x0, 0, d0).s;
-    frame([Q(c.x0, 18, d0), Q(c.x0, c.h - 16, d0), Q(c.x0, c.h - 16, d1), Q(c.x0, 18, d1), Q(c.x0, 18, d0)]);
-    ctx.lineWidth = 1.2 * Q(c.x0, 0, d0).s;
-    frame([Q(c.x0, 110, d0), Q(c.x0, 110, d1)]);
-    fillPoly(ctx, [Q(c.x0, 26, d0 + 4), Q(c.x0, c.h - 24, d0 + 14), Q(c.x0, c.h - 24, d0 + 20), Q(c.x0, 26, d0 + 10)], "rgba(190,206,240,0.06)");
-    const k = Q(c.x0 - 1, 100, d1 - 3);
-    ctx.fillStyle = "#a8853e"; ctx.beginPath(); ctx.arc(k.x, k.y, 1.4 * k.s, 0, Math.PI * 2); ctx.fill();
-  }
+// His notebook's spine, flat, to be laid on the wall among the library's
+// books: green cloth rounded over the back, gilt bands, a small red
+// title-piece; its edge catching the light once it stands out of the row.
+function notebookSpine(nb, f) {
+  const R = 3, w = Math.max(4, Math.round((nb.d1 - nb.d0) * R)), h = Math.max(4, Math.round((nb.y1 - nb.y0) * R));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const g = c.getContext("2d");
+  const cloth = g.createLinearGradient(0, 0, w, 0);
+  cloth.addColorStop(0, "#14211a"); cloth.addColorStop(0.32, "#3e5c44"); cloth.addColorStop(0.6, "#2a4030"); cloth.addColorStop(1, "#101a13");
+  g.fillStyle = cloth; g.fillRect(0, 0, w, h);
+  for (const fr of [0.08, 0.13, 0.87, 0.92]) { g.fillStyle = "rgba(201,165,82,0.7)"; g.fillRect(1, h * fr, w - 2, Math.max(1, h * 0.012)); }
+  for (const fr of [0.3, 0.7]) { g.fillStyle = "rgba(0,0,0,0.35)"; g.fillRect(1, h * fr, w - 2, Math.max(1, h * 0.01)); g.fillStyle = "rgba(200,220,190,0.18)"; g.fillRect(1, h * fr + Math.max(1, h * 0.01), w - 2, Math.max(1, h * 0.008)); }
+  const tp = g.createLinearGradient(0, 0, w, 0);
+  tp.addColorStop(0, "#4a1612"); tp.addColorStop(0.35, "#8a2e24"); tp.addColorStop(1, "#3a100c");
+  g.fillStyle = tp; g.fillRect(w * 0.14, h * 0.42, w * 0.72, h * 0.16);
+  g.strokeStyle = "rgba(226,189,104,0.7)"; g.lineWidth = 1; g.strokeRect(w * 0.14 + 0.5, h * 0.42 + 0.5, w * 0.72 - 1, h * 0.16 - 1);
+  // the light on it, as on the library's books standing out of their row
+  g.fillStyle = `rgba(255,226,180,${(0.06 + 0.12 * f).toFixed(3)})`; g.fillRect(0, 0, w, h);
+  g.fillStyle = "rgba(255,220,170,0.14)"; g.fillRect(0, 0, Math.max(1, w * 0.12), h);
+  return c;
 }
 
 // The bench: oak cupboards under a black slate top, a row of drawers.
 function paintBench(ctx, L) {
+  if (paintDeepLaboratoryBench(ctx, L)) return;
   const { Q } = L, b = L.bench;
   const oak = { side: "#1c1109", top: "#3a2414", front: "#2a190d" };
   footShadow(ctx, L, b, 0.7);
   block(ctx, L, { x0: b.x0 + 2, x1: b.x1 - 2, y0: 0, y1: b.h - 4, d0: b.d0 + 3, d1: b.d1 }, oak);
   const d = b.d0 + 3;
-  const face = (x0, x1, y0, y1, col) => fillPoly(ctx, [Q(x0, y1, d - 0.2), Q(x1, y1, d - 0.2), Q(x1, y0, d - 0.2), Q(x0, y0, d - 0.2)], col);
+  paintProjectedMaterial(ctx, L.surfaceMaterials?.wood, (u, v) => Q(b.x0 + 2 + (b.x1 - b.x0 - 4) * u, (b.h - 4) * (1 - v), d), 0.72);
+  const face = (x0, x1, y0, y1, col) => {
+    fillPoly(ctx, [Q(x0, y1, d - 0.2), Q(x1, y1, d - 0.2), Q(x1, y0, d - 0.2), Q(x0, y0, d - 0.2)], col);
+    if (col.startsWith("#") && y1 - y0 >= 10) {
+      paintProjectedMaterial(ctx, L.surfaceMaterials?.wood, (u, v) => Q(x0 + (x1 - x0) * u, y1 - (y1 - y0) * v, d - 0.2), 0.78);
+    }
+  };
   face(b.x0 + 2, b.x1 - 2, 0, 8, "#100904");
   const n = 4, w = (b.x1 - b.x0 - 12) / n;
   for (let i = 0; i < n; i++) {
@@ -285,6 +365,8 @@ function paintBench(ctx, L) {
   }
   // the slate top, overhanging a little
   block(ctx, L, { x0: b.x0, x1: b.x1, y0: b.h - 4, y1: b.h, d0: b.d0, d1: BACK }, { side: "#0c0e0f", top: "#2a3032", front: "#16191a" });
+  paintProjectedMaterial(ctx, L.surfaceMaterials?.slate, (u, v) => Q(b.x0 + (b.x1 - b.x0) * u, b.h, BACK - (BACK - b.d0) * v), 0.95, 4, 3);
+  paintProjectedMaterial(ctx, L.surfaceMaterials?.slate, (u, v) => Q(b.x0 + (b.x1 - b.x0) * u, b.h - 4 * v, b.d0), 0.5);
   fillPoly(ctx, [Q(b.x0, b.h, b.d0), Q(b.x1, b.h, b.d0), Q(b.x1, b.h - 0.6, b.d0), Q(b.x0, b.h - 0.6, b.d0)], "rgba(200,220,230,0.14)");
 }
 
@@ -292,6 +374,7 @@ function paintBench(ctx, L) {
 // stand, the rack of tubes, the five bottles, the burner under its flask;
 // the magnifying glass on its cloth at the front.
 function paintBenchTop(ctx, L, rack) {
+  if (paintLaboratoryObjects(ctx, L, rack)) return;
   const b = L.bench, on = L.on, h = b.h;
   // ── the oil lamp
   at(ctx, L, L.lamp.x, h, L.lamp.d, () => {
@@ -432,4 +515,7 @@ function paintStool(ctx, L) {
   ctx.beginPath(); ctx.ellipse(c.x, c.y + 3 * c.s, rx, ry, 0, 0, Math.PI); ctx.fill();
   ctx.fillStyle = grad(ctx, c.x - rx, 0, c.x + rx, 0, [[0, "#4a3018"], [0.4, "#8a5e34"], [1, "#3a2414"]]);
   ctx.beginPath(); ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.clip();
+  paintFlatMaterial(ctx, L.surfaceMaterials?.wood, c.x - rx, c.y - ry, rx * 2, ry * 2, c.s * 0.12, 0.8);
+  ctx.restore();
 }

@@ -54,9 +54,10 @@ export function playColdOpen(scope, { game, audio, reducedMotion = false, onUnde
     const skip = () => { if (skipped || ended) return; skipped = true; for (const wake of [...sleepers]) wake(); };
     const goUnder = () => { if (!under) { under = true; onUnder(); } };
 
-    // while it plays, no key reaches the house behind it
+    // while it plays, no key reaches the house behind it — unless the settings
+    // (opened from the header over it) are what the key is for
     const onKey = (e) => {
-      if (!root.isConnected) return;
+      if (!root.isConnected || document.querySelector("#options-modal:not(.hidden), #howto-modal:not(.hidden)")) return;
       e.stopPropagation();
       if (e.key === "Escape") { e.preventDefault(); skip(); }
     };

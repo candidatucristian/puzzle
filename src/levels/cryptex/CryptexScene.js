@@ -1,4 +1,4 @@
-import Candle from "./Candle.js";
+import Candles from "./Candle.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
@@ -8,14 +8,13 @@ import { letterOverlay } from "../../shared/envelope.js";
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CIPHER WHEEL"  ·  code: ROTOR  ·  very hard  ·  decipher
 //
-// A quiet study, lit by one candle. On the wall: a brass cipher wheel on a
-// walnut plaque — a fixed outer alphabet and a rotating inner disk, turning
-// with the slow click of a clock. On the desk: a sealed envelope holding a
-// letter enciphered with a Caesar shift of 3. Extinguishing the candle takes
-// three clicks, providing the hint to the shift.
+// A quiet study, lit by three candles of three heights. On the wall: a brass
+// cipher wheel on a walnut plaque — a fixed outer alphabet and a rotating
+// inner disk, turning with the slow click of a clock. On the desk: a sealed
+// envelope holding a letter enciphered with a Caesar shift of 3. One click
+// puts out one candle; three candles are the hint to the shift.
 //
-//   "HYHUB FLSKHU PDFKLQH / JXDUGV LWV VSLQQLQJ KHDUW / WKH URWRU"
-//    →  EVERY CIPHER MACHINE GUARDS ITS SPINNING HEART — THE ROTOR
+//   "WKH DQVZHU / LV URWRU"  →  THE ANSWER IS ROTOR
 //
 // Align the wheel, decode the message, and the word reveals itself: ROTOR.
 //
@@ -23,24 +22,20 @@ import { letterOverlay } from "../../shared/envelope.js";
 // like winding a clock), or scroll over the wheel. Click the envelope to
 // read the letter. The wheel is a tool — the answer is typed into the code box.
 //
-// The wheel's letters are painted in luminous paint: while the candle burns
-// they can't be seen and the disk is locked. Put out the candle and the
+// The wheel's letters are painted in luminous paint: while a candle burns
+// they can't be seen and the disk is locked. Put out the last candle and the
 // letters light up one by one around the rings; only then does the disk turn.
 //
-// The room is painted (study.js) and lit by the candle alone: the candle's
-// light is one layer whose brightness the candle drives, so the whole room —
-// wall, desk, brass — flickers and dims with the flame. The candle itself is
-// the wax is painted in the same camera; Candle.js animates its Phaser flame.
+// The room is painted (study.js) and lit by the candles alone: their light is
+// one layer whose brightness the flames drive together, so the whole room —
+// wall, desk, brass — flickers and dims with them. The wax is painted in the
+// same camera; Candle.js animates the Phaser flames.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// both rings read A→Z clockwise (left to right across the top); the cipher
-// is unchanged, so the answer is still ROTOR
+// both rings read A→Z clockwise (left to right across the top)
 const CRYPTEX_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const CRYPTEX_CIPHER = [
-  "HYHUB FLSKHU PDFKLQH",
-  "JXDUGV LWV VSLQQLQJ KHDUW",
-  "WKH URWRU",
-];
+// THE ANSWER IS ROTOR, every letter moved on by three
+const CRYPTEX_CIPHER = ["WKH DQVZHU", "LV URWRU"];
 
 // the luminous paint: engraved Roman capitals filled with a pale green glow
 const LUME_FONT = 'Georgia, "Times New Roman", serif';
@@ -61,7 +56,7 @@ export default class CryptexScene extends BasePuzzleScene {
     this.beginScene();
 
     this.isSolved = false;
-    this.candle = new Candle(this, {
+    this.candle = new Candles(this, {
       isBlocked: () => this._overlayOpen || this.isSolved,
       onExtinguished: () => this._revealLetters(),
     });
@@ -143,8 +138,9 @@ export default class CryptexScene extends BasePuzzleScene {
     this._deskY = deskY;
 
     const art = paintStudy(this, W, H, deskY);
-    this.candle.build(art.candle);
-    this._movableSparkleCleanups.push(attachMovableSparkles(this, this.candle.flame, { padding: 4 }));
+    this.candle.build(art.candles);
+    for (const f of this.candle.flames)
+      this._movableSparkleCleanups.push(attachMovableSparkles(this, f.flame, { padding: 4, enabled: () => !this.candle.out[f.index] }));
     const level = this.candle.lightState.level;
     this._art = art;
     // the room as it is with no candle at all...
@@ -154,7 +150,7 @@ export default class CryptexScene extends BasePuzzleScene {
       .setBlendMode(Phaser.BlendModes.ADD).setAlpha(level);
 
     this._buildTexts(W, H);
-    if (this.candle.clicks === 3) this._lettersShown = true;
+    if (this.candle.allOut) this._lettersShown = true;
     this._buildWheel(W, H);
     this._buildParchment(W, H, deskY);
     this._followCandle();

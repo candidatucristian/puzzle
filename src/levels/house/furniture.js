@@ -24,7 +24,20 @@ export function writingDesk(ctx, L, k) {
     ctx.strokeStyle = "rgba(4,2,1,0.8)";
     ctx.lineWidth = Math.max(0.8, 0.7 * s);
     ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
-    ctx.fillStyle = "#a8863e";
+    if (L.furnitureMaterial) {
+      ctx.strokeStyle = "rgba(210,164,102,0.22)";
+      ctx.lineWidth = Math.max(0.45, 0.35 * s);
+      ctx.beginPath(); ctx.moveTo(a.x + s, b.y - s); ctx.lineTo(b.x - s, b.y - s); ctx.lineTo(b.x - s, a.y + s); ctx.stroke();
+      const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+      const r = Math.max(1.2, 1.5 * s);
+      const brass = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
+      brass.addColorStop(0, "#e4c78e");
+      brass.addColorStop(0.45, "#9d7b3c");
+      brass.addColorStop(1, "#39260e");
+      ctx.fillStyle = brass;
+    } else {
+      ctx.fillStyle = "#a8863e";
+    }
     ctx.beginPath(); ctx.arc((a.x + b.x) / 2, (a.y + b.y) / 2, Math.max(1.2, 1.5 * s), 0, Math.PI * 2); ctx.fill();
   };
   for (const [x0, x1] of [[k.x0 + 3, k.x0 + ped - 3], [k.x1 - ped + 3, k.x1 - 3]]) for (const [y0, y1] of [[5, 22], [25, 42], [45, 60]]) drawer(x0, x1, y0, y1);

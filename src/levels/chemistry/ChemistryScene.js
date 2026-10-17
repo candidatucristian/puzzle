@@ -4,6 +4,8 @@ import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutLab, paintLab, releaseLabArt } from "./lab.js";
 import { LAB_FIXTURES } from "./glassware.js";
+import { loadLaboratoryArt } from "../room7/laboratoryArt.js";
+import { loadChemistryDetails } from "./photographicLab.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CHEMISTRY"  ·  code: FOCUS  ·  atomic numbers → symbols
@@ -35,6 +37,8 @@ export default class ChemistryScene extends BasePuzzleScene {
 
   preload() {
     this.load.image(LAB_FIXTURES.rack.key, LAB_FIXTURES.rack.url);
+    loadLaboratoryArt(this);
+    loadChemistryDetails(this);
   }
 
   create() {
@@ -91,7 +95,7 @@ export default class ChemistryScene extends BasePuzzleScene {
       .setOrigin(0.5, 1)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(-5);
-    this._blueH = 34 * L.u * bu.s;
+    this._blueH = (L.photoDetails && L.labArt ? 18 : 34) * L.u * bu.s;
     this._boost = 0;
     this.add
       .image(bu.mouth.x, bu.mouth.y - this._blueH * 0.4, k.glow)
@@ -107,9 +111,10 @@ export default class ChemistryScene extends BasePuzzleScene {
       .setDepth(5);
     this._gasZone.on("pointerdown", () => this._gas());
     const f = L.flask;
+    const steamY = f.steamY ?? f.y - f.r * 2.1;
     for (let i = 0; i < 3; i++) {
       const s = this.add
-        .image(f.x + (i - 1) * 3 * L.u, f.y - f.r * 2.1, k.steam)
+        .image(f.x + (i - 1) * 3 * L.u, steamY, k.steam)
         .setOrigin(0.5, 1)
         .setScale(0.4 * L.u)
         .setAlpha(0)
@@ -117,7 +122,7 @@ export default class ChemistryScene extends BasePuzzleScene {
       this.ambientObject(s);
       this.ambientTween({
         targets: s,
-        y: { from: f.y - f.r * 2.1, to: f.y - f.r * 2.1 - 30 * L.u },
+        y: { from: steamY, to: steamY - 30 * L.u },
         alpha: { from: 0.8, to: 0 },
         duration: 2400,
         delay: i * 800,

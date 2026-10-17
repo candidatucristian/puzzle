@@ -2,6 +2,7 @@ import { LETTERS, letterById } from "../shared/story.js";
 import { PLACES } from "../shared/house.js";
 import { renderLetter } from "./letterPage.js";
 import { playArrival } from "./letterArrival.js";
+import { paintEnvelope } from "../shared/envelope.js";
 
 // The case file: everything Inspector Wren gathers in Ashcombe House, kept in
 // an old leather police dossier that opens like a book. On its left page the
@@ -11,9 +12,12 @@ import { playArrival } from "./letterArrival.js";
 // word each puzzle gave up, typed on a tag with where it was found. Opened
 // with the Case file button or C.
 //
-// A letter found arrives as a letter should (letterArrival.js) and is filed;
-// one put off for later, and evidence not yet looked at, put a red mark on
-// the Case file button until they have been.
+// The three pages the Ashcombes left, one on each floor, wait when found: an
+// envelope in the side panel, under the notes, marked "!" — opened when the
+// player chooses, it arrives as a letter should (letterArrival.js), and only
+// once read is it filed here. The last letter arrives by itself. One put off
+// for later, and evidence not yet looked at, put a red mark on the Case file
+// button until they have been.
 
 const KEPT = "caseFile:letters"; // the letters found, in order
 const READ = "caseFile:read"; // the letters read
@@ -21,6 +25,25 @@ const SEEN = "caseFile:seen"; // the evidence looked at: the puzzles whose words
 
 // where each Ashcombe left a page for him: the first time he stands there
 const PAGES = { Study: "ivy", Upper: "silas", Top: "orion" };
+const WAITS = Object.values(PAGES); // these wait in the side panel until opened
+
+// the house's envelope (shared/envelope.js — the ROTOR study's), back up, its
+// red wax on the flap: a letter waiting in the side panel
+function envelopeIcon() {
+  const W = 152, H = 104;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  c.className = "wl-envelope";
+  c.setAttribute("aria-hidden", "true");
+  const g = c.getContext("2d");
+  const w = 17, d = 11, q = (W * 0.82) / w;
+  const at = (a, b) => ({ x: W / 2 + a * q, y: H / 2 - b * q });
+  const seal = at(0, d * 0.14);
+  paintEnvelope(g, { w, d, at, k: q, seal: { x: seal.x, y: seal.y - 0.3 * q, rx: 1.9 * q, ry: 1.9 * q } }, {
+    left: "#cdbf9f", right: "#ece2c6", wax: "#9e2318", shadow: true, shine: true,
+  });
+  return c;
+}
 
 export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, reducedMotion = () => false, isBusy = () => false }) {
   const $ = (id) => document.getElementById(id);
@@ -42,6 +65,9 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   const queue = [];
 
   const has = (id) => kept.includes(id);
+  // found but not yet opened: waiting in the side panel, not yet in the file
+  const waits = (id) => WAITS.includes(id) && has(id) && !read.includes(id);
+  const filed = (id) => has(id) && !waits(id);
   function unlock(id, { asRead = false } = {}) {
     if (has(id) || !letterById(id)) return false;
     kept.push(id); save(KEPT, kept);
@@ -52,7 +78,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   function markRead(id) { if (!read.includes(id)) { read.push(id); save(READ, read); } }
 
   // ── the red mark: something in the file not yet looked at ──
-  const news = () => kept.some((id) => !read.includes(id)) || solvedIds().some((id) => !seen.includes(id));
+  const news = () => kept.some((id) => filed(id) && !read.includes(id)) || solvedIds().some((id) => !seen.includes(id));
   function badge(pop = false) {
     if (!button) return;
     let mark = button.querySelector(".casefile-alert");
@@ -68,7 +94,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     letterList.replaceChildren();
     LETTERS.forEach((letter, n) => {
       const item = document.createElement("li");
-      if (!has(letter.id)) {
+      if (!filed(letter.id)) {
         item.className = "dossier-slip is-missing";
         item.innerHTML = `<span class="slip-no"></span><span class="slip-title">Not yet found</span>`;
         item.querySelector(".slip-no").textContent = `No. ${n + 1}`;
@@ -152,10 +178,10 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   for (const t of tabs) scope.on(t, "click", () => { if (tab !== t.dataset.casefileTab) sounds?.open(); setTab(t.dataset.casefileTab); });
 
   function open(trigger, { letter = null, on = null } = {}) {
-    const unread = kept.find((id) => !read.includes(id));
+    const unread = kept.find((id) => filed(id) && !read.includes(id));
     const fresh = solvedIds().some((id) => !seen.includes(id));
     const which = on ?? (letter || unread ? "letters" : fresh ? "clues" : tab);
-    showLetter(letter ?? unread ?? current ?? kept[kept.length - 1] ?? null);
+    showLetter(letter ?? unread ?? (current && filed(current) ? current : null) ?? kept.filter(filed).at(-1) ?? null);
     setTab(which);
     sounds?.open();
     dialogs.open("casefile-modal", trigger);
@@ -163,11 +189,45 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   scope.on($("btn-close-casefile"), "click", () => dialogs.close());
 
   // ── finding the letters ──
-  // a letter found is kept at once; it arrives as soon as nothing else is on
+  // one of the three pages: kept at once, and left waiting in the side panel
+  // for the player to open; any other letter arrives as soon as nothing else is on
   function reveal(id) {
     if (!unlock(id)) return;
+    if (WAITS.includes(id)) { renderWaiting(id); sounds?.ping(); return; }
     queue.push(id);
     flush();
+  }
+
+  // the envelopes waiting under the notes: each marked "!", nothing written,
+  // opened by a click — and gone from here once read and filed
+  const shelf = $("index-letters");
+  function renderWaiting(fresh = null) {
+    if (!shelf) return;
+    const list = kept.filter(waits);
+    shelf.replaceChildren(...list.map((id) => {
+      const letter = letterById(id);
+      const env = document.createElement("button");
+      env.type = "button";
+      env.className = "waiting-letter" + (id === fresh ? " is-new" : "");
+      env.setAttribute("aria-label", `A letter found: ${letter.title} — open it`);
+      env.title = letter.title;
+      const mark = document.createElement("span");
+      mark.className = "wl-alert";
+      mark.textContent = "!";
+      mark.setAttribute("aria-hidden", "true");
+      env.append(envelopeIcon(), mark);
+      scope.on(env, "click", () => openWaiting(id));
+      return env;
+    }));
+    shelf.hidden = list.length === 0;
+  }
+  async function openWaiting(id) {
+    if (arriving || dialogs.isOpen || isBusy() || !waits(id)) return;
+    arriving = true;
+    const how = await playArrival(scope, { letter: letterById(id), sounds, target: button, reducedMotion: reducedMotion() });
+    arriving = false;
+    if (how === "read") { markRead(id); current = id; badge(true); }
+    renderWaiting();
   }
   async function flush() {
     if (!queue.length || arriving) return;
@@ -202,6 +262,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     if (everySolved()) reveal("last");
   }));
   badge();
+  renderWaiting();
 
   return {
     open, has, reveal,
@@ -209,7 +270,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     unlock: (id) => unlock(id, { asRead: true }),
     reset() {
       kept = []; read = []; seen = []; current = null; lastPlace = null; lastSolved = 0; queue.length = 0;
-      save(KEPT, kept); save(READ, read); save(SEEN, seen); badge();
+      save(KEPT, kept); save(READ, read); save(SEEN, seen); badge(); renderWaiting();
     },
   };
 }

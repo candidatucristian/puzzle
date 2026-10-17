@@ -21,8 +21,11 @@ import { soft, grain, vignette, glowCanvas, rgb, makeCanvas, addCanvasTexture, l
  *  drip and the damp air are live in the scene. */
 
 const K = { room: "tc_room", flame: "tc_flame", glow: "tc_glow", fog: "tc_fog" };
+export const CELLAR_MATERIALS_KEY = "tc_cellar_materials";
+export const CELLAR_MATERIALS_URL = "assets/images/TapCode/cellar-background.png";
 const WARM = "255,182,104";
 const PALE = "150,170,214"; // what comes down the hatch
+const BRICK_SURFACES = [[430, 205, 105, 35], [650, 252, 100, 34], [495, 390, 90, 35], [680, 440, 95, 32]];
 
 // ── where everything is ─────────────────────────────────────────────────────
 
@@ -32,7 +35,7 @@ export function layoutCellar(W, H) {
   L.floorY = H * 0.77;
   L.ceilY = H * 0.075;
   L.vp = { x: W * 0.5, y: H * 0.42 };
-  // the message stone: no bigger than its marks need
+  // Keep the original room geometry and the space beside the square grid.
   const n = TAP_WORD.length;
   const gap = Math.min(W * 0.0085, 10.5);
   const clusterGap = gap * 3.4;
@@ -62,12 +65,18 @@ export function paintCellar(scene, L) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  paintWall(ctx, L);
+  // Sample only material surfaces from the photograph. Architecture, props
+  // and the square lattice keep their original perspective and coordinates.
+  const materials = t.exists(CELLAR_MATERIALS_KEY)
+    ? t.get(CELLAR_MATERIALS_KEY).getSourceImage()
+    : null;
+  paintWall(ctx, L, materials);
   paintJoists(ctx, L);
-  paintFloor(ctx, L);
+  paintFloor(ctx, L, materials);
   paintHatch(ctx, L);
   paintPipe(ctx, L);
-  paintSlab(ctx, L);
+  paintSlab(ctx, L, materials);
+  paintCarvedZ(ctx, L);
   paintRack(ctx, L);
   paintBarrel(ctx, L, W * 0.05, L.floorY + 16 * L.u, 92 * L.u, 128 * L.u);
   paintBarrel(ctx, L, W * 0.112, L.floorY + 4 * L.u, 80 * L.u, 112 * L.u);
@@ -76,6 +85,7 @@ export function paintCellar(scene, L) {
   paintLadder(ctx, L);
   paintPuddle(ctx, L);
   paintStool(ctx, L);
+  paintCarvingTools(ctx, L);
   paintCandleLight(ctx, L);
   paintDamp(ctx, L);
   vignette(ctx, W, H, 0.85);
@@ -91,10 +101,37 @@ export function releaseCellarArt(textures) {
   for (const key of Object.values(K)) if (textures.exists(key)) textures.remove(key);
 }
 
+// These small crops contain only brick, stone or limestone grain, never
+// furniture or a room view. The original painter supplies every outline.
+function paintMaterial(ctx, photo, crop, x, y, w, h, opacity, brightness) {
+  if (!photo) return;
+  ctx.save();
+  ctx.globalAlpha *= opacity;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(dimmed(photo, brightness), ...crop, x, y, w, h);
+  ctx.restore();
+}
+
+// The photograph dimmed and greyed once for each brightness it is used at,
+// and kept: a filter on every brick, hundreds of them, held the cellar dark
+// for a second each time it was gone into.
+const DIMMED = new WeakMap();
+function dimmed(photo, brightness) {
+  if (!DIMMED.has(photo)) DIMMED.set(photo, new Map());
+  const cache = DIMMED.get(photo);
+  if (!cache.has(brightness)) {
+    const c = makeCanvas(photo.width, photo.height), g = c.getContext("2d");
+    g.filter = `brightness(${brightness}) saturate(0.7)`;
+    g.drawImage(photo, 0, 0);
+    cache.set(brightness, c);
+  }
+  return cache.get(brightness);
+}
+
 // The wall: old brick in dark mortar, no two bricks one colour; lime come
 // out of it in pale blooms, a patch of render still holding, and the damp
 // risen from the floor to knee height, green at its edge.
-function paintWall(ctx, L) {
+function paintWall(ctx, L, materials) {
   const { W, H, u, floorY } = L;
   ctx.fillStyle = "#0a0a0c";
   ctx.fillRect(0, 0, W, floorY + 2);
@@ -109,6 +146,8 @@ function paintWall(ctx, L) {
       g.addColorStop(1, rgb(38 * k * red, 26 * k, 23 * k));
       ctx.fillStyle = g;
       ctx.fillRect(x + pad, y + pad, bw - pad * 2, bh - pad * 2);
+      const face = BRICK_SURFACES[((r * 7 + Math.round(x / bw)) % BRICK_SURFACES.length + BRICK_SURFACES.length) % BRICK_SURFACES.length];
+      paintMaterial(ctx, materials, face, x + pad, y + pad, bw - pad * 2, bh - pad * 2, 0.72, 0.66);
       ctx.fillStyle = "rgba(255,220,200,0.04)";
       ctx.fillRect(x + pad, y + pad, bw - pad * 2, Math.max(1, bh * 0.06));
       // its face: pitted, a corner gone here and there
@@ -184,13 +223,30 @@ function paintJoists(ctx, L) {
 }
 
 // The floor: big flagstones running toward us, dark, wet in the joints.
-function paintFloor(ctx, L) {
+function paintFloor(ctx, L, materials) {
   const { W, H, u, floorY, vp } = L;
   const g = ctx.createLinearGradient(0, floorY, 0, H);
   g.addColorStop(0, "#131518");
   g.addColorStop(1, "#24262a");
   ctx.fillStyle = g;
   ctx.fillRect(0, floorY, W, H - floorY);
+  if (materials) {
+    // Each stone is clipped to the original floor's vanishing point.
+    const ys = [floorY, ...[0.18, 0.42, 0.72].map(f => floorY + (H - floorY) * f), H];
+    const projectX = (x, y) => vp.x + (x - vp.x) * (y - vp.y) / (floorY - vp.y);
+    for (let row = 0; row < ys.length - 1; row++) {
+      const y0 = ys[row], y1 = ys[row + 1];
+      for (let i = -10; i < 10; i++) {
+        const xa = vp.x + i * W * 0.085, xb = xa + W * 0.085;
+        const xs = [projectX(xa, y0), projectX(xb, y0), projectX(xb, y1), projectX(xa, y1)];
+        if (Math.max(...xs) < 0 || Math.min(...xs) > W) continue;
+        ctx.save();
+        ctx.beginPath(); ctx.moveTo(xs[0], y0); ctx.lineTo(xs[1], y0); ctx.lineTo(xs[2], y1); ctx.lineTo(xs[3], y1); ctx.closePath(); ctx.clip();
+        paintMaterial(ctx, materials, [460 + ((i + 10 + row) % 3) * 74, 923, 150, 70], Math.min(...xs), y0, Math.max(...xs) - Math.min(...xs), y1 - y0, 0.65, 0.58);
+        ctx.restore();
+      }
+    }
+  }
   ctx.strokeStyle = "rgba(0,0,0,0.6)";
   ctx.lineWidth = Math.max(1, 1.4 * u);
   const k = (H - vp.y) / (floorY - vp.y);
@@ -397,7 +453,7 @@ function paintPuddle(ctx, L) {
 // its corners knocked off, a crack run in from one of them, the damp come
 // down its face. The candle is warm across it. Cut into it, the six lines
 // of marks, each two clusters: the row, then the column.
-function paintSlab(ctx, L) {
+function paintSlab(ctx, L, materials) {
   const { u } = L;
   const s = L.slab;
   const rnd = lcg(5115);
@@ -442,6 +498,7 @@ function paintSlab(ctx, L) {
   ctx.fill();
   ctx.save();
   ctx.clip();
+  paintMaterial(ctx, materials, [830, 325, 175, 205], s.x0, s.y0, s.w, s.h, 0.6, 0.8);
   // its face: the grain of the stone, its beds, mottling, pits
   for (let i = 0; i < 1500; i++) {
     ctx.fillStyle = rnd() < 0.55 ? `rgba(0,0,0,${(0.06 + rnd() * 0.16).toFixed(3)})` : `rgba(235,230,214,${(0.03 + rnd() * 0.08).toFixed(3)})`;
@@ -496,7 +553,13 @@ function paintSlab(ctx, L) {
   for (const [fx, fy] of [[0.97, 0.03], [0.02, 0.4], [0.6, 0.985], [0.985, 0.72]]) soft(ctx, s.x0 + s.w * fx, s.y0 + s.h * fy, (7 + rnd() * 7) * u, (5 + rnd() * 5) * u, "8,8,10", 0.7);
   soft(ctx, s.x0 + s.w, s.y0 + s.h * 0.8, s.w * 0.9, s.h * 0.75, WARM, 0.22, "lighter");
   ctx.restore();
-  // the marks, line by line, centred on the stone
+  paintSlabMarks(ctx, L);
+}
+
+// The marks, line by line, centred on the original message stone.
+function paintSlabMarks(ctx, L) {
+  const { u } = L;
+  const s = L.slab;
   const top = s.y0 + s.lineH * 0.9;
   for (let i = 0; i < s.n; i++) {
     const pair = tapPair(TAP_WORD[i]);
@@ -510,6 +573,90 @@ function paintSlab(ctx, L) {
     x += s.clusterGap - s.gap;
     for (let k = 0; k < col; k++) { carve(ctx, mr, x, y, s.markH, u); x += s.gap; }
   }
+}
+
+// A hand-cut Z just beyond the rack's last row: a deep groove with a broken
+// lip, tiny pale chips, and fresh limestone dust falling onto the floor.
+function paintCarvedZ(ctx, L) {
+  const { u, rack } = L;
+  const cell = rack.w / 5, z = cell * 0.36;
+  const x = rack.x0 + 5.5 * cell, y = rack.y0 + 4.5 * cell;
+  ctx.save();
+  const points = [
+    [x - z, y - z * 0.78], [x - z * 0.15, y - z * 0.8],
+    [x + z, y - z * 0.76], [x + z * 0.55, y - z * 0.22],
+    [x - z * 0.64, y + z * 0.68], [x + z * 0.95, y + z * 0.72],
+  ];
+  const stroke = (color, width, dx, dy) => {
+    ctx.beginPath();
+    points.forEach(([px, py], i) => (i ? ctx.lineTo(px + dx, py + dy) : ctx.moveTo(px + dx, py + dy)));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = "square";
+    ctx.lineJoin = "bevel";
+    ctx.stroke();
+  };
+  stroke("rgba(0,0,0,0.82)", Math.max(3, z * 0.19), 1.8 * u, 2.2 * u);
+  stroke("rgba(31,29,27,0.94)", Math.max(2.4, z * 0.14), 0, 0);
+  stroke("rgba(224,213,190,0.72)", Math.max(0.9, z * 0.035), -1.3 * u, -1.5 * u);
+  // Fresh flakes cling to the broken lower lip of the cut.
+  const rnd = lcg(707);
+  for (let i = 0; i < 18; i++) {
+    const px = x + (rnd() - 0.5) * z * 2.2;
+    const py = y + z * (0.82 + rnd() * 0.42);
+    const r = (0.45 + rnd() * 1.1) * u;
+    ctx.fillStyle = rnd() < 0.6 ? "rgba(211,203,185,0.7)" : "rgba(106,98,84,0.52)";
+    ctx.beginPath(); ctx.ellipse(px, py, r * 1.2, r * 0.65, rnd() * 0.5, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function paintCarvingTools(ctx, L) {
+  const { u, floorY, rack } = L;
+  const cell = rack.w / 5;
+  const x = rack.x0 + 5.5 * cell, y = floorY + 18 * u;
+  const rnd = lcg(8117);
+  soft(ctx, x - 3 * u, y, cell * 1.05, 6 * u, "178,164,135", 0.2);
+  // A shallow scatter follows the wall down to the floor, with a few chips
+  // among the fine powder. Its flattened shape lies on the existing floor.
+  for (let i = 0; i < 145; i++) {
+    const px = x + (rnd() + rnd() - 1) * cell * 1.35;
+    const py = y + (rnd() - 0.5) * 12 * u;
+    const r = (0.25 + rnd() * 1.35) * u;
+    ctx.fillStyle = rnd() < 0.6 ? "rgba(191,181,158,0.6)" : "rgba(112,103,87,0.66)";
+    ctx.beginPath(); ctx.moveTo(px - r, py); ctx.lineTo(px + r * 0.65, py - r * 0.45); ctx.lineTo(px + r, py + r * 0.5); ctx.closePath(); ctx.fill();
+  }
+  // One narrow steel masonry chisel, resting beside the dust.
+  ctx.save();
+  ctx.translate(x - 16 * u, y + 15 * u);
+  ctx.rotate(0.16);
+  ctx.scale(u, u);
+  soft(ctx, 2, 4, 58, 5, "0,0,0", 0.7);
+  const steel = ctx.createLinearGradient(0, -8, 0, 8);
+  steel.addColorStop(0, "#3c4648"); steel.addColorStop(0.24, "#b4b7ab");
+  steel.addColorStop(0.45, "#6e7876"); steel.addColorStop(0.72, "#384344"); steel.addColorStop(1, "#141b1d");
+  ctx.fillStyle = steel;
+  ctx.beginPath(); ctx.moveTo(-55, -8); ctx.lineTo(-34, -4); ctx.lineTo(46, -4);
+  ctx.lineTo(48, -6); ctx.lineTo(53, -5); ctx.lineTo(54, 5); ctx.lineTo(48, 6);
+  ctx.lineTo(45, 4); ctx.lineTo(-34, 4); ctx.lineTo(-55, 8); ctx.closePath(); ctx.fill();
+  // The sharpened bevel and the long facets catch different light.
+  ctx.fillStyle = "#959c93";
+  ctx.beginPath(); ctx.moveTo(-55, -8); ctx.lineTo(-48, -6.8); ctx.lineTo(-48, 6.8); ctx.lineTo(-55, 8); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "rgba(235,225,198,0.7)"; ctx.lineWidth = 0.75;
+  ctx.beginPath(); ctx.moveTo(-55, -6.5); ctx.lineTo(-55, 6.3); ctx.moveTo(-33, -2.7); ctx.lineTo(45, -2.7); ctx.stroke();
+  ctx.strokeStyle = "rgba(5,12,15,0.65)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(-34, 2.5); ctx.lineTo(46, 2.5); ctx.stroke();
+  for (let i = 0; i < 40; i++) {
+    const px = -42 + rnd() * 88, py = -3 + rnd() * 6;
+    ctx.strokeStyle = rnd() < 0.55 ? "rgba(227,219,191,0.2)" : "rgba(29,35,35,0.44)";
+    ctx.lineWidth = 0.3 + rnd() * 0.35;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + 2 + rnd() * 7, py + (rnd() - 0.5) * 0.6); ctx.stroke();
+  }
+  ctx.fillStyle = "#3b4342";
+  ctx.beginPath(); ctx.ellipse(52, 0, 2.4, 5.4, -0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(194,194,175,0.42)"; ctx.lineWidth = 0.7;
+  ctx.beginPath(); ctx.ellipse(52, -0.5, 1.8, 4.4, -0.12, Math.PI, Math.PI * 2); ctx.stroke();
+  ctx.restore();
 }
 
 // one mark cut in the stone: a dark groove, its lip lit by the candle on the
@@ -529,9 +676,8 @@ function carve(ctx, rnd, x, y, h, u) {
   soft(ctx, b.x + 1 * u, b.y + 2.6 * u, 3.4 * u, 1.4 * u, "210,205,190", 0.25);
 }
 
-// The bottle rack: a square of pine, five holes by five, on two feet — empty,
-// grey with dust, a cobweb across one corner. In chalk on the brick, a 1
-// over its first column and a 1 beside its first row.
+// The original square wooden lattice: five columns by five rows, open
+// square cells, two feet, dust and the cobweb across its upper corner.
 function paintRack(ctx, L) {
   const { u, floorY } = L;
   const { x0, y0, w } = L.rack;
@@ -543,25 +689,6 @@ function paintRack(ctx, L) {
   ctx.fillStyle = "#050404";
   ctx.fillRect(x0, y0, w, w);
   for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) soft(ctx, x0 + (c + 0.5) * cell, y0 + (r + 0.62) * cell, cell * 0.4, cell * 0.3, "70,46,36", 0.16);
-  // on the wall past the end of its bottom row, scratched into the brick:
-  // the Z there was no hole left for
-  {
-    const zx = x0 + 5.5 * cell, zy = y0 + 4.5 * cell, z = cell * 0.3;
-    const strokes = [[-z, -z * 0.9, z * 0.95, -z * 1.02], [z * 0.95, -z * 1.02, -z * 0.9, z * 0.96], [-z * 0.9, z * 0.96, z * 1.04, z * 0.88]];
-    ctx.lineCap = "round";
-    for (const [tone, dx, dy, lw] of [["rgba(0,0,0,0.75)", 0.9, 0.9, 2.8], ["rgba(222,212,190,0.72)", 0, 0, 1.6]]) {
-      ctx.strokeStyle = tone;
-      ctx.lineWidth = Math.max(1, lw * u);
-      for (const [ax, ay, bx, by] of strokes) {
-        ctx.beginPath();
-        ctx.moveTo(zx + ax + dx * u, zy + ay + dy * u);
-        ctx.lineTo(zx + (ax + bx) / 2 + 0.6 * u + dx * u, zy + (ay + by) / 2 - 0.5 * u + dy * u);
-        ctx.lineTo(zx + bx + dx * u, zy + by + dy * u);
-        ctx.stroke();
-      }
-    }
-    ctx.lineCap = "butt";
-  }
   // its bars
   const wood = (x, y, bw, bhh, upright) => {
     const g = upright ? ctx.createLinearGradient(x, 0, x + bw, 0) : ctx.createLinearGradient(0, y, 0, y + bhh);

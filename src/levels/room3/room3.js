@@ -2,6 +2,8 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
 import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
 import { paintKey } from "../../shared/keyArt.js";
 import { writingDesk, greenLamp, candle, gamesTable } from "../house/furniture.js";
+import { paintFlatMaterial, paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
+import { paintRoom3Herbarium, paintRoom3Flowers, paintRoom3SeedSacks } from "./botanical.js";
 import {
   WARM, BACK, roomLayout, roomStyle, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
   footShadow, paintChest, gloom,
@@ -111,12 +113,15 @@ export function paintRoom3(scene, L) {
   paintShell(ctx, L);
   paintWindowWall(ctx, L);
   paintChart(ctx, L);
+  paintRoom3Herbarium(ctx, L);
   paintRug(ctx, L);
   paintMoonlight(ctx, L);
+  paintRoom3Flowers(ctx, L);
   paintDesk(ctx, L);
   gamesTable(ctx, L, L.games, L.board, GAME);
   candle(ctx, L, L.candle, L.on.chess);
   paintBottleTable(ctx, L);
+  paintRoom3SeedSacks(ctx, L);
   paintGloom(ctx, L);
   vignette(ctx, W, H, 0.7);
   grain(ctx, W, H, 0.035);
@@ -144,6 +149,29 @@ function paintChart(ctx, L) {
   g.fillRect(0, 0, fw, fh);
   g.fillStyle = "#3c2a18";
   g.fillRect(2 * R, 2 * R, fw - 4 * R, fh - 4 * R);
+  if (L.surfaceMaterials?.chart) {
+    paintFlatMaterial(g, L.furnitureMaterial, 2 * R, 2 * R, fw - 4 * R, fh - 4 * R, 0.55, 0.82);
+    g.drawImage(L.surfaceMaterials.chart, 6 * R, 6 * R, fw - 12 * R, fh - 12 * R);
+    // Recessed paper, a narrow wooden bevel and restrained glass reflections.
+    g.strokeStyle = "rgba(4,3,2,0.8)";
+    g.lineWidth = 1.6 * R;
+    g.strokeRect(5.5 * R, 5.5 * R, fw - 11 * R, fh - 11 * R);
+    g.strokeStyle = "rgba(205,170,118,0.28)";
+    g.lineWidth = 0.4 * R;
+    g.strokeRect(2.5 * R, 2.5 * R, fw - 5 * R, fh - 5 * R);
+    g.save();
+    g.beginPath(); g.rect(6 * R, 6 * R, fw - 12 * R, fh - 12 * R); g.clip();
+    const reflection = g.createLinearGradient(0, 0, fw, fh);
+    reflection.addColorStop(0, "rgba(185,209,238,0.14)");
+    reflection.addColorStop(0.42, "rgba(185,209,238,0)");
+    reflection.addColorStop(0.48, "rgba(185,209,238,0.06)");
+    reflection.addColorStop(0.6, "rgba(185,209,238,0)");
+    g.fillStyle = reflection;
+    g.fillRect(0, 0, fw, fh);
+    g.restore();
+    onWall(ctx, L, -1, at, flat);
+    return;
+  }
   const paper = g.createLinearGradient(0, 0, fw, fh);
   paper.addColorStop(0, "#8a7c5c");
   paper.addColorStop(1, "#5e5440");
@@ -198,9 +226,13 @@ function paintRug(ctx, L) {
   strip(hw, 336, 526, "#0c1626");
   strip(hw - 7, 342, 520, "#5a5440");
   strip(hw - 11, 346, 516, "#12223a");
+  paintProjectedMaterial(ctx, L.surfaceMaterials?.rug, (u, v) => Q(mid - hw + hw * 2 * u, 0, 526 - 190 * v), 0.96, 8, 8);
   for (let i = 0; i < 700; i++) {
     const p = Q(mid + (rnd() * 2 - 1) * hw, 0, 338 + rnd() * 186);
-    ctx.fillStyle = rnd() < 0.6 ? "rgba(0,0,0,0.2)" : "rgba(200,220,255,0.05)";
+    const dark = rnd() < 0.6;
+    ctx.fillStyle = L.surfaceMaterials?.rug
+      ? dark ? "rgba(0,0,0,0.08)" : "rgba(200,220,255,0.025)"
+      : dark ? "rgba(0,0,0,0.2)" : "rgba(200,220,255,0.05)";
     ctx.fillRect(p.x, p.y, 3 * p.s, 0.9 * p.s);
   }
 }

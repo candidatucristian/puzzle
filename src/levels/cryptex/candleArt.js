@@ -1,19 +1,32 @@
-// The candle shares the study's camera and light. Its wax — uneven, dripped,
-// burned down into a hollow round a pool of melted wax — is ray-marched in
-// world space and baked into the room's two layers: the room with no light,
-// and what the flame adds (so the wax's glow dims and dies with the flame).
-// Only the flame, the ember and the smoke are drawn during play (Candle.js).
+// The candles share the study's camera and light. Their wax — uneven,
+// dripped, burned down into a hollow round a pool of melted wax — is
+// ray-marched in world space and baked into the room's layer with no light;
+// what each one's flame does to its own wax is baked apart (`glow`), so that
+// wax goes dark with its own flame. Only the flames, the embers and the
+// smoke are drawn during play (Candle.js).
+//
+// Three of them, burned down to different heights, standing together: the
+// tallest at the back — its flame is the one the room is lit from — one
+// half burned at its left, a stub at the front.
+const CANDLES = [
+  { dx: 0.9, dz: 2.6, radius: 2.65, height: 15.4, main: true },
+  { dx: -4.7, dz: -0.4, radius: 2.3, height: 10.4 },
+  { dx: 3.6, dz: -3.4, radius: 2.05, height: 5.8 },
+];
+
 export function candleLayout(cam, W, H, deskY) {
-  const foot = cam.deskToWorld(W * 0.81, deskY + (H - deskY) * 0.42);
-  const radius = 2.65;
-  const height = 15.4;
-  const flame = { x: foot.x - 0.16, y: height + 1.35, z: foot.z - 0.25 };
-  const wick = cam.P(flame.x, height + 0.36, flame.z);
-  return { foot, radius, height, flame, wick, scale: cam.kAt(foot.z) };
+  const at = cam.deskToWorld(W * 0.81, deskY + (H - deskY) * 0.42);
+  return CANDLES.map(({ dx, dz, radius, height, main = false }) => {
+    const foot = { x: at.x + dx, y: 0, z: at.z + dz };
+    const flame = { x: foot.x - 0.16, y: height + 1.35, z: foot.z - 0.25 };
+    const wick = cam.P(flame.x, height + 0.36, flame.z);
+    return { foot, radius, height, flame, wick, main, scale: cam.kAt(foot.z) };
+  });
 }
 
 function waxDistance(x, y, z, candle) {
   const { radius: r, height: h } = candle;
+  const tall = h / 15.4;
   const radial = Math.hypot(x, z),
     angle = Math.atan2(z, x);
   // Small variations round the wall: wax has no perfectly straight edge.
@@ -28,7 +41,7 @@ function waxDistance(x, y, z, candle) {
     [-2.85, 11.3, 0.17, 0.25],
   ]) {
     const side = Math.atan2(Math.sin(angle - a), Math.cos(angle - a));
-    const bottom = Math.max(0, end - y);
+    const bottom = Math.max(0, end * tall - y);
     const d = Math.hypot(side / width, bottom / 0.55);
     // a rounded bead of wax, flowing smoothly into the wall beside it
     if (d < 1) rr += rise * (1 - d * d) * (1 - d * d);
@@ -53,7 +66,11 @@ const AMBER = [240, 126, 50]; // ...and deeper in, where it has turned red
 const LIP = [255, 196, 118]; // the thin lip round the hollow, lit through
 const POOL = [255, 170, 78]; // melted wax, lit from above
 
-export function paintCandle(rc, lc, cam, candle, shadePixel) {
+// Returns the candle's own light — what its flame does to its wax — as a
+// canvas to lay over the room at (x, y); in `lc`, the room's light, the wax
+// only hides what is behind it — and so in the glows of the candles already
+// painted behind it (`under`: what this returned for each of them).
+export function paintCandle(rc, lc, cam, candle, shadePixel, under = []) {
   const { foot, radius: r, height: h, flame, scale: k } = candle;
   groundShadow(rc, lc, cam, candle);
 
@@ -67,9 +84,16 @@ export function paintCandle(rc, lc, cam, candle, shadePixel) {
     Math.ceil(cam.H) - y0,
     Math.ceil(bottom.y - y0 + margin * 0.75),
   );
-  if (w <= 0 || hh <= 0) return;
+  if (w <= 0 || hh <= 0) return null;
   const base = rc.getImageData(x0, y0, w, hh),
     light = lc.getImageData(x0, y0, w, hh);
+  const glowCanvas = document.createElement("canvas");
+  glowCanvas.width = w;
+  glowCanvas.height = hh;
+  const gc = glowCanvas.getContext("2d", { willReadFrequently: true });
+  const glow = gc.createImageData(w, hh);
+  for (let o = 3; o < glow.data.length; o += 4) glow.data[o] = 255;
+  const behind = under.filter(Boolean).map((u) => ({ ...u, img: u.canvas.getContext("2d").getImageData(0, 0, u.canvas.width, u.canvas.height) }));
   const B = [0, 0, 0, 0],
     L = [0, 0, 0, 0];
   const bounds = [
@@ -133,12 +157,22 @@ export function paintCandle(rc, lc, cam, candle, shadePixel) {
       const o = (j * w + i) * 4;
       for (let q = 0; q < 3; q++) {
         base.data[o + q] = base.data[o + q] * (1 - cover) + colB[q] * cover;
-        light.data[o + q] = light.data[o + q] * (1 - cover) + colL[q] * cover;
+        light.data[o + q] = light.data[o + q] * (1 - cover);
+        glow.data[o + q] = glow.data[o + q] * (1 - cover) + colL[q] * cover;
+      }
+      for (const u of behind) {
+        const ux = x0 + i - u.x, uy = y0 + j - u.y;
+        if (ux < 0 || uy < 0 || ux >= u.img.width || uy >= u.img.height) continue;
+        const k = (uy * u.img.width + ux) * 4;
+        for (let q = 0; q < 3; q++) u.img.data[k + q] *= 1 - cover;
       }
     }
   rc.putImageData(base, x0, y0);
   lc.putImageData(light, x0, y0);
-  paintWick(rc, lc, cam, candle);
+  gc.putImageData(glow, 0, 0);
+  for (const u of behind) u.canvas.getContext("2d").putImageData(u.img, 0, 0);
+  paintWick(rc, lc, gc, cam, candle, x0, y0);
+  return { canvas: glowCanvas, x: x0, y: y0 };
 }
 
 // How the wax looks at one point: the room's light alone (colB), and what
@@ -270,19 +304,22 @@ function groundShadow(rc, lc, cam, c) {
     ctx.fillRect(-1, -1, 2, 2);
     ctx.restore();
   };
-  ellipse(lc, r * 4.2, 0.8, 0.45);
-  ellipse(lc, r * 1.7, 0.7, 0.7);
+  if (c.main) {
+    ellipse(lc, r * 4.2, 0.8, 0.45);
+    ellipse(lc, r * 1.7, 0.7, 0.7);
+  } else ellipse(lc, r * 2.1, 0.55, 0.6);
   ellipse(rc, r * 1.6, 0.55, 0.7);
 }
 
 // A short cotton wick, bent over, black, standing in the pool — its tip
-// glowing where the flame holds it (only in the flame's layer)
-function paintWick(rc, lc, cam, candle) {
+// glowing where the flame holds it (only in its own light, `gc`, laid at x0, y0)
+function paintWick(rc, lc, gc, cam, candle, x0, y0) {
   const { flame, height: h, scale: k } = candle;
   const a = cam.P(flame.x + 0.12, h - 0.7, flame.z);
   const b = candle.wick;
-  for (const ctx of [rc, lc]) {
+  for (const ctx of [rc, lc, gc]) {
     ctx.save();
+    if (ctx === gc) ctx.translate(-x0, -y0);
     ctx.lineCap = "round";
     ctx.strokeStyle = ctx === rc ? "#0d0b09" : "#070302";
     ctx.lineWidth = Math.max(1.3, k * 0.16);
@@ -292,8 +329,9 @@ function paintWick(rc, lc, cam, candle) {
     ctx.stroke();
     ctx.restore();
   }
-  lc.save();
-  const g = lc.createRadialGradient(
+  gc.save();
+  gc.translate(-x0, -y0);
+  const g = gc.createRadialGradient(
     b.x,
     b.y,
     0,
@@ -303,7 +341,7 @@ function paintWick(rc, lc, cam, candle) {
   );
   g.addColorStop(0, "rgba(255,150,60,0.9)");
   g.addColorStop(1, "rgba(255,90,20,0)");
-  lc.fillStyle = g;
-  lc.fillRect(b.x - k, b.y - k, k * 2, k * 2);
-  lc.restore();
+  gc.fillStyle = g;
+  gc.fillRect(b.x - k, b.y - k, k * 2, k * 2);
+  gc.restore();
 }

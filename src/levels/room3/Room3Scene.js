@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import RoomScene from "../house/RoomScene.js";
 import { layoutRoom3, paintRoom3, releaseRoom3Art, SHIP_BOTTLE } from "./room3.js";
+import { loadRoom3Materials, room3Materials } from "./materials.js";
+import { loadRoom3Botanicals, room3Botanicals } from "./botanical.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The captain's room: the third room off the hall (see house/RoomScene.js for
@@ -28,12 +30,18 @@ export default class Room3Scene extends RoomScene {
 
   preload() {
     this.load.image(SHIP_BOTTLE.key, SHIP_BOTTLE.url);
+    loadRoom3Materials(this);
+    loadRoom3Botanicals(this);
   }
 
   layout(W, H, levels) {
     const on = {};
     for (const [light, level] of Object.entries(LIT_FOR)) on[light] = !levels.isCompleted(levels.indexOf(level));
-    return layoutRoom3(W, H, on);
+    const L = layoutRoom3(W, H, on);
+    L.surfaceMaterials = room3Materials(this);
+    L.furnitureMaterial = L.surfaceMaterials?.furniture;
+    L.botanicals = room3Botanicals(this);
+    return L;
   }
 
   paint(L) {

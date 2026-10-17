@@ -1,4 +1,6 @@
 import { soft, lcg, polygon } from "../../shared/paint.js";
+import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
+import { botanicProp, paintPhotographicIvy } from "./botanicMaterials.js";
 
 /** The ground floor is the botanist's: the hall dressed as the way into a
  *  house given over to plants. The same passage as before (hall.js) — its
@@ -94,6 +96,10 @@ function leafColour(rnd, warmth, moon = 0) {
 export function paintBotanicPaper(ctx, L, side, top, bottom) {
   const { P, u } = L;
   const X = side * L.wall;
+  if (L.botanicMaterials) {
+    paintProjectedMaterial(ctx, L.botanicMaterials.paper, (u, v) => P(X, top + (bottom - top) * v, 0.7 + (END - 0.7) * u), 0.94, 32, 3);
+    return;
+  }
   ctx.save();
   polygon(ctx, [P(X, top, 0.7), P(X, top, END), P(X, bottom, END), P(X, bottom, 0.7)]);
   ctx.clip();
@@ -124,6 +130,10 @@ export function paintSpecimen(ctx, L, side, z, kind) {
   const { P, H, u } = L;
   const X = side * L.wall;
   const y0 = -H * 0.49, y1 = -H * 0.31, w = 0.13;
+  if (L.botanicMaterials) {
+    paintProjectedMaterial(ctx, L.botanicMaterials.specimens[kind], (u, v) => P(X, y0 - H * 0.016 + (y1 - y0 + H * 0.032) * v, side < 0 ? z - 0.012 + (w + 0.024) * u : z + w + 0.012 - (w + 0.024) * u), 1, 8, 2);
+    return;
+  }
   const quad = (Ya, Yb, za, zb, fill) => { polygon(ctx, [P(X, Ya, za), P(X, Ya, zb), P(X, Yb, zb), P(X, Yb, za)]); ctx.fillStyle = fill; ctx.fill(); };
   const warmth = lit(L, side, (y0 + y1) / 2, z + w / 2);
   // the frame, a thin gilt slip, the sheet
@@ -195,6 +205,7 @@ export function paintSkylight(ctx, L) {
   ctx.save();
   ctx.clip();
   // the moon somewhere over it, and stars in the clear panes
+  if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.glass, (u, v) => P(x0 + (x1 - x0) * u, ceil, z0 + (z1 - z0) * v), 0.75, 6, 8);
   const m = P(wall * 0.12, ceil, 3.4);
   soft(ctx, m.x, m.y, (260 * u) / 3.4, (90 * u) / 3.4, MOON, 0.55, "lighter");
   const rnd = lcg(808);
@@ -204,11 +215,14 @@ export function paintSkylight(ctx, L) {
     ctx.fillRect(p.x, p.y, 1.2, 1.2);
   }
   // the ivy over it outside: dark leaves pressed to the glass at the edges
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; !L.botanicMaterials && i < 70; i++) {
     const edge = rnd() < 0.5 ? x0 + rnd() * wall * 0.16 : x1 - rnd() * wall * 0.16;
     const z = z0 + rnd() * (z1 - z0);
     const p = P(edge, ceil, z);
     ivyLeaf(ctx, p.x, p.y, (8 + rnd() * 7) * u / z, 0.7 + rnd() * 0.3, rnd() * Math.PI * 2, "rgba(6,10,8,0.85)");
+  }
+  if (L.botanicMaterials) for (const edge of [x0, x1 - wall * 0.09]) {
+    paintProjectedMaterial(ctx, L.botanicMaterials.ivy, (u, v) => P(edge + wall * 0.09 * u, ceil, z0 + (z1 - z0) * v), 0.85, 3, 8);
   }
   ctx.restore();
   // the glazing bars: along the hall, and across it
@@ -247,6 +261,12 @@ export function paintFallenLeaves(ctx, L) {
     ctx.translate(p.x, p.y);
     ctx.scale(1, 0.38);
     ctx.rotate(rnd() * Math.PI * 2);
+    if (L.botanicMaterials) {
+      const image = L.botanicMaterials.leaves[i % 3], h = s * 2.2, w = h * image.width / image.height;
+      ctx.drawImage(image, -w / 2, -h / 2, w, h);
+      ctx.restore();
+      continue;
+    }
     const tone = tones(fallen[Math.floor(rnd() * fallen.length)], 0.5, 0.05);
     blade(ctx, -s, 0, s, -s * 0.14, s * (0.25 + rnd() * 0.2), (rnd() - 0.5) * 0.15, tone);
     ctx.strokeStyle = tone.dark; ctx.lineWidth = Math.max(0.25, s * 0.055);
@@ -258,6 +278,7 @@ export function paintFallenLeaves(ctx, L) {
 /** Thin ivy runners follow the cornice. A few young shoots trail down,
  *  with exposed stem between the leaves and shorter growth above doors. */
 export function paintIvy(ctx, L) {
+  if (paintPhotographicIvy(ctx, L)) return;
   const { P, wall, ceil, H, u, doorTop } = L;
   const rnd = lcg(5150);
   const overDoor = (side, z) => L.doors.some((d) => d.side === side && z > d.z - 0.06 && z < d.z + 0.56);
@@ -489,6 +510,13 @@ export function paintBaskets(ctx, L) {
       }
     }
     ctx.save(); ctx.translate(bowl.x, bowl.y); ctx.scale(k, k);
+    if (L.botanicMaterials) {
+      const image = L.botanicMaterials.hanging, height = 150, width = height * image.width / image.height;
+      // The photographed basket's rim is 53% down its cropped height.
+      ctx.drawImage(image, -width / 2, -height * 0.53, width, height);
+      ctx.restore();
+      continue;
+    }
     const fronds = fernCrown(Math.round(z * 100 + side * 11), true);
     paintFernFronds(ctx, fronds.filter(f => f.depth < 0.45));
     const mg = ctx.createLinearGradient(-25, -5, 25, 20);
@@ -565,7 +593,8 @@ function clayPot(ctx, top, bottom, rTop, rBottom, glaze) {
 }
 
 /** A Boston fern spilling over the rim of its pot, on the little table. */
-export function paintTableFern(ctx) {
+export function paintTableFern(ctx, materials = null) {
+  if (materials) { botanicProp(ctx, materials.fern, 0, -128, 130); return; }
   const top = -170;
   const fronds = fernCrown(91);
   ctx.save(); ctx.translate(0, top);
@@ -579,7 +608,8 @@ export function paintTableFern(ctx) {
 
 /** A kentia palm in a glazed pot: tall stems arching over, the leaflets
  *  hanging from them in two rows. */
-export function paintPalm(ctx) {
+export function paintPalm(ctx, materials = null) {
+  if (materials) { botanicProp(ctx, materials.palm, 0, 0, 255); return; }
   const rnd = lcg(73);
   // a young one: kept small enough to stand clear of the doors either side
   ctx.save();
@@ -619,7 +649,8 @@ export function paintPalm(ctx) {
 
 /** An aspidistra in a terracotta urn: broad leaves on their own stalks, some
  *  standing, some bowed over. */
-export function paintUrnPlant(ctx) {
+export function paintUrnPlant(ctx, materials = null) {
+  if (materials) { botanicProp(ctx, materials.flowers, 0, 0, 190); return; }
   const rnd = lcg(47);
   const top = -101; // the soil in the urn
   const leaves = [
@@ -640,7 +671,8 @@ export function paintUrnPlant(ctx) {
 }
 
 /** On the trunk: a stack of clay pots, and a watering can. */
-export function paintPotsAndCan(ctx) {
+export function paintPotsAndCan(ctx, materials = null) {
+  if (materials) { botanicProp(ctx, materials.tools, 10, -70, 85); return; }
   // the pots, one inside the next, a little askew
   for (const [i, x] of [[0, -26], [1, -24], [2, -27]].map(([n, x]) => [n, x])) {
     const y = -70 - i * 11;

@@ -4,6 +4,7 @@ import { paintCarsSteps, releaseCarArt, relativeYaw, frameAt, FRAME_COUNT } from
 import { paintPeople, releasePeopleArt, FLAG_FRAMES } from "./people.js";
 import { drawPodium, releasePodiumArt } from "./podium.js";
 import { paintTvFrame, releaseTvFrame } from "./tvSet.js";
+import { addVhs, releaseVhsArt } from "./vhs.js";
 import {
   RALLY_NUMBERS as RY_NUMBERS,
   RALLY_START_DELAY_MS,
@@ -40,6 +41,10 @@ import {
 //
 // Found in the house, the stage is watched on a television: the same scene,
 // drawn back a little, with the set round it (tvSet.js).
+//
+// And it is a tape: an old VHS recording of the broadcast, played back — the
+// scanlines, the grain, the tracking noise, the recorder's PLAY in its corner
+// and the broadcaster's caption for the race across the top (vhs.js).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEG = Math.PI / 180;
@@ -82,6 +87,7 @@ export default class RallyScene extends BasePuzzleScene {
   update(time, delta) {
     // the cars are rendered a slice per frame while the stage waits
     if (this._carJob) this._pumpCars(12);
+    this._vhs?.update(time);
     this._updateStones(Math.min(delta || 16, 50));
   }
 
@@ -139,6 +145,8 @@ export default class RallyScene extends BasePuzzleScene {
       this.add.image(W / 2, H / 2, paintTvFrame(this, W, H, TV_ZOOM)).setDepth(1000);
       this.cameras.main.setZoom(TV_ZOOM);
     }
+
+    this._vhs = addVhs(this, W, H);
 
     if (this._finished) {
       // rebuilt after the race (a resize): straight to the dark stage and the podium
@@ -678,6 +686,7 @@ export default class RallyScene extends BasePuzzleScene {
     releasePeopleArt(this.textures);
     releasePodiumArt(this.textures);
     releaseTvFrame(this.textures);
+    releaseVhsArt(this.textures);
   }
 
   // a resize: everything is painted again from scratch
@@ -696,9 +705,11 @@ export default class RallyScene extends BasePuzzleScene {
     this._dim = [];
     this._flag = null;
     this._podium = null;
+    this._vhs = null;
   }
 
   shutdown() {
+    this._vhs = null;
     this._round = (this._round || 0) + 1;
     this._carJob = null;
     this.tweens.killAll();

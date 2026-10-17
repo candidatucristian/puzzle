@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import RoomScene from "./RoomScene.js";
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 import { paintKey } from "../../shared/keyArt.js";
+import { paintFlatMaterial, paintProjectedMaterial } from "./drawingRoomMaterials.js";
 import {
   BACK, roomLayout, roomStyle, chestAt, fillPoly, block, paintShell, paintWindowWall, paintMoonlight, footShadow, paintChest, gloom,
 } from "./roomKit.js";
@@ -70,6 +71,10 @@ function paintPlain(scene, L, K) {
       for (const [x0, x1] of [[tb.x0 + 2, tb.x0 + 7], [tb.x1 - 7, tb.x1 - 2]]) block(ctx, L, { x0, x1, d0, d1, y0: 0, y1: tb.h - 3 }, oak);
     }
     block(ctx, L, { ...tb, x0: tb.x0 - 2, x1: tb.x1 + 2, y0: tb.h - 3, y1: tb.h }, oak);
+    if (L.surfaceMaterials?.detailed) {
+      paintProjectedMaterial(ctx, L.surfaceMaterials.wood, (u, v) => Q(tb.x0 - 2 + (tb.x1 - tb.x0 + 4) * u, tb.h, tb.d1 - (tb.d1 - tb.d0) * v), 0.82, 2, 2);
+      paintProjectedMaterial(ctx, L.surfaceMaterials.wood, (u, v) => Q(tb.x0 - 2 + (tb.x1 - tb.x0 + 4) * u, tb.h - 3 * v, tb.d0), 0.5);
+    }
   }
   scene.paintDetails?.(ctx, L);
   const w = L.win, floor = Q(w.x - 30, 0, 470);
@@ -112,6 +117,15 @@ function paintHearth(ctx, L) {
     return g;
   };
   const box = (x0, y0, x1, y1, fill) => { ctx.fillStyle = fill; ctx.fillRect(x0, -y1, x1 - x0, y1 - y0); };
+  const stoneBox = (x0, y0, x1, y1, fill) => {
+    box(x0, y0, x1, y1, fill);
+    if (!L.surfaceMaterials?.stone) return;
+    paintFlatMaterial(ctx, L.surfaceMaterials.stone, x0, -y1, x1 - x0, y1 - y0, 0.33, 0.78);
+    ctx.save();
+    ctx.globalAlpha *= 0.24;
+    box(x0, y0, x1, y1, fill);
+    ctx.restore();
+  };
   // its shadow on the wall
   ctx.fillStyle = "rgba(0,0,0,0.5)";
   ctx.fillRect(o.x - 60 * s, o.y - 118 * s, 126 * s, 118 * s);
@@ -120,9 +134,12 @@ function paintHearth(ctx, L) {
   ctx.scale(s, s);
   // ── the stone: the whole face of it, then what stands out
   const stone = grad(-62, 0, 62, 0, [[0, "#1a1a1d"], [0.3, "#34353a"], [0.62, "#2a2b30"], [1, "#141416"]]);
-  box(-62, 0, 62, 108, stone);
+  stoneBox(-62, 0, 62, 108, stone);
   for (let i = 0; i < 2600; i++) {
-    ctx.fillStyle = rnd() < 0.55 ? "rgba(0,0,0,0.2)" : "rgba(214,214,222,0.07)";
+    const dark = rnd() < 0.55;
+    ctx.fillStyle = L.surfaceMaterials?.stone
+      ? dark ? "rgba(0,0,0,0.05)" : "rgba(214,214,222,0.025)"
+      : dark ? "rgba(0,0,0,0.2)" : "rgba(214,214,222,0.07)";
     ctx.fillRect(-62 + rnd() * 124, -rnd() * 108, 0.3 + rnd() * 0.9, 0.3 + rnd() * 0.6);
   }
   // the joints between its blocks
@@ -132,22 +149,22 @@ function paintHearth(ctx, L) {
   // the pilasters: a plinth, a sunk panel up each, a cap
   for (const side of [-1, 1]) {
     const x0 = side < 0 ? -62 : 44, x1 = x0 + 18;
-    box(x0 - 2, 0, x1 + 2, 10, grad(x0, 0, x1, 0, [[0, "#232428"], [0.4, "#3c3d43"], [1, "#18181b"]]));
+    stoneBox(x0 - 2, 0, x1 + 2, 10, grad(x0, 0, x1, 0, [[0, "#232428"], [0.4, "#3c3d43"], [1, "#18181b"]]));
     box(x0 - 2, 10, x1 + 2, 10.8, "rgba(214,220,236,0.16)");
     box(x0 + 4, 16, x1 - 4, 78, "rgba(0,0,0,0.28)");
     box(x0 + 4, 16, x0 + 4.7, 78, "rgba(0,0,0,0.4)");
     box(x1 - 4.7, 16, x1 - 4, 78, "rgba(214,220,236,0.12)");
-    box(x0 - 1.5, 82, x1 + 1.5, 86, grad(0, -86, 0, -82, [[0, "#46474e"], [1, "#1e1e22"]]));
+    stoneBox(x0 - 1.5, 82, x1 + 1.5, 86, grad(0, -86, 0, -82, [[0, "#46474e"], [1, "#1e1e22"]]));
   }
   // the frieze over the opening, a raised tablet in the middle of it
-  box(-62, 86, 62, 108, grad(0, -108, 0, -86, [[0, "#303136"], [1, "#222327"]]));
-  box(-20, 90, 20, 104, grad(0, -104, 0, -90, [[0, "#3e3f46"], [1, "#2a2b30"]]));
+  stoneBox(-62, 86, 62, 108, grad(0, -108, 0, -86, [[0, "#303136"], [1, "#222327"]]));
+  stoneBox(-20, 90, 20, 104, grad(0, -104, 0, -90, [[0, "#3e3f46"], [1, "#2a2b30"]]));
   box(-20, 103.3, 20, 104, "rgba(214,220,236,0.2)");
   box(-20, 90, 20, 90.8, "rgba(0,0,0,0.5)");
   // the mantelshelf: three steps of moulding, the top one lit
-  box(-64, 106, 64, 109, "#27282c");
-  box(-67, 109, 67, 112, "#303136");
-  box(-70, 112, 70, 117, grad(0, -117, 0, -112, [[0, "#4a4b53"], [1, "#2a2b30"]]));
+  stoneBox(-64, 106, 64, 109, "#27282c");
+  stoneBox(-67, 109, 67, 112, "#303136");
+  stoneBox(-70, 112, 70, 117, grad(0, -117, 0, -112, [[0, "#4a4b53"], [1, "#2a2b30"]]));
   box(-70, 116.3, 70, 117, "rgba(190,204,240,0.3)");
   box(-64, 102.5, 64, 106, "rgba(0,0,0,0.45)");
   // two brass candlesticks on it, their candles burnt down
@@ -279,9 +296,13 @@ function paintRug(ctx, L) {
   strip(hw, 336, 526, ground);
   strip(hw - 7, 342, 520, border);
   strip(hw - 11, 346, 516, field);
+  paintProjectedMaterial(ctx, L.surfaceMaterials?.rug, (u, v) => Q(mid - hw + hw * 2 * u, 0, 526 - 190 * v), 0.96, 8, 8);
   for (let i = 0; i < 700; i++) {
     const p = Q(mid + (rnd() * 2 - 1) * hw, 0, 338 + rnd() * 186);
-    ctx.fillStyle = rnd() < 0.6 ? "rgba(0,0,0,0.2)" : "rgba(255,230,210,0.05)";
+    const dark = rnd() < 0.6;
+    ctx.fillStyle = L.surfaceMaterials?.rug
+      ? dark ? "rgba(0,0,0,0.08)" : "rgba(255,230,210,0.025)"
+      : dark ? "rgba(0,0,0,0.2)" : "rgba(255,230,210,0.05)";
     ctx.fillRect(p.x, p.y, 3 * p.s, 0.9 * p.s);
   }
 }

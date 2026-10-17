@@ -16,6 +16,10 @@ import { paintDrawerDepth, paintSewingBits } from "./drawerDetails.js";
  *  Painted once per screen size: the drawer; a glow for the candle's light. */
 
 const K = { drawer: "tk_drawer", glow: "tk_glow" };
+export const STATION_DRAWER_PHOTO = "st_drawer_photo";
+export const STATION_DRAWER_PHOTO_URL = "assets/images/Station/drawer-interior.png";
+export const STATION_TICKET_CARD = "st_ticket_card";
+export const STATION_TICKET_CARD_URL = "assets/images/Station/ticket-card.png";
 const WARM = "255,190,120";
 const CARD = ["#e1d6b7", "#ded3b4", "#e4dabc", "#ddd1b2"];
 const PRESS = '"Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif';
@@ -28,23 +32,36 @@ export function paintTickets(scene, W, H, rows) {
   const S = Math.min(W, H);
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  paintDrawer(ctx, W, H, S);
-  paintOddments(ctx, W, H, S);
-  paintSewingBits(ctx, W, H, S);
+  const textures = scene.textures;
+  const drawerPhoto = textures.exists(STATION_DRAWER_PHOTO)
+    ? textures.get(STATION_DRAWER_PHOTO).getSourceImage()
+    : null;
+  const ticketCard = textures.exists(STATION_TICKET_CARD)
+    ? textures.get(STATION_TICKET_CARD).getSourceImage()
+    : null;
+  if (drawerPhoto) {
+    // The photograph contains the real drawer and its small sewing things;
+    // the ticket strip below remains live and keeps the exact puzzle layout.
+    ctx.drawImage(drawerPhoto, 0, 0, W, H);
+  } else {
+    paintDrawer(ctx, W, H, S);
+    paintOddments(ctx, W, H, S);
+    paintSewingBits(ctx, W, H, S);
+  }
   // One continuous paper strip: the dotted perforations leave small bridges
   // between tickets. All destinations, times and stamps retain their order.
   const tw = Math.min(W * 0.112, H * 0.23), th = tw * 2.05;
-  paintTicketStrip(ctx, W / 2, H * 0.5, tw, th, rows);
+  paintTicketStrip(ctx, W / 2, H * 0.5, tw, th, rows, ticketCard);
   // the candle's light, falling in from the upper left; the dark of the far end
   const light = { x: W * 0.2, y: H * 0.08, r: S * 0.9 };
-  soft(ctx, light.x, light.y, W * 0.8, H * 1.1, WARM, 0.16, "lighter");
+  soft(ctx, light.x, light.y, W * 0.8, H * 1.1, WARM, drawerPhoto ? 0.06 : 0.16, "lighter");
   const dark = ctx.createLinearGradient(W * 0.3, 0, W, H);
   dark.addColorStop(0, "rgba(3,3,5,0)");
-  dark.addColorStop(1, "rgba(3,3,5,0.5)");
+  dark.addColorStop(1, `rgba(3,3,5,${drawerPhoto ? 0.16 : 0.5})`);
   ctx.fillStyle = dark;
   ctx.fillRect(0, 0, W, H);
-  vignette(ctx, W, H, 0.6);
-  grain(ctx, W, H, 0.035);
+  vignette(ctx, W, H, drawerPhoto ? 0.12 : 0.6);
+  grain(ctx, W, H, drawerPhoto ? 0.009 : 0.035);
   const t = scene.textures;
   addCanvasTexture(t, K.drawer, c);
   addCanvasTexture(t, K.glow, glowCanvas());
@@ -55,13 +72,13 @@ export function releaseTicketArt(textures) {
   for (const key of Object.values(K)) if (textures.exists(key)) textures.remove(key);
 }
 
-function paintTicketStrip(ctx, cx, cy, tw, th, rows) {
+function paintTicketStrip(ctx, cx, cy, tw, th, rows, ticketCard) {
   const width = rows.length * tw;
   const strip = makeCanvas(width * 2, th * 2);
   const g = strip.getContext("2d");
   g.scale(2, 2);
   const rnd = lcg(2241);
-  rows.forEach((row, i) => paintTicket(g, tw * (i + 0.5), th / 2, tw, th, 0, row, i, rnd));
+  rows.forEach((row, i) => paintTicket(g, tw * (i + 0.5), th / 2, tw, th, 0, row, i, rnd, ticketCard));
 
   // Only the first three tickets retain their accordion folds. Adjacent
   // panels share an edge, so the perforated strip stays physically connected.
@@ -297,15 +314,24 @@ function paintOddments(ctx, W, H, S) {
 }
 
 // One card ticket, w by h, its middle at (cx, cy), turned by `rot`.
-function paintTicket(ctx, cx, cy, w, h, rot, row, i, rnd) {
+function paintTicket(ctx, cx, cy, w, h, rot, row, i, rnd, ticketCard) {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(rot);
-  // A section of the continuous stock; the strip casts one shared shadow.
-  ctx.fillStyle = CARD[i % CARD.length];
-  ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.fill();
+  // A photographed, individually cut piece of ticket card; all printed
+  // puzzle information stays live below, so every clue remains exact.
+  if (ticketCard) {
+    ctx.drawImage(ticketCard, -w / 2, -h / 2, w, h);
+  } else {
+    ctx.fillStyle = CARD[i % CARD.length];
+    ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.fill();
+  }
   ctx.save();
+  ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h);
   ctx.clip();
+  // Keep every stain and every line of live type inside the photographed
+  // card's transparent cut edge, including its slightly worn corners.
+  if (ticketCard) ctx.globalCompositeOperation = "source-atop";
   // the years on it: gone brown toward the edges, thumbed, flecked
   const age = ctx.createRadialGradient(0, 0, w * 0.2, 0, 0, h * 0.62);
   age.addColorStop(0, "rgba(120,84,40,0)");
@@ -356,20 +382,74 @@ function paintTicket(ctx, cx, cy, w, h, rot, row, i, rnd) {
   ctx.fillStyle = ink;
   ctx.fillText(row.time, 0, h * 0.04);
   rule(0.108);
-  small("PLATFORM", 0.143);
-  ctx.font = `700 ${w * 0.17}px ${PRESS}`;
-  ctx.fillText(row.track, 0, h * 0.215);
+  paintTrainMark(ctx, 0, h * 0.19, w, h);
   rule(0.27);
   rule(0.45, 2);
   // ── what became of its train, stamped across its foot (and off its edge)
   const stamp = paintStamp(row.remark, w, rnd);
-  ctx.globalCompositeOperation = "multiply";
+  ctx.globalCompositeOperation = ticketCard ? "source-atop" : "multiply";
   ctx.translate((rnd() - 0.5) * w * 0.05, h * 0.352);
   ctx.rotate(-0.17 + (rnd() - 0.5) * 0.1);
   ctx.drawImage(stamp, -stamp.width / 2, -stamp.height / 2);
   ctx.globalCompositeOperation = "source-over";
   ctx.restore();
   ctx.restore();
+}
+
+function paintTrainMark(ctx, x, y, w, h) {
+  // A small printer's sketch, not a filled badge: the station mark should
+  // read as a train at a glance without taking over the ticket face.
+  const s = Math.min(w * 0.22, h * 0.12);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = "rgba(48,38,29,0.76)";
+  ctx.lineWidth = Math.max(0.7, s * 0.055);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  // Fine, slightly imperfect outlines like a little engraved rail mark.
+  roundRect(ctx, -s * 0.78, -s * 0.25, s * 0.92, s * 0.52, s * 0.09);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(s * 0.12, -s * 0.1);
+  ctx.lineTo(s * 0.38, -s * 0.1);
+  ctx.lineTo(s * 0.62, s * 0.1);
+  ctx.lineTo(s * 0.62, s * 0.27);
+  ctx.lineTo(s * 0.12, s * 0.27);
+  ctx.stroke();
+  ctx.strokeRect(-s * 0.38, -s * 0.52, s * 0.17, s * 0.27);
+  ctx.strokeRect(s * 0.28, -s * 0.37, s * 0.16, s * 0.3);
+  ctx.beginPath();
+  ctx.arc(-s * 0.45, s * 0.31, s * 0.17, 0, Math.PI * 2);
+  ctx.arc(s * 0.08, s * 0.31, s * 0.17, 0, Math.PI * 2);
+  ctx.arc(s * 0.45, s * 0.31, s * 0.17, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = Math.max(0.55, s * 0.035);
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.86, s * 0.53);
+  ctx.lineTo(s * 0.68, s * 0.53);
+  ctx.stroke();
+  // a brief smoke curl, deliberately only two light strokes
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.29, -s * 0.57);
+  ctx.quadraticCurveTo(-s * 0.46, -s * 0.78, -s * 0.25, -s * 0.87);
+  ctx.moveTo(-s * 0.04, -s * 0.55);
+  ctx.quadraticCurveTo(s * 0.1, -s * 0.71, -s * 0.02, -s * 0.82);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 // A rubber stamp's mark, for a ticket w wide: the word in a box, the ink

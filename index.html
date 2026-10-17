@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Ashcombe Manor</title>
-    <!-- Phones: real device width, no pinch zoom over the puzzles, the
-         on-screen keyboard shrinks the page instead of covering the code box -->
+    <!-- Keep the viewport stable; entry.js blocks phone and tablet browsers. -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
@@ -39,6 +38,19 @@
     />
   </head>
   <body>
+    <div
+      id="desktop-only"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="desktop-only-title"
+    >
+      <div class="desktop-only-card">
+        <h1 id="desktop-only-title">Ashcombe Manor</h1>
+        <p class="desktop-only-msg">This game is only available on a desktop or laptop.</p>
+        <p class="desktop-only-sub">Open it on a computer to continue.</p>
+      </div>
+    </div>
     <svg
       class="icon-library"
       xmlns="http://www.w3.org/2000/svg"
@@ -103,7 +115,6 @@
     </div>
 
     <header id="compact-bar" class="app-header">
-      <div id="header-floor" role="status" aria-label="Current floor"></div>
       <div class="header-actions">
         <div class="volume-widget">
           <button
@@ -213,7 +224,7 @@
       <!-- Level navigation -->
       <aside id="sidebar" aria-label="Room index">
         <div class="drawer-heading">
-          <div><p id="index-heading" class="eyebrow">Rooms</p></div>
+          <div id="header-floor" role="status" aria-label="Where you are"></div>
         </div>
         <div class="progress-summary">
           <span id="progress-count"></span>
@@ -229,6 +240,8 @@
           <summary>Notes</summary>
           <div id="index-story" aria-label="Story"></div>
         </details>
+        <!-- the letters found and not yet opened: an envelope each, marked -->
+        <div id="index-letters" class="index-letters" aria-label="Letters found" hidden></div>
         <div id="index-done" hidden>
           <span class="done-mark" aria-hidden="true"></span>
           <p class="done-title">Completed</p>
@@ -910,11 +923,10 @@
           </section>
 
           <section class="howto-section howto-touch">
-            <h3>On a phone or tablet</h3>
+            <h3>Phone and tablet browsers</h3>
             <p>
-              Hold your device sideways. Tap to interact and drag to move
-              things. Full screen hides the top bar for more space; tap or pull
-              the small handle to bring it back.
+              Ashcombe Manor is available on desktop and laptop browsers. Open
+              it on a computer to play.
             </p>
           </section>
         </div>

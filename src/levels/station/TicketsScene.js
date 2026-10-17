@@ -1,7 +1,14 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { STATION_ROWS } from "./rows.js";
-import { paintTickets, releaseTicketArt } from "./tickets.js";
+import {
+  paintTickets,
+  releaseTicketArt,
+  STATION_DRAWER_PHOTO,
+  STATION_DRAWER_PHOTO_URL,
+  STATION_TICKET_CARD,
+  STATION_TICKET_CARD_URL,
+} from "./tickets.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "STATION"  ·  code: EXIT  ·  observation + ordering
@@ -14,13 +21,22 @@ import { paintTickets, releaseTicketArt } from "./tickets.js";
 // those four destinations has one letter that does not belong (see rows.js).
 // Read the wrong letters in order of departure time.
 //
-// The drawer is painted once per screen size (tickets.js). Nothing in it
-// moves; only the candle's light breathes over it.
+// The drawer photograph and the exact ticket strip are composed once per
+// screen size (tickets.js). Nothing in it moves; candlelight breathes over it.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class TicketsScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Station" });
+  }
+
+  preload() {
+    if (!this.textures.exists(STATION_DRAWER_PHOTO)) {
+      this.load.image(STATION_DRAWER_PHOTO, STATION_DRAWER_PHOTO_URL);
+    }
+    if (!this.textures.exists(STATION_TICKET_CARD)) {
+      this.load.image(STATION_TICKET_CARD, STATION_TICKET_CARD_URL);
+    }
   }
 
   init(data) {

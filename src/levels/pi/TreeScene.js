@@ -3,6 +3,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { layoutTree, paintTree, releaseTreeArt } from "./tree.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { spreadLit } from "./lamps.js";
+import { loadDrawingRoomMaterials } from "../house/drawingRoomMaterials.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PI"  ·  code: PI   ·  count the lamps
@@ -36,6 +37,10 @@ export default class TreeScene extends BasePuzzleScene {
 
   init(data) {
     this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+  }
+
+  preload() {
+    loadDrawingRoomMaterials(this);
   }
 
   create() {

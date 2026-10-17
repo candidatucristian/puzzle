@@ -14,6 +14,8 @@ import { OVERTIME_CLOCKS, SEGMENTS } from "./puzzle.js";
 const ROOM_KEY = "ot_room";
 const PUFF_KEY = "ot_puff";
 const COLON_KEY = "ot_colon_";
+const BOTANICAL_PHOTO_KEY = "ot_botanical_photo";
+const DESK_PROPS_KEY = "ot_desk_props";
 const ZW = 120; // the wall, in cm in front of the eye
 const EYE_H = 42; // the eye, in cm above the desk
 const AMB = [0.2, 0.21, 0.27]; // what light there is without the lamp
@@ -46,19 +48,36 @@ export function paintOffice(scene, W, H, keypad) {
   const cv = makeCanvas(W, H);
   const ctx = cv.getContext("2d");
   const rnd = lcg(1811);
+  const photo = scene.textures.exists(BOTANICAL_PHOTO_KEY)
+    ? scene.textures.get(BOTANICAL_PHOTO_KEY).getSourceImage()
+    : null;
+  const deskProps = photo && scene.textures.exists(DESK_PROPS_KEY)
+    ? scene.textures.get(DESK_PROPS_KEY).getSourceImage()
+    : null;
 
-  paintSurfaces(ctx, cam, lay);
-  paintGrain(ctx, cam, rnd);
-  if (lay.win) paintWindow(ctx, cam, lay, rnd);
-  paintWallClock(ctx, cam, lay);
-  paintShelf(ctx, cam, lay, rnd);
+  if (photo) {
+    // the photo has its own clocks at the desk's left: the mug stands on
+    // the right, between the paper and the lamp, where it hides none of them
+    lay.mug = { ...lay.mug, x: Math.min(19, cam.halfAt(86) - 6), z: 86 };
+    ctx.drawImage(photo, 0, 0, W, H);
+    paintPhotographicClockDisplays(ctx, lay, W, H);
+    if (deskProps) paintPhotographicDeskProps(ctx, deskProps, W, H);
+  } else {
+    paintSurfaces(ctx, cam, lay);
+    paintGrain(ctx, cam, rnd);
+    if (lay.mirror) paintMirror(ctx, cam, lay, rnd);
+    paintWallClock(ctx, cam, lay);
+    paintShelf(ctx, cam, lay, rnd);
+    paintAlarm(ctx, cam, lay);
+    paintTravel(ctx, cam, lay);
+  }
   paintPaper(ctx, cam, lay);
-  paintShadows(ctx, cam, lay);
-  paintAlarm(ctx, cam, lay);
-  paintLampBase(ctx, cam, lay);
-  paintTravel(ctx, cam, lay);
-  paintMug(ctx, cam, lay);
-  paintLampArm(ctx, cam, lay);
+  paintShadows(ctx, cam, lay, Boolean(photo), Boolean(deskProps));
+  if (!deskProps) {
+    paintLampBase(ctx, cam, lay);
+    paintMug(ctx, cam, lay);
+    paintLampArm(ctx, cam, lay);
+  }
   const calc = paintCalculator(ctx, cam, lay, keypad, rnd);
   paintPencil(ctx, cam, lay);
   paintAtmosphere(ctx, cam, lay);
@@ -70,7 +89,9 @@ export function paintOffice(scene, W, H, keypad) {
   });
   addCanvas(scene.textures, PUFF_KEY, puffCanvas());
   const m = lay.mug;
-  const s = cam.P(m.x, m.h - 1.1, m.z);
+  const s = deskProps
+    ? { x: (1122 * W) / 1536, y: (611 * H) / 1024 }
+    : cam.P(m.x, m.h - 1.1, m.z);
   return {
     room: ROOM_KEY,
     colons,
@@ -80,7 +101,73 @@ export function paintOffice(scene, W, H, keypad) {
   };
 }
 
-/** Frees the painted canvases — call once their images are destroyed. */
+// The room photo supplies realistic clock housings and supports. The exact
+// puzzle times stay live seven-segment displays, mapped to each glass face.
+function paintPhotographicClockDisplays(ctx, lay, W, H) {
+  const sx = W / 1536;
+  const sy = H / 1024;
+  // a glass face, given by its four corners in the photo (top-left, top-right,
+  // bottom-right, bottom-left); the digits are laid out in it with v going
+  // up, as glyph() draws them, and kept well inside its edges
+  const screen = (width, height, corners) => {
+    const padX = width * 0.08;
+    const h = Math.min(height * 0.62, (width - padX * 2) / 2.95);
+    const box = { x: padX, y: (height - h) / 2, w: width - padX * 2, h };
+    const map = (x, y) => {
+      const u = Math.max(0, Math.min(1, x / width));
+      const v = 1 - Math.max(0, Math.min(1, y / height));
+      const blend = (a, b, t) => a + (b - a) * t;
+      const top = {
+        x: blend(corners[0][0], corners[1][0], u),
+        y: blend(corners[0][1], corners[1][1], u),
+      };
+      const bottom = {
+        x: blend(corners[3][0], corners[2][0], u),
+        y: blend(corners[3][1], corners[2][1], u),
+      };
+      return {
+        x: blend(top.x, bottom.x, v) * sx,
+        y: blend(top.y, bottom.y, v) * sy,
+      };
+    };
+    return { box, map };
+  };
+  const displays = [
+    {
+      time: OVERTIME_CLOCKS[0],
+      style: RED_LED,
+      ...screen(177, 51, [[233, 148], [410, 148], [410, 199], [233, 199]]),
+    },
+    {
+      time: OVERTIME_CLOCKS[1],
+      style: AMBER_LED,
+      ...screen(104, 30, [[1179, 168], [1283, 168], [1283, 198], [1179, 198]]),
+    },
+    {
+      time: OVERTIME_CLOCKS[2],
+      style: RED_LED,
+      ...screen(145, 37, [[261, 667], [406, 667], [406, 704], [261, 704]]),
+    },
+    {
+      time: OVERTIME_CLOCKS[3],
+      style: LCD_DARK,
+      ...screen(117, 34, [[493, 687], [597, 680], [604, 740], [502, 749]]),
+    },
+  ];
+  for (const { time, style, box, map } of displays)
+    drawTime(ctx, lay, time, box, style, map);
+}
+
+// The transparent still-life sits on the clear right side of the desk photo.
+// Its warm lamp, mug and three small blooms replace the older painted props.
+function paintPhotographicDeskProps(ctx, image, W, H) {
+  const sx = W / 1536;
+  const sy = H / 1024;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(image, 825 * sx, 380 * sy, 520 * sx, 347 * sy);
+}
+
+/** Frees the painted canvases after their images are destroyed. */
 export function releaseOfficeArt(textures) {
   const keys = [ROOM_KEY, PUFF_KEY];
   for (let i = 0; i < 8; i++) keys.push(COLON_KEY + i);
@@ -158,15 +245,15 @@ function layout(cam) {
     z0: 101,
   };
   const radio = { x0: shelf.x0 + 2.5, w: 24, y0: 52, h: 8.5, z0: 104, d: 11 };
-  // the window fills the wall between the clock and the shelf
+  // an old mirror hangs on the wall between the clock and the shelf
   const onWall = (x, z) => (x * ZW) / z;
-  const left = onWall(clock.x + clock.w / 2, clock.z0) + 7;
-  const right = onWall(shelf.x0, shelf.z0) - 7;
-  const ww = Math.min(34, right - left);
+  const left = onWall(clock.x + clock.w / 2, clock.z0) + 9;
+  const right = onWall(shelf.x0, shelf.z0) - 9;
+  const mw = Math.min(30, right - left);
   const mid = (left + right) / 2;
-  const win =
-    ww >= 12
-      ? { x0: mid - ww / 2, x1: mid + ww / 2, y0: 48, y1: 100, depth: 11 }
+  const mirror =
+    mw >= 12
+      ? { x0: mid - mw / 2, x1: mid + mw / 2, y0: 56, y1: 96 }
       : null;
 
   const alarm = { x: fit(-40 * spread, 96, 8), z0: 96, w: 14, h: 8.5, d: 7.5 };
@@ -201,7 +288,7 @@ function layout(cam) {
     clock,
     shelf,
     radio,
-    win,
+    mirror,
     alarm,
     travel,
     mug,
@@ -281,8 +368,6 @@ function paintSurfaces(ctx, cam, lay) {
   const img = g.createImageData(w, h);
   const d = img.data;
   const yBack = hy + (F * EYE_H) / ZW;
-  const win = lay.win;
-  const wcx = win ? (win.x0 + win.x1) / 2 : 0;
   const halo = { x: lay.lamp.joint.x, y: lay.lamp.joint.y + 3 };
   const p = { x: 0, y: 0, z: 0 };
   for (let j = 0; j < h; j++) {
@@ -296,17 +381,13 @@ function paintSurfaces(ctx, cam, lay) {
         p.z = ZW;
         const base = wallBase(p.x, p.y);
         const col = shade(base, p, NZ, lay, 0);
-        // the shade leaks a little light onto the wall behind it, and the
-        // night outside greys the wall round the window
+        // the shade leaks a little light onto the wall behind it
         const hl =
           0.12 * Math.exp(-((p.x - halo.x) ** 2 + (p.y - halo.y) ** 2) / 1352);
-        const ml = win
-          ? 0.07 * Math.exp(-((p.x - wcx) ** 2 + (p.y - 72) ** 2) / 2312)
-          : 0;
         const ao = 0.6 + 0.4 * smooth01(p.y / 14);
-        d[o] = (col[0] + base[0] * (hl * LAMP[0] + ml * 0.5)) * ao;
-        d[o + 1] = (col[1] + base[1] * (hl * LAMP[1] + ml * 0.6)) * ao;
-        d[o + 2] = (col[2] + base[2] * (hl * LAMP[2] + ml * 0.85)) * ao;
+        d[o] = (col[0] + base[0] * hl * LAMP[0]) * ao;
+        d[o + 1] = (col[1] + base[1] * hl * LAMP[1]) * ao;
+        d[o + 2] = (col[2] + base[2] * hl * LAMP[2]) * ao;
       } else {
         const z = (F * EYE_H) / (Y - hy);
         p.x = ((X - cx) * z) / F;
@@ -374,164 +455,186 @@ function paintGrain(ctx, cam, rnd) {
   ctx.restore();
 }
 
-// ── the window: a night city through the glass ─────────────────────────────
+// ── the mirror: an old one, in a gilt frame, giving back the dark room ──────
 
-function paintWindow(ctx, cam, lay, rnd) {
-  const w = lay.win;
-  const zg = ZW + w.depth;
-  const { x0, x1, y0, y1 } = w;
-  const a = cam.P(x0, y1, zg);
-  const b = cam.P(x1, y0, zg);
-  const gx = a.x;
-  const gy = a.y;
-  const gw = b.x - a.x;
-  const gh = b.y - a.y;
-  const k = cam.k(zg);
+// What it holds is the room behind the chair, seen over his shoulder and so
+// higher than anything on the desk: its far wall with a picture on it, the
+// ceiling's cornice, the corner of a side wall — all of it dim, warmed from
+// below where the lamp's pool on the desk lights it. The glass is old: a
+// cold tint, a sheen across it, the silvering gone dark at its edges.
+function paintMirror(ctx, cam, lay, rnd) {
+  const m = lay.mirror;
+  const { x0, x1, y0, y1 } = m;
+  const zf = ZW - 2.6; // the frame's face
+  const zm = ZW - 1.4; // the glass, sunk a little into it
+  const fw = 3.4; // the frame's width
+  const k = cam.k(zm);
+  const P = (x, y, z) => cam.P(x, y, z);
 
+  // its shadow on the wall: the lamp is low and to the right, so it falls up
+  // and to the left
+  const o0 = P(x0 - fw, y1 + fw, zf);
+  const o1 = P(x1 + fw, y0 - fw, zf);
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = k * 3;
+  ctx.shadowOffsetX = -k * 1.1;
+  ctx.shadowOffsetY = -k * 1.5;
+  ctx.fillStyle = "#1a1612";
+  ctx.fillRect(o0.x, o0.y, o1.x - o0.x, o1.y - o0.y);
+  ctx.restore();
+
+  // ── the glass ──
+  const a = P(x0, y1, zm);
+  const b = P(x1, y0, zm);
+  const gx = a.x, gy = a.y, gw = b.x - a.x, gh = b.y - a.y;
   ctx.save();
   ctx.beginPath();
   ctx.rect(gx, gy, gw, gh);
   ctx.clip();
-  const sky = ctx.createLinearGradient(0, gy, 0, gy + gh);
-  sky.addColorStop(0, "#04060d");
-  sky.addColorStop(0.6, "#0a1122");
-  sky.addColorStop(1, "#1a2238");
-  ctx.fillStyle = sky;
+  // the reflection is the room behind the eye, folded through the glass: a
+  // point there at (x, y, -d) is seen at (x, y, 2·zm + d)
+  const back = 2 * zm + 150; // the far wall behind the chair, a metre and a half back
+  const ceil = 196; // the ceiling, above the desk
+  const sideX = Math.min(x0, x1) * (back / zm) - 30; // the side wall's line, at the far wall
+  const wall = ctx.createLinearGradient(0, gy, 0, gy + gh);
+  wall.addColorStop(0, "#0b0d13");
+  wall.addColorStop(0.55, "#151820");
+  wall.addColorStop(1, "#2a231d");
+  ctx.fillStyle = wall;
   ctx.fillRect(gx, gy, gw, gh);
-  const stars = Math.round((gw * gh) / 700);
-  for (let i = 0; i < stars; i++) {
-    ctx.fillStyle = `rgba(230,236,255,${(0.2 + rnd() * 0.5).toFixed(2)})`;
+  // the side wall, coming toward the glass from the corner
+  const side = [P(sideX, -80, back), P(sideX, ceil, back), P(sideX, ceil, zm), P(sideX, -80, zm)];
+  ctx.beginPath();
+  side.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  ctx.closePath();
+  ctx.fillStyle = "rgba(8,9,13,0.55)";
+  ctx.fill();
+  // the ceiling, darker, and the cornice along the far wall
+  const c0 = P(-400, ceil, back);
+  ctx.fillStyle = "#07080c";
+  ctx.fillRect(gx, gy, gw, Math.max(0, c0.y - gy));
+  const cr = P(0, ceil - 7, back);
+  const cg = ctx.createLinearGradient(0, c0.y, 0, cr.y);
+  cg.addColorStop(0, "#0c0d12");
+  cg.addColorStop(0.5, "#1d1e24");
+  cg.addColorStop(1, "#121318");
+  ctx.fillStyle = cg;
+  ctx.fillRect(gx, c0.y, gw, cr.y - c0.y);
+  // a picture on the far wall: a pale landscape in a dark frame
+  const pc = { x: (x0 + x1) / 2 * (back / zm) + 18, y: 120, w: 46, h: 34 };
+  const p0 = P(pc.x - pc.w / 2, pc.y + pc.h / 2, back);
+  const p1 = P(pc.x + pc.w / 2, pc.y - pc.h / 2, back);
+  const pw = p1.x - p0.x, ph = p1.y - p0.y;
+  ctx.fillStyle = "#0a0806";
+  ctx.fillRect(p0.x, p0.y, pw, ph);
+  const inset = Math.max(1.5, pw * 0.09);
+  const land = ctx.createLinearGradient(0, p0.y + inset, 0, p1.y - inset);
+  land.addColorStop(0, "#3a3e44");
+  land.addColorStop(0.55, "#4a4a42");
+  land.addColorStop(0.6, "#2e3328");
+  land.addColorStop(1, "#23271f");
+  ctx.fillStyle = land;
+  ctx.fillRect(p0.x + inset, p0.y + inset, pw - inset * 2, ph - inset * 2);
+  ctx.fillStyle = "rgba(20,24,18,0.8)";
+  ctx.beginPath();
+  ctx.moveTo(p0.x + inset, p0.y + ph * 0.62);
+  ctx.quadraticCurveTo(p0.x + pw * 0.35, p0.y + ph * 0.42, p0.x + pw * 0.6, p0.y + ph * 0.58);
+  ctx.quadraticCurveTo(p0.x + pw * 0.8, p0.y + ph * 0.5, p1.x - inset, p0.y + ph * 0.6);
+  ctx.lineTo(p1.x - inset, p1.y - inset);
+  ctx.lineTo(p0.x + inset, p1.y - inset);
+  ctx.closePath();
+  ctx.fill();
+  // the lamp's pool on the desk, thrown up onto that wall: warm, from below
+  const pool = P(lay.calc.cx, 20, back);
+  softEllipse(ctx, pool.x, pool.y, gw * 0.9, gh * 0.75, "255,190,120", 0.16, "lighter");
+  // the glass itself: a cold tint, a sheen across it, the edges gone dark
+  ctx.fillStyle = "rgba(150,170,175,0.05)";
+  ctx.fillRect(gx, gy, gw, gh);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (const [f, w, al] of [[0.22, 0.16, 0.05], [0.42, 0.05, 0.04], [0.7, 0.1, 0.025]]) {
+    const sx = gx + gw * f;
+    const sh = ctx.createLinearGradient(sx, 0, sx + gw * w, 0);
+    sh.addColorStop(0, "rgba(220,230,240,0)");
+    sh.addColorStop(0.5, `rgba(220,230,240,${al})`);
+    sh.addColorStop(1, "rgba(220,230,240,0)");
+    ctx.fillStyle = sh;
     ctx.beginPath();
-    ctx.arc(
-      gx + rnd() * gw,
-      gy + rnd() * gh * 0.62,
-      0.4 + rnd() * 0.7,
-      0,
-      Math.PI * 2,
-    );
+    ctx.moveTo(sx + gh * 0.35, gy);
+    ctx.lineTo(sx + gh * 0.35 + gw * w, gy);
+    ctx.lineTo(sx + gw * w - gh * 0.1, gy + gh);
+    ctx.lineTo(sx - gh * 0.1, gy + gh);
+    ctx.closePath();
     ctx.fill();
   }
-  // a thin moon
-  const mx = gx + gw * 0.72;
-  const my = gy + gh * 0.2;
-  const mr = k * 2.1;
-  ctx.save();
-  ctx.shadowColor = "rgba(210,220,255,0.6)";
-  ctx.shadowBlur = mr * 3;
-  ctx.fillStyle = "#ebe6d6";
-  ctx.beginPath();
-  ctx.arc(mx, my, mr, 0, Math.PI * 2);
-  ctx.fill();
   ctx.restore();
-  ctx.fillStyle = "#060914";
-  ctx.beginPath();
-  ctx.arc(mx + mr * 0.42, my - mr * 0.18, mr * 0.92, 0, Math.PI * 2);
-  ctx.fill();
-  // the city, a few windows still lit
-  const base = gy + gh;
-  let x = gx - 4;
-  let tallest = { x: 0, y: base };
-  while (x < gx + gw) {
-    const bw = k * (3 + rnd() * 6);
-    const bh = gh * (0.12 + rnd() * 0.3);
-    ctx.fillStyle = rnd() < 0.5 ? "#070a13" : "#0a0e19";
-    ctx.fillRect(x, base - bh, bw + 1, bh);
-    if (base - bh < tallest.y) tallest = { x: x + bw / 2, y: base - bh };
-    const cols = Math.max(1, Math.floor(bw / (k * 0.9)));
-    const rows = Math.max(1, Math.floor(bh / (k * 1.1)));
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (rnd() > 0.13) continue;
-        ctx.fillStyle =
-          rnd() < 0.75
-            ? `rgba(255,205,130,${(0.35 + rnd() * 0.4).toFixed(2)})`
-            : `rgba(170,200,255,${(0.3 + rnd() * 0.3).toFixed(2)})`;
-        ctx.fillRect(
-          x + (c + 0.3) * k * 0.9,
-          base - bh + (r + 0.35) * k * 1.1,
-          k * 0.4,
-          k * 0.5,
-        );
-      }
-    }
-    x += bw + k * rnd() * 1.2;
+  // the silvering, gone at its edges: a dark rim, and a few spots in it
+  const rim = Math.min(gw, gh) * 0.12;
+  for (const [x, y, w, h, gx0, gy0, gx1, gy1] of [
+    [gx, gy, gw, rim, 0, gy, 0, gy + rim],
+    [gx, gy + gh - rim, gw, rim, 0, gy + gh, 0, gy + gh - rim],
+    [gx, gy, rim, gh, gx, 0, gx + rim, 0],
+    [gx + gw - rim, gy, rim, gh, gx + gw, 0, gx + gw - rim, 0],
+  ]) {
+    const e = ctx.createLinearGradient(gx0, gy0, gx1, gy1);
+    e.addColorStop(0, "rgba(0,0,0,0.45)");
+    e.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = e;
+    ctx.fillRect(x, y, w, h);
   }
-  ctx.fillStyle = "rgba(255,60,50,0.9)";
-  ctx.beginPath();
-  ctx.arc(tallest.x, tallest.y - 2, Math.max(1, k * 0.2), 0, Math.PI * 2);
-  ctx.fill();
-  const haze = ctx.createLinearGradient(0, base - gh * 0.45, 0, base);
-  haze.addColorStop(0, "rgba(90,100,140,0)");
-  haze.addColorStop(1, "rgba(90,100,140,0.2)");
-  ctx.fillStyle = haze;
-  ctx.fillRect(gx, base - gh * 0.45, gw, gh * 0.45);
-  // the lamp, reflected in the glass
-  const rp = cam.Pv(v3(lay.bulb.x, lay.bulb.y, 2 * zg - lay.bulb.z));
-  softEllipse(ctx, rp.x, rp.y, k * 5, k * 5, "255,200,140", 0.2, "lighter");
-  softEllipse(
-    ctx,
-    rp.x,
-    rp.y,
-    k * 1.2,
-    k * 1.2,
-    "255,230,190",
-    0.35,
-    "lighter",
-  );
+  for (let i = 0; i < 26; i++) {
+    const edge = rnd() < 0.5;
+    const sx = edge ? gx + (rnd() < 0.5 ? rnd() * rim : gw - rnd() * rim) : gx + rnd() * gw;
+    const sy = edge ? gy + rnd() * gh : gy + (rnd() < 0.5 ? rnd() * rim : gh - rnd() * rim);
+    softEllipse(ctx, sx, sy, k * (0.3 + rnd() * 0.9), k * (0.3 + rnd() * 0.7), "18,16,12", 0.25 + rnd() * 0.3);
+  }
   ctx.restore();
+  // the bevel round the glass, catching the light
+  ctx.strokeStyle = "rgba(230,220,200,0.18)";
+  ctx.lineWidth = Math.max(1, k * 0.25);
+  ctx.strokeRect(gx + k * 0.3, gy + k * 0.3, gw - k * 0.6, gh - k * 0.6);
 
-  // the wall's thickness round the opening
-  const inside = v3((x0 + x1) / 2, (y0 + y1) / 2, ZW - 5);
-  const reveals = [
-    [v3(x0, y0, ZW), v3(x0, y0, zg), v3(x0, y1, zg), v3(x0, y1, ZW)],
-    [v3(x1, y0, ZW), v3(x1, y0, zg), v3(x1, y1, zg), v3(x1, y1, ZW)],
-    [v3(x0, y1, ZW), v3(x1, y1, ZW), v3(x1, y1, zg), v3(x0, y1, zg)],
-    [v3(x0, y0, ZW), v3(x1, y0, ZW), v3(x1, y0, zg), v3(x0, y0, zg)],
+  // ── the frame: gilt, a rounded moulding, the gold worn dark ──
+  const GILT = [150, 112, 52];
+  const lit = (p, n, f = 1) => css(shade(GILT, p, n, lay, 0.5), f);
+  // the four sides, each sloping in from its outer edge to the glass
+  const sides = [
+    { o: [v3(x0 - fw, y1 + fw, zf + 1), v3(x1 + fw, y1 + fw, zf + 1)], i: [v3(x1, y1, zm), v3(x0, y1, zm)], n: v3(0, 0.5, -0.86) },
+    { o: [v3(x1 + fw, y0 - fw, zf + 1), v3(x0 - fw, y0 - fw, zf + 1)], i: [v3(x0, y0, zm), v3(x1, y0, zm)], n: v3(0, -0.5, -0.86) },
+    { o: [v3(x0 - fw, y0 - fw, zf + 1), v3(x0 - fw, y1 + fw, zf + 1)], i: [v3(x0, y1, zm), v3(x0, y0, zm)], n: v3(-0.5, 0, -0.86) },
+    { o: [v3(x1 + fw, y1 + fw, zf + 1), v3(x1 + fw, y0 - fw, zf + 1)], i: [v3(x1, y0, zm), v3(x1, y1, zm)], n: v3(0.5, 0, -0.86) },
   ];
-  const mid = v3((x0 + x1) / 2, (y0 + y1) / 2, (ZW + zg) / 2);
-  for (const f of reveals) {
-    const n = mul(faceNormal(f, mid), -1); // they face into the opening
-    if (dot(n, sub(cam.eye, centroid(f))) <= 0) continue;
-    fill3(
-      ctx,
-      cam,
-      f,
-      css(shade(wallBase(0, 70), centroid(f), n, lay, 0), 0.8),
-    );
+  for (const s of sides) {
+    // the outer half of the moulding, then its crest, then the inner slope
+    const ring = (f, z) => s.o.map((p, j) => {
+      const q = s.i[1 - j];
+      return v3(p.x + (q.x - p.x) * f, p.y + (q.y - p.y) * f, z);
+    });
+    const outer = ring(0, zf + 1), crest = ring(0.45, zf), inner = ring(1, zm);
+    const nOut = v3(s.n.x * 1.2, s.n.y * 1.2, -0.7);
+    fill3(ctx, cam, [outer[0], outer[1], crest[1], crest[0]], lit(centroid([outer[0], crest[1]]), unit(nOut), 0.95));
+    fill3(ctx, cam, [crest[0], crest[1], inner[1], inner[0]], lit(centroid([crest[0], inner[1]]), unit(v3(-s.n.x, -s.n.y, -0.86)), 0.8));
+    // the crest itself, where the gold is brightest
+    const c0 = cam.Pv(crest[0]), c1 = cam.Pv(crest[1]);
+    ctx.strokeStyle = lit(centroid(crest), NZ, 1.35);
+    ctx.lineWidth = Math.max(1, k * 0.35);
+    ctx.beginPath();
+    ctx.moveTo(c0.x, c0.y);
+    ctx.lineTo(c1.x, c1.y);
+    ctx.stroke();
   }
-  void inside;
-
-  // the frame: a white-painted sash, dim in the dark, with a cross bar
-  const FRAME = [150, 146, 138];
-  const col = css(
-    shade(FRAME, v3((x0 + x1) / 2, (y0 + y1) / 2, zg - 1), NZ, lay, 0),
-    1.25,
-  );
-  const zf = zg - 0.6;
-  const bar = (u0, v0, u1, v1) =>
-    fill3(
-      ctx,
-      cam,
-      [v3(u0, v0, zf), v3(u1, v0, zf), v3(u1, v1, zf), v3(u0, v1, zf)],
-      col,
-    );
-  const fw = 3.2;
-  bar(x0, y0, x1, y0 + fw);
-  bar(x0, y1 - fw, x1, y1);
-  bar(x0, y0, x0 + fw, y1);
-  bar(x1 - fw, y0, x1, y1);
-  const mxw = (x0 + x1) / 2;
-  bar(mxw - 1.1, y0, mxw + 1.1, y1);
-  const ty = y0 + (y1 - y0) * 0.58;
-  bar(x0, ty - 1.1, x1, ty + 1.1);
-  // the sill, jutting into the room
-  box(
-    ctx,
-    cam,
-    lay,
-    { x0: x0 - 3, x1: x1 + 3, y0: y0 - 2, y1: y0, z0: ZW - 4.5, z1: ZW },
-    [132, 128, 120],
-  );
+  // the gold rubbed through to the dark ground here and there
+  const f0 = P(x0 - fw, y1 + fw, zf), f1 = P(x1 + fw, y0 - fw, zf);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(f0.x, f0.y, f1.x - f0.x, f1.y - f0.y);
+  ctx.rect(gx, gy, gw, gh);
+  ctx.clip("evenodd");
+  for (let i = 0; i < 40; i++) {
+    softEllipse(ctx, f0.x + rnd() * (f1.x - f0.x), f0.y + rnd() * (f1.y - f0.y), k * (0.3 + rnd() * 0.8), k * (0.2 + rnd() * 0.4), "30,20,10", 0.3);
+  }
+  ctx.restore();
 }
 
 // ── the clocks ──────────────────────────────────────────────────────────────
@@ -1041,7 +1144,13 @@ function paintPaper(ctx, cam, lay) {
 
 // everything's shadow on the desk: soft, cast away from the lamp, and a
 // darker contact line right under each thing so nothing floats
-function paintShadows(ctx, cam, lay) {
+function paintShadows(
+  ctx,
+  cam,
+  lay,
+  photographicClocks = false,
+  photographicDeskProps = false,
+) {
   const L = lay.bulb;
   const toDesk = (V) => {
     if (V.y >= L.y - 0.5) return null;
@@ -1086,19 +1195,24 @@ function paintShadows(ctx, cam, lay) {
   const g = calcGeom(lay.calc);
   solid(g.foot, g.crown, 0.62);
   const m = lay.mug;
-  solid(ring(m.x, m.z, m.r, 0), ring(m.x, m.z, m.r, m.h));
-  const a = lay.alarm;
-  solid(
-    rect(a.x - a.w / 2, a.x + a.w / 2, a.z0, a.z0 + a.d, 0),
-    rect(a.x - a.w / 2, a.x + a.w / 2, a.z0, a.z0 + a.d, a.h + 0.35),
-  );
-  const t = lay.travel;
-  solid(
-    rect(t.x - t.w / 2, t.x + t.w / 2, 80, 86.5, 0),
-    rect(t.x - t.w / 2, t.x + t.w / 2, 80.8, 83, 7.7),
-  );
-  const b = lay.lamp.base;
-  solid(ring(b.x, b.z, 8.5, 0), ring(b.x, b.z, 8.5, 2.2), 0.4);
+  if (!photographicDeskProps)
+    solid(ring(m.x, m.z, m.r, 0), ring(m.x, m.z, m.r, m.h));
+  if (!photographicClocks) {
+    const a = lay.alarm;
+    solid(
+      rect(a.x - a.w / 2, a.x + a.w / 2, a.z0, a.z0 + a.d, 0),
+      rect(a.x - a.w / 2, a.x + a.w / 2, a.z0, a.z0 + a.d, a.h + 0.35),
+    );
+    const t = lay.travel;
+    solid(
+      rect(t.x - t.w / 2, t.x + t.w / 2, 80, 86.5, 0),
+      rect(t.x - t.w / 2, t.x + t.w / 2, 80.8, 83, 7.7),
+    );
+  }
+  if (!photographicDeskProps) {
+    const b = lay.lamp.base;
+    solid(ring(b.x, b.z, 8.5, 0), ring(b.x, b.z, 8.5, 2.2), 0.4);
+  }
   const pa = lay.pencil.a;
   const pb = lay.pencil.b;
   const across = unit(v3(-(pb.z - pa.z), 0, pb.x - pa.x));

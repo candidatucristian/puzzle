@@ -38,44 +38,75 @@ export const PLACES = Object.freeze([
       "Railway tickets, all for the night of the 13th.",
       "Three singles, and one half-fare. Half-fares are for children.",
     ] },
-  // Up the stairs from the hall: the upper hall. Of its five doors — VII to
-  // XI — the first opens on the laboratory; the rest have nothing behind them
-  // yet. Its puzzle is not gone into, as a room's are: it `plays` there, in
+  // Up the stairs from the hall: the upper hall. Of its four doors — VII to
+  // X, two on each wall — the first opens on the laboratory, the second on
+  // the weighing room, the other two on rooms with nothing in them yet. Its puzzle is not gone into, as a room's are: it `plays` there, in
   // the hall itself, and is answered there.
-  { key: "Upper", name: "The Chemistry Hall", floor: "The Chemistry", storey: 2, back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: ["Room7", null, null, null, null], first: 7,
+  { key: "Upper", name: "The Chemistry Hall", floor: "The Chemistry", storey: 2, back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: ["Room7", "Room8", "Room9", "Room10"], first: 7,
     story: [
       "Silas's floor. A man who measured everything.",
       "One light up here still works, on and off. It is not broken. It is waiting.",
     ] },
-  { key: "Room7", name: "Room VII", back: "Upper", holds: ["chemistry"],
+  { key: "Room7", name: "Room VII", back: "Upper", holds: ["chemistry", "molecules"],
     story: [
       "His bench, just as he left it — and the burner still lit, forty years on.",
       "Somebody has been coming up here to keep it going.",
     ] },
+  { key: "Room8", name: "Room VIII", back: "Upper", holds: ["balance", "equations", "measures"],
+    story: [
+      "His weighing room. Everything in here was measured twice, and written down.",
+      "Three things left half done: a weighing, a sum on the board, a measure by the sink.",
+    ] },
   // Up again, by the stairs at the side of the upper hall: the top floor,
-  // the last — a round room under the dome. Three doors, XII to XIV, nothing
-  // behind them yet; at its window the telescope, which is looked through
-  // as a room's puzzles are gone to; and on the left an archway with an iron
-  // gate across it, and beyond the gate a passage with three doors more.
-  { key: "Top", name: "The Physics Hall", floor: "The Physics", storey: 3, back: "Upper", holds: ["telescope"], doors: [null, null, null], first: 12,
+  // the last — a round room under the dome. One door, XI, an empty room
+  // behind it; at its window the telescope, which is looked through as a room's
+  // puzzles are gone to; and on the left an archway with an iron gate across
+  // it, and beyond the gate a passage with two doors more, XII and XIII.
+  { key: "Top", name: "The Physics Hall", floor: "The Physics", storey: 3, back: "Upper", holds: ["telescope"], doors: ["Room11"], first: 11,
     story: [
       "Orion's dome. The whole sky, from up here.",
       "The same telescope I was given when I was ten. Mine came without a card.",
     ] },
-  { key: "TopHall", name: "The Top Passage", back: "Top", holds: [], doors: [null, null, null], first: 15,
+  { key: "TopHall", name: "The Top Passage", back: "Top", holds: [], doors: ["Room12", "Room13"], first: 12,
     story: [
-      "Rain in the roof, and three more doors.",
+      "Rain in the roof, and two more doors.",
       "The house goes further than the plans say. So, it seems, does this case.",
+    ] },
+  // the rooms behind the last doors, empty as yet (house/emptyRooms.js)
+  { key: "Room9", name: "Room IX", back: "Upper", holds: [],
+    story: [
+      "An empty room. Dust on the floor, and the fire laid but never lit.",
+      "He used every room on this floor. Why not this one?",
+    ] },
+  { key: "Room10", name: "Room X", back: "Upper", holds: [],
+    story: [
+      "Nothing in here at all — only nail holes round the door frame, where boards were once.",
+      "Somebody kept this room shut, and somebody else opened it again.",
+    ] },
+  { key: "Room11", name: "Room XI", back: "Top", holds: [],
+    story: [
+      "Orion's room, by the look of the paper: stars, faded nearly to nothing.",
+      "Empty. Even the nails are gone from the walls.",
+    ] },
+  { key: "Room12", name: "Room XII", back: "TopHall", holds: [],
+    story: [
+      "Bare boards on the walls, and the rain loud on the roof.",
+      "Nobody has stood in here for a very long time. Until tonight.",
+    ] },
+  { key: "Room13", name: "Room XIII", back: "TopHall", holds: [],
+    story: [
+      "The last room in the house, as far as the plans go.",
+      "Empty — and yet the hearth is swept.",
     ] },
   { key: "Room5", name: "Room V", back: "Hall", holds: ["tapcode", "pi", "rally"], needsKey: true, chest: "Room6",
     story: [
       "The room of their last evening: the table still laid for four, the fire let die, the television never switched off.",
       "The file says three people lived here.",
     ] },
-  { key: "Room6", name: "Room VI", back: "Hall", holds: ["billiards", "kinetic", "flags"], needsKey: true,
+  { key: "Room6", name: "Room VI", back: "Hall", holds: ["flags"], needsKey: true,
     story: [
       "A child's room, kept as if he might come back for it.",
-      "I had a cupboard of games just like this one. Every boy did, I suppose.",
+      "His medals, still behind their glass. Somebody has kept it clean.",
     ] },
 ]);
 

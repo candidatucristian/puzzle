@@ -1,6 +1,7 @@
 import { soft, lcg } from "../../shared/paint.js";
 import { fillPoly, thingAt } from "../house/roomKit.js";
 import { candle } from "../house/furniture.js";
+import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
 /** The trap in the drawing room's floor: a square hole cut through the
  *  parquet to the cellar, an oak curb round it, its door thrown back flat on
@@ -38,6 +39,7 @@ export function paintTrap(ctx, L) {
   fillPoly(ctx, [Q(lx0, 0, d0), Q(lx1, 0, d0), Q(lx1, 3, d0), Q(lx0, 3, d0)], "#120b06");
   fillPoly(ctx, [Q(lx1, 0, d0), Q(lx1, 0, d1), Q(lx1, 3, d1), Q(lx1, 3, d0)], "#0c0704");
   fillPoly(ctx, lid, "#33200f");
+  if (L.surfaceMaterials?.detailed) paintProjectedMaterial(ctx, L.surfaceMaterials.wood, (u, v) => Q(lx0 + w * u, 3, d1 - (d1 - d0) * v), 0.88, 2, 2);
   // its planks, running away from us, each its own shade
   for (let i = 0; i < 5; i++) {
     const a = lx0 + (w * i) / 5, b = lx0 + (w * (i + 1)) / 5, k = rnd();
@@ -65,6 +67,7 @@ export function paintTrap(ctx, L) {
   ctx.beginPath(); ctx.ellipse(ring.x, ring.y - 0.4 * ring.s, 6 * ring.s, 2.6 * ring.s, 0, Math.PI * 1.1, Math.PI * 1.8); ctx.stroke();
   // ── the curb, and the hole
   flat(x0 - 6, d0 - 6, x1 + 6, d1 + 6, "#3a2414");
+  if (L.surfaceMaterials?.detailed) paintProjectedMaterial(ctx, L.surfaceMaterials.wood, (u, v) => Q(x0 - 6 + (x1 - x0 + 12) * u, 0.4, d1 + 6 - (d1 - d0 + 12) * v), 0.72, 2, 2);
   const hole = [Q(x0, 0.4, d0), Q(x1, 0.4, d0), Q(x1, 0.4, d1), Q(x0, 0.4, d1)];
   fillPoly(ctx, hole, "#020203");
   ctx.save();

@@ -3,7 +3,7 @@ import { DOOR_LENGTH } from "../hall/doorMotion.js";
 
 /** The gallery off the top floor: a long stone passage under a barrel vault,
  *  given up to the weather years ago — and dark. The only light is an iron
- *  lantern by each of its three doors, still burning, so that each door
+ *  lantern by each of its two doors, still burning, so that each door
  *  stands in its own warm pool with the dark between them; past the last,
  *  nothing can be made out at all.
  *
@@ -37,11 +37,12 @@ export function layoutGallery(W, H) {
   L.spring = -H * 0.42;
   L.doorTop = L.floor - H * 1.08;
   L.P = (X, Y, z) => ({ x: L.vp.x + X / z, y: L.vp.y + Y / z, s: 1 / z });
-  L.doors = [[-1, 2.05], [1, 2.05], [1, 3.25]].map(([side, z], i) => {
+  // two doors, facing each other across it: XII on the left, XIII on the right
+  L.doors = [[-1, 2.05], [1, 2.05]].map(([side, z], i) => {
     const X = side * L.wall;
     const quad = [L.P(X, L.doorTop, z), L.P(X, L.doorTop, z + DOOR_LENGTH), L.P(X, L.floor, z + DOOR_LENGTH), L.P(X, L.floor, z)];
     const xs = quad.map((p) => p.x), ys = quad.map((p) => p.y);
-    return { side, z, i, number: 15 + i, quad,
+    return { side, z, i, number: 12 + i, quad,
       box: { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) },
       sill: L.P(X - side * L.wall * 0.07, L.floor, z + DOOR_LENGTH / 2),
     };

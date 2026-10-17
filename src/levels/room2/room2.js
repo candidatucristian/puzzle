@@ -3,9 +3,10 @@ import { paintKey } from "../../shared/keyArt.js";
 import { OVERTIME_CLOCKS } from "../overtime/puzzle.js";
 import { writingDesk, greenLamp } from "../house/furniture.js";
 import {
-  WARM, BACK, roomLayout, roomStyle, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
+  WARM, BACK, roomLayout, roomStyle, chestAt, thingAt, fillPoly, block, paintShell, paintWindowWall, paintMoonlight,
   paintChest, gloom,
 } from "../house/roomKit.js";
+import { paintWallBookcase } from "../house/wallBookcase.js";
 
 /** The second room off the hall, at night: the library, where the house kept
  *  its books and its accounts. Seen from just inside the door.
@@ -269,81 +270,11 @@ function paintOffice(ctx, L) {
 // packed close, here and there one leaning into a gap; on the third shelf
 // five standing a little out, a paper marker in each.
 function paintBookcase(ctx, L) {
-  const at = L.shelf, on = L.on.shelf;
-  const R = 3, fw = (at.d1 - at.d0) * R, fh = (at.y1 - at.y0) * R;
-  const flat = makeCanvas(fw, fh);
-  const g = flat.getContext("2d");
-  const rnd = lcg(521);
-  g.fillStyle = "#1c110a";
-  g.fillRect(0, 0, fw, fh);
-  g.fillStyle = "#060403";
-  g.fillRect(7 * R, 9 * R, fw - 14 * R, fh - 20 * R);
-  const spines = ["#3a1a16", "#1e2a24", "#2a2418", "#1a2230", "#3a2c16", "#2c1620", "#20201c", "#3c2a20", "#18261c"];
-  const rows = 5, rh = (fh - 20 * R) / rows;
-  for (let r = 0; r < rows; r++) {
-    const base = 9 * R + (r + 1) * rh - 2.6 * R;
-    let x = 8.5 * R, n = 0;
-    while (x < fw - 12 * R) {
-      const bw = (2.6 + rnd() * 3.8) * R, bh = (rh - 6 * R) * (0.66 + rnd() * 0.3);
-      if (rnd() < 0.06) { x += bw * 1.4; continue; }
-      const marked = r === 2 && n >= 8 && n < 18 && n % 2 === 0; // five, with one between each
-      n++;
-      const col = spines[Math.floor(rnd() * spines.length)];
-      if (rnd() < 0.05 && !marked) {
-        // one leaning against its neighbour
-        g.save();
-        g.translate(x, base);
-        g.rotate(-0.16);
-        g.fillStyle = col;
-        g.fillRect(0, -bh, bw, bh);
-        g.restore();
-        x += bw + 2.4 * R;
-        continue;
-      }
-      g.fillStyle = col;
-      g.fillRect(x, base - bh, bw - 0.7, bh);
-      g.fillStyle = "rgba(255,220,170,0.1)";
-      g.fillRect(x, base - bh, 0.9, bh);
-      if (rnd() < 0.55) {
-        g.fillStyle = "rgba(190,160,90,0.45)";
-        g.fillRect(x + 1, base - bh * 0.78, bw - 2.4, 0.04 * bh);
-        g.fillRect(x + 1, base - bh * 0.24, bw - 2.4, 0.03 * bh);
-      }
-      if (marked) {
-        // standing out: its edge catches the light, a marker stands up out of it
-        g.fillStyle = "rgba(255,226,180,0.16)";
-        g.fillRect(x, base - bh, bw - 0.7, bh);
-        g.fillStyle = "#e6dcc0";
-        g.fillRect(x + bw * 0.3, base - bh - 3.6 * R, 1.2 * R, 3.6 * R);
-      }
-      x += bw;
-    }
-    // the shelf under them, and the shadow of the one above
-    g.fillStyle = "#2a1a0e";
-    g.fillRect(7 * R, base, fw - 14 * R, 2.6 * R);
-    const sh = g.createLinearGradient(0, base - rh + 2.6 * R, 0, base - rh + 12 * R);
-    sh.addColorStop(0, "rgba(0,0,0,0.75)");
-    sh.addColorStop(1, "rgba(0,0,0,0)");
-    g.fillStyle = sh;
-    g.fillRect(7 * R, base - rh + 2.6 * R, fw - 14 * R, 9.4 * R);
-  }
-  // its plinth and its cornice
-  g.fillStyle = "#24160c";
-  g.fillRect(0, fh - 11 * R, fw, 11 * R);
-  g.fillStyle = "#2e1c10";
-  g.fillRect(0, 0, fw, 8 * R);
-  g.fillStyle = "rgba(255,214,170,0.18)";
-  g.fillRect(0, 0, fw, 1.2 * R);
-  // the lamp in the corner lights its far end
-  if (on) {
-    const lg = g.createLinearGradient(fw, 0, fw * 0.35, 0);
-    lg.addColorStop(0, `rgba(${WARM},0.26)`);
-    lg.addColorStop(1, `rgba(${WARM},0)`);
-    g.globalCompositeOperation = "lighter";
-    g.fillStyle = lg;
-    g.fillRect(0, 0, fw, fh);
-  }
-  onWall(ctx, L, -1, at, flat);
+  paintWallBookcase(ctx, L, {
+    at: L.shelf, side: -1, seed: 521,
+    marked: (r, n) => r === 2 && n >= 8 && n < 18 && n % 2 === 0, // five, with one between each
+    lit: L.on.shelf ? "far" : null,
+  });
 }
 
 

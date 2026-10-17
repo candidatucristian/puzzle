@@ -6,9 +6,12 @@ import { buildMorseSteps } from "../lightswitch/puzzle.js";
 import { addCanvasTexture, chime, noiseBurst } from "../../shared/paint.js";
 import { paintKey } from "../../shared/keyArt.js";
 import { cursorFor } from "../../shared/cursors.js";
+import * as chemical from "./chemical.js";
 import { layoutHall, paintHall, paintDoorSwing, releaseHallArt } from "./hall.js";
 import { doorMotion, DOOR_WALK_START_MS, DOOR_LATCH_MS, DOOR_SWING_MS } from "./doorMotion.js";
 import { IronLever } from "./ironLever.js";
+import { loadChemistryHallMaterials } from "./chemicalMaterials.js";
+import { loadBotanicHallMaterials } from "./botanicMaterials.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The hall: the ground floor of the manor, where the player stands on coming
@@ -51,6 +54,16 @@ export default class HallScene extends BasePuzzleScene {
   preload() {
     this.load.audio("doorhandle", "assets/sounds/global/doorhandle.mp3");
     this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
+    if (!this.upper && !this.wing) loadBotanicHallMaterials(this);
+    if (this.upper) {
+      loadChemistryHallMaterials(this);
+      if (!this.textures.exists(chemical.CHEMISTRY_TUBE_RACK)) {
+        this.load.image(chemical.CHEMISTRY_TUBE_RACK, chemical.CHEMISTRY_TUBE_RACK_URL);
+      }
+      if (!this.textures.exists(chemical.CHEMISTRY_VESSELS)) {
+        this.load.image(chemical.CHEMISTRY_VESSELS, chemical.CHEMISTRY_VESSELS_URL);
+      }
+    }
   }
 
   create(data) {
@@ -680,7 +693,7 @@ export default class HallScene extends BasePuzzleScene {
   }
 }
 
-/** The passage off the top floor: three doors, XV to XVII. */
+/** The passage off the top floor: two doors, XII and XIII. */
 export class TopWingScene extends HallScene {
   constructor() {
     super("TopHall", "wing");

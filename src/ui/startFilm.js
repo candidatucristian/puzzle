@@ -82,12 +82,14 @@ export function mountStartFilm(scope, preferences) {
 // drawn here on a canvas because the title is not part of the game's picture:
 // three stars standing at the door's edges, pulsing in turn, and small ones
 // that light somewhere on it, drift up a little and go out.
-// (the canvas it draws on sits over the thing, 40px out round it; the start
-// door's by default, or any other given)
-export function glint(scope, door, still, done, canvas = document.getElementById('start-door-glint')) {
+// (the canvas it draws on sits over the thing, PAD out round it; the start
+// door's by default, or any other given; `scale` makes it all larger —
+// the stars, the sparks, how far they rise — and `sparks` how many there are)
+export function glint(scope, door, still, done, canvas = document.getElementById('start-door-glint'), { scale = 1, sparks = 12 } = {}) {
   if (!door || !canvas) return;
-  const ctx = canvas.getContext('2d'), PAD = 40, EDGE = 4;
-  const particles = Array.from({ length: 12 }, () => ({ age: 1, life: 1, x: 0, y: 0, dx: 0, rise: 0, size: 0 }));
+  const ctx = canvas.getContext('2d'), PAD = Math.round(40 * scale), EDGE = 4 * scale;
+  canvas.style.left = canvas.style.top = `${-PAD}px`;
+  const particles = Array.from({ length: sparks }, () => ({ age: 1, life: 1, x: 0, y: 0, dx: 0, rise: 0, size: 0 }));
   let wait = 0, last = 0, frame = 0;
   const star = (x, y, radius, alpha) => {
     const line = (width, colour, a, pts) => {
@@ -119,7 +121,7 @@ export function glint(scope, door, still, done, canvas = document.getElementById
     [[box.x - EDGE, box.y + box.height * 0.22], [box.x + box.width + EDGE, box.y + box.height * 0.42], [box.x + box.width * 0.72, box.y - EDGE]]
       .forEach(([x, y], index) => {
         const pulse = quiet ? 0.18 : 0.18 + 0.38 * Math.max(0, Math.sin(time / 380 + index * 2.1));
-        star(x, y, 2.2 + pulse * 2.1, pulse);
+        star(x, y, (2.2 + pulse * 2.1) * scale, pulse);
       });
     if (quiet) { for (const p of particles) p.age = p.life; ctx.globalAlpha = 1; return; }
     wait -= dt;
@@ -128,9 +130,9 @@ export function glint(scope, door, still, done, canvas = document.getElementById
       if (p) {
         p.age = 0; p.life = 480 + Math.random() * 440;
         p.x = box.x + Math.random() * box.width; p.y = box.y + Math.random() * box.height;
-        p.dx = (Math.random() - 0.5) * 12; p.rise = 9 + Math.random() * 15; p.size = 1.6 + Math.random() * 1.8;
+        p.dx = (Math.random() - 0.5) * 12 * scale; p.rise = (9 + Math.random() * 15) * scale; p.size = (1.6 + Math.random() * 1.8) * scale;
       }
-      wait = 90 + Math.random() * 120;
+      wait = (90 + Math.random() * 120) * 12 / sparks;
     }
     for (const p of particles) {
       if (p.age >= p.life) continue;

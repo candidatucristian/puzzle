@@ -33,7 +33,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Dragging the bucket to the pot waters the plant; five pours add branches with 1, 1, 2, 3 and 5 leaves. The growing pattern is the Fibonacci sequence. A moonlit garden surrounds the potting bench — hills, cypresses, a lantern on the bench; the scenery contains no written formula. The name of the sequence gives FIBO or FIBONACCI.",
+    "description": "Dragging the bucket to the pot waters the plant; five pours add branches with 1, 1, 2, 3 and 5 leaves. The growing pattern is the Fibonacci sequence. An outdoor botanical garden surrounds the oak potting bench: mature trees, flower beds, ferns and a distant glasshouse. The lantern, pot and bucket remain on the bench; the scenery contains no written formula. The name of the sequence gives FIBO or FIBONACCI.",
     "references": [
       "LEAF_DEFS (PlantPotScene.js) — the leaves each pour brings: 1, 1, 2, 3 and 5, and where on the new branch they grow",
       "SEGMENTS — the plant's five branches, one per pour, in cm from the soil; paintStems() (plant.js) draws them as they grow",
@@ -71,10 +71,10 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A wax-sealed envelope holds three lines of Caesar-shifted ciphertext: \"HYHUB FLSKHU PDFKLQH\", \"JXDUGV LWV VSLQQLQJ KHDUW\", \"WKH URWRU\". The candle takes three clicks to extinguish; that count hints at shift 3. Turning the brass cipher wheel back 3 letters (Caesar shift −3) decodes it to \"EVERY CIPHER MACHINE GUARDS ITS SPINNING HEART — THE ROTOR\".",
+    "description": "A wax-sealed envelope holds two lines of Caesar-shifted ciphertext: \"WKH DQVZHU\", \"LV URWRU\". Three candles of different heights burn on the desk, each put out by one click; the three of them hint at shift 3. Once the last is out the wheel's luminous letters show and it turns. Turning the brass cipher wheel back 3 letters (Caesar shift −3) decodes it to \"THE ANSWER IS ROTOR\".",
     "references": [
-      "CRYPTEX_CIPHER — the three lines of shift-3 ciphertext",
-      "Candle.blow() - three clicks extinguish the flame and reveal the shift through counting",
+      "CRYPTEX_CIPHER — the two lines of shift-3 ciphertext",
+      "Candles.blow() (Candle.js) — one click puts out one of the three candles (candleArt.js CANDLES); three candles reveal the shift",
       "CRYPTEX_ALPHA + the rotating disk — the physical decoder wheel"
     ]
   },
@@ -276,18 +276,18 @@ const metadata = [
     "id": "flags",
     "key": "Flags",
     "name": "The Trophy Wall",
-    "summary": "Five flags hang over the cups and medals on a trophy wall.",
+    "summary": "Shelves of cups and certificates from a botanical olympiad; five medals hang on ribbons in their countries' colours.",
     "code": "DEBRIEFING",
     "altCode": null,
     "hint": {
-      "text": "THE TROPHY WALL.\nThe flags along the rod, left to right.",
+      "text": "THE TROPHY WALL.\nThe ribbons on the medals, left to right.",
       "sound": false,
       "tool": true
     },
-    "description": "In a quiet room of the house at night, over a long walnut sideboard of cups and a shelf of small cups, a shield and medals on their ribbons, five national flags hang on rings from a brass rod across the wall, left to right: Germany, Brazil, Ireland, Finland, Nigeria — none of them labeled by name, only by their actual colors/pattern. Concatenating each country's ISO two-letter code in hanging order — DE + BR + IE + FI + NG — spells DEBRIEFING.",
+    "description": "A botanist's bookshelves at night hold what was won at the International Botanical Olympiad — gold cups in laurel on plinths, certificates, scrolls, potted plants, books — with a rainy window and a microscope on the right. From the upper shelf's edge hang five medals on broad ribbons, each ribbon a national flag, left to right: Germany, Brazil, Ireland, Finland, Nigeria; the medals bear plants in relief and the words BOTANICAL OLYMPIAD, but no country is named. Concatenating each country's ISO two-letter code in that order — DE + BR + IE + FI + NG — spells DEBRIEFING. The cups and loose medals carry no flag.",
     "references": [
-      "FLAG_CODES = [\"DE\",\"BR\",\"IE\",\"FI\",\"NG\"] (flags/flagDesigns.js) — hanging order = code order",
-      "flagDesigns.js paintDesign() — per-flag colored geometry, no text labels drawn; trophies.js paintFlagFrames() makes them stir; the cups and medals carry no writing"
+      "FLAG_CODES = [\"DE\",\"BR\",\"IE\",\"FI\",\"NG\"] (flags/flagDesigns.js) — left-to-right order of the medals = code order",
+      "flagDesigns.js paintDesign() — per-flag colored geometry, no text labels drawn; trophies.js paintMedal() — each medal's ribbon is its country's flag (RIBBON)"
     ]
   },
   {
@@ -322,7 +322,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Six numbered rally cars come round a floodlit gravel oval at night and cross the finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the floodlights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level. In the house the stage is watched on the drawing room's television.",
+    "description": "Six numbered rally cars come round a floodlit gravel oval at night and cross the finish line in order: 19, 9, 12, 22, 5, 18. Interpreting each number as an alphabet position (A=1 through Z=26) spells SILVER. After the last car, the floodlights go out and a podium appears. The race runs once; replay runs it again. The optional car recording is atmosphere and is not required to solve the level. In the house the stage is watched on the drawing room's television. It plays as an old VHS tape of the broadcast — scanlines, grain, tracking noise, the recorder's PLAY in the corner — with the broadcaster's caption across the top, \"THE GRAND NIGHT RALLY / FINAL STAGE · THE CHAMPIONSHIP IS DECIDED TONIGHT\" (no figures in it: the cars' numbers stay the only ones on screen).",
     "references": [
       "RALLY_NUMBERS = [19, 9, 12, 22, 5, 18] (puzzle.js) — the door numbers, in order of crossing",
       "RALLY_CROSS_MS — original crossing times [0, 3000, 3506, 6506, 7256, 7762] and RALLY_CAR_MS are divided by RALLY_PACE (0.77), running at 77% of base pace while preserving their spacing; tight pairs cross about 657 ms apart",
@@ -332,7 +332,8 @@ const metadata = [
       "stage.js — the floodlit stage, its ground lit pixel by pixel by the real lamps; CAR_LANES keeps each car on its own line, the close pairs one near and one far",
       "_planRound() / _runRace() — work out launches and whooshes from RALLY_CROSS_MS, then lights out, then the podium (RALLY_PODIUM_MS later); the race runs once",
       "_soundLead() — measures the loudest moment of wroom.mp3 so it lands on the line",
-      "podium.js: RY_WINNERS — the top three and their cups; drawPodium() paints the board"
+      "podium.js: RY_WINNERS — the top three and their cups; drawPodium() paints the board",
+      "vhs.js: addVhs() — the tape look over the picture and RACE_CAPTION, the broadcaster's caption"
     ]
   },
   {
@@ -570,7 +571,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "In the games room (Room 6), a tall oak cupboard stands with both doors open, lit by a lamp out of the picture. Games are stacked flat on its top and bottom shelves, only their plain spines showing, with a box of chessmen and a pack of cards. On the middle shelf four board-game boxes stand face out, side by side, each lid painted with one big wooden game piece: left to right a coral triangle, a yellow disc, a sea-green heptagon and a blue pentagon. A card pinned inside the right-hand door reads \"One unbroken curve counts as one.\" Count each piece's sides — the disc's single curved rim counts as one — and read them left to right: 3, 1, 7, 5, which map through A=1 to C A G E. A click on a box only rocks it on the shelf.",
+    "description": "A tall oak cupboard stands with both doors open, lit by a lamp out of the picture. Games are stacked flat on its top and bottom shelves, only their plain spines showing, with a box of chessmen and a pack of cards. On the middle shelf four board-game boxes stand face out, side by side, each lid painted with one big wooden game piece: left to right a coral triangle, a yellow disc, a sea-green heptagon and a blue pentagon. A card pinned inside the right-hand door reads \"One unbroken curve counts as one.\" Count each piece's sides — the disc's single curved rim counts as one — and read them left to right: 3, 1, 7, 5, which map through A=1 to C A G E. A click on a box only rocks it on the shelf.",
     "references": [
       "kinetic/puzzle.js GAME_LIDS — triangle, circle, heptagon and pentagon with explicit rim counts, in shelf order",
       "polygonVertices() — genuine polygon outlines for the pieces; cupboardLayout() — where the lids stand",
@@ -655,6 +656,86 @@ const metadata = [
       "blindSlits() / lightPassesBlind() — the moving barrier apertures, independent of the image",
       "venetian/city.js paintVenetian — static skyline, thousands of lights and the window frame",
       "VenetianScene — draggable cord, horizontal slats and a GeometryMask over the unchanged city texture"
+    ]
+  },
+  {
+    "id": "molecules",
+    "key": "Molecules",
+    "name": "Silas's Notebook",
+    "summary": "Silas's laboratory notebook lies open: one molecule drawn on each page.",
+    "code": "SHIP",
+    "altCode": null,
+    "hint": {
+      "text": "WHAT HE DREW.\nEach page is one element, drawn as its molecule.",
+      "sound": false,
+      "tool": true
+    },
+    "description": "In Silas's laboratory (Room VII) his notebook stands among the books of the bookcase on the right wall — a click draws it a little way out of the shelf and it opens by itself — and it lies open on a desk under the lamp. Its four pages each draw one element as its molecule — sulfur as a crown of eight atoms, hydrogen as a small pair, iodine as a large pair, phosphorus as a tetrahedron of four — with a note of his under it (a crown of eight; the lightest of all; violet, when it is warmed; four, in a pyramid) and no formula or symbol written: the molecules are S₈, H₂, I₂, P₄. Two pages show at a time; clicking the right page turns forward, the left page back. Recognising each element and reading their symbols in page order spells SHIP.",
+    "references": [
+      "MOLECULES (molecules/puzzle.js) — the four pages in order; readNotebook() spells SHIP",
+      "molecules/book.js paintPage() — each page's molecule and note, no letters; drawCrown() / drawPair() / drawTetra()",
+      "MoleculesScene — two pages at a time, turned by clicking the right page (forward) or the left (back)"
+    ]
+  },
+  {
+    "id": "balance",
+    "key": "Balance",
+    "name": "The Apothecary's Balance",
+    "summary": "A brass balance, a box of weights, and four small phials waiting to be weighed.",
+    "code": "SALT",
+    "altCode": null,
+    "hint": {
+      "text": "WEIGH THEM.\nEvery phial, in its turn.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "In Silas's weighing room (Room VIII), his apothecary's balance stands on the desk under the lamp, its box of brass weights open beside it — 20, 10, 10, 5, 2, 2 and 1 g, each stamped with its weight — and four stoppered phials in a row, numbered I to IV on their labels. A click puts a phial on the left pan (one at a time) and a weight on the right; a click on either takes it back. The beam leans to the heavier pan and comes level, its pointer on the scale's zero, when the two are equal. The phials weigh 19, 1, 12 and 20 g; read as places in the alphabet (A1Z26) in the phials' order they spell SALT. Nothing on screen says what to do with the grams.",
+    "references": [
+      "PHIALS = [19, 1, 12, 20] (balance/puzzle.js) — what each phial weighs, in the order of their numbers; balanceWord() spells SALT",
+      "WEIGHTS = [20, 10, 10, 5, 2, 2, 1] — the box, as a real set is made up; canWeigh() — every phial can be weighed with it",
+      "beamAngle() — the heavier pan down, a single gram visible, a big difference to the stop",
+      "balance/art.js — the room, the stand, the beam with its pointer, the pans, the phials and the weights painted apart",
+      "BalanceScene — click to load and unload the pans; the beam swings as a damped pendulum; the pans hang from their hooks"
+    ]
+  },
+  {
+    "id": "equations",
+    "key": "Equations",
+    "name": "Half Wiped",
+    "summary": "Three reactions in chalk on a blackboard, some of their numbers wiped away.",
+    "code": "2324",
+    "altCode": null,
+    "hint": {
+      "text": "NOTHING IS LOST.\nThe boxes, on the blackboard.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "Silas's blackboard in his weighing room (Room VIII): three reactions in his chalk hand under the date 13. X. 1961, and in the corner Lavoisier's \"Rien ne se perd.\" Some coefficients are wiped and left as boxes: _H₂ + O₂ → 2H₂O, N₂ + _H₂ → _NH₃, _Fe + 3O₂ → 2Fe₂O₃. Balancing each — as many atoms of every element after the arrow as before it — fills them with 2; 3 and 2; 4. Read left to right and top to bottom, the missing numbers are 2324. A click on a box chalks a number into it (the next click the next number, the wheel up or down, a right click back), so the working can be tried on the board; the board itself checks nothing.",
+    "references": [
+      "REACTIONS (equations/puzzle.js) — the three reactions, their wiped coefficients; equationsCode() gives 2324",
+      "atoms() / balances() — counts each side's atoms; only the right numbers balance",
+      "equations/art.js layoutBoard() — the reactions laid out in his hand, subscripts small and low, a box for each wiped number",
+      "EquationsScene — each box its own chalk texture; click, wheel or right click to change the number in it"
+    ]
+  },
+  {
+    "id": "measures",
+    "key": "Measures",
+    "name": "To the Line",
+    "summary": "By the sink: two plain bottles, a tap, and a flask with a single ring round its neck.",
+    "code": "ACID",
+    "altCode": null,
+    "hint": {
+      "text": "TO THE LINE.\nThe flask takes one pour.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "By the laboratory sink in Silas's weighing room (Room VIII): a glass bottle that holds 500 ml and one that holds 300 ml, nothing marked on them but that, a brass tap over a fireclay sink, and a volumetric flask etched 400 ml on its bulb with one ring round its neck and a strip of blue litmus hung in it. A click takes up a bottle; then a click on the tap fills it to the brim, on the sink empties it, on the other bottle pours as much as it can take, and on the flask pours all of it. Exactly 400 ml in one pour brings the flask to its ring: the litmus turns red and the word ACID comes up on it, paler. Any other amount is shown for a moment and then tipped away into the sink. One way: fill the 500, pour it into the 300 (200 left), empty the 300, pour the 200 into it, fill the 500 again, top up the 300 (400 left), pour the 400 into the flask. The water stays level in a tilted bottle and keeps its volume.",
+    "references": [
+      "BOTTLES = [500, 300], FLASK_ML = 400, MEASURES_WORD = \"ACID\" (measures/puzzle.js); pour() and toTheLine(); fewestMoves() — 6 moves from empty to 400 ml",
+      "measures/art.js interior() / waterIn() — each vessel's inside as a polygon; the water clipped under a level surface to its exact area, whatever the tilt",
+      "the flask's bulb holds 380 ml, so its 400 ml ring stands on its neck",
+      "MeasuresScene — take up, fill, empty and pour; a wrong amount in the flask is tipped away; paintLitmus() turns it and shows the word"
     ]
   }
 ];

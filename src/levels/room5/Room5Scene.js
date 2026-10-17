@@ -4,6 +4,7 @@ import { layoutTrap, paintTrap } from "./trapdoor.js";
 import { layoutRoomTree, paintRoomTree } from "./roomTree.js";
 import { layoutRoomTv, paintRoomTv, paintSnow } from "./roomTv.js";
 import { addCanvasTexture } from "../../shared/paint.js";
+import { loadDrawingRoomFinishes, drawingRoomFinishes } from "../house/drawingRoomMaterials.js";
 
 const SNOW = "room5_snow"; // the television's snow, kept moving over its glass
 
@@ -30,8 +31,14 @@ export default class Room5Scene extends PlainRoomScene {
     });
   }
 
+  preload() {
+    super.preload();
+    loadDrawingRoomFinishes(this);
+  }
+
   layout(W, H, levels) {
     const L = super.layout(W, H);
+    L.surfaceMaterials = drawingRoomFinishes(this);
     layoutTrap(L, !levels.isCompleted(levels.indexOf("tapcode")));
     layoutRoomTree(L, !levels.isCompleted(levels.indexOf("pi")));
     layoutRoomTv(L, !levels.isCompleted(levels.indexOf("rally")));

@@ -1,6 +1,7 @@
 import RoomScene from "../house/RoomScene.js";
 import { layoutRoom4, paintRoom4, releaseRoom4Art } from "./room4.js";
 import { noiseBurst } from "../../shared/paint.js";
+import { CROSSING_BACKGROUND, CROSSING_BACKGROUND_URL } from "../crossing/street.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The counting room: the fourth room off the hall (see house/RoomScene.js for
@@ -22,6 +23,13 @@ const LIT_FOR = { cards: "sequence", painting: "crossing", drawer: "station" };
 export default class Room4Scene extends RoomScene {
   constructor() {
     super("Room4");
+  }
+
+  preload() {
+    super.preload();
+    if (!this.textures.exists(CROSSING_BACKGROUND)) {
+      this.load.image(CROSSING_BACKGROUND, CROSSING_BACKGROUND_URL);
+    }
   }
 
   layout(W, H, levels) {

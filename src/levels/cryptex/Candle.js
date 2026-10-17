@@ -1,8 +1,14 @@
 import Phaser from "phaser";
 
-/** The candle's life. Its wax is baked into the study's two layers; here are
- * the flame, the light round it, the ember and the smoke — and a transparent
- * button over the candle, so it can be blown out from the keyboard too.
+/** The candles' lives. Their wax is baked into the study's layers (each
+ * one's own glow on its wax apart, so it goes dark with its flame); here
+ * are the flames, the light round them, the embers and the smoke — and a
+ * transparent button over each candle, so it can be put out from the
+ * keyboard too.
+ *
+ * Three candles, of three heights; one click puts one out. The room is lit
+ * by all three: its light is as strong as their flames together, and goes
+ * out with the last of them.
  *
  * The flame is painted once, as a strip of frames of a real candle flame:
  * a faint orange mantle, a yellow body, a white-hot heart, the dark zone
@@ -21,41 +27,118 @@ const BASE = 146; // where the wick is, in a frame
 const TEX_W = 34; // the flame's width, in a frame, at rest
 const TEX_H = 124; // ...and its height
 
-export default class Candle {
+export default class Candles {
   constructor(scene, { isBlocked, onExtinguished }) {
     this.scene = scene;
     this.isBlocked = isBlocked;
     this.onExtinguished = onExtinguished;
-    this.clicks = 0;
-    this.lightState = { level: 1, bend: 0 };
+    this.out = [false, false, false];
+    // the room's light: the flames' together, 1 with all three burning
+    this.lightState = { level: 1 };
+    this.flames = this.out.map((_, i) => new Flame(this, i));
     this._timers = new Set();
   }
 
-  build(art) {
+  /** How many have been put out. */
+  get clicks() {
+    return this.out.filter(Boolean).length;
+  }
+
+  get allOut() {
+    return this.out.every(Boolean);
+  }
+
+  /** The flame of the tallest, for whatever needs one to point at. */
+  get flame() {
+    return this.flames[0].flame;
+  }
+
+  build(arts) {
     this.removeDom();
-    this.art = art;
     this.reducedMotion = !this.scene.ambientMotion;
+    makeTextures(this.scene.textures);
+    arts.forEach((art, i) => this.flames[i].build(art, this.out[i]));
+    this.lightState.level = this._level(0);
+    this.update(this.scene.time.now);
+  }
+
+  // the room's light from the flames as they are now, each flickering
+  _level(t) {
+    let sum = 0;
+    for (const f of this.flames) sum += f.level(t);
+    return sum / this.flames.length;
+  }
+
+  blow(i, event) {
+    if (this.isBlocked() || this.out[i]) return;
+    this.out[i] = true;
+    this.scene.services.audio.playClick(this.scene);
+    this.flames[i].blow(event);
+    if (this.allOut) this._later(() => this.onExtinguished(), 900);
+  }
+
+  update(time) {
+    this.reducedMotion = !this.scene.ambientMotion;
+    const t = this.reducedMotion ? 0 : time / 1000;
+    for (const f of this.flames) f.update(time, t);
+    this.lightState.level = Phaser.Math.Clamp(this._level(t), 0, 1);
+    this.wallLight?.setAlpha(this.lightState.level);
+  }
+
+  _later(callback, delay) {
+    const timer = this.scene.time.delayedCall(delay, () => {
+      this._timers.delete(timer);
+      callback();
+    });
+    this._timers.add(timer);
+    return timer;
+  }
+
+  removeDom() {
+    for (const timer of this._timers) timer.remove(false);
+    this._timers.clear();
+    for (const f of this.flames) f.remove();
+  }
+
+  destroy() {
+    this.removeDom();
+    for (const f of this.flames) this.scene.tweens.killTweensOf(f.state);
+    this.wallLight = null;
+  }
+}
+
+/** One candle's flame, its own glow on its wax, its ember and its smoke. */
+class Flame {
+  constructor(candles, index) {
+    this.candles = candles;
+    this.scene = candles.scene;
+    this.index = index;
+    this.state = { level: 1, bend: 0 };
+    this.phase = index * 2.3; // each flickers in its own time
+  }
+
+  build(art, out) {
+    this.remove();
+    this.art = art;
     this.smokeSince = null;
     this._frame = Math.random() * FRAMES;
     this._lastT = null;
-    makeTextures(this.scene.textures);
-    const { wick, scale: k, height, radius } = art;
+    this.scene.tweens.killTweensOf(this.state);
+    Object.assign(this.state, { level: out ? 0 : 1, bend: 0 });
+    const { wick, scale: k, height, radius, glow } = art;
     const add = this.scene.add;
     const ADD = Phaser.BlendModes.ADD;
+    // its light in its own wax, under the flames and over the room's light
+    this.glow = glow
+      ? add.image(glow.x, glow.y, glow.key).setOrigin(0).setBlendMode(ADD).setDepth(-9.8)
+      : null;
     this.halo = add.image(wick.x, wick.y, HALO).setBlendMode(ADD).setDepth(7.9);
     this.flame = add
       .image(wick.x, wick.y, FLAME, 0)
       .setOrigin(0.5, BASE / FH)
       .setDepth(8);
-    this.core = add
-      .image(wick.x, wick.y, CORE)
-      .setBlendMode(ADD)
-      .setDepth(8.05);
-    this.ember = add
-      .image(wick.x, wick.y, EMBER)
-      .setBlendMode(ADD)
-      .setDepth(8.1)
-      .setAlpha(0);
+    this.core = add.image(wick.x, wick.y, CORE).setBlendMode(ADD).setDepth(8.05);
+    this.ember = add.image(wick.x, wick.y, EMBER).setBlendMode(ADD).setDepth(8.1).setAlpha(0);
     this.smoke = add.graphics().setDepth(9);
 
     const el = document.createElement("div");
@@ -64,63 +147,42 @@ export default class Candle {
     el.style.top = `${wick.y - 3 * k}px`;
     el.style.width = `${(radius + 1.1) * k * 2}px`;
     el.style.height = `${(height + 4) * k}px`;
-    el.innerHTML =
-      '<button type="button" class="candle-action" aria-label="Put out the candle"></button>';
-    el.querySelector("button").addEventListener("click", (event) => {
+    el.innerHTML = '<button type="button" class="candle-action" aria-label="Put out the candle"></button>';
+    const button = el.querySelector("button");
+    button.disabled = out;
+    button.addEventListener("click", (event) => {
       event.stopPropagation();
-      this.blow(event);
+      this.candles.blow(this.index, event);
     });
     const box = document.getElementById("game-container");
     if (box) box.appendChild(el);
     this.dom = el;
-    this.refresh(true);
-    this.update(this.scene.time.now);
   }
 
-  refresh(instant = false) {
-    const strength = (3 - this.clicks) / 3;
-    const button = this.dom?.querySelector("button");
-    if (button) button.disabled = strength === 0;
-    this.scene.tweens.killTweensOf(this.lightState);
-    if (instant) Object.assign(this.lightState, { level: strength, bend: 0 });
-    else
-      this.scene.tweens.add({
-        targets: this.lightState,
-        level: strength,
-        duration: 650,
-        ease: "Sine.easeInOut",
-      });
+  // how much light it gives now: its strength, trembling with the flame
+  level(t) {
+    const p = this.phase;
+    const flicker = 1 + 0.016 * Math.sin(t * 7.1 + p) + 0.009 * Math.sin(t * 19.3 + 1 + p);
+    this._flicker = flicker;
+    return Phaser.Math.Clamp(this.state.level * flicker, 0, 1);
   }
 
-  // One click is one breath: the flame bows away from it, nearly goes, and
-  // comes back smaller; the third takes it
+  // One breath and it is gone: the flame bows away from it, gutters, and dies
   blow(event) {
     const button = this.dom?.querySelector("button");
-    if (this.isBlocked() || this.clicks >= 3 || button?.disabled) return;
-    this.clicks++;
-    this.scene.services.audio.playClick(this.scene);
     if (button) button.disabled = true;
-    const target = (3 - this.clicks) / 3;
-    const fx = this.lightState;
-    const rect = this.dom.getBoundingClientRect();
-    const dir =
-      event?.clientX && event.clientX < rect.left + rect.width / 2 ? 1 : -1;
+    const fx = this.state;
+    const rect = this.dom?.getBoundingClientRect();
+    const dir = rect && event?.clientX && event.clientX < rect.left + rect.width / 2 ? 1 : -1;
     this.scene.tweens.killTweensOf(fx);
     const from = fx.level;
-    const steps = this.reducedMotion
-      ? [[target, 0, 600]]
-      : target
-        ? [
-            [from * 0.3, dir * 0.85, 130],
-            [from * 0.45, dir * 0.6, 120],
-            [target * 0.75, -dir * 0.1, 200],
-            [target, 0, 300],
-          ]
-        : [
-            [from * 0.35, dir * 0.9, 120],
-            [from * 0.15, dir * 1.1, 140],
-            [0, dir * 0.6, 160],
-          ];
+    const steps = this.candles.reducedMotion
+      ? [[0, 0, 600]]
+      : [
+          [from * 0.35, dir * 0.9, 120],
+          [from * 0.15, dir * 1.1, 140],
+          [0, dir * 0.6, 160],
+        ];
     const next = (i) => {
       if (i >= steps.length) return;
       const [level, bend, duration] = steps[i];
@@ -134,31 +196,20 @@ export default class Candle {
       });
     };
     next(0);
-    if (!target) {
-      this._later(() => {
-        this.smokeSince = this.scene.time.now;
-      }, 330);
-      this._later(() => this.onExtinguished(), 900);
-    } else
-      this._later(() => {
-        if (button?.isConnected) button.disabled = false;
-      }, 820);
+    this.candles._later(() => {
+      this.smokeSince = this.scene.time.now;
+    }, 330);
   }
 
-  update(time) {
+  update(time, t) {
     if (!this.flame || !this.art) return;
-    this.reducedMotion = !this.scene.ambientMotion;
-    const fx = this.lightState;
-    const t = this.reducedMotion ? 0 : time / 1000;
-    const dt =
-      this._lastT === null
-        ? 0
-        : Math.min(0.1, Math.max(0, (time - this._lastT) / 1000));
+    const reduced = this.candles.reducedMotion;
+    const fx = this.state;
+    const dt = this._lastT === null ? 0 : Math.min(0.1, Math.max(0, (time - this._lastT) / 1000));
     this._lastT = time;
-    const flicker =
-      1 + 0.016 * Math.sin(t * 7.1) + 0.009 * Math.sin(t * 19.3 + 1);
-    const level = Phaser.Math.Clamp(fx.level * flicker, 0, 1);
-    this.wallLight?.setAlpha(level);
+    const level = this.level(t);
+    const flicker = this._flicker;
+    this.glow?.setAlpha(level);
     const { wick, scale: k } = this.art;
     const on = level > 0.005;
     this.flame.setVisible(on);
@@ -166,16 +217,10 @@ export default class Candle {
     this.halo.setVisible(on);
     if (on) {
       // it quivers at a flame's own uneven pace
-      if (!this.reducedMotion)
-        this._frame +=
-          dt * (17 + 7 * Math.sin(t * 1.7) + 4 * Math.sin(t * 4.3));
+      if (!reduced) this._frame += dt * (17 + 7 * Math.sin(t * 1.7 + this.phase) + 4 * Math.sin(t * 4.3));
       const h = k * (1.05 + 1.95 * level) * flicker; // about 3 cm tall, burning well
       const w = k * (0.6 + 0.32 * level);
-      const lean =
-        fx.bend * 0.85 +
-        (this.reducedMotion
-          ? 0
-          : 0.03 * Math.sin(t * 3.7) + 0.02 * Math.sin(t * 1.3));
+      const lean = fx.bend * 0.85 + (reduced ? 0 : 0.03 * Math.sin(t * 3.7 + this.phase) + 0.02 * Math.sin(t * 1.3));
       this.flame
         .setFrame(Math.floor(this._frame) % FRAMES)
         .setScale(w / TEX_W, h / TEX_H)
@@ -200,8 +245,8 @@ export default class Candle {
     this._drawSmoke();
   }
 
-  // After the last breath: the wick's tip glows, flickers and cools; a
-  // thread of smoke rises off it, curling and thinning out
+  // After its breath: the wick's tip glows, flickers and cools; a thread of
+  // smoke rises off it, curling and thinning out
   _drawSmoke() {
     const g = this.smoke;
     g.clear();
@@ -220,10 +265,8 @@ export default class Candle {
     this.ember
       .setPosition(wick.x, wick.y)
       .setDisplaySize(k * 1.5, k * 1.5)
-      .setAlpha(
-        cool * cool * (0.8 + 0.2 * Math.sin(age * 23) * Math.sin(age * 7)),
-      );
-    if (this.reducedMotion) return;
+      .setAlpha(cool * cool * (0.8 + 0.2 * Math.sin(age * 23) * Math.sin(age * 7)));
+    if (this.candles.reducedMotion) return;
     const fade = Math.max(0, 1 - age / 5);
     const top = Math.min(15, age * 9); // how far it has risen, in cm
     const N = 56;
@@ -238,52 +281,18 @@ export default class Candle {
       const x = wick.x + curl * k;
       const y = wick.y - rise * k;
       const a = fade * (1 - u) * (1 - 0.45 * u);
-      g.lineStyle(k * (0.3 + u * 1.1), 0xb4b0a8, a * 0.07).lineBetween(
-        px,
-        py,
-        x,
-        y,
-      );
-      g.lineStyle(k * (0.07 + u * 0.22), 0xdcd8d0, a * 0.3).lineBetween(
-        px,
-        py,
-        x,
-        y,
-      );
+      g.lineStyle(k * (0.3 + u * 1.1), 0xb4b0a8, a * 0.07).lineBetween(px, py, x, y);
+      g.lineStyle(k * (0.07 + u * 0.22), 0xdcd8d0, a * 0.3).lineBetween(px, py, x, y);
       px = x;
       py = y;
     }
   }
 
-  _later(callback, delay) {
-    const timer = this.scene.time.delayedCall(delay, () => {
-      this._timers.delete(timer);
-      callback();
-    });
-    this._timers.add(timer);
-    return timer;
-  }
-
-  removeDom() {
-    for (const timer of this._timers) timer.remove(false);
-    this._timers.clear();
+  remove() {
     this.dom?.remove();
     this.dom = null;
-    for (const obj of [
-      this.flame,
-      this.core,
-      this.halo,
-      this.ember,
-      this.smoke,
-    ])
-      obj?.destroy();
-    this.flame = this.core = this.halo = this.ember = this.smoke = null;
-  }
-
-  destroy() {
-    this.removeDom();
-    this.scene.tweens.killTweensOf(this.lightState);
-    this.wallLight = null;
+    for (const obj of [this.flame, this.core, this.halo, this.ember, this.smoke, this.glow]) obj?.destroy();
+    this.flame = this.core = this.halo = this.ember = this.smoke = this.glow = null;
   }
 }
 

@@ -5,6 +5,9 @@ import { paintLeverMount } from "./ironLever.js";
 import { layoutGallery, paintGallery } from "../top/gallery.js";
 import * as botanic from "./botanic.js";
 import * as chemical from "./chemical.js";
+import { chemistryHallMaterials, paintChemistryBulb, paintHallSconcePhoto } from "./chemicalMaterials.js";
+import { botanicHallMaterials } from "./botanicMaterials.js";
+import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
  *  length, three closed doors along either wall, and at its far end the
@@ -21,7 +24,7 @@ import * as chemical from "./chemical.js";
  *  (z, 1 at the picture, larger further off).
  *
  *  The floor above has a hall of the same plan (`upper`), far gone and put
- *  to chemistry: five doors, a flight of stairs going up to the right where
+ *  to chemistry: four doors, a flight of stairs going up to the right where
  *  the sixth would be, tiled walls and floor, copper pipes and laboratory
  *  cupboards. A bare bulb on a flex is worked by the iron lever.
  *
@@ -41,6 +44,11 @@ const END = 4.7; // how far off the end wall is
 // where along the walls the doors are, and the sconces between them
 const DOORS = [1.32, 2.2, 3.1];
 const SCONCES = [2.01, 2.9];
+// upstairs the doors stand further apart, each with a reagent cabinet at its
+// right hand (chemical.js) — on the left wall that is further in, on the
+// right nearer us; the right wall starts past the stairs and the lever
+const UPPER_DOORS = { [-1]: [1.25, 2.75], [1]: [2.5, 3.6] };
+const UPPER_SCONCES = { [-1]: [2.42, 3.95], [1]: [3.15, 4.3] };
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII"];
 // The stairs at the far end, going up and away to the floor above: how wide
 // they and their opening are (of the hall's half-width), how deep and how
@@ -50,11 +58,12 @@ const STAIR = { half: 0.4, open: 0.5, run: 0.16, rise: 0.085, steps: 15, head: -
 // ── where everything is ─────────────────────────────────────────────────────
 
 /** `upper`: the hall of the floor above — the same passage, gone to seed:
- *  doors VII to XII, a window where the stairs are below, one sconce still
+ *  doors VII to X, two on each wall, well apart, each with a cabinet at its right
+ *  hand; a window where the stairs are below, one sconce still
  *  alight, and in place of the chandelier a bare bulb on a flex, which is
  *  `bulbOn` until its puzzle is solved. */
 /** `wing`: the stone gallery off the top floor, gone to ruin, with doors
- *  XV–XVII (top/gallery.js). */
+ *  XII and XIII facing each other (top/gallery.js). */
 export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } = {}) {
   if (wing) return layoutGallery(W, H);
   const u = Math.min(W / 1000, H / 700);
@@ -69,9 +78,7 @@ export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } 
   // the six doors: left wall then right, nearest first; each a quadrangle
   L.doors = [];
   for (const side of [-1, 1]) {
-    DOORS.forEach((z, i) => {
-      // upstairs the first place on the right is not a door: the stairs go up there
-      if (upper && side > 0 && i === 0) return;
+    (upper ? UPPER_DOORS[side] : DOORS).forEach((z, i) => {
       // the passage has three: the middle one on the left, the first and the last on the right
       if (wing && (side < 0 ? i !== 1 : i === 1)) return;
       const X = side * L.wall;
@@ -108,7 +115,10 @@ export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } 
   }
   L.sconces = [];
   // upstairs only the first on the left still has a candle in it
-  for (const side of [-1, 1]) for (const z of SCONCES) L.sconces.push({ side, z, dead: (upper && !(side < 0 && z === SCONCES[0])) || (wing && !(side > 0 && z === SCONCES[1])), ...L.P(side * L.wall, -H * 0.2, z) });
+  for (const side of [-1, 1]) {
+    const zs = upper ? UPPER_SCONCES[side] : SCONCES;
+    for (const z of zs) L.sconces.push({ side, z, dead: (upper && !(side < 0 && z === zs[0])) || (wing && !(side > 0 && z === zs[1])), ...L.P(side * L.wall, -H * 0.2, z) });
+  }
   if (upper) {
     // the bulb on its flex, where the chandelier hangs below: what opens the puzzle
     const b = L.P(0, L.ceil + H * 0.36, 1.9), top = L.P(0, L.ceil, 1.9), r = (36 * u) / 1.9;
@@ -162,7 +172,15 @@ export function paintHallOn(ctx, L) {
 
 export function paintHall(scene, L) {
   const t = scene.textures;
+  if (L.theme === "chemistry") L.chemicalMaterials = chemistryHallMaterials(scene);
+  if (L.theme === "botanic") L.botanicMaterials = botanicHallMaterials(scene);
   const { W, H } = L;
+  if (L.theme === "chemistry" && t.exists(chemical.CHEMISTRY_TUBE_RACK)) {
+    L.tubeRackPhoto = t.get(chemical.CHEMISTRY_TUBE_RACK).getSourceImage();
+  }
+  if (L.theme === "chemistry" && t.exists(chemical.CHEMISTRY_VESSELS)) {
+    L.vesselPhotoSheet = t.get(chemical.CHEMISTRY_VESSELS).getSourceImage();
+  }
   const K = L.wing ? KEYS.wing : L.upper ? KEYS.upper : KEYS.ground;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
@@ -489,6 +507,8 @@ function paintCeiling(ctx, L) {
   polygon(ctx, [P(-wall, ceil, 0.8), P(wall, ceil, 0.8), P(wall, ceil, END), P(-wall, ceil, END)]);
   ctx.fillStyle = L.theme === "chemistry" ? "#111816" : "#0b0a0c";
   ctx.fill();
+  if (L.chemicalMaterials) paintProjectedMaterial(ctx, L.chemicalMaterials.ceiling, (u, v) => P(-wall + 2 * wall * u, ceil, END - (END - 0.8) * v), 1, 8, 12);
+  if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.plaster, (u, v) => P(-wall + 2 * wall * u, ceil, END - (END - 0.8) * v), 1, 8, 12);
   ctx.strokeStyle = "rgba(60,54,60,0.5)";
   for (let z = 1; z < END; z += 0.45) {
     const a = P(-wall, ceil, z), b = P(wall, ceil, z);
@@ -517,6 +537,7 @@ function paintFloor(ctx, L) {
     const a = P(X, floor, 0.7), b = P(X, floor, END);
     const tone = rnd();
     if (i < n) {
+      if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.floor, (u, v) => P(X + 2 * wall / n * u, floor, END - (END - 0.7) * v), 1, 1, 16);
       polygon(ctx, [a, P(X + (2 * wall) / n, floor, 0.7), P(X + (2 * wall) / n, floor, END), b]);
       ctx.fillStyle = tone < 0.5 ? `rgba(0,0,0,${(tone * 0.3).toFixed(3)})` : `rgba(255,200,150,${((tone - 0.5) * 0.06).toFixed(3)})`;
       ctx.fill();
@@ -536,10 +557,11 @@ function paintFloor(ctx, L) {
   strip(rw, runner ? runner.edge : L.worn ? "#101a17" : "#2e0c10");
   strip(rw * 0.9, runner ? runner.border : L.worn ? "#4a4734" : "#6a5a3a");
   strip(rw * 0.84, runner ? runner.field : L.worn ? "#16261f" : "#3c1014");
+  if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.carpet, (u, v) => P(-rw * 0.84 + rw * 1.68 * u, floor, END - (END - 0.7) * v), 1, 4, 16);
   // its pattern: a lozenge every stride, small flowers between
   for (let z = 0.8; z < END - 0.3; z += 0.22) {
     const p = P(0, floor, z);
-    ctx.fillStyle = runner ? runner.motif : "rgba(120,96,56,0.5)";
+    ctx.fillStyle = L.botanicMaterials ? "rgba(150,150,90,0.1)" : runner ? runner.motif : "rgba(120,96,56,0.5)";
     ctx.beginPath();
     ctx.moveTo(p.x, p.y - (11 * u) / z);
     ctx.lineTo(p.x + (rw * 0.3) / z, p.y);
@@ -594,6 +616,7 @@ function paintWall(ctx, L, side) {
   ctx.restore();
   }
   band(dado, floor, "#2a1a10", "#120a06");
+  if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.oak, (u, v) => P(X, dado + (floor - dado) * v, 0.7 + (END - 0.7) * u), 0.95, 24, 2);
   band(dado - H * 0.012, dado + H * 0.012, "#3e2616", "#1a0e08");
   band(-H * 0.5, -H * 0.485, "#3e2616", "#1a0e08");
   band(floor - H * 0.035, floor, "#140b06", "#080403");
@@ -638,10 +661,12 @@ function paintEnd(ctx, L) {
   const a = P(-wall, ceil, END), b = P(wall, floor, END);
   ctx.fillStyle = "#0b100f";
   ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
+  paintFlatMaterial(ctx, L.botanicMaterials?.paper, a.x, a.y, b.x - a.x, b.y - a.y, L.u * 0.3, 0.9);
   // panelling along its foot
   const dado = P(0, floor - H * 0.36, END).y;
   ctx.fillStyle = "#140c07";
   ctx.fillRect(a.x, dado, b.x - a.x, b.y - dado);
+  paintFlatMaterial(ctx, L.botanicMaterials?.oak, a.x, dado, b.x - a.x, b.y - dado, L.u * 0.22, 0.9);
   ctx.fillStyle = "#2a1a0e";
   ctx.fillRect(a.x, dado - 2, b.x - a.x, 4);
 
@@ -684,11 +709,14 @@ function paintEnd(ctx, L) {
     };
     if (y1 > 0) {
       tread(sx, "#3a2616");
+      if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.across, (u, v) => P(-sx + sx * 2 * u, y1, z0 + (z1 - z0) * v), 0.9, 4, 1);
       tread(rw, "#5a1a20");
+      if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.carpet, (u, v) => P(-rw + rw * 2 * u, y1, z0 + (z1 - z0) * v), 0.9, 4, 1);
       tread(sx, `rgba(${MOON},${(0.3 * lit).toFixed(3)})`);
     }
     riser(sx, "#120a06");
     riser(rw, "#280a0e");
+    if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.carpet, (u, v) => P(-rw + rw * 2 * u, y1 + (y0 - y1) * v, z0), 0.65, 4, 1);
     // the nose of the step, catching the light; the brass rod at its foot
     const p = P(-sx, y1, z0), q = P(sx, y1, z0);
     ctx.fillStyle = `rgba(190,208,240,${(0.2 + 0.5 * lit).toFixed(3)})`;
@@ -871,6 +899,7 @@ function paintSideStairs(ctx, L, span, side, dir) {
     const lit = dir > 0 ? 0.2 + 0.8 * (i / (n - 1)) : 0.7 * (1 - i / (n - 1));
     if (y1 > 0) {
       poly([P(X, y1, z0), P(X1, y1, z0), P(X1, y1, z1), P(X, y1, z1)], "#33221a");
+      if (L.chemicalMaterials) paintProjectedMaterial(ctx, L.chemicalMaterials.across, (u, v) => P(X + (X1 - X) * u, y1, z0 + (z1 - z0) * v), 0.85, 3, 3);
       poly([P(X, y1, z0 + 0.16), P(X1, y1, z0 + 0.16), P(X1, y1, z1 - 0.16), P(X, y1, z1 - 0.16)], "#16261f");
       poly([P(X, y1, z0), P(X1, y1, z0), P(X1, y1, z1), P(X, y1, z1)], `rgba(${MOON},${(0.2 * lit).toFixed(3)})`);
     }
@@ -909,7 +938,7 @@ function paintSideStairs(ctx, L, span, side, dir) {
 // What years of nobody have done to the upper hall: the paper come away
 // from the walls in sheets, the plaster behind it bare; damp run down from
 // the ceiling, and stained it; cracks; cobwebs over the doors; the runner
-// worn through and marked; one door boarded across; dust and fallen plaster
+// worn through and marked; dust and fallen plaster
 // along the foot of the walls. Nothing worse than neglect.
 function paintDecay(ctx, L) {
   const { P, wall, floor, ceil, H, u } = L;
@@ -997,21 +1026,6 @@ function paintDecay(ctx, L) {
     const z = 0.85 + rnd() * 3.6, p = P((rnd() * 2 - 1) * wall * 0.32, floor, z);
     soft(ctx, p.x, p.y, ((18 + rnd() * 70) * u) / z, ((5 + rnd() * 12) * u) / z, rnd() < 0.6 ? "8,5,3" : "0,0,0", 0.8);
   }
-  // one door boarded across: three planks, none of them level
-  const shut = L.upper && L.doors.find((d) => d.side > 0 && d.i === 1);
-  if (shut) {
-    const X = shut.side * wall;
-    for (let k = 0; k < 3; k++) {
-      const y = L.doorTop + (floor - L.doorTop) * (0.2 + k * 0.26), tilt = (rnd() - 0.5) * H * 0.05, ph = H * 0.05;
-      const z0 = shut.z - 0.05, z1 = shut.z + DOOR_LEN + 0.05;
-      poly([P(X, y, z0), P(X, y + tilt, z1), P(X, y + tilt + ph, z1), P(X, y + ph, z0)], k % 2 ? "#2a2118" : "#33281c");
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = Math.max(0.8, (1.6 * u) / shut.z);
-      ctx.stroke();
-      ctx.fillStyle = "#07080a";
-      for (const [zz, yy] of [[z0 + 0.03, y + ph / 2], [z1 - 0.03, y + tilt + ph / 2]]) { const q = P(X, yy, zz); ctx.beginPath(); ctx.arc(q.x, q.y, Math.max(1, (2.4 * u) / zz), 0, Math.PI * 2); ctx.fill(); }
-    }
-  }
 }
 
 // The light. A clear glass bulb on a braided flex from a cracked plaster rose,
@@ -1062,6 +1076,7 @@ function paintBulb(ctx, L) {
   ctx.fillStyle = "#2a2016";
   ctx.beginPath(); ctx.ellipse(b.x, fy1 - r * 0.06, r * 0.13, r * 0.1, 0, 0, Math.PI * 2); ctx.fill();
   // ── the holder: a bakelite cap and skirt, ribbed, a brass collar under it
+  if (paintChemistryBulb(ctx, L)) return;
   const hx = (y0, y1, w0, w1, fill) => {
     ctx.fillStyle = fill;
     ctx.beginPath();
@@ -1202,10 +1217,12 @@ function paintDoor(ctx, L, d) {
     return { x: top.x + (bot.x - top.x) * b, y: top.y + (bot.y - top.y) * b };
   };
   const quad = (a0, b0, a1, b1) => [f(a0, b0), f(a1, b0), f(a1, b1), f(a0, b1)];
+  const materials = L.chemicalMaterials ?? L.botanicMaterials;
   // the architrave
   polygon(ctx, quad(-0.12, -0.05, 1.12, 1));
   ctx.fillStyle = L.theme === "chemistry" ? "#2b3a31" : "#2c1b10";
   ctx.fill();
+  if (materials) paintProjectedMaterial(ctx, materials.paint ?? materials.oak, (a, b) => f(-0.12 + 1.24 * a, -0.05 + 1.05 * b), 0.9, 12, 2);
   polygon(ctx, quad(-0.04, -0.015, 1.04, 1));
   ctx.fillStyle = "#0a0605";
   ctx.fill();
@@ -1219,6 +1236,7 @@ function paintDoor(ctx, L, d) {
   ctx.save();
   ctx.clip();
   // grain down it
+  if (materials) paintProjectedMaterial(ctx, materials.paint ?? materials.oak, (a, b) => f(a, b), 1, 12, 2);
   const rnd = lcg(300 + d.i * 7 + (d.side > 0 ? 50 : 0));
   for (let i = 0; i < 26; i++) {
     const a = rnd();
@@ -1296,6 +1314,7 @@ function paintDoorHandle(ctx, L, d, f) {
 
 // a sconce: a brass arm, a candle in a glass, its light on the wall and floor
 function paintSconce(ctx, L, s) {
+  if (paintHallSconcePhoto(ctx, L, s, L.chemicalMaterials ?? L.botanicMaterials)) return;
   const { u } = L;
   const k = (u * 1.5) / s.z;
   const x = s.x - s.side * 14 * k;
@@ -1457,7 +1476,22 @@ function paintThings(ctx, L) {
   // brass weights and the animated pendulum behind its glass.
   if (!L.worn) stand(-1, END - 0.12, wall * 0.26, () => {
     shadow(66);
+    const walnutPhotos = new Map();
     const walnut = (x0, x1) => {
+      if (L.botanicMaterials) {
+        const width = Math.ceil(x1 - x0);
+        if (!walnutPhotos.has(width)) {
+          const c = makeCanvas(width, 256), g = c.getContext("2d");
+          g.drawImage(L.botanicMaterials.oak, 0, 0, width, 256);
+          const round = g.createLinearGradient(0, 0, width, 0);
+          round.addColorStop(0, "rgba(0,0,0,0.48)"); round.addColorStop(0.36, "rgba(0,0,0,0)"); round.addColorStop(1, "rgba(0,0,0,0.52)");
+          g.fillStyle = round; g.fillRect(0, 0, width, 256);
+          const pattern = ctx.createPattern(c, "repeat");
+          pattern.setTransform(new DOMMatrix().translate(x0, 0));
+          walnutPhotos.set(width, pattern);
+        }
+        return walnutPhotos.get(width);
+      }
       const g = ctx.createLinearGradient(x0, 0, x1, 0);
       g.addColorStop(0, "#180d07"); g.addColorStop(0.08, "#56351d"); g.addColorStop(0.2, "#80552e");
       g.addColorStop(0.34, "#3f2514"); g.addColorStop(0.53, "#644326"); g.addColorStop(0.76, "#382111");
@@ -1591,7 +1625,8 @@ function paintThings(ctx, L) {
     tg.addColorStop(0, "#5a3a22"); tg.addColorStop(1, "#1e120a");
     ctx.fillStyle = tg;
     ctx.fillRect(-44, -128, 88, 14);
-    if (L.theme === "botanic") { botanic.paintTableFern(ctx); return; }
+    paintFlatMaterial(ctx, L.botanicMaterials?.across, -44, -128, 88, 14, 0.25, 0.85);
+    if (L.theme === "botanic") { botanic.paintTableFern(ctx, L.botanicMaterials); return; }
     ctx.fillStyle = "#6a4a3a";
     ctx.beginPath(); ctx.moveTo(-20, -128); ctx.lineTo(20, -128); ctx.lineTo(15, -164); ctx.lineTo(-15, -164); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "#16301e"; ctx.lineCap = "round";
@@ -1606,7 +1641,7 @@ function paintThings(ctx, L) {
     ctx.lineCap = "butt";
   });
   // ── and right: a hall chair, its tall carved back to the wall
-  if (L.theme === "botanic") stand(1, 2.01, 60, () => botanic.paintPalm(ctx));
+  if (L.theme === "botanic") stand(1, 2.01, 60, () => botanic.paintPalm(ctx, L.botanicMaterials));
   else if (!L.worn) stand(1, 2.01, 44, () => {
     shadow(46);
     ctx.fillStyle = dark;
@@ -1622,7 +1657,7 @@ function paintThings(ctx, L) {
     ctx.fillRect(-22, -176, 44, 76);
   });
   // ── between the last two doors, left: an umbrella stand; right: a trunk
-  if (L.theme === "botanic") stand(-1, 2.9, 44, () => botanic.paintUrnPlant(ctx));
+  if (L.theme === "botanic") stand(-1, 2.9, 44, () => botanic.paintUrnPlant(ctx, L.botanicMaterials));
   else if (!L.worn) stand(-1, 2.9, 40, () => {
     shadow(30);
     const g = ctx.createLinearGradient(-22, 0, 22, 0);
@@ -1642,12 +1677,15 @@ function paintThings(ctx, L) {
     g.addColorStop(0, "#4a3220"); g.addColorStop(1, "#1a100a");
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.roundRect(-52, -70, 104, 70, [10, 10, 2, 2]); ctx.fill();
+    ctx.save(); ctx.clip();
+    paintFlatMaterial(ctx, L.botanicMaterials?.oak, -52, -70, 104, 70, 0.25, 0.85, "soft-light");
+    ctx.restore();
     ctx.fillStyle = "#8a6a2a";
     for (const x of [-34, 30]) ctx.fillRect(x, -70, 6, 70);
     ctx.fillRect(-7, -44, 14, 16);
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(-52, -46, 104, 2.4);
-    if (L.theme === "botanic") botanic.paintPotsAndCan(ctx);
+    if (L.theme === "botanic") botanic.paintPotsAndCan(ctx, L.botanicMaterials);
   });
   if (L.upper) {
     // ── upstairs, down the left: barrels, stood and stacked and left

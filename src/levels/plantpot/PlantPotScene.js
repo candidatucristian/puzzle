@@ -1,6 +1,6 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { makeMoonTexture } from "../../shared/moon.js";
-import { GARDEN_TREES } from "./matureTrees.js";
+import { loadPhotographicGarden } from "./photographicGarden.js";
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
   paintPlantArt,
@@ -15,8 +15,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PLANT POT"  ·  code: FIBO / FIBONACCI  ·  water the plant
 //
-// A garden at night under a full moon, seen from the study's window: we
-// look out and down over the sill. On the potting bench under the window,
+// An outdoor botanical garden at night under a full moon. On the oak bench,
 // beside a storm lantern, stand a terracotta pot and a zinc bucket of water. Drag the
 // bucket to the pot and it pours; each pour grows the plant one branch, and
 // each new branch brings its leaves: 1, 1, 2, 3, 5. Five pours, and the plant
@@ -85,7 +84,7 @@ export default class PlantPotScene extends BasePuzzleScene {
 
   preload() {
     this.load.image("leaf", "assets/images/PlantPot/leaf.png");
-    this.load.image(GARDEN_TREES.key, GARDEN_TREES.url);
+    loadPhotographicGarden(this);
     this.load.audio("wateringplant", "assets/sounds/PlantPot/wateringplant.mp3");
   }
 
@@ -176,8 +175,6 @@ export default class PlantPotScene extends BasePuzzleScene {
 
     this._makeBench(L);
     this._makeLantern(L);
-    // the window we look out of, in front of everything in the garden
-    this.add.image(0, 0, K.frame).setOrigin(0, 0).setDepth(17);
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
     this._built = true;
   }
@@ -445,11 +442,12 @@ export default class PlantPotScene extends BasePuzzleScene {
     for (let i = 0; i < 10; i++) {
       const a0 = i / 10;
       const a1 = (i + 1) / 10;
+      if (this._L.photographic && (!this._L.inSky(hx - sh.dx * tail * a0, hy - sh.dy * tail * a0) || !this._L.inSky(hx - sh.dx * tail * a1, hy - sh.dy * tail * a1))) continue;
       g.lineStyle(1.6 * (1 - a0) + 0.3, 0xeef2ff, fade * (1 - a0) * 0.85);
       g.lineBetween(hx - sh.dx * tail * a0, hy - sh.dy * tail * a0, hx - sh.dx * tail * a1, hy - sh.dy * tail * a1);
     }
     g.fillStyle(0xffffff, fade);
-    g.fillCircle(hx, hy, 1.4);
+    if (!this._L.photographic || this._L.inSky(hx, hy)) g.fillCircle(hx, hy, 1.4);
   }
 
   // ── pouring and growing ────────────────────────────────────────────────────

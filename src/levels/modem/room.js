@@ -1,23 +1,10 @@
-import { makeMoonTexture } from "../../shared/moon.js";
-
-/** The room for MODEM, painted the way the office in OVERTIME is: a real room
- *  at night, seen in true one-point perspective and lit pixel by pixel — a
- *  desk against a blue-green wall, a table lamp on the left throwing its warm
- *  light down onto the desk and up the wall, a window on the right with the
- *  moon over the valley and the moonlight lying on the desk through it. In
- *  the middle of the desk stands the old router, its two antennas up, a cable
- *  running from its back to the socket on the wall; the name on its front,
- *  W. LEIBNIZ.
- *
- *  Everything is laid out in centimetres in front of the eye and projected,
- *  and painted once per screen size onto one canvas. What moves stays out of
- *  the painting: the scene lights the router's LEDs (at `leds`, with their
- *  light on the desk under them), and dust turns in the lamplight. */
+/** The MODEM room is one photographic background. The thirteen router lenses
+ *  stay dark in that still; the scene adds the animated LED light and desk
+ *  reflections above it, plus drifting dust in the lamp light. */
 
 const ROOM_KEY = "md_room";
 const GLOW_KEY = "md_glow";
 const MOTE_KEY = "md_mote";
-const MOON_KEY = "tele_moon"; // the same moon as over the valley through the telescope
 const ZW = 100; // the wall, in cm in front of the eye
 const EYE_H = 30; // the eye, in cm above the desk
 const AMB = [0.17, 0.18, 0.24]; // what light there is without the lamp
@@ -29,20 +16,31 @@ const MOON_DIR = unit(v3(0.25, 0.6, 0.76)); // from the desk toward the moon
 const NZ = v3(0, 0, -1);
 const UP = v3(0, 1, 0);
 
-export function paintRoom(scene, W, H) {
+export function paintRoom(scene, W, H, roomPhoto) {
+  if (roomPhoto) return paintPhotographicRoom(scene, W, H, roomPhoto);
+
   const cam = camera(W, H);
   const lay = layout(cam);
-  makeMoonTexture(scene.textures, MOON_KEY);
-  const moonImg = scene.textures.get(MOON_KEY).getSourceImage();
   const cv = makeCanvas(W, H);
   const ctx = cv.getContext("2d");
   const rnd = lcg(909);
   paintSurfaces(ctx, cam, lay);
   paintDeskGrain(ctx, cam, rnd);
-  paintWindow(ctx, cam, lay, moonImg, rnd);
+  paintProtocolDiagram(ctx, cam, lay);
   paintSocket(ctx, cam, lay);
   paintLamp(ctx, cam, lay);
-  paintRouter(ctx, cam, lay);
+  paintRouterProcedural(ctx, cam, lay);
+  const ledScale = cam.k(lay.router.z0);
+  const leds = lay.leds.map((p) => {
+    const s = cam.Pv(p);
+    const d = cam.Pv(v3(p.x, 0, lay.router.z0 - 1.6));
+    return {
+      x: s.x,
+      y: s.y,
+      r: ledScale * lay.ledR,
+      spill: { x: d.x, y: d.y, rx: cam.k(lay.router.z0 - 1.6) * 2.4 },
+    };
+  });
   paintAtmosphere(ctx, cam);
   addCanvas(scene.textures, ROOM_KEY, cv);
   addCanvas(
@@ -64,16 +62,11 @@ export function paintRoom(scene, W, H) {
       [1, 0],
     ]),
   );
-  const k = cam.k(lay.router.z0);
   return {
     keys: { room: ROOM_KEY, glow: GLOW_KEY, mote: MOTE_KEY },
     // each LED: where it is on screen, its lens's radius, and the patch of
     // desk just in front of the router that its light falls on
-    leds: lay.leds.map((p) => {
-      const s = cam.Pv(p);
-      const d = cam.Pv(v3(p.x, 0, lay.router.z0 - 1.6));
-      return { x: s.x, y: s.y, r: k * lay.ledR, spill: { x: d.x, y: d.y, rx: cam.k(lay.router.z0 - 1.6) * 2.4 } };
-    }),
+    leds,
     // where the lamplight hangs in the air, for the dust
     lamp: (() => {
       const b = cam.Pv(lay.lamp.bulb);
@@ -85,6 +78,55 @@ export function paintRoom(scene, W, H) {
 
 export function releaseRoomArt(textures) {
   for (const key of [ROOM_KEY, GLOW_KEY, MOTE_KEY]) if (textures.exists(key)) textures.remove(key);
+}
+
+function paintPhotographicRoom(scene, W, H, photo) {
+  const canvas = makeCanvas(W, H);
+  canvas.getContext("2d").drawImage(photo, 0, 0, W, H);
+  addCanvas(scene.textures, ROOM_KEY, canvas);
+  addCanvas(
+    scene.textures,
+    GLOW_KEY,
+    radial(64, "255,255,255", [
+      [0, 1],
+      [0.18, 0.55],
+      [0.5, 0.12],
+      [1, 0],
+    ]),
+  );
+  addCanvas(
+    scene.textures,
+    MOTE_KEY,
+    radial(32, "255,226,180", [
+      [0, 1],
+      [0.25, 0.5],
+      [1, 0],
+    ]),
+  );
+
+  // These anchors follow the thirteen dark lenses in the photograph. The
+  // lenses stay in the still image; only their light and reflections animate.
+  const ledXs = [
+    0.4321, 0.4456, 0.4581, 0.4713, 0.4841, 0.4973, 0.5108,
+    0.5239, 0.5374, 0.5505, 0.5634, 0.576, 0.5909,
+  ];
+  const radius = Math.max(1.6, Math.min(W * 0.002, H * 0.00355));
+  const spillRadius = Math.min(W * 0.011, H * 0.02);
+  return {
+    keys: { room: ROOM_KEY, glow: GLOW_KEY, mote: MOTE_KEY },
+    leds: ledXs.map((x) => ({
+      x: W * x,
+      y: H * 0.686,
+      r: radius,
+      spill: { x: W * x, y: H * 0.737, rx: spillRadius },
+    })),
+    lamp: {
+      x: W * 0.205,
+      y: H * 0.315,
+      r: Math.min(W, H) * 0.15,
+    },
+    u: Math.min(W / 1000, H / 700),
+  };
 }
 
 // ── the camera and the room's layout ────────────────────────────────────────
@@ -108,7 +150,7 @@ function camera(W, H) {
 }
 
 function layout(cam) {
-  // on a narrow screen the lamp and the window close in toward the middle
+  // on a narrow screen the lamp and the wall diagram close in toward the middle
   const spread = Math.min(1, cam.halfAt(ZW) / 80);
   const router = { x0: -17, x1: 17, y0: 0, y1: 7, z0: 55, z1: 73 };
   const ledY = 4.8;
@@ -124,13 +166,13 @@ function layout(cam) {
     bulb: v3(lampX, 27.5, 80),
   };
   const wx = 23 * spread;
-  const win = { x0: wx, x1: wx + 36, y0: 24, y1: 64, depth: 9, frame: 2.2 };
+  const diagram = { x0: wx, x1: wx + 36, y0: 24, y1: 64 };
   return {
     router,
     leds,
     ledR: 0.42,
     lamp,
-    win,
+    diagram,
     socket: { x: 8.5, y: 8.5, s: 7 },
     antennas: [
       { a: v3(-14, 7.3, 71), b: v3(-16.8, 23.5, 72) },
@@ -242,9 +284,6 @@ function paintSurfaces(ctx, cam, lay) {
   const img = g.createImageData(w, h);
   const d = img.data;
   const yBack = hy + (F * EYE_H) / ZW;
-  const win = lay.win;
-  const wcx = (win.x0 + win.x1) / 2;
-  const wcy = (win.y0 + win.y1) / 2;
   const p = { x: 0, y: 0, z: 0 };
   for (let j = 0; j < h; j++) {
     const Y = (j + 0.5) * R;
@@ -258,11 +297,9 @@ function paintSurfaces(ctx, cam, lay) {
         p.z = ZW;
         const base = wallBase(p.x, p.y);
         col = shade(base, p, NZ, lay);
-        // the night outside greys the wall round the window a little, and
-        // it is darker down in the corner where the wall meets the desk
-        const ml = 0.08 * Math.exp(-((p.x - wcx) ** 2 + (p.y - wcy) ** 2) / 1600);
+        // the wall falls darker toward the desk and the room's corners
         const ao = 0.62 + 0.38 * smooth01(p.y / 12);
-        col = [(col[0] + base[0] * ml * MOON[0]) * ao, (col[1] + base[1] * ml * MOON[1]) * ao, (col[2] + base[2] * ml * MOON[2]) * ao];
+        col = [col[0] * ao, col[1] * ao, col[2] * ao];
       } else {
         const z = (F * EYE_H) / (Y - hy);
         p.x = ((X - cx) * z) / F;
@@ -270,9 +307,8 @@ function paintSurfaces(ctx, cam, lay) {
         p.z = z;
         const base = deskBase(p.x, z);
         col = shade(base, p, UP, lay, 1);
-        const m = moonOn(p, lay) * MOON_POWER;
         const ao = 0.6 + 0.4 * smooth01((ZW - z) / 10);
-        col = [(col[0] + base[0] * m * MOON[0]) * ao, (col[1] + base[1] * m * MOON[1]) * ao, (col[2] + base[2] * m * MOON[2]) * ao];
+        col = [col[0] * ao, col[1] * ao, col[2] * ao];
       }
       d[o] = col[0];
       d[o + 1] = col[1];
@@ -324,7 +360,149 @@ function paintDeskGrain(ctx, cam, rnd) {
   ctx.restore();
 }
 
-// ── the window ──────────────────────────────────────────────────────────────
+// The former window is now a small wall-mounted request/response schematic.
+// Its symbols explain the exchange without putting any protocol name on the wall.
+function paintProtocolDiagram(ctx, cam, lay) {
+  const d = lay.diagram;
+  const a = cam.P(d.x0, d.y1, ZW);
+  const b = cam.P(d.x1, d.y0, ZW);
+  const x = a.x, y = a.y, w = b.x - a.x, h = b.y - a.y;
+  const scale = Math.min(w / 250, h / 220);
+  ctx.save();
+  softEllipse(ctx, x + w * 0.52, y + h * 0.55, w * 0.62, h * 0.62, "0,0,0", 0.52);
+  const brass = ctx.createLinearGradient(x, y, x + w, y + h);
+  brass.addColorStop(0, "#73572e"); brass.addColorStop(0.24, "#d4b875");
+  brass.addColorStop(0.72, "#8b6b38"); brass.addColorStop(1, "#392b19");
+  ctx.fillStyle = brass;
+  roundRect(ctx, x - 4 * scale, y - 4 * scale, w + 8 * scale, h + 8 * scale, 4 * scale);
+  ctx.fill();
+  const board = ctx.createLinearGradient(0, y, 0, y + h);
+  board.addColorStop(0, "#172126"); board.addColorStop(0.52, "#10181d"); board.addColorStop(1, "#0b1115");
+  ctx.fillStyle = board;
+  roundRect(ctx, x + 3 * scale, y + 3 * scale, w - 6 * scale, h - 6 * scale, 2 * scale);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(202,222,219,0.075)";
+  ctx.lineWidth = Math.max(0.6, scale * 0.65);
+  for (let i = 1; i < 8; i++) {
+    const gx = x + (w * i) / 8;
+    ctx.beginPath(); ctx.moveTo(gx, y + h * 0.08); ctx.lineTo(gx, y + h * 0.92); ctx.stroke();
+  }
+  for (let i = 1; i < 6; i++) {
+    const gy = y + (h * i) / 6;
+    ctx.beginPath(); ctx.moveTo(x + w * 0.06, gy); ctx.lineTo(x + w * 0.94, gy); ctx.stroke();
+  }
+
+  const cy = y + h * 0.5;
+  const clientX = x + w * 0.19;
+  const routerX = x + w * 0.5;
+  const serverX = x + w * 0.81;
+  const icon = Math.min(w * 0.115, h * 0.17);
+  diagramLaptop(ctx, clientX, cy, icon);
+  diagramRouter(ctx, routerX, cy, icon * 0.92);
+  diagramServer(ctx, serverX, cy, icon);
+
+  const left = clientX + icon * 0.72;
+  const right = serverX - icon * 0.72;
+  const upper = y + h * 0.29;
+  const lower = y + h * 0.72;
+  diagramArrow(ctx, left, upper, right, upper, "#9bd4d4", scale);
+  diagramArrow(ctx, right, lower, left, lower, "#d9b879", scale);
+  packet(ctx, x + w * 0.39, upper, scale, "request");
+  packet(ctx, x + w * 0.62, lower, scale, "response");
+  for (let i = 0; i < 4; i++) {
+    const t = 0.27 + i * 0.12;
+    ctx.fillStyle = i % 2 ? "rgba(224,237,224,0.76)" : "rgba(147,208,210,0.7)";
+    ctx.beginPath(); ctx.arc(left + (right - left) * t, upper, scale * 1.25, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(228,199,138,0.74)";
+    ctx.beginPath(); ctx.arc(right - (right - left) * t, lower, scale * 1.25, 0, Math.PI * 2); ctx.fill();
+  }
+  // Small brass fasteners make the chart feel fixed to the plaster.
+  for (const [px, py] of [[x + 8 * scale, y + 8 * scale], [x + w - 8 * scale, y + 8 * scale], [x + 8 * scale, y + h - 8 * scale], [x + w - 8 * scale, y + h - 8 * scale]]) {
+    ctx.fillStyle = "#c6a260"; ctx.beginPath(); ctx.arc(px, py, 1.7 * scale, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(49,34,17,0.85)"; ctx.lineWidth = Math.max(0.6, 0.45 * scale);
+    ctx.beginPath(); ctx.moveTo(px - scale, py); ctx.lineTo(px + scale, py); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function diagramLaptop(ctx, x, y, s) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = "#d5e0d9"; ctx.lineWidth = Math.max(1, s * 0.09); ctx.lineJoin = "round";
+  roundRect(ctx, -s * 0.55, -s * 0.38, s * 1.1, s * 0.72, s * 0.06); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-s * 0.72, s * 0.49); ctx.lineTo(-s * 0.55, s * 0.35); ctx.lineTo(s * 0.55, s * 0.35); ctx.lineTo(s * 0.72, s * 0.49); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle = "rgba(155,212,212,0.7)"; ctx.lineWidth = Math.max(0.8, s * 0.045);
+  ctx.beginPath(); ctx.moveTo(-s * 0.3, -s * 0.12); ctx.lineTo(s * 0.28, -s * 0.12); ctx.moveTo(-s * 0.3, s * 0.06); ctx.lineTo(s * 0.08, s * 0.06); ctx.stroke();
+  ctx.restore();
+}
+
+function diagramRouter(ctx, x, y, s) {
+  ctx.save(); ctx.translate(x, y);
+  ctx.strokeStyle = "#d5e0d9"; ctx.lineWidth = Math.max(1, s * 0.08); ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(-s * 0.25, -s * 0.1); ctx.lineTo(-s * 0.42, -s * 0.72); ctx.moveTo(s * 0.25, -s * 0.1); ctx.lineTo(s * 0.42, -s * 0.72); ctx.stroke();
+  ctx.fillStyle = "#344b4b"; ctx.strokeStyle = "#d5e0d9";
+  roundRect(ctx, -s * 0.6, -s * 0.1, s * 1.2, s * 0.52, s * 0.12); ctx.fill(); ctx.stroke();
+  for (let i = 0; i < 3; i++) { ctx.fillStyle = i === 1 ? "#d8b36b" : "#85c8ad"; ctx.beginPath(); ctx.arc(-s * 0.3 + i * s * 0.3, s * 0.16, Math.max(0.8, s * 0.055), 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+
+function diagramServer(ctx, x, y, s) {
+  ctx.save(); ctx.translate(x, y);
+  for (let i = 0; i < 3; i++) {
+    const yy = (i - 1) * s * 0.48;
+    ctx.fillStyle = "#26343a"; ctx.strokeStyle = "#d5e0d9"; ctx.lineWidth = Math.max(1, s * 0.06);
+    roundRect(ctx, -s * 0.5, yy - s * 0.18, s, s * 0.36, s * 0.05); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = i === 1 ? "#d8b36b" : "#91d2b0"; ctx.beginPath(); ctx.arc(-s * 0.31, yy, Math.max(0.8, s * 0.055), 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(217,229,220,0.62)"; ctx.beginPath(); ctx.moveTo(-s * 0.12, yy); ctx.lineTo(s * 0.34, yy); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function diagramArrow(ctx, x0, y0, x1, y1, color, scale) {
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = Math.max(1.4, scale * 1.35); ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  const dir = Math.sign(x1 - x0);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - dir * scale * 4.2, y1 - scale * 2.5); ctx.lineTo(x1 - dir * scale * 4.2, y1 + scale * 2.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function packet(ctx, x, y, scale, kind) {
+  const w = scale * (kind === "request" ? 7 : 8), h = scale * 9;
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = kind === "request" ? "#d9eee5" : "#eeddb7";
+  ctx.strokeStyle = "rgba(10,16,18,0.85)"; ctx.lineWidth = Math.max(0.7, scale * 0.55);
+  roundRect(ctx, -w / 2, -h / 2, w, h, scale * 0.7); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = kind === "request" ? "#57898a" : "#9e7941";
+  ctx.lineWidth = Math.max(0.6, scale * 0.55);
+  for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-w * 0.25, -h * 0.16 + i * h * 0.22); ctx.lineTo(w * 0.25, -h * 0.16 + i * h * 0.22); ctx.stroke(); }
+  ctx.restore();
+}
+
+// ── router ──────────────────────────────────────────────────────────────────
+function paintRouter(ctx, cam, lay, image) {
+  const r = lay.router;
+  const w = (r.x1 - r.x0) * cam.k((r.z0 + r.z1) / 2);
+  const h = w * (image.height / image.width);
+  const cx = cam.cx;
+  const ledY = cam.P(0, 4.8, r.z0).y;
+  const top = ledY - h * 0.535;
+  const left = cx - w / 2;
+  softEllipse(ctx, cx + w * 0.02, top + h * 0.79, w * 0.48, h * 0.095, "0,0,0", 0.72);
+  // The textured, photographed casing sits on the desk; the existing antenna
+  // painter is drawn over its rear edge so it remains joined to the housing.
+  ctx.drawImage(image, left, top, w, h);
+  for (const an of lay.antennas) antenna(ctx, cam, lay, an);
+  return lay.leds.map((_, i) => {
+    const ratio = i / 12;
+    const x = left + w * (0.145 + ratio * 0.595);
+    const y = top + h * (0.474 + ratio * 0.105);
+    return {
+      x, y, r: Math.max(2.2, w * 0.009),
+      spill: { x, y: top + h * 0.78, rx: w * 0.043 },
+    };
+  });
+}
+
 // Set into the wall a hand's depth: the far side of the opening and its top
 // and bottom seen in perspective, the white-painted frame and its cross of
 // glazing bars, and beyond the glass the night over the valley — the moon,
@@ -603,7 +781,7 @@ function paintLamp(ctx, cam, lay) {
 // thirteen lights sit — five on the left, eight on the right — and under
 // them its maker's name. Two antennas stand up at the back.
 
-function paintRouter(ctx, cam, lay) {
+function paintRouterProcedural(ctx, cam, lay) {
   const r = lay.router;
   const k = cam.k(r.z0);
   const body = [44, 47, 54];

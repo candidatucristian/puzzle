@@ -1,15 +1,19 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { paintStreet, paintFrame, releaseStreetArt } from "./street.js";
+import {
+  code39Bars,
+  CROSSING_BACKGROUND,
+  CROSSING_BACKGROUND_URL,
+  paintStreet,
+  paintFrame,
+  releaseStreetArt,
+} from "./street.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CROSSING"  ·  code: GO   ·  read the stripes
 //
-// A storybook night: standing at the curb, about to cross. One old block on
-// the left — brick, a fire escape, smoke from its chimney — one on the right,
-// stucco, a little cat-food shop glowing under its striped awning on the far
-// sidewalk, and between them the moon over a far skyline. The road is wet
-// and every light lies on it. The signals are green.
+// A rain-dark Exeter street, photographed at night: old brick and stone,
+// warm shop windows, a distant church, and broken reflections on the road.
 //
 // The crossing runs straight away from you, up the screen: wide at your
 // feet, narrow at the far curb. Its stripes — the rungs of the zebra — are
@@ -19,60 +23,13 @@ import { paintStreet, paintFrame, releaseStreetArt } from "./street.js";
 //
 //   G O   →   GO
 //
-// Only ten stripes, so at a glance it is just a slightly worn crossing.
-// Nothing on screen says "barcode." The walk signal's green and the warm
-// windows are the only living colours; the code is the proof.
+// The ten worn white bars keep the Code 39 clue legible without looking like
+// a barcode graphic. Fine rain keeps the otherwise photographic scene alive.
 //
-// The street is painted once per screen size (street.js); the windows,
-// signals, smoke, steam, the shop's sign, the stars and the cat are live.
-//
-// Found in the house, it is a painting on a wall: the same street in a
-// frame, and nothing in it moves — no cat, no car, the signals dark.
+// Found in the house, this same scene appears as a small framed painting.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CR_WORD = "GO";
-const CR_WIDE = 2.6; // wide : narrow stripe ratio (Code 39)
-
-// Code 39 — each glyph is 9 elements (bar,space,bar,…,bar), 3 of them wide
-const CR_CODE39 = {
-  A: "wnnnnwnnw",
-  B: "nnwnnwnnw",
-  C: "wnwnnwnnn",
-  D: "nnnnwwnnw",
-  E: "wnnnwwnnn",
-  F: "nnwnwwnnn",
-  G: "nnnnnwwnw",
-  H: "wnnnnwwnn",
-  I: "nnwnnwwnn",
-  J: "nnnnwwwnn",
-  K: "wnnnnnnww",
-  L: "nnwnnnnww",
-  M: "wnwnnnnwn",
-  N: "nnnnwnnww",
-  O: "wnnnwnnwn",
-  P: "nnwnwnnwn",
-  Q: "nnnnnnwww",
-  R: "wnnnnnwwn",
-  S: "nnwnnnwwn",
-  T: "nnnnwnwwn",
-  U: "wwnnnnnnw",
-  V: "nwwnnnnnw",
-  W: "wwwnnnnnn",
-  X: "nwnnwnnnw",
-  Y: "wwnnwnnnn",
-  Z: "nwwnwnnnn",
-  0: "nnnwwnwnn",
-  1: "wnnwnnnnw",
-  2: "nnwwnnnnw",
-  3: "wnwwnnnnn",
-  4: "nnnwwnnnw",
-  5: "wnnwwnnnn",
-  6: "nnwwwnnnn",
-  7: "nnnwnnwnw",
-  8: "wnnwnnwnn",
-  9: "nnwwnnwnn",
-  "*": "nwnnwnwnn",
-};
 
 const CR_WARM = 0xffdf9e; // lit windows and lamplight
 const CR_CAT = 0x07080c; // the cat, darker than the night
@@ -81,6 +38,12 @@ const CR_RIM = 0x9fb4e6; // the moon on its edges
 export default class CrossingScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Crossing" });
+  }
+
+  preload() {
+    if (!this.textures.exists(CROSSING_BACKGROUND)) {
+      this.load.image(CROSSING_BACKGROUND, CROSSING_BACKGROUND_URL);
+    }
   }
 
   init(data) {
@@ -104,33 +67,10 @@ export default class CrossingScene extends BasePuzzleScene {
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
-  // ordered element list for a Code 39 string — bare letters, no sentinels,
-  // so the crossing keeps a plausible stripe count
-  _code39(word) {
-    const full = word.toUpperCase();
-    const els = [];
-    for (let k = 0; k < full.length; k++) {
-      const pat = CR_CODE39[full[k]];
-      if (!pat) continue;
-      for (let i = 0; i < 9; i++) {
-        els.push({ bar: i % 2 === 0, w: pat[i] === "w" ? CR_WIDE : 1 });
-      }
-      if (k < full.length - 1) els.push({ space: true, bar: false, w: 1 });
-    }
-    return els;
-  }
-
+  // Code 39 bars, without start/stop sentinels, keep a plausible stripe count.
   // the stripes, as fractions of the way from our feet (0) to the far curb (1)
   _bars() {
-    const els = this._code39(CR_WORD);
-    const total = els.reduce((sum, e) => sum + e.w, 0);
-    const bars = [];
-    let u = 0;
-    for (const e of els) {
-      if (e.bar) bars.push({ t0: u / total, t1: (u + e.w) / total });
-      u += e.w;
-    }
-    return bars;
+    return code39Bars(CR_WORD);
   }
 
   // ── construction ───────────────────────────────────────────────────────────
@@ -138,24 +78,52 @@ export default class CrossingScene extends BasePuzzleScene {
   _build(W, H) {
     this._W = W;
     this._H = H;
-    const art = paintStreet(this, W, H, this._bars(), { still: this._still });
+    const photo = this.textures.get(CROSSING_BACKGROUND).getSourceImage();
+    const art = paintStreet(this, W, H, this._bars(), { still: this._still, photo });
     this._art = art;
     this._baseY = art.baseY;
     this._curbY = art.curbY;
 
     this.add.image(0, 0, art.city).setOrigin(0, 0).setDepth(-20);
     if (this._still) { this._hang(W, H, art); return; }
-    this._makeStars(W, H, art);
-    this._makeFarWindows(art);
-    this._makeWindows(art);
-    this._makeSmoke(art.smoke.x, art.smoke.y, art.puff);
-    this._makeSteam(art.steam.x, art.steam.y, art.puff);
-    this._makeWalkSignal(art);
-    this._drawCat(W, H);
+    this._makeRain(W, H);
   }
 
-  // The street as a painting: its lit windows painted lit, and the frame
-  // round it — the whole picture drawn back a little to make room for that.
+  _makeRain(W, H) {
+    const rnd = this._rng(7551);
+    const S = Math.min(W, H);
+    const count = Math.min(42, Math.max(24, Math.round((W * H) / 30000)));
+    for (let i = 0; i < count; i++) {
+      const length = S * (0.014 + rnd() * 0.014);
+      const streak = this.add.graphics();
+      streak.lineStyle(Math.max(0.65, S * 0.00075), 0xdce6f0, 0.85);
+      streak.beginPath();
+      streak.moveTo(0, 0);
+      streak.lineTo(-S * 0.002, length);
+      streak.strokePath();
+      streak.setDepth(-10).setPosition(-length, -length).setAlpha(0);
+      this.ambientObject(streak);
+
+      const fall = () => {
+        if (!streak.scene) return;
+        const x = rnd() * W;
+        streak.setPosition(x, -length - rnd() * H * 0.18);
+        streak.setAlpha(0.1 + rnd() * 0.16);
+        this.ambientTween({
+          targets: streak,
+          x: x - W * 0.018,
+          y: H + length,
+          alpha: 0,
+          duration: 2100 + rnd() * 2500,
+          ease: "Linear",
+          onComplete: fall,
+        });
+      };
+      this.time.delayedCall(rnd() * 2400, fall);
+    }
+  }
+
+  // In the house, the street hangs in its gilt frame on a dark wall.
   _hang(W, H, art) {
     const ZOOM = 0.84;
     for (const p of art.far) this.add.rectangle(p.x, p.y, 3, 4, CR_WARM, 0.45).setDepth(-12);

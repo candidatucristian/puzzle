@@ -75,6 +75,7 @@ const TUNE = {
 };
 
 const PHASE = { ROOM: 0, TRANSITION: 1, SKY: 2 };
+const TELESCOPE_PHOTO = "telescope_refractor_photo";
 
 export default class TelescopeScene extends BasePuzzleScene {
   constructor() {
@@ -84,6 +85,15 @@ export default class TelescopeScene extends BasePuzzleScene {
   init(data) {
     this.skipFadeIn =
       data && data.skipFade !== undefined ? data.skipFade : true;
+  }
+
+  preload() {
+    if (!this.textures.exists(TELESCOPE_PHOTO)) {
+      this.load.image(
+        TELESCOPE_PHOTO,
+        "assets/images/Telescope/refractor.png?v=1",
+      );
+    }
   }
 
   // ── the pencil: jittered hand-drawn primitives ────────────────────────────
@@ -190,7 +200,10 @@ export default class TelescopeScene extends BasePuzzleScene {
     const sk = this.add.container(W / 2, H / 2);
     this._room.add(sk);
     this._roomSketch = sk;
-    this._roomArch = drawRoom(this, sk, W, H);
+    const telescopePhoto = this.textures
+      .get(TELESCOPE_PHOTO)
+      .getSourceImage();
+    this._roomArch = drawRoom(this, sk, W, H, telescopePhoto);
     const telescopeHitArea = this.add.zone(0.54 * W - W / 2, 0.61 * H - H / 2, W * 0.22, H * 0.62);
     sk.add(telescopeHitArea);
     this._telescopeSparkleCleanup = attachMovableSparkles(this, telescopeHitArea, {

@@ -5,8 +5,9 @@ import { candleLayout, paintCandle } from "./candleArt.js";
  *  desk, lit by nothing but the candle. On the wall hangs a brass cipher
  *  wheel on a walnut plaque; on the desk lies the sealed envelope.
  *
- *  Painted once per screen size and lit pixel by pixel from the candle's
- *  flame, in layers the candle can dim and make flicker:
+ *  Painted once per screen size and lit pixel by pixel from the tallest
+ *  candle's flame, in layers the candles can dim and make flicker (and each
+ *  candle's own glow on its wax, apart: candleArt.js):
  *    room  — the room with no candle at all (almost black)
  *    light — everything the candle adds, shadows included (drawn with ADD;
  *            Candle.js drives its alpha, as it drove the old wall light)
@@ -22,6 +23,7 @@ const SHADE = "cx_disk_shade";
 const SHEEN = "cx_disk_sheen";
 const LUME = "cx_lume";
 const LETTER = "cx_letter";
+const GLOW = "cx_candle_glow"; // each candle's own light on its wax: 0, 1, 2
 
 const ZW = 100; // the wall, in cm in front of the eye
 const EYE_H = 40; // the eye, in cm above the desk
@@ -45,8 +47,9 @@ const tone = (L) => (1.8 * L) / (1 + L);
 /** Materials are baked once per viewport; only the light and flame animate. */
 export function paintStudy(scene, W, H, deskY) {
   const cam = camera(W, H, deskY);
-  const candle = candleLayout(cam, W, H, deskY);
-  const { flame } = candle;
+  const candles = candleLayout(cam, W, H, deskY);
+  // the room is lit from the tallest one's flame
+  const { flame } = candles.find((c) => c.main);
   // the wheel hangs on the wall above the desk: on a short canvas (a phone)
   // it shrinks with the height so the desk never cuts into its plaque
   const R = Math.min(185, W * .235, Math.max(60, H * .26));
@@ -63,8 +66,11 @@ export function paintStudy(scene, W, H, deskY) {
   const disk = paintWheel(rc, lc, cam, flame, wheel);
   paintStudyDetails(rc, lc, cam, flame);
   paintEnvelope(rc, lc, cam, flame, env);
-  paintCandle(rc, lc, cam, candle, shadePixel);
-  finish(rc, lc, cam);
+  // the far ones first, so the near ones stand in front of them
+  const order = candles.map((c, i) => i).sort((a, b) => candles[b].foot.z - candles[a].foot.z);
+  const glows = [];
+  for (const i of order) glows[i] = paintCandle(rc, lc, cam, candles[i], shadePixel, [...glows]);
+  finish(rc, lc, cam, glows);
 
   addCanvas(scene.textures, ROOM, room);
   addCanvas(scene.textures, LIGHT, light);
@@ -72,10 +78,15 @@ export function paintStudy(scene, W, H, deskY) {
   addCanvas(scene.textures, SHADE, disk.shade);
   addCanvas(scene.textures, SHEEN, disk.sheen);
   addCanvas(scene.textures, LUME, paintLume(wheel));
+  candles.forEach((c, i) => {
+    if (!glows[i]) return;
+    addCanvas(scene.textures, GLOW + i, glows[i].canvas);
+    c.glow = { key: GLOW + i, x: glows[i].x, y: glows[i].y };
+  });
   return {
     room: ROOM,
     light: LIGHT,
-    candle,
+    candles,
     wheel: {
       ...wheel,
       disk: DISK,
@@ -89,7 +100,7 @@ export function paintStudy(scene, W, H, deskY) {
 }
 
 export function releaseStudyArt(textures) {
-  for (const key of [ROOM, LIGHT, DISK, SHADE, SHEEN, LUME, LETTER]) {
+  for (const key of [ROOM, LIGHT, DISK, SHADE, SHEEN, LUME, LETTER, GLOW + 0, GLOW + 1, GLOW + 2]) {
     if (textures.exists(key)) textures.remove(key);
   }
 }
@@ -838,10 +849,13 @@ function paintEnvelope(rc, lc, cam, flame, env) {
 
 // ── finishing ───────────────────────────────────────────────────────────────
 
-function finish(rc, lc, cam) {
+function finish(rc, lc, cam, glows = []) {
   const { W, H } = cam;
   const R = Math.hypot(W, H) / 2;
-  for (const ctx of [rc, lc]) {
+  const own = glows.filter(Boolean).map((gl) => ({ ctx: gl.canvas.getContext("2d"), x: gl.x, y: gl.y }));
+  for (const { ctx, x = 0, y = 0 } of [{ ctx: rc }, { ctx: lc }, ...own]) {
+    ctx.save();
+    ctx.translate(-x, -y);
     const v = ctx.createRadialGradient(
       W / 2,
       H * 0.5,
@@ -854,6 +868,7 @@ function finish(rc, lc, cam) {
     v.addColorStop(1, "rgba(0,0,0,0.6)");
     ctx.fillStyle = v;
     ctx.fillRect(0, 0, W, H);
+    ctx.restore();
   }
   const noise = makeCanvas(128, 128);
   const g = noise.getContext("2d");

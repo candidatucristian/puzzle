@@ -3,17 +3,18 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { HOUSE_GO, zoomInto, zoomOutFrom } from "../../shared/house.js";
 import { layoutRotunda, paintRotunda, releaseRotundaArt } from "./rotunda.js";
+import { loadPhysicsMaterials } from "./materials.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The top floor: the last, and not a hall at all but a round room under the
-// dome, as long shut up as the floor below — three doors set round its wall,
-// two candles still alight between them, a tall window facing us with the
+// dome, as long shut up as the floor below — one door in its wall, XI,
+// two candles still alight either side of the window, a tall window facing us with the
 // moon in it, and the telescope before the window. Like the halls below it is a way to things and has no code of its
 // own: the telescope glints until its puzzle is solved, and a click walks up
 // to it; a door glints once there is something behind it to be found.
 //
 // On the left a doorway with nothing hung in it any more opens on a gallery
-// gone to ruin, with three doors more; a click goes down it.
+// gone to ruin, with two doors more, facing; a click goes down it.
 //
 // The room is painted (rotunda.js). Live over it: the candles, the light
 // under a door that calls, dust in the moonlight, the glints, and the slow
@@ -23,6 +24,10 @@ import { layoutRotunda, paintRotunda, releaseRotundaArt } from "./rotunda.js";
 export default class TopScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Top" });
+  }
+
+  preload() {
+    loadPhysicsMaterials(this);
   }
 
   create(data) {

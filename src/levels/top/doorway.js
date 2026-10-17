@@ -1,4 +1,5 @@
 import { polygon, soft, lcg } from "../../shared/paint.js";
+import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
 /** The way into the passage off the top floor: not a door but the passage
  *  itself, opening straight out of the rotunda's wall — no frame, no door
@@ -35,6 +36,10 @@ export function paintPassage(g, L) {
   g.save(); opening(g, p); g.clip();
   // the floor: the rotunda's parquet carried on in, its boards running away
   fill(g, [P(-p.half, 0, 0), P(p.half, 0, 0), P(p.half, 0, DEEP), P(-p.half, 0, DEEP)], fade(P(0, 0, 0), P(0, 0, DEEP * 0.6), "#4c3622", 0.8));
+  if (L.physicsMaterials) {
+    paintProjectedMaterial(g, L.physicsMaterials.planks[0], (u, v) => P(-p.half + 2 * p.half * u, 0, DEEP * v), 0.85, 4, 4);
+    fill(g, [P(-p.half, 0, 0), P(p.half, 0, 0), P(p.half, 0, DEEP), P(-p.half, 0, DEEP)], fade(P(0, 0, 0), P(0, 0, DEEP * 0.6), "rgba(0,0,0,0.15)", 0.8));
+  }
   for (let i = 1; i < 6; i++) {
     const x = -p.half + (2 * p.half * i) / 6, a = P(x, 0, 0), b = P(x, 0, DEEP * 0.5);
     const s = g.createLinearGradient(a.x, a.y, b.x, b.y);
@@ -47,12 +52,20 @@ export function paintPassage(g, L) {
   for (const side of [-1, 1]) {
     const x = side * p.half, lit = side < 0 ? "#5c4c3c" : "#30281f";
     fill(g, [P(x, 0, 0), P(x, 0, DEEP), P(x, p.tall, DEEP), P(x, p.tall, 0)], fade(P(x, p.tall * 0.5, 0), P(x, p.tall * 0.5, DEEP * 0.55), lit, side < 0 ? 0.85 : 0.65));
+    if (L.physicsMaterials) {
+      paintProjectedMaterial(g, L.physicsMaterials.paper, (u, v) => P(x, p.tall - (p.tall - 96) * v, DEEP * u), 0.85, 8, 2);
+      fill(g, [P(x, 96, 0), P(x, 96, DEEP), P(x, p.tall, DEEP), P(x, p.tall, 0)], fade(P(x, 150, 0), P(x, 150, DEEP * 0.55), "rgba(0,0,0,0.18)", 0.7));
+    }
     for (let z = 8; z < DEEP * 0.45; z += 11) {
       const a = P(x, 96, z), b = P(x, p.tall, z), k = 1 - z / (DEEP * 0.45);
       g.strokeStyle = `rgba(255,226,180,${(0.04 * k).toFixed(3)})`; g.lineWidth = Math.max(0.5, a.s * 3);
       g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
     }
     fill(g, [P(x, 0, 0), P(x, 0, DEEP * 0.5), P(x, 96, DEEP * 0.5), P(x, 96, 0)], fade(P(x, 48, 0), P(x, 48, DEEP * 0.5), side < 0 ? "#2a1a10" : "#140c07", 0.8));
+    if (L.physicsMaterials) {
+      paintProjectedMaterial(g, L.physicsMaterials.oak, (u, v) => P(x, 96 * (1 - v), DEEP * 0.5 * u), 0.8, 6, 2);
+      fill(g, [P(x, 0, 0), P(x, 0, DEEP * 0.5), P(x, 96, DEEP * 0.5), P(x, 96, 0)], fade(P(x, 48, 0), P(x, 48, DEEP * 0.5), "rgba(0,0,0,0.2)", 0.8));
+    }
     // the paper coming away, a sheet of it hanging, just in the light
     if (side < 0) {
       const z = 40 + rnd() * 30;

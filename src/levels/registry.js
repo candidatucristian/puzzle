@@ -20,6 +20,10 @@ import FireworksScene from "./colors/Fireworksscene.js";
 import CompassScene from "./compass/CompassScene.js";
 import BookshelfScene from "./bookshelf/BookshelfScene.js";
 import ChemistryScene from "./chemistry/ChemistryScene.js";
+import MoleculesScene from "./molecules/MoleculesScene.js";
+import BalanceScene from "./balance/BalanceScene.js";
+import EquationsScene from "./equations/EquationsScene.js";
+import MeasuresScene from "./measures/MeasuresScene.js";
 import BilliardsScene from "./billiards/BilliardsScene.js";
 import MetroScene from "./metro/MetroScene.js";
 import ResistorsScene from "./resistors/ResistorsScene.js";
@@ -56,6 +60,10 @@ const scenes = {
   Compass: CompassScene,
   Bookshelf: BookshelfScene,
   Chemistry: ChemistryScene,
+  Molecules: MoleculesScene,
+  Balance: BalanceScene,
+  Equations: EquationsScene,
+  Measures: MeasuresScene,
   Billiards: BilliardsScene,
   Metro: MetroScene,
   Resistors: ResistorsScene,

@@ -2,6 +2,7 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
 import { paintKey } from "../../shared/keyArt.js";
 import { writingDesk, greenLamp, candle } from "../house/furniture.js";
 import { paintRoomDetails, paintStove } from "./details.js";
+import { code39Bars, CROSSING_BACKGROUND, paintCrossingPhoto } from "../crossing/street.js";
 import {
   WARM, BACK, roomLayout, roomStyle, block, chestAt, thingAt, fillPoly, paintShell, paintWindowWall, paintMoonlight, paintChest, gloom, footShadow, onWall,
 } from "../house/roomKit.js";
@@ -111,7 +112,7 @@ export function paintRoom4(scene, L) {
   paintShell(ctx, L);
   paintWindowWall(ctx, L);
   paintBoard(ctx, L);
-  paintPicture(ctx, L);
+  paintPicture(ctx, L, scene.textures.get(CROSSING_BACKGROUND).getSourceImage());
   paintRug(ctx, L);
   paintMoonlight(ctx, L);
   paintRoomDetails(ctx, L, "back");
@@ -236,18 +237,15 @@ function pictureLight(ctx, L, x0, x1, y, on) {
   if (on) soft(ctx, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2 + 5 * s, (p1.x - p0.x) * 0.5, 12 * s, "255,226,170", 0.5, "lighter");
 }
 
-// The painting: a street at night in a dull gilt frame — the moon between
-// two dark blocks, a lit window or two, the wet road, and across it the
-// pale stripes of a crossing. Small here, and only itself: enough to know
-// it by. Over it, its own picture light.
-function paintPicture(ctx, L) {
+// The same rain-dark street photograph and worn Code 39 crossing, in its
+// dull gilt frame under the room's picture light.
+function paintPicture(ctx, L, photo) {
   const { Q } = L;
   const p = L.painting, on = L.on.painting;
   const s = Q(-L.half, p.y0, (p.d0 + p.d1) / 2).s;
   const R = 6, fw = Math.round((p.d1 - p.d0) * R), fh = Math.round((p.y1 - p.y0) * R), m = 5 * R;
   const flat = makeCanvas(fw, fh);
   const g = flat.getContext("2d");
-  const rnd = lcg(64);
   // the frame: gilt gone dull, a dark hollow in its moulding
   const gilt = g.createLinearGradient(0, 0, 0, fh);
   gilt.addColorStop(0, on ? "#7a6230" : "#3e3218");
@@ -265,49 +263,7 @@ function paintPicture(ctx, L) {
   g.save();
   g.translate(m, m);
   g.beginPath(); g.rect(0, 0, w, h); g.clip();
-  const sky = g.createLinearGradient(0, 0, 0, h * 0.52);
-  sky.addColorStop(0, "#0a1230");
-  sky.addColorStop(1, "#22335e");
-  g.fillStyle = sky;
-  g.fillRect(0, 0, w, h);
-  soft(g, w * 0.5, h * 0.17, h * 0.2, h * 0.2, "200,214,250", 0.5, "lighter");
-  g.fillStyle = "#ece8d6";
-  g.beginPath(); g.arc(w * 0.5, h * 0.17, h * 0.05, 0, Math.PI * 2); g.fill();
-  // the far skyline, then the two blocks
-  g.fillStyle = "#0c1226";
-  for (let x = w * 0.28; x < w * 0.72; x += w * 0.035) g.fillRect(x, h * (0.36 + rnd() * 0.1), w * 0.035 + 1, h * 0.2);
-  g.fillStyle = "#1c1519";
-  g.fillRect(0, h * 0.05, w * 0.3, h * 0.47);
-  g.fillStyle = "#171b22";
-  g.fillRect(w * 0.7, h * 0.1, w * 0.3, h * 0.42);
-  g.fillStyle = "rgba(255,206,130,0.85)";
-  for (const [fx, fy] of [[0.07, 0.16], [0.2, 0.28], [0.12, 0.4], [0.78, 0.2], [0.9, 0.34], [0.82, 0.44]]) g.fillRect(w * fx, h * fy, w * 0.03, h * 0.05);
-  // the sidewalk, the wet road, the moon lying on it
-  g.fillStyle = "#2a2d36";
-  g.fillRect(0, h * 0.52, w, h * 0.05);
-  const road = g.createLinearGradient(0, h * 0.57, 0, h);
-  road.addColorStop(0, "#161a24");
-  road.addColorStop(1, "#0b0d13");
-  g.fillStyle = road;
-  g.fillRect(0, h * 0.57, w, h * 0.43);
-  soft(g, w * 0.5, h * 0.8, w * 0.1, h * 0.24, "170,190,236", 0.2, "lighter");
-  // the crossing, running away from our feet
-  g.fillStyle = "rgba(214,212,200,0.82)";
-  for (let i = 0; i < 6; i++) {
-    const t0 = i / 6 + 0.035, t1 = t0 + 0.095;
-    const at = (t) => ({ y: h - (h - h * 0.57) * t, hw: w * (0.3 - 0.16 * t) });
-    const n = at(t0), f = at(t1);
-    g.beginPath();
-    g.moveTo(w / 2 - n.hw, n.y); g.lineTo(w / 2 + n.hw, n.y); g.lineTo(w / 2 + f.hw, f.y); g.lineTo(w / 2 - f.hw, f.y);
-    g.closePath();
-    g.fill();
-  }
-  // two street lamps
-  for (const fx of [0.33, 0.67]) {
-    g.fillStyle = "#07080c";
-    g.fillRect(w * fx - 1, h * 0.3, 2, h * 0.24);
-    soft(g, w * fx, h * 0.3, h * 0.07, h * 0.07, "255,206,130", 0.8, "lighter");
-  }
+  paintCrossingPhoto(g, w, h, photo, code39Bars("GO"));
   // old varnish; and with its light out, only the moon on it
   g.fillStyle = "rgba(120,88,30,0.12)";
   g.fillRect(0, 0, w, h);

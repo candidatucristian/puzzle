@@ -24,20 +24,17 @@ const PLAN = [
     ], stairs: { x: 138, y: 136, w: 44, h: 48, dir: "up" }, entrance: true },
   { title: "The Chemistry", roman: "II", x: 330, hall: { key: "Upper", x: 132, y: 130, w: 56, h: 340 },
     rooms: [
-      { key: "Room7", n: 7, x: 40, y: 357, w: 92, h: 113, side: -1 }, { n: 8, x: 40, y: 243, w: 92, h: 114, side: -1 }, { n: 9, x: 40, y: 130, w: 92, h: 113, side: -1 },
-      { n: 10, x: 188, y: 243, w: 92, h: 114, side: 1 }, { n: 11, x: 188, y: 130, w: 92, h: 113, side: 1 },
+      { key: "Room7", n: 7, x: 40, y: 243, w: 92, h: 227, side: -1 }, { key: "Room8", n: 8, x: 40, y: 130, w: 92, h: 113, side: -1 },
+      { key: "Room9", n: 9, x: 188, y: 243, w: 92, h: 114, side: 1 }, { key: "Room10", n: 10, x: 188, y: 130, w: 92, h: 113, side: 1 },
     ], stairs: { x: 194, y: 363, w: 80, h: 101, dir: "up", well: true }, well: { x: 188, y: 357, w: 92, h: 113 }, landing: { x: 138, y: 136, w: 44, h: 48 } },
   { title: "The Physics", roman: "III", x: 650, round: { key: "Top", cx: 180, cy: 345, r: 78 },
     rooms: [
-      { n: 12, x: 200, y: 165, w: 62, h: 62, door: [231, 227, "h"], neck: { x: 223, y: 227, w: 16, h: 62, along: "v", open: [225, 276, 12, 22] } },
-      { n: 13, x: 270, y: 262, w: 52, h: 58, door: [270, 302, "v"], neck: { x: 245, y: 294, w: 25, h: 16, along: "h", open: [238, 296, 16, 12] } },
-      { n: 14, x: 270, y: 352, w: 52, h: 58, door: [270, 370, "v"], neck: { x: 252, y: 362, w: 18, h: 16, along: "h", open: [245, 364, 16, 12] } },
+      { key: "Room11", n: 11, x: 270, y: 262, w: 52, h: 58, door: [270, 302, "v"], neck: { x: 245, y: 294, w: 25, h: 16, along: "h", open: [238, 296, 16, 12] } },
     ],
     passage: { key: "TopHall", x: 56, y: 130, w: 40, h: 188, stub: { x: 96, y: 290, w: 30, h: 28 } },
     wing: [
-      { n: 15, x: 14, y: 200, w: 42, h: 52, door: [56, 226, "v"] },
-      { n: 16, x: 96, y: 200, w: 42, h: 52, door: [96, 226, "v"] },
-      { n: 17, x: 96, y: 138, w: 42, h: 52, door: [96, 164, "v"] },
+      { key: "Room12", n: 12, x: 14, y: 200, w: 42, h: 52, door: [56, 226, "v"] },
+      { key: "Room13", n: 13, x: 96, y: 200, w: 42, h: 52, door: [96, 226, "v"] },
     ] },
 ];
 

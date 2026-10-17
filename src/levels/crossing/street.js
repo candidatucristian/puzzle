@@ -1,16 +1,8 @@
-/** The street for CROSSING, painted like a storybook night: a deep blue sky
- *  and the moon between two old blocks — brick on the left with its fire
- *  escape, stucco on the right with a little cat-food shop glowing under a
- *  striped awning — a far skyline, the wet road shining with every light,
- *  and the zebra crossing running away from our feet to the far curb.
- *
- *  The crossing is laid on the road in perspective — the eye high enough
- *  that the far stripes are still easy to tell apart — and its stripes are
- *  exactly the bars the scene asks for. Painted once per screen size; the
- *  lit windows, the signals' green, the smoke and steam, the shop's sign,
- *  the stars and the cat are live, in the scene. */
+/** The photographic street plate and Code 39 crossing. */
 
 const CITY = "cr_city";
+export const CROSSING_BACKGROUND = "cr_photo_background";
+export const CROSSING_BACKGROUND_URL = "assets/images/Crossing/street-background.png";
 const WIN = "cr_win_";
 const GLOW = "cr_glow";
 const PUFF = "cr_puff";
@@ -19,10 +11,219 @@ const WALK = "cr_walk";
 const FRAME = "cr_frame";
 const VARIANTS = 5;
 const WARM = "255,206,130";
+const PHOTO_CURB = 0.526;
+
+const CODE39 = {
+  A: "wnnnnwnnw", B: "nnwnnwnnw", C: "wnwnnwnnn", D: "nnnnwwnnw",
+  E: "wnnnwwnnn", F: "nnwnwwnnn", G: "nnnnnwwnw", H: "wnnnnwwnn",
+  I: "nnwnnwwnn", J: "nnnnwwwnn", K: "wnnnnnnww", L: "nnwnnnnww",
+  M: "wnwnnnnwn", N: "nnnnwnnww", O: "wnnnwnnwn", P: "nnwnwnnwn",
+  Q: "nnnnnnwww", R: "wnnnnnwwn", S: "nnwnnnwwn", T: "nnnnwnwwn",
+  U: "wwnnnnnnw", V: "nwwnnnnnw", W: "wwwnnnnnn", X: "nwnnwnnnw",
+  Y: "wwnnwnnnn", Z: "nwwnwnnnn", 0: "nnnwwnwnn", 1: "wnnwnnnnw",
+  2: "nnwwnnnnw", 3: "wnwwnnnnn", 4: "nnnwwnnnw", 5: "wnnwwnnnn",
+  6: "nnwwwnnnn", 7: "nnnwnnwnw", 8: "wnnwnnwnn", 9: "nnwwnnwnn",
+  "*": "nwnnwnwnn",
+};
+
+export function code39Bars(word = "GO") {
+  const bars = [];
+  const letters = [...word.toUpperCase()];
+  const elements = [];
+  for (let k = 0; k < letters.length; k++) {
+    const pattern = CODE39[letters[k]];
+    if (!pattern) continue;
+    for (let i = 0; i < 9; i++) {
+      elements.push({ bar: i % 2 === 0, width: pattern[i] === "w" ? 2.6 : 1 });
+    }
+    if (k < letters.length - 1) elements.push({ bar: false, width: 1 });
+  }
+  const total = elements.reduce((sum, element) => sum + element.width, 0);
+  let offset = 0;
+  for (const element of elements) {
+    if (element.bar) bars.push({ t0: offset / total, t1: (offset + element.width) / total });
+    offset += element.width;
+  }
+  return bars;
+}
+
+/** Paints the shared photoreal street plate and its worn, perspective crossing. */
+export function paintCrossingPhoto(ctx, W, H, photo, bars) {
+  const curbY = drawPhotoCover(ctx, W, H, photo);
+  const z0 = 1000;
+  const z1 = 1900;
+  const K = (H - curbY) / (1 / z0 - 1 / z1);
+  const hy = H - K / z0;
+  const focal = W * 0.95;
+  const center = W / 2;
+  const halfRoad = 450;
+  const project = (x, z) => ({ x: center + (focal * x) / z, y: hy + K / z });
+  const rnd = lcg(4848);
+
+  for (const bar of bars) {
+    const za = z0 + bar.t0 * (z1 - z0);
+    const zb = z0 + bar.t1 * (z1 - z0);
+    const q = [
+      project(-halfRoad, za), project(halfRoad, za),
+      project(halfRoad, zb), project(-halfRoad, zb),
+    ];
+    const top = Math.min(...q.map((point) => point.y));
+    const bottom = Math.max(...q.map((point) => point.y));
+    const width = Math.max(...q.map((point) => point.x)) - Math.min(...q.map((point) => point.x));
+    const height = bottom - top;
+
+    const outline = wornStripePoints(q, rnd, Math.min(W, H));
+    traceWornStripe(ctx, outline);
+    const pigment = ctx.createLinearGradient(0, top, 0, bottom);
+    pigment.addColorStop(0, "rgba(212,210,199,0.69)");
+    pigment.addColorStop(0.42, "rgba(216,214,203,0.77)");
+    pigment.addColorStop(1, "rgba(197,199,193,0.73)");
+    ctx.fillStyle = pigment;
+    ctx.fill();
+
+    // Uneven, fine chips let the wet asphalt and reflections show through the old paint.
+    ctx.save();
+    traceWornStripe(ctx, outline);
+    ctx.clip();
+    const flakes = Math.max(10, Math.round((width * height) / 1100));
+    for (let i = 0; i < flakes; i++) {
+      const x = q[3].x + rnd() * (q[2].x - q[3].x);
+      const y = q[3].y + height * (0.08 + rnd() * 0.84);
+      const chipW = 0.8 + rnd() * Math.max(1.2, W * 0.005);
+      const chipH = 0.5 + rnd() * Math.max(0.8, H * 0.003);
+      ctx.fillStyle = rnd() < 0.72
+        ? `rgba(16,20,25,${0.16 + rnd() * 0.24})`
+        : `rgba(247,241,222,${0.12 + rnd() * 0.2})`;
+      ctx.fillRect(x, y, chipW, chipH);
+    }
+    // Long, faint wet highlights follow the road surface without making the paint glossy white.
+    ctx.globalCompositeOperation = "screen";
+    for (let i = 0; i < 3; i++) {
+      const y = q[3].y + height * (0.2 + rnd() * 0.65);
+      ctx.fillStyle = `rgba(214,222,230,${0.04 + rnd() * 0.06})`;
+      ctx.fillRect(q[3].x + rnd() * width * 0.7, y, width * (0.12 + rnd() * 0.28), 0.6 + rnd() * 1.2);
+    }
+    ctx.restore();
+  }
+  paintSignature(ctx, W, H);
+  return { curbY, baseY: H * 0.5 };
+}
+
+function wornStripePoints(q, rnd, scale) {
+  const center = q.reduce((sum, point) => ({ x: sum.x + point.x / q.length, y: sum.y + point.y / q.length }), { x: 0, y: 0 });
+  const corners = q.map((point, i) => {
+    const previous = q[(i + q.length - 1) % q.length];
+    const next = q[(i + 1) % q.length];
+    const prevLength = Math.hypot(previous.x - point.x, previous.y - point.y);
+    const nextLength = Math.hypot(next.x - point.x, next.y - point.y);
+    const cut = Math.min(scale * (0.003 + rnd() * 0.005), prevLength * 0.14, nextLength * 0.14);
+    const approach = {
+      x: point.x + ((previous.x - point.x) * cut) / Math.max(1, prevLength),
+      y: point.y + ((previous.y - point.y) * cut) / Math.max(1, prevLength),
+    };
+    const departure = {
+      x: point.x + ((next.x - point.x) * cut) / Math.max(1, nextLength),
+      y: point.y + ((next.y - point.y) * cut) / Math.max(1, nextLength),
+    };
+    const middle = { x: (approach.x + departure.x) / 2, y: (approach.y + departure.y) / 2 };
+    const towardCenter = Math.hypot(center.x - middle.x, center.y - middle.y) || 1;
+    const bite = rnd() < 0.72 ? scale * (0.0015 + rnd() * 0.0035) : 0;
+    return {
+      approach,
+      departure,
+      chipped: bite > 0,
+      bite: {
+        x: middle.x + ((center.x - middle.x) * bite) / towardCenter,
+        y: middle.y + ((center.y - middle.y) * bite) / towardCenter,
+      },
+    };
+  });
+
+  const points = [corners[0].approach];
+  for (let i = 0; i < corners.length; i++) {
+    const corner = corners[i];
+    const next = corners[(i + 1) % corners.length];
+    if (corner.chipped) {
+      points.push(corner.bite);
+    }
+    points.push(corner.departure);
+
+    const dx = next.approach.x - corner.departure.x;
+    const dy = next.approach.y - corner.departure.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const segments = Math.max(1, Math.round(length / Math.max(16, scale * 0.14)));
+    for (let step = 1; step <= segments; step++) {
+      const t = step / segments;
+      let x = corner.departure.x + dx * t;
+      let y = corner.departure.y + dy * t;
+      if (step < segments) {
+        const roughness = (rnd() - 0.5) * scale * 0.003;
+        x += (-dy / length) * roughness;
+        y += (dx / length) * roughness;
+      }
+      points.push({ x, y });
+    }
+  }
+  return points;
+}
+
+function traceWornStripe(ctx, points) {
+  ctx.beginPath();
+  points.forEach((point, i) => (i ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y)));
+  ctx.closePath();
+}
+
+function paintSignature(ctx, W, H) {
+  const size = Math.max(8, Math.min(W, H) * 0.021);
+  ctx.save();
+  ctx.translate(W * 0.968, H * 0.952);
+  ctx.rotate(-0.045);
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.font = `italic ${size}px "Segoe Script", "Brush Script MT", cursive`;
+  ctx.fillStyle = "rgba(224,211,181,0.76)";
+  ctx.shadowColor = "rgba(4,7,11,0.8)";
+  ctx.shadowBlur = Math.max(1, size * 0.16);
+  ctx.shadowOffsetY = Math.max(0.5, size * 0.04);
+  ctx.fillText("R. Hale", 0, 0);
+  ctx.shadowColor = "transparent";
+  ctx.strokeStyle = "rgba(224,211,181,0.58)";
+  ctx.lineWidth = Math.max(0.55, size * 0.045);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-size * 1.8, size * 0.48);
+  ctx.quadraticCurveTo(-size * 0.75, size * 0.72, size * 0.1, size * 0.36);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPhotoCover(ctx, W, H, photo) {
+  const sourceW = photo.width || photo.naturalWidth;
+  const sourceH = photo.height || photo.naturalHeight;
+  let sx = 0, sy = 0, sw = sourceW, sh = sourceH;
+  if (sourceW / sourceH > W / H) {
+    sw = sourceH * (W / H);
+    sx = (sourceW - sw) / 2;
+  } else {
+    sh = sourceW / (W / H);
+    sy = (sourceH - sh) / 2;
+  }
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(photo, sx, sy, sw, sh, 0, 0, W, H);
+  return ((PHOTO_CURB * sourceH - sy) / sh) * H;
+}
 
 /** `still`: the street as a painter would have it, for hanging on a wall —
  *  nobody about, no car, the signals dark. */
-export function paintStreet(scene, W, H, bars, { still = false } = {}) {
+export function paintStreet(scene, W, H, bars, { still = false, photo } = {}) {
+  if (photo) {
+    const cv = makeCanvas(W, H);
+    const ctx = cv.getContext("2d");
+    const { curbY, baseY } = paintCrossingPhoto(ctx, W, H, photo, bars);
+    add(scene.textures, CITY, cv);
+    return { city: CITY, windows: [], far: [], baseY, curbY };
+  }
   const cam = camera(W, H);
   const lay = { windows: [], far: [] };
   const cv = makeCanvas(W, H);

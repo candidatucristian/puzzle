@@ -7,16 +7,16 @@ import { paintRoom, releaseRoomArt } from "./room.js";
 // Level — "MODEM"  ·  code: HTTPS  ·  read the lights
 //
 // A room at night, painted like the office in OVERTIME: an old router on a
-// desk under a table lamp, the moon in the window beside it. Its name on the
-// front — W. LEIBNIZ — is the only nod to binary. It never stopped
+// desk under a table lamp, with a diagram on the wall beside it. Its name on
+// the front — W. LEIBNIZ — is the only nod to binary. It never stopped
 // transmitting: of its thirteen lights, the eight on the right show one
 // letter at a time as a whole byte — a light on for each 1, dark for each 0,
 // the first bit on the left — held long enough to be read; and after each
 // letter one of the five on the left turns red. Five letters, then a pause,
 // and it starts over:  H T T P S  →  HTTPS
 //
-// The room is painted once per screen size (room.js); the lights, their glow
-// on the desk and the dust in the lamplight are driven from here, with the
+// The room is one photographic background (room.js); the lights, their glow
+// on the desk and the dust in the lamplight stay animated over it, using the
 // schedule from planTransmission() in puzzle.js.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -40,6 +40,9 @@ export default class ModemScene extends BasePuzzleScene {
 
   preload() {
     this.load.audio("hardware", "assets/sounds/Modem/hardwaresound.mp3");
+    if (!this.textures.exists("md_room_photo")) {
+      this.load.image("md_room_photo", "assets/images/Modem/room-photoreal.png?v=2");
+    }
   }
 
   create() {
@@ -63,7 +66,8 @@ export default class ModemScene extends BasePuzzleScene {
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
-    const art = (this._art = paintRoom(this, W, H));
+    const roomPhoto = this.textures.get("md_room_photo").getSourceImage();
+    const art = (this._art = paintRoom(this, W, H, roomPhoto));
     this.add.image(0, 0, art.keys.room).setOrigin(0, 0).setDepth(0);
     this._makeLeds(art);
     this._makeMotes(art);
