@@ -14,6 +14,8 @@
  *  its shape. The room is painted once per screen size (`room`); the pieces
  *  are painted once and kept. */
 
+import { chessPhotography, paintPhotographicChessTable, paintPhotographicBoard, photographicPiece, photographicPieceShadow } from "./photographicChess.js";
+
 const ROOM = "ch_room";
 const MOTE = "ch_mote";
 const FILES = "abcdefgh";
@@ -330,13 +332,20 @@ export function paintParlour(scene, W, H, pieces) {
   const t = scene.textures;
   const room = makeCanvas(W, H);
   const ctx = room.getContext("2d");
-  paintFloor(ctx, cam, lcg(99));
-  const top = paintTable(ctx, cam, lcg(311));
-  paintBoard(ctx, cam, lcg(777));
-  paintFallen(ctx, cam);
-  const band = paintWindowLight(ctx, cam, top);
-  paintCurtain(ctx, cam, lcg(515));
-  finish(ctx, cam);
+  const photo = chessPhotography(scene);
+  let band;
+  if (photo && paintPhotographicChessTable(ctx, scene, W, H)) {
+    paintPhotographicBoard(ctx, (x, y, z) => cam.P(x, y, cam.zc + z), photo);
+    band = { A0: { x: W * 0.05 }, A1: { x: W * 0.3 }, B0: { x: W * 0.35 }, B1: { x: W * 0.7 } };
+  } else {
+    paintFloor(ctx, cam, lcg(99));
+    const top = paintTable(ctx, cam, lcg(311));
+    paintBoard(ctx, cam, lcg(777));
+    paintFallen(ctx, cam);
+    band = paintWindowLight(ctx, cam, top);
+    paintCurtain(ctx, cam, lcg(515));
+    finish(ctx, cam);
+  }
   add(t, ROOM, room);
   if (!t.exists(MOTE))
     t.addCanvas(
@@ -356,8 +365,8 @@ export function paintParlour(scene, W, H, pieces) {
     const p = cam.P(x, BH, z);
     const k = cam.k(z);
     const u = k * UNIT; // screen pixels per shape unit, here
-    const art = pieceArt(t, def.kind, def.white);
-    const sh = shadowArt(t, def.kind);
+    const art = photo ? photographicPiece(t, photo, def.kind, def.white) : pieceArt(t, def.kind, def.white);
+    const sh = photo ? photographicPieceShadow(t, art, def.kind, def.white) : shadowArt(t, def.kind);
     return {
       ...def,
       rank,

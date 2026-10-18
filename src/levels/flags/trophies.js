@@ -541,7 +541,7 @@ function paintLooseMedal(g, L, m) {
 // in relief in the middle
 // `part`: "shadow" (what it throws on the shelf behind), "ribbon", "disc"
 // (with its ring), or all of them
-function paintMedal(g, L, m, medalFaces, brazilMedal, part = "all") {
+export function paintMedal(g, L, m, medalFaces, brazilMedal, part = "all") {
   const { u } = L;
   const { x, y, len, r, w, code } = m;
   const look = MEDAL[code], rib = RIBBON[code];

@@ -168,10 +168,10 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "An old router on a desk in a lamplit room at night shows the word HTTPS as ASCII binary, one letter at a time across its eight right-hand LEDs — each letter's byte at once, an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
+    "description": "An old router on a desk in a lamplit room at night shows the word HTTPS as ASCII binary, one letter at a time across its seven right-hand LEDs — each letter's 7-bit ASCII code at once (the always-zero leading bit has no LED; a plain space stands between the counters and the letter), an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
     "references": [
       "modem/puzzle.js: MODEM_WORD = \"HTTPS\", planTransmission() — ASCII binary LED schedule",
-      "_startAnimation() — LEDs 5–12 show each letter's byte (lit = 1), LED[i] turns red per completed letter",
+      "_startAnimation() — LEDs 5–11 show each letter's 7-bit code (lit = 1), LED[i] turns red per completed letter; room.js withoutSpareLens() covers the photograph's sixth lens",
       "room.js paintRouter() — the maker's name \"W. LEIBNIZ\" printed on the router's front, the binary-notation flavor clue"
     ]
   },

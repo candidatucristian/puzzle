@@ -3,6 +3,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst } from "../../shared/paint.js";
 import { layoutLibrary, paintLibrary, releaseLibraryArt } from "./library.js";
+import { LIBRARY_PHOTOGRAPH, loadLibraryPhotography } from "./photographicLibrary.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "BOOKSHELF"  ·  code: SIGHT  ·  a book cipher
@@ -25,6 +26,10 @@ export default class BookshelfScene extends BasePuzzleScene {
     super({ key: "Bookshelf" });
   }
 
+  preload() {
+    loadLibraryPhotography(this);
+  }
+
   init(data) {
     this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
@@ -42,7 +47,7 @@ export default class BookshelfScene extends BasePuzzleScene {
 
   _build(W, H) {
     this._movableSparkleCleanups = [];
-    const L = layoutLibrary(W, H);
+    const L = layoutLibrary(W, H, { photographic: this.textures.exists(LIBRARY_PHOTOGRAPH) });
     const art = paintLibrary(this, L);
     this._L = L;
     const k = art.keys;
@@ -74,15 +79,17 @@ export default class BookshelfScene extends BasePuzzleScene {
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.55)
       .setDepth(-5);
-    const tail = this.add.image(L.tail.x, L.tail.y, k.tail).setOrigin(0.4, 0).setScale(0.5).setDepth(-7);
-    this.ambientTween({
-      targets: tail,
-      angle: { from: -9, to: 9 },
-      duration: 2600,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
+    if (!L.photographic) {
+      const tail = this.add.image(L.tail.x, L.tail.y, k.tail).setOrigin(0.4, 0).setScale(0.5).setDepth(-7);
+      this.ambientTween({
+        targets: tail,
+        angle: { from: -9, to: 9 },
+        duration: 2600,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
     for (let i = 0; i < 3; i++) {
       const s = this.add
         .image(L.cup.x + (i - 1) * 4 * L.u, L.cup.y - 20 * L.u, k.steam)

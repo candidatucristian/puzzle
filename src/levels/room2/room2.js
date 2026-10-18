@@ -7,6 +7,7 @@ import {
   paintChest, gloom,
 } from "../house/roomKit.js";
 import { paintWallBookcase } from "../house/wallBookcase.js";
+import { alignRoom2Photography, alignRoom2Objects, paintRoom2Photography } from "./photographicRoom.js";
 
 /** The second room off the hall, at night: the library, where the house kept
  *  its books and its accounts. Seen from just inside the door.
@@ -36,8 +37,9 @@ const K = { room: "r2_room", glow: "r2_glow", shut: "r2_chest_shut", open: "r2_c
 /** `on` says which of the room's three lights still burn: `shelf` the
  *  standard lamp by the bookshelves, `clock` the lamp on the clerk's desk
  *  and the clocks' own digits, `desk` the lamp over the router. */
-export function layoutRoom2(W, H, on = { shelf: true, desk: true, clock: true }) {
+export function layoutRoom2(W, H, on = { shelf: true, desk: true, clock: true }, { photographic = false } = {}) {
   const L = roomLayout(W, H);
+  if (photographic) alignRoom2Photography(L);
   // panelled in walnut to a coffered ceiling, parquet underfoot, a tall sash
   // window between heavy red curtains
   L.style = roomStyle({
@@ -83,6 +85,7 @@ export function layoutRoom2(W, H, on = { shelf: true, desk: true, clock: true })
   const led = (i) => Q(r.x0 + (r.x1 - r.x0) * (0.14 + i * 0.06), r.y0 + 2.6, r.d0);
   L.leds = [led(8), led(9)];
   L.colon = Q(ck.x, (ck.y0 + ck.y1) / 2, BACK - 2);
+  if (photographic) alignRoom2Objects(L);
   return L;
 }
 
@@ -95,17 +98,19 @@ export function paintRoom2(scene, L) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, W, H);
-  paintShell(ctx, L);
-  paintWindowWall(ctx, L);
-  paintBookcase(ctx, L);
-  paintRug(ctx, L);
-  paintMoonlight(ctx, L);
-  paintStandLamp(ctx, L);
-  paintOffice(ctx, L);
-  paintDesk(ctx, L);
-  paintGloom(ctx, L);
-  vignette(ctx, W, H, 0.7);
-  grain(ctx, W, H, 0.035);
+  if (!paintRoom2Photography(ctx, scene, L, showTime)) {
+    paintShell(ctx, L);
+    paintWindowWall(ctx, L);
+    paintBookcase(ctx, L);
+    paintRug(ctx, L);
+    paintMoonlight(ctx, L);
+    paintStandLamp(ctx, L);
+    paintOffice(ctx, L);
+    paintDesk(ctx, L);
+    paintGloom(ctx, L);
+    vignette(ctx, W, H, 0.7);
+    grain(ctx, W, H, 0.035);
+  }
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, paintChest(L, false));

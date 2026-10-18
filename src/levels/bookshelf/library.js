@@ -1,4 +1,5 @@
 import { BOOKS } from "./puzzle.js";
+import { alignLibraryPhotography, paintPhotographicLibrary } from "./photographicLibrary.js";
 import {
   soft,
   grain,
@@ -49,7 +50,7 @@ const BINDINGS = [
 
 // ── where everything is ─────────────────────────────────────────────────────
 
-export function layoutLibrary(W, H) {
+export function layoutLibrary(W, H, { photographic = false } = {}) {
   const u = Math.min(W / 1000, H / 700);
   const L = { W, H, u, S: Math.min(W, H) };
   L.vp = { x: W * 0.47, y: H * 0.42 };
@@ -90,6 +91,7 @@ export function layoutLibrary(W, H) {
   // the cat, asleep on top of the case, its tail over the edge
   L.cat = { x: c.x1 - caseW * 0.16, y: c.top + H * 0.002, s: u };
   L.tail = { x: L.cat.x + 34 * u, y: c.top + H * 0.012 };
+  if (photographic) alignLibraryPhotography(L);
   return L;
 }
 
@@ -168,6 +170,8 @@ function gloom(L, x, y) {
 // ── painting ────────────────────────────────────────────────────────────────
 
 export function paintLibrary(scene, L) {
+  const photograph = paintPhotographicLibrary(scene, L, K, paintSteam());
+  if (photograph) return photograph;
   const t = scene.textures;
   const { W, H } = L;
   const c = makeCanvas(W, H);

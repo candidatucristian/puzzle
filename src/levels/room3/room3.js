@@ -4,6 +4,7 @@ import { paintKey } from "../../shared/keyArt.js";
 import { writingDesk, greenLamp, candle, gamesTable } from "../house/furniture.js";
 import { paintFlatMaterial, paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 import { paintRoom3Herbarium, paintRoom3Flowers, paintRoom3SeedSacks } from "./botanical.js";
+import { alignRoom3Photography, placeRoom3PhotoChest, alignRoom3Objects, paintRoom3Photography, paintRoom3Flame, ROOM3_FLAME } from "./photographicRoom.js";
 import {
   WARM, BACK, roomLayout, roomStyle, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
   footShadow, paintChest, gloom,
@@ -33,7 +34,7 @@ import {
 
 // The source image stays cached across room visits; viewport canvases in K
 // are the resources rebuilt and released when the room changes size.
-export const SHIP_BOTTLE = { key: "r3_ship_bottle", url: "assets/images/Room3/ship-in-bottle.png" };
+export const SHIP_BOTTLE = { key: "r3_ship_bottle_v2", url: "assets/images/Room3/ship-in-bottle-v2.png" };
 
 const K = { room: "r3_room", glow: "r3_glow", shut: "r3_chest_shut", open: "r3_chest_open", key: "r3_key" };
 
@@ -46,8 +47,9 @@ const GAME = [[7, 0, true, 5.6], [4, 1, true, 9.6], [0, 2, true, 4.6], [3, 3, fa
 /** `on` says which of the room's three lights still burn: `ship` the lantern
  *  by the bottle, `chess` the candle on the games table, `phone` the lamp
  *  over the telephone and the telephone's own screen. */
-export function layoutRoom3(W, H, on = { ship: true, chess: true, phone: true }) {
+export function layoutRoom3(W, H, on = { ship: true, chess: true, phone: true }, { photographic = false } = {}) {
   const L = roomLayout(W, H);
+  if (photographic) alignRoom3Photography(L);
   // fitted out like a cabin: limewashed boards over navy match-boarding,
   // beams overhead, a deck of wide planks, a round port for a window
   L.style = roomStyle({
@@ -79,6 +81,7 @@ export function layoutRoom3(W, H, on = { ship: true, chess: true, phone: true })
   L.deskLamp = { x: k.x0 + kw * 0.13, d: 538, y: k.h };
   const ph = (L.phone = { x: k.x0 + kw * 0.46, d: 530, y: k.h, w: 9.5, h: 22 });
   L.chest = { x0: k.x0 + kw * 0.72, x1: k.x0 + kw * 0.92, d0: 524, d1: 539, y0: k.h + 1, y1: k.h + 8.5, lid: 5.5 };
+  if (photographic) placeRoom3PhotoChest(L);
   chestAt(L);
   // the chart on the left-hand wall
   L.chart = { d0: 386, d1: 520, y0: 108, y1: 200 };
@@ -98,6 +101,7 @@ export function layoutRoom3(W, H, on = { ship: true, chess: true, phone: true })
     lantern: { x: lp.x, y: lp.y, r: 70 * lp.s }, flame: { x: cp.x, y: cp.y, r: 44 * cp.s },
     desk: { x: dp.x, y: dp.y, r: 90 * dp.s }, screen: { x: sp.x, y: sp.y, r: 14 * sp.s },
   };
+  if (photographic) alignRoom3Objects(L);
   return L;
 }
 
@@ -110,31 +114,35 @@ export function paintRoom3(scene, L) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, W, H);
-  paintShell(ctx, L);
-  paintWindowWall(ctx, L);
-  paintChart(ctx, L);
-  paintRoom3Herbarium(ctx, L);
-  paintRug(ctx, L);
-  paintMoonlight(ctx, L);
-  paintRoom3Flowers(ctx, L);
-  paintDesk(ctx, L);
-  gamesTable(ctx, L, L.games, L.board, GAME);
-  candle(ctx, L, L.candle, L.on.chess);
-  paintBottleTable(ctx, L);
-  paintRoom3SeedSacks(ctx, L);
-  paintGloom(ctx, L);
-  vignette(ctx, W, H, 0.7);
-  grain(ctx, W, H, 0.035);
+  if (!paintRoom3Photography(ctx, scene, L, GAME)) {
+    paintShell(ctx, L);
+    paintWindowWall(ctx, L);
+    paintChart(ctx, L);
+    paintRoom3Herbarium(ctx, L);
+    paintRug(ctx, L);
+    paintMoonlight(ctx, L);
+    paintRoom3Flowers(ctx, L);
+    paintDesk(ctx, L);
+    gamesTable(ctx, L, L.games, L.board, GAME);
+    candle(ctx, L, L.candle, L.on.chess);
+    paintBottleTable(ctx, L);
+    paintRoom3SeedSacks(ctx, L);
+    paintGloom(ctx, L);
+    vignette(ctx, W, H, 0.7);
+    grain(ctx, W, H, 0.035);
+  }
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, paintChest(L, false));
   addCanvasTexture(t, K.open, paintChest(L, true));
   addCanvasTexture(t, K.key, paintKey());
+  if (L.photographic) paintRoom3Flame(t);
   return { keys: K };
 }
 
 export function releaseRoom3Art(textures) {
   for (const key of Object.values(K)) if (textures.exists(key)) textures.remove(key);
+  if (textures.exists(ROOM3_FLAME)) textures.remove(ROOM3_FLAME);
 }
 
 // a sea chart on the left-hand wall: yellowed paper under glass in a dark

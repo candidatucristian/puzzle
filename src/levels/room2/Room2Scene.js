@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import RoomScene from "../house/RoomScene.js";
 import { layoutRoom2, paintRoom2, releaseRoom2Art } from "./room2.js";
+import { ROOM2_PHOTOGRAPH, loadRoom2Photography } from "./photographicRoom.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The library: the second room off the hall (see house/RoomScene.js for what
@@ -23,10 +24,15 @@ export default class Room2Scene extends RoomScene {
     super("Room2");
   }
 
+  preload() {
+    super.preload();
+    loadRoom2Photography(this);
+  }
+
   layout(W, H, levels) {
     const on = {};
     for (const [light, level] of Object.entries(LIT_FOR)) on[light] = !levels.isCompleted(levels.indexOf(level));
-    return layoutRoom2(W, H, on);
+    return layoutRoom2(W, H, on, { photographic: this.textures.exists(ROOM2_PHOTOGRAPH) });
   }
 
   paint(L) {

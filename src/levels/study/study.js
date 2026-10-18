@@ -1,5 +1,6 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg, polygon } from "../../shared/paint.js";
 import { paintKey } from "../../shared/keyArt.js";
+import { alignStudyPhotography, alignStudyObjects, paintStudyPhotography, paintStudyFlame, STUDY_FLAME } from "./photographicRoom.js";
 import {
   WARM, BACK, roomLayout, chestAt, thingAt, fillPoly, block, onWall, paintShell, paintWindowWall, paintMoonlight,
   footShadow, paintChest, gloom,
@@ -35,8 +36,9 @@ const K = { room: "sd_room", glow: "sd_glow", shut: "sd_chest_shut", open: "sd_c
  *  under it has given up its puzzle; after that it is turned right down.
  *  `candleOn`: the candle on the desk, which burns until the cipher wheel
  *  over it has been solved, and is then out. */
-export function layoutStudy(W, H, { lampOn = true, candleOn = true } = {}) {
+export function layoutStudy(W, H, { lampOn = true, candleOn = true, photographic = false } = {}) {
   const L = roomLayout(W, H);
+  if (photographic) alignStudyPhotography(L);
   L.lampOn = lampOn;
   L.candleOn = candleOn;
   const { Q, half: hx } = L;
@@ -58,6 +60,7 @@ export function layoutStudy(W, H, { lampOn = true, candleOn = true } = {}) {
   chestAt(L);
   // down the left-hand wall, the books
   L.shelf = { d0: 372, d1: 566, y0: 0, y1: 236 };
+  if (photographic) alignStudyObjects(L);
 
   // what opens a puzzle: its outline to click in, the box its glints keep to
   const things = [];
@@ -74,6 +77,10 @@ export function layoutStudy(W, H, { lampOn = true, candleOn = true } = {}) {
   L.lampGlow = { x: lp.x, y: lp.y, r: 150 * lp.s };
   const cp = Q(L.candle.x, L.candle.y + 27, L.candle.d);
   L.flame = { x: cp.x, y: cp.y, r: 46 * cp.s };
+  if (photographic) {
+    L.lampGlow = L.photoLamp;
+    L.flame = L.photoFlame;
+  }
   return L;
 }
 
@@ -86,29 +93,33 @@ export function paintStudy(scene, L) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, W, H);
-  paintShell(ctx, L);
-  paintWindowWall(ctx, L);
-  paintPlate(ctx, L);
-  paintWheel(ctx, L);
-  paintPot(ctx, L);
-  paintShelves(ctx, L);
-  paintRug(ctx, L);
-  paintMoonlight(ctx, L);
-  paintDesk(ctx, L);
-  paintTable(ctx, L);
-  paintGloom(ctx, L);
-  vignette(ctx, W, H, 0.7);
-  grain(ctx, W, H, 0.035);
+  if (!paintStudyPhotography(ctx, scene, L)) {
+    paintShell(ctx, L);
+    paintWindowWall(ctx, L);
+    paintPlate(ctx, L);
+    paintWheel(ctx, L);
+    paintPot(ctx, L);
+    paintShelves(ctx, L);
+    paintRug(ctx, L);
+    paintMoonlight(ctx, L);
+    paintDesk(ctx, L);
+    paintTable(ctx, L);
+    paintGloom(ctx, L);
+    vignette(ctx, W, H, 0.7);
+    grain(ctx, W, H, 0.035);
+  }
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, paintChest(L, false));
   addCanvasTexture(t, K.open, paintChest(L, true));
   addCanvasTexture(t, K.key, paintKey());
+  if (L.photographic) paintStudyFlame(t);
   return { keys: K };
 }
 
 export function releaseStudyArt(textures) {
   for (const key of Object.values(K)) if (textures.exists(key)) textures.remove(key);
+  if (textures.exists(STUDY_FLAME)) textures.remove(STUDY_FLAME);
 }
 
 // the bookshelves down the left-hand wall

@@ -1,5 +1,6 @@
 import { soft, polygon, lcg, grain, vignette, makeCanvas } from "../../shared/paint.js";
 import { DOOR_LENGTH } from "../hall/doorMotion.js";
+import { paintAttic } from "./attic.js";
 
 /** The gallery off the top floor: a long stone passage under a barrel vault,
  *  given up to the weather years ago — and dark. The only light is an iron
@@ -27,18 +28,20 @@ const line = (g, points, style, width = 1) => {
 };
 const rgb = (r, g, b) => `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
 
-/** A broad vaulted gallery, sharing the halls' projection and door contract. */
+/** A confined attic passage, sharing the halls' projection and door contract. */
 export function layoutGallery(W, H) {
-  const L = { W, H, u: Math.min(W / 1000, H / 700), wing: true, worn: true };
+  const L = { W, H, u: Math.min(W / 1000, H / 700), wing: true, worn: true, theme: "attic" };
+  L.ambientLight = 0.3;
   L.vp = { x: W * 0.5, y: H * 0.45 };
-  L.wall = Math.max(W * 0.72, H * 0.86);
+  // Normalised landmarks match the photographic plate at every screen size.
+  L.wall = W * 0.5;
   L.floor = H * 0.72;
-  L.ceil = -H * 0.98;
-  L.spring = -H * 0.42;
+  L.ceil = -H * 0.82;
+  L.spring = -H * 0.41;
   L.doorTop = L.floor - H * 1.08;
   L.P = (X, Y, z) => ({ x: L.vp.x + X / z, y: L.vp.y + Y / z, s: 1 / z });
   // two doors, facing each other across it: XII on the left, XIII on the right
-  L.doors = [[-1, 2.05], [1, 2.05]].map(([side, z], i) => {
+  L.doors = [[-1, 1.8], [1, 1.8]].map(([side, z], i) => {
     const X = side * L.wall;
     const quad = [L.P(X, L.doorTop, z), L.P(X, L.doorTop, z + DOOR_LENGTH), L.P(X, L.floor, z + DOOR_LENGTH), L.P(X, L.floor, z)];
     const xs = quad.map((p) => p.x), ys = quad.map((p) => p.y);
@@ -349,6 +352,7 @@ function darkness(g, L, lights) {
 /** The gallery, onto a canvas the size of the screen. `paintDoor(g, L, d)`
  *  paints a door (the halls' own). */
 export function paintGallery(g, L, paintDoor) {
+  if (L.atticMaterials) { paintAttic(g, L, paintDoor); return; }
   const { W, H, P } = L;
   const rnd = lcg(1717);
   g.fillStyle = "#050505"; g.fillRect(0, 0, W, H);

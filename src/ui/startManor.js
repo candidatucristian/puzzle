@@ -54,6 +54,11 @@ export function mountStartManor(scope, preferences) {
   if (!live) {
     base = document.createElement('canvas'); live = document.createElement('canvas');
     base.className = 'start-painting'; live.className = 'start-painting';
+    // The house is painted once and then only shown: kept by the processor,
+    // not the graphics card, so that the browser never puts it to sleep or
+    // throws it away while the window is hidden (it came back flickering, or
+    // blank, after a minimise or an Alt-Tab).
+    base.getContext('2d', { willReadFrequently: true });
     film.append(base, live);
   }
   let scene = null, stopped = false, frame = 0, details = null, paintedDetails = null, disposed = false;
@@ -75,12 +80,23 @@ export function mountStartManor(scope, preferences) {
     }
     if (still()) drawLive(live.getContext('2d'), scene, 0, true);
   }
+  // The picture's own clock: it runs only while the picture is seen, and never
+  // leaps — back from a hidden window the cloud and the mist go on from where
+  // they were instead of jumping.
+  let clock = 0, last = null;
   function tick(time) {
     if (stopped) return;
     frame = requestAnimationFrame(tick);
+    clock += last === null ? 0 : Math.min(0.05, Math.max(0, (time - last) / 1000));
+    last = time;
     if (!scene || still()) return;
-    drawLive(live.getContext('2d'), scene, time / 1000, false);
+    drawLive(live.getContext('2d'), scene, clock, false);
   }
+  // hidden and shown again: the clock picks up again without a leap
+  scope.on(document, 'visibilitychange', () => { last = null; });
+  // should the browser drop a canvas anyway, paint the house again at once
+  const repaint = () => { scene = null; layout(); };
+  for (const c of [base, live]) scope.on(c, 'contextrestored', repaint);
   layout();
   loadManorArchitecture().then(art => {
     if (disposed || stopped) return;

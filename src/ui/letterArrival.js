@@ -77,11 +77,13 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
 
     const unfold = async from => {
       const article = renderLetter(page, letter);
+      // blank while it unfolds; the words are written on it once it lies open
+      if (!still) article.classList.add('is-unwritten');
       page.style.visibility = 'hidden'; reading.classList.add('is-shown');
       // Paint the canvases before making the matching panel copies.
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       if (!alive()) return;
-      if (still) { page.style.visibility = 'visible'; return; }
+      if (still) { page.style.visibility = 'visible'; pen = sounds?.writing?.() ?? null; return; }
       const folds = letterFolds(article, root, true), { rig, box } = folds;
       const area = page.getBoundingClientRect();
       const fit = Math.min(1, (area.height - 44) / box.height);
@@ -104,7 +106,12 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       if (!alive()) return;
       await finished(animate(rig, [{ transform: restPose }, { transform: 'translate(0,0) scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3,.65,.3,1)' }));
       page.style.visibility = 'visible'; rig.remove();
+      article.classList.replace('is-unwritten', 'is-writing');
+      pen = sounds?.writing?.() ?? null;
+      life.later(() => article.classList.remove('is-writing'), 1400);
     };
+    // the pen on paper, as the letter lies open to be read
+    let pen = null;
 
     const open = async () => {
       if (state !== 'waiting') return;
@@ -137,6 +144,7 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       const wasReading = state === 'reading'; setState('filing');
       file.disabled = hint.disabled = later.disabled = true; env.tabIndex = -1;
       caption.classList.add('is-away'); hint.classList.add('is-away');
+      pen?.stop(); pen = null;
       sounds?.file();
       let node = env, from = env.getBoundingClientRect();
       if (wasReading && !still) {

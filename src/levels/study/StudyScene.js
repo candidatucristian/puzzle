@@ -1,5 +1,6 @@
 import RoomScene from "../house/RoomScene.js";
 import { layoutStudy, paintStudy, releaseStudyArt } from "./study.js";
+import { STUDY_PHOTOGRAPH, STUDY_FLAME, loadStudyPhotography } from "./photographicRoom.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The study: the first room off the hall (see house/RoomScene.js for what
@@ -22,10 +23,15 @@ export default class StudyScene extends RoomScene {
     super("Study");
   }
 
+  preload() {
+    super.preload();
+    loadStudyPhotography(this);
+  }
+
   layout(W, H, levels) {
     const lampOn = !levels.isCompleted(levels.indexOf(LAMP_FOR));
     const candleOn = !levels.isCompleted(levels.indexOf(CANDLE_FOR));
-    return layoutStudy(W, H, { lampOn, candleOn });
+    return layoutStudy(W, H, { lampOn, candleOn, photographic: this.textures.exists(STUDY_PHOTOGRAPH) });
   }
 
   paint(L) {
@@ -42,10 +48,19 @@ export default class StudyScene extends RoomScene {
     const lamp = glow(L.lampGlow, 0.2 * lit);
     this.ambientTween({ targets: lamp, alpha: { from: 0.17 * lit, to: 0.25 * lit }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     this._flame = L.candleOn ? glow(L.flame, 0.4) : null;
+    this._flameBody = null;
+    if (L.photographic && L.candleOn) {
+      const height = 10 * L.H / 948;
+      this._flameBody = this.add.image(L.flame.x, L.flame.y, STUDY_FLAME)
+        .setOrigin(0.5, 0.94).setDisplaySize(height * 0.38, height).setDepth(-7.9);
+      this._flameSize = { x: this._flameBody.scaleX, y: this._flameBody.scaleY };
+    }
   }
 
   tick(t) {
     this._flame?.setAlpha(0.36 + 0.06 * Math.sin(t * 9) + Math.random() * 0.05);
+    this._flameBody?.setScale(this._flameSize.x * (1 + 0.05 * Math.sin(t * 11)), this._flameSize.y * (1 + 0.035 * Math.sin(t * 7)))
+      .setRotation(0.035 * Math.sin(t * 5)).setAlpha(0.92 + 0.06 * Math.sin(t * 9));
   }
 
   // with the candle out there is only the moon on the chest

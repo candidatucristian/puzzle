@@ -401,11 +401,11 @@ function wallUpper(ctx, L, M, a0, a1, tone, rnd) {
   } else {
     // bare plaster: patched, stained, cracked here and there
     paintWallMaterial(ctx, L.surfaceMaterials?.wallPlaster, M, a0, a1, foot, top, 0.9);
-    for (let i = 0; i < (a1 - a0) * 0.2; i++) {
+    for (let i = 0; !L.surfaceMaterials?.cleanPlaster && i < (a1 - a0) * 0.2; i++) {
       const p = M(a0 + rnd() * (a1 - a0), rnd() * top);
       soft(ctx, p.x, p.y, (10 + rnd() * 40) * p.s, (8 + rnd() * 30) * p.s, rnd() < 0.6 ? "0,0,0" : "150,146,128", 0.1 + rnd() * 0.1);
     }
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; !L.surfaceMaterials?.cleanPlaster && i < 3; i++) {
       let a = a0 + rnd() * (a1 - a0), y = top - rnd() * 60;
       ctx.strokeStyle = "rgba(0,0,0,0.5)";
       ctx.lineWidth = Math.max(0.6, 0.3 * M(a, y).s);

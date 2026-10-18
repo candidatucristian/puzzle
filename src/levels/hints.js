@@ -27,7 +27,7 @@ export const HINT_DETAILS = {
     "Four different worlds, one missing thing. Look for the single word each programme circles around.",
   ],
   modem: [
-    "Eight lights carry the message, five keep count. On or off is all a machine needs — read a row at a time.",
+    "Seven lights carry the message, five keep count. On or off is all a machine needs — read a row at a time.",
   ],
   telescope: [
     "Some stars sit in tidy little groups, all the same frame, only some places lit. A pattern like that is meant to be felt as much as seen.",

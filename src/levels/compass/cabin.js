@@ -1,5 +1,6 @@
 import { paintEnvelope } from "../../shared/envelope.js";
 import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
+import { paintCabinPhotography, paintPhotographicSea, paintPhotographicCompass, paintPhotographicLantern } from "./photographicCabin.js";
 
 /** The captain's cabin for COMPASS, seen whole as from its door, painted in
  *  the telescope's manner: dark as a storybook night, picked out in gold.
@@ -158,18 +159,20 @@ export function paintCabin(scene, L) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  paintShell(ctx, L);
-  paintStern(ctx, L);
-  for (const s of L.ribs) paintRib(ctx, L, s);
-  paintTable(ctx, L);
-  paintCandle(ctx, L);
-  paintCompassShadow(ctx, L);
-  paintLight(ctx, L);
-  finish(ctx, L);
+  if (!paintCabinPhotography(ctx, scene, L)) {
+    paintShell(ctx, L);
+    paintStern(ctx, L);
+    for (const s of L.ribs) paintRib(ctx, L, s);
+    paintTable(ctx, L);
+    paintCandle(ctx, L);
+    paintCompassShadow(ctx, L);
+    paintLight(ctx, L);
+    finish(ctx, L);
+  }
   add(t, K.room, c);
 
   add(t, K.folded, paintFolded(L));
-  const view = paintView(L);
+  const view = paintPhotographicSea(L) || paintView(L);
   add(t, K.view, view.sky);
   add(t, K.glitter, view.glitter);
   const body = paintCompass(L);
@@ -178,7 +181,7 @@ export function paintCabin(scene, L) {
   add(t, K.needle, needle.canvas);
   add(t, K.shade, paintNeedle(L.compass.r, true).canvas);
   add(t, K.glass, paintGlass(L.compass.r));
-  const lantern = paintLantern(L.lantern);
+  const lantern = paintPhotographicLantern(L.lantern, L.nauticalPhoto?.lantern) || paintLantern(L.lantern);
   add(t, K.lantern, lantern.canvas);
   add(t, K.flame, paintFlame());
   add(
@@ -1082,6 +1085,10 @@ function paintCompass(L) {
     g.stroke();
   }
   // the shackle at the top of the gimbal ring
+  if (paintPhotographicCompass(g, L, cx, cy)) {
+    paintCard(g, { x: cx, y: cy, r, photographic: true });
+    return { canvas: c, oy: cy / h };
+  }
   g.strokeStyle = gold(
     g,
     cx - cR * 0.1,
@@ -1264,7 +1271,7 @@ function paintCard(ctx, card) {
   ctx.fillStyle = fill;
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fill();
+  if (!card.photographic) ctx.fill();
   const ink = "#2a1a10";
   const navy = "#1f2f5a";
   const red = "#a8231c";

@@ -2,6 +2,8 @@ import RoomScene from "../house/RoomScene.js";
 import { layoutRoom4, paintRoom4, releaseRoom4Art } from "./room4.js";
 import { noiseBurst } from "../../shared/paint.js";
 import { CROSSING_BACKGROUND, CROSSING_BACKGROUND_URL } from "../crossing/street.js";
+import { loadRoom4Photography } from "./photographicRoom.js";
+import { ROOM4_INTERIOR, loadRoom4Interior } from "./photographicInterior.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The counting room: the fourth room off the hall (see house/RoomScene.js for
@@ -27,6 +29,8 @@ export default class Room4Scene extends RoomScene {
 
   preload() {
     super.preload();
+    loadRoom4Photography(this);
+    loadRoom4Interior(this);
     if (!this.textures.exists(CROSSING_BACKGROUND)) {
       this.load.image(CROSSING_BACKGROUND, CROSSING_BACKGROUND_URL);
     }
@@ -35,7 +39,7 @@ export default class Room4Scene extends RoomScene {
   layout(W, H, levels) {
     const on = {};
     for (const [light, level] of Object.entries(LIT_FOR)) on[light] = !levels.isCompleted(levels.indexOf(level));
-    return layoutRoom4(W, H, on);
+    return layoutRoom4(W, H, on, this.textures.exists(ROOM4_INTERIOR));
   }
 
   paint(L) {

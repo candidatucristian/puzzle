@@ -1,9 +1,10 @@
 import { paintEnvelope as paintSharedEnvelope } from "../../shared/envelope.js";
 import { candleLayout, paintCandle } from "./candleArt.js";
+import { cryptexPhotography, sampleMaterial, sampleRotor, rotorPhotoDiameter, paintPhotographicDisk, paintPhotographicBooks } from "./photographicMaterials.js";
 
 /** The study for CIPHER WHEEL, painted as a real room: a dark wall above a
  *  desk, lit by nothing but the candle. On the wall hangs a brass cipher
- *  wheel on a walnut plaque; on the desk lies the sealed envelope.
+ *  wheel on the square walnut plaque from Room I; on the desk lies the sealed envelope.
  *
  *  Painted once per screen size and lit pixel by pixel from the tallest
  *  candle's flame, in layers the candles can dim and make flicker (and each
@@ -32,6 +33,7 @@ const CL = [1, 0.7, 0.42]; // candlelight
 const POWER = 3.1;
 const D0 = 27;
 const T = .8; // the plaque's thickness, in cm
+const PLAQUE_HALF = 1.37; // square walnut mount, matching the one in Room I
 
 const WALL = 0;
 const WOOD = 1;
@@ -47,13 +49,14 @@ const tone = (L) => (1.8 * L) / (1 + L);
 /** Materials are baked once per viewport; only the light and flame animate. */
 export function paintStudy(scene, W, H, deskY) {
   const cam = camera(W, H, deskY);
+  cam.materials = cryptexPhotography(scene);
   const candles = candleLayout(cam, W, H, deskY);
+  candles.forEach((candle, index) => { candle.photo = cam.materials?.candles[index]; });
   // the room is lit from the tallest one's flame
   const { flame } = candles.find((c) => c.main);
-  // the wheel hangs on the wall above the desk: on a short canvas (a phone)
-  // it shrinks with the height so the desk never cuts into its plaque
-  const R = Math.min(185, W * .235, Math.max(60, H * .26));
-  const wheel = { cx: W * .41, cy: Math.min(H * .36, deskY - R * 1.22), R, diskR: R * .745 };
+  // The larger square mount stays clear of both the screen top and desk.
+  const R = Math.min(185, W * .235, Math.max(60, H * .2));
+  const wheel = { cx: W * .41, cy: Math.min(H * .36, deskY - R * 1.5), R, diskR: R * .745 };
   const env = envelopeGeom(cam, W, H, deskY);
 
   const room = makeCanvas(W, H);
@@ -74,7 +77,7 @@ export function paintStudy(scene, W, H, deskY) {
 
   addCanvas(scene.textures, ROOM, room);
   addCanvas(scene.textures, LIGHT, light);
-  addCanvas(scene.textures, DISK, paintDisk(wheel, disk.bake));
+  addCanvas(scene.textures, DISK, paintDisk(wheel, disk.bake, cam.materials));
   addCanvas(scene.textures, SHADE, disk.shade);
   addCanvas(scene.textures, SHEEN, disk.sheen);
   addCanvas(scene.textures, LUME, paintLume(wheel));
@@ -169,7 +172,8 @@ function shadePixel(alb, p, n, ks, e, vis, flame, bd, ld, o, ao, tint) {
   ld[o + 3] = 255;
 }
 
-function plaster(x, y) {
+function plaster(x, y, materials) {
+  if (materials) return sampleMaterial(materials.plaster, x, y, 180);
   const f = .95 + .07 * noise2(x / 18, y / 18) + .055 * noise2(x * 4, y * 4) +
     .04 * noise2(x * 17, y * 17);
   return [66 * f, 73 * f, 70 * f];
@@ -177,7 +181,8 @@ function plaster(x, y) {
 
 // Same longitudinal plank material as OVERTIME; geometry and grain share
 // world coordinates, so the wood recedes toward the wall.
-function oak(x, z) {
+function oak(x, z, materials) {
+  if (materials) return sampleMaterial(materials.desk, x, z, 65, 150);
   const plank = Math.floor((x + 1000) / 13.5);
   const variation = .93 + .11 * hash2(plank, 7919);
   const bend = .18 * Math.sin(z * .045 + plank * 2) + .07 * Math.sin(z * .14);
@@ -218,6 +223,7 @@ function paintArchitecture(rc, lc, cam, flame) {
 }
 
 function paintStudyDetails(rc, lc, cam, flame) {
+  if (paintPhotographicBooks(rc, lc, cam, flame, shadePixel)) return;
   const { W, H, deskY } = cam;
   const path = (ctx, points) => {
     ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath();
@@ -283,7 +289,7 @@ function paintDeskGrain(rc, lc, cam) {
       ctx.strokeStyle = 'rgba(177,131,72,.07)'; ctx.lineWidth = .65; ctx.stroke();
     }
     ctx.lineCap = 'round';
-    for (let i = 0; i < 1200; i++) {
+    for (let i = 0; i < (cam.materials ? 0 : 1200); i++) {
       const x = -half + rnd() * half * 2, phase = rnd() * Math.PI * 2;
       const amplitude = .03 + rnd() * .16;
       const z0 = zNear + rnd() * (ZW - zNear);
@@ -300,13 +306,15 @@ function paintDeskGrain(rc, lc, cam) {
   }
 }
 
-function walnut(x, y) {
+function walnut(x, y, materials) {
+  if (materials) return sampleMaterial(materials.walnut, x, y, 60, 90);
   const f =
     0.76 + 0.4 * noise2(x / 16, y * 1.3) * (0.75 + 0.25 * noise2(x / 5, y / 5));
   return [104 * f, 62 * f, 38 * f];
 }
 
-function brass(x, y) {
+function brass(x, y, materials) {
+  if (materials) return sampleMaterial(materials.brass, x, y, 70);
   const f = 0.94 + 0.1 * noise2(x * 1.5, y * 1.5);
   return [210 * f, 170 * f, 96 * f];
 }
@@ -330,7 +338,7 @@ function paintSurfaces(rc, lc, cam, flame) {
       if (sy < deskY) {
         const p = cam.wallToWorld(sx, sy);
         shadePixel(
-          plaster(p.x, p.y),
+          plaster(p.x, p.y, cam.materials),
           p,
           NW,
           0,
@@ -345,7 +353,7 @@ function paintSurfaces(rc, lc, cam, flame) {
         );
       } else {
         const p = cam.deskToWorld(sx, sy);
-        const albedo = oak(p.x, p.z);
+        const albedo = oak(p.x, p.z, cam.materials);
         shadePixel(
           albedo,
           p,
@@ -372,7 +380,8 @@ function paintSurfaces(rc, lc, cam, flame) {
 function paintWheel(rc, lc, cam, flame, wheel) {
   const { W, deskY, k } = cam;
   const { cx, cy, R, diskR } = wheel;
-  const Rp = R * 1.15;
+  const half = R * PLAQUE_HALF;
+  const Rp = Math.SQRT2 * half; // enclosing radius for rays past the square corners
   // the flame, seen straight on the wall, and how far it stands out from it
   const fx = cam.cx + flame.x * k;
   const fy = cam.hy + (EYE_H - flame.y) * k;
@@ -384,12 +393,12 @@ function paintWheel(rc, lc, cam, flame, wheel) {
   const ax = (cx - fx) / toC;
   const ay = (cy - fy) / toC;
   const Ls = Math.min(360, ((T + 2) * (toC + Rp)) / Math.max(1, Hf - T - 2));
-  const x0 = Math.max(0, Math.floor(Math.min(cx, cx + ax * Ls) - Rp - 40));
-  const x1 = Math.min(W, Math.ceil(Math.max(cx, cx + ax * Ls) + Rp + 40));
-  const y0 = Math.max(0, Math.floor(Math.min(cy, cy + ay * Ls) - Rp - 40));
+  const x0 = Math.max(0, Math.floor(Math.min(cx, cx + ax * Ls) - half - 40));
+  const x1 = Math.min(W, Math.ceil(Math.max(cx, cx + ax * Ls) + half + 40));
+  const y0 = Math.max(0, Math.floor(Math.min(cy, cy + ay * Ls) - half - 40));
   const y1 = Math.min(
     Math.floor(deskY),
-    Math.ceil(Math.max(cy, cy + ay * Ls) + Rp + 40),
+    Math.ceil(Math.max(cy, cy + ay * Ls) + half + 40),
   );
   const w = x1 - x0;
   const h = y1 - y0;
@@ -472,12 +481,12 @@ function paintWheel(rc, lc, cam, flame, wheel) {
         // bare wall: only where the wheel darkens it does it need repainting
         const aoP =
           0.55 +
-          0.45 * smooth01((Math.hypot(sx - cx, sy - cy) - Rp) / (R * 0.1));
+          0.45 * smooth01((Math.max(Math.abs(sx - cx), Math.abs(sy - cy)) - half) / (R * 0.1));
         const vis = march(sx, sy, 0);
         if (vis >= 0.999 && aoP >= 0.999) continue;
         const p = cam.wallToWorld(sx, sy, 0);
         shadePixel(
-          plaster(p.x, p.y),
+          plaster(p.x, p.y, cam.materials),
           p,
           NWALL,
           0,
@@ -537,20 +546,22 @@ function paintWheel(rc, lc, cam, flame, wheel) {
       let tint = WHITE;
       const ao = 1;
       if (m === WOOD) {
-        alb = walnut(p.x, p.y);
+        alb = cam.materials?.wheel ? sampleRotor(cam.materials, sx - cx, sy - cy, R) : walnut(p.x, p.y, cam.materials);
         ks = 0.18;
         e = 24;
       } else if (m === GROOVE) {
         alb = [24, 18, 12];
       } else {
-        const b = brass(p.x, p.y);
+        const b = cam.materials?.wheel
+          ? sampleRotor(cam.materials, sx - cx, sy - cy, R)
+          : brass(p.x, p.y, cam.materials);
         const g = Gg[idx];
         alb = [
           b[0] * (1 - 0.6 * g),
           b[1] * (1 - 0.6 * g),
           b[2] * (1 - 0.6 * g),
         ];
-        ks = m === POLISH ? 1.1 : 0.95;
+        ks = cam.materials ? (m === POLISH ? 0.72 : 0.48) : (m === POLISH ? 1.1 : 0.95);
         e = m === POLISH ? 80 : 56;
         tint = BRASS_SPEC;
       }
@@ -588,16 +599,17 @@ function paintWheel(rc, lc, cam, flame, wheel) {
 // the wheel's relief: height above the wall (cm), material, engraving
 function sampleWheel(dx, dy, R, out) {
   const r = Math.hypot(dx, dy);
-  const Rp = R * 1.15;
+  const half = R * PLAQUE_HALF;
+  const corner = R * 0.018;
+  const qx = Math.abs(dx) - (half - corner), qy = Math.abs(dy) - (half - corner);
+  const edge = Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - corner;
   let h = 0;
   let m = WALL;
   let g = 0;
-  if (r <= Rp) {
+  if (edge <= 0) {
     if (r > R * 1.05) {
-      // walnut, its edge rounded over
-      const bw = R * 0.05;
-      const u = clamp01((r - (Rp - bw)) / bw);
-      h = T * Math.sqrt(1 - u * u);
+      // A square physical board, with a narrow beveled perimeter.
+      h = T * smooth01(-edge / (R * 0.025));
       m = WOOD;
     } else if (r >= R * 0.77) {
       // the brass ring: bevelled edges, two engraved circles, a cell for
@@ -629,15 +641,15 @@ function sampleWheel(dx, dy, R, out) {
       m = DISKM;
     }
   }
-  // four brass screws in the plaque's rim, their slots every which way
-  for (let q = 0; r > R * 1.07 && r < R * 1.13 && q < 4; q++) {
-    const ang = Math.PI / 4 + (q * Math.PI) / 2;
-    const qx = dx - Math.cos(ang) * R * 1.1;
-    const qy = dy - Math.sin(ang) * R * 1.1;
-    const rs = R * 0.024;
+  // Four corner fasteners, aligned to the photographic square mount.
+  for (let q = 0; edge <= 0 && r > R * 1.4 && q < 4; q++) {
+    const sx = (q % 2 ? 1.1 : -1.1) * R;
+    const sy = (q < 2 ? -1.12 : 1.03) * R;
+    const qx = dx - sx, qy = dy - sy;
+    const rs = R * 0.065;
     const dd = Math.hypot(qx, qy);
     if (dd < rs) {
-      const sa = ang * 1.7 + q;
+      const sa = 1.1 + q * 0.12;
       h = T + 0.4 * Math.sqrt(1 - (dd / rs) ** 2);
       g = 0;
       if (Math.abs(qx * Math.sin(sa) - qy * Math.cos(sa)) < rs * 0.16) {
@@ -648,16 +660,16 @@ function sampleWheel(dx, dy, R, out) {
     }
   }
   // the index at twelve o'clock: a polished wedge on a small block
-  const tipY = -R * 0.925;
-  const baseY = -R * 1.075;
+  const tipY = -R * 0.96;
+  const baseY = -R * 1.054;
   if (dy >= baseY && dy <= tipY) {
-    const half = R * 0.05 * (1 - (dy - baseY) / (tipY - baseY));
-    if (Math.abs(dx) < half) {
+    const indexHalf = R * 0.06 * (1 - (dy - baseY) / (tipY - baseY));
+    if (Math.abs(dx) < indexHalf) {
       h = T + 2;
       m = POLISH;
       g = 0;
     }
-  } else if (dy < baseY && dy > -R * 1.14 && Math.abs(dx) < R * 0.07) {
+  } else if (dy < baseY && dy > -R * 1.112 && Math.abs(dx) < R * 0.06) {
     h = T + 2;
     m = POLISH;
     g = 0;
@@ -669,7 +681,7 @@ function sampleWheel(dx, dy, R, out) {
 
 // the turning disk: lathe-turned brass, the inner letters' cells, a blued
 // steel needle at its own A, a domed hub
-function paintDisk(wheel, bake) {
+function paintDisk(wheel, bake, materials) {
   const { R, diskR } = wheel;
   const S = Math.ceil(diskR * 2) + 2;
   const cv = makeCanvas(S, S);
@@ -680,7 +692,8 @@ function paintDisk(wheel, bake) {
   g.beginPath();
   g.arc(0, 0, diskR, 0, Math.PI * 2);
   g.fill();
-  for (let r = 3; r < diskR - 1; r += 1.3) {
+  if (materials) paintPhotographicDisk(g, materials.wheel || materials.brass, diskR, bake, materials.wheel ? rotorPhotoDiameter(R) : null);
+  for (let r = 3; !materials && r < diskR - 1; r += 1.3) {
     g.strokeStyle =
       rnd() < 0.5
         ? `rgba(255,240,205,${(0.02 + rnd() * 0.05).toFixed(3)})`
@@ -738,34 +751,36 @@ function paintDisk(wheel, bake) {
   g.lineTo(0, -R * 0.16);
   g.stroke();
   // the hub
-  const dome = g.createRadialGradient(
-    -R * 0.03,
-    -R * 0.03,
-    R * 0.01,
-    0,
-    0,
-    R * 0.16,
-  );
-  dome.addColorStop(0, css(bake, 1.45));
-  dome.addColorStop(0.6, css(bake, 1));
-  dome.addColorStop(1, css(bake, 0.55));
-  g.fillStyle = dome;
-  g.beginPath();
-  g.arc(0, 0, R * 0.16, 0, Math.PI * 2);
-  g.fill();
-  g.strokeStyle = css(bake, 0.35);
-  g.lineWidth = 1.2;
-  g.stroke();
-  g.fillStyle = css(bake, 0.7);
-  g.beginPath();
-  g.arc(0, 0, R * 0.045, 0, Math.PI * 2);
-  g.fill();
-  g.strokeStyle = css(bake, 0.25);
-  g.lineWidth = Math.max(1.5, R * 0.012);
-  g.beginPath();
-  g.moveTo(-R * 0.04, -R * 0.01);
-  g.lineTo(R * 0.04, R * 0.01);
-  g.stroke();
+  if (!materials?.wheel) {
+    const dome = g.createRadialGradient(
+      -R * 0.03,
+      -R * 0.03,
+      R * 0.01,
+      0,
+      0,
+      R * 0.16,
+    );
+    dome.addColorStop(0, css(bake, 1.45));
+    dome.addColorStop(0.6, css(bake, 1));
+    dome.addColorStop(1, css(bake, 0.55));
+    g.fillStyle = dome;
+    g.beginPath();
+    g.arc(0, 0, R * 0.16, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = css(bake, 0.35);
+    g.lineWidth = 1.2;
+    g.stroke();
+    g.fillStyle = css(bake, 0.7);
+    g.beginPath();
+    g.arc(0, 0, R * 0.045, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = css(bake, 0.25);
+    g.lineWidth = Math.max(1.5, R * 0.012);
+    g.beginPath();
+    g.moveTo(-R * 0.04, -R * 0.01);
+    g.lineTo(R * 0.04, R * 0.01);
+    g.stroke();
+  }
   return cv;
 }
 

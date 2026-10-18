@@ -5,6 +5,7 @@ import { layoutRoomTree, paintRoomTree } from "./roomTree.js";
 import { layoutRoomTv, paintRoomTv, paintSnow } from "./roomTv.js";
 import { addCanvasTexture } from "../../shared/paint.js";
 import { loadDrawingRoomFinishes, drawingRoomFinishes } from "../house/drawingRoomMaterials.js";
+import { ROOM5_PHOTOGRAPH, ROOM5_REFERENCE, loadRoom5Photography, alignRoom5Photography, alignRoom5PhotoObjects, paintRoom5Photography } from "./photographicRoom.js";
 
 const SNOW = "room5_snow"; // the television's snow, kept moving over its glass
 
@@ -34,15 +35,23 @@ export default class Room5Scene extends PlainRoomScene {
   preload() {
     super.preload();
     loadDrawingRoomFinishes(this);
+    loadRoom5Photography(this);
   }
 
   layout(W, H, levels) {
-    const L = super.layout(W, H);
+    const photographic = this.textures.exists(ROOM5_PHOTOGRAPH);
+    const L = super.layout(photographic ? ROOM5_REFERENCE.width : W, photographic ? ROOM5_REFERENCE.height : H);
+    if (photographic) alignRoom5Photography(L, W, H);
     L.surfaceMaterials = drawingRoomFinishes(this);
     layoutTrap(L, !levels.isCompleted(levels.indexOf("tapcode")));
     layoutRoomTree(L, !levels.isCompleted(levels.indexOf("pi")));
     layoutRoomTv(L, !levels.isCompleted(levels.indexOf("rally")));
+    if (photographic) alignRoom5PhotoObjects(L);
     return L;
+  }
+
+  paint(L) {
+    return L.photographic ? paintRoom5Photography(this, L, this._keys) : super.paint(L);
   }
 
   paintDetails(ctx, L) {

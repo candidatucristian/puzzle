@@ -394,6 +394,18 @@ body.in-house #game-container canvas { scale: 1.028; }
 .letter-paper { position: absolute; z-index: 0; pointer-events: none; }
 .letter-words { position: relative; z-index: 1; }
 .letter-words p { margin: 0 0 14px; }
+/* a found letter, as it opens: the sheet is blank while it unfolds, and then
+   the words come up on it as if written there by an unseen hand — top to
+   bottom in a little over a second, the ink darkening as it goes
+   (letterArrival.js) */
+@property --ink { syntax: "<percentage>"; inherits: false; initial-value: 110%; }
+.letter-page.is-unwritten .letter-words { visibility: hidden; }
+.letter-page.is-writing .letter-words {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--ink) - 7%), rgba(0,0,0,.35) var(--ink), transparent calc(var(--ink) + 4%));
+  mask-image: linear-gradient(to bottom, #000 calc(var(--ink) - 7%), rgba(0,0,0,.35) var(--ink), transparent calc(var(--ink) + 4%));
+  animation: letter-ink 1.2s cubic-bezier(.45,.05,.4,1) both; }
+@keyframes letter-ink { from { --ink: -6%; } to { --ink: 110%; } }
+[data-reduced-motion="true"] .letter-page.is-writing .letter-words { animation: none; -webkit-mask-image: none; mask-image: none; }
 .letter-note { font: italic 400 calc(11px * var(--reading-scale, 1)) var(--ui-font); color: #8a2a20; letter-spacing: .04em; }
 .letter-dateline { font-size: .82em; color: #5a4a36; text-align: right; }
 .letter-salutation { margin-top: 18px !important; }

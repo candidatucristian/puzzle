@@ -4,6 +4,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { paintStudy, releaseStudyArt } from "./study.js";
 import { letterOverlay } from "../../shared/envelope.js";
+import { loadCryptexPhotography } from "./photographicMaterials.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CIPHER WHEEL"  ·  code: ROTOR  ·  very hard  ·  decipher
@@ -45,6 +46,10 @@ const LUME_GLOW = "rgba(120, 255, 165, 0.85)";
 export default class CryptexScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Cryptex" });
+  }
+
+  preload() {
+    loadCryptexPhotography(this);
   }
 
   init(data) {

@@ -1,7 +1,10 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 import { paintKey } from "../../shared/keyArt.js";
-import { writingDesk, greenLamp, candle } from "../house/furniture.js";
+import { greenLamp, candle } from "../house/furniture.js";
 import { paintRoomDetails, paintStove } from "./details.js";
+import { room4Photography, room4Front, paintRoom4Desk, paintRoom4Lamp, paintRoom4Window } from "./photographicRoom.js";
+import { alignRoom4Perspective, placeRoom4PhotoChest, room4PhotoCabinet, alignRoom4PhotoObjects, paintRoom4Interior } from "./photographicInterior.js";
+import { paintFlatMaterial, paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 import { code39Bars, CROSSING_BACKGROUND, paintCrossingPhoto } from "../crossing/street.js";
 import {
   WARM, BACK, roomLayout, roomStyle, block, chestAt, thingAt, fillPoly, paintShell, paintWindowWall, paintMoonlight, paintChest, gloom, footShadow, onWall,
@@ -39,8 +42,9 @@ const CARDS = [23, 31, 11, 28, 19, 24];
 /** `on` says which of the room's lights still burn: `cards` the picture
  *  light over the board and the lamp on the desk under it, `painting` the
  *  light over the painting, `drawer` the candle on the chest of drawers. */
-export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: true }) {
+export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: true }, photographic = false) {
   const L = roomLayout(W, H);
+  if (photographic) alignRoom4Perspective(L);
   // a counting room: plaster walls, stone flags, a small leaded window
   // set high and deep, an iron stove in the corner
   L.style = roomStyle({
@@ -61,6 +65,7 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
   const kw = k.x1 - k.x0;
   L.deskLamp = { x: k.x0 + kw * 0.12, d: 538, y: k.h };
   L.chest = { x0: k.x0 + kw * 0.72, x1: k.x0 + kw * 0.92, d0: 524, d1: 539, y0: k.h + 1, y1: k.h + 8.5, lid: 5.5 };
+  if (photographic) placeRoom4PhotoChest(L);
   chestAt(L);
   const b = (L.board = { x0: k.x0 - 6, x1: k.x1 + 6, y0: 122, y1: 180 });
 
@@ -70,6 +75,7 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
   p.quad = [Q(-hx, p.y1, p.d0), Q(-hx, p.y1, p.d1), Q(-hx, p.y0, p.d1), Q(-hx, p.y0, p.d0)];
   // the chest of drawers under the window, its top drawer (as it is when pulled out), a candle on it
   const cb = (L.cabinet = { x0: 0.3 * hx, x1: 0.54 * hx, d0: 554, d1: 598, h: 88 });
+  if (photographic) Object.assign(cb, room4PhotoCabinet());
   const dr = (L.drawer = { x0: cb.x0 + 3, x1: cb.x1 - 3, y0: cb.h - 26, y1: cb.h - 6, d0: cb.d0 - 16, d1: cb.d0 });
   L.cabinetCandle = { x: cb.x0 + 13, y: cb.h, d: 574 };
 
@@ -97,6 +103,7 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
     desk: { x: dp.x, y: dp.y, r: 90 * dp.s }, picture: { x: pp.x, y: pp.y, r: 46 * pp.s }, stove: { x: sv.x, y: sv.y, r: 46 * sv.s },
     painting: { x: tp.x, y: tp.y, r: 40 * tp.s }, candle: { x: cp.x, y: cp.y, r: 70 * cp.s },
   };
+  if (photographic) alignRoom4PhotoObjects(L);
   return L;
 }
 
@@ -104,26 +111,37 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
 
 export function paintRoom4(scene, L) {
   const t = scene.textures;
+  L.photoArt = room4Photography(scene);
+  L.surfaceMaterials = L.photoArt?.surfaces;
+  L.furnitureMaterial = L.photoArt?.wood;
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, W, H);
-  paintShell(ctx, L);
-  paintWindowWall(ctx, L);
-  paintBoard(ctx, L);
-  paintPicture(ctx, L, scene.textures.get(CROSSING_BACKGROUND).getSourceImage());
-  paintRug(ctx, L);
-  paintMoonlight(ctx, L);
-  paintRoomDetails(ctx, L, "back");
-  paintStove(ctx, L);
-  paintCabinet(ctx, L);
-  writingDesk(ctx, L, L.desk);
-  paintRoomDetails(ctx, L, "front");
-  greenLamp(ctx, L, L.deskLamp, L.desk, L.on.cards);
-  paintGloom(ctx, L);
-  vignette(ctx, W, H, 0.7);
-  grain(ctx, W, H, 0.035);
+  if (paintRoom4Interior(ctx, scene, L, CARDS, scene.textures.get(CROSSING_BACKGROUND).getSourceImage())) {
+    ctx.save();
+    ctx.filter = `brightness(${L.on.drawer ? 0.76 : 0.48})`;
+    topDrawer(ctx, L, L.on.drawer ? 0 : L.drawer.d1 - L.drawer.d0);
+    ctx.restore();
+  } else {
+    paintShell(ctx, L);
+    paintWindowWall(ctx, L);
+    paintRoom4Window(ctx, L);
+    paintBoard(ctx, L);
+    paintPicture(ctx, L, scene.textures.get(CROSSING_BACKGROUND).getSourceImage());
+    paintRug(ctx, L);
+    paintMoonlight(ctx, L);
+    paintRoomDetails(ctx, L, "back");
+    paintStove(ctx, L);
+    paintCabinet(ctx, L);
+    paintRoom4Desk(ctx, L);
+    paintRoomDetails(ctx, L, "front");
+    if (!paintRoom4Lamp(ctx, L)) greenLamp(ctx, L, L.deskLamp, L.desk, L.on.cards);
+    paintGloom(ctx, L);
+    vignette(ctx, W, H, L.photoArt ? 0.63 : 0.7);
+    grain(ctx, W, H, L.photoArt ? 0.012 : 0.035);
+  }
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, paintChest(L, false));
@@ -150,6 +168,7 @@ function paintBoard(ctx, L) {
   const rnd = lcg(31);
   g.fillStyle = "#3e2716";
   g.fillRect(0, 0, fw, fh);
+  paintFlatMaterial(g, L.photoArt?.wood, 0, 0, fw, fh, 0.9, 1);
   g.fillStyle = "rgba(255,210,160,0.12)";
   g.fillRect(0, 0, fw, 1.2 * R);
   g.fillStyle = "#1a0f08";
@@ -161,7 +180,8 @@ function paintBoard(ctx, L) {
   ck.addColorStop(1, on ? "#4a3420" : "#281e14");
   g.fillStyle = ck;
   g.fillRect(5.5 * R, 5.5 * R, fw - 11 * R, fh - 11 * R);
-  for (let i = 0; i < 3200; i++) {
+  paintFlatMaterial(g, L.photoArt?.cork, 5.5 * R, 5.5 * R, fw - 11 * R, fh - 11 * R, 0.55, 0.9);
+  for (let i = 0; !L.photoArt && i < 3200; i++) {
     g.fillStyle = rnd() < 0.55 ? "rgba(40,22,8,0.22)" : "rgba(255,226,180,0.1)";
     g.fillRect(5.5 * R + rnd() * (fw - 11 * R), 5.5 * R + rnd() * (fh - 11 * R), 0.8 + rnd() * 2, 0.8 + rnd() * 1.4);
   }
@@ -181,6 +201,7 @@ function paintBoard(ctx, L) {
     cg.addColorStop(1, on ? "#c4b999" : "#6a665a");
     g.fillStyle = cg;
     g.fillRect(-cw / 2, -ch / 2, cw, ch);
+    paintFlatMaterial(g, L.photoArt?.paper, -cw / 2, -ch / 2, cw, ch, 0.3, 0.86);
     // an index card's blue rule, and its number in ink
     g.fillStyle = "rgba(90,120,170,0.4)";
     g.fillRect(-cw / 2, -ch / 2 + 6 * R, cw, 0.7);
@@ -252,6 +273,7 @@ function paintPicture(ctx, L, photo) {
   gilt.addColorStop(1, on ? "#3a2c12" : "#1e180a");
   g.fillStyle = gilt;
   g.fillRect(0, 0, fw, fh);
+  paintFlatMaterial(g, L.photoArt?.gilt, 0, 0, fw, fh, 0.6, 0.9);
   g.fillStyle = "rgba(10,6,2,0.55)";
   g.fillRect(m * 0.36, m * 0.36, fw - m * 0.72, fh - m * 0.72);
   g.fillStyle = gilt;
@@ -315,9 +337,10 @@ function paintCabinet(ctx, L) {
   // the two that are shut
   for (const [y0, y1] of [[8, 32], [35, 59]]) {
     face(c.x0 + 3, y0, c.x1 - 3, y1, c.d0, "#2e1b0f");
+    if (L.photoArt) room4Front(ctx, L, L.photoArt.drawer, c.x0 + 3, c.x1 - 3, y0, y1, c.d0);
     face(c.x0 + 3, y1 - 0.9, c.x1 - 3, y1, c.d0, "rgba(4,2,1,0.8)");
     face(c.x0 + 3, y0, c.x1 - 3, y0 + 0.7, c.d0, "rgba(255,206,160,0.1)");
-    knobs((y0 + y1) / 2, c.d0);
+    if (!L.photoArt) knobs((y0 + y1) / 2, c.d0);
   }
   // the top one: shut while its puzzle waits, out once it has been solved
   topDrawer(ctx, L, on ? 0 : dr.d1 - dr.d0);
@@ -342,9 +365,10 @@ function topDrawer(ctx, L, pull) {
   };
   if (pull <= 0) {
     face(dr.x0, dr.y0, dr.x1, dr.y1, c.d0, "#2e1b0f");
+    if (L.photoArt) room4Front(ctx, L, L.photoArt.drawer, dr.x0, dr.x1, dr.y0, dr.y1, c.d0);
     face(dr.x0, dr.y1 - 0.9, dr.x1, dr.y1, c.d0, "rgba(4,2,1,0.8)");
     face(dr.x0, dr.y0, dr.x1, dr.y0 + 0.7, c.d0, "rgba(255,206,160,0.1)");
-    knobs((dr.y0 + dr.y1) / 2, c.d0);
+    if (!L.photoArt) knobs((dr.y0 + dr.y1) / 2, c.d0);
     return;
   }
   face(dr.x0, dr.y0, dr.x1, dr.y1 + 1, c.d0, "#040302");
@@ -354,6 +378,7 @@ function topDrawer(ctx, L, pull) {
     const x = dr.x0 + 3 + i * step;
     const points = [Q(x, dr.y1, dr.d0 + 2.5), Q(x + step, dr.y1, dr.d0 + 2.5), Q(x + step, dr.y1, dr.d1 - 1), Q(x, dr.y1, dr.d1 - 1)];
     fillPoly(ctx, points, on ? "#c7b994" : "#46473f");
+    if (L.photoArt) paintProjectedMaterial(ctx, L.photoArt.paper, (u, v) => Q(x + step * u, dr.y1, dr.d0 + 2.5 + (dr.d1 - dr.d0 - 3.5) * v), 0.9, 1, 2);
     if (i > 0) {
       ctx.save(); ctx.strokeStyle = "#504531"; ctx.lineWidth = 0.6 * points[0].s;
       ctx.setLineDash([0.65 * points[0].s, 1.4 * points[0].s]);
@@ -361,7 +386,8 @@ function topDrawer(ctx, L, pull) {
     }
   }
   face(dr.x0, dr.y1 - 0.8, dr.x1, dr.y1, dr.d0, "rgba(255,206,160,0.16)");
-  knobs((dr.y0 + dr.y1) / 2, dr.d0);
+  if (L.photoArt) room4Front(ctx, L, L.photoArt.drawer, dr.x0, dr.x1, dr.y0, dr.y1, dr.d0);
+  else knobs((dr.y0 + dr.y1) / 2, dr.d0);
 }
 
 // The drawer coming out, a frame at a time, each only the patch of the
@@ -370,8 +396,20 @@ const DRAWER = Array.from({ length: 10 }, (_, i) => "r4_drawer_" + i);
 function drawerFrame(L, pull) {
   const b = L.drawerBox;
   const c = makeCanvas(b.width, b.height), ctx = c.getContext("2d");
+  // Photo meshes cull against their destination canvas. Project the small
+  // moving drawer locally before applying the room's global lighting.
+  const drawerLayout = { ...L, Q: (...point) => {
+    const p = L.Q(...point);
+    return { ...p, x: p.x - b.x, y: p.y - b.y };
+  } };
+  topDrawer(ctx, drawerLayout, pull);
+  if (L.photographic) {
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.fillStyle = `rgba(0,0,0,${L.on.drawer ? 0.24 : 0.52})`;
+    ctx.fillRect(0, 0, b.width, b.height);
+    return c;
+  }
   ctx.translate(-b.x, -b.y);
-  topDrawer(ctx, L, pull);
   // the candle's light on its foot spills on to the drawer's front
   const lit = makeCanvas(b.width, b.height), g = lit.getContext("2d");
   const cn = L.Q(L.cabinetCandle.x, L.cabinetCandle.y, L.cabinetCandle.d);
@@ -383,8 +421,8 @@ function drawerFrame(L, pull) {
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = "lighter"; ctx.drawImage(lit, 0, 0); ctx.restore();
   ctx.globalCompositeOperation = "source-atop";
   paintGloom(ctx, L);
-  vignette(ctx, L.W, L.H, 0.7);
-  grain(ctx, L.W, L.H, 0.035);
+  vignette(ctx, L.W, L.H, L.photoArt ? 0.63 : 0.7);
+  grain(ctx, L.W, L.H, L.photoArt ? 0.012 : 0.035);
   return c;
 }
 
@@ -398,6 +436,10 @@ function paintRug(ctx, L) {
   strip(hw, 336, 526, "#2e0c10");
   strip(hw - 7, 342, 520, "#6a5a3a");
   strip(hw - 11, 346, 516, "#3c1014");
+  if (L.photoArt) {
+    paintProjectedMaterial(ctx, L.photoArt.rug, (u, v) => Q(mid - hw + 11 + (hw - 11) * 2 * u, 0, 516 - 170 * v), 1, 6, 8);
+    return;
+  }
   for (let i = 0; i < 700; i++) {
     const p = Q(mid + (rnd() * 2 - 1) * hw, 0, 338 + rnd() * 186);
     ctx.fillStyle = rnd() < 0.6 ? "rgba(0,0,0,0.2)" : "rgba(255,220,190,0.05)";

@@ -1,4 +1,8 @@
-/** The scene for BINARY TREE: a root-view box on a shelf by a sunny window.
+/** BINARY TREE: the photographic Room I glass terrarium, with a living
+ *  sprout, thin clue roots and small paper specimen labels. The procedural
+ *  painting below remains the fallback when photography is unavailable.
+ *
+ *  Original procedural scene: a root-view box on a shelf by a sunny window.
  *  A seedling has come up in a wooden box with a glass front, and behind the
  *  glass its root can be seen going down through the soil, forking three
  *  times to eight tips. The gardener has marked it the way root boxes are
@@ -15,6 +19,7 @@
  *  inside of the glass. */
 
 import { BINARY_PATHS, BINARY_LEAVES } from "./puzzle.js";
+import { paintPhotographicTerrarium } from "./photographicTerrarium.js";
 
 const K = {
   wall: "bt_wall",
@@ -25,6 +30,7 @@ const K = {
   veil: "bt_veil",
   stem: "bt_stem",
   leaves: "bt_leaves",
+  front: "bt_front",
 };
 
 // ── where everything is ─────────────────────────────────────────────────────
@@ -150,11 +156,13 @@ function rootPoint(s, t) {
 export function paintRootBox(scene, W, H) {
   const L = layoutRootBox(W, H);
   const t = scene.textures;
-  add(t, K.wall, paintWallLayer(L));
-  add(t, K.box, paintBoxLayer(L));
-  const dapple = paintDapple(L);
+  const photo = paintPhotographicTerrarium(scene, L, rootSegments, rootPoint);
+  add(t, K.wall, photo ? photo.wall : paintWallLayer(L));
+  add(t, K.box, photo ? photo.box : paintBoxLayer(L));
+  add(t, K.front, photo ? photo.front : makeCanvas(1, 1));
+  const dapple = photo ? photo.dapple : paintDapple(L);
   add(t, K.dapple, dapple.canvas);
-  add(t, K.veil, paintVeil(L));
+  add(t, K.veil, photo ? photo.veil : paintVeil(L));
   add(
     t,
     K.mote,
@@ -166,9 +174,9 @@ export function paintRootBox(scene, W, H) {
   );
   add(t, K.drop, paintDrop());
   // the seedling stands apart from the painting, so its leaves can stir
-  add(t, K.stem, paintSeedling(L, "stem"));
-  add(t, K.leaves, paintSeedling(L, "leaves"));
-  return { L, keys: K, dapple: dapple.at, seedling: SEEDLING };
+  add(t, K.stem, photo ? photo.stem : paintSeedling(L, "stem"));
+  add(t, K.leaves, photo ? photo.leaves : paintSeedling(L, "leaves"));
+  return { L, keys: K, dapple: dapple.at, seedling: photo ? photo.seedling : SEEDLING };
 }
 
 export function releaseRootBoxArt(textures) {

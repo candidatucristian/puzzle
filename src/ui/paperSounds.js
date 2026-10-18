@@ -11,6 +11,9 @@
 //   unfold   the sheet opened out, fold by fold
 //   file     the letter slid into the dossier
 //   ping     something new in the case file
+//   writing  a pen on paper as a found letter is opened out: four and a half
+//            seconds of the recording (assets/sounds/writingonpaper.mp3),
+//            coming in softly and dying away; returns { stop() }
 
 export function mountPaperSounds({ game, audio }) {
   const ctx = () => {
@@ -53,6 +56,56 @@ export function mountPaperSounds({ game, audio }) {
     }
   }
   const swell = (k) => Math.sin(Math.PI * k) ** 1.5;
+  // the recording of the pen, fetched once and kept decoded
+  // (the recording is very quiet, near -48 dB: it is brought up to a clear
+  // level by what it measures, its peaks kept clear of clipping)
+  const WRITING = { url: "assets/sounds/writingonpaper.mp3", seconds: 4.5, loudness: 0.11, gain: 0.8 };
+  let writingBuffer = null, writingLoad = null, writingLift = 1;
+  function loadWriting(ac) {
+    if (writingBuffer) return Promise.resolve(writingBuffer);
+    writingLoad ??= fetch(WRITING.url).then((r) => r.arrayBuffer()).then((b) => ac.decodeAudioData(b)).then((buf) => {
+      const n = Math.min(buf.length, Math.floor(buf.sampleRate * WRITING.seconds));
+      let sum = 0, peak = 0, count = 0;
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+        const d = buf.getChannelData(ch);
+        for (let i = 0; i < n; i++) { const v = Math.abs(d[i]); sum += v * v; if (v > peak) peak = v; count++; }
+      }
+      const rms = Math.sqrt(sum / Math.max(1, count));
+      writingLift = Math.max(1, Math.min(WRITING.loudness / Math.max(1e-5, rms), 0.95 / Math.max(1e-5, peak)));
+      return (writingBuffer = buf);
+    }).catch(() => { writingLoad = null; return null; });
+    return writingLoad;
+  }
+  function writing() {
+    let stopped = false, gainNode = null, src = null;
+    const c = ctx();
+    if (c) loadWriting(c.ac).then((buf) => {
+      const now = ctx();
+      if (!buf || !now || stopped) return;
+      const { ac, out, vol } = now, t = ac.currentTime, len = Math.min(WRITING.seconds, buf.duration);
+      src = ac.createBufferSource(); gainNode = ac.createGain();
+      src.buffer = buf;
+      const peak = WRITING.gain * writingLift * vol;
+      gainNode.gain.setValueAtTime(0.0001, t);
+      gainNode.gain.exponentialRampToValueAtTime(peak, t + 0.2);
+      gainNode.gain.setValueAtTime(peak, t + Math.max(0.2, len - 0.9));
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      src.connect(gainNode).connect(out);
+      src.start(t, 0, len);
+    });
+    return {
+      // put down early: it dies away quickly instead of running on
+      stop() {
+        stopped = true;
+        if (!src || !gainNode) return;
+        const t = gainNode.context.currentTime;
+        gainNode.gain.cancelScheduledValues(t);
+        gainNode.gain.setValueAtTime(Math.max(0.0001, gainNode.gain.value), t);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+        try { src.stop(t + 0.3); } catch { /* already stopped */ }
+      },
+    };
+  }
   return {
     whoosh() { noise({ dur: 0.55, freq: 2600, to: 500, q: 0.8, gain: 0.32, env: swell }); },
     land() {
@@ -72,5 +125,6 @@ export function mountPaperSounds({ game, audio }) {
       noise({ at: 0.36, dur: 0.08, type: "lowpass", freq: 700, gain: 0.3, env: (k) => (1 - k) ** 3 });
     },
     ping() { tones([[880, 0.05], [1318.5, 0.04, 0.09]], { decay: 0.7 }); },
+    writing,
   };
 }

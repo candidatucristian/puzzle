@@ -1,6 +1,8 @@
-/** The MODEM room is one photographic background. The thirteen router lenses
- *  stay dark in that still; the scene adds the animated LED light and desk
- *  reflections above it, plus drifting dust in the lamp light. */
+/** The MODEM room is one photographic background. The router's lenses stay
+ *  dark in that still — twelve of them: five counters, a space, seven for the
+ *  letter (the photograph's sixth lens, which no letter ever lit, is covered
+ *  over with the plastic above it); the scene adds the animated LED light and
+ *  desk reflections above it, plus drifting dust in the lamp light. */
 
 const ROOM_KEY = "md_room";
 const GLOW_KEY = "md_glow";
@@ -80,9 +82,25 @@ export function releaseRoomArt(textures) {
   for (const key of [ROOM_KEY, GLOW_KEY, MOTE_KEY]) if (textures.exists(key)) textures.remove(key);
 }
 
+// The photograph with its sixth lens taken out: the strip of the router's
+// face just above it copied down over it, so there is only plastic between
+// the counters and the letter's lights. (In the photograph's own pixels,
+// 1672 × 941; kept once made.)
+const PATCHED = new WeakMap();
+function withoutSpareLens(photo) {
+  if (PATCHED.has(photo)) return PATCHED.get(photo);
+  const c = makeCanvas(photo.width, photo.height), g = c.getContext("2d");
+  g.drawImage(photo, 0, 0);
+  const kx = photo.width / 1672, ky = photo.height / 941;
+  const x = 820 * kx, w = 21 * kx, h = 13 * ky;
+  g.drawImage(c, x, 626 * ky, w, h, x, 640 * ky, w, h);
+  PATCHED.set(photo, c);
+  return c;
+}
+
 function paintPhotographicRoom(scene, W, H, photo) {
   const canvas = makeCanvas(W, H);
-  canvas.getContext("2d").drawImage(photo, 0, 0, W, H);
+  canvas.getContext("2d").drawImage(withoutSpareLens(photo), 0, 0, W, H);
   addCanvas(scene.textures, ROOM_KEY, canvas);
   addCanvas(
     scene.textures,
@@ -104,11 +122,12 @@ function paintPhotographicRoom(scene, W, H, photo) {
     ]),
   );
 
-  // These anchors follow the thirteen dark lenses in the photograph. The
-  // lenses stay in the still image; only their light and reflections animate.
+  // These anchors follow the dark lenses in the photograph: the five
+  // counters, then — past the space where the sixth was — the letter's seven.
+  // The lenses stay in the still image; only their light and reflections animate.
   const ledXs = [
-    0.4321, 0.4456, 0.4581, 0.4713, 0.4841, 0.4973, 0.5108,
-    0.5239, 0.5374, 0.5505, 0.5634, 0.576, 0.5909,
+    0.4321, 0.4456, 0.4581, 0.4713, 0.4841,
+    0.5108, 0.5239, 0.5374, 0.5505, 0.5634, 0.576, 0.5909,
   ];
   const radius = Math.max(1.6, Math.min(W * 0.002, H * 0.00355));
   const spillRadius = Math.min(W * 0.011, H * 0.02);
@@ -156,7 +175,7 @@ function layout(cam) {
   const ledY = 4.8;
   const leds = [];
   for (let i = 0; i < 5; i++) leds.push(v3(-12.8 + i * 1.3, ledY, router.z0));
-  for (let i = 0; i < 8; i++) leds.push(v3(0.2 + i * 1.3, ledY, router.z0));
+  for (let i = 0; i < 7; i++) leds.push(v3(1.5 + i * 1.3, ledY, router.z0));
   const lampX = -41 * spread;
   const lamp = {
     x: lampX,

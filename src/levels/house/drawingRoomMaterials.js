@@ -156,7 +156,12 @@ export function paintFlatMaterial(ctx, tile, x, y, w, h, scale, opacity, blend =
 export function paintProjectedMaterial(ctx, tile, at, opacity = 1, columns = 1, rows = 1) {
   if (!tile) return;
   const outline = [at(0, 0), at(1, 0), at(1, 1), at(0, 1)];
-  const xs = outline.map(p => p.x), ys = outline.map(p => p.y);
+  // skipped only when it falls wholly off the canvas — judged where it lands
+  // on the canvas, through whatever transform is on it (a door's swing is
+  // painted into a small canvas moved and scaled to the door)
+  const m = ctx.getTransform();
+  const onCanvas = outline.map(p => ({ x: m.a * p.x + m.c * p.y + m.e, y: m.b * p.x + m.d * p.y + m.f }));
+  const xs = onCanvas.map(p => p.x), ys = onCanvas.map(p => p.y);
   if (Math.max(...xs) < 0 || Math.min(...xs) > ctx.canvas.width || Math.max(...ys) < 0 || Math.min(...ys) > ctx.canvas.height) return;
   ctx.save();
   ctx.globalAlpha *= opacity;

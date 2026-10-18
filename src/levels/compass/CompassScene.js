@@ -4,6 +4,7 @@ import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { layoutCabin, paintCabin, releaseCabinArt, addMapMarks, MAP_FONT, MAP_LINES } from "./cabin.js";
 import { letterOverlay } from "../../shared/envelope.js";
 import { COMPASS_BEARINGS } from "./puzzle.js";
+import { loadCabinPhotography, cabinPhotography, alignCabinPhotography } from "./photographicCabin.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "COMPASS"  ·  code: LOST  ·  compass bearings → a walk → letters
@@ -47,6 +48,7 @@ export default class CompassScene extends BasePuzzleScene {
 
   preload() {
     this.load.audio("creakingwood", "assets/sounds/Compass/creakingwood.mp3");
+    loadCabinPhotography(this);
   }
 
   create() {
@@ -66,6 +68,7 @@ export default class CompassScene extends BasePuzzleScene {
   _build(W, H) {
     this._mapSparkleCleanups = [];
     const L = layoutCabin(W, H);
+    alignCabinPhotography(L, cabinPhotography(this));
     const art = paintCabin(this, L);
     const k = art.keys;
     const inv = 1 / art.res;

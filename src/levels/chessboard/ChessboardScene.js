@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { paintParlour, releaseParlourArt, releasePieceArt } from "./parlour.js";
+import { loadChessPhotography } from "./photographicChess.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CHESSBOARD"  ·  code: HEADACHE  ·  expert  ·  TOOL (chess notation)
@@ -45,6 +46,10 @@ const CHESS_PIECES = [
 export default class ChessboardScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Chessboard" });
+  }
+
+  preload() {
+    loadChessPhotography(this);
   }
 
   init(data) {

@@ -3,6 +3,7 @@ import { soft, makeCanvas } from "../../shared/paint.js";
 import { EYE, WARM, block, fillPoly, footShadow, onWall, thingAt } from "../house/roomKit.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
 import { METAL, RIBBON, MEDAL } from "../flags/trophies.js";
+import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint } from "./photographicRoom.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Room 6, the last along the hall: grey-green plaster under a coffered
@@ -29,33 +30,51 @@ export default class Room6Scene extends PlainRoomScene {
     });
   }
 
+  preload() {
+    super.preload();
+    loadRoom6Photography(this);
+  }
+
   layout(W, H, levels) {
     const L = super.layout(W, H);
+    if (this.textures.exists(ROOM6_PHOTOGRAPH)) alignRoom6Photography(L, this.plan.window);
     const { Q, half: hx } = L;
     const lit = (id) => !levels.isCompleted(levels.indexOf(id));
     L.on = { flags: lit("flags") };
     // the medal cabinet against the left-hand wall: its front stands `deep`
     // off the wall, glazed from `glass.y0` up
     const mc = (L.cabinet = { x0: -hx, x1: -hx + 40, d0: 418, d1: 568, h: 212 });
-    mc.glass = { y0: 84, y1: 198 };
+    mc.glass = L.photographic ? { y0: 80, y1: 193 } : { y0: 84, y1: 198 };
     // the spiral stair in the right-hand corner, round its post, going up
     // through a round well in the ceiling; it climbs anticlockwise seen from
     // above and its last treads are at the back
     L.stairs = { cx: hx - 74, cd: 516, R: 66, r0: 5, rise: 20, perTurn: 13 };
     const front = -hx + 40, g = mc.glass;
-    L.things = [
-      thingAt("flags", "Look at the medals", [Q(front, g.y0, mc.d0), Q(front, g.y0, mc.d1), Q(front, g.y1, mc.d1), Q(front, g.y1, mc.d0)]),
-    ];
+    const cabinetFace = L.photographic ? [
+      room6CabinetPoint(L, 0, (mc.h-g.y0)/mc.h), room6CabinetPoint(L, 1, (mc.h-g.y0)/mc.h),
+      room6CabinetPoint(L, 1, (mc.h-g.y1)/mc.h), room6CabinetPoint(L, 0, (mc.h-g.y1)/mc.h),
+    ] : [Q(front, g.y0, mc.d0), Q(front, g.y0, mc.d1), Q(front, g.y1, mc.d1), Q(front, g.y1, mc.d0)];
+    L.things = [thingAt("flags", "Look at the medals", cabinetFace)];
     // where the room's light is, for the dark and for the scene
     const ml = Q(front - 4, g.y1 - 10, (mc.d0 + mc.d1) / 2);
     const mid = Q(front, (g.y0 + g.y1) / 2, (mc.d0 + mc.d1) / 2);
-    const st = L.stairs, sm = Q(st.cx, L.top * 0.6, st.cd);
+    const st = L.stairs, sm = Q(st.cx, L.top * 0.6, st.cd), sf = Q(st.cx - 20, 30, st.cd - 30);
     L.glows = { flags: { x: ml.x, y: ml.y + 30 * ml.s, r: 80 * ml.s } };
+    if (L.photographic) {
+      const lamp = room6CabinetPoint(L, 0.5, 0.07);
+      L.glows.flags = { ...lamp, r: 52 * H / 948 };
+    }
     L.detailLights = [
       { x: mid.x, y: mid.y, rx: 120 * mid.s, ry: 130 * mid.s, k: L.on.flags ? 0.85 : 0.35 },
-      { x: sm.x, y: sm.y, rx: 110 * sm.s, ry: 200 * sm.s, k: 0.22 },
+      // the stairs: the light from the floor above down the well, enough to see them by
+      { x: sm.x, y: sm.y, rx: 160 * sm.s, ry: 240 * sm.s, k: 0.62 },
+      { x: sf.x, y: sf.y, rx: 120 * sf.s, ry: 70 * sf.s, k: 0.5 },
     ];
     return L;
+  }
+
+  paint(L) {
+    return L.photographic ? paintRoom6Photography(this, L, this._keys) : super.paint(L);
   }
 
   paintDetails(ctx, L) {
@@ -67,7 +86,7 @@ export default class Room6Scene extends PlainRoomScene {
     super.live(L, k);
     // the cabinet's light while it burns, breathing very slightly
     if (!L.on.flags) return;
-    const a = 0.16;
+    const a = L.photographic ? 0.07 : 0.16;
     const lamp = glow(L.glows.flags, a, 0xffc078);
     this.ambientTween({ targets: lamp, alpha: { from: a * 0.85, to: a * 1.2 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   }
@@ -266,7 +285,7 @@ function paintSpiralStairs(ctx, L) {
   // the well in the ceiling, and the faint warm light down it
   fillPoly(ctx, arc(R + 10, 0, Math.PI * 2, L.top, 32), "#030303");
   const wl = Q(cx, L.top - 20, cd);
-  soft(ctx, wl.x, wl.y + 40 * wl.s, 70 * wl.s, 120 * wl.s, WARM, 0.05, "lighter");
+  soft(ctx, wl.x, wl.y + 40 * wl.s, 90 * wl.s, 170 * wl.s, WARM, 0.16, "lighter");
   footShadow(ctx, L, { x0: cx - R, x1: cx + R, d0: cd - R, d1: cd + R }, 0.7);
 
   const items = [];
@@ -292,10 +311,10 @@ function paintSpiralStairs(ctx, L) {
       fillPoly(ctx, [...arc(R, a0, a1, y), ...arc(R, a1, a0, y - T)], "#140c07");
       fillPoly(ctx, [at(r0, a1, y), at(R, a1, y), at(R, a1, y - T), at(r0, a1, y - T)], "#1e130b");
       const m0 = at(r0, (a0 + a1) / 2, y), m1 = at(R, (a0 + a1) / 2, y);
-      fillPoly(ctx, top, grad(ctx, m0.x, m0.y, m1.x, m1.y, [[0, "#1c120a"], [0.6, "#2e1e12"], [1, "#24170d"]]));
+      fillPoly(ctx, top, grad(ctx, m0.x, m0.y, m1.x, m1.y, [[0, "#2a1c10"], [0.6, "#4a3220"], [1, "#3a2616"]]));
       // the nosing, catching what little light there is
       const e = arc(R, a0, a1, y);
-      ctx.strokeStyle = "rgba(255,210,170,0.09)"; ctx.lineWidth = Math.max(0.6, 0.5 * e[0].s);
+      ctx.strokeStyle = "rgba(255,210,170,0.2)"; ctx.lineWidth = Math.max(0.6, 0.6 * e[0].s);
       ctx.beginPath(); e.forEach((p, j) => (j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke();
     } else {
       // seen from below: its underside, then its outer edge

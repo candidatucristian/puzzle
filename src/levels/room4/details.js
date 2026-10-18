@@ -1,5 +1,6 @@
 import { lcg, soft } from "../../shared/paint.js";
 import { block, fillPoly, footShadow } from "../house/roomKit.js";
+import { paintRoom4Bookcase, paintRoom4Chair, paintRoom4Firewood, paintRoom4Stove } from "./photographicRoom.js";
 
 function gradient(ctx, x0, y0, x1, y1, stops) {
   const g = ctx.createLinearGradient(x0, y0, x1, y1);
@@ -26,6 +27,7 @@ function stoveBody(ctx) {
 
 /** Cast iron, a recessed firebox, charred wood and real hardware, all geometry. */
 export function paintStove(ctx, L) {
+  if (paintRoom4Stove(ctx, L)) return;
   const { Q } = L, st = L.stove;
   const f = Q(st.x, 0, st.d), u = f.s;
   block(ctx, L, { x0: st.x - 42, x1: st.x + 42, d0: st.d - 39, d1: st.d + 27, y0: 0, y1: 4 },
@@ -145,6 +147,7 @@ export function paintStove(ctx, L) {
 }
 
 function paintBookcase(ctx, L) {
+  if (paintRoom4Bookcase(ctx, L)) return;
   const { Q } = L, hx = L.half;
   const b = { x0: 0.015 * hx, x1: 0.255 * hx, d0: 568, d1: 597, h: 182 };
   footShadow(ctx, L, b);
@@ -201,6 +204,7 @@ function paintDeskItems(ctx, L) {
 // painted from the far side to the near, so the back stands in front of the
 // seat as it does in the room.
 function paintChair(ctx, L) {
+  if (paintRoom4Chair(ctx, L)) return;
   const { Q } = L, d = L.desk, x = d.x0 + (d.x1 - d.x0) * 0.56;
   const near = 418, far = 456; // the back of the chair (towards us), its front (towards the desk)
   const seat = 45; // the seat's height
@@ -253,37 +257,39 @@ function paintChair(ctx, L) {
 }
 
 function paintFirewood(ctx, L) {
+  const photographed = paintRoom4Firewood(ctx, L);
   const st = L.stove, p = L.Q(st.x + 43, 0, st.d - 42);
-  soft(ctx, p.x, p.y + 3 * p.s, 24 * p.s, 8 * p.s, "0,0,0", 0.7);
-  ctx.save(); ctx.translate(p.x, p.y); ctx.scale(p.s, p.s);
-  const rnd = lcg(741);
-  ctx.beginPath(); ctx.moveTo(-18, -29); ctx.lineTo(18, -29); ctx.lineTo(14, -2); ctx.quadraticCurveTo(0, 3, -14, -2); ctx.closePath();
-  ctx.fillStyle = gradient(ctx, -18, 0, 18, 0, [[0, "#6d4f2f"], [0.4, "#8c6b41"], [1, "#3b2a1b"]]); ctx.fill();
-  ctx.save(); ctx.clip();
-  for (let y = -26; y < 0; y += 2.4) {
-    ctx.strokeStyle = "rgba(24,14,7,0.65)"; ctx.lineWidth = 0.7;
-    ctx.beginPath(); ctx.moveTo(-19, y); ctx.quadraticCurveTo(0, y + 3, 19, y); ctx.stroke();
-  }
-  for (let x = -17; x < 18; x += 3) {
-    ctx.strokeStyle = "rgba(203,157,93,0.28)"; ctx.lineWidth = 0.6;
-    ctx.beginPath(); ctx.moveTo(x, -29); ctx.lineTo(x * 0.75, 1); ctx.stroke();
-  }
-  ctx.restore();
-  ellipse(ctx, 0, -29, 19, 5.3, "#795e3b"); ellipse(ctx, 0, -29.5, 16.5, 3.9, "#160e08");
-  for (let i = 0; i < 7; i++) {
-    ctx.save(); ctx.translate(-12 + i * 4.1, -30 - rnd() * 4); ctx.rotate(-0.7 + rnd() * 1.4);
-    const length = 11 + rnd() * 9;
-    round(ctx, -3, -length, 6, length, 1.5, "#392b1c");
-    ctx.strokeStyle = "#786046"; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(-1.5, -length + 1); ctx.lineTo(-1.2, -1); ctx.stroke();
-    ellipse(ctx, 0, -length, 3, 1.7, "#b29569");
-    ellipse(ctx, 0, -length, 1.6, 0.8, "#786046");
+  if (!photographed) {
+    soft(ctx, p.x, p.y + 3 * p.s, 24 * p.s, 8 * p.s, "0,0,0", 0.7);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.scale(p.s, p.s);
+    const rnd = lcg(741);
+    ctx.beginPath(); ctx.moveTo(-18, -29); ctx.lineTo(18, -29); ctx.lineTo(14, -2); ctx.quadraticCurveTo(0, 3, -14, -2); ctx.closePath();
+    ctx.fillStyle = gradient(ctx, -18, 0, 18, 0, [[0, "#6d4f2f"], [0.4, "#8c6b41"], [1, "#3b2a1b"]]); ctx.fill();
+    ctx.save(); ctx.clip();
+    for (let y = -26; y < 0; y += 2.4) {
+      ctx.strokeStyle = "rgba(24,14,7,0.65)"; ctx.lineWidth = 0.7;
+      ctx.beginPath(); ctx.moveTo(-19, y); ctx.quadraticCurveTo(0, y + 3, 19, y); ctx.stroke();
+    }
+    for (let x = -17; x < 18; x += 3) {
+      ctx.strokeStyle = "rgba(203,157,93,0.28)"; ctx.lineWidth = 0.6;
+      ctx.beginPath(); ctx.moveTo(x, -29); ctx.lineTo(x * 0.75, 1); ctx.stroke();
+    }
+    ctx.restore();
+    ellipse(ctx, 0, -29, 19, 5.3, "#795e3b"); ellipse(ctx, 0, -29.5, 16.5, 3.9, "#160e08");
+    for (let i = 0; i < 7; i++) {
+      ctx.save(); ctx.translate(-12 + i * 4.1, -30 - rnd() * 4); ctx.rotate(-0.7 + rnd() * 1.4);
+      const length = 11 + rnd() * 9;
+      round(ctx, -3, -length, 6, length, 1.5, "#392b1c");
+      ctx.strokeStyle = "#786046"; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(-1.5, -length + 1); ctx.lineTo(-1.2, -1); ctx.stroke();
+      ellipse(ctx, 0, -length, 3, 1.7, "#b29569");
+      ellipse(ctx, 0, -length, 1.6, 0.8, "#786046");
+      ctx.restore();
+    }
+    ctx.strokeStyle = "#a28251"; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.ellipse(0, -28, 17, 16, 0, Math.PI, Math.PI * 2); ctx.stroke();
     ctx.restore();
   }
-  ctx.strokeStyle = "#a28251"; ctx.lineWidth = 1.3;
-  ctx.beginPath(); ctx.ellipse(0, -28, 17, 16, 0, Math.PI, Math.PI * 2); ctx.stroke();
-  ctx.restore();
-
   const tools = L.Q(st.x - 43, 0, st.d + 8);
   ctx.save(); ctx.translate(tools.x, tools.y); ctx.scale(tools.s, tools.s);
   ellipse(ctx, 0, -1.4, 10, 3, "#202322");

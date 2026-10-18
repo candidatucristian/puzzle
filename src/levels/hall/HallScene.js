@@ -12,6 +12,7 @@ import { doorMotion, DOOR_WALK_START_MS, DOOR_LATCH_MS, DOOR_SWING_MS } from "./
 import { IronLever } from "./ironLever.js";
 import { loadChemistryHallMaterials } from "./chemicalMaterials.js";
 import { loadBotanicHallMaterials } from "./botanicMaterials.js";
+import { loadAtticMaterials } from "../top/atticMaterials.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The hall: the ground floor of the manor, where the player stands on coming
@@ -55,6 +56,7 @@ export default class HallScene extends BasePuzzleScene {
     this.load.audio("doorhandle", "assets/sounds/global/doorhandle.mp3");
     this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
     if (!this.upper && !this.wing) loadBotanicHallMaterials(this);
+    if (this.wing) loadAtticMaterials(this);
     if (this.upper) {
       loadChemistryHallMaterials(this);
       if (!this.textures.exists(chemical.CHEMISTRY_TUBE_RACK)) {
@@ -100,6 +102,7 @@ export default class HallScene extends BasePuzzleScene {
     const L = (this._L = layoutHall(W, H, { upper: this.upper, wing: this.wing, bulbOn: false }));
     const art = (this._art = paintHall(this, L));
     const k = art.keys;
+    const ambientLight = L.ambientLight ?? 1;
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
 
     // the candles in the sconces, never quite still
@@ -109,7 +112,7 @@ export default class HallScene extends BasePuzzleScene {
         .setDisplaySize((150 * L.u) / s.z, (150 * L.u) / s.z)
         .setTint(0xffc078)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(0.3)
+        .setAlpha(0.3 * ambientLight)
         .setDepth(-8),
     );
 
@@ -125,12 +128,12 @@ export default class HallScene extends BasePuzzleScene {
         .setDisplaySize((L.wall * 0.42) / d.z, (H * 0.09) / d.z)
         .setTint(0xffc078)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(calling ? 0.3 : 0.06)
+        .setAlpha((calling ? 0.3 : 0.06) * ambientLight)
         .setDepth(-8);
       if (calling) {
         this.ambientTween({
           targets: glow,
-          alpha: { from: 0.22, to: 0.5 },
+          alpha: { from: 0.22 * ambientLight, to: 0.5 * ambientLight },
           duration: 2200 + n * 260,
           yoyo: true,
           repeat: -1,
@@ -582,7 +585,7 @@ export default class HallScene extends BasePuzzleScene {
   _spill(art, aperture) {
     const { d, spill, lit } = art, L = this._L;
     spill.setDisplaySize((L.wall * (0.2 + aperture * 0.9)) / d.z, (L.H * (0.06 + aperture * 0.24)) / d.z)
-      .setAlpha(aperture * (lit ? 0.48 : 0.2));
+      .setAlpha(aperture * (lit ? 0.48 : 0.2) * (L.ambientLight ?? 1));
   }
 
   // The door swinging shut: its own opening run backward, to the latch.
@@ -640,7 +643,7 @@ export default class HallScene extends BasePuzzleScene {
     if (!this._L || !this.ambientMotion || this.reducedMotion) return;
     const t = time / 1000;
     const gust = this._gust?.v ?? 0;
-    this._candles.forEach((g, i) => g.setAlpha((0.26 + 0.05 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.04) * (1 - 0.55 * gust)));
+    this._candles.forEach((g, i) => g.setAlpha((0.26 + 0.05 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.04) * (1 - 0.55 * gust) * (this._L.ambientLight ?? 1)));
     // the chandelier's candles: never still, and leaning with every draught
     for (const f of this._flames ?? []) {
       const live = 0.9 + 0.08 * Math.sin(t * 11 + f.phase) + Math.random() * 0.05;

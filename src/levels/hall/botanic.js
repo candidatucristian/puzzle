@@ -248,6 +248,7 @@ export const RUNNER = { edge: "#122417", border: "#5a5434", field: "#1c3322", mo
 
 /** Leaves come in and fallen along the boards, most of them by the walls. */
 export function paintFallenLeaves(ctx, L) {
+  if (L.botanicMaterials) return;
   const { P, wall, floor, u } = L;
   const rnd = lcg(2024);
   const fallen = [[74, 58, 28], [94, 74, 32], [58, 58, 28], [106, 78, 34], [46, 58, 30], [84, 64, 28]];
@@ -261,12 +262,6 @@ export function paintFallenLeaves(ctx, L) {
     ctx.translate(p.x, p.y);
     ctx.scale(1, 0.38);
     ctx.rotate(rnd() * Math.PI * 2);
-    if (L.botanicMaterials) {
-      const image = L.botanicMaterials.leaves[i % 3], h = s * 2.2, w = h * image.width / image.height;
-      ctx.drawImage(image, -w / 2, -h / 2, w, h);
-      ctx.restore();
-      continue;
-    }
     const tone = tones(fallen[Math.floor(rnd() * fallen.length)], 0.5, 0.05);
     blade(ctx, -s, 0, s, -s * 0.14, s * (0.25 + rnd() * 0.2), (rnd() - 0.5) * 0.15, tone);
     ctx.strokeStyle = tone.dark; ctx.lineWidth = Math.max(0.25, s * 0.055);
@@ -513,7 +508,7 @@ export function paintBaskets(ctx, L) {
     if (L.botanicMaterials) {
       const image = L.botanicMaterials.hanging, height = 150, width = height * image.width / image.height;
       // The photographed basket's rim is 53% down its cropped height.
-      ctx.drawImage(image, -width / 2, -height * 0.53, width, height);
+      ctx.drawImage(image, -width / 2, -height * 0.4, width, height);
       ctx.restore();
       continue;
     }

@@ -1,16 +1,16 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { paintRootBox, releaseRootBoxArt } from "./rootbox.js";
+import { loadTerrariumPhotography } from "./photographicTerrarium.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "BINARY TREE"  ·  code: CABBAGE   ·  fork, then read
 //
-// A root-view box on a shelf by a sunny window. Behind its glass front a
+// The glass terrarium from Room I, photographed beside its desk lamp. A
 // seedling's root goes down through the soil and forks three times, to eight
-// tips. The gardener has marked the glass in white grease pencil — START
-// where the root begins, a letter under each tip (shuffled — NOT
-// alphabetical) — and a strip of masking tape across the front of the box
-// reads, in marker:
+// tips. Small paper specimen labels mark a letter under each tip (shuffled,
+// not alphabetical). Seven photographic gold plates spaced evenly across
+// the wooden base carry the message from left to right:
 //
 //   RLR  LRL  LLL  LLL  LRL  LLR  LRR
 //
@@ -37,6 +37,10 @@ export default class BinaryTreeScene extends BasePuzzleScene {
       data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
 
+  preload() {
+    loadTerrariumPhotography(this);
+  }
+
   create() {
     this.beginScene();
     this.input.mouse.disableContextMenu();
@@ -60,6 +64,7 @@ export default class BinaryTreeScene extends BasePuzzleScene {
     this._makeDapple(art);
     this.add.image(0, 0, art.keys.box).setOrigin(0, 0).setDepth(-10);
     this._makeSeedling(art);
+    this.add.image(0, 0, art.keys.front).setOrigin(0, 0).setDepth(-9.6);
     this._makeDrops();
     this._makeMotes(art);
     this.add.image(0, 0, art.keys.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);

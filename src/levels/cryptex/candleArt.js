@@ -8,6 +8,8 @@
 // Three of them, burned down to different heights, standing together: the
 // tallest at the back — its flame is the one the room is lit from — one
 // half burned at its left, a stub at the front.
+import { paintPhotographicCandle } from "./photographicMaterials.js";
+
 const CANDLES = [
   { dx: 0.9, dz: 2.6, radius: 2.65, height: 15.4, main: true },
   { dx: -4.7, dz: -0.4, radius: 2.3, height: 10.4 },
@@ -73,6 +75,7 @@ const POOL = [255, 170, 78]; // melted wax, lit from above
 export function paintCandle(rc, lc, cam, candle, shadePixel, under = []) {
   const { foot, radius: r, height: h, flame, scale: k } = candle;
   groundShadow(rc, lc, cam, candle);
+  if (candle.photo) return paintPhotographicCandle(rc, lc, cam, candle, under);
 
   const bottom = cam.P(foot.x, 0, foot.z);
   const top = cam.P(foot.x, h + 1, foot.z);

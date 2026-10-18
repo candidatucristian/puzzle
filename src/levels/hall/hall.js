@@ -6,8 +6,11 @@ import { layoutGallery, paintGallery } from "../top/gallery.js";
 import * as botanic from "./botanic.js";
 import * as chemical from "./chemical.js";
 import { chemistryHallMaterials, paintChemistryBulb, paintHallSconcePhoto } from "./chemicalMaterials.js";
-import { botanicHallMaterials } from "./botanicMaterials.js";
+import { botanicHallMaterials, paintBotanicGrass } from "./botanicMaterials.js";
+import { atticMaterials } from "../top/atticMaterials.js";
+import { paintAtticForeground, paintAtticShade } from "../top/attic.js";
 import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
+import { paintChemistryStairs3D } from "./staircase3D.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
  *  length, three closed doors along either wall, and at its far end the
@@ -166,14 +169,15 @@ export function paintHallOn(ctx, L) {
   if (L.theme === "botanic") botanic.paintBaskets(ctx, L);
   if (L.upper) paintBulb(ctx, L);
   paintGloom(ctx, L);
-  vignette(ctx, W, H, L.wing ? 0.9 : 0.75);
-  grain(ctx, W, H, 0.035);
+  vignette(ctx, W, H, L.wing ? 0.9 : L.botanicMaterials ? 0.8 : 0.75);
+  grain(ctx, W, H, L.botanicMaterials ? 0.008 : 0.035);
 }
 
 export function paintHall(scene, L) {
   const t = scene.textures;
   if (L.theme === "chemistry") L.chemicalMaterials = chemistryHallMaterials(scene);
   if (L.theme === "botanic") L.botanicMaterials = botanicHallMaterials(scene);
+  if (L.wing) L.atticMaterials = atticMaterials(scene);
   const { W, H } = L;
   if (L.theme === "chemistry" && t.exists(chemical.CHEMISTRY_TUBE_RACK)) {
     L.tubeRackPhoto = t.get(chemical.CHEMISTRY_TUBE_RACK).getSourceImage();
@@ -294,13 +298,18 @@ export function paintDoorSwing(scene, L, d, lit) {
   // Preserve objects in front of the door, and the hall's original shade.
   // They must not jump in brightness or move with the opening leaf.
   const foreground = sheet((ctx) => {
+    if (L.atticMaterials) {
+      paintAtticForeground(ctx, L);
+      paintAtticShade(ctx, L);
+      return;
+    }
     if (L.worn && L.theme !== "chemistry") paintDecay(ctx, L);
     for (const s of L.sconces) paintSconce(ctx, L, s);
     paintThings(ctx, L);
     if (L.upper) paintBulb(ctx, L);
     paintGloom(ctx, L);
-    vignette(ctx, L.W, L.H, 0.75, "source-over");
-    grain(ctx, L.W, L.H, 0.035);
+    vignette(ctx, L.W, L.H, L.botanicMaterials ? 0.8 : 0.75, "source-over");
+    grain(ctx, L.W, L.H, L.botanicMaterials ? 0.008 : 0.035);
   });
   // Keep the wood, panels and carved number in a single material. Project
   // that material instead of rasterizing hundreds of strokes per frame.
@@ -546,6 +555,7 @@ function paintFloor(ctx, L) {
     ctx.lineWidth = Math.max(1, 1.4 * u);
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
+  if (paintBotanicGrass(ctx, L)) { ctx.restore(); return; }
   // the runner
   const rw = wall * 0.34;
   const strip = (hw, col) => {
@@ -620,6 +630,11 @@ function paintWall(ctx, L, side) {
   band(dado - H * 0.012, dado + H * 0.012, "#3e2616", "#1a0e08");
   band(-H * 0.5, -H * 0.485, "#3e2616", "#1a0e08");
   band(floor - H * 0.035, floor, "#140b06", "#080403");
+  if (L.botanicMaterials) {
+    for (const [y0, y1] of [[dado - H * 0.012, dado + H * 0.012], [-H * 0.5, -H * 0.485], [floor - H * 0.035, floor]]) {
+      paintProjectedMaterial(ctx, L.botanicMaterials.oak, (u, v) => P(X, y0 + (y1 - y0) * u, 0.7 + (END - 0.7) * v), 0.92, 2, 24);
+    }
+  }
   // the dado's panels
   ctx.strokeStyle = "rgba(4,2,1,0.7)";
   for (let z = 0.75; z < END - 0.2; z += 0.3) {
@@ -628,6 +643,7 @@ function paintWall(ctx, L, side) {
     ctx.lineWidth = Math.max(0.8, (2 * u) / z);
     polygon(ctx, [a, b, c, d]);
     ctx.stroke();
+    if (L.botanicMaterials) paintProjectedMaterial(ctx, L.botanicMaterials.panel, (u, v) => P(X, dado + H * 0.04 + (floor - dado - H * 0.1) * v, z + 0.03 + 0.24 * u), 1, 6, 2);
   }
   // portraits: dark canvases in dull gilt, nobody's face quite to be made out
   // (each hangs in the middle of the wall between two doors, clear of both)
@@ -878,57 +894,82 @@ function paintSideStairs(ctx, L, span, side, dir) {
   const { P, wall, floor, H, u } = L;
   const { z0, z1 } = span;
   const head = L.doorTop, run = wall * 0.075, rise = H * 0.078, n = 12;
+  const visibleFlight = L.theme === "chemistry" && dir > 0;
+  const depthStep = visibleFlight ? 0.11 : 0;
+  const materials = L.chemicalMaterials;
   const X0 = side * wall, out = (i) => side * (wall + i * run);
   const quad = [P(X0, head, z0), P(X0, head, z1), P(X0, floor, z1), P(X0, floor, z0)];
   const poly = (pts, fill) => { polygon(ctx, pts); ctx.fillStyle = fill; ctx.fill(); };
   // its architrave
   poly([P(X0, head - H * 0.045, z0 - 0.06), P(X0, head - H * 0.045, z1 + 0.06), P(X0, floor, z1 + 0.06), P(X0, floor, z0 - 0.06)], "#2c1b10");
+  if (materials) paintProjectedMaterial(ctx, materials.oak, (u, v) => P(X0, head - H * 0.045 + (floor - head + H * 0.045) * v, z0 - 0.06 + (z1 - z0 + 0.12) * u), 0.9, 10, 3);
   poly(quad, "#07090c");
+  if (visibleFlight && paintChemistryStairs3D(ctx, L, span)) return;
   ctx.save();
   polygon(ctx, quad);
   ctx.clip();
   // the far wall of the stairwell, a little light on it from above
-  const fw = [P(X0, head - H, z1), P(out(n + 4), head - H, z1), P(out(n + 4), floor + H, z1), P(X0, floor + H, z1)];
+  const fw = [P(X0, head - H, z1), P(out(n + 4), head - H, z1 + depthStep * (n + 4)), P(out(n + 4), floor + H, z1 + depthStep * (n + 4)), P(X0, floor + H, z1)];
   const g = ctx.createLinearGradient(0, quad[1].y, 0, quad[2].y);
   g.addColorStop(0, dir > 0 ? "#1c2634" : "#12161c");
   g.addColorStop(1, "#0a0d11");
   poly(fw, g);
+  if (visibleFlight && materials) {
+    paintProjectedMaterial(ctx, materials.stairPlaster, (u, v) => P(X0 + (out(n + 4) - X0) * u, head - H + (floor - head + H * 2) * v, z1 + depthStep * (n + 4) * u), 0.7, 10, 6);
+    const light = P(out(n), floor - n * rise - H * 0.16, (z0 + z1) / 2 + n * depthStep);
+    soft(ctx, light.x, light.y, H * 0.16, H * 0.2, "182,204,226", 0.28, "lighter");
+  }
   // the steps, the furthest first: each a riser facing the hall and a tread beyond it
   for (let i = n - 1; i >= 0; i--) {
     const X = out(i), X1 = out(i + 1), y0 = floor - dir * i * rise, y1 = y0 - dir * rise;
+    const aZ = z0 + i * depthStep, bZ = z1 + i * depthStep;
     const lit = dir > 0 ? 0.2 + 0.8 * (i / (n - 1)) : 0.7 * (1 - i / (n - 1));
     if (y1 > 0) {
-      poly([P(X, y1, z0), P(X1, y1, z0), P(X1, y1, z1), P(X, y1, z1)], "#33221a");
-      if (L.chemicalMaterials) paintProjectedMaterial(ctx, L.chemicalMaterials.across, (u, v) => P(X + (X1 - X) * u, y1, z0 + (z1 - z0) * v), 0.85, 3, 3);
-      poly([P(X, y1, z0 + 0.16), P(X1, y1, z0 + 0.16), P(X1, y1, z1 - 0.16), P(X, y1, z1 - 0.16)], "#16261f");
-      poly([P(X, y1, z0), P(X1, y1, z0), P(X1, y1, z1), P(X, y1, z1)], `rgba(${MOON},${(0.2 * lit).toFixed(3)})`);
+      const tread = [P(X, y1, aZ), P(X1, y1, aZ + depthStep), P(X1, y1, bZ + depthStep), P(X, y1, bZ)];
+      poly(tread, visibleFlight ? "#55432f" : "#33221a");
+      if (materials) paintProjectedMaterial(ctx, materials.across, (u, v) => P(X + (X1 - X) * u, y1, aZ + depthStep * u + (z1 - z0) * v), 0.9, 3, 3);
+      poly([P(X, y1, aZ + 0.16), P(X1, y1, aZ + depthStep + 0.16), P(X1, y1, bZ + depthStep - 0.16), P(X, y1, bZ - 0.16)], visibleFlight ? "#35483b" : "#16261f");
+      poly(tread, `rgba(${MOON},${((visibleFlight ? 0.3 : 0.2) * lit).toFixed(3)})`);
     }
     if (dir > 0) {
-      poly([P(X, y0, z0), P(X, y0, z1), P(X, y1, z1), P(X, y1, z0)], "#130c07");
-      poly([P(X, y0, z0 + 0.16), P(X, y0, z1 - 0.16), P(X, y1, z1 - 0.16), P(X, y1, z0 + 0.16)], "#0c1512");
+      poly([P(X, y0, aZ), P(X, y0, bZ), P(X, y1, bZ), P(X, y1, aZ)], visibleFlight ? "#343b39" : "#130c07");
+      if (visibleFlight && materials) paintProjectedMaterial(ctx, materials.stairPlaster, (u, v) => P(X, y1 + (y0 - y1) * v, aZ + (bZ - aZ) * u), 0.8, 3, 2);
+      poly([P(X, y0, aZ + 0.16), P(X, y0, bZ - 0.16), P(X, y1, bZ - 0.16), P(X, y1, aZ + 0.16)], visibleFlight ? "#465449" : "#0c1512");
     }
     // the nose of the step
-    const a = P(X, dir > 0 ? y1 : y0, z0), b = P(X, dir > 0 ? y1 : y0, z1);
-    ctx.strokeStyle = `rgba(190,208,240,${(0.15 + 0.4 * lit).toFixed(3)})`;
+    const a = P(X, dir > 0 ? y1 : y0, aZ), b = P(X, dir > 0 ? y1 : y0, bZ);
+    ctx.strokeStyle = `rgba(190,208,240,${((visibleFlight ? 0.45 : 0.15) + 0.4 * lit).toFixed(3)})`;
     ctx.lineWidth = Math.max(0.8, (2 * u) / z0);
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
   // the rail on the far wall, going with the steps
-  const r0 = P(X0, floor - H * 0.3, z1 - 0.03), r1 = P(out(n), floor - dir * n * rise - H * 0.3, z1 - 0.03);
-  ctx.strokeStyle = "#1c110a";
+  const r0 = P(X0, floor - H * 0.3, z1 - 0.03), r1 = P(out(n), floor - dir * n * rise - H * 0.3, z1 + depthStep * n - 0.03);
+  if (visibleFlight) {
+    for (let i = 0; i < n; i += 2) {
+      const z = z1 + depthStep * i - 0.03, y = floor - i * rise;
+      const a = P(out(i), y, z), b = P(out(i), y - H * 0.3, z);
+      ctx.strokeStyle = "#48515a"; ctx.lineWidth = Math.max(1, 4 * u / z);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.strokeStyle = "rgba(197,213,223,0.45)"; ctx.lineWidth = Math.max(0.5, u / z);
+      ctx.beginPath(); ctx.moveTo(a.x - u, a.y); ctx.lineTo(b.x - u, b.y); ctx.stroke();
+    }
+  }
+  ctx.strokeStyle = visibleFlight ? "#6f543a" : "#1c110a";
   ctx.lineWidth = Math.max(1.6, (9 * u) / z1);
   ctx.beginPath(); ctx.moveTo(r0.x, r0.y); ctx.lineTo(r1.x, r1.y); ctx.stroke();
   ctx.strokeStyle = "rgba(170,190,228,0.35)";
   ctx.lineWidth = Math.max(0.6, (2 * u) / z1);
   ctx.beginPath(); ctx.moveTo(r0.x, r0.y - (3 * u) / z1); ctx.lineTo(r1.x, r1.y - (3 * u) / z1); ctx.stroke();
   // the dark gathering along the flight
-  ctx.fillStyle = dir > 0 ? "rgba(2,3,5,0.28)" : "rgba(2,3,5,0.5)";
+  ctx.fillStyle = visibleFlight ? "rgba(2,3,5,0.08)" : dir > 0 ? "rgba(2,3,5,0.28)" : "rgba(2,3,5,0.5)";
   polygon(ctx, quad);
   ctx.fill();
   ctx.restore();
   // the newel at the foot of it, on the hall side
   const foot = P(X0, floor, z1 + 0.02), top = P(X0, floor - H * 0.4, z1 + 0.02), nw = Math.max(3, (30 * u) / z1);
-  ctx.strokeStyle = "#2a190e";
+  const newelWood = ctx.createLinearGradient(foot.x - nw / 2, 0, foot.x + nw / 2, 0);
+  newelWood.addColorStop(0, "#291d13"); newelWood.addColorStop(0.4, visibleFlight ? "#8b6f4c" : "#2a190e"); newelWood.addColorStop(1, "#302218");
+  ctx.strokeStyle = visibleFlight ? newelWood : "#2a190e";
   ctx.lineWidth = nw;
   ctx.beginPath(); ctx.moveTo(foot.x, foot.y); ctx.lineTo(top.x, top.y); ctx.stroke();
   ctx.fillStyle = "#3c2414";
@@ -1217,7 +1258,7 @@ function paintDoor(ctx, L, d) {
     return { x: top.x + (bot.x - top.x) * b, y: top.y + (bot.y - top.y) * b };
   };
   const quad = (a0, b0, a1, b1) => [f(a0, b0), f(a1, b0), f(a1, b1), f(a0, b1)];
-  const materials = L.chemicalMaterials ?? L.botanicMaterials;
+  const materials = L.chemicalMaterials ?? L.botanicMaterials ?? L.atticMaterials;
   // the architrave
   polygon(ctx, quad(-0.12, -0.05, 1.12, 1));
   ctx.fillStyle = L.theme === "chemistry" ? "#2b3a31" : "#2c1b10";
@@ -1236,9 +1277,9 @@ function paintDoor(ctx, L, d) {
   ctx.save();
   ctx.clip();
   // grain down it
-  if (materials) paintProjectedMaterial(ctx, materials.paint ?? materials.oak, (a, b) => f(a, b), 1, 12, 2);
+  if (materials) paintProjectedMaterial(ctx, materials.door ?? materials.paint ?? materials.oak, (a, b) => f(a, b), 1, 12, 2);
   const rnd = lcg(300 + d.i * 7 + (d.side > 0 ? 50 : 0));
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; !materials?.door && i < 26; i++) {
     const a = rnd();
     const p = f(a, 0), q = f(a + (rnd() - 0.5) * 0.04, 1);
     ctx.strokeStyle = rnd() < 0.6 ? "rgba(6,3,1,0.3)" : "rgba(255,200,150,0.05)";
@@ -1248,7 +1289,7 @@ function paintDoor(ctx, L, d) {
   ctx.restore();
   // six panels: each sunk, dark on its upper and near edges, lit on the others
   const rows = [[0.13, 0.36], [0.4, 0.66], [0.7, 0.95]]; // under a deep top rail
-  for (const [b0, b1] of rows) {
+  for (const [b0, b1] of materials?.door ? [] : rows) {
     for (const [a0, a1] of [[0.1, 0.46], [0.54, 0.9]]) {
       polygon(ctx, quad(a0, b0, a1, b1));
       ctx.fillStyle = "rgba(6,3,2,0.5)";
@@ -1849,12 +1890,25 @@ function paintThings(ctx, L) {
 // the dark of a house asleep: the sconces and the moon down the stairs are all there is
 function paintGloom(ctx, L) {
   const { W, H, u } = L;
+  const stair = L.theme === "chemistry" && L.stairs ? {
+    near: L.P(L.wall, L.doorTop, L.stairs.z0), far: L.P(L.wall, L.doorTop, L.stairs.z1),
+    nearFoot: L.P(L.wall, L.floor, L.stairs.z0), farFoot: L.P(L.wall, L.floor, L.stairs.z1),
+  } : null;
   const step = Math.max(6, Math.round(10 * u));
   for (let y = 0; y < H; y += step) {
     for (let x = 0; x < W; x += step) {
       const d = Math.hypot((x + step / 2 - L.vp.x) / (W * 0.62), (y + step / 2 - L.vp.y) / (H * 0.74));
-      // upstairs the dark comes in closer
-      const a = L.wing ? Math.min(0.92, 0.14 + Math.max(0, d - 0.2) * 1.35) : L.theme === "chemistry" ? Math.min(0.9, 0.1 + Math.max(0, d - 0.22) * 1.3) : L.worn ? Math.min(0.9, Math.max(0, d - 0.24) * 1.3) : Math.min(0.8, Math.max(0, d - 0.34) * 1.05);
+      // Upstairs stays dim enough for the separately rendered Morse flashes.
+      let a = L.botanicMaterials ? Math.min(0.82, 0.3 + Math.max(0, d - 0.28) * 0.95) : L.wing ? Math.min(0.92, 0.14 + Math.max(0, d - 0.2) * 1.35) : L.theme === "chemistry" ? Math.min(0.9, 0.22 + Math.max(0, d - 0.22) * 1.3) : L.worn ? Math.min(0.9, Math.max(0, d - 0.24) * 1.3) : Math.min(0.8, Math.max(0, d - 0.34) * 1.05);
+      if (stair) {
+        const px = x + step / 2, py = y + step / 2, feather = 14 * u;
+        const t = Math.max(0, Math.min(1, (px - stair.far.x) / (stair.near.x - stair.far.x)));
+        const top = stair.far.y + (stair.near.y - stair.far.y) * t;
+        const bottom = stair.farFoot.y + (stair.nearFoot.y - stair.farFoot.y) * t;
+        const across = Math.max(0, Math.min(1, (px - stair.far.x + feather) / feather, (stair.near.x - px + feather) / feather));
+        const down = Math.max(0, Math.min(1, (py - top + feather) / feather, (bottom - py + feather) / feather));
+        a *= 1 - 0.66 * across * down;
+      }
       if (a <= 0.004) continue;
       ctx.fillStyle = `rgba(3,4,6,${a.toFixed(3)})`;
       ctx.fillRect(x, y, step, step);

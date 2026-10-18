@@ -3,6 +3,8 @@ import RoomScene from "../house/RoomScene.js";
 import { layoutRoom3, paintRoom3, releaseRoom3Art, SHIP_BOTTLE } from "./room3.js";
 import { loadRoom3Materials, room3Materials } from "./materials.js";
 import { loadRoom3Botanicals, room3Botanicals } from "./botanical.js";
+import { ROOM3_PHOTOGRAPH, ROOM3_FLAME, loadRoom3Photography } from "./photographicRoom.js";
+import { loadChessPhotography } from "../chessboard/photographicChess.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The captain's room: the third room off the hall (see house/RoomScene.js for
@@ -29,7 +31,10 @@ export default class Room3Scene extends RoomScene {
   }
 
   preload() {
-    this.load.image(SHIP_BOTTLE.key, SHIP_BOTTLE.url);
+    super.preload();
+    if (!this.textures.exists(SHIP_BOTTLE.key)) this.load.image(SHIP_BOTTLE.key, SHIP_BOTTLE.url);
+    loadRoom3Photography(this);
+    loadChessPhotography(this, { table: false });
     loadRoom3Materials(this);
     loadRoom3Botanicals(this);
   }
@@ -37,7 +42,7 @@ export default class Room3Scene extends RoomScene {
   layout(W, H, levels) {
     const on = {};
     for (const [light, level] of Object.entries(LIT_FOR)) on[light] = !levels.isCompleted(levels.indexOf(level));
-    const L = layoutRoom3(W, H, on);
+    const L = layoutRoom3(W, H, on, { photographic: this.textures.exists(ROOM3_PHOTOGRAPH) });
     L.surfaceMaterials = room3Materials(this);
     L.furnitureMaterial = L.surfaceMaterials?.furniture;
     L.botanicals = room3Botanicals(this);
@@ -54,8 +59,8 @@ export default class Room3Scene extends RoomScene {
 
   live(L, k, glow) {
     const on = L.on, g = L.glows;
-    // Keep the original table position and hit area. A separate full-resolution
-    // image retains the fine rigging and glass when the camera walks up to it.
+    // The bottle and its hit area share the photographed tabletop landmarks.
+    // A separate image retains the fine rigging and transparent glass up close.
     const { box } = L.things.find(thing => thing.level === "compass");
     const source = this.textures.get(SHIP_BOTTLE.key).getSourceImage();
     const scale = Math.min(box.width / source.width, box.height / source.height);
@@ -74,6 +79,12 @@ export default class Room3Scene extends RoomScene {
       .setDepth(-9);
     // the lantern and the candle, never still; the lamp, breathing
     this._flames = [on.ship && glow(g.lantern, 0.34), on.chess && glow(g.flame, 0.4)].filter(Boolean);
+    this._candleBody = null;
+    if (L.photographic && on.chess) {
+      const height = 12 * L.H / 948;
+      this._candleBody = this.add.image(g.flame.x, g.flame.y, ROOM3_FLAME)
+        .setOrigin(0.5, 0.94).setDisplaySize(height * 0.38, height).setDepth(-7.9);
+    }
     if (on.phone) {
       const lamp = glow(g.desk, 0.18);
       this.ambientTween({ targets: lamp, alpha: { from: 0.15, to: 0.22 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
@@ -87,6 +98,7 @@ export default class Room3Scene extends RoomScene {
   tick(t) {
     this._flames.forEach((flame, i) => flame.setAlpha(0.34 + 0.06 * Math.sin(t * 9 + i * 2) + Math.random() * 0.05));
     this._screen?.setAlpha(t % 3 < 1.6 ? 0.25 + 0.3 * Math.abs(Math.sin(t * 6)) : 0.12);
+    this._candleBody?.setAlpha(0.9 + 0.08 * Math.sin(t * 9)).setRotation(0.04 * Math.sin(t * 5));
   }
 
   // with the desk lamp out there is only the moon on the chest

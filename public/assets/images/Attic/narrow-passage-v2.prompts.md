@@ -1,0 +1,18 @@
+# Narrow dark attic passage
+
+Mode: built-in imagegen.
+
+Asset: `narrow-passage-photo-v2.png`. Reference: `.artifacts/attic-reference/narrow-attic-layout.png`, a newly authored perspective guide. The photograph supplies the entire coherent environment. Door leaves, numbers, handles, lantern lights, interactions and animation remain separate. Normalised reference projection: vp=(.5W,.45H), wall=.5W, floor=.72H, doorTop=-.36H, ceil=-.82H, spring=-.41H; doors z=1.8, length=.5.
+
+## Final prompt
+
+Use case: sketch-to-render.
+Input image 1 is a STRICT PERSPECTIVE / DOORWAY POSITION GUIDE ONLY. Replace EVERY flat primitive with a real photographed environment; do NOT retain its flat colors or drawn style.
+Asset type: full photographic game environment background, landscape 1536x1024.
+Primary request: an EXTREMELY PHOTOREALISTIC DARK AND NARROW attic passage in an old English manor at night, the viewer standing inside the loft beneath the low pitched roof. The hallway must feel cramped, intimate and deep; not a grand room, not a wide loft. Preserve the reference camera, central vanishing point at 50% width / 45% height, continuous flat floor, and the TWO BLACK DOORWAY OPENINGS exactly where they are in the reference.
+Architecture: the dark openings are on the opposing SIDE walls, not front-facing doors. Their inner LEAF APERTURE coordinates in the 1536x1024 reference are: LEFT near-top (341,256), far-top (434,301), far-bottom (434,781), near-bottom (341,870); RIGHT near-top (1195,256), far-top (1102,301), far-bottom (1102,781), near-bottom (1195,870). Preserve these two quadrilateral BLACK EMPTY OPENINGS with NO door leaves inside them, framed by actual dark walnut architraves; do not place objects across them. Closed door leaves are animated separately by the game. No other doorway. No text or numbers.
+Surfaces: rough very dark oak structural posts, low timber collar ties, dense uneven rafters under actual roof boards with visible nailheads and irregular fibres, deep eaves clearly visible along both sides. Old lime plaster between real timber studs, naturally chipped in a FEW places with aged brick beneath. Authentic dark plank floor, irregular endgrain, dust in joints, subtle scuffs, real depth. The original reference contains only simplified structural shapes; add many authentic smaller roof rafters and realistic timber thickness, joinery, iron straps and natural imperfections.
+Storage: a convincing real attic with stacked old wooden crates and trunks, a couple of wood barrels with metal hoops, a burlap sack, rolled textiles and a draped chair, all gathered ALONG THE EXTREME SIDES and deep at the end, under the eaves. In foreground edges bottom left and right, boxes/barrels partially cropped make the aisle look appreciably NARROWER. Leave both doorway openings fully unobstructed and a narrow central walking path.
+Lighting: very DARK LOW-KEY NIGHT photograph. Nearly black corners and rafters; wood visible with subtle warm highlights, gentle dull blue moonlight through one SMALL rainy window on the far gable, low amber practical light OUT OF FRAME. No bright daylight, no brilliant light shafts, no fog, no orange fantasy glow. NO lanterns on the walls by the doors; the game adds its own lights. Keep visual detail in the shadows without raising exposure.
+Style: an actual high-end cinematic location photograph, physical believable materials, natural lens depth and light falloff, real tonal complexity, no painted strokes at all. The reference is only perspective guidance; the final must not look like a textured wireframe, flat-polygon render, collage, procedural game mesh or painting. Photographic realism is the central requirement. NO people, NO UI, NO labels, NO watermark.
+

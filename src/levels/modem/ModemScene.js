@@ -9,8 +9,8 @@ import { paintRoom, releaseRoomArt } from "./room.js";
 // A room at night, painted like the office in OVERTIME: an old router on a
 // desk under a table lamp, with a diagram on the wall beside it. Its name on
 // the front — W. LEIBNIZ — is the only nod to binary. It never stopped
-// transmitting: of its thirteen lights, the eight on the right show one
-// letter at a time as a whole byte — a light on for each 1, dark for each 0,
+// transmitting: of its twelve lights, the seven on the right show one
+// letter at a time as its seven-bit ASCII code — a light on for each 1, dark for each 0,
 // the first bit on the left — held long enough to be read; and after each
 // letter one of the five on the left turns red. Five letters, then a pause,
 // and it starts over:  H T T P S  →  HTTPS

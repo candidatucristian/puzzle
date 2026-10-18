@@ -63,33 +63,33 @@ export function paintWall(ctx, L, side) {
   const { P, H, wall, floor, ceil, u } = L, X = side * wall;
   const rnd = lcg(side < 0 ? 105 : 907), dado = floor - H * 0.46;
   const quad = (y0, y1, z0 = 0.7, z1 = END) => [P(X, y0, z0), P(X, y0, z1), P(X, y1, z1), P(X, y1, z0)];
-  fill(ctx, quad(ceil, floor), gradient(ctx, P(X, 0, 0.8).x, 0, P(X, 0, END).x, 0, [[0, "#2c322b"], [0.5, "#202923"], [1, "#121d1b"]]));
+  fill(ctx, quad(ceil, floor), gradient(ctx, P(X, 0, 0.8).x, 0, P(X, 0, END).x, 0, [[0, "#858580"], [0.5, "#6f7572"], [1, "#4d5857"]]));
   ctx.save(); polygon(ctx, quad(ceil, dado)); ctx.clip();
   if (L.chemicalMaterials) paintProjectedMaterial(ctx, L.chemicalMaterials.plaster, (u, v) => P(X, ceil + (dado - ceil) * v, 0.7 + (END - 0.7) * u), 0.92, 24, 3);
   // Mineral flecks and irregular wash in the old lime plaster.
-  for (let i = 0; i < 1300; i++) {
+  for (let i = 0; !L.chemicalMaterials?.whiteWalls && i < 1300; i++) {
     const z = 0.72 + rnd() * 4, y = ceil + rnd() * (dado - ceil), p = P(X, y, z);
     ctx.fillStyle = i % 4 ? "rgba(176,175,145,0.045)" : "rgba(13,26,22,0.1)";
     ctx.fillRect(p.x, p.y, (0.6 + rnd() * 2) * u / z, (0.6 + rnd() * 3) * u / z);
   }
   ctx.restore();
-  fill(ctx, quad(dado, floor), "#162724");
+  fill(ctx, quad(dado, floor), "#717a75");
   const tileH = H * 0.056, tileZ = 0.16;
   for (let row = 0, y = dado; y < floor; y += tileH, row++) {
     for (let z = 0.65 - (row % 2) * tileZ / 2; z < END; z += tileZ) {
       const k = 0.8 + rnd() * 0.3;
       const tile = quad(y + H * 0.0015, Math.min(floor, y + tileH - H * 0.0015), z + 0.002, z + tileZ - 0.002);
-      fill(ctx, tile, `rgb(${Math.round(40 * k)},${Math.round(66 * k)},${Math.round(58 * k)})`);
+      fill(ctx, tile, `rgb(${Math.round(150 * k)},${Math.round(153 * k)},${Math.round(147 * k)})`);
       if (L.chemicalMaterials) paintProjectedMaterial(ctx, L.chemicalMaterials.tile, (u, v) => P(X, y + H * 0.0015 + (Math.min(floor, y + tileH - H * 0.0015) - y - H * 0.0015) * v, z + 0.002 + (tileZ - 0.004) * u), 0.9, 3, 1);
-      line(ctx, [tile[0], tile[1]], "rgba(130,151,123,0.15)", Math.max(0.35, u / z));
-      line(ctx, [tile[3], tile[2]], "rgba(3,15,13,0.35)", Math.max(0.35, u / z));
+      line(ctx, [tile[0], tile[1]], "rgba(214,217,206,0.2)", Math.max(0.35, u / z));
+      line(ctx, [tile[3], tile[2]], "rgba(49,59,54,0.35)", Math.max(0.35, u / z));
     }
   }
-  fill(ctx, quad(dado - H * 0.014, dado + H * 0.008), "#192823");
-  fill(ctx, quad(dado - H * 0.014, dado - H * 0.011), "#65725a");
-  fill(ctx, quad(floor - H * 0.035, floor), "#11201c");
-  fill(ctx, quad(ceil, ceil + H * 0.04), "#28382e");
-  fill(ctx, quad(ceil + H * 0.038, ceil + H * 0.043), "#71806a");
+  fill(ctx, quad(dado - H * 0.014, dado + H * 0.008), "#78817b");
+  fill(ctx, quad(dado - H * 0.014, dado - H * 0.011), "#c0c0b3");
+  fill(ctx, quad(floor - H * 0.035, floor), "#36403d");
+  fill(ctx, quad(ceil, ceil + H * 0.04), "#737d76");
+  fill(ctx, quad(ceil + H * 0.038, ceil + H * 0.043), "#c0c2b6");
   // Charts are laid onto the wall in perspective, like the framed specimens below.
   wallChart(ctx, L, side, 1.38, 1.77, -H * 0.56, -H * 0.36, 0);
   wallChart(ctx, L, side, 2.78, 2.98, -H * 0.48, -H * 0.29, 1);
@@ -171,12 +171,12 @@ export function paintPipes(ctx, L) {
 }
 
 export function paintEndDado(ctx, L, { a, b, dado }) {
-  ctx.fillStyle = "#253b34"; ctx.fillRect(a.x, dado, b.x - a.x, b.y - dado);
+  ctx.fillStyle = "#777f79"; ctx.fillRect(a.x, dado, b.x - a.x, b.y - dado);
   if (L.chemicalMaterials) paintProjectedMaterial(ctx, L.chemicalMaterials.tile, (u, v) => ({ x: a.x + (b.x - a.x) * u, y: dado + (b.y - dado) * v }), 0.9, 2, 2);
   const size = L.H * 0.056 / END;
-  for (let y = dado; y < b.y; y += size) line(ctx, [{ x: a.x, y }, { x: b.x, y }], "#172b25", 0.7);
-  for (let x = a.x; x < b.x; x += size * 2.2) line(ctx, [{ x, y: dado }, { x, y: b.y }], "#172b25", 0.7);
-  ctx.fillStyle = "#758068"; ctx.fillRect(a.x, dado - 2, b.x - a.x, 2);
+  for (let y = dado; y < b.y; y += size) line(ctx, [{ x: a.x, y }, { x: b.x, y }], "#525c56", 0.7);
+  for (let x = a.x; x < b.x; x += size * 2.2) line(ctx, [{ x, y: dado }, { x, y: b.y }], "#525c56", 0.7);
+  ctx.fillStyle = "#bcc0b4"; ctx.fillRect(a.x, dado - 2, b.x - a.x, 2);
 }
 
 // Glassware is drawn in local bench units, with the base at y=0. The wall
@@ -292,8 +292,12 @@ export function paintThings(ctx, L) {
   // test tubes on its cabinet by door X, right; then by door VII the still,
   // left, and by door IX the balance, right, clear of the lever over it
   labCabinet(ctx, L, -1, 3.31, 3.64, { height: 0.62, rows: 4, cols: 2, glass: true, depth: 0.1, vesselPhotos: L.vesselPhotoSheet });
-  on(labCabinet(ctx, L, 1, 3.22, 3.52), () => paintTubeRack(ctx, L.tubeRackPhoto));
-  on(labCabinet(ctx, L, -1, 1.8, 2.1), () => {
+  on(labCabinet(ctx, L, 1, 3.12, 3.52), () => paintTubeRack(ctx, L.tubeRackPhoto));
+  const bench = labCabinet(ctx, L, -1, 1.87, 2.53, { depth: 0.12, cols: 4 });
+  if (L.chemicalMaterials?.workgroups) {
+    on(bench.at(0.78), () => paintHallApparatus(ctx, L.chemicalMaterials.workgroups[1], 0, 0, 140));
+  }
+  on(bench.at(0.16), () => {
     if (L.chemicalMaterials) paintHallApparatus(ctx, L.chemicalMaterials.apparatus[1], 0, 0, 137);
     else paintStill(ctx, L.vesselPhotoSheet);
   });
@@ -301,13 +305,51 @@ export function paintThings(ctx, L) {
     if (L.chemicalMaterials) paintHallApparatus(ctx, L.chemicalMaterials.apparatus[0], 14, 0, 128);
     else paintBalance(ctx);
   });
+  paintLaboratoryShelves(ctx, L);
   // A long apothecary counter beneath the blackboard, with drawers and bottles.
+  if (paintLaboratoryCounter(ctx, L)) return;
   const back = P(0, floor, END - 0.05), k = H / 700 / END;
   ctx.save(); ctx.translate(back.x, back.y); ctx.scale(k, k);
   cabinet(ctx, 620, 170, false, L.vesselPhotoSheet, L.chemicalMaterials);
   const rnd = lcg(713);
   for (let i = 0; i < 13; i++) vessel(ctx, -271 + i * 44, -177, 24 + rnd() * 8, 48 + rnd() * 37, { amber: i % 3 !== 0, label: ["NaCl", "Cu", "Fe", "S"][i % 4], stoppered: true, liquid: i % 3 ? "114,82,33" : "65,111,113", level: 0.48 }, L.vesselPhotoSheet);
   ctx.restore();
+}
+
+function paintLaboratoryShelves(ctx, L) {
+  const materials = L.chemicalMaterials;
+  if (!materials?.reagentShelf) return;
+  const { P, wall, H } = L;
+  for (const [side, z0, z1] of [[-1, 1.94, 2.54], [1, 2.14, 2.41], [1, 3.14, 3.5]]) {
+    const X = side * wall, front = side * (wall - wall * 0.024);
+    const bottom = -H * 0.1, height = wall * (z1 - z0) / ((z0 + z1) / 2) / 1.4, top = bottom - height;
+    const zAt = u => side < 0 ? z0 + (z1 - z0) * u : z1 - (z1 - z0) * u;
+    const quad = [P(front, top, z0), P(front, top, z1), P(front, bottom, z1), P(front, bottom, z0)];
+    fill(ctx, quad.map(p => ({ x: p.x + 2 * L.u, y: p.y + 3 * L.u })), "rgba(0,0,0,0.26)");
+    paintProjectedMaterial(ctx, materials.oak, (u, v) => P(X + (front - X) * u, top + height * v, z0), 0.78, 2, 2);
+    paintProjectedMaterial(ctx, materials.reagentShelf, (u, v) => P(front, top + height * v, zAt(u)), 1, 16, 3);
+  }
+}
+
+function paintLaboratoryCounter(ctx, L) {
+  const materials = L.chemicalMaterials;
+  if (!materials?.counterFront) return false;
+  const { P, floor, H } = L, scale = H / 700;
+  const half = 470 * scale, top = floor - 170 * scale, front = END - 0.22;
+  const base = P(0, floor, front);
+  soft(ctx, base.x, base.y, half / front * 1.08, 11 * scale, "0,0,0", 0.65);
+  for (const x0 of [-half, 0]) {
+    paintProjectedMaterial(ctx, materials.counterFront, (u, v) => P(x0 + half * u, top + (floor - top) * v, front), 1, 6, 2);
+  }
+  paintProjectedMaterial(ctx, materials.slate, (u, v) => P(-half - 5 * scale + (half * 2 + 10 * scale) * u, top - 5 * scale, END - (END - front + 0.015) * v), 1, 8, 4);
+  fill(ctx, [P(-half - 5 * scale, top - 5 * scale, front - 0.015), P(half + 5 * scale, top - 5 * scale, front - 0.015), P(half + 5 * scale, top, front - 0.015), P(-half - 5 * scale, top, front - 0.015)], "#182021");
+  for (const [x, index, height] of [[-285, 2, 96], [0, 0, 118], [290, 3, 78]]) {
+    const p = P(x * scale, top - 5 * scale, END - 0.1), k = scale / (END - 0.1);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.scale(k, k);
+    paintHallApparatus(ctx, materials.workgroups[index], 0, 0, height);
+    ctx.restore();
+  }
+  return true;
 }
 
 // ── the end wall: a blackboard where the window was ──────────────────────────
@@ -412,7 +454,7 @@ function blackboard(L) {
 export function paintEndBoard(ctx, L) {
   const { P, wall, floor, ceil, H } = L;
   const a = P(-wall, ceil, END), b = P(wall, floor, END);
-  ctx.fillStyle = gradient(ctx, 0, a.y, 0, b.y, [[0, "#141c19"], [1, "#1c2925"]]);
+  ctx.fillStyle = gradient(ctx, 0, a.y, 0, b.y, [[0, "#737b74"], [1, "#505c58"]]);
   ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
   paintFlatMaterial(ctx, L.chemicalMaterials?.plaster, a.x, a.y, b.x - a.x, b.y - a.y, L.u * 0.3, 0.9);
   const dado = P(0, floor - H * 0.36, END).y;
@@ -464,7 +506,7 @@ export function labCabinet(ctx, L, side, z0, z1, { depth = 0.11, height = 0.3, r
   const front = [face(top, 0), face(top, 1), face(floor, 1), face(floor, 0)];
   quad(front, gradient(ctx, front[0].x, 0, front[1].x, 0, [[0, "#3a2718"], [1, "#1c120a"]]));
   const materials = L.chemicalMaterials;
-  if (materials) paintProjectedMaterial(ctx, materials.oak, (u, v) => face(top + (floor - top) * v, u), 0.9, 12, 2);
+  if (materials) paintProjectedMaterial(ctx, !glass && materials.drawerFace ? materials.paint : materials.oak, (u, v) => face(top + (floor - top) * v, u), 0.9, 12, 2);
   const plinth = H * 0.025, frame = 0.05;
   const cell = (r, c) => {
     const y0 = top + (floor - plinth - top) * (r / rows), y1 = top + (floor - plinth - top) * ((r + 1) / rows);
@@ -492,16 +534,22 @@ export function labCabinet(ctx, L, side, z0, z1, { depth = 0.11, height = 0.3, r
       } else {
         // a drawer: its face, a dark gap round it, light along its top edge
         quad(pts, gradient(ctx, pts[0].x, pts[0].y, pts[2].x, pts[2].y, [[0, "#4e3622"], [0.6, "#352313"], [1, "#24170c"]]));
-        if (materials) paintProjectedMaterial(ctx, materials.oak, (u, v) => face(d.y0 + (d.y1 - d.y0) * v, d.t0 + (d.t1 - d.t0) * u), 0.9, 4, 2);
+        if (!glass && materials?.drawerFace) {
+          const tAt = u => side < 0 ? d.t0 + (d.t1 - d.t0) * u : d.t1 - (d.t1 - d.t0) * u;
+          paintProjectedMaterial(ctx, materials.drawerFace, (u, v) => face(d.y0 + (d.y1 - d.y0) * v, tAt(u)), 1, 6, 2);
+        } else if (materials) paintProjectedMaterial(ctx, materials.oak, (u, v) => face(d.y0 + (d.y1 - d.y0) * v, d.t0 + (d.t1 - d.t0) * u), 0.9, 4, 2);
         ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.lineWidth = Math.max(0.6, 1.2 * k);
         polygon(ctx, pts); ctx.stroke();
         ctx.strokeStyle = "rgba(255,214,160,0.16)";
         ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.stroke();
         // a brass card-holder, the card in it
-        const card = face(d.y0 + (d.y1 - d.y0) * 0.27, mid);
-        ctx.fillStyle = "#8a7444"; ctx.fillRect(card.x - 4 * k, card.y - 3 * k, 8 * k, 6 * k);
-        ctx.fillStyle = "#cbbf9a"; ctx.fillRect(card.x - 3.2 * k, card.y - 2.2 * k, 6.4 * k, 4.4 * k);
+        if (glass || !materials?.drawerFace) {
+          const card = face(d.y0 + (d.y1 - d.y0) * 0.27, mid);
+          ctx.fillStyle = "#8a7444"; ctx.fillRect(card.x - 4 * k, card.y - 3 * k, 8 * k, 6 * k);
+          ctx.fillStyle = "#cbbf9a"; ctx.fillRect(card.x - 3.2 * k, card.y - 2.2 * k, 6.4 * k, 4.4 * k);
+        }
       }
+      if (!glass && materials?.drawerFace) continue;
       // the brass handle, its shadow under it
       const h = face(d.y0 + (d.y1 - d.y0) * (glazed ? 0.5 : 0.6), glazed ? d.t1 - (d.t1 - d.t0) * 0.08 : mid);
       ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.ellipse(h.x + 1.5 * k, h.y + 2 * k, 3.2 * k, 2.6 * k, 0, 0, Math.PI * 2); ctx.fill();
@@ -516,21 +564,21 @@ export function labCabinet(ctx, L, side, z0, z1, { depth = 0.11, height = 0.3, r
   const end = [P(Xw, top, z0), P(Xf, top, z0), P(Xf, floor, z0), P(Xw, floor, z0)];
   quad(end, gradient(ctx, end[0].x, 0, end[1].x, 0, [[0, "#1a110a"], [1, "#2c1e12"]]));
   if (materials) {
-    paintProjectedMaterial(ctx, materials.oak, (u, v) => P(Xw + (Xf - Xw) * u, top + (floor - top) * v, z0), 0.78, 2, 2);
+    paintProjectedMaterial(ctx, !glass && materials.drawerFace ? materials.paint : materials.oak, (u, v) => P(Xw + (Xf - Xw) * u, top + (floor - top) * v, z0), 0.78, 2, 2);
     quad(end, "rgba(0,0,0,0.35)");
   }
   // the top: oak, lit, a thicker edge standing proud
   const lid = H * 0.012, over = side * wall * 0.006, Xo = Xf - over;
   const topQuad = [P(Xo, top - lid, z0 - 0.006), P(Xw, top - lid, z0 - 0.006), P(Xw, top - lid, z1 + 0.006), P(Xo, top - lid, z1 + 0.006)];
   quad(topQuad, gradient(ctx, topQuad[0].x, topQuad[0].y, topQuad[2].x, topQuad[2].y, [[0, "#6a4a2c"], [1, "#3a2816"]]));
-  if (materials) paintProjectedMaterial(ctx, materials.across, (u, v) => P(Xo + (Xw - Xo) * u, top - lid, z0 - 0.006 + (z1 - z0 + 0.012) * v), 1, 4, 4);
+  if (materials) paintProjectedMaterial(ctx, !glass && materials.drawerFace ? materials.slate : materials.across, (u, v) => P(Xo + (Xw - Xo) * u, top - lid, z0 - 0.006 + (z1 - z0 + 0.012) * v), 1, 4, 4);
   quad([P(Xo, top - lid, z0 - 0.006), P(Xw, top - lid, z0 - 0.006), P(Xw, top, z0 - 0.006), P(Xo, top, z0 - 0.006)], "#2a1c10");
   quad([P(Xo, top - lid, z0 - 0.006), P(Xo, top - lid, z1 + 0.006), P(Xo, top, z1 + 0.006), P(Xo, top, z0 - 0.006)], "#4a321c");
   ctx.strokeStyle = "rgba(255,220,170,0.22)"; ctx.lineWidth = Math.max(0.6, kAt(0));
   const e0 = P(Xo, top - lid, z0 - 0.006), e1 = P(Xo, top - lid, z1 + 0.006);
   ctx.beginPath(); ctx.moveTo(e0.x, e0.y); ctx.lineTo(e1.x, e1.y); ctx.stroke();
   const m = P((Xw + Xf) / 2, top - lid, (z0 + z1) / 2);
-  return { x: m.x, y: m.y, k: kAt(0.5) };
+  return { x: m.x, y: m.y, k: kAt(0.5), at: t => ({ ...P((Xw + Xf) / 2, top - lid, z0 + (z1 - z0) * t), k: kAt(t) }) };
 }
 
 // ── what stands on them, drawn in their own units (a pixel at the picture) ──
