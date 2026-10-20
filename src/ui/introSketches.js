@@ -212,12 +212,13 @@ export function drawThree(svg) {
 
 /** One of the three alone — for the chapter card of their floor: the svg is
  *  framed on their ring, which draws itself from `at`, and then what is in it. */
-export function drawEmblem(svg, who, at = 0) {
+// `pace` under 1 draws it quicker (a chapter card that is up only a moment)
+export function drawEmblem(svg, who, at = 0, pace = 1) {
   const { cx, lines } = EMBLEMS[who];
   svg.setAttribute("viewBox", `${cx - 112} 206 224 224`);
   const g = group(svg, "co-emblem");
-  ink(g, circle(cx, 318, 96), at, 1300);
-  inks(g, lines, at + 800, 900, 380);
+  ink(g, circle(cx, 318, 96), at, 1300 * pace);
+  inks(g, lines, at + 800 * pace, 900 * pace, 380 * pace);
   return g;
 }
 

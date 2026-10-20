@@ -33,7 +33,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Legacy drawing fonts belong to the rooms. Interface fonts are self-hosted. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Special+Elite&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Dancing+Script:wght@400..600&family=Special+Elite&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -311,6 +311,14 @@
           <!-- the front door in the film: it glints, and a click on it goes in -->
           <div id="start-door" aria-hidden="true">
             <canvas id="start-door-glint"></canvas>
+          </div>
+          <!-- the house's name, low on the left, laid into the dark of the picture -->
+          <div id="start-legend">
+            <p class="legend-eyebrow">The Ashcombe residence</p>
+            <h1 class="legend-title">Ashcombe Manor</h1>
+            <span class="legend-rule" aria-hidden="true"></span>
+            <p class="legend-line">Home of Ivy, Silas and Orion Ashcombe.</p>
+            <p class="legend-info"><svg class="legend-info-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4" /><path d="M12 10.6 V16.4 M12 7.6 V7.7" /></svg>Click on the door to enter the manor</p>
           </div>
           <canvas
             id="start-moon"

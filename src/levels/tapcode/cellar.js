@@ -1,6 +1,7 @@
 import { TAP_WORD, tapPair } from "./puzzle.js";
 import { paintMaps } from "./maps.js";
 import { soft, grain, vignette, glowCanvas, rgb, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
+import { cellarPhotographicMaterials, paintCellarPhotography, paintCellarSurface } from "./photographicCellar.js";
 
 /** The cellar for TAPCODE, under the house: no window, and no light but what
  *  comes down the hatch and a candle on a stool. A brick wall, damp to the
@@ -65,31 +66,37 @@ export function paintCellar(scene, L) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  // Sample only material surfaces from the photograph. Architecture, props
-  // and the square lattice keep their original perspective and coordinates.
-  const materials = t.exists(CELLAR_MATERIALS_KEY)
-    ? t.get(CELLAR_MATERIALS_KEY).getSourceImage()
-    : null;
-  paintWall(ctx, L, materials);
-  paintJoists(ctx, L);
-  paintFloor(ctx, L, materials);
-  paintHatch(ctx, L);
-  paintPipe(ctx, L);
-  paintSlab(ctx, L, materials);
-  paintCarvedZ(ctx, L);
-  paintRack(ctx, L);
-  paintBarrel(ctx, L, W * 0.05, L.floorY + 16 * L.u, 92 * L.u, 128 * L.u);
-  paintBarrel(ctx, L, W * 0.112, L.floorY + 4 * L.u, 80 * L.u, 112 * L.u);
-  paintCrate(ctx, L);
-  paintMaps(ctx, L);
-  paintLadder(ctx, L);
-  paintPuddle(ctx, L);
-  paintStool(ctx, L);
-  paintCarvingTools(ctx, L);
-  paintCandleLight(ctx, L);
-  paintDamp(ctx, L);
-  vignette(ctx, W, H, 0.85);
-  grain(ctx, W, H, 0.03);
+  if (paintCellarPhotography(ctx, scene, L)) {
+    // The exact six clue pairs remain native; the photographed Z and square
+    // lattice are part of the room, with no duplicate geometry on top.
+    paintSlabMarks(ctx, L);
+  } else {
+    L.photographicMaterials = cellarPhotographicMaterials(scene);
+    // Keep the accepted material-by-material scene as the fallback.
+    const materials = t.exists(CELLAR_MATERIALS_KEY)
+      ? t.get(CELLAR_MATERIALS_KEY).getSourceImage()
+      : null;
+    paintWall(ctx, L, materials);
+    paintJoists(ctx, L);
+    paintFloor(ctx, L, materials);
+    paintHatch(ctx, L);
+    paintPipe(ctx, L);
+    paintSlab(ctx, L, materials);
+    paintCarvedZ(ctx, L);
+    paintRack(ctx, L);
+    paintBarrel(ctx, L, W * 0.05, L.floorY + 16 * L.u, 92 * L.u, 128 * L.u);
+    paintBarrel(ctx, L, W * 0.112, L.floorY + 4 * L.u, 80 * L.u, 112 * L.u);
+    paintCrate(ctx, L);
+    paintMaps(ctx, L);
+    paintLadder(ctx, L);
+    paintPuddle(ctx, L);
+    paintStool(ctx, L);
+    paintCarvingTools(ctx, L);
+    paintCandleLight(ctx, L);
+    paintDamp(ctx, L);
+    vignette(ctx, W, H, 0.85);
+    grain(ctx, W, H, 0.03);
+  }
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.flame, paintFlame());
   addCanvasTexture(t, K.glow, glowCanvas());
@@ -147,14 +154,21 @@ function paintWall(ctx, L, materials) {
       ctx.fillStyle = g;
       ctx.fillRect(x + pad, y + pad, bw - pad * 2, bh - pad * 2);
       const face = BRICK_SURFACES[((r * 7 + Math.round(x / bw)) % BRICK_SURFACES.length + BRICK_SURFACES.length) % BRICK_SURFACES.length];
-      paintMaterial(ctx, materials, face, x + pad, y + pad, bw - pad * 2, bh - pad * 2, 0.72, 0.66);
+      if (L.photographicMaterials) {
+        paintCellarSurface(ctx, L.photographicMaterials.brick, x + pad, y + pad, bw - pad * 2, bh - pad * 2, 1, "source-over", r * 17 + Math.abs(Math.round(x / bw)));
+      } else paintMaterial(ctx, materials, face, x + pad, y + pad, bw - pad * 2, bh - pad * 2, 0.72, 0.66);
       ctx.fillStyle = "rgba(255,220,200,0.04)";
       ctx.fillRect(x + pad, y + pad, bw - pad * 2, Math.max(1, bh * 0.06));
       // its face: pitted, a corner gone here and there
+      // Consume the same seeded grain so the original render patch and damp
+      // keep their shapes even when the photographed brick supplies its pits.
+      ctx.save();
+      if (L.photographicMaterials) ctx.globalAlpha = 0;
       for (let j = 0; j < 5; j++) {
         ctx.fillStyle = `rgba(0,0,0,${(0.15 + rnd() * 0.3).toFixed(2)})`;
         ctx.fillRect(x + pad + rnd() * (bw - pad * 2), y + pad + rnd() * (bh - pad * 2), (1 + rnd() * 3) * u, (1 + rnd() * 2) * u);
       }
+      ctx.restore();
       if (rnd() < 0.12) soft(ctx, x + bw * rnd(), y + bh * rnd(), bw * 0.3, bh * 0.5, "0,0,0", 0.5);
     }
   }
@@ -169,6 +183,12 @@ function paintWall(ctx, L, materials) {
   ctx.closePath();
   ctx.fillStyle = "#2e2d2b";
   ctx.fill();
+  if (L.photographicMaterials) {
+    ctx.save();
+    ctx.clip();
+    paintCellarSurface(ctx, L.photographicMaterials.plaster, rx - W * 0.1, ry - H * 0.13, W * 0.2, H * 0.26);
+    ctx.restore();
+  }
   ctx.strokeStyle = "rgba(0,0,0,0.6)";
   ctx.lineWidth = 2 * u;
   ctx.stroke();
@@ -211,6 +231,7 @@ function paintJoists(ctx, L) {
     g.addColorStop(1, "#120c07");
     ctx.fillStyle = g;
     ctx.fillRect(x, 0, jw, ceilY + 10 * u);
+    paintCellarSurface(ctx, L.photographicMaterials?.oak, x, 0, jw, ceilY + 10 * u, 0.65, "soft-light", Math.round(x / step));
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     for (let i = 0; i < 4; i++) ctx.fillRect(x + rnd() * jw, 0, 1, ceilY + 10 * u);
   }
@@ -230,7 +251,7 @@ function paintFloor(ctx, L, materials) {
   g.addColorStop(1, "#24262a");
   ctx.fillStyle = g;
   ctx.fillRect(0, floorY, W, H - floorY);
-  if (materials) {
+  if (materials || L.photographicMaterials) {
     // Each stone is clipped to the original floor's vanishing point.
     const ys = [floorY, ...[0.18, 0.42, 0.72].map(f => floorY + (H - floorY) * f), H];
     const projectX = (x, y) => vp.x + (x - vp.x) * (y - vp.y) / (floorY - vp.y);
@@ -242,7 +263,9 @@ function paintFloor(ctx, L, materials) {
         if (Math.max(...xs) < 0 || Math.min(...xs) > W) continue;
         ctx.save();
         ctx.beginPath(); ctx.moveTo(xs[0], y0); ctx.lineTo(xs[1], y0); ctx.lineTo(xs[2], y1); ctx.lineTo(xs[3], y1); ctx.closePath(); ctx.clip();
-        paintMaterial(ctx, materials, [460 + ((i + 10 + row) % 3) * 74, 923, 150, 70], Math.min(...xs), y0, Math.max(...xs) - Math.min(...xs), y1 - y0, 0.65, 0.58);
+        if (L.photographicMaterials) {
+          paintCellarSurface(ctx, L.photographicMaterials.flags, Math.min(...xs), y0, Math.max(...xs) - Math.min(...xs), y1 - y0, 1, "source-over", row * 23 + i + 10);
+        } else paintMaterial(ctx, materials, [460 + ((i + 10 + row) % 3) * 74, 923, 150, 70], Math.min(...xs), y0, Math.max(...xs) - Math.min(...xs), y1 - y0, 0.65, 0.58);
         ctx.restore();
       }
     }
@@ -321,6 +344,7 @@ function paintLadder(ctx, L) {
     g.addColorStop(1, "#0a0909");
     ctx.fillStyle = g;
     ctx.fillRect(x - half, y - 4 * u, half * 2, 8 * u);
+    paintCellarSurface(ctx, L.photographicMaterials?.iron, x - half, y - 4 * u, half * 2, 8 * u, 0.5, "soft-light", Math.round(y / u));
   }
   for (const s of [-1, 1]) {
     const rx = x + s * half, rw = 9 * u;
@@ -330,6 +354,7 @@ function paintLadder(ctx, L) {
     g.addColorStop(1, "#0b0a0a");
     ctx.fillStyle = g;
     ctx.fillRect(rx - rw / 2, top, rw, foot - top);
+    paintCellarSurface(ctx, L.photographicMaterials?.iron, rx - rw / 2, top, rw, foot - top, 0.5, "soft-light", s + 2);
     // the light from above down its upper length
     const lit = ctx.createLinearGradient(0, ceilY, 0, floorY * 0.6);
     lit.addColorStop(0, "rgba(190,204,236,0.5)");
@@ -339,7 +364,7 @@ function paintLadder(ctx, L) {
   }
   // rust, where the damp gets at it
   const rnd = lcg(515);
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; !L.photographicMaterials && i < 70; i++) {
     const s = rnd() < 0.5 ? -1 : 1, y = ceilY + rnd() * (foot - ceilY);
     ctx.fillStyle = `rgba(${Math.round(120 + rnd() * 50)},${Math.round(56 + rnd() * 24)},24,${(0.2 + rnd() * 0.4).toFixed(2)})`;
     ctx.fillRect(x + s * half - 4 * u + rnd() * 8 * u, y, (1 + rnd() * 3) * u, (2 + rnd() * 7) * u);
@@ -380,13 +405,15 @@ function paintPipe(ctx, L) {
   ctx.fillRect(turn - r, y, r * 2, floorY - y + 4 * u);
   ctx.fillStyle = along;
   ctx.fillRect(turn, y - r, W - turn, r * 2);
+  paintCellarSurface(ctx, L.photographicMaterials?.iron, turn - r, y, r * 2, floorY - y + 4 * u, 0.65, "soft-light", 1);
+  paintCellarSurface(ctx, L.photographicMaterials?.iron, turn, y - r, W - turn, r * 2, 0.65, "soft-light", 2);
   // the elbow
   ctx.fillStyle = "#3e4248";
   ctx.beginPath(); ctx.arc(turn, y, r * 1.25, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "rgba(255,255,255,0.1)";
   ctx.beginPath(); ctx.arc(turn - r * 0.3, y - r * 0.4, r * 0.5, 0, Math.PI * 2); ctx.fill();
   // rust and old paint
-  for (let i = 0; i < 160; i++) {
+  for (let i = 0; !L.photographicMaterials && i < 160; i++) {
     const onRun = rnd() < 0.6;
     const px = onRun ? turn + rnd() * (W - turn) : turn - r + rnd() * r * 2, py = onRun ? y - r + rnd() * r * 2 : y + rnd() * (floorY - y);
     ctx.fillStyle = rnd() < 0.7 ? `rgba(${Math.round(110 + rnd() * 50)},${Math.round(50 + rnd() * 26)},22,${(0.15 + rnd() * 0.35).toFixed(2)})` : "rgba(0,0,0,0.3)";
@@ -456,6 +483,11 @@ function paintPuddle(ctx, L) {
 function paintSlab(ctx, L, materials) {
   const { u } = L;
   const s = L.slab;
+  if (L.photographicMaterials?.slab) {
+    ctx.drawImage(L.photographicMaterials.slab, s.x0 - 5 * u, s.y0 - 5 * u, s.w + 10 * u, s.h + 10 * u);
+    paintSlabMarks(ctx, L);
+    return;
+  }
   const rnd = lcg(5115);
   // its outline: along each side in short runs, a little in and out, and
   // the corners cut across
@@ -632,6 +664,11 @@ function paintCarvingTools(ctx, L) {
   ctx.rotate(0.16);
   ctx.scale(u, u);
   soft(ctx, 2, 4, 58, 5, "0,0,0", 0.7);
+  if (L.photographicMaterials?.chisel) {
+    ctx.drawImage(L.photographicMaterials.chisel, -55, -8, 110, 16);
+    ctx.restore();
+    return;
+  }
   const steel = ctx.createLinearGradient(0, -8, 0, 8);
   steel.addColorStop(0, "#3c4648"); steel.addColorStop(0.24, "#b4b7ab");
   steel.addColorStop(0.45, "#6e7876"); steel.addColorStop(0.72, "#384344"); steel.addColorStop(1, "#141b1d");
@@ -698,8 +735,12 @@ function paintRack(ctx, L) {
     ctx.fillStyle = g;
     ctx.fillRect(x, y, bw, bhh);
   };
-  for (let i = 0; i <= 5; i++) wood(x0 + i * cell - bar / 2, y0 - bar / 2, bar, w + bar, true);
-  for (let i = 0; i <= 5; i++) wood(x0 - bar / 2, y0 + i * cell - bar / 2, w + bar, bar, false);
+  if (L.photographicMaterials?.rack) {
+    ctx.drawImage(L.photographicMaterials.rack, x0 - bar / 2, y0 - bar / 2, w + bar, w + bar);
+  } else {
+    for (let i = 0; i <= 5; i++) wood(x0 + i * cell - bar / 2, y0 - bar / 2, bar, w + bar, true);
+    for (let i = 0; i <= 5; i++) wood(x0 - bar / 2, y0 + i * cell - bar / 2, w + bar, bar, false);
+  }
   // dust on every ledge, a cobweb in the top right hole
   ctx.fillStyle = "rgba(190,186,170,0.2)";
   for (let i = 1; i <= 5; i++) ctx.fillRect(x0, y0 + i * cell - bar / 2 - 1.4 * u, w, 1.4 * u);
@@ -714,6 +755,10 @@ function paintRack(ctx, L) {
 function paintBarrel(ctx, L, x, base, w, h) {
   const { u } = L;
   soft(ctx, x + 6 * u, base, w * 0.6, 9 * u, "0,0,0", 0.65);
+  if (L.photographicMaterials?.barrel) {
+    ctx.drawImage(L.photographicMaterials.barrel, x - w * 0.56, base - h - 7 * u, w * 1.12, h + 7 * u);
+    return;
+  }
   const shape = () => {
     ctx.beginPath();
     ctx.moveTo(x - w * 0.4, base - h);
@@ -764,6 +809,10 @@ function paintCrate(ctx, L) {
   const { W, u, floorY } = L;
   const x = W * 0.258, base = floorY + 22 * u, w = 104 * u, h = 62 * u;
   soft(ctx, x + 6 * u, base, w * 0.62, 8 * u, "0,0,0", 0.6);
+  if (L.photographicMaterials?.crate) {
+    ctx.drawImage(L.photographicMaterials.crate, x - w / 2, base - h - 40 * u, w, h + 40 * u);
+    return;
+  }
   // the bottles' necks and the straw, standing out of it
   const rnd = lcg(818);
   for (const dx of [-0.3, -0.06, 0.2, 0.36]) {
@@ -805,6 +854,11 @@ function paintStool(ctx, L) {
   const x = L.stool.x;
   const seat = floorY - 72 * u;
   soft(ctx, x + 6 * u, floorY + 2 * u, 46 * u, 8 * u, "0,0,0", 0.6);
+  if (L.photographicMaterials?.stool && L.photographicMaterials?.candle) {
+    ctx.drawImage(L.photographicMaterials.stool, x - 38 * u, floorY - 80 * u, 76 * u, 84 * u);
+    ctx.drawImage(L.photographicMaterials.candle, x - 15 * u, L.candle.y - 4 * u, 30 * u, 35 * u);
+    return;
+  }
   ctx.strokeStyle = "#4a2e18";
   ctx.lineWidth = 6 * u;
   ctx.lineCap = "round";

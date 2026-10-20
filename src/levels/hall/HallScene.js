@@ -11,6 +11,7 @@ import { layoutHall, paintHall, paintDoorSwing, releaseHallArt } from "./hall.js
 import { doorMotion, DOOR_WALK_START_MS, DOOR_LATCH_MS, DOOR_SWING_MS } from "./doorMotion.js";
 import { IronLever } from "./ironLever.js";
 import { loadChemistryHallMaterials } from "./chemicalMaterials.js";
+import { loadStaircaseArt } from "./staircase.js";
 import { loadBotanicHallMaterials } from "./botanicMaterials.js";
 import { loadAtticMaterials } from "../top/atticMaterials.js";
 
@@ -55,10 +56,13 @@ export default class HallScene extends BasePuzzleScene {
   preload() {
     this.load.audio("doorhandle", "assets/sounds/global/doorhandle.mp3");
     this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
+    // the iron gates across the stairs, swinging open (ground floor only)
+    if (!this.upper && !this.wing) this.load.audio("irongateopen", "assets/sounds/irongateopensound.mp3");
     if (!this.upper && !this.wing) loadBotanicHallMaterials(this);
     if (this.wing) loadAtticMaterials(this);
     if (this.upper) {
       loadChemistryHallMaterials(this);
+      loadStaircaseArt(this);
       if (!this.textures.exists(chemical.CHEMISTRY_TUBE_RACK)) {
         this.load.image(chemical.CHEMISTRY_TUBE_RACK, chemical.CHEMISTRY_TUBE_RACK_URL);
       }
@@ -355,9 +359,8 @@ export default class HallScene extends BasePuzzleScene {
       levels.takeKey(GATES);
       // the bars' shadows go with the gate
       if (this._bars) this.tweens.add({ targets: this._bars, alpha: 0, duration: 900, onComplete: () => { this._bars?.destroy(); this._bars = null; } });
-      // the latch, then the hinges
-      chime(this, [[196, 0.05], [147, 0.04]], 0.5);
-      this.time.delayedCall(260, () => chime(this, [[82, 0.05], [61, 0.04]], 1.6));
+      // the gates heard opening, recorded (assets/sounds/irongateopensound.mp3)
+      this.services.audio.playSfx("irongateopen", 0.8, this);
       this.tweens.add({
         targets: leaves,
         scaleX: shut * OPEN,
@@ -369,13 +372,14 @@ export default class HallScene extends BasePuzzleScene {
     });
   }
 
-  // The stairs at the side of the upper hall: they glint, and a click goes up them.
+  // The spiral at the side of the Chemistry hall leads up to Physics.
   _stairsUp(L) {
+    const shape = new Phaser.Geom.Polygon(L.stairs.quad.flatMap(p => [p.x,p.y]));
     const steps = this.add
-      .zone(L.up.x, L.up.y, L.up.width, L.up.height)
+      .zone(0, 0, L.W, L.H)
       .setOrigin(0, 0)
-      .setInteractive({ useHandCursor: true })
-      .setData("interactionLabel", "Go up the stairs")
+      .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
+      .setData("interactionLabel", "Go up the spiral stairs")
       .setDepth(5);
     steps.on("pointerdown", () => this._go(L.up, { place: "Top" }));
     this._sparkles.push(attachMovableSparkles(this, steps, { padding: 2, bounds: () => L.up }));

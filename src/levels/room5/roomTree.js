@@ -51,5 +51,5 @@ export function paintRoomTree(ctx, L) {
       ctx.beginPath(); ctx.ellipse(p.x, p.y, Math.max(1, 1.2 * s), Math.max(1.2, 1.7 * s), 0, 0, Math.PI * 2); ctx.fill();
     }
   }
-  soft(ctx, foot.x, foot.y - t.tall * 0.45 * s, t.reach * 1.5 * s, t.tall * 0.6 * s, "255,184,96", 0.1, "lighter");
+  soft(ctx, foot.x, foot.y - t.tall * 0.45 * s, t.reach * 1.5 * s, t.tall * 0.6 * s, "255,184,96", 0.035, "lighter");
 }

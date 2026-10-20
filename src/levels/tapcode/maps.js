@@ -9,6 +9,11 @@ import { soft, rgb, lcg } from "../../shared/paint.js";
 export function paintMaps(ctx, L) {
   const { x, s: k } = L.maps;
   const fy = L.floorY;
+  if (L.photographicMaterials?.maps) {
+    soft(ctx, x + 8 * k, fy + 12 * k, 74 * k, 10 * k, "0,0,0", 0.7);
+    ctx.drawImage(L.photographicMaterials.maps, x - 74 * k, fy - 132 * k, 148 * k, 150 * k);
+    return;
+  }
   const rnd = lcg(613);
   // the cellar is dark: the paper only catches a little of the light
   const shade = (tone, m) => rgb(tone[0] * m * 0.72, tone[1] * m * 0.72, tone[2] * m * 0.72);

@@ -9,6 +9,7 @@
 //   the gallery         rain on the roof (its leak drips in the scene itself)
 //   rooms with a fire   the fire: its crackle and its low roar
 //   the cellar          the cold stillness of under the house (its drip, the scene's)
+//   outside, at the gate  the rain coming down
 
 const BEDS = {
   Hall: ["tone", "creaks"],
@@ -115,7 +116,13 @@ export function mountAmbience(scope, { game, levels, audio }) {
   }
   function choose() {
     const place = levels.place;
-    if (place && !levels.answering) want = BEDS[place.key] ?? ["tone"];
+    const body = document.body.classList;
+    // the opening film and the Inspector's desk are over the gate, not at it:
+    // its rain (a hiss, heard there) waits until the manor is stood before
+    if (body.contains("intro-video-on") || body.contains("prologue-on")) want = [];
+    // outside the house, before the gate: the rain coming down
+    else if (body.contains("outside")) want = ["rain"];
+    else if (place && !levels.answering) want = BEDS[place.key] ?? ["tone"];
     else if (place) want = BEDS[place.key] ?? [];
     else want = BEDS.level[levels.definitions[levels.currentIndex]?.key] ?? [];
     apply();
@@ -126,5 +133,13 @@ export function mountAmbience(scope, { game, levels, audio }) {
   scope.on(window, "pointerdown", wake);
   scope.on(window, "keydown", wake);
   if (audio?.subscribe) scope.add(audio.subscribe(volume));
+  // the film and the desk coming and going change what is heard
+  let wasOver = null;
+  const watch = new MutationObserver(() => {
+    const over = document.body.classList.contains("intro-video-on") || document.body.classList.contains("prologue-on");
+    if (over !== wasOver) { wasOver = over; choose(); }
+  });
+  watch.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  scope.add(() => watch.disconnect());
   scope.add(() => { for (const bed of beds.values()) bed.stop(); beds.clear(); out?.disconnect(); });
 }

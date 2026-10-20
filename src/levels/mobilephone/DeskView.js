@@ -1,6 +1,7 @@
 import { DESK_ART, PHONE_ART, phonePoint, prepareDeskArt } from "./art.js";
+import { DESK_PHOTOGRAPH, addPhotographicDesk, addPhotographicCradle } from "./photographicMaterials.js";
 
-/** Every prop is drawn by code, then cached separately for inexpensive resizing. */
+/** The photographed desk and live coffee ripples follow the same image scale. */
 export default class DeskView {
   constructor(scene) {
     this.scene = scene;
@@ -15,35 +16,40 @@ export default class DeskView {
       return object;
     };
 
-    const scale = Math.max(W / DESK_ART.width, H / DESK_ART.height);
-    add(this.scene.add.image(W / 2, H / 2, DESK_ART.key)
-      .setScale(scale).setDepth(-10));
-
-    // Prop sizes follow the handset so a short viewport keeps their proportions.
-    const sideWidth = W / 2 - 170 * layout.s;
-    const propScale = Math.min(layout.s, (sideWidth - 24) / 300);
     this.mug = null;
-    if (propScale > 0.16) {
-      const left = sideWidth * 0.5;
-      const right = W - left;
-      const cupY = H * 0.31;
-      add(this.scene.add.image(left - 32 * propScale, cupY + 115 * propScale, "mp_coffee_ring_code")
-        .setScale(propScale).setDepth(-9));
-      add(this.scene.add.image(left, cupY, "mp_cup_code")
-        .setOrigin(196 / 340, 146 / 312).setScale(propScale).setDepth(-8));
-      this.mug = { cx: left, cy: cupY + 2 * propScale, r: 96 * propScale };
+    if (this.scene.textures.exists(DESK_PHOTOGRAPH)) {
+      this.mug = addPhotographicDesk(this.scene, W, H, add);
+    } else {
+      const scale = Math.max(W / DESK_ART.width, H / DESK_ART.height);
+      add(this.scene.add.image(W / 2, H / 2, DESK_ART.key)
+        .setScale(scale).setDepth(-10));
 
-      const note = add(this.scene.add.container(right, H * 0.33)
-        .setAngle(5).setScale(propScale).setDepth(-8));
-      note.add(this.scene.add.image(0, 0, "mp_note_code"));
-      note.add(this.scene.add.text(0, -5, "don't answer\nif you don't\nknow who's\ncalling.", {
-        fontFamily: '"Special Elite", monospace', fontSize: "26px",
-        lineSpacing: 9, color: "#493425",
-      }).setOrigin(0.5));
+      // Prop sizes follow the handset so a short viewport keeps their proportions.
+      const sideWidth = W / 2 - 170 * layout.s;
+      const propScale = Math.min(layout.s, (sideWidth - 24) / 300);
+      if (propScale > 0.16) {
+        const left = sideWidth * 0.5;
+        const right = W - left;
+        const cupY = H * 0.31;
+        add(this.scene.add.image(left - 32 * propScale, cupY + 115 * propScale, "mp_coffee_ring_code")
+          .setScale(propScale).setDepth(-9));
+        add(this.scene.add.image(left, cupY, "mp_cup_code")
+          .setOrigin(196 / 340, 146 / 312).setScale(propScale).setDepth(-8));
+        this.mug = { cx: left, cy: cupY + 2 * propScale, r: 96 * propScale };
 
-      add(this.scene.add.image(right, H * 0.75, "mp_pen_code")
-        .setScale(propScale).setAngle(-34).setDepth(-8));
+        const note = add(this.scene.add.container(right, H * 0.33)
+          .setAngle(5).setScale(propScale).setDepth(-8));
+        note.add(this.scene.add.image(0, 0, "mp_note_code"));
+        note.add(this.scene.add.text(0, -5, "don't answer\nif you don't\nknow who's\ncalling.", {
+          fontFamily: '"Special Elite", monospace', fontSize: "26px",
+          lineSpacing: 9, color: "#493425",
+        }).setOrigin(0.5));
+
+        add(this.scene.add.image(right, H * 0.75, "mp_pen_code")
+          .setScale(propScale).setAngle(-34).setDepth(-8));
+      }
     }
+    addPhotographicCradle(this.scene, layout, add);
     this.rippleGfx = add(this.scene.add.graphics().setDepth(-7));
     const screen = phonePoint(PHONE_ART.screen.x, PHONE_ART.screen.y);
     this.screenGlow = add(this.scene.add.image(

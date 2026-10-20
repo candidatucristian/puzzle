@@ -27,7 +27,8 @@ export function mountCinema(scope, { storage, reducedMotion = () => false }) {
   const LINE = 900; // ms between one line coming up and the next
   const RISE = 1700; // ms a line takes to come up
   // `sketch`: one of the three emblems, drawn in the pencil over the words
-  function card(lines, { hold = 1500, onDark = null, sketch = null } = {}) {
+  // `brief`: the words up at once, and the card held a second once black
+  function card(lines, { hold = 1500, onDark = null, sketch = null, brief = false } = {}) {
     busy++;
     return new Promise((resolve) => {
       const root = document.createElement("div");
@@ -38,7 +39,7 @@ export function mountCinema(scope, { storage, reducedMotion = () => false }) {
       if (sketch) {
         const svg = sketchLayer(text);
         svg.classList.add("cinema-emblem");
-        drawEmblem(svg, sketch, 150);
+        drawEmblem(svg, sketch, 150, brief ? 0.45 : 1);
       }
       lines.forEach((line, i) => {
         const p = document.createElement("p");
@@ -72,6 +73,8 @@ export function mountCinema(scope, { storage, reducedMotion = () => false }) {
       // what is behind it changes only once the screen has gone black
       if (onDark) scope.later(onDark, still ? 0 : 950);
       if (still) { root.classList.add("is-all"); timer = scope.later(lift, 1800); return; }
+      // black by 900 ms, then one second up
+      if (brief) { root.classList.add("is-all"); hurried = true; timer = scope.later(lift, 1900); return; }
       timer = scope.later(lift, 500 + (lines.length - 1) * LINE + RISE + hold);
     });
   }
@@ -88,7 +91,7 @@ export function mountCinema(scope, { storage, reducedMotion = () => false }) {
     const storey = chapterOf(key);
     if (!storey) return false;
     mark(`chapter:${storey}`);
-    card(CHAPTERS[storey], { hold: 2200, onDark: go, sketch: EMBLEM[storey] });
+    card(CHAPTERS[storey], { onDark: go, sketch: EMBLEM[storey], brief: true });
     return true;
   }
 
@@ -98,7 +101,7 @@ export function mountCinema(scope, { storage, reducedMotion = () => false }) {
   function enterHouse(goIn) {
     if (seen.includes("chapter:1")) { goIn(); return; }
     mark("chapter:1");
-    card(CHAPTERS[1], { hold: 2200, onDark: goIn, sketch: EMBLEM[1] });
+    card(CHAPTERS[1], { onDark: goIn, sketch: EMBLEM[1], brief: true });
   }
 
   return {

@@ -7,6 +7,7 @@ import { loadLaboratoryArt, laboratoryArt, paintLaboratoryObjects } from "./labo
 import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
 import { loadRoom7DepthArt, room7DepthArt, paintDeepGlassCabinet, paintDeepWashingStation, paintDeepLaboratoryBench } from "./depthArt.js";
 import { loadChemistryDetails, chemistryDetails } from "../chemistry/photographicLab.js";
+import { ROOM7_PHOTOGRAPH, loadRoom7Photography, alignRoom7Photography, paintRoom7Photography, paintRoom7Notebook } from "./photographicRoom.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The laboratory: the first room off the chemist's hall, behind door VII
@@ -50,6 +51,8 @@ export default class Room7Scene extends PlainRoomScene {
   }
 
   preload() {
+    super.preload();
+    loadRoom7Photography(this);
     for (const { key, url } of Object.values(LAB_FIXTURES)) this.load.image(key, url);
     loadLaboratoryArt(this);
     loadRoom7DepthArt(this);
@@ -134,7 +137,12 @@ export default class Room7Scene extends PlainRoomScene {
     // A soft bounce keeps the carved cabinet fronts readable below the slab.
     const face = Q((b.x0 + b.x1) / 2, 47, b.d0);
     L.detailLights.push({ x: face.x, y: face.y, rx: 130 * face.s, ry: 72 * face.s, k: L.on ? 0.52 : 0.38 });
+    if (this.textures.exists(ROOM7_PHOTOGRAPH)) alignRoom7Photography(L);
     return L;
+  }
+
+  paint(L) {
+    return L.photographic ? paintRoom7Photography(this, L, this._keys) : super.paint(L);
   }
 
   // His notebook taken from the shelf: it slides a little way toward the
@@ -160,6 +168,11 @@ export default class Room7Scene extends PlainRoomScene {
     }
     const { tex } = this._nb, g = tex.getContext();
     g.clearRect(0, 0, W, H);
+    if (L.photographic) {
+      paintRoom7Notebook(g, this, L, f);
+      tex.refresh();
+      return;
+    }
     if (out > 0.05) {
       // its near side, and the top of its leaves, between the wall and where it stands
       fillPoly(g, [Q(hx - out, nb.y0, nb.d0), Q(hx, nb.y0, nb.d0), Q(hx, nb.y1, nb.d0), Q(hx - out, nb.y1, nb.d0)], "#16231a");
@@ -190,12 +203,13 @@ export default class Room7Scene extends PlainRoomScene {
     if (!L.on) return;
     // the lamp and the burner, breathing very slightly
     for (const [at, a, tint] of [[L.glows.lamp, 0.2, 0xffc078], [L.glows.burner, 0.28, 0x7aa0ff]]) {
-      const light = glow(at, a, tint);
-      this.ambientTween({ targets: light, alpha: { from: a * 0.85, to: a * 1.2 }, duration: tint === 0xffc078 ? 3200 : 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      const alpha = L.photographic ? a * 0.35 : a;
+      const light = glow(at, alpha, tint);
+      this.ambientTween({ targets: light, alpha: { from: alpha * 0.85, to: alpha * 1.2 }, duration: tint === 0xffc078 ? 3200 : 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
     // and the uranium's own faint green
     const u = L.bottleRow[3], p = L.Q(u.x, L.bench.h + 10, u.d);
-    glow({ x: p.x, y: p.y, r: 22 * p.s }, 0.22, 0x78ff6e);
+    glow(L.photoUranium ?? { x: p.x, y: p.y, r: 22 * p.s }, L.photographic ? 0.07 : 0.22, 0x78ff6e);
   }
 }
 

@@ -9,9 +9,10 @@ const ASSETS = {
   sconces: { key: "hall_sconces_photo", url: "assets/images/Physics/observatory-fixtures.png" },
 };
 const cache = new WeakMap();
+const FLOOR_PHOTO = { key: "botany_hall_floor_photographic_v3", url: "assets/images/Botany/hall-floor-photographic-v3.png" };
 
 export function loadBotanicHallMaterials(scene) {
-  for (const { key, url } of Object.values(ASSETS)) if (!scene.textures.exists(key)) scene.load.image(key, url);
+  for (const { key, url } of [...Object.values(ASSETS), FLOOR_PHOTO]) if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 
 export function botanicHallMaterials(scene) {
@@ -59,9 +60,23 @@ export function botanicHallMaterials(scene) {
       return c;
     });
     const door = crop(sources.door, 0, 0, sources.door.width, sources.door.height, 0.94);
+    let photographicFloor = null;
+    if (scene.textures.exists(FLOOR_PHOTO.key)) {
+      const photo = scene.textures.get(FLOOR_PHOTO.key).getSourceImage();
+      photographicFloor = makeCanvas(photo.width, photo.height);
+      const g = photographicFloor.getContext("2d");
+      g.filter = "brightness(0.9) saturate(0.84)";
+      // Match the grass to the existing runner width, independent of the scan.
+      // All three surfaces share their original photographed contact edges.
+      const source = [0, 0.326, 0.676, 1], destination = [0, 0.3538, 0.6462, 1];
+      for (let i = 0; i < 3; i++) {
+        g.drawImage(photo, source[i] * photo.width, 0, (source[i + 1] - source[i]) * photo.width, photo.height,
+          destination[i] * photo.width, 0, (destination[i + 1] - destination[i]) * photo.width, photo.height);
+      }
+    }
     cache.set(atlas, {
       paper: tile(0, 0, 0.84), oak, across, floor: tile(2, 0, 0.92),
-      grass, grassTiles, door,
+      grass, grassTiles, door, photographicFloor,
       panel: crop(door, door.width * 0.08, door.height * 0.4, door.width * 0.39, door.height * 0.28),
       carpet: tile(0, 0, 0.7), plaster: tile(1, 1, 0.48), glass: tile(2, 1, 0.8),
       palm: plants[0], fern: plants[1], flowers: plants[2], hanging: plants[3], ivy: plants[4], tools: plants[5],
@@ -72,6 +87,16 @@ export function botanicHallMaterials(scene) {
     });
   }
   return cache.get(sources.surfaces);
+}
+
+// One continuous floor scan replaces the repeated plank and lawn patches.
+// Its perspective follows the same floor plane as door sills and gate shadows.
+export function paintBotanicFloor(ctx, L, far = 4.7) {
+  const photo = L.botanicMaterials?.photographicFloor;
+  if (L.theme !== "botanic" || !photo) return false;
+  const { P, wall, floor } = L, near = 0.7;
+  paintProjectedMaterial(ctx, photo, (u, v) => P(-wall + 2 * wall * u, floor, near + (far - near) * v), 1, 8, 64);
+  return true;
 }
 
 // Living grass occupies the existing runner footprint. Its small photo tiles

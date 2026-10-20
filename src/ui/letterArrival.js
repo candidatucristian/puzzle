@@ -27,7 +27,7 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
     Object.assign(rest.style, { width: `${W}px`, height: `${H}px` });
     const shadow = el('div', 'env-contact-shadow'), env = el('div', 'env');
     Object.assign(env.style, { width: `${W}px`, height: `${H}px` });
-    env.tabIndex = -1; env.setAttribute('role', 'button'); env.setAttribute('aria-label', 'Break the seal');
+    env.tabIndex = -1; env.setAttribute('role', 'button'); env.setAttribute('aria-label', 'Open the letter');
     const inside = layer('env-inside', W, H, dpr, g => paintEnvelopePart(g, art, 'inside', W, H, TIP));
     const sheet = el('div', 'env-letter');
     Object.assign(sheet.style, { left: `${W * .06}px`, width: `${W * .88}px`, top: `${H * .08}px`, height: `${H * .72}px` });
@@ -46,14 +46,12 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       if (!paintDocumentSeal(g, shape)) paintSeal(g, shape, { wax: '#a4251b', shine: true });
     });
     Object.assign(seal.style, { left: `${W / 2 - r * 1.5}px`, top: `${TIP - r * 1.6}px` });
-    const hint = el('button', 'env-hint', 'Break the seal'); hint.type = 'button'; hint.disabled = true;
-    env.append(inside, sheet, pocket, flap, seal); rest.append(shadow, env); stage.append(rest, hint);
-    const later = el('button', 'arrival-later', 'Later'); later.type = 'button'; later.disabled = true;
+    env.append(inside, sheet, pocket, flap, seal); rest.append(shadow, env); stage.append(rest);
     const reading = el('div', 'arrival-reading'), page = el('div', 'arrival-page');
     page.tabIndex = 0; page.setAttribute('aria-label', letter.title);
     const file = el('button', 'arrival-file', 'File it in the case file'); file.type = 'button'; file.disabled = true;
     reading.append(page, file);
-    root.append(el('div', 'arrival-veil'), caption, stage, later, reading); document.body.append(root);
+    root.append(el('div', 'arrival-veil'), caption, stage, reading); document.body.append(root);
 
     let state;
     const setState = value => { state = value; root.dataset.state = value; };
@@ -108,19 +106,19 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       page.style.visibility = 'visible'; rig.remove();
       article.classList.replace('is-unwritten', 'is-writing');
       pen = sounds?.writing?.() ?? null;
-      life.later(() => article.classList.remove('is-writing'), 1400);
+      life.later(() => article.classList.remove('is-writing'), 2100);
     };
     // the pen on paper, as the letter lies open to be read
     let pen = null;
 
     const open = async () => {
       if (state !== 'waiting') return;
-      setState('breaking'); hint.disabled = true; later.hidden = true; env.tabIndex = -1;
+      setState('breaking'); env.tabIndex = -1;
       root.classList.remove('is-waiting'); root.focus({ preventScroll: true });
       await finished(animate(flap, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-5deg)' }, { transform: 'rotateX(-2deg)' }], { duration: 310, easing: 'ease-in-out' }));
       if (!alive()) return;
       sounds?.crack(); fractureWax(seal, flap, env, animate);
-      caption.classList.add('is-away'); hint.classList.add('is-away');
+      caption.classList.add('is-away');
       await wait(170);
       if (!alive()) return;
       setState('opening'); sounds?.open();
@@ -140,20 +138,19 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
     };
 
     const away = async how => {
-      if (!['waiting', 'reading'].includes(state)) return;
-      const wasReading = state === 'reading'; setState('filing');
-      file.disabled = hint.disabled = later.disabled = true; env.tabIndex = -1;
-      caption.classList.add('is-away'); hint.classList.add('is-away');
+      if (state !== 'reading') return;
+      setState('filing');
+      file.disabled = true;
       pen?.stop(); pen = null;
       sounds?.file();
-      let node = env, from = env.getBoundingClientRect();
-      if (wasReading && !still) {
+      let node = page, from = env.getBoundingClientRect();
+      if (!still) {
         const folds = letterFolds(page.querySelector('.letter-page'), root);
         node = folds.rig; from = folds.box; page.style.visibility = 'hidden';
         const top = animate(folds.top, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-179deg)' }], { duration: 600, easing: 'ease-in-out' });
         const bottom = animate(folds.bottom, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(179deg)' }], { duration: 650, delay: 110, easing: 'ease-in-out' });
         await Promise.all([finished(top), finished(bottom)]);
-      } else if (wasReading) node = page;
+      }
       if (!alive()) return;
       const into = target?.getBoundingClientRect();
       if (into && from.width) {
@@ -172,13 +169,13 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       await wait(220); finish(how);
     };
 
-    life.on(env, 'click', open); life.on(hint, 'click', open);
-    life.on(later, 'click', () => away('later')); life.on(file, 'click', () => away('read'));
+    // it has to be opened: there is no putting it off (Esc does nothing until it is read)
+    life.on(env, 'click', open); life.on(file, 'click', () => away('read'));
     life.on(window, 'keydown', event => {
-      if (event.key === 'Escape' && ['waiting', 'reading'].includes(state)) { event.preventDefault(); event.stopPropagation(); away(state === 'reading' ? 'read' : 'later'); }
+      if (event.key === 'Escape' && ['waiting', 'reading'].includes(state)) { event.preventDefault(); event.stopPropagation(); if (state === 'reading') away('read'); }
       else if (['Enter', ' '].includes(event.key) && event.target === env && state === 'waiting') { event.preventDefault(); event.stopPropagation(); open(); }
       else if (event.key === 'Tab') {
-        const focusable = state === 'waiting' ? [env, hint, later] : state === 'reading' ? [page, file] : [root];
+        const focusable = state === 'waiting' ? [env] : state === 'reading' ? [page, file] : [root];
         const index = focusable.indexOf(document.activeElement);
         event.preventDefault(); focusable[(index + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length].focus({ preventScroll: true });
       }
@@ -186,7 +183,7 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
 
     const resting = 'translate(0,0) rotateX(3deg) rotate(-2deg)';
     setState('arriving'); requestAnimationFrame(() => root.classList.add('is-shown'));
-    sounds?.whoosh();
+    sounds?.whoosh(); sounds?.prepareWriting?.();
     animate(shadow, [{ opacity: 0, transform: 'translate(22px,30px) scale(.82)' }, { opacity: .65, transform: 'translate(0,0) scale(1)' }], { duration: 1050, easing: 'ease-out' });
     finished(animate(env, [
       { transform: 'translate(45px,110px) rotateX(22deg) rotate(-7deg)', opacity: 0 },
@@ -195,7 +192,7 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
     ], { duration: 1050, easing: 'cubic-bezier(.2,.65,.3,1)' })).then(() => {
       if (!alive() || state !== 'arriving') return;
       sounds?.land(); setState('waiting'); root.classList.add('is-waiting');
-      env.tabIndex = 0; hint.disabled = later.disabled = false; env.focus({ preventScroll: true });
+      env.tabIndex = 0; env.focus({ preventScroll: true });
     });
   });
 }

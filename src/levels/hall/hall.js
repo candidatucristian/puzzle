@@ -6,11 +6,11 @@ import { layoutGallery, paintGallery } from "../top/gallery.js";
 import * as botanic from "./botanic.js";
 import * as chemical from "./chemical.js";
 import { chemistryHallMaterials, paintChemistryBulb, paintHallSconcePhoto } from "./chemicalMaterials.js";
-import { botanicHallMaterials, paintBotanicGrass } from "./botanicMaterials.js";
+import { botanicHallMaterials, paintBotanicFloor, paintBotanicGrass } from "./botanicMaterials.js";
 import { atticMaterials } from "../top/atticMaterials.js";
 import { paintAtticForeground, paintAtticShade } from "../top/attic.js";
 import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
-import { paintChemistryStairs3D } from "./staircase3D.js";
+import { paintChemistryStairs, staircaseArt } from "./staircase.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
  *  length, three closed doors along either wall, and at its far end the
@@ -27,7 +27,7 @@ import { paintChemistryStairs3D } from "./staircase3D.js";
  *  (z, 1 at the picture, larger further off).
  *
  *  The floor above has a hall of the same plan (`upper`), far gone and put
- *  to chemistry: four doors, a flight of stairs going up to the right where
+ *  to chemistry: four doors, a spiral stair going up to the right where
  *  the sixth would be, tiled walls and floor, copper pipes and laboratory
  *  cupboards. A bare bulb on a flex is worked by the iron lever.
  *
@@ -136,10 +136,12 @@ export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } 
       contact: { x: sw.x - sr * 0.12, y: sw.y + sr * 0.69 },
     };
     L.thing = { level: "lightswitch", label: "Pull the iron lever", box: { x: sw.x - Math.max(30, sr * 1.4), y: sw.y - ph * 0.5 - 5, width: Math.max(46, sr * 2.1), height: ph + 10 } };
-    // the stairs going up to the right, where the first right-hand door is below
-    L.stairs = { z0: 1.26, z1: 1.9 };
+    // the spiral going up to Physics, where the first right-hand door is below
+    L.stairs = { z0: 1.46, z1: 1.91, head: L.floor - H * 0.76 };
     // where they are on the screen, to be clicked: the way to the top floor
-    const pts = [L.P(L.wall, L.doorTop, 1.26), L.P(L.wall, L.doorTop, 1.9), L.P(L.wall, L.floor, 1.9), L.P(L.wall, L.floor, 1.26)];
+    const { z0, z1, head } = L.stairs;
+    const pts = [L.P(L.wall, head, z0), L.P(L.wall, head, z1), L.P(L.wall, L.floor, z1), L.P(L.wall, L.floor, z0)];
+    L.stairs.quad = pts;
     const x0 = Math.min(...pts.map((p) => p.x)), y0 = Math.min(...pts.map((p) => p.y));
     L.up = { x: x0, y: y0, width: Math.min(W, Math.max(...pts.map((p) => p.x))) - x0, height: Math.min(H, Math.max(...pts.map((p) => p.y))) - y0 };
   }
@@ -160,7 +162,7 @@ export function paintHallOn(ctx, L) {
   if (L.theme === "chemistry") chemical.paintPipes(ctx, L);
   if (L.worn) paintEndWindow(ctx, L); else paintEnd(ctx, L);
   paintStairLight(ctx, L);
-  if (L.stairs) paintSideStairs(ctx, L, L.stairs, 1, 1);
+  if (L.stairs) paintChemistryStairs(ctx, L, L.stairs);
   for (const d of L.doors) paintDoor(ctx, L, d);
   if (L.worn && L.theme !== "chemistry") paintDecay(ctx, L);
   if (L.theme === "botanic") botanic.paintIvy(ctx, L);
@@ -170,12 +172,15 @@ export function paintHallOn(ctx, L) {
   if (L.upper) paintBulb(ctx, L);
   paintGloom(ctx, L);
   vignette(ctx, W, H, L.wing ? 0.9 : L.botanicMaterials ? 0.8 : 0.75);
-  grain(ctx, W, H, L.botanicMaterials ? 0.008 : 0.035);
+  grain(ctx, W, H, L.botanicMaterials ? 0.008 : L.theme === "chemistry" ? 0.012 : 0.035);
 }
 
 export function paintHall(scene, L) {
   const t = scene.textures;
-  if (L.theme === "chemistry") L.chemicalMaterials = chemistryHallMaterials(scene);
+  if (L.theme === "chemistry") {
+    L.chemicalMaterials = chemistryHallMaterials(scene);
+    L.staircaseArt = staircaseArt(scene);
+  }
   if (L.theme === "botanic") L.botanicMaterials = botanicHallMaterials(scene);
   if (L.wing) L.atticMaterials = atticMaterials(scene);
   const { W, H } = L;
@@ -530,6 +535,7 @@ function paintCeiling(ctx, L) {
 // middle of them — deep red, a paler border, worn along its centre
 function paintFloor(ctx, L) {
   if (L.theme === "chemistry") { chemical.paintFloor(ctx, L); return; }
+  if (paintBotanicFloor(ctx, L, END)) return;
   const { P, wall, floor, u } = L;
   const rnd = lcg(64);
   polygon(ctx, [P(-wall, floor, 0.7), P(wall, floor, 0.7), P(wall, floor, END), P(-wall, floor, END)]);
@@ -885,96 +891,6 @@ function paintEndWindow(ctx, L) {
   }
 }
 
-// Stairs at the side of a hall: an opening in a wall where a door would be,
-// and through it a flight going off at right angles — up (`dir` 1) or down
-// (-1) — away from the hall on that `side`. Its steps are seen end on, a
-// strip of carpet down the middle of them, a rail on the far wall, a newel
-// at its foot. `span` is how far along the wall the opening runs.
-function paintSideStairs(ctx, L, span, side, dir) {
-  const { P, wall, floor, H, u } = L;
-  const { z0, z1 } = span;
-  const head = L.doorTop, run = wall * 0.075, rise = H * 0.078, n = 12;
-  const visibleFlight = L.theme === "chemistry" && dir > 0;
-  const depthStep = visibleFlight ? 0.11 : 0;
-  const materials = L.chemicalMaterials;
-  const X0 = side * wall, out = (i) => side * (wall + i * run);
-  const quad = [P(X0, head, z0), P(X0, head, z1), P(X0, floor, z1), P(X0, floor, z0)];
-  const poly = (pts, fill) => { polygon(ctx, pts); ctx.fillStyle = fill; ctx.fill(); };
-  // its architrave
-  poly([P(X0, head - H * 0.045, z0 - 0.06), P(X0, head - H * 0.045, z1 + 0.06), P(X0, floor, z1 + 0.06), P(X0, floor, z0 - 0.06)], "#2c1b10");
-  if (materials) paintProjectedMaterial(ctx, materials.oak, (u, v) => P(X0, head - H * 0.045 + (floor - head + H * 0.045) * v, z0 - 0.06 + (z1 - z0 + 0.12) * u), 0.9, 10, 3);
-  poly(quad, "#07090c");
-  if (visibleFlight && paintChemistryStairs3D(ctx, L, span)) return;
-  ctx.save();
-  polygon(ctx, quad);
-  ctx.clip();
-  // the far wall of the stairwell, a little light on it from above
-  const fw = [P(X0, head - H, z1), P(out(n + 4), head - H, z1 + depthStep * (n + 4)), P(out(n + 4), floor + H, z1 + depthStep * (n + 4)), P(X0, floor + H, z1)];
-  const g = ctx.createLinearGradient(0, quad[1].y, 0, quad[2].y);
-  g.addColorStop(0, dir > 0 ? "#1c2634" : "#12161c");
-  g.addColorStop(1, "#0a0d11");
-  poly(fw, g);
-  if (visibleFlight && materials) {
-    paintProjectedMaterial(ctx, materials.stairPlaster, (u, v) => P(X0 + (out(n + 4) - X0) * u, head - H + (floor - head + H * 2) * v, z1 + depthStep * (n + 4) * u), 0.7, 10, 6);
-    const light = P(out(n), floor - n * rise - H * 0.16, (z0 + z1) / 2 + n * depthStep);
-    soft(ctx, light.x, light.y, H * 0.16, H * 0.2, "182,204,226", 0.28, "lighter");
-  }
-  // the steps, the furthest first: each a riser facing the hall and a tread beyond it
-  for (let i = n - 1; i >= 0; i--) {
-    const X = out(i), X1 = out(i + 1), y0 = floor - dir * i * rise, y1 = y0 - dir * rise;
-    const aZ = z0 + i * depthStep, bZ = z1 + i * depthStep;
-    const lit = dir > 0 ? 0.2 + 0.8 * (i / (n - 1)) : 0.7 * (1 - i / (n - 1));
-    if (y1 > 0) {
-      const tread = [P(X, y1, aZ), P(X1, y1, aZ + depthStep), P(X1, y1, bZ + depthStep), P(X, y1, bZ)];
-      poly(tread, visibleFlight ? "#55432f" : "#33221a");
-      if (materials) paintProjectedMaterial(ctx, materials.across, (u, v) => P(X + (X1 - X) * u, y1, aZ + depthStep * u + (z1 - z0) * v), 0.9, 3, 3);
-      poly([P(X, y1, aZ + 0.16), P(X1, y1, aZ + depthStep + 0.16), P(X1, y1, bZ + depthStep - 0.16), P(X, y1, bZ - 0.16)], visibleFlight ? "#35483b" : "#16261f");
-      poly(tread, `rgba(${MOON},${((visibleFlight ? 0.3 : 0.2) * lit).toFixed(3)})`);
-    }
-    if (dir > 0) {
-      poly([P(X, y0, aZ), P(X, y0, bZ), P(X, y1, bZ), P(X, y1, aZ)], visibleFlight ? "#343b39" : "#130c07");
-      if (visibleFlight && materials) paintProjectedMaterial(ctx, materials.stairPlaster, (u, v) => P(X, y1 + (y0 - y1) * v, aZ + (bZ - aZ) * u), 0.8, 3, 2);
-      poly([P(X, y0, aZ + 0.16), P(X, y0, bZ - 0.16), P(X, y1, bZ - 0.16), P(X, y1, aZ + 0.16)], visibleFlight ? "#465449" : "#0c1512");
-    }
-    // the nose of the step
-    const a = P(X, dir > 0 ? y1 : y0, aZ), b = P(X, dir > 0 ? y1 : y0, bZ);
-    ctx.strokeStyle = `rgba(190,208,240,${((visibleFlight ? 0.45 : 0.15) + 0.4 * lit).toFixed(3)})`;
-    ctx.lineWidth = Math.max(0.8, (2 * u) / z0);
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-  }
-  // the rail on the far wall, going with the steps
-  const r0 = P(X0, floor - H * 0.3, z1 - 0.03), r1 = P(out(n), floor - dir * n * rise - H * 0.3, z1 + depthStep * n - 0.03);
-  if (visibleFlight) {
-    for (let i = 0; i < n; i += 2) {
-      const z = z1 + depthStep * i - 0.03, y = floor - i * rise;
-      const a = P(out(i), y, z), b = P(out(i), y - H * 0.3, z);
-      ctx.strokeStyle = "#48515a"; ctx.lineWidth = Math.max(1, 4 * u / z);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      ctx.strokeStyle = "rgba(197,213,223,0.45)"; ctx.lineWidth = Math.max(0.5, u / z);
-      ctx.beginPath(); ctx.moveTo(a.x - u, a.y); ctx.lineTo(b.x - u, b.y); ctx.stroke();
-    }
-  }
-  ctx.strokeStyle = visibleFlight ? "#6f543a" : "#1c110a";
-  ctx.lineWidth = Math.max(1.6, (9 * u) / z1);
-  ctx.beginPath(); ctx.moveTo(r0.x, r0.y); ctx.lineTo(r1.x, r1.y); ctx.stroke();
-  ctx.strokeStyle = "rgba(170,190,228,0.35)";
-  ctx.lineWidth = Math.max(0.6, (2 * u) / z1);
-  ctx.beginPath(); ctx.moveTo(r0.x, r0.y - (3 * u) / z1); ctx.lineTo(r1.x, r1.y - (3 * u) / z1); ctx.stroke();
-  // the dark gathering along the flight
-  ctx.fillStyle = visibleFlight ? "rgba(2,3,5,0.08)" : dir > 0 ? "rgba(2,3,5,0.28)" : "rgba(2,3,5,0.5)";
-  polygon(ctx, quad);
-  ctx.fill();
-  ctx.restore();
-  // the newel at the foot of it, on the hall side
-  const foot = P(X0, floor, z1 + 0.02), top = P(X0, floor - H * 0.4, z1 + 0.02), nw = Math.max(3, (30 * u) / z1);
-  const newelWood = ctx.createLinearGradient(foot.x - nw / 2, 0, foot.x + nw / 2, 0);
-  newelWood.addColorStop(0, "#291d13"); newelWood.addColorStop(0.4, visibleFlight ? "#8b6f4c" : "#2a190e"); newelWood.addColorStop(1, "#302218");
-  ctx.strokeStyle = visibleFlight ? newelWood : "#2a190e";
-  ctx.lineWidth = nw;
-  ctx.beginPath(); ctx.moveTo(foot.x, foot.y); ctx.lineTo(top.x, top.y); ctx.stroke();
-  ctx.fillStyle = "#3c2414";
-  ctx.beginPath(); ctx.arc(top.x, top.y - nw * 0.4, nw * 0.62, 0, Math.PI * 2); ctx.fill();
-}
 
 // What years of nobody have done to the upper hall: the paper come away
 // from the walls in sheets, the plaster behind it bare; damp run down from
@@ -1891,27 +1807,34 @@ function paintThings(ctx, L) {
 function paintGloom(ctx, L) {
   const { W, H, u } = L;
   const stair = L.theme === "chemistry" && L.stairs ? {
-    near: L.P(L.wall, L.doorTop, L.stairs.z0), far: L.P(L.wall, L.doorTop, L.stairs.z1),
-    nearFoot: L.P(L.wall, L.floor, L.stairs.z0), farFoot: L.P(L.wall, L.floor, L.stairs.z1),
+    near: L.P(L.wall,L.stairs.head,L.stairs.z0), far: L.P(L.wall,L.stairs.head,L.stairs.z1),
+    nearFoot: L.P(L.wall,L.floor,L.stairs.z0), farFoot: L.P(L.wall,L.floor,L.stairs.z1),
   } : null;
-  const step = Math.max(6, Math.round(10 * u));
-  for (let y = 0; y < H; y += step) {
-    for (let x = 0; x < W; x += step) {
-      const d = Math.hypot((x + step / 2 - L.vp.x) / (W * 0.62), (y + step / 2 - L.vp.y) / (H * 0.74));
-      // Upstairs stays dim enough for the separately rendered Morse flashes.
-      let a = L.botanicMaterials ? Math.min(0.82, 0.3 + Math.max(0, d - 0.28) * 0.95) : L.wing ? Math.min(0.92, 0.14 + Math.max(0, d - 0.2) * 1.35) : L.theme === "chemistry" ? Math.min(0.9, 0.22 + Math.max(0, d - 0.22) * 1.3) : L.worn ? Math.min(0.9, Math.max(0, d - 0.24) * 1.3) : Math.min(0.8, Math.max(0, d - 0.34) * 1.05);
-      if (stair) {
-        const px = x + step / 2, py = y + step / 2, feather = 14 * u;
-        const t = Math.max(0, Math.min(1, (px - stair.far.x) / (stair.near.x - stair.far.x)));
-        const top = stair.far.y + (stair.near.y - stair.far.y) * t;
-        const bottom = stair.farFoot.y + (stair.nearFoot.y - stair.farFoot.y) * t;
-        const across = Math.max(0, Math.min(1, (px - stair.far.x + feather) / feather, (stair.near.x - px + feather) / feather));
-        const down = Math.max(0, Math.min(1, (py - top + feather) / feather, (bottom - py + feather) / feather));
-        a *= 1 - 0.66 * across * down;
-      }
-      if (a <= 0.004) continue;
-      ctx.fillStyle = `rgba(3,4,6,${a.toFixed(3)})`;
-      ctx.fillRect(x, y, step, step);
+  // Interpolate a light mask instead of painting opaque square patches.
+  // The old patches left a visible checkerboard over floors and thresholds.
+  const step = Math.max(6,Math.round(10*u)), w = Math.ceil(W/step), h = Math.ceil(H/step);
+  const mask = makeCanvas(w,h), g = mask.getContext("2d"), pixels = g.createImageData(w,h);
+  for (let row = 0; row < h; row++) for (let col = 0; col < w; col++) {
+    const px = (col+0.5)*W/w, py = (row+0.5)*H/h;
+    const d = Math.hypot((px-L.vp.x)/(W*0.62),(py-L.vp.y)/(H*0.74));
+    // Upstairs stays dim enough for the separately rendered Morse flashes.
+    let a = L.botanicMaterials ? Math.min(0.82,0.3+Math.max(0,d-0.28)*0.95)
+      : L.wing ? Math.min(0.92,0.14+Math.max(0,d-0.2)*1.35)
+      : L.theme === "chemistry" ? Math.min(0.9,0.22+Math.max(0,d-0.22)*1.3)
+      : L.worn ? Math.min(0.9,Math.max(0,d-0.24)*1.3) : Math.min(0.8,Math.max(0,d-0.34)*1.05);
+    if (stair) {
+      const feather = 14*u;
+      const t = Math.max(0,Math.min(1,(px-stair.far.x)/(stair.near.x-stair.far.x)));
+      const top = stair.far.y+(stair.near.y-stair.far.y)*t;
+      const bottom = stair.farFoot.y+(stair.nearFoot.y-stair.farFoot.y)*t;
+      const across = Math.max(0,Math.min(1,(px-stair.far.x+feather)/feather,(stair.near.x-px+feather)/feather));
+      const down = Math.max(0,Math.min(1,(py-top+feather)/feather,(bottom-py+feather)/feather));
+      a *= 1-0.66*across*down;
     }
+    const i = (row*w+col)*4;
+    pixels.data[i] = 3; pixels.data[i+1] = 4; pixels.data[i+2] = 6; pixels.data[i+3] = Math.round(a*255);
   }
+  g.putImageData(pixels,0,0);
+  ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(mask,0,0,W,H); ctx.restore();
 }

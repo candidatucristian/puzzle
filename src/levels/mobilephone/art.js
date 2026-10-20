@@ -1,7 +1,8 @@
 import { prepareHandset } from "./proceduralPhone.js";
 import { prepareDesk } from "./proceduralDesk.js";
+import { DESK_PHOTOGRAPH, preparePhotographicHandset } from "./photographicMaterials.js";
 
-// Design coordinates shared by the procedural geometry and live hit areas.
+// Design coordinates shared by the photographed surfaces and live hit areas.
 export const DESK_ART = {
   key: "mp_walnut_code",
   width: 1536,
@@ -9,7 +10,7 @@ export const DESK_ART = {
 };
 
 export const PHONE_ART = {
-  key: "mp_handset_code",
+  key: "mp_handset_surface_v2",
   width: 857,
   height: 1835,
   scale: 800 / 1835,
@@ -27,9 +28,9 @@ export function phonePoint(x, y) {
 }
 
 export function preparePhoneArt(scene) {
-  prepareHandset(scene, PHONE_ART, phonePoint);
+  if (!preparePhotographicHandset(scene, PHONE_ART)) prepareHandset(scene, PHONE_ART, phonePoint);
 }
 
 export function prepareDeskArt(scene) {
-  prepareDesk(scene, DESK_ART);
+  if (!scene.textures.exists(DESK_PHOTOGRAPH)) prepareDesk(scene, DESK_ART);
 }

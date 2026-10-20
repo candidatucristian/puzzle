@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { CELLAR_MATERIALS_KEY, CELLAR_MATERIALS_URL, layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
+import { loadCellarPhotography } from "./photographicCellar.js";
+import { HOUSE_BACK } from "../../shared/house.js";
+import { CURSORS } from "../../shared/cursors.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "TAPCODE"  ·  code: ESCAPE   ·  count the knocks
@@ -35,6 +38,7 @@ export default class TapCodeScene extends BasePuzzleScene {
   }
 
   preload() {
+    loadCellarPhotography(this);
     this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
     if (!this.textures.exists(CELLAR_MATERIALS_KEY)) this.load.image(CELLAR_MATERIALS_KEY, CELLAR_MATERIALS_URL);
   }
@@ -78,6 +82,28 @@ export default class TapCodeScene extends BasePuzzleScene {
     this._makeDrip(L, k.glow);
     this._makeMotes(L, k.glow);
     this._makeFog(L, k.fog);
+    this._makeExit(L);
+  }
+
+  _makeExit(L) {
+    // Stay between the rails, just inside the opening above the top rung.
+    const x = L.ladder.x, y = Math.max(32, L.ceilY * 0.65);
+    const size = Phaser.Math.Clamp(32 * L.u, 28, 38);
+    const arrow = this.add.graphics({ x, y }).setDepth(10).setAlpha(0.82);
+    const points = [
+      { x: 0, y: -size / 2 }, { x: size * 0.31, y: -size * 0.13 },
+      { x: size * 0.08, y: -size * 0.13 }, { x: size * 0.08, y: size / 2 },
+      { x: -size * 0.08, y: size / 2 }, { x: -size * 0.08, y: -size * 0.13 },
+      { x: -size * 0.31, y: -size * 0.13 },
+    ];
+    arrow.lineStyle(3, 0x090b0d, 0.85).strokePoints(points, true);
+    arrow.fillStyle(0xece7db).fillPoints(points, true);
+    this.add.zone(x, y, 56, 56).setDepth(11).setName("basement-exit")
+      .setInteractive({ cursor: CURSORS.ladder })
+      .setData("interactionLabel", "Climb up to Room V")
+      .on("pointerover", () => arrow.setAlpha(1))
+      .on("pointerout", () => arrow.setAlpha(0.82))
+      .on("pointerdown", () => this.game.events.emit(HOUSE_BACK));
   }
 
   // The weeping joint: a bead of water gathers under it, lets go, falls the

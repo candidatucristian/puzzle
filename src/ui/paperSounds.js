@@ -11,9 +11,9 @@
 //   unfold   the sheet opened out, fold by fold
 //   file     the letter slid into the dossier
 //   ping     something new in the case file
-//   writing  a pen on paper as a found letter is opened out: four and a half
-//            seconds of the recording (assets/sounds/writingonpaper.mp3),
-//            coming in softly and dying away; returns { stop() }
+//   writing  a pen on paper as a found letter is opened out: two seconds of
+//            the recording (assets/sounds/writingonpaper.mp3), as long as the
+//            words take to be written; returns { stop() }
 
 export function mountPaperSounds({ game, audio }) {
   const ctx = () => {
@@ -59,7 +59,8 @@ export function mountPaperSounds({ game, audio }) {
   // the recording of the pen, fetched once and kept decoded
   // (the recording is very quiet, near -48 dB: it is brought up to a clear
   // level by what it measures, its peaks kept clear of clipping)
-  const WRITING = { url: "assets/sounds/writingonpaper.mp3", seconds: 4.5, loudness: 0.11, gain: 0.8 };
+  // two seconds: exactly as long as the words take to be written (letter-ink)
+  const WRITING = { url: "assets/sounds/writingonpaper.mp3", seconds: 2, loudness: 0.11, gain: 0.8 };
   let writingBuffer = null, writingLoad = null, writingLift = 1;
   function loadWriting(ac) {
     if (writingBuffer) return Promise.resolve(writingBuffer);
@@ -87,8 +88,8 @@ export function mountPaperSounds({ game, audio }) {
       src.buffer = buf;
       const peak = WRITING.gain * writingLift * vol;
       gainNode.gain.setValueAtTime(0.0001, t);
-      gainNode.gain.exponentialRampToValueAtTime(peak, t + 0.2);
-      gainNode.gain.setValueAtTime(peak, t + Math.max(0.2, len - 0.9));
+      gainNode.gain.exponentialRampToValueAtTime(peak, t + 0.12);
+      gainNode.gain.setValueAtTime(peak, t + Math.max(0.12, len - 0.3));
       gainNode.gain.exponentialRampToValueAtTime(0.0001, t + len);
       src.connect(gainNode).connect(out);
       src.start(t, 0, len);
@@ -126,5 +127,7 @@ export function mountPaperSounds({ game, audio }) {
     },
     ping() { tones([[880, 0.05], [1318.5, 0.04, 0.09]], { decay: 0.7 }); },
     writing,
+    // fetched and decoded ahead, so the pen starts with the words, not after them
+    prepareWriting() { const c = ctx(); if (c) void loadWriting(c.ac); },
   };
 }

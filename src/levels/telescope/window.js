@@ -5,6 +5,7 @@ import {
   curtainOutline,
   innerEdgeAt,
 } from "./windowFrame.js";
+import { paintWindowPhotography } from "./photographicWindow.js";
 
 /** The close-up: the very same arched window from the room sketch, its
  *  sheer curtains tied back, now as tall as the screen — as though you'd
@@ -26,8 +27,9 @@ const LIT = "#3b4868"; // stone in full moonlight
 
 export function drawWindow(scene, W, H) {
   const geo = layoutWindow(W, H);
-  addCanvas(scene.textures, SKY_KEY, paintSky(geo));
-  addCanvas(scene.textures, FRONT_KEY, paintFront(geo));
+  const photography = paintWindowPhotography(scene, geo);
+  addCanvas(scene.textures, SKY_KEY, photography?.backdrop || paintSky(geo));
+  addCanvas(scene.textures, FRONT_KEY, photography?.front || paintFront(geo));
   const backdrop = scene.add.image(0, 0, SKY_KEY).setOrigin(0, 0).setDepth(0);
   const frame = scene.add.image(0, 0, FRONT_KEY).setOrigin(0, 0).setDepth(3);
   return { geo, backdrop, frame };

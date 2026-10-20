@@ -1,6 +1,7 @@
 import PlainRoomScene from "../house/plainRoom.js";
 import { soft, lcg } from "../../shared/paint.js";
 import { BACK, WARM, block, fillPoly, footShadow, thingAt } from "../house/roomKit.js";
+import { ROOM8_PHOTOGRAPH, loadRoom8Photography, alignRoom8Photography, paintRoom8Photography } from "./photographicRoom.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Room 8, behind door VIII off the chemist's hall: his weighing room (see
@@ -27,6 +28,11 @@ export default class Room8Scene extends PlainRoomScene {
       chest: null,
       rug: ["#141618", "#2c2e30", "#191b1d"],
     });
+  }
+
+  preload() {
+    super.preload();
+    loadRoom8Photography(this);
   }
 
   layout(W, H, levels) {
@@ -70,7 +76,12 @@ export default class Room8Scene extends PlainRoomScene {
       { x: bm.x, y: bm.y, rx: 200 * bm.s, ry: 110 * bm.s, k: L.on.equations ? 0.85 : 0.35 },
       { x: vm.x, y: vm.y, rx: 150 * vm.s, ry: 80 * vm.s, k: L.on.measures ? 0.85 : 0.35 },
     ];
+    if (this.textures.exists(ROOM8_PHOTOGRAPH)) alignRoom8Photography(L);
     return L;
+  }
+
+  paint(L) {
+    return L.photographic ? paintRoom8Photography(this, L, this._keys) : super.paint(L);
   }
 
   paintDetails(ctx, L) {
@@ -85,8 +96,9 @@ export default class Room8Scene extends PlainRoomScene {
     // each light while it burns, breathing very slightly
     for (const [id, a, tint] of [["balance", 0.22, 0xffcf8a], ["equations", 0.16, 0xffd6a0], ["measures", 0.18, 0xffc884]]) {
       if (!L.on[id]) continue;
-      const light = glow(L.glows[id], a, tint);
-      this.ambientTween({ targets: light, alpha: { from: a * 0.85, to: a * 1.18 }, duration: 3000 + a * 4000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      const alpha = L.photographic ? a * 0.35 : a;
+      const light = glow(L.glows[id], alpha, tint);
+      this.ambientTween({ targets: light, alpha: { from: alpha * 0.85, to: alpha * 1.18 }, duration: 3000 + a * 4000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
   }
 }

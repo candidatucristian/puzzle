@@ -5,6 +5,7 @@ import { ConstellationHover, HOVER_TUNE } from "./constellations.js";
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
+import { loadWindowPhotography, photographicMoonTexture } from "./photographicWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "TELESCOPE"  ·  code: ORION  ·  TOOL (Braille alphabet)
@@ -88,6 +89,7 @@ export default class TelescopeScene extends BasePuzzleScene {
   }
 
   preload() {
+    loadWindowPhotography(this);
     if (!this.textures.exists(TELESCOPE_PHOTO)) {
       this.load.image(
         TELESCOPE_PHOTO,
@@ -118,6 +120,18 @@ export default class TelescopeScene extends BasePuzzleScene {
 
   // sharp 4-point sparkle: long N/E/S/W points, short diagonals — no halo
   _fillSparkle(g, x, y, R, color, alpha) {
+    if (this._geo?.photographic) {
+      // Photographic point light: a tiny bright core, soft optical bloom and
+      // restrained diffraction, all centred on the original star position.
+      for (const [radius, strength] of [[0.95, 0.018], [0.62, 0.045], [0.34, 0.12]]) {
+        g.fillStyle(color, alpha * strength);
+        g.fillCircle(x, y, Math.max(0.8, R * radius));
+      }
+      g.lineStyle(Math.max(0.5, R * 0.04), color, alpha * 0.2);
+      g.lineBetween(x - R * 0.55, y, x + R * 0.55, y);
+      g.lineBetween(x, y - R * 0.55, x, y + R * 0.55);
+      return;
+    }
     const inner = R * 0.22;
     const pts = [];
     for (let i = 0; i < 8; i++) {
@@ -439,10 +453,11 @@ export default class TelescopeScene extends BasePuzzleScene {
     this._groups = [];
 
     // the moon hangs where the window's painted moonlight expects it
-    makeMoonTexture(this.textures, "tele_moon");
+    const photoMoon = photographicMoonTexture(this.textures);
+    if (!photoMoon) makeMoonTexture(this.textures, "tele_moon");
     const moonR = geo.moon.r;
     this._moon = this.add
-      .image(geo.moon.x, geo.moon.y, "tele_moon")
+      .image(geo.moon.x, geo.moon.y, photoMoon || "tele_moon")
       .setDepth(1);
     this._moon.setDisplaySize((moonR * 2) / 0.72, (moonR * 2) / 0.72);
 
@@ -675,9 +690,9 @@ export default class TelescopeScene extends BasePuzzleScene {
     }
   }
 
-  // ── Synthesized ambience: night wind and crickets ─────────────────────────
+  // ── Synthesized ambience: night wind ──────────────────────────────────────
 
-  // The night comes in through the open window: wind and crickets play at the
+  // The night comes in through the open window: the wind plays at the
   // glass and during the dive to it, not in the room, and follow mute and the
   // effects volume. (The gain used to be set only at the window, so the first
   // dive's whoosh went unheard and the room stayed noisy after a visit.)
@@ -724,36 +739,8 @@ export default class TelescopeScene extends BasePuzzleScene {
       wind.start();
 
       this._amb = { ac, master, wind, wg };
-
-      this._cricketTimer = this.time.addEvent({
-        delay: 380,
-        loop: true,
-        callback: () => {
-          if (Math.random() < 0.55) this._chirp();
-        },
-      });
     } catch (e) {
       this._amb = null;
-    }
-  }
-
-  _chirp() {
-    if (!this._amb) return;
-    const ac = this._amb.ac,
-      t = ac.currentTime;
-    for (let k = 0; k < 2; k++) {
-      const o = ac.createOscillator(),
-        g = ac.createGain();
-      o.type = "sine";
-      o.frequency.value = 4100 + Math.random() * 500;
-      const st = t + k * 0.06;
-      g.gain.setValueAtTime(0, st);
-      g.gain.linearRampToValueAtTime(0.22, st + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.001, st + 0.05);
-      o.connect(g);
-      g.connect(this._amb.master);
-      o.start(st);
-      o.stop(st + 0.07);
     }
   }
 
@@ -802,10 +789,6 @@ export default class TelescopeScene extends BasePuzzleScene {
       }
     } catch (e) {}
     this._amb = null;
-    if (this._cricketTimer) {
-      this._cricketTimer.remove(false);
-      this._cricketTimer = null;
-    }
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────

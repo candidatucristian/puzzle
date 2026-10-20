@@ -39,24 +39,10 @@
 }
 .arrival .env-seal, .arrival.is-waiting .env-seal { animation: none; filter: drop-shadow(0 2px 1px #410d0850); }
 .env-wax-piece { position: absolute; z-index: 5; backface-visibility: hidden; filter: drop-shadow(1px 1px .6px #460e0980); pointer-events: none; }
-.arrival .env-hint {
-  display: block; margin: 0; padding: 13px 27px 11px; border: 0; border-bottom: 1px solid #ae937267;
-  background: linear-gradient(0deg, #9275550d, transparent); border-radius: 0;
-  color: #e2d2b4; font: 400 13px 'Special Elite', monospace; letter-spacing: .13em;
-  cursor: var(--cursor-hand, pointer); animation: none; opacity: 0;
-  transition: color .2s ease, border-color .2s ease, opacity .3s ease;
-}
-.arrival.is-waiting .env-hint { opacity: 1; animation: none; }
-.arrival .env-hint:hover { color: #fff3da; border-bottom-color: #dec6a1; }
-.arrival .env-hint.is-away { opacity: 0; }
-.arrival .env-hint:focus-visible, .arrival .arrival-file:focus-visible, .arrival .arrival-later:focus-visible {
+.arrival .arrival-file:focus-visible {
   outline: 1px solid #e5cba3; outline-offset: 5px;
 }
 .arrival .env:focus-visible .env-seal { filter: drop-shadow(0 2px 1px #410d0850) drop-shadow(0 0 4px #e0b17b60); }
-.arrival .arrival-later {
-  border: 0; border-bottom: 1px solid #bba88a48; border-radius: 0; background: none;
-  color: #c2b394; font: 400 12px 'Special Elite', monospace; padding: 8px 4px;
-}
 .arrival-reading { z-index: 4; }
 .arrival-page {
   width: min(620px, 92vw); max-height: calc(100dvh - 140px); min-height: 0;
@@ -101,7 +87,6 @@
   .arrival-caption { top: 20px; }
   .arrival-title { font-size: 25px; margin-top: 9px !important; }
   .arrival-stage { gap: 16px; top: 56%; }
-  .arrival .env-hint { padding: 8px 20px; font-size: 12px; }
   .arrival .letter-page { padding: 32px 38px 100px; font-size: calc(14px * var(--reading-scale, 1)); }
   .arrival-reading { padding: 12px; gap: 12px; }
   .arrival-page { max-height: calc(100dvh - 95px); }

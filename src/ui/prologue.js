@@ -3,18 +3,27 @@ import { renderLetter } from "./letterPage.js";
 import { glint } from "./startFilm.js";
 import { taskCard } from "./tasks.js";
 
-const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk.png`;
-const NAMEPLATE_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-nameplate-v2.png`;
-const DESK_WIDTH = 1536, DESK_HEIGHT = 1024;
+const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-film-match-v2.png`;
+const DESK_WIDTH = 1672,
+  DESK_HEIGHT = 941;
+// Out of the film, into the game: the desk fills the screen, the matte gone,
+// framed as the film's last shot comes to rest (no closer: the film is
+// drawing back, and the game must not then move in). The opening film's
+// last move (introVideo.js) ends on exactly this.
+export const DESK_CAMERA = Object.freeze({ zoom: 1, origin: "50% 50%" });
 let deskImage;
 
-// The cold open has ample time to decode its next, photographic scene.
+// Decode the desk while the opening film plays, before the fade reveals it.
 export function preloadPrologueDesk() {
   if (!deskImage) {
     const image = new Image();
     image.decoding = "async";
-    deskImage = new Promise(resolve => {
-      image.onload = () => resolve(image);
+    deskImage = new Promise((resolve) => {
+      image.onload = () =>
+        image
+          .decode()
+          .catch(() => {})
+          .then(() => resolve(image));
       image.onerror = () => resolve(null);
     });
     image.src = DESK_IMAGE;
@@ -24,40 +33,55 @@ export function preloadPrologueDesk() {
 
 export function playPrologue(scope, options) {
   void preloadPrologueDesk();
-  playDesk(scope, options);
+  return playDesk(scope, options);
 }
 
-// A moving, rain-swept frame: his desk, the night the letter comes. Two
+// The film's framing continues on his desk, the night the letter comes. Two
 // things on it, opened in turn: the letter first — why tonight — and then,
 // as it asks, the Ashcombe file — the report the case was closed on, and the
 // question he pencilled under it. Both are live text, on the same paper used
-// throughout the case file. Bottom right, tonight's tasks — one at a time:
+// throughout the case file. In the lower matte, tonight's task — one at a time:
 // the next shows only once the last is ticked in the pencil; with both done,
 // bottom right, the way to the house.
-function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) {
+function playDesk(
+  scope,
+  {
+    onDone,
+    reducedMotion = false,
+    sounds = null,
+    revealImmediately = false,
+    deferInteraction = false,
+  } = {},
+) {
   const root = document.createElement("div");
   root.id = "prologue";
   root.setAttribute("role", "dialog");
-  root.setAttribute("aria-label", "The Ashcombe file, on Inspector Wren's desk");
+  root.setAttribute(
+    "aria-label",
+    "The Ashcombe file, on Inspector Wren's desk",
+  );
+  root.dataset.phase = deferInteraction ? "opening" : "ready";
+  root.inert = deferInteraction;
   if (reducedMotion) root.classList.add("is-still");
 
   const camera = document.createElement("div");
   camera.className = "prologue-camera";
+  Object.assign(camera.style, {
+    transform: `scale(${DESK_CAMERA.zoom})`,
+    transformOrigin: DESK_CAMERA.origin,
+  });
   const photograph = document.createElement("img");
   photograph.className = "prologue-photo";
   photograph.alt = "";
   photograph.decoding = "async";
+  const deskWidth = DESK_WIDTH,
+    deskHeight = DESK_HEIGHT;
   camera.append(photograph);
 
   const rain = document.createElement("canvas");
   rain.className = "prologue-rain";
   rain.setAttribute("aria-hidden", "true");
   camera.append(rain);
-
-  const folder = document.createElement("div");
-  folder.className = "prologue-folder-label";
-  folder.textContent = "ASHCOMBE · 1961";
-  folder.setAttribute("aria-hidden", "true");
 
   // the letter on the blotter, opened first; then the leather file beside it
   const envelope = document.createElement("button");
@@ -69,26 +93,19 @@ function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) 
   dossier.type = "button";
   dossier.className = "prologue-envelope prologue-dossier";
   dossier.setAttribute("aria-label", "Open the Ashcombe file");
-  dossier.title = "Open the file";
+  // no "Open the file" over it until it is its turn
   dossier.disabled = true;
 
   const nameplate = document.createElement("div");
   nameplate.className = "prologue-desk-nameplate";
   nameplate.setAttribute("role", "img");
   nameplate.setAttribute("aria-label", "Inspector Arthur Wren");
-  const nameplateImage = document.createElement("img");
-  nameplateImage.className = "prologue-nameplate-image";
-  nameplateImage.src = NAMEPLATE_IMAGE;
-  nameplateImage.alt = "";
-  nameplateImage.decoding = "async";
-  nameplateImage.draggable = false;
-  const inscription = document.createElement("span");
-  inscription.className = "prologue-nameplate-inscription";
-  inscription.textContent = "Inspector Arthur Wren";
-  nameplate.append(nameplateImage, inscription);
-  // The nameplate sits behind the photographed envelope; its transparent
-  // lower edge is clipped to the envelope's real top edge in the photograph.
-  camera.append(folder, dossier, nameplate, envelope);
+  // The physical plaque and folder label are in the photograph, with the
+  // same light and perspective as the film. No bright plates are laid over it.
+  camera.append(dossier, nameplate, envelope);
+  // what is to be opened now is drawn round in the game's thin pencil, on its
+  // own shape in the photograph: the letter first, then the file
+  camera.append(outlines());
   // the glint the house's door has, on whichever is to be opened now: the
   // letter first, then — once it is put down — the file
   const sparkle = (thing, step) => {
@@ -96,99 +113,184 @@ function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) 
     canvas.className = "prologue-glint";
     canvas.setAttribute("aria-hidden", "true");
     thing.append(canvas);
-    glint(scope, thing, () => reducedMotion, () => !root.isConnected || root.dataset.step !== step, canvas, { scale: 2, sparks: 22 });
+    glint(
+      scope,
+      thing,
+      () => reducedMotion,
+      () => !root.isConnected || root.dataset.step !== step,
+      canvas,
+      { scale: 2, sparks: 6 },
+    );
   };
 
-  // tonight's tasks (tasks.js): the second not shown until the first is done
-  const tasks = taskCard([
-    ["letter", "Read the letter"],
-    ["file", "Open the case file", { later: true }],
-    ["house", "Go to Ashcombe Manor", { later: true }],
-  ], { sounds });
+  // tonight's tasks (tasks.js), in a side panel on the right that fades in
+  // once the film has handed over: one at a time, each struck through and
+  // ticked when done, and the next coming in under it
+  const tasks = taskCard(
+    [
+      ["letter", "Read the letter"],
+      ["file", "Open the case file", { later: true }],
+      ["house", "Go to Ashcombe Manor", { later: true }],
+    ],
+    { sounds },
+  );
+  tasks.node.setAttribute("aria-live", "polite");
 
   // with both done: the way on, drawn as the way back is, its arrow turned
   const onward = document.createElement("button");
   onward.type = "button";
   onward.className = "prologue-onward";
   onward.hidden = true;
-  onward.innerHTML = `<span class="onward-word">Go to Ashcombe Manor<svg class="onward-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
+  onward.innerHTML = `<span class="onward-word">Ashcombe Manor<svg class="onward-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
       ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" />`).join("")}
     </svg></span><svg class="onward-icon" viewBox="0 0 44 22" aria-hidden="true"><g class="onward-arrow">
       ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M3 18.5C5.5 8.2 16.5 3.6 26 4.6C32.4 5.3 36.8 8.6 39.6 13.2" /><path class="${c}" d="M40.6 6.4L39.7 13.4L33 12.1" />`).join("")}
     </g></svg>`;
 
-  root.append(camera, tasks.node, onward);
+  const panel = document.createElement("aside");
+  panel.className = "prologue-panel";
+  panel.setAttribute("aria-label", "Tonight");
+  const head = document.createElement("header");
+  head.className = "prologue-panel-head";
+  // headed as the game's own index heads a floor: its mark in a box, a rule, the name
+  head.innerHTML = `<span class="pf-numeral">P</span><span class="pf-rule"></span><span class="pf-words"><span class="pf-name">Inspector Wren's Study</span><span class="pf-where">Prologue · Exeter, 2001</span></span>`;
+  const label = document.createElement("p");
+  label.className = "prologue-panel-label";
+  label.textContent = "Tonight";
+  panel.append(head, label, tasks.node, onward);
+  root.append(camera, panel);
   const reading = readingStage(scope, root);
   root.dataset.step = "letter";
   sparkle(envelope, "letter");
 
+  if (revealImmediately) root.classList.add("is-shown");
   document.body.append(root);
   // while the desk is up, the header stands over it with only what the opening needs
   document.body.classList.add("prologue-on");
-  requestAnimationFrame(() => root.classList.add("is-shown"));
-  void preloadPrologueDesk().then(image => {
+  scope.add(() => {
+    root.remove();
+    document.body.classList.remove("prologue-on");
+  });
+  if (!revealImmediately)
+    requestAnimationFrame(() => root.classList.add("is-shown"));
+  // The film's frozen frame dissolves into this game background, fully
+  // decoded before the covering film starts to disappear.
+  const ready = preloadPrologueDesk().then(async (image) => {
     if (!image || !root.isConnected) return;
     photograph.src = image.src;
+    await photograph.decode().catch(() => {});
   });
 
   const placeSceneDetails = () => {
-    const width = window.innerWidth, height = window.innerHeight;
-    const cover = Math.max(width / DESK_WIDTH, height / DESK_HEIGHT);
-    const offsetX = (width - DESK_WIDTH * cover) / 2;
-    const offsetY = (height - DESK_HEIGHT * cover) / 2;
-    const place = (node, x, y, w, h) => Object.assign(node.style, {
-      left: `${offsetX + x * cover}px`, top: `${offsetY + y * cover}px`,
-      width: `${w * cover}px`, height: `${h * cover}px`,
-    });
+    const width = camera.clientWidth,
+      height = camera.clientHeight;
+    const cover = Math.max(width / deskWidth, height / deskHeight);
+    const offsetX = (width - deskWidth * cover) / 2;
+    const offsetY = (height - deskHeight * cover) / 2;
+    const scaleX = (deskWidth / DESK_WIDTH) * cover,
+      scaleY = (deskHeight / DESK_HEIGHT) * cover;
+    const place = (node, x, y, w, h) =>
+      Object.assign(node.style, {
+        left: `${offsetX + x * scaleX}px`,
+        top: `${offsetY + y * scaleY}px`,
+        width: `${w * scaleX}px`,
+        height: `${h * scaleY}px`,
+      });
     // Follow the real objects even when the frame is cropped for a narrow
     // or unusually wide screen. The photograph and button share one camera.
-    place(dossier, 6, 512, 776, 286);
-    place(envelope, 728, 649, 430, 150);
-    place(folder, 315, 523, 225, 40);
-    place(nameplate, 805, 543, 290, 144);
+    place(dossier, 0, 534, 810, 270);
+    place(envelope, 726, 700, 422, 112);
+    place(nameplate, 894, 552, 286, 132);
     resizeRain(rain, width, height);
   };
   placeSceneDetails();
   scope.on(window, "resize", placeSceneDetails);
 
-  let lastFrame = 0, previous = performance.now();
-  const drops = Array.from({ length: 90 }, () => ({
-    x: .666 + Math.random() * .295, y: Math.random() * .40,
-    speed: 22 + Math.random() * 76, length: 5 + Math.random() * 16,
-    alpha: .08 + Math.random() * .18,
-  }));
+  // Rain on his window, and only on its glass: the six panes between the
+  // frame and its bars, in the photograph's own pixels. The photograph has
+  // its beads of water already; over them a few drops at a time gather and
+  // run down a pane in fits and starts, as water does, each leaving a thin
+  // wet trail that fades behind it; and behind the glass, very faintly, the
+  // rain coming down in the street.
+  const PANES = [[737, 0, 916, 155], [938, 0, 1159, 155], [1182, 0, 1430, 150],
+    [737, 182, 916, 481], [938, 177, 1159, 484], [1182, 166, 1428, 492]];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const newRun = (run = {}) => {
+    const pane = PANES[Math.floor(Math.random() * PANES.length)], [l, t, r, b] = pane;
+    return Object.assign(run, { pane, x: rnd(l + 6, r - 6), y: rnd(t + 2, t + (b - t) * .55), size: rnd(1, 2.1),
+      speed: rnd(26, 70), v: 0, wait: rnd(.4, 3.2), trail: [] });
+  };
+  const runs = Array.from({ length: 9 }, () => newRun());
+  const streaks = Array.from({ length: 46 }, () => ({ x: rnd(737, 1430), y: rnd(0, 492), length: rnd(9, 24), v: rnd(520, 900), alpha: rnd(.025, .07) }));
   const rainContext = rain.getContext("2d");
-  let frame = 0;
-  const animateRain = now => {
+  let frame = 0, previous = performance.now(), lastFrame = 0;
+  const animateRain = (now) => {
     if (!root.isConnected || reducedMotion) return;
     frame = requestAnimationFrame(animateRain);
-    if (now - lastFrame < 32) return;
-    const dt = Math.min(.045, (now - previous) / 1000);
+    if (now - lastFrame < 30) return;
+    const dt = Math.min(0.05, (now - previous) / 1000);
     previous = lastFrame = now;
-    rainContext.clearRect(0, 0, rain.width, rain.height);
-    rainContext.save();
-    rainContext.scale(rain.width / window.innerWidth, rain.height / window.innerHeight);
-    const x0 = (window.innerWidth - DESK_WIDTH * Math.max(window.innerWidth / DESK_WIDTH, window.innerHeight / DESK_HEIGHT)) / 2;
-    const y0 = (window.innerHeight - DESK_HEIGHT * Math.max(window.innerWidth / DESK_WIDTH, window.innerHeight / DESK_HEIGHT)) / 2;
-    const cover = Math.max(window.innerWidth / DESK_WIDTH, window.innerHeight / DESK_HEIGHT);
-    rainContext.beginPath();
-    rainContext.roundRect(x0 + .674 * DESK_WIDTH * cover, y0 + 8 * cover,
-      .296 * DESK_WIDTH * cover, .407 * DESK_HEIGHT * cover, 8 * cover);
-    rainContext.clip();
-    rainContext.lineCap = "round";
-    for (const drop of drops) {
-      drop.y += drop.speed * dt / (DESK_HEIGHT * cover);
-      if (drop.y > .405) drop.y = .008;
-      const x = x0 + drop.x * DESK_WIDTH * cover;
-      const y = y0 + drop.y * DESK_HEIGHT * cover;
-      rainContext.beginPath();
-      rainContext.moveTo(x, y);
-      rainContext.lineTo(x + .8 * cover, y + drop.length * cover);
-      rainContext.strokeStyle = `rgba(207,222,238,${drop.alpha})`;
-      rainContext.lineWidth = .75 * cover;
-      rainContext.stroke();
+    const g = rainContext;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, rain.width, rain.height);
+    // drawn in the photograph's pixels, placed as the photograph is (cover)
+    const width = camera.clientWidth, height = camera.clientHeight;
+    const cover = Math.max(width / deskWidth, height / deskHeight);
+    const sx = rain.width / width, sy = rain.height / height;
+    g.setTransform(sx * cover, 0, 0, sy * cover, sx * (width - deskWidth * cover) / 2, sy * (height - deskHeight * cover) / 2);
+    g.save();
+    g.beginPath();
+    for (const [l, t, r, b] of PANES) g.rect(l, t, r - l, b - t);
+    g.clip();
+    g.lineCap = "round";
+    // the street's rain, behind the glass
+    g.lineWidth = .6;
+    for (const drop of streaks) {
+      drop.y += drop.v * dt;
+      if (drop.y > 492) { drop.y = -drop.length; drop.x = rnd(737, 1430); }
+      g.strokeStyle = `rgba(200,214,232,${drop.alpha})`;
+      g.beginPath();
+      g.moveTo(drop.x, drop.y);
+      g.lineTo(drop.x - drop.length * .1, drop.y + drop.length);
+      g.stroke();
     }
-    rainContext.restore();
+    // the drops running down the glass
+    for (const run of runs) {
+      const [, , , bottom] = run.pane;
+      if (run.wait > 0) run.wait -= dt;
+      else {
+        run.v += (run.speed - run.v) * Math.min(1, dt * 3);
+        // now and then it catches on the glass, and waits
+        if (Math.random() < dt * .7) { run.wait = rnd(.25, 1.3); run.v = 0; }
+      }
+      const was = run.y;
+      run.y += run.v * dt;
+      run.x += Math.sin(run.y * .09) * .08;
+      if (run.y - was > .01) run.trail.push({ x: run.x, y: run.y, age: 0 });
+      for (const point of run.trail) point.age += dt;
+      while (run.trail.length && run.trail[0].age > 2.6) run.trail.shift();
+      if (run.y > bottom - 4) { newRun(run); continue; }
+      // its trail, wet and fading
+      for (let i = 1; i < run.trail.length; i++) {
+        const a = run.trail[i - 1], b = run.trail[i];
+        g.strokeStyle = `rgba(214,226,240,${.1 * (1 - b.age / 2.6)})`;
+        g.lineWidth = run.size * .7;
+        g.beginPath();
+        g.moveTo(a.x, a.y);
+        g.lineTo(b.x, b.y);
+        g.stroke();
+      }
+      // the drop: a bead of light, brighter at its lower edge
+      const bead = g.createRadialGradient(run.x, run.y + run.size * .35, 0, run.x, run.y, run.size * 1.6);
+      bead.addColorStop(0, "rgba(238,244,252,.62)");
+      bead.addColorStop(.45, "rgba(205,218,236,.28)");
+      bead.addColorStop(1, "rgba(205,218,236,0)");
+      g.fillStyle = bead;
+      g.beginPath();
+      g.arc(run.x, run.y, run.size * 1.6, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.restore();
   };
   if (!reducedMotion) frame = requestAnimationFrame(animateRain);
   scope.add(() => cancelAnimationFrame(frame));
@@ -198,6 +300,8 @@ function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) 
   const openLetter = () => {
     if (root.dataset.step !== "letter" || reading.open) return;
     envelope.disabled = true;
+    envelope.removeAttribute("title");
+    delete envelope.dataset.tip;
     reading.show(letterById("invitation"), {}, "Put it down", () => {
       reading.hide();
       root.dataset.step = "file";
@@ -205,6 +309,7 @@ function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) 
       // a moment after the tick, the next task
       scope.later(() => tasks.show("file"), reducedMotion ? 0 : 700);
       dossier.disabled = false;
+      dossier.dataset.tip = "Open the file";
       sparkle(dossier, "file");
       dossier.focus({ preventScroll: true });
     });
@@ -213,17 +318,21 @@ function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) 
     if (root.dataset.step !== "file" || reading.open) return;
     root.dataset.step = "read";
     dossier.disabled = true;
+    delete dossier.dataset.tip;
     reading.show(CASE_REPORT, { seal: false }, "Put it down", () => {
       reading.hide();
       root.dataset.step = "done";
       tasks.tick("file");
       // the last task, and the way on, a moment after the second tick
-      scope.later(() => {
-        tasks.show("house");
-        onward.hidden = false;
-        requestAnimationFrame(() => onward.classList.add("is-in"));
-        onward.focus({ preventScroll: true });
-      }, reducedMotion ? 0 : 650);
+      scope.later(
+        () => {
+          tasks.show("house");
+          onward.hidden = false;
+          requestAnimationFrame(() => onward.classList.add("is-in"));
+          onward.focus({ preventScroll: true });
+        },
+        reducedMotion ? 0 : 650,
+      );
     });
   };
   const leave = () => {
@@ -233,22 +342,102 @@ function playDesk(scope, { onDone, reducedMotion = false, sounds = null } = {}) 
     // the desk stays until what comes next has covered it: `onDone` is given
     // the way to take it down, and calls it once the screen has gone black —
     // so the house is never glimpsed between the two
-    const dismiss = () => { document.body.classList.remove("prologue-on"); root.remove(); };
-    if (onDone) { onDone(dismiss); return; }
+    const dismiss = () => {
+      document.body.classList.remove("prologue-on");
+      root.remove();
+    };
+    if (onDone) {
+      onDone(dismiss);
+      return;
+    }
     root.classList.add("is-leaving");
     scope.later(dismiss, reducedMotion ? 20 : 950);
   };
   scope.on(envelope, "click", openLetter);
   scope.on(dossier, "click", openFile);
   scope.on(onward, "click", leave);
-  scope.on(window, "keydown", event => {
-    if (reading.open || !root.isConnected || !["Enter", " "].includes(event.key)) return;
-    if (event.target instanceof HTMLButtonElement && root.contains(event.target)) return;
+  scope.on(window, "keydown", (event) => {
+    if (
+      root.inert ||
+      reading.open ||
+      !root.isConnected ||
+      !["Enter", " "].includes(event.key)
+    )
+      return;
+    if (
+      event.target instanceof HTMLButtonElement &&
+      root.contains(event.target)
+    )
+      return;
     event.preventDefault();
     if (root.dataset.step === "letter") openLetter();
     else if (root.dataset.step === "file") openFile();
     else if (root.dataset.step === "done") leave();
   });
+  return ready.then(() => () => {
+    if (scope.closed || !root.isConnected) return;
+    root.dataset.phase = "ready";
+    root.inert = false;
+  });
+}
+
+// The letter and the file as they lie in the photograph (its own pixels,
+// 1672 x 941), each drawn round a little outside its edges by hand — a line
+// that wavers slightly and does not quite close, in the three passes of the
+// game's pencil. Laid over the photograph exactly as it is shown (`slice`
+// is the photograph's cover); a line shows only on the step it belongs to.
+const OUTLINES = {
+  letter: [
+    [790, 697],
+    [1145, 710],
+    [1157, 814],
+    [719, 796],
+  ],
+  file: [
+    [0, 616],
+    [410, 531],
+    [806, 596],
+    [812, 612],
+    [558, 788],
+    [438, 766],
+    [242, 738],
+    [0, 700],
+  ],
+};
+function outlines() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "prologue-outlines");
+  svg.setAttribute("viewBox", `0 0 ${DESK_WIDTH} ${DESK_HEIGHT}`);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+  svg.setAttribute("aria-hidden", "true");
+  // a hand's line round the points: each side bowed a touch, the end run
+  // a little past the start
+  const hand = (points, seed) => {
+    let wobble = seed;
+    const jitter = () => {
+      wobble = (wobble * 9301 + 49297) % 233280;
+      return (wobble / 233280 - 0.5) * 5;
+    };
+    const loop = [...points, points[0], points[1]];
+    let d = `M${loop[0][0] + jitter()} ${loop[0][1] + jitter()}`;
+    for (let i = 1; i < loop.length; i++) {
+      const [x0, y0] = loop[i - 1],
+        [x1, y1] = loop[i];
+      const last = i === loop.length - 1;
+      const [ex, ey] = last
+        ? [x0 + (x1 - x0) * 0.12, y0 + (y1 - y0) * 0.12]
+        : [x1, y1];
+      d += ` Q${(x0 + ex) / 2 + jitter()} ${(y0 + ey) / 2 + jitter()} ${ex + jitter() * 0.4} ${ey + jitter() * 0.4}`;
+    }
+    return d;
+  };
+  svg.innerHTML = Object.entries(OUTLINES)
+    .map(
+      ([step, points], i) =>
+        `<g class="prologue-outline" data-for="${step}">${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" pathLength="1" d="${hand(points, 7 + i * 13)}" />`).join("")}</g>`,
+    )
+    .join("");
+  return svg;
 }
 
 // Resize the transparent rain layer at screen resolution, then draw rain only
@@ -275,30 +464,53 @@ function readingStage(scope, root) {
   reading.append(sheet, go);
   root.append(reading);
 
-  let open = false, then = null;
+  let open = false,
+    then = null;
   // each button acts once: a second press, or Esc after it, does nothing
-  const act = () => { const after = then; if (!open || !after) return; then = null; after(); };
+  const act = () => {
+    const after = then;
+    if (!open || !after) return;
+    then = null;
+    after();
+  };
   const show = (doc, options, label, after) => {
-    open = true; then = after;
+    open = true;
+    then = after;
     renderLetter(sheet, doc, options);
     go.textContent = label;
     reading.hidden = false;
-    sheet.scrollTop = 0; reading.scrollTop = 0;
+    sheet.scrollTop = 0;
+    reading.scrollTop = 0;
     requestAnimationFrame(() => {
       reading.classList.add("is-shown");
       // too long for the screen: it scrolls, and its foot fades to say so
-      sheet.classList.toggle("is-long", sheet.scrollHeight > sheet.clientHeight + 2);
+      sheet.classList.toggle(
+        "is-long",
+        sheet.scrollHeight > sheet.clientHeight + 2,
+      );
     });
     go.focus({ preventScroll: true });
   };
   const hide = () => {
-    open = false; then = null;
+    open = false;
+    then = null;
     reading.classList.remove("is-shown");
-    scope.later(() => { if (!open) reading.hidden = true; }, 500);
+    scope.later(() => {
+      if (!open) reading.hidden = true;
+    }, 500);
   };
   scope.on(go, "click", act);
-  scope.on(window, "keydown", event => {
-    if (open && event.key === "Escape") { event.preventDefault(); act(); }
+  scope.on(window, "keydown", (event) => {
+    if (open && event.key === "Escape") {
+      event.preventDefault();
+      act();
+    }
   });
-  return { show, hide, get open() { return open; } };
+  return {
+    show,
+    hide,
+    get open() {
+      return open;
+    },
+  };
 }

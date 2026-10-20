@@ -4,6 +4,7 @@ import { layoutTree, paintTree, releaseTreeArt } from "./tree.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { spreadLit } from "./lamps.js";
 import { loadDrawingRoomMaterials } from "../house/drawingRoomMaterials.js";
+import { TREE_PHOTOGRAPH, loadTreePhotography, alignTreePhotography } from "./photographicTree.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PI"  ·  code: PI   ·  count the lamps
@@ -41,6 +42,7 @@ export default class TreeScene extends BasePuzzleScene {
 
   preload() {
     loadDrawingRoomMaterials(this);
+    loadTreePhotography(this);
   }
 
   create() {
@@ -57,6 +59,7 @@ export default class TreeScene extends BasePuzzleScene {
 
   _build(W, H) {
     const L = (this._L = layoutTree(W, H));
+    if (this.textures.exists(TREE_PHOTOGRAPH)) alignTreePhotography(L, layoutTree(1792, 1024));
     const k = (this._keys = paintTree(this, L).keys);
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-16);
     this._makeMoon(L.moon);
@@ -76,11 +79,13 @@ export default class TreeScene extends BasePuzzleScene {
         const p = row[j];
         const glow = this.add
           .image(p.x, p.y, k.glow)
-          .setDisplaySize(L.lamp.h * 6.4, L.lamp.h * 6.4)
+          .setDisplaySize(L.lamp.h * (L.photoLamps ? 4.8 : 6.4), L.lamp.h * (L.photoLamps ? 4.8 : 6.4))
           .setTint(0xffb860)
           .setBlendMode(Phaser.BlendModes.ADD)
           .setDepth(-8);
-        const lamp = this.add.image(p.x, p.y, k.lamp).setDisplaySize(L.lamp.w * 1.5, L.lamp.h * 1.4).setDepth(-7);
+        const lamp = this.add.image(p.x, p.y, k.lamp).setDepth(-7);
+        if (L.photoLamps) lamp.setDisplaySize(L.lamp.h * 1.6 * L.photoLampAspect, L.lamp.h * 1.6).setOrigin(0.5, 0.67);
+        else lamp.setDisplaySize(L.lamp.w * 1.5, L.lamp.h * 1.4);
         const level = 0.9 + rnd() * 0.1;
         lamp.setAlpha(level); glow.setAlpha(level);
         this.ambientTween({

@@ -1,6 +1,7 @@
 import { createMoonCanvas } from "../../shared/moon.js";
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 import { drawingRoomMaterials, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
+import { paintTreePhotography, treePhotographicProps, photographicGiftArt } from "./photographicTree.js";
 
 /** The Christmas tree for PI, in the drawing room at night: a tall fir in a
  *  wooden tub, nine tiers of boughs, a brass star on its top, glass balls
@@ -70,27 +71,36 @@ export function paintTree(scene, L) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  paintRoom(ctx, L, drawingRoomMaterials(scene));
-  paintWindow(ctx, L);
-  paintParcels(ctx, L, false);
-  paintTub(ctx, L);
-  for (let i = L.tree.tiers - 1; i >= 0; i--) paintTier(ctx, L, i);
-  paintStar(ctx, L);
-  paintBalls(ctx, L);
-  paintStrings(ctx, L);
-  paintParcels(ctx, L, true);
-  // the room's dark, away from the window
-  const dark = ctx.createLinearGradient(L.win.x0, 0, 0, 0);
-  dark.addColorStop(0, "rgba(3,3,5,0.1)");
-  dark.addColorStop(1, "rgba(3,3,5,0.5)");
-  ctx.fillStyle = dark;
-  ctx.fillRect(0, 0, W, H);
-  vignette(ctx, W, H, 0.8);
-  grain(ctx, W, H, 0.03);
+  const props = L.photographic ? treePhotographicProps(scene) : null;
+  L.photoLamps = !!props;
+  if (L.photographic) {
+    paintTreePhotography(ctx, scene, L);
+    paintStrings(ctx, L, props?.bulbOff);
+  } else {
+    paintRoom(ctx, L, drawingRoomMaterials(scene));
+    paintWindow(ctx, L);
+    paintParcels(ctx, L, false);
+    paintTub(ctx, L);
+    for (let i = L.tree.tiers - 1; i >= 0; i--) paintTier(ctx, L, i);
+    paintStar(ctx, L);
+    paintBalls(ctx, L);
+    paintStrings(ctx, L);
+    paintParcels(ctx, L, true);
+    // the room's dark, away from the window
+    const dark = ctx.createLinearGradient(L.win.x0, 0, 0, 0);
+    dark.addColorStop(0, "rgba(3,3,5,0.1)");
+    dark.addColorStop(1, "rgba(3,3,5,0.5)");
+    ctx.fillStyle = dark;
+    ctx.fillRect(0, 0, W, H);
+    vignette(ctx, W, H, 0.8);
+    grain(ctx, W, H, 0.03);
+  }
   addCanvasTexture(t, K.room, c);
-  addCanvasTexture(t, K.lamp, paintLamp());
+  if (props) L.photoLampAspect = props.bulbOn.width / props.bulbOn.height;
+  addCanvasTexture(t, K.lamp, props?.bulbOn ?? paintLamp());
   const origins = {};
-  for (const [name, art] of Object.entries(giftArt(L.gift.s))) {
+  const parcels = giftArt(L.gift.s);
+  for (const [name, art] of Object.entries(L.photographic ? photographicGiftArt(scene, parcels, L.gift.s) : parcels)) {
     addCanvasTexture(t, K[name], art.canvas);
     origins[name] = { x: art.ox / art.canvas.width, y: art.oy / art.canvas.height };
   }
@@ -285,14 +295,20 @@ function paintTub(ctx, L) {
   ctx.beginPath(); ctx.ellipse(cx, y0, w0, 6 * u, 0, 0, Math.PI * 2); ctx.fill();
 }
 
-// One tier of boughs: wide and drooping, its lower edge in tips; dark fir
+// Keep each tier inside its string, including the short cord at either end.
+function boughHalfWidth(L, i) {
+  const row = L.rows[i], cx = L.tree.cx;
+  return Math.min(cx - row[0].x, row[row.length - 1].x - cx) + 8 * L.u;
+}
+
+// One tier of boughs: drooping, its lower edge in tips; dark fir
 // green, the tier above throwing its shadow down it, the moon along the side
 // toward the window.
 function paintTier(ctx, L, i) {
   const { u } = L;
   const { cx, top, th } = L.tree;
   const rnd = lcg(900 + i * 31);
-  const ya = top + (i - 0.35) * th, yb = top + (i + 1.16) * th, hw = L.half(i) * 1.1;
+  const ya = top + (i - 0.35) * th, yb = top + (i + 1.16) * th, hw = boughHalfWidth(L, i);
   const tips = 5 + i;
   const shape = () => {
     ctx.beginPath();
@@ -314,9 +330,9 @@ function paintTier(ctx, L, i) {
   ctx.fill();
   ctx.restore();
   const g = ctx.createLinearGradient(0, ya, 0, yb);
-  g.addColorStop(0, "#0a1810");
-  g.addColorStop(0.6, "#12281a");
-  g.addColorStop(1, "#0b1c12");
+  g.addColorStop(0, "#060d09");
+  g.addColorStop(0.6, "#0b1810");
+  g.addColorStop(1, "#08120c");
   shape();
   ctx.fillStyle = g;
   ctx.fill();
@@ -327,7 +343,7 @@ function paintTier(ctx, L, i) {
     const y = ya + Math.sqrt(rnd()) * (yb - ya), w = hw * ((y - ya) / (yb - ya));
     const x = cx + (rnd() * 2 - 1) * w, out = (x - cx) / hw;
     const len = (5 + rnd() * 9) * u;
-    ctx.strokeStyle = rnd() < 0.55 ? `rgba(4,12,7,${(0.3 + rnd() * 0.4).toFixed(2)})` : `rgba(${Math.round(50 + rnd() * 40)},${Math.round(96 + rnd() * 50)},${Math.round(62 + rnd() * 30)},${(0.14 + rnd() * 0.3).toFixed(2)})`;
+    ctx.strokeStyle = rnd() < 0.55 ? `rgba(3,8,5,${(0.3 + rnd() * 0.4).toFixed(2)})` : `rgba(${Math.round(25 + rnd() * 24)},${Math.round(49 + rnd() * 30)},${Math.round(33 + rnd() * 20)},${(0.14 + rnd() * 0.3).toFixed(2)})`;
     ctx.lineWidth = Math.max(0.7, (0.8 + rnd() * 0.8) * u);
     ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + out * len * 0.9 + (rnd() - 0.5) * 3 * u, y + len * (0.5 + rnd() * 0.5)); ctx.stroke();
   }
@@ -335,7 +351,7 @@ function paintTier(ctx, L, i) {
   const side = ctx.createLinearGradient(cx - hw, 0, cx + hw, 0);
   side.addColorStop(0, "rgba(0,0,0,0.4)");
   side.addColorStop(0.55, "rgba(0,0,0,0)");
-  side.addColorStop(1, `rgba(${MOON},0.14)`);
+  side.addColorStop(1, `rgba(${MOON},0.045)`);
   ctx.fillStyle = side;
   ctx.fillRect(cx - hw, ya, hw * 2, yb - ya);
   ctx.restore();
@@ -377,7 +393,7 @@ function paintBalls(ctx, L) {
   const glass = [["#5a0e14", "#e06a70"], ["#6a5216", "#f0d890"], ["#10244e", "#7a9ae0"], ["#3c3e46", "#d8dce6"]];
   for (let i = 1; i < tiers; i++) {
     for (let n = 0; n < (i < 4 ? 1 : 2); n++) {
-      const x = cx + (rnd() * 2 - 1) * L.half(i) * 0.7, y = top + (i + 0.36 + rnd() * 0.12) * th, r = (6.5 + rnd() * 3.5) * u;
+      const x = cx + (rnd() * 2 - 1) * boughHalfWidth(L, i) * 0.65, y = top + (i + 0.36 + rnd() * 0.12) * th, r = (6.5 + rnd() * 3.5) * u;
       const [deep, shine] = glass[Math.floor(rnd() * glass.length)];
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
       ctx.lineWidth = Math.max(0.7, 0.8 * u);
@@ -399,7 +415,7 @@ function paintBalls(ctx, L) {
 // The strings of lamps: a cord along each tier from side to side, a brass
 // holder wherever a lamp goes, and in each holder its little glass lamp,
 // dark — the scene lights the ones that are alight.
-function paintStrings(ctx, L) {
+function paintStrings(ctx, L, bulb = null) {
   const { u } = L;
   const { w, h } = L.lamp;
   for (const row of L.rows) {
@@ -415,6 +431,11 @@ function paintStrings(ctx, L) {
     ctx.lineTo(last.x + 14 * u, last.y - h * 0.9 - 5 * u);
     ctx.stroke();
     for (const p of row) {
+      if (bulb) {
+        const height = h * 1.6, width = height * bulb.width / bulb.height;
+        ctx.drawImage(bulb, p.x - width / 2, p.y - height * 0.67, width, height);
+        continue;
+      }
       ctx.fillStyle = "#6a5226";
       ctx.fillRect(p.x - w * 0.3, p.y - h * 0.95, w * 0.6, h * 0.36);
       const g = ctx.createRadialGradient(p.x - w * 0.15, p.y - h * 0.1, 0.5, p.x, p.y, h * 0.6);

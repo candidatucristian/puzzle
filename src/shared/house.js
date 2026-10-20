@@ -127,6 +127,8 @@ export const STILL_LOCKED = [];
 
 /** A place asks to go somewhere: `{ place: key }` or `{ level: id }`. */
 export const HOUSE_GO = "house:go";
+/** Leave a puzzle or room by the same route as the Back control. */
+export const HOUSE_BACK = "house:back";
 
 /** A puzzle played in a place has been answered there: its level's id. */
 export const HOUSE_SOLVED = "house:solved";

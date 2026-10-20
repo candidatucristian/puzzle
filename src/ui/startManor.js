@@ -2,6 +2,7 @@ import { soft, grain, makeCanvas, lcg } from '../shared/paint.js';
 import { createMoonCanvas } from '../shared/moon.js';
 import { glint } from './startFilm.js';
 import { loadManorArchitecture, paintManorMaterial, paintManorWindow, paintManorEntrance } from './manorArchitecture.js';
+import { loadManorExterior, paintManorExterior, drawManorExteriorLive } from './manorExterior.js';
 
 /** The manor behind the title, painted — by the same hand as the hall and the
  *  rooms inside it — instead of filmed. Deep night, and seen from close to.
@@ -63,6 +64,9 @@ export function mountStartManor(scope, preferences) {
   }
   let scene = null, stopped = false, frame = 0, details = null, paintedDetails = null, disposed = false;
   film.dataset.architecture = 'loading';
+  const architecture = loadManorExterior()
+    .then(exterior => ({ exterior }))
+    .catch(() => loadManorArchitecture());
 
   function layout() {
     const box = film.getBoundingClientRect();
@@ -98,7 +102,7 @@ export function mountStartManor(scope, preferences) {
   const repaint = () => { scene = null; layout(); };
   for (const c of [base, live]) scope.on(c, 'contextrestored', repaint);
   layout();
-  loadManorArchitecture().then(art => {
+  architecture.then(art => {
     if (disposed || stopped) return;
     details = art;
     layout();
@@ -126,6 +130,7 @@ export function mountStartManor(scope, preferences) {
 // ── the house, painted ──────────────────────────────────────────────────────
 
 function paintManor(ctx, W, H, details = null) {
+  if (details?.exterior) return paintManorExterior(ctx, W, H, details.exterior);
   // a unit, in pixels: the house takes most of the width
   const s0 = Math.min(H / 74, W / 118);
   const cx = W * 0.53, gy = H * (GROUND / 100);
@@ -1094,6 +1099,10 @@ function paintClouds(W, H, s) {
 // ── what moves ──────────────────────────────────────────────────────────────
 
 function drawLive(ctx, sc, t, frozen) {
+  if (sc.photographic) {
+    drawManorExteriorLive(ctx, sc, t, frozen);
+    return;
+  }
   const { W, H, s } = sc;
   ctx.clearRect(0, 0, W, H);
   // cloud going slowly across, brighter where it passes the moon
