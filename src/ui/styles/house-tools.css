@@ -439,7 +439,8 @@ body.in-house #game-container canvas { scale: 1.028; }
 
 .prologue-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
   filter: brightness(.64) contrast(1.12) saturate(.82); }
-.prologue-rain { position: absolute; z-index: 1; inset: 0; pointer-events: none; }
+.prologue-rain { position: absolute; z-index: 1; pointer-events: none;
+  filter: brightness(.64) contrast(1.12) saturate(.82); }
 #prologue :is(.prologue-rain, .prologue-glint) { transition: opacity .8s ease; }
 #prologue[data-phase="opening"] :is(.prologue-rain, .prologue-glint, .prologue-tasks) { opacity: 0; animation: none; }
 
@@ -711,6 +712,12 @@ li.dossier-slip.is-missing { padding: 12px 14px 11px 30px; display: grid; outlin
    their own lettering into their pictures; this is the page around them.) ══ */
 body, body *, body svg text { font-family: var(--ui-font) !important; }
 .letter-page, .letter-page * { font-family: "Dancing Script", "Segoe Script", cursive !important; }
+/* under a letter, in pencil, in Arthur's own hand: what he makes of it
+   (story.js `margin`) — a different hand from the letter's, graphite grey,
+   set a little askew, as a note added afterwards is */
+.letter-page .letter-margin { margin-top: 26px !important; padding-top: 12px; border-top: 1px dashed #5b5f6633; transform: rotate(-1.2deg); transform-origin: 0 50%;
+  font-family: "Architects Daughter", "Segoe Print", cursive !important; font-size: 1.04em; line-height: 1.45; letter-spacing: .01em; color: #373b43; }
+.letter-page .letter-margin::after { content: "  — A. W."; color: #4b505999; }
 .letter-page { font-size-adjust: ex-height .5; font-weight: 500; letter-spacing: .01em; }
 
 /* ══ The cold open (coldOpen.js): black with grain on it, and the story so far
@@ -944,14 +951,14 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
   transition: color .5s ease, opacity .5s ease; }
 :is(#prologue, #start-screen) .prologue-tasks li.is-done { color: #a9a396; }
 :is(#prologue, #start-screen) .prologue-tasks li.is-done .task-text { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: #ece7db80; }
-:is(#prologue, #start-screen) .task-box { width: 16px; height: 16px; flex-shrink: 0; overflow: visible; }
-:is(#prologue, #start-screen) :is(.task-box, .onward-icon, .onward-line) path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-:is(#prologue, #start-screen) :is(.task-box, .onward-icon, .onward-line) .ink-dark { stroke: #0b0b0c; stroke-width: 2.2; stroke-opacity: .8; }
-:is(#prologue, #start-screen) :is(.task-box, .onward-icon, .onward-line) .ink-white { stroke: #ece7db; stroke-width: 1.1; }
-:is(#prologue, #start-screen) :is(.task-box, .onward-icon, .onward-line) .ink-over { stroke: #fff; stroke-width: .45; stroke-opacity: .45; transform: translate(.6px, -.45px); }
-:is(#prologue, #start-screen) .task-box .tick { stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .55s cubic-bezier(.45, .05, .35, 1); }
-:is(#prologue, #start-screen) .task-box .tick.ink-white { stroke: #f4e3b6; stroke-width: 1.6; }
-:is(#prologue, #start-screen) .prologue-tasks li.is-done .tick { stroke-dashoffset: 0; }
+:is(#prologue, #start-screen, #index-outside) .task-box { width: 16px; height: 16px; flex-shrink: 0; overflow: visible; }
+:is(#prologue, #start-screen, #index-outside) :is(.task-box, .onward-icon, .onward-line) path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+:is(#prologue, #start-screen, #index-outside) :is(.task-box, .onward-icon, .onward-line) .ink-dark { stroke: #0b0b0c; stroke-width: 2.2; stroke-opacity: .8; }
+:is(#prologue, #start-screen, #index-outside) :is(.task-box, .onward-icon, .onward-line) .ink-white { stroke: #ece7db; stroke-width: 1.1; }
+:is(#prologue, #start-screen, #index-outside) :is(.task-box, .onward-icon, .onward-line) .ink-over { stroke: #fff; stroke-width: .45; stroke-opacity: .45; transform: translate(.6px, -.45px); }
+:is(#prologue, #start-screen, #index-outside) .task-box .tick { stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .55s cubic-bezier(.45, .05, .35, 1); }
+:is(#prologue, #start-screen, #index-outside) .task-box .tick.ink-white { stroke: #f4e3b6; stroke-width: 1.6; }
+:is(#prologue, #start-screen, #index-outside) .prologue-tasks li.is-done .tick { stroke-dashoffset: 0; }
 
 #prologue .prologue-onward { position: absolute; z-index: 6; right: clamp(34px, 4vw, 60px); bottom: clamp(26px, 5vh, 52px);
   display: inline-flex; align-items: center; gap: 10px; padding: 8px 6px 10px 10px; border: 0; border-radius: 4px; background: transparent; color: #ece7db;
@@ -1009,21 +1016,21 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 #prologue .prologue-panel-label { margin: 34px 0 8px 2px; font: 400 calc(11px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: var(--ui-muted, #92928e); }
 /* the tasks, as the index's lines: a small number, the words, and on the right
    the pencil tick once done; the one to do now marked as the current room is */
-#prologue .prologue-panel .prologue-tasks { position: static; display: grid; gap: 3px; min-width: 0; margin: 0; padding: 0 5px 0 2px;
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks { position: static; display: grid; gap: 3px; min-width: 0; margin: 0; padding: 0 5px 0 2px;
   list-style: none; background: none; box-shadow: none; animation: none; counter-reset: task; }
-#prologue .prologue-panel .prologue-tasks::before { content: none; }
-#prologue .prologue-panel .prologue-tasks li { position: relative; display: grid; grid-template-columns: 25px minmax(0, 1fr) 16px; align-items: center; gap: 9px;
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks::before { content: none; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li { position: relative; display: grid; grid-template-columns: 25px minmax(0, 1fr) 16px; align-items: center; gap: 9px;
   min-height: 42px; padding: 9px 10px; border-radius: 3px; box-sizing: border-box; counter-increment: task;
   font: 400 calc(12px * var(--reading-scale, 1))/1.4 var(--ui-font); letter-spacing: 0; color: #b9b9b4; text-shadow: none; }
-#prologue .prologue-panel .prologue-tasks li[hidden] { display: none; }
-#prologue .prologue-panel .prologue-tasks li::before { content: counter(task, decimal-leading-zero); grid-column: 1; grid-row: 1; font: 400 10px var(--ui-mono, monospace); color: #888882; }
-#prologue .prologue-panel .prologue-tasks .task-text { grid-column: 2; grid-row: 1; font-family: var(--ui-font) !important; }
-#prologue .prologue-panel .prologue-tasks .task-box { grid-column: 3; grid-row: 1; display: block; width: 16px; height: 16px; }
-#prologue .prologue-panel .prologue-tasks li:not(.is-done) { background: #1a1a19; color: #eeeee8; }
-#prologue .prologue-panel .prologue-tasks li:not(.is-done)::after { content: ""; position: absolute; left: 0; top: 13px; bottom: 13px; width: 2px; background: #c4c4bc; }
-#prologue .prologue-panel .prologue-tasks li:not(.is-done)::before { color: #d0d0c8; }
-#prologue .prologue-panel .prologue-tasks li.is-done { color: #7c7c77; }
-#prologue .prologue-panel .prologue-tasks li.is-done .task-text { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: #b9b9b499; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li[hidden] { display: none; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li::before { content: counter(task, decimal-leading-zero); grid-column: 1; grid-row: 1; font: 400 10px var(--ui-mono, monospace); color: #888882; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks .task-text { grid-column: 2; grid-row: 1; font-family: var(--ui-font) !important; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks .task-box { grid-column: 3; grid-row: 1; display: block; width: 16px; height: 16px; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li:not(.is-done) { background: #1a1a19; color: #eeeee8; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li:not(.is-done)::after { content: ""; position: absolute; left: 0; top: 13px; bottom: 13px; width: 2px; background: #c4c4bc; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li:not(.is-done)::before { color: #d0d0c8; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li.is-done { color: #7c7c77; }
+:is(#prologue .prologue-panel, #index-outside) .prologue-tasks li.is-done .task-text { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: #b9b9b499; }
 #prologue .prologue-panel .prologue-onward { position: absolute; right: clamp(22px, 2vw, 36px); bottom: clamp(26px, 5vh, 52px); }
 
 
@@ -1081,7 +1088,7 @@ body.outside .index-letters { display: none; }
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 26%, #000 74%, transparent 100%);
   mask-image: linear-gradient(180deg, transparent 0%, #000 26%, #000 74%, transparent 100%); }
 #start-legend .legend-eyebrow { margin: 0 0 12px; font: 500 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .46em; text-transform: uppercase; color: #a9a59a; }
-#start-legend .legend-title { margin: 0; font: 300 clamp(36px, 3.9vw, 60px)/1.02 var(--ui-font); letter-spacing: .015em; color: #f3eee3;
+#start-legend .legend-title { margin: 0; font: 300 clamp(26px, 2.6vw, 40px)/1.05 var(--ui-font); letter-spacing: .015em; color: #f3eee3;
   text-shadow: 0 2px 24px rgba(0,0,0,.75), 0 0 1px rgba(0,0,0,.6); }
 #start-legend .legend-rule { display: block; width: 64px; height: 1px; margin: 18px 0 14px; background: linear-gradient(90deg, #ece7db99, #ece7db00); }
 #start-legend .legend-line { margin: 0; max-width: 34ch; font: 300 italic calc(13px * var(--reading-scale, 1))/1.55 var(--ui-font); letter-spacing: .02em; color: #c9c4b8; text-shadow: 0 1px 10px rgba(0,0,0,.8); }
@@ -1092,3 +1099,29 @@ body.outside .index-letters { display: none; }
 #start-legend .legend-info { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; font: 400 calc(12px * var(--reading-scale, 1))/1.3 var(--ui-font); letter-spacing: .03em; color: #d8d3c7; text-shadow: 0 1px 10px rgba(0,0,0,.8); }
 #start-legend .legend-info-icon { width: 16px; height: 16px; flex-shrink: 0; overflow: visible; }
 #start-legend .legend-info-icon :is(circle, path) { fill: none; stroke: #ece7db; stroke-width: 1; stroke-linecap: round; opacity: .8; }
+
+/* ══ No scroll bars anywhere: they are ugly in a game. Whatever runs longer
+   than its box still scrolls under the wheel, the keys and the touchpad;
+   only the bar itself is never drawn. ══ */
+html, body, body * { scrollbar-width: none !important; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar, body *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+
+/* tonight's tasks before the house, under its line in the index */
+.outside-tasks { display: grid; gap: 8px; }
+.outside-tasks .outside-label { margin-left: 2px; }
+
+/* the front door drawn round in the thin pencil, as the letter on his desk
+   is (prologue.js outlines): drawn in, then breathing; brighter under the
+   hand; not while the house's story is being told over the picture */
+#start-door .door-outline { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; opacity: .75;
+  animation: outline-breathe 2.6s ease-in-out 2.2s infinite; transition: opacity .5s ease; }
+#start-door .door-outline path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1;
+  animation: door-outline-draw 1.4s cubic-bezier(.45, .05, .3, 1) .8s forwards; }
+#start-door .door-outline .ink-dark { stroke: #000; stroke-opacity: .7; stroke-width: 2.4; }
+#start-door .door-outline .ink-white { stroke: #ece7db; stroke-width: 1.05; }
+#start-door .door-outline .ink-over { stroke: #fff; stroke-opacity: .45; stroke-width: .45; transform: translate(.6px, -.45px); }
+#start-door:hover .door-outline { opacity: 1; animation: none; }
+#start-screen.is-telling #start-door .door-outline { opacity: 0; animation: none; }
+@keyframes door-outline-draw { to { stroke-dashoffset: 0; } }
+[data-reduced-motion="true"] #start-door .door-outline { animation: none; }
+[data-reduced-motion="true"] #start-door .door-outline path { animation: none; stroke-dashoffset: 0; }

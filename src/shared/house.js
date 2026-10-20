@@ -47,7 +47,7 @@ export const PLACES = Object.freeze([
       "Silas's floor. A man who measured everything.",
       "One light up here still works, on and off. It is not broken. It is waiting.",
     ] },
-  { key: "Room7", name: "Room VII", back: "Upper", holds: ["chemistry", "molecules"],
+  { key: "Room7", name: "Room VII", back: "Upper", holds: ["chemistry", "molecules", "phials"],
     story: [
       "His bench, just as he left it — and the burner still lit, forty years on.",
       "Somebody has been coming up here to keep it going.",
@@ -103,7 +103,7 @@ export const PLACES = Object.freeze([
       "The room of their last evening: the table still laid for four, the fire let die, the television never switched off.",
       "The file says three people lived here.",
     ] },
-  { key: "Room6", name: "Room VI", back: "Hall", holds: ["flags"], needsKey: true,
+  { key: "Room6", name: "Room VI", back: "Hall", holds: ["flags", "herbarium"], needsKey: true,
     story: [
       "A child's room, kept as if he might come back for it.",
       "His medals, still behind their glass. Somebody has kept it clean.",

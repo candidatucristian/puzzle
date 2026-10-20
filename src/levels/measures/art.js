@@ -1,16 +1,13 @@
-import { soft, grain, vignette, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
+import { soft, grain, vignette, makeCanvas, addCanvasTexture, lcg, glowCanvas } from "../../shared/paint.js";
 import { BOTTLES, FLASK_ML, MEASURES_WORD } from "./puzzle.js";
+import { photographRoom, photographGlass } from "./photography.js";
 
-/** The laboratory sink for MEASURES, painted: white tiles gone grey, a
- *  fireclay sink let into a slate counter, a brass swan-neck tap over it;
- *  on the slate two plain glass bottles — 500 ml and 300 ml etched on their
- *  shoulders, nothing else — and a volumetric flask with one ring round its
- *  neck, 400 ml on its bulb, a strip of blue litmus hung in it.
- *
- *  The vessels are painted as glass alone, about their middles; the scene
- *  pours the water in them (see `interior`, `waterIn`). */
+/** Photographic laboratory and transparent glass, with a painted fallback.
+ *  Water stays separate from the glass so its surface remains horizontal
+ *  during a pour (see `interior`, `waterIn`). The blue strip burns to reveal
+ *  the answer once the water reaches the flask's 400 ml ring. */
 
-export const KEYS = { room: "ms_room", glass: (i) => `ms_glass_${i}` };
+export const KEYS = { room: "ms_room", glass: (i) => `ms_glass_${i}`, glow: "ms_glow", flame: "ms_flame" };
 const RES = 2;
 
 export function layoutSink(W, H) {
@@ -24,9 +21,9 @@ export function layoutSink(W, H) {
   // centimetres-as-pixels about its middle, and where it stands
   const bottle = (cap, w, h, neckW, neckH) => ({ kind: "bottle", cap, w, h, neckW, neckH, top: -h / 2 - neckH, bottom: h / 2 });
   L.vessels = [
-    { ...bottle(BOTTLES[0], 76 * u, 182 * u, 28 * u, 30 * u), x: W * 0.47 },
-    { ...bottle(BOTTLES[1], 64 * u, 146 * u, 24 * u, 26 * u), x: W * 0.6 },
-    { kind: "flask", cap: 0, r: 58 * u, neckW: 22 * u, neckH: 142 * u, x: W * 0.79 },
+    { ...bottle(BOTTLES[0], 100 * u, 182 * u, 42 * u, 30 * u), x: W * 0.47 },
+    { ...bottle(BOTTLES[1], 82 * u, 146 * u, 36 * u, 26 * u), x: W * 0.6 },
+    { kind: "flask", cap: 0, r: 58 * u, neckW: 32 * u, neckH: 142 * u, x: W * 0.79 },
   ];
   for (const v of L.vessels) {
     if (v.kind === "flask") { v.top = -v.r - v.neckH; v.bottom = v.r; }
@@ -113,12 +110,14 @@ function surface(v, frac) {
 // ── painting ────────────────────────────────────────────────────────────────
 
 export function paintSink(scene, L) {
-  addCanvasTexture(scene.textures, KEYS.room, paintRoom(L));
-  L.vessels.forEach((v, i) => addCanvasTexture(scene.textures, KEYS.glass(i), paintGlass(L, v)));
+  addCanvasTexture(scene.textures, KEYS.room, photographRoom(scene, L) ?? paintRoom(L));
+  L.vessels.forEach((v, i) => addCanvasTexture(scene.textures, KEYS.glass(i), paintGlass(L, v, photographGlass(scene, i))));
+  addCanvasTexture(scene.textures, KEYS.glow, glowCanvas());
+  addCanvasTexture(scene.textures, KEYS.flame, paintFlame());
 }
 
 export function releaseSink(textures) {
-  for (const k of [KEYS.room, KEYS.glass(0), KEYS.glass(1), KEYS.glass(2)]) if (textures.exists(k)) textures.remove(k);
+  for (const k of [KEYS.room, KEYS.glass(0), KEYS.glass(1), KEYS.glass(2), KEYS.glow, KEYS.flame]) if (textures.exists(k)) textures.remove(k);
 }
 
 /** A glass texture's size on screen and where its middle is in it. */
@@ -193,7 +192,7 @@ function paintRoom(L) {
 
 // the glass alone: faint, its edges bright where they turn from us, a
 // shine down one side, what is etched on it
-function paintGlass(L, v) {
+function paintGlass(L, v, photograph = null) {
   const { u } = L, R = RES, box = glassBox(v, u);
   const c = makeCanvas(box.w * R, box.h * R), g = c.getContext("2d");
   g.scale(R, R); g.translate(box.ox, box.oy);
@@ -212,20 +211,27 @@ function paintGlass(L, v) {
       g.lineTo(hw, sh); g.quadraticCurveTo(hw, -v.h / 2 + v.w * 0.06, nw, -v.h / 2); g.lineTo(nw, v.top);
     }
   };
-  outline(); g.closePath(); g.fillStyle = "rgba(190,215,220,0.07)"; g.fill();
-  // the edges, brighter at the sides where the glass turns away
-  outline(); g.strokeStyle = "rgba(225,240,245,0.55)"; g.lineWidth = 1.4 * u; g.stroke();
-  outline(); g.strokeStyle = "rgba(0,0,0,0.35)"; g.lineWidth = 0.5 * u; g.stroke();
-  // the rim of the mouth, seen a little from above
-  g.strokeStyle = "rgba(230,245,250,0.7)"; g.lineWidth = 1.2 * u;
-  g.beginPath(); g.ellipse(0, v.top, v.neckW / 2 + 1.5 * u, 2.6 * u, 0, 0, Math.PI * 2); g.stroke();
-  // a shine down the left, a fainter one right
-  const shineH = v.kind === "flask" ? v.r * 1.2 : v.h * 0.7, shineX = v.kind === "flask" ? -v.r * 0.6 : -v.w / 2 + 7 * u;
-  g.fillStyle = "rgba(255,255,255,0.32)"; g.beginPath(); g.roundRect(shineX, -shineH / 2, 3 * u, shineH, 1.5 * u); g.fill();
-  g.fillStyle = "rgba(255,255,255,0.12)"; g.beginPath(); g.roundRect(-shineX - 5 * u, -shineH / 2 + 10 * u, 2 * u, shineH * 0.7, 1 * u); g.fill();
+  if (photograph) {
+    const width = v.kind === "flask" ? v.r * 2 : v.w;
+    g.save(); g.filter = "brightness(.8) saturate(.7)";
+    g.drawImage(photograph, -width / 2, v.top, width, v.bottom - v.top);
+    g.restore();
+  } else {
+    outline(); g.closePath(); g.fillStyle = "rgba(190,215,220,0.07)"; g.fill();
+    // the edges, brighter at the sides where the glass turns away
+    outline(); g.strokeStyle = "rgba(225,240,245,0.55)"; g.lineWidth = 1.4 * u; g.stroke();
+    outline(); g.strokeStyle = "rgba(0,0,0,0.35)"; g.lineWidth = 0.5 * u; g.stroke();
+    // the rim of the mouth, seen a little from above
+    g.strokeStyle = "rgba(230,245,250,0.7)"; g.lineWidth = 1.2 * u;
+    g.beginPath(); g.ellipse(0, v.top, v.neckW / 2 + 1.5 * u, 2.6 * u, 0, 0, Math.PI * 2); g.stroke();
+    // a shine down the left, a fainter one right
+    const shineH = v.kind === "flask" ? v.r * 1.2 : v.h * 0.7, shineX = v.kind === "flask" ? -v.r * 0.6 : -v.w / 2 + 7 * u;
+    g.fillStyle = "rgba(255,255,255,0.32)"; g.beginPath(); g.roundRect(shineX, -shineH / 2, 3 * u, shineH, 1.5 * u); g.fill();
+    g.fillStyle = "rgba(255,255,255,0.12)"; g.beginPath(); g.roundRect(-shineX - 5 * u, -shineH / 2 + 10 * u, 2 * u, shineH * 0.7, 1 * u); g.fill();
+  }
   // what is etched on it: white, frosted
   g.fillStyle = "rgba(235,240,240,0.7)"; g.textAlign = "center"; g.textBaseline = "middle";
-  g.font = `500 ${Math.round(11 * u)}px Georgia, serif`;
+  g.font = `500 ${Math.round(13 * u)}px Georgia, serif`;
   if (v.kind === "flask") {
     g.fillText(`${FLASK_ML} ml`, 0, v.r * 0.28);
     g.font = `${Math.round(7 * u)}px Georgia, serif`; g.fillText("20 °C", 0, v.r * 0.5);
@@ -238,24 +244,64 @@ function paintGlass(L, v) {
   return c;
 }
 
-/** The litmus strip hung in the flask's neck, blue, or turned red with
- *  the word showing on it, paler (`turn` from 0 to 1). */
-export function paintLitmus(L, turn) {
+/** A cobalt paper fuse: its blue coating burns from top to bottom, leaving
+ *  the pale letters in charred fibres strictly behind the advancing ember. */
+export function paintLitmus(L, turn, existing = null) {
   const { u } = L, f = L.vessels[2], R = RES;
-  const w = 8 * u, h = (f.ring - f.top) + 6 * u;
-  const c = makeCanvas(w * R, h * R), g = c.getContext("2d");
+  const w = 17 * u, h = (f.ring - f.top) + 6 * u;
+  const c = existing ?? makeCanvas(w * R, h * R), g = c.getContext("2d");
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
   g.scale(R, R);
-  const mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * turn));
-  const col = mix([86, 110, 176], [190, 48, 62]);
-  g.fillStyle = `rgb(${col.join(",")})`; g.fillRect(0, 0, w, h);
-  g.fillStyle = "rgba(255,255,255,0.08)"; g.fillRect(0, 0, w * 0.3, h);
+  const blue = g.createLinearGradient(0, 0, w, 0);
+  blue.addColorStop(0, "#1c324e"); blue.addColorStop(.38, "#41658d"); blue.addColorStop(1, "#223d63");
+  g.fillStyle = blue; g.fillRect(0, 0, w, h);
+  const rnd = lcg(812);
+  for (let i = 0; i < 180; i++) {
+    g.fillStyle = `rgba(180,204,225,${.025 + rnd() * .08})`;
+    g.fillRect(rnd() * w, rnd() * h, .45 * u, (1 + rnd() * 4) * u);
+  }
   if (turn > 0) {
-    g.save(); g.globalAlpha = turn * 0.85;
-    g.fillStyle = "rgba(255,226,220,0.9)"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.font = `700 ${Math.round(w * 0.82)}px Georgia, serif`;
-    const letters = MEASURES_WORD.split(""), step = Math.min(w * 1.05, (h - 10 * u) / letters.length);
-    letters.forEach((ch, i) => g.fillText(ch, w / 2, h - 6 * u - (letters.length - 1 - i) * step - step / 2));
+    const edge = h * turn;
+    g.save(); g.beginPath(); g.rect(0, 0, w, edge); g.clip();
+    const ash = g.createLinearGradient(0, 0, w, 0);
+    ash.addColorStop(0, "#191714"); ash.addColorStop(.5, "#3b342b"); ash.addColorStop(1, "#171616");
+    g.fillStyle = ash; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 150; i++) {
+      g.fillStyle = `rgba(157,136,105,${.06 + rnd() * .15})`;
+      g.fillRect(rnd() * w, rnd() * h, (.3 + rnd()) * u, (.5 + rnd() * 2) * u);
+    }
+    g.fillStyle = "#eee2c8"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = `600 ${Math.round(w * .84)}px Georgia, serif`;
+    const step = Math.min(w * 1.3, (h - 12 * u) / MEASURES_WORD.length);
+    [...MEASURES_WORD].forEach((letter, i) => g.fillText(letter, w / 2, (h - step * 4) / 2 + (i + .5) * step));
     g.restore();
+    if (turn < 1) {
+      const ember = g.createLinearGradient(0, edge - 3 * u, 0, edge + 2 * u);
+      ember.addColorStop(0, "rgba(151,42,9,0)"); ember.addColorStop(.6, "#f5ac4e"); ember.addColorStop(1, "rgba(83,23,7,0)");
+      g.fillStyle = ember; g.fillRect(0, edge - 3 * u, w, 5 * u);
+    }
   }
   return { canvas: c, w, h };
+}
+
+function paintFlame() {
+  const c = makeCanvas(96, 192), g = c.getContext("2d");
+  const flame = g.createLinearGradient(0, 10, 0, 188);
+  flame.addColorStop(0, "rgba(224,78,9,0)");
+  flame.addColorStop(.35, "rgba(242,109,20,.48)");
+  flame.addColorStop(.75, "rgba(255,171,58,.92)");
+  flame.addColorStop(1, "rgba(186,72,8,0)");
+  g.fillStyle = flame;
+  g.beginPath(); g.moveTo(45, 186);
+  g.bezierCurveTo(0, 164, 19, 114, 36, 91);
+  g.bezierCurveTo(52, 65, 53, 30, 44, 8);
+  g.bezierCurveTo(85, 53, 67, 86, 74, 106);
+  g.bezierCurveTo(101, 156, 78, 179, 45, 186); g.fill();
+  const core = g.createLinearGradient(0, 95, 0, 184);
+  core.addColorStop(0, "rgba(255,224,151,0)");
+  core.addColorStop(.6, "#fff1ba"); core.addColorStop(1, "rgba(255,213,122,.3)");
+  g.fillStyle = core;
+  g.beginPath(); g.moveTo(46, 182); g.bezierCurveTo(23, 163, 43, 130, 51, 100);
+  g.bezierCurveTo(66, 138, 76, 166, 46, 182); g.fill();
+  return c;
 }

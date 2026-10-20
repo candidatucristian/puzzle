@@ -29,6 +29,7 @@ import { mountCinema } from './cinema.js';
 import { mountPaperSounds } from './paperSounds.js';
 import { playIntroVideo } from './introVideo.js';
 import { playManorStory } from './manorStory.js';
+import { taskCard } from './tasks.js';
 
 export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
@@ -104,6 +105,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     document.body.classList.toggle('in-house', Boolean(levels.place) && !levels.answering);
   }));
   let started = false;
+  let doorTasks = null; // tonight's tasks, before the house, until he goes in
+  let entering = []; // the walk up to the front door, while it runs
   let sessionStart = null;
   const touch = isTouchDevice();
 
@@ -112,8 +115,18 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   outside(!start.classList.contains('hidden'));
   function showGame() {
     if (!start.classList.contains('hidden')) film.stop();
-    start.classList.add('hidden'); storage.setItem('hasPlayedBefore', 'true');
+    start.classList.add('hidden'); storage.setItem('hasPlayedBefore', 'true'); storage.setItem('house:entered', 'true');
     outside(false);
+    // the walk up to the door, done: the picture put back for another time outside
+    for (const step of entering) step.cancel();
+    entering = [];
+    // in by the door: the last of tonight's tasks done, and the list put away
+    if (doorTasks) {
+      doorTasks.tick('door');
+      const done = doorTasks.node.parentElement;
+      doorTasks = null;
+      scope.later(() => done?.remove(), 1200);
+    }
     progressUI.render();
     if (game.sound.context?.state === 'suspended') {
       game.sound.context.resume().catch(error => console.warn('Audio will resume after the next interaction.', error));
@@ -148,10 +161,40 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     // the way in — the door, or any key — leads to the hall; its doors lead
     // to the rooms
     completion.hide(); mobile?.close();
-    cinema.enterHouse(() => {
+    toTheDoor(() => cinema.enterHouse(() => {
       showGame();
       levels.enterHall();
-    });
+    }));
+  }
+  // Up to the front door exactly as a door inside the house is walked up to
+  // (shared/house.js aimCameraAt, zoomInto; walk below): one movement, the
+  // door travelling to the middle of the picture while everything swells
+  // evenly about it, over WALK_MS, eased in and out; the picture holding for
+  // the first part of the way, then darkening; the steps heard. The door's
+  // pencil line and the house's name go at once. Then in.
+  function toTheDoor(then) {
+    const film = byId('start-film'), door = byId('start-door');
+    if (preferences?.reducedMotion || !film?.animate || !door) { then(); return; }
+    const box = start.getBoundingClientRect(), at = door.getBoundingClientRect();
+    const W = box.width, H = box.height;
+    const x = at.left + at.width / 2 - box.left, y = at.top + at.height / 2 - box.top;
+    const reach = Math.min(3.4, Math.max(1.7, 0.62 * Math.min(W / at.width, H / at.height)));
+    // the camera's own path, frame by frame: k eased as the house's Sine.easeInOut
+    const frames = [];
+    for (let i = 0; i <= 24; i++) {
+      const t = i / 24, k = (1 - Math.cos(Math.PI * t)) / 2, zoom = Math.pow(reach, k);
+      const sx = x + (W / 2 - x) * k, sy = y + (H / 2 - y) * k;
+      frames.push({ offset: t, transform: `translate(${sx - zoom * x}px, ${sy - zoom * y}px) scale(${zoom})`, opacity: t <= 0.3 ? 1 : Math.cos((t - 0.3) / 0.7 * Math.PI / 2) ** 1.4 });
+    }
+    film.style.transformOrigin = '0 0';
+    const close = film.animate(frames, { duration: WALK_MS, easing: 'linear', fill: 'forwards' });
+    const gone = [door, byId('start-legend'), start.querySelector('.manor-story')].filter(Boolean)
+      .map(el => el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out', fill: 'forwards' }));
+    entering = [close, ...gone];
+    footsteps.walk(WALK_MS + 900);
+    let went = false;
+    const go = () => { if (!went) { went = true; then(); } };
+    close.finished.then(go, go);
   }
   // Walking through the house: the picture dissolves to black, what is
   // behind it changes, and it comes softly back. No veil, no title — one
@@ -244,22 +287,52 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
         // A plain black covers the desk before the manor appears.
         onDone: async (dismiss) => {
           caseFile.unlock('invitation');
-          await cinema.card([], { hold: 300, onDark: dismiss });
+          showDoorTasks();
+          // before the manor for the first time, the house's own story — set
+          // up behind the black, so that the house is never seen before it
+          // (its name and its door wait under the story)
+          await cinema.card([], { hold: 300, onDark: () => {
+            dismiss();
+            playManorStory(scope, { reducedMotion: Boolean(preferences?.reducedMotion) });
+          } });
           if (!opening.closed) stopOpening();
-          // before the manor for the first time: the house's own story
-          playManorStory(scope, { reducedMotion: Boolean(preferences?.reducedMotion) });
         },
       });
     };
-    // not until the loading screen is gone, or it starts unseen
-    const roll = () => {
-      if (document.getElementById('loading-screen')) { opening.later(roll, 120); return; }
-      void preloadPrologueDesk();
-      playIntroVideo(opening, { game, audio, reducedMotion: Boolean(preferences?.reducedMotion), onUnder: prologue });
-    };
-    roll();
+    // at once, under the loading screen: its black is what the loading
+    // screen fades into, and its titles wait for that (introVideo.js)
+    void preloadPrologueDesk();
+    playIntroVideo(opening, { game, audio, reducedMotion: Boolean(preferences?.reducedMotion), onUnder: prologue });
   }
   openCase();
+  // In front of the house, until he first goes in: tonight's tasks carried on
+  // from the desk, in the index on the right — those done struck through, and
+  // the way in the one left to do (tasks.js, styled as the desk's panel).
+  // gone in before? (the first chapter is shown on the first time in, cinema.js)
+  const hasEntered = () => {
+    if (storage.getItem('house:entered')) return true;
+    try { return JSON.parse(storage.getItem('story:seen') || '[]').includes('chapter:1'); } catch { return false; }
+  };
+  function showDoorTasks() {
+    if (doorTasks || hasEntered()) return;
+    const host = byId('index-outside');
+    if (!host) return;
+    doorTasks = taskCard([
+      ['letter', 'Read the letter'],
+      ['file', 'Open the case file'],
+      ['house', 'Go to Ashcombe Manor'],
+      ['door', 'Click on the door to enter the manor'],
+    ]);
+    for (const done of ['letter', 'file', 'house']) doorTasks.tick(done);
+    const list = document.createElement('div');
+    list.className = 'outside-tasks';
+    const label = document.createElement('p');
+    label.className = 'outside-label';
+    label.textContent = 'Tonight';
+    list.append(label, doorTasks.node);
+    host.querySelector('.outside-story')?.after(list);
+  }
+  if (caseFile.has('invitation')) showDoorTasks();
   const glass = mountMagnifier(scope, game);
   mountAmbience(scope, { game, levels, audio });
   mountTooltips(scope);
@@ -356,6 +429,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       levels.reset();
       caseFile.reset();
       cinema.reset();
+      storage.removeItem('house:entered');
       goOutside();
       openCase();
     },

@@ -2,17 +2,29 @@ import { addCanvasTexture, glowCanvas, grain, makeCanvas, polygon, soft, vignett
 import { BACK, roomLayout } from "../house/roomKit.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
+import { HERBARIUM_COVER } from "../herbarium/photography.js";
 import {
   paintMedal, TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL,
   TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL,
 } from "../flags/trophies.js";
 
 export const ROOM6_PHOTOGRAPH = "room6_photographic_interior_v1";
+// Ivy's herbarium, shut, on the console table under the window beside the
+// fern (the photograph's own pixels, 1659 x 948): its cover's four corners as
+// seen from the door, front left first. Painted on the photograph, and what
+// is clicked to open it.
+const PHOTO = { width: 1659, height: 948 };
+const HERBARIUM = [[684, 584], [786, 581], [779, 569], [692, 571]];
+export function room6HerbariumQuad(L) {
+  const sx = L.W / PHOTO.width, sy = L.H / PHOTO.height;
+  return [[676, 592], [794, 589], [790, 560], [684, 562]].map(([x, y]) => ({ x: x * sx, y: y * sy }));
+}
 const REFERENCE = { width: 1792, height: 1024 };
 
 export function loadRoom6Photography(scene) {
   for (const [key, url] of [
     [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-photographic-v1.png"],
+    [HERBARIUM_COVER.key, HERBARIUM_COVER.url],
     [TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL],
     [TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
@@ -102,10 +114,53 @@ export function paintRoom6Photography(scene, L, keys) {
     const lamp = L.glows.flags;
     soft(ctx, lamp.x, lamp.y, lamp.r * 0.8, lamp.r * 1.3, "255,195,130", 0.055, "lighter");
   }
+  paintHerbarium(ctx, L, scene.textures.exists(HERBARIUM_COVER.key) ? scene.textures.get(HERBARIUM_COVER.key).getSourceImage() : null);
   ctx.fillStyle = "rgba(2,4,6,0.1)"; ctx.fillRect(0, 0, L.W, L.H);
   vignette(ctx, L.W, L.H, 0.28, "source-over");
   grain(ctx, L.W, L.H, 0.006);
   addCanvasTexture(scene.textures, keys.room, canvas);
   addCanvasTexture(scene.textures, keys.glow, glowCanvas());
   return keys;
+}
+
+// The herbarium, shut, lying on the table: a deep green cloth cover, the
+// cream of its page block along the front and the side, a paler label on it,
+// its shadow on the wood.
+function paintHerbarium(ctx, L, photograph) {
+  ctx.save();
+  ctx.scale(L.W / PHOTO.width, L.H / PHOTO.height);
+  const [fl, fr, br, bl] = HERBARIUM.map(([x, y]) => ({ x, y }));
+  const down = 7; // the book's thickness, as it is seen
+  soft(ctx, (fl.x + fr.x) / 2 + 4, fl.y + down + 1, 62, 6, "0,0,0", 0.6);
+  // the page block: along the front, and down the right-hand side
+  polygon(ctx, [fl, fr, { x: fr.x, y: fr.y + down }, { x: fl.x, y: fl.y + down }]);
+  ctx.fillStyle = "#b9ab88"; ctx.fill();
+  ctx.strokeStyle = "rgba(90,70,40,0.35)"; ctx.lineWidth = 0.6;
+  for (let i = 1; i < 5; i++) { const y = fl.y + (down * i) / 5; ctx.beginPath(); ctx.moveTo(fl.x + 2, y); ctx.lineTo(fr.x - 1, y - 2); ctx.stroke(); }
+  polygon(ctx, [fr, br, { x: br.x, y: br.y + down }, { x: fr.x, y: fr.y + down }]);
+  ctx.fillStyle = "#9e916f"; ctx.fill();
+  // the cloth of its boards, a little over the pages at the front and the spine down the left
+  polygon(ctx, [fl, fr, br, bl]);
+  const cloth = ctx.createLinearGradient(fl.x, fl.y, br.x, br.y);
+  cloth.addColorStop(0, "#22341f"); cloth.addColorStop(0.6, "#2f4529"); cloth.addColorStop(1, "#1b2a18");
+  ctx.fillStyle = cloth; ctx.fill();
+  ctx.strokeStyle = "rgba(10,16,8,0.7)"; ctx.lineWidth = 1; ctx.stroke();
+  if (photograph) {
+    const coverPoint = (u, v) => {
+      const left = { x: bl.x + (fl.x - bl.x) * v, y: bl.y + (fl.y - bl.y) * v };
+      const right = { x: br.x + (fr.x - br.x) * v, y: br.y + (fr.y - br.y) * v };
+      return { x: left.x + (right.x - left.x) * u, y: left.y + (right.y - left.y) * u };
+    };
+    ctx.save(); ctx.filter = "brightness(.65) saturate(.76)";
+    paintProjectedMaterial(ctx, photograph, coverPoint, 1, 8, 4); ctx.restore();
+  }
+  polygon(ctx, [fl, bl, { x: bl.x - 3, y: bl.y + 2 }, { x: fl.x - 3, y: fl.y + down }]);
+  ctx.fillStyle = "#16220f"; ctx.fill();
+  // a label on the cover, and the lamp's warm across it
+  if (!photograph) {
+    polygon(ctx, [{ x: 720, y: 578 }, { x: 750, y: 577 }, { x: 748, y: 573 }, { x: 722, y: 574 }]);
+    ctx.fillStyle = "rgba(214,200,160,0.85)"; ctx.fill();
+  }
+  soft(ctx, 735, 575, 50, 8, "255,190,120", 0.12, "lighter");
+  ctx.restore();
 }

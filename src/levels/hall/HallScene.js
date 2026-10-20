@@ -253,7 +253,8 @@ export default class HallScene extends BasePuzzleScene {
 
   // A thin mist in the hall: banks of it lying low along the floor at
   // different depths, each drifting slowly across and back, the nearest
-  // the faintest so that it never hides the doors; and a haze hanging at
+  // the faintest so that it never hides the doors, and dim, the hall being
+  // dark — it catches only what light there is; and a haze hanging at
   // the far end, in the moon from the stairs.
   _fog(L, key) {
     const { H } = L;
@@ -262,15 +263,15 @@ export default class HallScene extends BasePuzzleScene {
       const bank = this.add
         .image(p.x - side * wide * 0.14, p.y, key)
         .setDisplaySize(wide, (H * 0.52) / z)
-        .setTint(0xa9b4c8)
-        .setAlpha(0.26 + i * 0.06)
+        .setTint(0x7d8698)
+        .setAlpha(0.18 + i * 0.05)
         .setDepth(-7.4);
       this.ambientTween({ targets: bank, x: p.x + side * wide * 0.14, duration: 19000 + i * 4200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       this.ambientTween({ targets: bank, alpha: bank.alpha * 0.6, duration: 7000 + i * 1900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
     const far = L.P(0, -H * 0.05, 4.4);
-    const haze = this.add.image(far.x, far.y, key).setDisplaySize(L.wall * 0.9, H * 0.34).setTint(0xb8c6e4).setAlpha(0.34).setDepth(-7.4);
-    this.ambientTween({ targets: haze, alpha: 0.2, scaleX: haze.scaleX * 1.12, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    const haze = this.add.image(far.x, far.y, key).setDisplaySize(L.wall * 0.9, H * 0.34).setTint(0xa4b2cc).setAlpha(0.28).setDepth(-7.4);
+    this.ambientTween({ targets: haze, alpha: 0.16, scaleX: haze.scaleX * 1.12, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   }
 
   // What makes the ground floor's hall a place somebody lives in — or did.

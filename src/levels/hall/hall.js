@@ -1818,7 +1818,9 @@ function paintGloom(ctx, L) {
     const px = (col+0.5)*W/w, py = (row+0.5)*H/h;
     const d = Math.hypot((px-L.vp.x)/(W*0.62),(py-L.vp.y)/(H*0.74));
     // Upstairs stays dim enough for the separately rendered Morse flashes.
-    let a = L.botanicMaterials ? Math.min(0.82,0.3+Math.max(0,d-0.28)*0.95)
+    // The Botany Hall is lit only by its candles and the moon through the
+    // skylight: dark even down its middle, and darker toward the doors.
+    let a = L.botanicMaterials ? Math.min(0.8,0.4+Math.max(0,d-0.26)*0.95)
       : L.wing ? Math.min(0.92,0.14+Math.max(0,d-0.2)*1.35)
       : L.theme === "chemistry" ? Math.min(0.9,0.22+Math.max(0,d-0.22)*1.3)
       : L.worn ? Math.min(0.9,Math.max(0,d-0.24)*1.3) : Math.min(0.8,Math.max(0,d-0.34)*1.05);

@@ -3,7 +3,8 @@
 // volumetric flask etched with a single ring: 400 ml. A strip of litmus
 // paper hangs in its neck. Fill, pour and empty the bottles at the tap and
 // the sink; pour exactly 400 ml into the flask in one go and the solution
-// reaches its ring, the litmus turns, and on it, paler, a word: ACID.
+// reaches its ring and ignites the blue strip like a fuse. The flame
+// leaves the word ACID in the charred paper behind it.
 //
 //   fill 500 · 500 → 300 (200 left) · empty 300 · 500 → 300 (200 in it)
 //   fill 500 · 500 → 300 (takes 100: 400 left) · 500 → flask

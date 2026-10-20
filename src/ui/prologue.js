@@ -2,6 +2,7 @@ import { CASE_REPORT, letterById } from "../shared/story.js";
 import { renderLetter } from "./letterPage.js";
 import { glint } from "./startFilm.js";
 import { taskCard } from "./tasks.js";
+import { mountWindowRain } from "./windowRain.js";
 
 const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-film-match-v2.png`;
 const DESK_WIDTH = 1672,
@@ -78,10 +79,10 @@ function playDesk(
     deskHeight = DESK_HEIGHT;
   camera.append(photograph);
 
-  const rain = document.createElement("canvas");
-  rain.className = "prologue-rain";
-  rain.setAttribute("aria-hidden", "true");
-  camera.append(rain);
+  const rain = mountWindowRain(scope, {
+    host: camera, image: preloadPrologueDesk(),
+    imageWidth: deskWidth, imageHeight: deskHeight, reducedMotion,
+  });
 
   // the letter on the blotter, opened first; then the leather file beside it
   const envelope = document.createElement("button");
@@ -201,99 +202,10 @@ function playDesk(
     place(dossier, 0, 534, 810, 270);
     place(envelope, 726, 700, 422, 112);
     place(nameplate, 894, 552, 286, 132);
-    resizeRain(rain, width, height);
+    rain.resize(width, height);
   };
   placeSceneDetails();
   scope.on(window, "resize", placeSceneDetails);
-
-  // Rain on his window, and only on its glass: the six panes between the
-  // frame and its bars, in the photograph's own pixels. The photograph has
-  // its beads of water already; over them a few drops at a time gather and
-  // run down a pane in fits and starts, as water does, each leaving a thin
-  // wet trail that fades behind it; and behind the glass, very faintly, the
-  // rain coming down in the street.
-  const PANES = [[737, 0, 916, 155], [938, 0, 1159, 155], [1182, 0, 1430, 150],
-    [737, 182, 916, 481], [938, 177, 1159, 484], [1182, 166, 1428, 492]];
-  const rnd = (a, b) => a + Math.random() * (b - a);
-  const newRun = (run = {}) => {
-    const pane = PANES[Math.floor(Math.random() * PANES.length)], [l, t, r, b] = pane;
-    return Object.assign(run, { pane, x: rnd(l + 6, r - 6), y: rnd(t + 2, t + (b - t) * .55), size: rnd(1, 2.1),
-      speed: rnd(26, 70), v: 0, wait: rnd(.4, 3.2), trail: [] });
-  };
-  const runs = Array.from({ length: 9 }, () => newRun());
-  const streaks = Array.from({ length: 46 }, () => ({ x: rnd(737, 1430), y: rnd(0, 492), length: rnd(9, 24), v: rnd(520, 900), alpha: rnd(.025, .07) }));
-  const rainContext = rain.getContext("2d");
-  let frame = 0, previous = performance.now(), lastFrame = 0;
-  const animateRain = (now) => {
-    if (!root.isConnected || reducedMotion) return;
-    frame = requestAnimationFrame(animateRain);
-    if (now - lastFrame < 30) return;
-    const dt = Math.min(0.05, (now - previous) / 1000);
-    previous = lastFrame = now;
-    const g = rainContext;
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    g.clearRect(0, 0, rain.width, rain.height);
-    // drawn in the photograph's pixels, placed as the photograph is (cover)
-    const width = camera.clientWidth, height = camera.clientHeight;
-    const cover = Math.max(width / deskWidth, height / deskHeight);
-    const sx = rain.width / width, sy = rain.height / height;
-    g.setTransform(sx * cover, 0, 0, sy * cover, sx * (width - deskWidth * cover) / 2, sy * (height - deskHeight * cover) / 2);
-    g.save();
-    g.beginPath();
-    for (const [l, t, r, b] of PANES) g.rect(l, t, r - l, b - t);
-    g.clip();
-    g.lineCap = "round";
-    // the street's rain, behind the glass
-    g.lineWidth = .6;
-    for (const drop of streaks) {
-      drop.y += drop.v * dt;
-      if (drop.y > 492) { drop.y = -drop.length; drop.x = rnd(737, 1430); }
-      g.strokeStyle = `rgba(200,214,232,${drop.alpha})`;
-      g.beginPath();
-      g.moveTo(drop.x, drop.y);
-      g.lineTo(drop.x - drop.length * .1, drop.y + drop.length);
-      g.stroke();
-    }
-    // the drops running down the glass
-    for (const run of runs) {
-      const [, , , bottom] = run.pane;
-      if (run.wait > 0) run.wait -= dt;
-      else {
-        run.v += (run.speed - run.v) * Math.min(1, dt * 3);
-        // now and then it catches on the glass, and waits
-        if (Math.random() < dt * .7) { run.wait = rnd(.25, 1.3); run.v = 0; }
-      }
-      const was = run.y;
-      run.y += run.v * dt;
-      run.x += Math.sin(run.y * .09) * .08;
-      if (run.y - was > .01) run.trail.push({ x: run.x, y: run.y, age: 0 });
-      for (const point of run.trail) point.age += dt;
-      while (run.trail.length && run.trail[0].age > 2.6) run.trail.shift();
-      if (run.y > bottom - 4) { newRun(run); continue; }
-      // its trail, wet and fading
-      for (let i = 1; i < run.trail.length; i++) {
-        const a = run.trail[i - 1], b = run.trail[i];
-        g.strokeStyle = `rgba(214,226,240,${.1 * (1 - b.age / 2.6)})`;
-        g.lineWidth = run.size * .7;
-        g.beginPath();
-        g.moveTo(a.x, a.y);
-        g.lineTo(b.x, b.y);
-        g.stroke();
-      }
-      // the drop: a bead of light, brighter at its lower edge
-      const bead = g.createRadialGradient(run.x, run.y + run.size * .35, 0, run.x, run.y, run.size * 1.6);
-      bead.addColorStop(0, "rgba(238,244,252,.62)");
-      bead.addColorStop(.45, "rgba(205,218,236,.28)");
-      bead.addColorStop(1, "rgba(205,218,236,0)");
-      g.fillStyle = bead;
-      g.beginPath();
-      g.arc(run.x, run.y, run.size * 1.6, 0, Math.PI * 2);
-      g.fill();
-    }
-    g.restore();
-  };
-  if (!reducedMotion) frame = requestAnimationFrame(animateRain);
-  scope.add(() => cancelAnimationFrame(frame));
 
   // the letter, then the file it sends him to — each ticked once it is put
   // down — then the house
@@ -438,16 +350,6 @@ function outlines() {
     )
     .join("");
   return svg;
-}
-
-// Resize the transparent rain layer at screen resolution, then draw rain only
-// over the actual window in the photograph.
-function resizeRain(canvas, width, height) {
-  const scale = Math.min(1.5, window.devicePixelRatio || 1);
-  canvas.width = Math.ceil(width * scale);
-  canvas.height = Math.ceil(height * scale);
-  Object.assign(canvas.style, { width: `${width}px`, height: `${height}px` });
-  canvas.dataset.scale = String(scale);
 }
 
 // the sheet laid open over the desk, with its one button under it: a letter

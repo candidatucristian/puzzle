@@ -115,6 +115,11 @@ export default class Room7Scene extends PlainRoomScene {
       const x = hx - L.bookcaseDepth - 1;
       L.things.push(Object.assign(thingAt("molecules", "Take out his notebook", [Q(x, nb.y0 - 3, nb.d0 - 4), Q(x, nb.y0 - 3, nb.d1 + 4), Q(x, nb.y1 + 4, nb.d1 + 4), Q(x, nb.y1 + 4, nb.d0 - 4)]), { before: true }));
     }
+    // the little rack of phials, at the right-hand end of the sink counter
+    {
+      const w = L.washing, rx = w.x + w.width * 0.94, ry = w.y + w.height * 0.62, s = w.width * 0.05;
+      L.things.push(thingAt("phials", "Look at the phials", [{ x: rx - s, y: ry - s * 1.4 }, { x: rx + s, y: ry - s * 1.4 }, { x: rx + s, y: ry + s * 0.4 }, { x: rx - s, y: ry + s * 0.4 }]));
+    }
 
     // where the room's lights are, for the dark and for the scene
     const lp = Q(L.lamp.x, b.h + 28, L.lamp.d), bp = Q(L.burner.x, b.h + 14, L.burner.d);

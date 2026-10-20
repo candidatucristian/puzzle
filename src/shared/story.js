@@ -8,7 +8,13 @@
  *  The letters are what he gathers on the way: the one that brings him, a
  *  page left by each of the three on their own floor of the house, and the
  *  last, which waits for the end. Each says when it is found (`found`) — the
- *  case file (ui/caseFile.js) watches for it. No scene code lives here. */
+ *  case file (ui/caseFile.js) watches for it. No scene code lives here.
+ *
+ *  Under each of the first four, in pencil (`margin`), what Arthur makes of
+ *  it: the story's steps, so that the player is a little ahead of him at the
+ *  end rather than lost — Ivy is alive; Rose had a boy, and there is no child
+ *  in the file; his own father knew them; a star named for a boy. The last
+ *  letter needs no note. */
 
 export const CASE = Object.freeze({ title: "The Ashcombe Case", year: 1961, detective: "Inspector Arthur Wren" });
 
@@ -20,14 +26,16 @@ export const LETTERS = Object.freeze([
     dateline: "Ashcombe House · October 2001",
     salutation: "Inspector Wren,",
     body: [
-      "My brothers and I left Ashcombe House forty years ago. We left to keep a promise.",
-      "I have seen you at the gate over the years. If you still want to know why we went, come to the house.",
-      "Before you come, read your father's report again. Look at what he wrote about the dining table.",
-      "The gate is unlocked. Start in the hall. What you find in each room will open the next. Put out the lights as you go.",
-      "I was sorry to hear about your father. He did more for us than you know.",
-      "Please come alone.",
+      "Forty years ago this October, my brothers and I locked every door of Ashcombe House and went away in the night. You have read the file. You know that nobody was hurt, that nothing was taken, and that nobody ever understood why.",
+      "The others gave up within the year. You never did. You came back to our gate in the rain more often than you would ever admit, and once you stood at the dining-room window for the best part of an hour. So you are the one we chose.",
+      "We did not leave because we were afraid. We left to keep a promise, and the house has kept it for us ever since. Every room holds something we could not say out loud. Every door opens with a key from the room before it. Nothing in there will explain itself: it was built for someone patient.",
+      "The lamps are still in their places, the clocks have stopped where we left them, and the dust has been allowed to settle as it pleased. Forgive the cold.",
+      "Take your file out once more before you come, and look at what the constables wrote about our table. Then come. The gate is unlocked. Start in the hall, and put the lights out, one by one.",
+      "We were sorry to hear about your father. He was a better man than anybody knew.",
+      "Come alone, and come soon. Some of us are older than the house now.",
     ],
     signature: "— I. A.",
+    margin: "I. A. — Ivy Ashcombe. She is alive.",
   },
   {
     id: "ivy",
@@ -42,6 +50,7 @@ export const LETTERS = Object.freeze([
       "If he comes, I shall not give the boy up. I have decided it the way I decide everything: slowly, and for good.",
     ],
     signature: "— I.",
+    margin: "Rose had a boy. There is no child anywhere in the file.",
   },
   {
     id: "silas",
@@ -56,6 +65,7 @@ export const LETTERS = Object.freeze([
       "Ivy calls it a game. It is not a game. It is a lock with a heart in it.",
     ],
     signature: "— S. A.",
+    margin: "Constable Wren. Dad knew them. He never said.",
   },
   {
     id: "orion",
@@ -69,6 +79,7 @@ export const LETTERS = Object.freeze([
       "If you are reading this under my dome, you have come a long way up, and you have put out a great many lights. Do not stop now. The last thing we kept is the simplest of all.",
     ],
     signature: "— O. A.",
+    margin: "A star named for a boy. Who was he to them?",
   },
   {
     id: "last",
@@ -104,54 +115,47 @@ export const INTRO = Object.freeze({
   where: ["Exeter · October 2001", "At Inspector Wren's residence", "Tonight, after forty years, a letter came from Ashcombe House."],
 });
 
-/** The opening (ui/introVideo.js), in three parts, each telling what the
- *  player needs at that moment and no more.
+/** The opening (ui/introVideo.js) is his story, and only his: a man who has
+ *  carried one file for half his life, his father who would not speak of it,
+ *  and tonight's letter. Who the Ashcombes were waits until he stands before
+ *  their house (`MANOR_STORY`, ui/manorStory.js), where it means most.
  *
- *  Before the film (`page`): the case's name, then two short paragraphs —
- *  the case that has never let Inspector Wren go, and the letter waiting for
- *  him tonight.
- *
- *  Over the film (`asides`): the same night, at his house; then the case
- *  itself, as the file has it — no names yet: who the three were is told at
- *  the manor.
- *
- *  At the manor (`MANOR_STORY`, ui/manorStory.js): only once he stands
- *  before the house, the three of them — one for each floor he is about to
- *  climb — and what he is to do there.
- *
- *  A passage: `over` the small line above it, `name` (a person, set
- *  large), `lines` its words; `at` is [from, to] in the film's seconds. */
+ *  `page`: the case's name, with where and when, then two short paragraphs.
+ *  `asides`: passages over the film, of him, not of the pictures — `over`
+ *  the small line above, `lines` the words, `at` [from, to] in its seconds. */
 export const OPENING = Object.freeze({
   page: {
     title: "The Ashcombe Case",
     place: "Exeter · Inspector Arthur Wren's residence",
     date: "12 October 2001",
     story: [
-      "Forty years ago, three scientists locked every door of their house in Devon and walked out into the night. No one was hurt, nothing was taken, and no one has ever learned why. For twenty-two years Inspector Arthur Wren has worked the case that every other detective gave up on — the one file he has never been able to close, and never been able to put down.",
-      "Tonight, after twenty-two years, he came home to find a letter waiting under his door. No stamp. No postmark. No name of the sender.",
+      "For twenty-two years, Inspector Arthur Wren has kept one file within reach of his desk. It is the oldest unsolved case in the county, and the only one he has never been able to put down. Every October he takes it out and reads it again, as if this year the pages might say something different.",
+      "His father, Constable Thomas Wren, was the first policeman at Ashcombe House the morning the case began, and wrote its first report. He died this spring without ever speaking of it. Tonight, on the eve of the fortieth anniversary, Arthur came home to a letter waiting under his door. No stamp. No postmark. Only his name, in a hand he almost knows.",
     ],
   },
   asides: [
     { at: [1.4, 8], over: "Exeter · 12 October 2001", lines: ["That night, at Inspector Wren's residence."] },
-    { at: [9.6, 17.8], over: "Devon & Cornwall Constabulary · Case 61/1013", lines: ["The disappearance of three scientists from Ashcombe House, Devon.", "Opened 14 October 1961. Closed November 1962. Never solved."] },
-    { at: [19.4, 27.6], over: "14 October 1961 · Morning", lines: ["Every door of the house was found locked from the outside.", "No key was ever recovered. No sign of a struggle. Nothing missing."] },
-    { at: [29.2, 37.4], over: "Inside the house", lines: ["Every lamp had been put out, one room at a time.", "Every clock in the house had been stopped."] },
-    { at: [39, 45.8], over: "The dining room", lines: ["The table was laid for four.", "Only three people had ever lived there."] },
-    { at: [47, 53.4], over: "The search", lines: ["For a year the ports, the stations and the coast were watched.", "No debts. No quarrel. No letter. Not one of them was seen again."] },
-    { at: [54.6, 61.6], over: "Case 61/1013 · Reporting officer", lines: ["Constable Thomas Wren, the first man at the door.", "Forty years later, his son still keeps the file open."] },
-    { at: [63, 70.2], over: "Exeter · Tonight", lines: ["The house has written to him.", "It is asking him to come home."] },
+    { at: [9.6, 17.8], over: "Inspector Arthur Wren · Devon & Cornwall Constabulary", lines: ["Twenty-two years on the force. More cases closed than anyone at the station.", "One left open."] },
+    { at: [19.4, 27.6], over: "October 1961", lines: ["He was only a small boy the autumn it began.", "His father came home one morning that October, and never said a word about where he had been."] },
+    { at: [29.2, 37.4], over: "Constable Thomas Wren", lines: ["He was the first man at the door of Ashcombe House.", "He wrote the report, closed his notebook, and kept it closed for forty years."] },
+    { at: [39, 45.8], over: "Case 61/1013", lines: ["Arthur has read the file more times than he can count.", "One line in it has never let him rest."] },
+    { at: [47, 53.4], over: "The dining room", lines: ["The table had been laid for four.", "Who was the fourth place for?"] },
+    { at: [54.6, 61.6], over: "This spring", lines: ["His father died with the answer, if he ever had it.", "Arthur was left with the file, and the question."] },
+    { at: [63, 70.2], over: "Tonight", lines: ["After forty years, someone has written to him.", "The letter is signed with two initials: I. A."] },
   ],
 });
 
-/** At the manor, the first time he stands before it (ui/manorStory.js): who
- *  the house belonged to — a floor for each of the three — and what he is to
- *  do in it. Passages as the film's, each brought on by Next. */
+/** At the manor, the first time he stands before it (ui/manorStory.js): the
+ *  Ashcombes at last — whose house it was, a floor for each of the three, the
+ *  night they went, and that someone is still waiting. Brought on by Next. */
 export const MANOR_STORY = Object.freeze([
-  { over: "Ashcombe House · Devon · 1961", lines: ["This house belonged to three of the finest minds in England.", "A sister and her two brothers — and a floor of the house for each of them."] },
-  { over: "The ground floor · The Botany", name: "Ivy Ashcombe", lines: ["who could make anything grow.", "She kept the tropical glasshouses at Kew, and never once hurried a seed."] },
-  { over: "The first floor · The Chemistry", name: "Silas Ashcombe", lines: ["who could take anything apart.", "He trusted nothing he could not measure, and hid things only where a careful mind would find them."] },
-  { over: "The top floor · The Physics", name: "Orion Ashcombe", lines: ["who spent his nights counting what other people never see.", "Every star he found, he named. One of them is in no catalogue."] },
-  { over: "Tonight", lines: ["For the first time in forty years, the gate has been left unlocked.", "Start in the hall, and put the lights out as you go."] },
+  { over: "Ashcombe House · Devon", lines: ["This was the house of the Ashcombes.", "Three of the finest minds in England — a sister and her two brothers — and a floor of the house for each of them."] },
+  { over: "The ground floor · The Botany", name: "Ivy Ashcombe", lines: ["who could make anything grow.", "She kept the glasshouses at Kew. A seed, she said, must never be hurried — and she never hurried anything she loved."] },
+  { over: "The first floor · The Chemistry", name: "Silas Ashcombe", lines: ["who could take anything apart.", "He measured everything in the world exactly — everything, his sister said, but his own heart."] },
+  { over: "The top floor · The Physics", name: "Orion Ashcombe", lines: ["who counted the stars for a living.", "Every star he found, he named. One of them is in no catalogue."] },
+  { over: "And the youngest", name: "Rose Ashcombe", lines: ["who was not there that night.", "There had been a fourth Ashcombe once: their little sister, the one they all loved best. She died in the winter of 1959."] },
+  { over: "13 October 1961", lines: ["On the last night anyone saw them, they laid the table for four, put out the lights one room at a time, and locked every door behind them.", "They took nothing with them. They left something behind."] },
+  { over: "Tonight", lines: ["For the first time in forty years, the gate is unlocked, and a light is burning in the hall.", "Someone has been waiting for him."] },
 ].map(Object.freeze));
 
 /** What is in the file on his desk, opened in the prologue once the letter
@@ -161,14 +165,14 @@ export const CASE_REPORT = Object.freeze({
   dateline: "Devon & Cornwall Constabulary · Case 61/1013",
   salutation: "The disappearance of Ivy, Silas and Orion Ashcombe",
   body: [
-    "Ashcombe House, Devon. The three occupants were last seen on the evening of 13 October 1961.",
-    "All doors locked from the outside. No keys recovered. No sign of a struggle. No property reported missing.",
-    "Dining-room table set for four.",
-    "Enquiries at the ports and along the coast produced no further sightings.",
-    "Reporting officer: Constable T. Wren. Attended 14 October 1961.",
+    "Ashcombe House, Devon. The three occupants last seen on the evening of 13 October 1961.",
+    "All doors found locked from the outside; no keys recovered. No sign of a struggle. Nothing missing from the house.",
+    "In the dining room, the table laid for four.",
+    "No debts, no quarrel, no letter left behind. Enquiries at the ports and along the coast without result.",
+    "Reporting officer: Constable T. Wren, first at the house on the morning of 14 October.",
   ],
   signature: "Closed, November 1962: insufficient evidence.",
-  postscript: "Three people. Four places. Who was the fourth? — A. W.",
+  postscript: "Pencilled under it, in his hand: Four places laid. Three Ashcombes. Who was the fourth? — A. W.",
 });
 
 /** A card for each floor, the first time he stands on it: whose floor it

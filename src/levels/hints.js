@@ -44,6 +44,9 @@ export const HINT_DETAILS = {
   crossing: [
     "The stripes and the gaps between them are not all the same width. Things in shops wear stripes like these.",
   ],
+  herbarium: [
+    "On each page one plant is drawn round. Count the sides of each figure, and read the counts as letters.",
+  ],
   flags: [
     "Each flag stands for a country, and every country has a short name of just two letters.",
   ],
@@ -73,6 +76,9 @@ export const HINT_DETAILS = {
   ],
   measures: [
     "Nothing measures 400 ml for you: only the brims of the two bottles are sure. What is left in the larger after it fills the smaller?",
+  ],
+  phials: [
+    "Yellow and blue are two halves of one colour. The tag says whose colour it was: think of what she spent her life growing.",
   ],
   molecules: [
     "Name the element each molecule is made of; every one of them has a symbol of a single letter. Read the pages in their order.",

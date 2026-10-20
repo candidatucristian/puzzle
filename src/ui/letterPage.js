@@ -32,6 +32,8 @@ export function renderLetter(host, letter, { note = "", seal: sealed = true } = 
   for (const para of letter.body) add("p", "letter-para", para);
   add("p", "letter-signature", letter.signature);
   add("p", "letter-ps", letter.postscript);
+  // and under it, in pencil, in his own hand: what Arthur makes of it
+  add("p", "letter-margin", letter.margin);
   page.append(paper, words);
   if (sealed) page.append(wax);
   host.append(page);

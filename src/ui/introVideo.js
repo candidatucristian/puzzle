@@ -254,14 +254,20 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   const runTitles = () => new Promise(resolve => {
     root.dataset.phase = "titles";
     const { title, place, date, story } = OPENING.page;
-    const button = (label) => { const b = make("button", "intro-page-play", label); b.type = "button"; return b; };
+    // the way on, with how far along the opening it is: "Next [1/2]"
+    const button = (label, step) => {
+      const b = make("button", "intro-page-play", label);
+      b.type = "button";
+      if (step) b.append(" ", make("span", "next-count", `[${step}/2]`));
+      return b;
+    };
     const opening = make("div", "intro-card is-title");
-    const next = button("Next");
+    const next = button("Next", 1);
     opening.append(make("h1", "intro-card-title", title), make("span", "intro-card-rule"),
       make("p", "intro-card-place", place), make("p", "intro-card-date", date), next);
     const page = make("div", "intro-card is-story");
     const paragraphs = story.map((text) => make("p", "intro-story-text", text));
-    const go = button("Begin");
+    const go = button("Begin", 2);
     const way = make("div", "intro-story-way");
     way.append(go, make("p", "intro-page-hint", "Best with sound"));
     page.append(...paragraphs, way);
@@ -369,7 +375,18 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   // the film loads behind the page, and comes up out of it once it is asked for
   root.classList.add("is-before");
   video.src = VIDEO;
-  void runTitles().then(() => {
+  // Laid in at once, under the loading screen, so its black is what the
+  // loading screen fades into — the house is never glimpsed before the story.
+  // The titles begin only as the loading screen starts to go.
+  const loaded = () => new Promise(resolve => {
+    const look = () => {
+      const screen = document.getElementById("loading-screen");
+      if (!screen || screen.classList.contains("fade-out")) resolve();
+      else scope.later(look, 60);
+    };
+    look();
+  });
+  void loaded().then(() => (scope.closed ? null : runTitles())).then(() => {
     if (finishing || scope.closed) return;
     root.classList.remove("is-before");
     root.dataset.phase = "loading";

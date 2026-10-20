@@ -13,6 +13,7 @@ import TicketsScene from "./station/TicketsScene.js";
 import TreeScene from "./pi/TreeScene.js";
 import CrossingScene from "./crossing/CrossingScene.js";
 import FlagsScene from "./flags/FlagsScene.js";
+import HerbariumScene from "./herbarium/HerbariumScene.js";
 import TapCodeScene from "./tapcode/TapCodeScene.js";
 import RallyScene from "./rally/RallyScene.js";
 import OvertimeScene from "./overtime/Overtime.js";
@@ -21,6 +22,7 @@ import CompassScene from "./compass/CompassScene.js";
 import BookshelfScene from "./bookshelf/BookshelfScene.js";
 import ChemistryScene from "./chemistry/ChemistryScene.js";
 import MoleculesScene from "./molecules/MoleculesScene.js";
+import PhialsScene from "./phials/PhialsScene.js";
 import BalanceScene from "./balance/BalanceScene.js";
 import EquationsScene from "./equations/EquationsScene.js";
 import MeasuresScene from "./measures/MeasuresScene.js";
@@ -53,6 +55,7 @@ const scenes = {
   Pi: TreeScene,
   Crossing: CrossingScene,
   Flags: FlagsScene,
+  Herbarium: HerbariumScene,
   TapCode: TapCodeScene,
   Rally: RallyScene,
   Overtime: OvertimeScene,
@@ -61,6 +64,7 @@ const scenes = {
   Bookshelf: BookshelfScene,
   Chemistry: ChemistryScene,
   Molecules: MoleculesScene,
+  Phials: PhialsScene,
   Balance: BalanceScene,
   Equations: EquationsScene,
   Measures: MeasuresScene,

@@ -236,7 +236,8 @@
           <span id="save-status" role="status" aria-live="polite"></span>
         </div>
         <div id="levels-grid"></div>
-        <details id="index-notes" class="index-notes">
+        <!-- the notes are open to begin with; their heading folds them away -->
+        <details id="index-notes" class="index-notes" open>
           <summary>Notes</summary>
           <div id="index-story" aria-label="Story"></div>
         </details>
@@ -311,6 +312,8 @@
           <!-- the front door in the film: it glints, and a click on it goes in -->
           <div id="start-door" aria-hidden="true">
             <canvas id="start-door-glint"></canvas>
+            <!-- the way in, drawn round in the thin pencil, as the letter on his desk was -->
+            <svg class="door-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="ink-dark" pathLength="1" vector-effect="non-scaling-stroke" d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6" /><path class="ink-white" pathLength="1" vector-effect="non-scaling-stroke" d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6" /><path class="ink-over" pathLength="1" vector-effect="non-scaling-stroke" d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6" /></svg>
           </div>
           <!-- the house's name, low on the left, laid into the dark of the picture -->
           <div id="start-legend">
@@ -318,7 +321,6 @@
             <h1 class="legend-title">Ashcombe Manor</h1>
             <span class="legend-rule" aria-hidden="true"></span>
             <p class="legend-line">Home of Ivy, Silas and Orion Ashcombe.</p>
-            <p class="legend-info"><svg class="legend-info-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4" /><path d="M12 10.6 V16.4 M12 7.6 V7.7" /></svg>Click on the door to enter the manor</p>
           </div>
           <canvas
             id="start-moon"

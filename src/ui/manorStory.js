@@ -41,7 +41,11 @@ export function playManorStory(scope, { reducedMotion = false } = {}) {
     const next = document.createElement("button");
     next.type = "button";
     next.className = "intro-page-play manor-story-next";
-    next.textContent = "Next";
+    // how far along the house's story it is: "Next [2/7]"
+    const count = document.createElement("span");
+    count.className = "next-count";
+    count.textContent = `[${index}/${MANOR_STORY.length}]`;
+    next.append("Next ", count);
     next.addEventListener("click", (event) => { own(event); show(); });
     node.append(next);
     changing = true;

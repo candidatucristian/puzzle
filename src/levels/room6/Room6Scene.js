@@ -3,7 +3,7 @@ import { soft, makeCanvas } from "../../shared/paint.js";
 import { EYE, WARM, block, fillPoly, footShadow, onWall, thingAt } from "../house/roomKit.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
 import { METAL, RIBBON, MEDAL } from "../flags/trophies.js";
-import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint } from "./photographicRoom.js";
+import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint, room6HerbariumQuad } from "./photographicRoom.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Room 6, the last along the hall: grey-green plaster under a coffered
@@ -55,6 +55,12 @@ export default class Room6Scene extends PlainRoomScene {
       room6CabinetPoint(L, 1, (mc.h-g.y1)/mc.h), room6CabinetPoint(L, 0, (mc.h-g.y1)/mc.h),
     ] : [Q(front, g.y0, mc.d0), Q(front, g.y0, mc.d1), Q(front, g.y1, mc.d1), Q(front, g.y1, mc.d0)];
     L.things = [thingAt("flags", "Look at the medals", cabinetFace)];
+    // Ivy's herbarium, shut, on the table under the window
+    const herbarium = L.photographic ? room6HerbariumQuad(L) : (() => {
+      const w = L.win, y = w.sill + (H - w.sill) * 0.28;
+      return [{ x: w.cx - w.rx * 0.6, y: y + 14 }, { x: w.cx + w.rx * 0.6, y: y + 14 }, { x: w.cx + w.rx * 0.6, y: y - 14 }, { x: w.cx - w.rx * 0.6, y: y - 14 }];
+    })();
+    L.things.push(thingAt("herbarium", "Open her herbarium", herbarium));
     // where the room's light is, for the dark and for the scene
     const ml = Q(front - 4, g.y1 - 10, (mc.d0 + mc.d1) / 2);
     const mid = Q(front, (g.y0 + g.y1) / 2, (mc.d0 + mc.d1) / 2);

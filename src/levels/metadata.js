@@ -291,6 +291,26 @@ const metadata = [
     ]
   },
   {
+    "id": "herbarium",
+    "key": "Herbarium",
+    "name": "Ivy's Herbarium",
+    "summary": "Her book of pressed plants, open on the table under the window.",
+    "code": "HEDGE",
+    "altCode": null,
+    "hint": {
+      "text": "DRAWN ROUND.\nOne on every page.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "In Room VI, Ivy's herbarium lies on the console table under the window; opened, it shows five pages of pressed plants, four or five to a page, each taped down with its Latin name under it in her hand. On every page one specimen has been drawn round in pencil with a figure of straight sides: page I an octagon round the hawthorn, II a pentagon round the dog rose, III a square round the ivy, IV a heptagon round the blackthorn, V a pentagon round the privet. Each figure's sides, counted, are a letter's place in the alphabet — 8 H, 5 E, 4 D, 7 G, 5 E — and in page order they spell HEDGE (all five ringed plants are hedgerow plants). Two pages show at a time: the right page turns forward, the left back. Nothing on screen says to count.",
+    "references": [
+      "PAGES (herbarium/puzzle.js) — the specimens of each page, the ringed one carrying its figure's sides [8, 5, 4, 7, 5]; herbariumWord() spells HEDGE",
+      "herbarium/photography.js and book.js — a photographed walnut table and sewn green-cloth album, plain aged paper, 23 transparent pressed specimens with their Latin labels, gummed mounting strips and the pencilled figure drawFigure(); the last face inside the back cover",
+      "HerbariumScene — two pages at a time, turned by clicking the right page (forward) or the left (back)",
+      "room6/photographicRoom.js — the matching photographed green-cloth cover projected onto the closed book on the console table under the window, and the thing that opens it"
+    ]
+  },
+  {
     "id": "tapcode",
     "key": "TapCode",
     "name": "Marks in Stone",
@@ -678,6 +698,26 @@ const metadata = [
     ]
   },
   {
+    "id": "phials",
+    "key": "Phials",
+    "name": "Two Phials",
+    "summary": "A little rack by the sinks: a phial of yellow, a phial of blue, an empty tube, and a tag in his hand.",
+    "code": "GREEN",
+    "altCode": null,
+    "hint": {
+      "text": "WHO WAS SHE?\nAnd what did she love to grow?",
+      "sound": false,
+      "tool": false
+    },
+    "description": "In Silas's laboratory (Room VII), at the end of the counter by the sinks, a little walnut rack holds three tubes: a corked phial of yellow, an empty tube, and a corked phial of blue. A paper tag tied to the rack's post says, in his hand, \"For my sister.\" A click lifts a tube from the rack and holds it up to the light; another puts it back. They are never mixed: the empty tube waits for it. His sister was Ivy, the botanist — the colour of what she grew is the colour yellow and blue make together: GREEN. Nothing on screen says what to do with the colours.",
+    "references": [
+      "PHIALS_WORD = 'GREEN' (phials/puzzle.js); RACK — yellow, the empty tube, blue; TAG = 'For my sister.'",
+      "phials/photography.js and art.js — a photographic slate worktop, glazed tiles, brass tap, walnut rack and paper tag; separate transparent glass phials with yellow and blue liquid, cork stoppers and an empty centre tube",
+      "PhialsScene — a click lifts a tube vertically through its rack hole before it tilts toward the light; another puts it back. The rack's photographic front face hides the seated tubes correctly; raised positions survive resizing and respect reduced motion. The tubes are never mixed",
+      "room7/photographicRoom.js — the rack painted on the counter at the right of the sinks, and the thing that opens the puzzle"
+    ]
+  },
+  {
     "id": "balance",
     "key": "Balance",
     "name": "The Apothecary's Balance",
@@ -730,12 +770,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "By the laboratory sink in Silas's weighing room (Room VIII): a glass bottle that holds 500 ml and one that holds 300 ml, nothing marked on them but that, a brass tap over a fireclay sink, and a volumetric flask etched 400 ml on its bulb with one ring round its neck and a strip of blue litmus hung in it. A click takes up a bottle; then a click on the tap fills it to the brim, on the sink empties it, on the other bottle pours as much as it can take, and on the flask pours all of it. Exactly 400 ml in one pour brings the flask to its ring: the litmus turns red and the word ACID comes up on it, paler. Any other amount is shown for a moment and then tipped away into the sink. One way: fill the 500, pour it into the 300 (200 left), empty the 300, pour the 200 into it, fill the 500 again, top up the 300 (400 left), pour the 400 into the flask. The water stays level in a tilted bottle and keeps its volume.",
+    "description": "By the laboratory sink in Silas's weighing room (Room VIII): photographic glass bottles holding 500 ml and 300 ml, a brass tap over a worn fireclay sink, and a volumetric flask etched 400 ml on its bulb with one ring round its neck and a blue paper strip hung in it. Reagent bottles, a test-tube rack, stirring rods and a mortar surround the slate workbench. A click takes up a bottle; then a click on the tap fills it to the brim, on the sink empties it, on the other bottle pours as much as it can take, and on the flask pours all of it. Exactly 400 ml in one pour brings the flask to its ring and ignites the blue strip like a fuse: a small flame travels down it, revealing ACID in the charred paper behind the flame. The word remains after the fire goes out. Any other amount is shown for a moment and then tipped away into the sink. One way: fill the 500, pour it into the 300 (200 left), empty the 300, pour the 200 into it, fill the 500 again, top up the 300 (400 left), pour the 400 into the flask. Water remains level during tilts and keeps its volume. Resizing preserves measurements and resumes an unfinished burn; reduced motion reveals the finished strip immediately.",
     "references": [
       "BOTTLES = [500, 300], FLASK_ML = 400, MEASURES_WORD = \"ACID\" (measures/puzzle.js); pour() and toTheLine(); fewestMoves() — 6 moves from empty to 400 ml",
       "measures/art.js interior() / waterIn() — each vessel's inside as a polygon; the water clipped under a level surface to its exact area, whatever the tilt",
       "the flask's bulb holds 380 ml, so its 400 ml ring stands on its neck",
-      "MeasuresScene — take up, fill, empty and pour; a wrong amount in the flask is tipped away; paintLitmus() turns it and shows the word"
+      "MeasuresScene — take up, fill, empty and pour; a wrong amount is tipped away; _turn() and paintLitmus() burn the blue strip and reveal the word progressively"
     ]
   }
 ];

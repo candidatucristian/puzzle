@@ -3,6 +3,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { noiseBurst, addCanvasTexture } from "../../shared/paint.js";
 import { KEYS, glassBox, layoutSink, paintLitmus, paintSink, releaseSink, waterIn } from "./art.js";
 import { BOTTLES, pour, toTheLine } from "./puzzle.js";
+import { loadMeasuresPhotography, alignMeasuresPhotography } from "./photography.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "MEASURES"  ·  code: ACID  ·  to the line
@@ -13,7 +14,8 @@ import { BOTTLES, pour, toTheLine } from "./puzzle.js";
 // a strip of blue litmus hung in it. A click takes up a bottle; then the
 // tap fills it, the sink empties it, the other bottle takes what it can of
 // it, and the flask takes all of it. Exactly 400 ml into the flask in one
-// pour stands at its ring — the litmus turns red, and on it, paler: ACID.
+// pour stands at its ring — a flame travels down the blue strip and leaves
+// the word ACID in its charred wake.
 // Anything else is tipped away into the sink, and the flask stands empty.
 //
 // The water is level in a tilted bottle and keeps its volume (art.js
@@ -21,6 +23,7 @@ import { BOTTLES, pour, toTheLine } from "./puzzle.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const WATER = 0x9fc4d4;
+const BURN_MS = 4600;
 
 export default class MeasuresScene extends BasePuzzleScene {
   constructor() {
@@ -31,6 +34,10 @@ export default class MeasuresScene extends BasePuzzleScene {
     this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
 
+  preload() {
+    loadMeasuresPhotography(this);
+  }
+
   create() {
     this.beginScene();
     // what is in each bottle, in the flask, and whether it has stood at its ring
@@ -38,6 +45,8 @@ export default class MeasuresScene extends BasePuzzleScene {
     this._flaskMl = 0;
     this._turned = 0;
     this._atLine = false;
+    this._pendingContents = null;
+    this._burnEndsAt = null;
     this._build(this.cameras.main.width, this.cameras.main.height);
     this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
@@ -47,6 +56,7 @@ export default class MeasuresScene extends BasePuzzleScene {
 
   _build(W, H) {
     const L = (this._L = layoutSink(W, H));
+    alignMeasuresPhotography(this, L);
     paintSink(this, L);
     this.add.image(0, 0, KEYS.room).setOrigin(0, 0).setDepth(-10);
     const u = L.u;
@@ -66,20 +76,25 @@ export default class MeasuresScene extends BasePuzzleScene {
       const glass = this.add.image(0, 0, KEYS.glass(i)).setDisplaySize(box.w, box.h).setOrigin(box.ox / box.w, box.oy / box.h);
       parts.push(glass);
       const c = this.add.container(v.x, v.y, parts).setDepth(5);
+      const shadow = this.add.image(v.x, L.counter + 3 * u, KEYS.glow).setDepth(1)
+        .setTint(0x000000).setAlpha(.6).setDisplaySize(box.w * 1.25, 16 * u);
       const hit = this.add.zone(v.x, v.y + (v.top + v.bottom) / 2, box.w, v.bottom - v.top + 10 * u).setDepth(9)
+        .setName(`measures-vessel-${i}`)
         .setInteractive({ useHandCursor: true }).setData("interactionLabel", v.kind === "flask" ? "Pour into the flask" : "Take up the bottle");
       hit.on("pointerdown", () => this._click(i));
-      return { v, i, c, water, litmus, hit, home: { x: v.x, y: v.y }, angle: 0 };
+      return { v, i, c, water, litmus, hit, shadow, home: { x: v.x, y: v.y }, angle: 0 };
     });
     this._paintLitmus();
+    this._makeBurn();
     // the tap and the sink
     const t = L.tap;
-    this.add.zone(t.x - 20 * u, t.spout.y + 40 * u, 90 * u, 220 * u).setDepth(9).setInteractive({ useHandCursor: true })
+    this.add.zone((t.x + t.spout.x) / 2, t.spout.y + 40 * u, 100 * u, 160 * u).setName("measures-tap").setDepth(9).setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Fill it at the tap").on("pointerdown", () => this._tap());
     const s = L.sink;
-    this.add.zone((s.x0 + s.x1) / 2, L.counter + 40 * u, s.x1 - s.x0, 80 * u).setDepth(9).setInteractive({ useHandCursor: true })
+    this.add.zone((s.x0 + s.x1) / 2, s.hitY ?? L.counter + 40 * u, s.x1 - s.x0, s.hitH ?? 80 * u).setName("measures-sink").setDepth(9).setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Empty it into the sink").on("pointerdown", () => this._sink());
     this._built = true;
+    if (this._atLine && this._turned < 1) this._turn({ sound: false });
   }
 
   // ── what is done with them ─────────────────────────────────────────────────
@@ -101,7 +116,8 @@ export default class MeasuresScene extends BasePuzzleScene {
   _lift(i, up) {
     this._held = up ? i : null;
     const b = this._vessels[i];
-    this.tweens.add({ targets: b.c, y: b.home.y - (up ? 18 * this._L.u : 0), duration: 220, ease: "Cubic.easeOut" });
+    this.tweens.killTweensOf(b.c);
+    this.tweens.add({ targets: b.c, y: b.home.y - (up ? 18 * this._L.u : 0), duration: this.reducedMotion ? 0 : 220, ease: "Cubic.easeOut" });
     noiseBurst(this, { dur: 0.06, type: "bandpass", freq: up ? 2600 : 1800, q: 3, gain: 0.12, env: (x) => (1 - x) ** 3 });
   }
 
@@ -109,6 +125,7 @@ export default class MeasuresScene extends BasePuzzleScene {
   // (k from 0 to 1), tip it back and bring it home; then `done`
   _carryAndTip(i, to, angle, ms, during, done) {
     const b = this._vessels[i], fast = this.reducedMotion;
+    this.tweens.killTweensOf(b.c);
     this._busy = true;
     const go = fast ? 0 : 380, back = fast ? 0 : 380, tip = fast ? 0 : 260;
     this.tweens.add({
@@ -125,7 +142,7 @@ export default class MeasuresScene extends BasePuzzleScene {
               targets: b, angle: 0, duration: tip, ease: "Sine.easeOut", onUpdate: () => b.c.setRotation(b.angle),
               onComplete: () => this.tweens.add({
                 targets: b.c, x: b.home.x, y: b.home.y, duration: back, ease: "Sine.easeInOut",
-                onComplete: () => { this._busy = false; this._held = null; done?.(); },
+                onComplete: () => { this._busy = false; this._held = null; this._pendingContents = null; done?.(); },
               }),
             });
           },
@@ -160,6 +177,7 @@ export default class MeasuresScene extends BasePuzzleScene {
     const mouth = { x: B.home.x, y: B.home.y + B.v.top };
     const at = { x: B.home.x - side * (A.v.h * 0.5 + 10 * u), y: mouth.y - 60 * u };
     const start = this._ml.slice();
+    this._pendingContents = { bottles: levels };
     this._glug(moved);
     this._carryAndTip(from, at, side * 1.2, 300 + moved * 2.4, (k) => {
       this._ml[from] = start[from] - moved * k;
@@ -172,6 +190,10 @@ export default class MeasuresScene extends BasePuzzleScene {
     const A = this._vessels[from], F = this._vessels[2], u = this._L.u;
     const ml = this._ml[from];
     if (!ml) { this._lift(from, false); return; }
+    this._pendingContents = {
+      bottles: this._ml.map((amount, i) => i === from ? 0 : amount),
+      flask: toTheLine(ml) ? ml : 0, atLine: toTheLine(ml),
+    };
     const mouth = { x: F.home.x, y: F.home.y + F.v.top };
     const at = { x: F.home.x - (A.v.h * 0.5 + 10 * u), y: mouth.y - 50 * u };
     this._glug(ml);
@@ -184,7 +206,8 @@ export default class MeasuresScene extends BasePuzzleScene {
       if (toTheLine(ml)) { this._atLine = true; this._turn(); return; }
       // a moment to see where it stands, then it is tipped away
       this._busy = true;
-      this.setSceneTimeout(() => this._emptyFlask(), 900);
+      this._pendingContents = { flask: 0 };
+      this._drainTimer = this.setSceneTimeout(() => { this._drainTimer = null; this._emptyFlask(); }, 900);
     });
   }
 
@@ -194,9 +217,11 @@ export default class MeasuresScene extends BasePuzzleScene {
     if (this._busy || i === null) return;
     const b = this._vessels[i], L = this._L, u = L.u, cap = BOTTLES[i], have = this._ml[i];
     if (have >= cap) return;
-    const at = { x: L.tap.spout.x, y: L.counter - b.v.bottom - 6 * u };
+    const at = { x: L.tap.spout.x, y: L.tap.spout.y + 12 * u - b.v.top };
     const start = have;
     this._busy = true;
+    this._pendingContents = { bottles: this._ml.map((amount, j) => j === i ? cap : amount) };
+    this.tweens.killTweensOf(b.c);
     this._hiss(cap - have);
     this.tweens.add({
       targets: b.c, x: at.x, y: at.y, duration: this.reducedMotion ? 0 : 420, ease: "Sine.easeInOut",
@@ -214,7 +239,7 @@ export default class MeasuresScene extends BasePuzzleScene {
           this._stream.clear();
           this.tweens.add({
             targets: b.c, x: b.home.x, y: b.home.y, duration: this.reducedMotion ? 0 : 420, ease: "Sine.easeInOut",
-            onComplete: () => { this._busy = false; this._held = null; },
+            onComplete: () => { this._busy = false; this._held = null; this._pendingContents = null; },
           });
         },
       }),
@@ -227,9 +252,10 @@ export default class MeasuresScene extends BasePuzzleScene {
     if (this._busy || i === null) return;
     if (!this._ml[i]) { this._lift(i, false); return; }
     const L = this._L, u = L.u, s = L.sink, start = this._ml[i];
-    const drain = { x: (s.x0 + s.x1) / 2, y: L.counter + 40 * u };
+    const drain = s.drain ?? { x: (s.x0 + s.x1) / 2, y: L.counter + 40 * u };
     const at = { x: drain.x + 30 * u, y: L.counter - 110 * u };
     this._glug(start);
+    this._pendingContents = { bottles: this._ml.map((amount, j) => j === i ? 0 : amount) };
     this._carryAndTip(i, at, -1.9, 300 + start * 1.6, (k) => {
       this._ml[i] = start * (1 - k);
       this._drawStream(this._vessels[i], drain, k);
@@ -239,31 +265,77 @@ export default class MeasuresScene extends BasePuzzleScene {
   // anything but the line: the flask tipped away into the sink, and it stands empty
   _emptyFlask() {
     const F = this._vessels[2], L = this._L, u = L.u, s = L.sink, start = this._flaskMl;
-    const drain = { x: (s.x0 + s.x1) / 2, y: L.counter + 40 * u };
+    const drain = s.drain ?? { x: (s.x0 + s.x1) / 2, y: L.counter + 40 * u };
     const at = { x: drain.x + 70 * u, y: L.counter - 150 * u };
     this._glug(start);
     // the flask is no bottle: carried by hand the same way
     this._held = null;
+    this._pendingContents = { flask: 0 };
     this._carryAndTip(2, at, -2.0, 300 + start * 1.6, (k) => {
       this._flaskMl = start * (1 - k);
       this._drawStream(F, drain, k);
     }, () => { this._flaskMl = 0; });
   }
 
-  // at the line: the litmus turns, and the word comes up on it
-  _turn() {
+  // At the line, one continuous burn reveals the word behind its front.
+  _turn({ sound = true } = {}) {
+    if (this.reducedMotion) {
+      this._turned = 1; this._burnEndsAt = null; this._paintLitmus(); return;
+    }
+    if (sound) noiseBurst(this, { dur: .65, type: "highpass", freq: 1700, q: .5, gain: .1, env: x => (1 - x) ** 2 * (.45 + .55 * Math.abs(Math.sin(x * 93))) });
     this.tweens.addCounter({
-      from: this._turned, to: 1, duration: this.reducedMotion ? 0 : 2400, ease: "Sine.easeInOut",
+      from: this._turned, to: 1, duration: BURN_MS * (1 - this._turned), ease: "Linear",
       onUpdate: (tw) => { this._turned = tw.getValue(); this._paintLitmus(); },
+      onComplete: () => { this._turned = 1; this._burnEndsAt = this.time.now; this._paintLitmus(); },
     });
   }
 
   _paintLitmus() {
     const F = this._vessels?.[2];
     if (!F?.litmus) return;
-    const { canvas, w, h } = paintLitmus(this._L, this._turned);
-    addCanvasTexture(this.textures, "ms_litmus", canvas);
+    const texture = this.textures.exists("ms_litmus") ? this.textures.get("ms_litmus") : null;
+    const { canvas, w, h } = paintLitmus(this._L, this._turned, texture?.getSourceImage());
+    if (texture) texture.refresh();
+    else addCanvasTexture(this.textures, "ms_litmus", canvas);
     F.litmus.setTexture("ms_litmus").setDisplaySize(w, h);
+  }
+
+  _makeBurn() {
+    const F = this._vessels[2];
+    this._burnGlow = this.add.image(0, 0, KEYS.glow).setTint(0xff983c).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
+    this._burnFlame = this.add.image(0, 0, KEYS.flame).setOrigin(.5, .94).setVisible(false);
+    this._burnSmoke = this.add.graphics();
+    F.c.add([this._burnGlow, this._burnSmoke, this._burnFlame]);
+  }
+
+  _updateBurn(time) {
+    const F = this._vessels[2], u = this._L.u;
+    const burning = this._atLine && this._turned > 0 && this._turned < 1 && !this.reducedMotion;
+    const tail = this._burnEndsAt === null ? 0 : Math.max(0, 1 - (time - this._burnEndsAt) / 380);
+    const strength = this.reducedMotion ? 0 : burning ? 1 : tail;
+    this._burnFlame.setVisible(strength > 0); this._burnGlow.setVisible(strength > 0);
+    this._burnSmoke.clear();
+    if (!strength) return;
+    const x = F.litmus.x, y = F.litmus.y + F.litmus.displayHeight * this._turned;
+    const flicker = Math.sin(time * .021) * .12 + Math.sin(time * .037 + .8) * .07;
+    this._burnFlame.setPosition(x + Math.sin(time * .013) * u, y + u)
+      .setDisplaySize((19 + flicker * 8) * u, (37 + flicker * 19) * u)
+      .setAngle(Math.sin(time * .015) * 5).setAlpha(strength * .94);
+    this._burnGlow.setPosition(x, y - 7 * u).setDisplaySize(79 * u, 104 * u).setAlpha((.21 + flicker * .15) * strength);
+    if (!this.ambientEffects) return;
+    for (let strand = 0; strand < 3; strand++) {
+      const offset = (time / 1100 + strand / 3) % 1;
+      for (let step = 1; step <= 9; step++) {
+        const a = (step - 1) / 9, b = step / 9;
+        const point = t => ({
+          x: x + Math.sin(t * 5 + time * .0014 + strand) * (2 + t * 7) * u,
+          y: y - (22 + (t + offset) * 42) * u,
+        });
+        const p = point(a), q = point(b);
+        this._burnSmoke.lineStyle((1 + b * 2) * u, 0xaaa498, (1 - b) * .11 * strength)
+          .lineBetween(p.x, p.y, q.x, q.y);
+      }
+    }
   }
 
   // ── the water ──────────────────────────────────────────────────────────────
@@ -279,21 +351,26 @@ export default class MeasuresScene extends BasePuzzleScene {
     return w?.surface ? w.surface[0].y : b.v.bottom - 4;
   }
 
-  update() {
+  update(time) {
     if (!this._built) return;
     const u = this._L.u;
     for (const b of this._vessels) {
+      const lift = Math.max(0, b.home.y - b.c.y);
+      b.shadow.setX(b.c.x).setAlpha(.6 * Math.max(0, 1 - lift / (240 * u)));
       const g = b.water.clear(), w = waterIn(b.v, this._frac(b), b.angle);
       if (!w) continue;
-      g.fillStyle(WATER, 0.32);
+      g.fillStyle(0x668d96, 0.24);
       g.fillPoints(w.poly.map((p) => new Phaser.Geom.Point(p.x, p.y)), true);
+      const depth = waterIn(b.v, this._frac(b) * .68, b.angle);
+      if (depth) g.fillStyle(0x2c5261, .1).fillPoints(depth.poly, true);
       if (w.surface) {
         // the meniscus: a bright line where the water meets the air
         const [p, q] = w.surface;
-        g.lineStyle(Math.max(1, 1.4 * u), 0xe8f6ff, 0.75).lineBetween(p.x, p.y, q.x, q.y);
-        g.lineStyle(Math.max(1, 2.4 * u), WATER, 0.35).lineBetween(p.x, p.y + 2 * u, q.x, q.y + 2 * u);
+        g.lineStyle(Math.max(.75, 1.2 * u), 0xe8f6ff, 0.6).lineBetween(p.x, p.y, q.x, q.y);
+        g.lineStyle(Math.max(1, 2.4 * u), WATER, 0.22).lineBetween(p.x, p.y + 2 * u, q.x, q.y + 2 * u);
       }
     }
+    this._updateBurn(time);
   }
 
   // ── sounds ─────────────────────────────────────────────────────────────────
@@ -312,7 +389,17 @@ export default class MeasuresScene extends BasePuzzleScene {
 
   _teardown() {
     this._built = false;
+    this.clearSceneTimeout(this._drainTimer); this._drainTimer = null;
     this.tweens.killAll();
+    // A resize lands the current pour at its exact final volume. Fractional
+    // animation frames must never become the player's new measurements.
+    if (this._pendingContents) {
+      const { bottles, flask, atLine } = this._pendingContents;
+      if (bottles) this._ml = bottles;
+      if (flask !== undefined) this._flaskMl = flask;
+      if (atLine !== undefined) this._atLine = atLine;
+      this._pendingContents = null;
+    }
     for (const obj of this.children.list.slice()) obj.destroy();
     releaseSink(this.textures);
     if (this.textures.exists("ms_litmus")) this.textures.remove("ms_litmus");
@@ -320,6 +407,7 @@ export default class MeasuresScene extends BasePuzzleScene {
 
   shutdown() {
     this._built = false;
+    this.clearSceneTimeout(this._drainTimer); this._drainTimer = null;
     this.tweens.killAll();
     releaseSink(this.textures);
     if (this.textures.exists("ms_litmus")) this.textures.remove("ms_litmus");

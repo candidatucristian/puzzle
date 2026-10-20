@@ -161,3 +161,5 @@ body.intro-video-on :is(#options-modal, #howto-modal) { z-index: 620; }
 .manor-story .intro-aside-name { font-size: clamp(28px, 2.4vw, 38px) !important; }
 .manor-story .intro-title-over { font-size: clamp(10px, .75vw, 11.5px); }
 .manor-story .manor-story-next { margin-top: clamp(18px, 3vh, 28px); pointer-events: auto; text-shadow: none; }
+/* how far along a sequence of Next it is, quieter than the word */
+.intro-page-play .next-count { margin-left: .2em; letter-spacing: .12em; color: #a39987; font-variant-numeric: tabular-nums; }
