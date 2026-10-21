@@ -1,6 +1,7 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { makeMoonTexture } from "../../shared/moon.js";
 import { loadPhotographicGarden } from "./photographicGarden.js";
+import { loadPlantPhotography } from "./photographicPlant.js";
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
   paintPlantArt,
@@ -22,9 +23,9 @@ import {
 // has grown the sequence that bears a name. The scenery holds no formula and
 // nothing on screen explains the counting.
 //
-// The garden is painted once per screen size (garden.js), the pot and the
-// bucket too (plant.js); the stems are painted live as they grow, and the
-// leaves are the level's own leaf image (assets/images/PlantPot/leaf.webp).
+// The garden, oak table and terracotta pot are photographic. Four leaf
+// variants and a bark photograph give the living plant its texture; its
+// stems and leaves still grow separately, preserving the counting puzzle.
 // What moves is driven from here: the lantern's flame, fireflies over the
 // grass, the stars, now and then a shooting star.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,33 +33,35 @@ import {
 // the plant's skeleton, in cm from the middle of the soil: one segment per
 // pour, each a curve from `from` to `to`, `w0` to `w1` thick
 const SEGMENTS = [
-  { from: { x: 0, y: 0 }, cp: { x: 5, y: -13 }, to: { x: -2.4, y: -26 }, w0: 2.4, w1: 1.7 },
-  { from: { x: -2.4, y: -26 }, cp: { x: -8, y: -39 }, to: { x: 3, y: -53 }, w0: 1.7, w1: 1.05 },
-  { from: { x: -2.4, y: -26 }, cp: { x: 12, y: -27 }, to: { x: 28, y: -37 }, w0: 1.15, w1: 0.55 },
-  { from: { x: 3, y: -53 }, cp: { x: -10, y: -51 }, to: { x: -26, y: -65 }, w0: 1.0, w1: 0.5 },
-  { from: { x: 3, y: -53 }, cp: { x: 6, y: -69 }, to: { x: 17, y: -85 }, w0: 0.95, w1: 0.45 },
+  { from: { x: 0, y: 0 }, cp: { x: 2, y: -12 }, to: { x: -1.5, y: -23 }, w0: 1.6, w1: 1.05 },
+  { from: { x: -1.5, y: -23 }, cp: { x: -5, y: -34 }, to: { x: 3, y: -43 }, w0: 1.05, w1: .78 },
+  { from: { x: -1.5, y: -23 }, cp: { x: 12, y: -25 }, to: { x: 26, y: -33 }, w0: .78, w1: .42 },
+  { from: { x: 3, y: -43 }, cp: { x: -17, y: -46 }, to: { x: -36, y: -65 }, w0: .72, w1: .38 },
+  { from: { x: 3, y: -43 }, cp: { x: 39, y: -52 }, to: { x: 44, y: -90 }, w0: .78, w1: .42 },
 ];
 
 // the leaves each pour brings — 1, 1, 2, 3 and 5 — where on the new branch
 // (t along it) and which way they point (0 up, + clockwise)
 const LEAF_DEFS = [
-  [{ seg: 0, t: 0.6, angle: 35, scale: 1 }],
-  [{ seg: 1, t: 0.4, angle: -35, scale: 1 }],
+  [{ seg: 0, t: .96, angle: -48, scale: .95 }],
+  [{ seg: 1, t: .82, angle: 35, scale: 1 }],
   [
-    { seg: 2, t: 0.4, angle: 25, scale: 0.9 },
-    { seg: 2, t: 0.85, angle: 55, scale: 0.9 },
+    { seg: 2, t: .4, angle: 45, scale: .9 },
+    { seg: 2, t: .96, angle: 65, scale: .9 },
   ],
   [
-    { seg: 3, t: 0.3, angle: -20, scale: 0.85 },
-    { seg: 3, t: 0.6, angle: -45, scale: 0.85 },
-    { seg: 3, t: 0.9, angle: -70, scale: 0.85 },
+    { seg: 3, t: .2, angle: -35, scale: .85 },
+    { seg: 3, t: .58, angle: -55, scale: .85 },
+    { seg: 3, t: .98, angle: -85, scale: .8 },
   ],
   [
-    { seg: 4, t: 0.18, angle: 20, scale: 0.75 },
-    { seg: 4, t: 0.38, angle: -15, scale: 0.75 },
-    { seg: 4, t: 0.58, angle: 35, scale: 0.75 },
-    { seg: 4, t: 0.78, angle: -5, scale: 0.75 },
-    { seg: 4, t: 0.96, angle: 45, scale: 0.75 },
+    // The upper shoot leaves the older pair before opening its first leaf.
+    // Generous node spacing keeps all five blades separate and countable.
+    { seg: 4, t: .22, angle: 70, scale: .76 },
+    { seg: 4, t: .4, angle: -40, scale: .76 },
+    { seg: 4, t: .58, angle: 65, scale: .76 },
+    { seg: 4, t: .77, angle: -42, scale: .72 },
+    { seg: 4, t: .98, angle: 20, scale: .68 },
   ],
 ];
 
@@ -68,7 +71,7 @@ const LEAF_DEFS = [
 const LEAF_IMAGE = { ox: 0.05, oy: 0.95, turn: -45, cmPerPx: 0.034 };
 
 // the stems' canvas: the plant's reach, in cm from the soil
-const PLANT_BOX = { x0: -46, x1: 40, y0: -100, y1: 4 };
+const PLANT_BOX = { x0: -58, x1: 58, y0: -110, y1: 4 };
 const TIP = -80; // degrees the bucket tips to pour
 const DEG = Math.PI / 180;
 
@@ -85,11 +88,15 @@ export default class PlantPotScene extends BasePuzzleScene {
   preload() {
     this.load.image("leaf", "assets/images/PlantPot/leaf.webp");
     loadPhotographicGarden(this);
+    loadPlantPhotography(this);
     this.load.audio("wateringplant", "assets/sounds/PlantPot/wateringplant.mp3");
   }
 
   create() {
     this.beginScene();
+    const canvas=this.game.canvas;
+    canvas.dataset.sceneColour="natural";
+    this._sceneCleanups.add(()=>{delete canvas.dataset.sceneColour;});
 
     // the puzzle's state, kept across resizes
     this.isSolved = false;
@@ -161,6 +168,8 @@ export default class PlantPotScene extends BasePuzzleScene {
     this._drops = [];
     this._stream = null;
     this._shoot = null;
+    this.bucketGlints = null;
+    this._bucketSparklePool = [];
     this._shootTimer = 3500 + Math.random() * 4000;
 
     const art = (this._art = paintGarden(this, W, H));
@@ -676,7 +685,7 @@ export default class PlantPotScene extends BasePuzzleScene {
 
   _paintStems() {
     const ctx = this._stemsCanvas.getContext("2d");
-    paintStems(ctx, this._stemPx, this._stemsOrigin, SEGMENTS, this._grown, this._lantern);
+    paintStems(ctx, this._stemPx, this._stemsOrigin, SEGMENTS, this._grown, this._lantern, this._plantArt.bark);
     this._stemsTex.refresh();
   }
 
@@ -688,23 +697,24 @@ export default class PlantPotScene extends BasePuzzleScene {
     };
   }
 
-  // the leaves a pour brings (the level's own leaf image, its stalk at the
-  // lower left, the leaf pointing up and right — turned back 45° so that
-  // angle 0 points straight up); `grow` animates them opening, else they are
-  // simply there (a rebuild)
+  // Each photograph is anchored by its petiole, with the blade pointing up.
+  // Growth unfolds it at the same node on every rebuild; the older leaf is
+  // retained only as a missing-photograph fallback.
   _addLeaves(step, grow, onDone) {
     const defs = LEAF_DEFS[step];
     defs.forEach((d, i) => {
       const seg = SEGMENTS[d.seg];
       const p = this._segPoint(seg, d.t);
-      const angle = d.angle + LEAF_IMAGE.turn;
+      const photograph = this._plantArt.leaves?.[(step + i) % 4];
+      const angle = d.angle + (photograph ? 0 : LEAF_IMAGE.turn);
       const leaf = this.add
-        .image(this._soil.x + p.x, this._soil.y + p.y, "leaf")
-        .setOrigin(LEAF_IMAGE.ox, LEAF_IMAGE.oy)
+        .image(this._soil.x + p.x, this._soil.y + p.y, photograph?.key ?? "leaf")
+        .setOrigin(photograph?.ox ?? LEAF_IMAGE.ox, photograph?.oy ?? LEAF_IMAGE.oy)
         .setAngle(angle);
       leaf.baseAngle = angle;
-      const full = LEAF_IMAGE.cmPerPx * d.scale;
-      leaf.setScale(grow ? 0 : full);
+      const full = (photograph ? 17 / photograph.height : LEAF_IMAGE.cmPerPx) * d.scale;
+      const width=full*1.12;
+      leaf.setScale(grow ? width*.08 : width, grow ? full*.16 : full);
       leaf.setInteractive({ cursor: "pointer" });
       leaf.on("pointerdown", () => this._swing(leaf));
       this.leafLayer.add(leaf);
@@ -712,16 +722,16 @@ export default class PlantPotScene extends BasePuzzleScene {
       if (grow) {
         this.tweens.add({
           targets: leaf,
-          scaleX: full,
+          scaleX: width,
           scaleY: full,
-          duration: 500,
-          delay: i * 220,
-          ease: "Back.easeOut",
+          duration: 620,
+          delay: i * 180,
+          ease: "Sine.easeOut",
         });
       }
     });
     if (!grow) return;
-    this.time.delayedCall((defs.length - 1) * 220 + 510, () => onDone && onDone());
+    this.time.delayedCall((defs.length - 1) * 180 + 630, () => onDone && onDone());
   }
 
   // a leaf touched: it swings on its stalk and settles

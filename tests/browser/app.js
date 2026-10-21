@@ -4,7 +4,7 @@ export function evaluateApp(page, callback, arg) {
     let app = window.__descipher;
     if (!app) {
       const entry = [...document.querySelectorAll('script[type="module"][src]')]
-        .find(script => new URL(script.src).pathname === '/src/entry.js');
+        .find(script => new URL(script.src).pathname.endsWith('/entry.js') || /assets\/index-[^/]+\.js/.test(new URL(script.src).pathname));
       if (entry) {
         app = await (await import(entry.src)).ready;
       }

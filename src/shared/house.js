@@ -33,7 +33,7 @@ export const PLACES = Object.freeze([
       "Their grandfather's things, everything he brought home from the sea.",
       "A photograph turned face down: four children, not three. Nobody ever spoke of a fourth.",
     ] },
-  { key: "Room4", name: "Room IV", back: "Hall", holds: ["sequence", "crossing", "station"], needsKey: true, chest: "Room5",
+  { key: "Room4", name: "Room IV", back: "Hall", holds: ["sequence", "wires", "station"], needsKey: true, chest: "Room5",
     story: [
       "Railway tickets, all for the night of the 13th.",
       "Three singles, and one half-fare. Half-fares are for children.",
@@ -58,7 +58,7 @@ export const PLACES = Object.freeze([
       "Three things left half done: a weighing, a sum on the board, a measure by the sink.",
     ] },
   // Up again, by the stairs at the side of the upper hall: the top floor,
-  // the last — a round room under the dome. One door, XI, an empty room
+  // the last — a round room under the dome. One door, XI, the physics study
   // behind it; at its window the telescope, which is looked through as a room's
   // puzzles are gone to; and on the left an archway with an iron gate across
   // it, and beyond the gate a passage with two doors more, XII and XIII.
@@ -85,18 +85,18 @@ export const PLACES = Object.freeze([
     ] },
   { key: "Room11", name: "Room XI", back: "Top", holds: [],
     story: [
-      "Orion's room, by the look of the paper: stars, faded nearly to nothing.",
-      "Empty. Even the nails are gone from the walls.",
+      "Orion's physics study. Coils, lenses, and a galvanometer on the workbench.",
+      "Waves and a pendulum on the slate. Rain against the tall sash window.",
     ] },
   { key: "Room12", name: "Room XII", back: "TopHall", holds: [],
     story: [
       "Bare boards on the walls, and the rain loud on the roof.",
-      "Nobody has stood in here for a very long time. Until tonight.",
+      "Old charts and instrument cases, kept under the eaves.",
     ] },
   { key: "Room13", name: "Room XIII", back: "TopHall", holds: [],
     story: [
       "The last room in the house, as far as the plans go.",
-      "Empty — and yet the hearth is swept.",
+      "Tools on the bench. The fire is cold, but the hearth is swept.",
     ] },
   { key: "Room5", name: "Room V", back: "Hall", holds: ["tapcode", "pi", "rally"], needsKey: true, chest: "Room6",
     story: [

@@ -25,8 +25,11 @@ const DESK_FILTER = "brightness(.64) contrast(1.12) saturate(.82)";
 export function playIntroVideo(parent, { game, audio, reducedMotion = false, onUnder = () => {}, i18n = null }) {
   const scope = new Scope();
   const root = document.createElement("div");
+  const setPhase = (phase) => {
+    root.dataset.phase = phase;
+  };
   root.id = "intro-video";
-  root.dataset.phase = "loading";
+  setPhase("loading");
   root.setAttribute("role", "dialog");
   root.setAttribute("aria-label", i18n ? i18n.t("intro.ariaFilm") : "The opening film");
 
@@ -186,7 +189,7 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     if (!handOver) video.pause();
     play.hidden = true;
     skip.hidden = true;
-    root.dataset.phase = "preparing";
+    setPhase("preparing");
     await prepareDesk();
     if (scope.closed) return;
     if (handOver && deskCamera) {
@@ -200,7 +203,7 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     video.pause();
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     if (scope.closed) return;
-    root.dataset.phase = "transition";
+    setPhase("transition");
     root.classList.add("is-dissolving");
     restoreAudio();
     // transitionend owns removal; the timer is only for suppressed transitions.
@@ -253,7 +256,7 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   let begin = null;
   const openingData = i18n?.getOpening() || OPENING;
   const runTitles = () => new Promise(resolve => {
-    root.dataset.phase = "titles";
+    setPhase("titles");
     const { title, place, date, story } = openingData.page;
     // the way on, with how far along the opening it is: "Next [1/2]"
     const button = (label, step) => {
@@ -328,6 +331,7 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
       frameCallback = null;
       if (finishing || scope.closed) return;
       const time = frame?.mediaTime ?? video.currentTime;
+      if (root.dataset.phase === "loading" && !video.paused && time > 0) markPlaying();
       showAside(time);
       if (!video.seeking && Number.isFinite(video.duration) && video.duration > HANDOFF_AT && time >= HANDOFF_AT) {
         void finish(true);
@@ -345,20 +349,29 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     if (finishing || scope.closed) return;
     play.hidden = true;
     syncAudio();
-    video.play().catch(error => {
-      if (scope.closed || finishing) return;
-      if (error.name === "NotAllowedError") {
-        root.dataset.phase = "ready";
-        play.hidden = false;
-        play.focus({ preventScroll: true });
-      } else void finish();
-    });
+    setPhase("playing");
+    const playback = video.play();
+    if (playback !== undefined) {
+      playback.then(() => {
+        if (!finishing) markPlaying();
+      }).catch(error => {
+        if (scope.closed || finishing) return;
+        if (error.name === "NotAllowedError") {
+          setPhase("ready");
+          play.hidden = false;
+          play.focus({ preventScroll: true });
+        } else void finish();
+      });
+    }
   };
-  scope.on(video, "playing", () => {
-    if (!finishing) root.dataset.phase = "playing";
+  const markPlaying = () => {
+    if (!finishing) setPhase("playing");
     play.hidden = true;
-    // a moment in, while nothing else is asked of the page
     scope.later(() => { if (!finishing) void prepareDesk(); }, 1500);
+  };
+  scope.on(video, "playing", markPlaying);
+  scope.on(video, "timeupdate", () => {
+    if (root.dataset.phase === "loading" && !video.paused && video.currentTime > 0) markPlaying();
   });
   scope.on(video, "ended", () => { void finish(); });
   scope.on(video, "error", () => { void finish(); });
@@ -391,7 +404,6 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   void loaded().then(() => (scope.closed ? null : runTitles())).then(() => {
     if (finishing || scope.closed) return;
     root.classList.remove("is-before");
-    root.dataset.phase = "loading";
     watchFrame();
     start();
     titles.classList.add("is-gone");

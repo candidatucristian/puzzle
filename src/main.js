@@ -7,6 +7,7 @@ import { ComfortPreferences } from './core/ComfortPreferences.js';
 import { HintStore } from './core/HintStore.js';
 import { I18n } from './core/i18n.js';
 import { LEVEL_DEFINITIONS } from './levels/registry.js';
+import { LEGACY_LEVEL_IDS } from './levels/metadata.js';
 import { gameConfig } from './core/config.js';
 import { mountUI } from './ui/controls.js';
 
@@ -15,7 +16,7 @@ export function start(loading) {
   if (game) return game;
   const storage = new SafeStorage();
   const i18n = new I18n(storage);
-  const progress = new ProgressStore(storage, LEVEL_DEFINITIONS);
+  const progress = new ProgressStore(storage, LEVEL_DEFINITIONS, {legacyLevelIds:LEGACY_LEVEL_IDS});
   const audio = new AudioManager(storage);
   const levels = new LevelManager(LEVEL_DEFINITIONS, progress);
   const preferences = new ComfortPreferences(storage, matchMedia('(prefers-reduced-motion: reduce)').matches);

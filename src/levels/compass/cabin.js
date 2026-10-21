@@ -1,34 +1,17 @@
 import { paintEnvelope } from "../../shared/envelope.js";
 import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
-import { paintCabinPhotography, paintPhotographicSea, paintPhotographicCompass, paintPhotographicLantern } from "./photographicCabin.js";
+import { paintCabinPhotography, paintPhotographicCompass, paintPhotographicLantern } from "./photographicCabin.js";
 
-/** The captain's cabin for COMPASS, seen whole as from its door, painted in
- *  the telescope's manner: dark as a storybook night, picked out in gold.
- *  The hull curves up on either side on its great ribs, each edged with a
- *  line of gilt; the deck beams cross overhead; at the far end the stern
- *  window, in a gilded frame, stands open on the moonlit sea, its crimson
- *  curtains tied back with gold. A lantern swings near us. On the chart
- *  table, its top inlaid with a gold line, lie the sealed envelope with the map in it, and a candle.
- *  And hanging from the beam above, on a chain, its face to us, the ship's
- *  compass in its gilded gimbal ring.
- *
- *  One-point perspective: everything in the room is placed by (x, y, s) —
- *  across, down from the eye, and how near (s = 1 at the table's front, the
- *  far wall at 0.27) — and comes to the screen at VP + (x, y) · s. The
- *  compass hangs square to us, so its card reads straight: up 0, right 90,
- *  down 180, left 270 — the ways the bearings walk.
- *
- *  Painted once per screen size: the cabin (`room`, the window left open);
- *  the night behind the window (it rolls with the ship), the compass, its
- *  needle and the needle's shadow, its glass (it swings, so they are apart),
- *  the lantern, the candle flame, the glows, the envelope (it leaves the
- *  table when opened) and the map unfolded. The scene moves them. */
+/** The captain's enclosed timber cabin: solid oak hull and stern walls,
+ *  curved ribs and low deck beams, lit by a swinging lantern and a candle.
+ *  The compass, its needle, the lantern and the sealed map stay separate
+ *  from the background so their animation and interactions remain live.
+ *  The chart table uses one-point perspective; the compass faces us so
+ *  north, east, south and west read as up, right, down and left. */
 
 export const MAP_FONT = '"Architects Daughter", "Special Elite", cursive';
 const K = {
   room: "cp_room",
-  view: "cp_view",
-  glitter: "cp_glitter",
   body: "cp_body",
   needle: "cp_needle",
   shade: "cp_needle_shadow",
@@ -39,11 +22,9 @@ const K = {
   letter: "cp_letter",
   marks: "cp_marks",
   folded: "cp_folded",
-  beams: "cp_beams",
 };
 const WARM = "255,186,100";
 const GOLD = "232,184,96";
-const MOON = "150,180,235";
 const R = 2; // the small things are painted at twice their size
 
 // the telescope's gold: bright where it catches the light, deep in shadow
@@ -62,7 +43,7 @@ export function layoutCabin(W, H) {
   const S = Math.min(W, H);
   const u = Math.min(W / 1000, H / 700);
   const L = { W, H, S, u };
-  L.vp = { x: W / 2, y: H * 0.3 }; // the eye's height: the sea's horizon
+  L.vp = { x: W / 2, y: H * 0.3 }; // the eye's height
   L.f = H * 0.88;
   L.ceilY = -0.62 * H;
   L.floorY = 1.1 * H;
@@ -76,11 +57,6 @@ export function layoutCabin(W, H) {
     farS: 0.485,
     thick: 0.05 * H,
   };
-  // the stern windows: three tall lights side by side, square-headed
-  const hw = Math.min(W * 0.21, H * 0.31);
-  L.win = { x: W / 2, top: H * 0.2, sill: H * 0.5, hw, lights: 3 };
-  L.win.spring = L.win.top;
-  L.win.cy = (L.win.top + L.win.sill) / 2;
   const tw = L.table.hw;
   // the envelope with the map in it, front left on the table
   const m = { x: -0.62 * tw, s: 0.88, w: 0.26 * H, d: 0.17 * H };
@@ -111,16 +87,6 @@ export function layoutCabin(W, H) {
   const cR = Math.min(H * 0.17, W * 0.12);
   L.compass = { x: W * 0.68, y: H * 0.4, R: cR, r: cR * 0.7 };
   L.pivot = { x: L.compass.x, y: -H * 0.08 };
-  // the moonlight: in through the window, down across the cabin to a pool
-  // on the table and the floor beyond, toward us and to the left
-  L.beam = {
-    top: {
-      x0: L.win.x - hw * 0.9,
-      x1: L.win.x + hw * 0.85,
-      y: L.win.sill - (L.win.sill - L.win.spring) * 0.1,
-    },
-    bottom: { x0: W * 0.2, x1: W * 0.6, y: H * 0.9 },
-  };
   // the lantern, hanging near us, top left
   L.lantern = { x: W * 0.14, y: -H * 0.01, len: H * 0.17, s: 1.7 * u };
   return L;
@@ -172,9 +138,6 @@ export function paintCabin(scene, L) {
   add(t, K.room, c);
 
   add(t, K.folded, paintFolded(L));
-  const view = paintPhotographicSea(L) || paintView(L);
-  add(t, K.view, view.sky);
-  add(t, K.glitter, view.glitter);
   const body = paintCompass(L);
   add(t, K.body, body.canvas);
   const needle = paintNeedle(L.compass.r, false);
@@ -194,7 +157,6 @@ export function paintCabin(scene, L) {
       [1, 0],
     ]),
   );
-  add(t, K.beams, paintMoonbeams(L));
   return {
     keys: K,
     res: R,
@@ -284,366 +246,39 @@ function paintShell(ctx, L) {
   }
 }
 
-// the far wall: dark panelling, the great window in its gilded frame, open
-// on the night, the moon spilling round it, the curtains tied back
+// The stern is an uninterrupted timber wall in the procedural fallback too.
 function paintStern(ctx, L) {
-  const { W, H, win } = L;
-  const sb = L.backS;
-  const outline = [];
+  const { W, H } = L, outline = [];
   for (let i = 0; i <= 20; i++) {
     const [x, y] = hullPoint(L, i / 20);
-    outline.push(P(L, -x, y, sb));
+    outline.push(P(L, -x, y, L.backS));
   }
   for (let i = 20; i >= 0; i--) {
     const [x, y] = hullPoint(L, i / 20);
-    outline.push(P(L, x, y, sb));
+    outline.push(P(L, x, y, L.backS));
   }
   ctx.save();
   ctx.beginPath();
-  outline.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-  ctx.closePath();
-  const g = ctx.createLinearGradient(0, outline[20].y, 0, outline[0].y);
-  g.addColorStop(0, "#160b05");
-  g.addColorStop(1, "#24140a");
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.clip();
-  const x0 = Math.min(...outline.map((p) => p.x));
-  const x1 = Math.max(...outline.map((p) => p.x));
-  const rnd = lcg(77);
-  const boards = 16;
-  for (let i = 0; i < boards; i++) {
-    const bx = x0 + ((x1 - x0) * i) / boards;
-    const k = 0.85 + rnd() * 0.3;
-    ctx.fillStyle = `rgba(${Math.round(90 * k)},${Math.round(54 * k)},${Math.round(28 * k)},0.16)`;
-    ctx.fillRect(bx, 0, (x1 - x0) / boards, H);
-    ctx.fillStyle = "rgba(4,1,0,0.75)";
-    ctx.fillRect(bx, 0, Math.max(1, W * 0.0015), H);
+  outline.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.closePath(); ctx.clip();
+  const x0 = Math.min(...outline.map(p => p.x)), x1 = Math.max(...outline.map(p => p.x));
+  const top = Math.min(...outline.map(p => p.y)), bottom = Math.max(...outline.map(p => p.y));
+  const rnd = lcg(77), height = H * 0.035;
+  for (let y = top; y < bottom; y += height) {
+    const k = 0.8 + rnd() * 0.4;
+    ctx.fillStyle = `rgb(${Math.round(53*k)},${Math.round(30*k)},${Math.round(15*k)})`;
+    ctx.fillRect(x0, y, x1 - x0, height);
+    ctx.fillStyle = "rgba(5,2,0,0.8)";
+    ctx.fillRect(x0, y, x1 - x0, Math.max(1, H * 0.002));
+    ctx.fillStyle = "rgba(195,138,74,0.08)";
+    ctx.fillRect(x0, y + H * 0.003, x1 - x0, Math.max(0.5, H * 0.001));
   }
-  // a gilt rail along the wall at the sill's height
-  ctx.fillStyle = "rgba(10,4,1,0.8)";
-  ctx.fillRect(x0, win.sill + H * 0.012, x1 - x0, H * 0.012);
-  ctx.fillStyle = `rgba(${GOLD},0.35)`;
-  ctx.fillRect(x0, win.sill + H * 0.012, x1 - x0, Math.max(1, H * 0.0025));
-  soft(
-    ctx,
-    win.x + win.hw * 0.3,
-    win.cy,
-    win.hw * 2.4,
-    (win.sill - win.top) * 1.3,
-    MOON,
-    0.2,
-    "lighter",
-  );
+  for (const at of [0.25, 0.5, 0.75]) {
+    const x = x0 + (x1 - x0) * at, width = W * 0.009;
+    ctx.fillStyle = "#170c06"; ctx.fillRect(x, top, width, bottom - top);
+    ctx.fillStyle = "rgba(182,124,65,0.12)"; ctx.fillRect(x, top, Math.max(1, width * 0.15), bottom - top);
+  }
   ctx.restore();
-
-  // the frame: heavy dark timber, a carved lintel over it with a thin gilt
-  // bead, the opening left open for the night (the scene's, behind)
-  const fw = win.hw * 0.08;
-  const wx0 = win.x - win.hw;
-  const wx1 = win.x + win.hw;
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.8)";
-  ctx.shadowBlur = H * 0.02;
-  ctx.fillStyle = "#1e1007";
-  ctx.fillRect(
-    wx0 - fw * 1.6,
-    win.top - fw * 2.6,
-    win.hw * 2 + fw * 3.2,
-    win.sill - win.top + fw * 3,
-  );
-  ctx.restore();
-  const lint = ctx.createLinearGradient(0, win.top - fw * 2.6, 0, win.top);
-  lint.addColorStop(0, "#3a2010");
-  lint.addColorStop(0.6, "#24130a");
-  lint.addColorStop(1, "#120904");
-  ctx.fillStyle = lint;
-  ctx.fillRect(
-    wx0 - fw * 1.6,
-    win.top - fw * 2.6,
-    win.hw * 2 + fw * 3.2,
-    fw * 2.6,
-  );
-  // a run of carved dentils along the lintel
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  for (let x = wx0 - fw * 1.2; x < wx1 + fw * 1.2; x += fw * 0.9)
-    ctx.fillRect(x, win.top - fw * 1.1, fw * 0.45, fw * 0.6);
-  ctx.fillStyle = `rgba(${GOLD},0.4)`;
-  ctx.fillRect(
-    wx0 - fw * 1.6,
-    win.top - fw * 0.35,
-    win.hw * 2 + fw * 3.2,
-    Math.max(1, fw * 0.12),
-  );
-  ctx.fillRect(
-    wx0 - fw * 1.6,
-    win.top - fw * 2.6,
-    win.hw * 2 + fw * 3.2,
-    Math.max(1, fw * 0.1),
-  );
-  // the opening, left open
-  ctx.save();
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.fillRect(wx0, win.top, win.hw * 2, win.sill - win.top);
-  ctx.restore();
-  // the panes' glass: a faint cool sheen on each, a little uneven
-  const n = win.lights;
-  const lw = (win.hw * 2) / n;
-  const post = fw * 1.1;
-  const rows = 5;
-  const cols = 3;
-  const rnd2 = lcg(303);
-  for (let i = 0; i < n; i++) {
-    const lx0 = wx0 + i * lw + post / 2;
-    const lx1 = wx0 + (i + 1) * lw - post / 2;
-    const pw = (lx1 - lx0) / cols;
-    const ph = (win.sill - win.top) / rows;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const px = lx0 + c * pw;
-        const py = win.top + r * ph;
-        const sg = ctx.createLinearGradient(px, py, px + pw, py + ph);
-        sg.addColorStop(
-          0,
-          `rgba(170,190,230,${(0.04 + rnd2() * 0.05).toFixed(3)})`,
-        );
-        sg.addColorStop(0.5, "rgba(170,190,230,0)");
-        sg.addColorStop(
-          1,
-          `rgba(170,190,230,${(0.02 + rnd2() * 0.03).toFixed(3)})`,
-        );
-        ctx.fillStyle = sg;
-        ctx.fillRect(px, py, pw, ph);
-      }
-    }
-    // the glazing bars: thin dark wood, a cold glint along one edge
-    const bar = Math.max(2, fw * 0.32);
-    ctx.fillStyle = "#140a04";
-    for (let c = 1; c < cols; c++)
-      ctx.fillRect(lx0 + c * pw - bar / 2, win.top, bar, win.sill - win.top);
-    for (let r = 1; r < rows; r++)
-      ctx.fillRect(lx0, win.top + r * ph - bar / 2, lx1 - lx0, bar);
-    ctx.fillStyle = "rgba(170,195,240,0.18)";
-    for (let c = 1; c < cols; c++)
-      ctx.fillRect(lx0 + c * pw + bar / 2 - 1, win.top, 1, win.sill - win.top);
-    for (let r = 1; r < rows; r++)
-      ctx.fillRect(lx0, win.top + r * ph + bar / 2 - 1, lx1 - lx0, 1);
-    // the light's own frame
-    ctx.strokeStyle = "#140a04";
-    ctx.lineWidth = bar * 1.6;
-    ctx.strokeRect(
-      lx0,
-      win.top + bar * 0.8,
-      lx1 - lx0,
-      win.sill - win.top - bar * 1.6,
-    );
-  }
-  // the posts between the lights, turned, a gilt ring on each
-  for (let i = 0; i <= n; i++) {
-    const px = wx0 + i * lw;
-    const pg = ctx.createLinearGradient(px - post, 0, px + post, 0);
-    pg.addColorStop(0, "#0e0703");
-    pg.addColorStop(0.4, "#3a2010");
-    pg.addColorStop(1, "#0e0703");
-    ctx.fillStyle = pg;
-    ctx.fillRect(
-      px - post / 2 - (i === 0 || i === n ? fw * 0.4 : 0),
-      win.top,
-      post + (i === 0 || i === n ? fw * 0.8 : 0),
-      win.sill - win.top,
-    );
-    ctx.fillStyle = `rgba(${GOLD},0.45)`;
-    for (const f of [0.18, 0.82])
-      ctx.fillRect(
-        px - post / 2,
-        win.top + (win.sill - win.top) * f,
-        post,
-        Math.max(1, post * 0.12),
-      );
-  }
-  // the sill, its gilt edge catching the moon
-  const sy = win.sill;
-  const sx0 = win.x - win.hw - fw * 2.2;
-  const sx1 = win.x + win.hw + fw * 2.2;
-  const sd = H * 0.03;
-  const sg = ctx.createLinearGradient(0, sy - sd * 0.2, 0, sy + sd);
-  sg.addColorStop(0, "#6a4220");
-  sg.addColorStop(0.5, "#3a200c");
-  sg.addColorStop(1, "#140904");
-  ctx.fillStyle = sg;
-  ctx.beginPath();
-  ctx.moveTo(sx0 + sd * 0.8, sy - sd * 0.15);
-  ctx.lineTo(sx1 - sd * 0.8, sy - sd * 0.15);
-  ctx.lineTo(sx1, sy + sd * 0.45);
-  ctx.lineTo(sx1, sy + sd);
-  ctx.lineTo(sx0, sy + sd);
-  ctx.lineTo(sx0, sy + sd * 0.45);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = `rgba(${GOLD},0.6)`;
-  ctx.fillRect(
-    sx0 + sd * 0.4,
-    sy + sd * 0.42,
-    sx1 - sx0 - sd * 0.8,
-    Math.max(1, sd * 0.08),
-  );
-  ctx.fillStyle = "rgba(200,220,255,0.2)";
-  ctx.fillRect(
-    sx0 + sd,
-    sy - sd * 0.1,
-    sx1 - sx0 - sd * 2,
-    Math.max(1, sd * 0.1),
-  );
-  paintCurtains(ctx, L, fw);
-}
-
-// deep crimson velvet on a gilded rod, a gold fringe at the hem, gathered
-// and tied back with gold cord and tassel
-function paintCurtains(ctx, L, fw) {
-  const { H, win } = L;
-  const rodY = win.top - fw * 3.2;
-  const reach = win.hw + fw * 4.5;
-  ctx.fillStyle = gold(ctx, 0, rodY - 3, 0, rodY + 3);
-  ctx.fillRect(
-    win.x - reach,
-    rodY - Math.max(1.5, H * 0.003),
-    reach * 2,
-    Math.max(3, H * 0.006),
-  );
-  for (const side of [-1, 1]) {
-    const fx = win.x + side * reach;
-    const fg = ctx.createRadialGradient(
-      fx - 2,
-      rodY - 2,
-      0.5,
-      fx,
-      rodY,
-      H * 0.011,
-    );
-    fg.addColorStop(0, "#fff0b8");
-    fg.addColorStop(1, "#7a5418");
-    ctx.fillStyle = fg;
-    ctx.beginPath();
-    ctx.arc(fx, rodY, H * 0.011, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  for (const side of [-1, 1]) {
-    const outer = win.x + side * reach * 0.97;
-    const inner = win.x + side * (win.hw * 0.8);
-    const tieY = win.spring + (win.sill - win.spring) * 0.45;
-    const tieX = win.x + side * (win.hw + fw * 1.2);
-    const foot = win.sill + H * 0.07;
-    const footIn = win.x + side * (win.hw + fw * 0.6);
-    const path = () => {
-      ctx.beginPath();
-      ctx.moveTo(outer, rodY);
-      ctx.lineTo(inner, rodY);
-      ctx.bezierCurveTo(
-        inner,
-        rodY + (tieY - rodY) * 0.5,
-        tieX - side * fw * 0.2,
-        tieY - H * 0.05,
-        tieX,
-        tieY,
-      );
-      ctx.bezierCurveTo(
-        tieX + side * fw * 0.3,
-        tieY + H * 0.05,
-        footIn,
-        foot - H * 0.08,
-        footIn,
-        foot,
-      );
-      ctx.quadraticCurveTo(
-        (footIn + outer) / 2,
-        foot + H * 0.012,
-        outer + side * fw * 0.3,
-        foot,
-      );
-      ctx.closePath();
-    };
-    soft(
-      ctx,
-      (outer + tieX) / 2 + side * fw,
-      (rodY + foot) / 2,
-      Math.abs(outer - inner) * 0.7,
-      (foot - rodY) * 0.6,
-      "0,0,0",
-      0.5,
-    );
-    path();
-    const left = Math.min(outer, inner);
-    const right = Math.max(outer, inner);
-    const g = ctx.createLinearGradient(left, 0, right, 0);
-    for (let i = 0; i <= 6; i++)
-      g.addColorStop(i / 6, i % 2 ? "#300408" : "#7a1420");
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.save();
-    ctx.clip();
-    soft(
-      ctx,
-      tieX - side * fw * 0.2,
-      tieY,
-      fw * 1.2,
-      (foot - rodY) * 0.5,
-      "190,200,255",
-      0.18,
-      "lighter",
-    );
-    const shade = ctx.createLinearGradient(0, rodY, 0, foot);
-    shade.addColorStop(0, "rgba(0,0,0,0.4)");
-    shade.addColorStop(0.3, "rgba(0,0,0,0)");
-    shade.addColorStop(1, "rgba(0,0,0,0.35)");
-    ctx.fillStyle = shade;
-    ctx.fillRect(left - fw, rodY, right - left + fw * 2, foot - rodY);
-    ctx.restore();
-    // the gold fringe along its hem
-    ctx.strokeStyle = `rgba(${GOLD},0.75)`;
-    ctx.lineWidth = 1;
-    const f0 = Math.min(footIn, outer);
-    const f1 = Math.max(footIn, outer);
-    for (let x = f0; x <= f1; x += Math.max(2, H * 0.004)) {
-      const yy =
-        foot + Math.sin(((x - f0) / (f1 - f0 || 1)) * Math.PI) * H * 0.01;
-      ctx.beginPath();
-      ctx.moveTo(x, yy - H * 0.004);
-      ctx.lineTo(x, yy + H * 0.01);
-      ctx.stroke();
-    }
-    // the gold cord and its tassel
-    const cx = (tieX + outer) / 2;
-    const cw = Math.abs(outer - tieX) / 2 + fw * 0.15;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#6a4810";
-    ctx.lineWidth = Math.max(3, H * 0.011);
-    ctx.beginPath();
-    ctx.ellipse(cx, tieY, cw, H * 0.012, 0, 0.1, Math.PI - 0.1);
-    ctx.stroke();
-    ctx.strokeStyle = "#f0c868";
-    ctx.lineWidth = Math.max(2, H * 0.007);
-    ctx.stroke();
-    ctx.fillStyle = gold(ctx, cx - fw * 0.4, 0, cx + fw * 0.4, 0);
-    ctx.beginPath();
-    ctx.moveTo(cx - fw * 0.12, tieY + H * 0.018);
-    ctx.lineTo(cx + fw * 0.12, tieY + H * 0.018);
-    ctx.quadraticCurveTo(
-      cx + fw * 0.5,
-      tieY + H * 0.05,
-      cx + fw * 0.45,
-      tieY + H * 0.075,
-    );
-    ctx.lineTo(cx - fw * 0.45, tieY + H * 0.075);
-    ctx.quadraticCurveTo(
-      cx - fw * 0.5,
-      tieY + H * 0.05,
-      cx - fw * 0.12,
-      tieY + H * 0.018,
-    );
-    ctx.closePath();
-    ctx.fill();
-    ctx.lineCap = "butt";
-  }
 }
 
 // a rib of the hull standing out of the planks on both sides, a line of gilt
@@ -925,16 +560,13 @@ function paintCompassShadow(ctx, L) {
   soft(ctx, c.x + c.R * 0.3, ty, c.R * 1.1, c.R * 0.18, "0,0,0", 0.6);
 }
 
-// the lights: the lantern's gold over the room, the candle's on the table,
-// a faint shaft of moonlight down from the window
+// The lantern's warm light over the enclosed cabin.
 function paintLight(ctx, L) {
-  const { W, H, win } = L;
+  const { W, H } = L;
   soft(ctx, L.lantern.x, H * 0.2, W * 0.16, H * 0.2, WARM, 0.06, "lighter");
-  void win;
 }
 
-// a deep vignette over the cabin (only where it is painted: the window stays
-// open), the telescope's dark round the edges
+// A deep vignette keeps the cabin dark around its edges.
 function finish(ctx, L) {
   const { W, H } = L;
   ctx.save();
@@ -958,98 +590,6 @@ function finish(ctx, L) {
   ctx.restore();
 }
 
-// The moon's light coming in at the stern window: broad soft shafts through
-// the air of the cabin, a few brighter rays inside them, and where they come
-// down, the window's shape laid in silver across the table and the floor.
-// Painted on its own so the scene can let it breathe and drift dust in it.
-function paintMoonbeams(L) {
-  const { W, H, win } = L;
-  const b = L.beam;
-  const c = makeCanvas(W, H);
-  const g = c.getContext("2d");
-  const lerp = (a, z, k) => a + (z - a) * k;
-  // the broad shaft
-  const shaft = (k0, k1, a, blur) => {
-    const tx0 = lerp(b.top.x0, b.top.x1, k0);
-    const tx1 = lerp(b.top.x0, b.top.x1, k1);
-    const bx0 = lerp(b.bottom.x0, b.bottom.x1, k0);
-    const bx1 = lerp(b.bottom.x0, b.bottom.x1, k1);
-    for (let i = 0; i < 4; i++) {
-      const grow = blur * (i / 3);
-      g.beginPath();
-      g.moveTo(tx0 - grow * 0.3, b.top.y);
-      g.lineTo(tx1 + grow * 0.3, b.top.y);
-      g.lineTo(bx1 + grow, b.bottom.y);
-      g.lineTo(bx0 - grow, b.bottom.y);
-      g.closePath();
-      const gr = g.createLinearGradient(0, b.top.y, 0, b.bottom.y);
-      gr.addColorStop(0, `rgba(${MOON},0)`);
-      gr.addColorStop(0.18, `rgba(${MOON},${(a * 0.9) / 4})`);
-      gr.addColorStop(0.55, `rgba(${MOON},${(a * 0.7) / 4})`);
-      gr.addColorStop(1, `rgba(${MOON},${(a * 0.15) / 4})`);
-      g.fillStyle = gr;
-      g.fill();
-    }
-  };
-  shaft(0, 1, 0.22, W * 0.05);
-  // brighter rays inside it, as the light comes through the glazing
-  const rnd = lcg(919);
-  for (let i = 0; i < 7; i++) {
-    const k = 0.06 + rnd() * 0.86;
-    const w = 0.025 + rnd() * 0.06;
-    shaft(k, Math.min(1, k + w), 0.12 + rnd() * 0.12, W * 0.01);
-  }
-  // the window's own glow at its opening
-  soft(g, win.x, win.cy, win.hw * 1.3, (win.sill - win.top) * 0.6, MOON, 0.1);
-  // where it lands: the window laid in silver across the table top
-  const t = L.table;
-  const py = L.vp.y + L.topY * 0.72;
-  const px = lerp(b.bottom.x0, b.bottom.x1, 0.5) + W * 0.02;
-  soft(g, px, py, t.hw * 0.62, H * 0.06, MOON, 0.42);
-  soft(g, px, py, t.hw * 0.4, H * 0.035, "220,232,255", 0.3);
-  // the window's bars laid across the pool, as shadow
-  g.save();
-  g.beginPath();
-  g.ellipse(px, py, t.hw * 0.62, H * 0.06, 0, 0, Math.PI * 2);
-  g.clip();
-  g.globalCompositeOperation = "destination-out";
-  g.strokeStyle = "rgba(0,0,0,0.3)";
-  g.lineWidth = Math.max(1.5, H * 0.004);
-  for (let i = -4; i <= 4; i++) {
-    g.beginPath();
-    g.moveTo(px + i * t.hw * 0.14 - t.hw * 0.05, py - H * 0.06);
-    g.lineTo(px + i * t.hw * 0.17 + t.hw * 0.05, py + H * 0.06);
-    g.stroke();
-  }
-  for (const dy of [-0.035, 0, 0.035]) {
-    g.beginPath();
-    g.moveTo(px - t.hw * 0.7, py + H * dy);
-    g.lineTo(px + t.hw * 0.7, py + H * dy);
-    g.stroke();
-  }
-  g.restore();
-  // and on the floor beyond the table's front, softer
-  soft(
-    g,
-    lerp(b.bottom.x0, b.bottom.x1, 0.45),
-    H * 0.97,
-    W * 0.22,
-    H * 0.05,
-    MOON,
-    0.22,
-  );
-  // a little silver on the edges that face the window
-  soft(
-    g,
-    L.compass.x - L.compass.R * 0.7,
-    L.compass.y,
-    L.compass.R * 0.5,
-    L.compass.R * 1.1,
-    MOON,
-    0.16,
-  );
-  return c;
-}
 
 // ── the compass ─────────────────────────────────────────────────────────────
 
@@ -1479,161 +1019,8 @@ function paintGlass(r) {
   return c;
 }
 
-// ── the night, the lantern, the flame, the map ──────────────────────────────
+// ── the lantern, the flame, the map ────────────────────────────────────────
 
-// The night through the stern window, a little larger than the window so it
-// can roll: sky, stars, the moon, a moonlit cloud or two, an island with its
-// palms, the sea from the horizon (at the eye) to us. The moon's road is its
-// own, to glitter.
-function paintView(L) {
-  const { win, vp } = L;
-  const w = win.hw * 2 * 1.3;
-  const h = (win.sill - win.top) * 1.4;
-  const hy = vp.y - (win.cy - h / 2);
-  const sky = makeCanvas(w, h);
-  const g = sky.getContext("2d");
-  const sg = g.createLinearGradient(0, 0, 0, hy);
-  sg.addColorStop(0, "#010208");
-  sg.addColorStop(0.6, "#040a18");
-  sg.addColorStop(1, "#0a1428");
-  g.fillStyle = sg;
-  g.fillRect(0, 0, w, hy + 1);
-  const rnd = lcg(2024);
-  for (let i = 0; i < 45; i++) {
-    g.fillStyle = `rgba(220,228,255,${(0.15 + rnd() * 0.4).toFixed(2)})`;
-    g.beginPath();
-    g.arc(rnd() * w, rnd() * hy * 0.85, 0.5 + rnd() * 1.1, 0, Math.PI * 2);
-    g.fill();
-  }
-  const mx = w * 0.44;
-  const my = hy * 0.68;
-  const mr = win.hw * 0.08;
-  soft(g, mx, my, mr * 5, mr * 5, "180,200,250", 0.22);
-  const mg = g.createRadialGradient(
-    mx - mr * 0.3,
-    my - mr * 0.3,
-    mr * 0.1,
-    mx,
-    my,
-    mr,
-  );
-  mg.addColorStop(0, "#f4f2ea");
-  mg.addColorStop(1, "#c8c2b0");
-  g.fillStyle = mg;
-  g.beginPath();
-  g.arc(mx, my, mr, 0, Math.PI * 2);
-  g.fill();
-  for (const [cx, cy, cw, ch] of [
-    [0.22, 0.32, 0.2, 0.06],
-    [0.84, 0.66, 0.16, 0.05],
-  ]) {
-    for (let i = 0; i < 5; i++) {
-      const ox = (i - 2) * w * cw * 0.32;
-      soft(
-        g,
-        w * cx + ox,
-        hy * cy - Math.abs(ox) * 0.08,
-        w * cw * 0.45,
-        hy * ch * 1.5,
-        "6,10,22",
-        0.7,
-      );
-    }
-    soft(
-      g,
-      w * cx,
-      hy * cy + hy * ch * 0.6,
-      w * cw,
-      hy * ch * 0.6,
-      "90,110,160",
-      0.12,
-    );
-  }
-  const ix = w * 0.25;
-  const iw = w * 0.22;
-  const ih = hy * 0.09;
-  g.fillStyle = "#03060e";
-  g.beginPath();
-  g.moveTo(ix - iw / 2, hy + 1);
-  g.bezierCurveTo(
-    ix - iw * 0.32,
-    hy - ih * 1.2,
-    ix + iw * 0.05,
-    hy - ih * 1.5,
-    ix + iw / 2,
-    hy + 1,
-  );
-  g.closePath();
-  g.fill();
-  const palm = (px, k, lean) => {
-    const top = { x: px + lean * ih * 0.6, y: hy - ih * (1.05 + k) };
-    g.strokeStyle = "#03060e";
-    g.lineWidth = Math.max(1.2, ih * 0.1);
-    g.beginPath();
-    g.moveTo(px, hy - ih * 0.9);
-    g.quadraticCurveTo(px + lean * ih * 0.1, top.y + ih * 0.4, top.x, top.y);
-    g.stroke();
-    g.fillStyle = "#03060e";
-    for (const a of [-2.7, -2.1, -1.4, -0.9, -0.3]) {
-      g.beginPath();
-      g.moveTo(top.x, top.y);
-      g.quadraticCurveTo(
-        top.x + Math.cos(a) * ih * 0.5,
-        top.y + Math.sin(a) * ih * 0.5 - ih * 0.12,
-        top.x + Math.cos(a) * ih * 0.85,
-        top.y + Math.sin(a) * ih * 0.55 + ih * 0.25,
-      );
-      g.quadraticCurveTo(
-        top.x + Math.cos(a) * ih * 0.4,
-        top.y + Math.sin(a) * ih * 0.3,
-        top.x,
-        top.y,
-      );
-      g.fill();
-    }
-  };
-  palm(ix - iw * 0.08, 0.55, -1);
-  palm(ix + iw * 0.06, 0.35, 1);
-  const seaG = g.createLinearGradient(0, hy, 0, h);
-  seaG.addColorStop(0, "#08142a");
-  seaG.addColorStop(1, "#010309");
-  g.fillStyle = seaG;
-  g.fillRect(0, hy, w, h - hy);
-  g.fillStyle = "rgba(150,170,220,0.18)";
-  g.fillRect(0, hy - 0.5, w, 1.2);
-  for (let i = 0; i < 80; i++) {
-    const f = Math.pow(rnd(), 1.4);
-    const yy = hy + 3 + f * (h - hy - 3);
-    const len = 3 + f * w * 0.08;
-    const xx = rnd() * w;
-    g.strokeStyle = `rgba(110,140,200,${(0.05 + rnd() * 0.08).toFixed(2)})`;
-    g.lineWidth = 0.6 + f * 1.2;
-    g.beginPath();
-    g.moveTo(xx, yy);
-    g.quadraticCurveTo(xx + len / 2, yy - 1 - f * 2, xx + len, yy);
-    g.stroke();
-  }
-  const glitter = makeCanvas(w, h);
-  const gg = glitter.getContext("2d");
-  soft(
-    gg,
-    mx,
-    hy + (h - hy) * 0.4,
-    w * 0.05,
-    (h - hy) * 0.5,
-    "200,215,250",
-    0.14,
-  );
-  for (let i = 0; i < 90; i++) {
-    const f = Math.pow(rnd(), 1.2);
-    const yy = hy + 2 + f * (h - hy - 4);
-    const spread = w * (0.01 + f * 0.09);
-    const xx = mx + (rnd() - 0.5) * spread * 2;
-    gg.fillStyle = `rgba(235,240,250,${(0.2 + rnd() * 0.4).toFixed(2)})`;
-    gg.fillRect(xx, yy, 2 + f * 10 * rnd(), 0.8 + f * 1.4);
-  }
-  return { sky, glitter, w, h };
-}
 
 // a candle flame: white at the heart, gold, a little orange at its tip
 function paintFlame() {

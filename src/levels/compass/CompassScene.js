@@ -75,26 +75,12 @@ export default class CompassScene extends BasePuzzleScene {
     this._L = L;
     this._art = art;
 
-    // the night through the stern window, behind the cabin (the window is
-    // left open in it); it rolls with the ship
-    this._view = this.add.image(L.win.x, L.win.cy, k.view).setDepth(-12);
-    this._glitter = this.add
-      .image(L.win.x, L.win.cy, k.glitter)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(-11);
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
     // the envelope lies on the table as it does on the study desk
     this._folded = this.add
       .image(L.map.x, L.map.y, k.folded)
       .setScale(inv)
       .setDepth(-9);
-    // the moon's light through the window, and the dust turning in it
-    this._beams = this.add
-      .image(0, 0, k.beams)
-      .setOrigin(0, 0)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(-3);
-    this._makeDust(L, k.glow);
 
     // the candle's flame and its light
     const cd = L.candle;
@@ -213,49 +199,6 @@ export default class CompassScene extends BasePuzzleScene {
     };
   }
 
-  // motes of dust drifting slowly through the moonbeams, catching the light
-  _makeDust(L, glow) {
-    const b = L.beam;
-    const rnd = this._rng(4040);
-    const inBeam = (k, f) => {
-      const y = b.top.y + (b.bottom.y - b.top.y) * f;
-      const x0 = b.top.x0 + (b.bottom.x0 - b.top.x0) * f;
-      const x1 = b.top.x1 + (b.bottom.x1 - b.top.x1) * f;
-      return { x: x0 + (x1 - x0) * k, y };
-    };
-    for (let i = 0; i < 46; i++) {
-      const p = inBeam(rnd(), 0.08 + rnd() * 0.8);
-      const size = L.S * (0.004 + rnd() * 0.006);
-      const mote = this.add
-        .image(p.x, p.y, glow)
-        .setDisplaySize(size, size)
-        .setTint(0xdce6ff)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(0)
-        .setDepth(-2);
-      if (!this.ambientMotion) {
-        mote.setAlpha(0.3 + rnd() * 0.3);
-        continue;
-      }
-      const drift = () => {
-        const q = inBeam(rnd(), 0.08 + rnd() * 0.8);
-        mote.setPosition(q.x, q.y);
-        this.tweens.add({
-          targets: mote,
-          x: q.x + (rnd() - 0.5) * L.S * 0.06,
-          y: q.y + L.S * (0.01 + rnd() * 0.04),
-          duration: 6000 + rnd() * 8000,
-          onUpdate: (tw) =>
-            mote.setAlpha(
-              Math.sin(Math.PI * tw.progress) * (0.35 + 0.3 * rnd()),
-            ),
-          onComplete: drift,
-        });
-      };
-      this.time.delayedCall(rnd() * 6000, drift);
-    }
-  }
-
   // ── the needle ─────────────────────────────────────────────────────────────
 
   update(time, delta) {
@@ -330,17 +273,11 @@ export default class CompassScene extends BasePuzzleScene {
     this._clink();
   }
 
-  // the ship's roll: the sea tilting in the window and its moon road
-  // glittering, the compass swaying a little on its hook, the lantern
-  // swinging on its chain and its light swinging with it
+  // The compass and lantern sway with the ship; the lantern's light follows.
   _roll(t) {
     const L = this._L;
     const on = this.ambientMotion && !this.reducedMotion ? 1 : 0;
     const roll = on * (Math.sin(t * 0.9) * 1.8 + Math.sin(t * 0.37 + 1) * 0.8);
-    this._view.setAngle(roll);
-    this._glitter
-      .setAngle(roll)
-      .setAlpha(0.75 + on * 0.25 * Math.sin(t * 3.1) * Math.sin(t * 1.7));
     this._compass.setAngle(-roll * 0.5);
     const flick = on * (Math.sin(t * 13) * 0.5 + Math.sin(t * 7.3) * 0.5);
     this._flame
@@ -350,10 +287,6 @@ export default class CompassScene extends BasePuzzleScene {
       )
       .setAngle(flick * 4);
     this._candleGlow.setAlpha(0.32 + flick * 0.05);
-    // the moonlight breathes as clouds pass and the ship rolls
-    this._beams.setAlpha(
-      0.9 + on * (0.07 * Math.sin(t * 0.5) + 0.03 * Math.sin(t * 1.7)),
-    );
     const swing =
       on * (Math.sin(t * 0.9 - 0.4) * 6 + Math.sin(t * 0.37 + 0.6) * 2);
     this._lantern.setAngle(swing);
@@ -486,7 +419,6 @@ export default class CompassScene extends BasePuzzleScene {
     releaseCabinArt(this.textures);
     this._letter = null;
     this._zones = [];
-    this._view = this._glitter = this._beams = null;
     this._L = null;
   }
 

@@ -3,6 +3,7 @@ import { createMoonCanvas } from '../shared/moon.js';
 import { glint } from './startFilm.js';
 import { loadManorArchitecture, paintManorMaterial, paintManorWindow, paintManorEntrance } from './manorArchitecture.js';
 import { loadManorExterior, paintManorExterior, drawManorExteriorLive } from './manorExterior.js';
+import { createRainFall } from '../shared/rainFall.js';
 
 /** The manor behind the title, painted — by the same hand as the hall and the
  *  rooms inside it — instead of filmed. Deep night, and seen from close to.
@@ -63,6 +64,30 @@ export function mountStartManor(scope, preferences) {
     film.append(base, live);
   }
   let scene = null, stopped = false, frame = 0, details = null, paintedDetails = null, disposed = false;
+  // the rain falling in front of the house, over both: drawn with WebGL where
+  // it can be, on a canvas of its own (otherwise the live canvas draws it)
+  let rain = null;
+  const dropRain = () => {
+    rain?.dispose(); rain?.canvas.remove(); rain = null;
+    if (scene) scene.rainLive = false;
+  };
+  const mountRain = () => {
+    dropRain();
+    if (!scene?.photographic || stopped || disposed) return;
+    rain = createRainFall({ width: scene.W, height: scene.H, source: base, ground: scene.ground, horizon: scene.horizon, pace: 0.6, density: 0.45, seed: 6161 });
+    if (!rain) return;
+    rain.canvas.className = 'start-painting';
+    rain.canvas.setAttribute('aria-hidden', 'true');
+    live.after(rain.canvas);
+    scene.rainLive = true;
+    const lost = rain;
+    scope.on(rain.canvas, 'webglcontextlost', (event) => {
+      event.preventDefault();
+      if (rain !== lost) return;
+      dropRain();
+      if (scene && still()) drawLive(live.getContext('2d'), scene, 0, true);
+    });
+  };
   film.dataset.architecture = 'loading';
   const architecture = loadManorExterior()
     .then(exterior => ({ exterior }))
@@ -77,6 +102,7 @@ export function mountStartManor(scope, preferences) {
     for (const c of [base, live]) { c.width = W; c.height = H; }
     scene = paintManor(base.getContext('2d'), W, H, details);
     paintedDetails = details;
+    mountRain();
     // the front door's place in the picture, in screen pixels
     if (door) {
       const d = scene.door;
@@ -91,10 +117,12 @@ export function mountStartManor(scope, preferences) {
   function tick(time) {
     if (stopped) return;
     frame = requestAnimationFrame(tick);
-    clock += last === null ? 0 : Math.min(0.05, Math.max(0, (time - last) / 1000));
+    const dt = last === null ? 0 : Math.min(0.05, Math.max(0, (time - last) / 1000));
+    clock += dt;
     last = time;
     if (!scene || still()) return;
     drawLive(live.getContext('2d'), scene, clock, false);
+    if (rain) { rain.advance(dt); rain.draw(); }
   }
   // hidden and shown again: the clock picks up again without a leap
   scope.on(document, 'visibilitychange', () => { last = null; });
@@ -110,7 +138,7 @@ export function mountStartManor(scope, preferences) {
   }).catch(() => {
     if (!disposed && !stopped) film.dataset.architecture = 'fallback';
   });
-  scope.add(() => { disposed = true; });
+  scope.add(() => { disposed = true; dropRain(); });
   scope.on(window, 'resize', layout);
   if (typeof ResizeObserver === 'function') {
     const watch = new ResizeObserver(layout);
@@ -123,7 +151,7 @@ export function mountStartManor(scope, preferences) {
   scope.add(() => cancelAnimationFrame(frame));
   return {
     /** The title is gone: the picture stops moving and lets go of the screen. */
-    stop() { stopped = true; cancelAnimationFrame(frame); },
+    stop() { stopped = true; cancelAnimationFrame(frame); dropRain(); },
   };
 }
 

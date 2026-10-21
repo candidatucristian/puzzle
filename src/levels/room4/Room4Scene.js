@@ -1,14 +1,14 @@
 import RoomScene from "../house/RoomScene.js";
 import { layoutRoom4, paintRoom4, releaseRoom4Art } from "./room4.js";
 import { noiseBurst } from "../../shared/paint.js";
-import { CROSSING_BACKGROUND, CROSSING_BACKGROUND_URL } from "../crossing/street.js";
+import { loadWiresPhotography } from "../wires/photographicPainting.js";
 import { loadRoom4Photography } from "./photographicRoom.js";
 import { ROOM4_INTERIOR, loadRoom4Interior } from "./photographicInterior.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The counting room: the fourth room off the hall (see house/RoomScene.js for
 // what every room does). Three puzzles are found in it: the six numbered
-// cards pinned on the cork board over the desk, the painting of a street
+// cards pinned on the cork board over the desk, the painting of birds on wires
 // hung beside them, and the drawer of old tickets pulled out of the chest
 // under the window. The gilt chest is on the desk's far end.
 //
@@ -20,7 +20,7 @@ import { ROOM4_INTERIOR, loadRoom4Interior } from "./photographicInterior.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 // which puzzle each of the room's lights is lit for
-const LIT_FOR = { cards: "sequence", painting: "crossing", drawer: "station" };
+const LIT_FOR = { cards: "sequence", painting: "wires", drawer: "station" };
 
 export default class Room4Scene extends RoomScene {
   constructor() {
@@ -31,9 +31,7 @@ export default class Room4Scene extends RoomScene {
     super.preload();
     loadRoom4Photography(this);
     loadRoom4Interior(this);
-    if (!this.textures.exists(CROSSING_BACKGROUND)) {
-      this.load.image(CROSSING_BACKGROUND, CROSSING_BACKGROUND_URL);
-    }
+    loadWiresPhotography(this,false);
   }
 
   layout(W, H, levels) {

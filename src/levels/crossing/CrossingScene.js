@@ -8,6 +8,7 @@ import {
   paintFrame,
   releaseStreetArt,
 } from "./street.js";
+import { addRainFall } from "../../shared/phaserRain.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CROSSING"  ·  code: GO   ·  read the stripes
@@ -89,7 +90,20 @@ export default class CrossingScene extends BasePuzzleScene {
     this._makeRain(W, H);
   }
 
+  // the rain over the street (shared/rainFall.js): lit by the lamps and the
+  // shop windows it falls past, and ringing the water on the road
   _makeRain(W, H) {
+    const curb = this._curbY;
+    if (addRainFall(this, {
+      picture: this.textures.get(this._art.city).getSourceImage(),
+      ground: [[0, curb + 4], [W, curb + 4], [W, H], [0, H]], horizon: curb,
+      density: 0.9, wind: -0.07, seed: 7551,
+    })) return;
+    this._makeStreaks(W, H);
+  }
+
+  // (without WebGL: a few streaks falling)
+  _makeStreaks(W, H) {
     const rnd = this._rng(7551);
     const S = Math.min(W, H);
     const count = Math.min(42, Math.max(24, Math.round((W * H) / 30000)));

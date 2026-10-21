@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "phaser": "3.60.0",
-    "shader-doodle": "1.0.0-alpha.22"
+    "shader-doodle": "1.0.0-alpha.22",
+    "three": "0.170.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

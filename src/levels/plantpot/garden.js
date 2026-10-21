@@ -9,9 +9,8 @@ import { gardenPhotographs, paintGardenPhotograph, paintPhotographicBench } from
  *  frame. The older procedural landscape remains a missing-asset fallback.
  *
  *  The moon and stars, fireflies and lantern flame remain live. The pot,
- *  bucket and growing plant belong to plant.js and keep their existing art.
- *  The bench photograph follows the original tabletop in centimetres so
- *  those objects retain their size, positions and interaction coordinates.
+ *  bucket and growing plant belong to plant.js. The bench keeps its natural
+ *  photographed proportions; the pot and leaves use botanical photographs.
  *  The landscape and bench canvases are painted once per screen size. */
 
 const K = {
@@ -26,11 +25,11 @@ const K = {
 
 // the lantern, standing on the bench's left end (cm from the bench-top
 // centre; y is up, negative)
-export const LANTERN = { x: -51, flameY: -11.6, back: 7 };
+export const LANTERN = { x: -43, flameY: -11.6, back: 4 };
 // the bench top: how much of its depth we see (cm, from above), the rail
 // under its near edge, and the shelf below
 const BENCH = { depth: 26, apron: 4.5, shelf: 21 };
-export const POT_X = -35.5;
+export const POT_X = -28;
 export const BUCKET_X = 36;
 
 // ── where everything is ─────────────────────────────────────────────────────
@@ -39,7 +38,7 @@ function layoutGarden(W, H) {
   const S = Math.min(W, H);
   const u = Math.min(W / 1000, H / 650); // the garden's unit
   const s = Math.min(1.3, H / 640) * 0.85; // the bench's scale
-  const cm = s * 3.5; // screen pixels per centimetre at the bench
+  const cm = Math.min(s * 3.5, W / 210); // screen pixels per centimetre at the bench
   const L = {
     W,
     H,
@@ -53,7 +52,7 @@ function layoutGarden(W, H) {
     far: (x) => H * (0.168 + 0.012 * Math.sin((x / W) * 5.6 + 0.9) + 0.005 * Math.sin((x / W) * 14.2 + 2.3)),
     near: (x) => H * (0.232 + 0.004 * Math.sin((x / W) * 3.9 + 2.6)),
     moon: { x: W * 0.72, y: H * 0.082, r: S * 0.036 },
-    bench: { x: W * 0.48, y: H * 0.715, x0: -59, x1: 61, top: 3.2 },
+    bench: { x: W * 0.48, y: H * 0.65, x0: -59, x1: 61, top: 3.2 },
     sill: H * 0.9, // where the window's sill begins
   };
   // the bench's own coordinates (cm) on screen
@@ -350,8 +349,8 @@ function paintBench(ctx, L) {
   const { H, cm, bench, at, flame } = L;
   if (paintPhotographicBench(ctx, L, BENCH.depth)) {
     const surface = at(POT_X, 0);
-    softEllipse(ctx, surface.x, surface.y, 12.5 * cm, 5 * cm, "0,0,0", 0.55);
-    softEllipse(ctx, surface.x + 12 * cm, surface.y - 1.6 * cm, 22 * cm, 5.6 * cm, "0,0,0", 0.45);
+    softEllipse(ctx, surface.x, surface.y, 8.5 * cm, 1.9 * cm, "0,0,0", 0.62);
+    softEllipse(ctx, surface.x + 10 * cm, surface.y - 1.2 * cm, 16 * cm, 3.4 * cm, "0,0,0", 0.26);
     softEllipse(ctx, at(LANTERN.x, 0).x, surface.y - LANTERN.back * cm, 8 * cm, 3.4 * cm, "0,0,0", 0.5);
     return;
   }

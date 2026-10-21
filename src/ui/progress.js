@@ -49,10 +49,13 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
 
   function render() {
     const near = levels.nearby;
+    const activePlaceKey = levels.place?.key ?? levels.homeOf(levels.currentIndex)?.key;
     const placeData =
-      i18n && levels.place ? i18n.getPlace(levels.place.key) : null;
-    const currentPlaceName = placeData?.name ?? near.name;
-    const currentFloorName = placeData?.floor ?? levels.floor;
+      i18n && activePlaceKey ? i18n.getPlace(activePlaceKey) : null;
+    const currentPlaceName = (levels.place ? placeData?.name : null) ?? near.name;
+    const currentFloorName = i18n
+      ? (placeData?.floor ?? i18n.getFloorName(levels.floor))
+      : (placeData?.floor ?? levels.floor);
     const currentStory = placeData?.story?.length
       ? placeData.story
       : near.story;
@@ -249,7 +252,9 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
     // the floor's numeral in a fine square, a hairline, the place's name over
     // its floor's; a light passing once over it as it comes
     const floor = document.getElementById("header-floor");
-    const storey = `Floor ${String(levels.storey).padStart(2, "0")}`;
+    const storey = i18n
+      ? i18n.t("sidebar.floorPrefix", { number: String(levels.storey).padStart(2, "0") })
+      : `Floor ${String(levels.storey).padStart(2, "0")}`;
     if (
       floor.dataset.shown !==
       `${currentPlaceName} ${storey} ${currentFloorName}`
@@ -257,11 +262,13 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
       floor.dataset.shown = `${currentPlaceName} ${storey} ${currentFloorName}`;
       const el = (tag, className, textContent = "") =>
         Object.assign(document.createElement(tag), { className, textContent });
-      const below = /basement|cellar/i.test(currentFloorName);
+      const below = /basement|cellar|subsol|podval/i.test(currentFloorName);
       const words = el("span", "floor-words");
       words.append(el("span", "floor-name", currentPlaceName));
       // the floor's name under it — but not in its own hall, named for it
+      const isHall = levels.place && ["Hall", "Upper", "Top"].includes(levels.place.key);
       if (
+        !isHall &&
         !currentPlaceName
           .toLowerCase()
           .includes(String(currentFloorName).toLowerCase())

@@ -5,7 +5,8 @@ import {evaluateApp} from './app.js';
 async function point(page,id) {
   return evaluateApp(page,({services},id)=>{
     const s=services.levels.activeScene,t=s._toys[id];
-    return {x:t.img.x,y:t.img.y+t.h*(.5-t.origin),W:s.scale.width,H:s.scale.height};
+    const b=t.zone.getBounds();
+    return {x:b.centerX,y:b.centerY,W:s.scale.width,H:s.scale.height};
   },id);
 }
 async function coordinates(page,p) {
@@ -42,7 +43,7 @@ test('His Cot keeps its fifteen decorative belongings fixed and lets only the fi
   await expect.poll(async()=>(await state(page)).built).toBe(true);
   await expect(page.locator('#game-container canvas')).toHaveCSS('filter','none');
   expect(await evaluateApp(page,({services})=>Object.values(services.levels.activeScene._toys)
-    .filter(t=>t.img.input?.draggable).map(t=>t.id).sort())).toEqual(['book','chaplin','hotel','musicbox','oscar']);
+    .filter(t=>t.zone.input?.draggable).map(t=>t.id).sort())).toEqual(['book','chaplin','hotel','musicbox','oscar']);
   expect(await evaluateApp(page,({services})=>services.levels.activeScene._L.all.length)).toBe(20);
   await page.locator('#game-viewport').screenshot({path:'.artifacts/cot-review/initial.png'});
   for(const id of ['duck','train','rockingHorse','ball','teddy','rabbit']) {
@@ -54,7 +55,7 @@ test('His Cot keeps its fifteen decorative belongings fixed and lets only the fi
     await page.mouse.move(p.x+16,p.y+9,{steps:6});await page.mouse.up();
     expect((await state(page)).positions,id+' remains fixed').toEqual({});
   }
-  for(const[id,event]of[['musicbox','dance'],['oscar','glint'],['book','lift'],['chaplin','hat'],['hotel','bell']]){
+  for(const[id,event]of[['musicbox','dance'],['oscar','glint'],['book','open'],['chaplin','hat'],['hotel','bell']]){
     await click(page,id);
     await expect.poll(async()=>Boolean((await state(page)).state[event]),{message:id+' responds to a click'}).toBe(true);
   }
@@ -74,14 +75,13 @@ test('His Cot keeps its fifteen decorative belongings fixed and lets only the fi
   const turn=(await state(page)).state.turn;
   await expect.poll(async()=>(await state(page)).state.turn).toBeGreaterThan(turn);
   await click(page,'chaplin');
-  await expect.poll(()=>evaluateApp(page,({services})=>services.levels.activeScene._hat.y)).toBeLessThan(
-    await evaluateApp(page,({services})=>services.levels.activeScene._hatHome.y));
+  await expect.poll(()=>evaluateApp(page,({services})=>services.levels.activeScene._stage.toys.chaplin.parts.hat.position.y)).toBeGreaterThan(.118);
   const p=await coordinates(page,await point(page,'hotel'));
   await page.mouse.move(p.x,p.y);await page.mouse.down();
   await page.mouse.move(-100,1200,{steps:10});await page.mouse.up();
   expect(await evaluateApp(page,({services})=>{
-    const s=services.levels.activeScene,t=s._toys.hotel,b=t.img.getBounds();
-    return b.x>=0&&b.right<=s.scale.width&&t.y<s._L.frontTop;
+    const s=services.levels.activeScene,b=s._stage.bounds('hotel');
+    return b.x>=0&&b.x+b.w<=s.scale.width&&b.y+b.h<s._L.frontTop;
   })).toBe(true);
   await page.setViewportSize({width:915,height:412});
   await expect.poll(async()=>{

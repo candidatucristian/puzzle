@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import { existsSync } from 'node:fs';
 
 const localChrome = process.platform === 'win32' && existsSync('C:/Program Files/Google/Chrome/Application/chrome.exe');
@@ -15,10 +15,8 @@ export default defineConfig({
     trace: process.env.CI ? 'retain-on-failure' : 'off', screenshot: 'only-on-failure',
   },
   projects: [
-    // the desktop layout: every existing check
-    { name: 'desktop', testIgnore: /mobile\.spec\.js/, use: { viewport: { width: 1440, height: 1000 }, channel } },
-    // a phone held sideways: the compact layout, touch and the drawers
-    { name: 'phone', testMatch: /mobile\.spec\.js/, use: { ...devices['Pixel 7 landscape'], channel } },
+    // the desktop layout: every test in the suite
+    { name: 'desktop', use: { viewport: { width: 1440, height: 1000 }, channel } },
   ],
   webServer: {
     command: 'npm run dev -- --port 5174', url: 'http://127.0.0.1:5174',

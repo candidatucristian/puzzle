@@ -70,6 +70,13 @@ export const en = {
     keyWordSingular: 'key',
     keyWordPlural: 'keys',
     roomLocked: 'Solve the previous room to unlock',
+    floorPrefix: 'Floor {number}',
+  },
+  floors: {
+    botany: 'The Botany',
+    chemistry: 'The Chemistry',
+    physics: 'The Physics',
+    basement: 'Basement',
   },
   veil: {
     caption: 'Answer accepted',
@@ -441,6 +448,13 @@ export const en = {
       story: [
         "Orion's dome. The whole sky, from up here.",
         'The same telescope I was given when I was ten. Mine came without a card.',
+      ],
+    },
+    Room11: {
+      name: 'Room XI',
+      story: [
+        "Orion's physics study. Coils, lenses, and a galvanometer on the workbench.",
+        'Waves and a pendulum on the slate. Rain against the tall sash window.',
       ],
     },
     TopHall: {

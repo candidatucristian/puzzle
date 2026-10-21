@@ -5,7 +5,7 @@ import { paintRoomDetails, paintStove } from "./details.js";
 import { room4Photography, room4Front, paintRoom4Desk, paintRoom4Lamp, paintRoom4Window } from "./photographicRoom.js";
 import { alignRoom4Perspective, placeRoom4PhotoChest, room4PhotoCabinet, alignRoom4PhotoObjects, paintRoom4Interior } from "./photographicInterior.js";
 import { paintFlatMaterial, paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
-import { code39Bars, CROSSING_BACKGROUND, paintCrossingPhoto } from "../crossing/street.js";
+import { birdPainting } from "../wires/photographicPainting.js";
 import {
   WARM, BACK, roomLayout, roomStyle, block, chestAt, thingAt, fillPoly, paintShell, paintWindowWall, paintMoonlight, paintChest, gloom, footShadow, onWall,
 } from "../house/roomKit.js";
@@ -21,7 +21,7 @@ import {
  *  overhead; a chair at the desk, registers on a bookcase and a log basket.
  *
  *  On the left wall hangs a painting in a dull gilt frame —
- *  a street at night, and a pedestrian crossing — under a picture light of
+ *  a farmhouse at dawn, with six birds on five wires — under a picture light of
  *  its own. Under the window stands a chest of three drawers, the top one
  *  shut until it is pulled out, old tickets in it, and a candle on the chest.
  *
@@ -69,7 +69,7 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
   chestAt(L);
   const b = (L.board = { x0: k.x0 - 6, x1: k.x1 + 6, y0: 122, y1: 180 });
 
-  // The street painting hangs on the left wall, following its perspective.
+  // The bird painting hangs on the left wall, following its perspective.
   const p = (L.painting = { d0: 448, d1: 582, y0: 120 });
   p.y1 = p.y0 + ((p.d1 - p.d0 - 10) * 9) / 16 + 10;
   p.quad = [Q(-hx, p.y1, p.d0), Q(-hx, p.y1, p.d1), Q(-hx, p.y0, p.d1), Q(-hx, p.y0, p.d0)];
@@ -82,7 +82,7 @@ export function layoutRoom4(W, H, on = { cards: true, painting: true, drawer: tr
   // what opens a puzzle
   L.things = [
     thingAt("sequence", "Look at the cards", [Q(b.x0, b.y1, BACK), Q(b.x1, b.y1, BACK), Q(b.x1, b.y0, BACK), Q(b.x0, b.y0, BACK)]),
-    thingAt("crossing", "Look at the painting", p.quad),
+    thingAt("wires", "Look at the painting", p.quad),
     thingAt("station", "Look in the drawer", [Q(dr.x0, dr.y1 + 4, dr.d1), Q(dr.x1, dr.y1 + 4, dr.d1), Q(dr.x1, dr.y0, dr.d0), Q(dr.x0, dr.y0, dr.d0)]),
   ];
   // the drawer is shut until it has been pulled out (see Room4Scene)
@@ -119,7 +119,8 @@ export function paintRoom4(scene, L) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, W, H);
-  if (paintRoom4Interior(ctx, scene, L, CARDS, scene.textures.get(CROSSING_BACKGROUND).getSourceImage())) {
+  const painting=birdPainting(scene.textures).image;
+  if (paintRoom4Interior(ctx, scene, L, CARDS, painting)) {
     ctx.save();
     ctx.filter = `brightness(${L.on.drawer ? 0.76 : 0.48})`;
     topDrawer(ctx, L, L.on.drawer ? 0 : L.drawer.d1 - L.drawer.d0);
@@ -129,7 +130,7 @@ export function paintRoom4(scene, L) {
     paintWindowWall(ctx, L);
     paintRoom4Window(ctx, L);
     paintBoard(ctx, L);
-    paintPicture(ctx, L, scene.textures.get(CROSSING_BACKGROUND).getSourceImage());
+    paintPicture(ctx, L, painting);
     paintRug(ctx, L);
     paintMoonlight(ctx, L);
     paintRoomDetails(ctx, L, "back");
@@ -258,8 +259,8 @@ function pictureLight(ctx, L, x0, x1, y, on) {
   if (on) soft(ctx, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2 + 5 * s, (p1.x - p0.x) * 0.5, 12 * s, "255,226,170", 0.5, "lighter");
 }
 
-// The same rain-dark street photograph and worn Code 39 crossing, in its
-// dull gilt frame under the room's picture light.
+// The same six birds and farmhouse scene, in the dull gilt frame under
+// the room's picture light.
 function paintPicture(ctx, L, photo) {
   const { Q } = L;
   const p = L.painting, on = L.on.painting;
@@ -285,7 +286,7 @@ function paintPicture(ctx, L, photo) {
   g.save();
   g.translate(m, m);
   g.beginPath(); g.rect(0, 0, w, h); g.clip();
-  paintCrossingPhoto(g, w, h, photo, code39Bars("GO"));
+  g.drawImage(photo,0,0,w,h);
   // old varnish; and with its light out, only the moon on it
   g.fillStyle = "rgba(120,88,30,0.12)";
   g.fillRect(0, 0, w, h);

@@ -4,11 +4,12 @@ import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 export const COT_PHOTOS = {
   room: "cot_photo_closeup_mahogany_v2", overview: "cot_photo_overview_mahogany_v2",
   objects: "cot_photo_objects_v1", belongings: "cot_photo_belongings_v1",
-  extras: "cot_extra_toys_v1", hoop: "cot_mobile_hoop_v1",
+  extras: "cot_extra_toys_v1", hoop: "cot_mobile_hoop_v1", materials: "cot_antique_materials_v1",
 };
 const FILES = [[COT_PHOTOS.room, "cot-closeup-mahogany-v2.webp"], [COT_PHOTOS.overview, "cot-room-mahogany-v2.webp"],
   [COT_PHOTOS.objects, "cot-objects-v1.webp"], [COT_PHOTOS.belongings, "cot-belongings-v1.webp"],
-  [COT_PHOTOS.extras, "cot-extra-toys-v1.webp"], [COT_PHOTOS.hoop, "cot-mobile-hoop-v1.webp"]];
+  [COT_PHOTOS.extras, "cot-extra-toys-v1.webp"], [COT_PHOTOS.hoop, "cot-mobile-hoop-v1.webp"],
+  [COT_PHOTOS.materials, "antique-toy-materials-v1.webp"]];
 const CROPS = {
   musicbox: [40, 5, 400, 416], oscar: [550, 0, 154, 424], book: [834, 54, 411, 350],
   chaplin: [90, 425, 243, 432], hotel: [422, 420, 411, 440], dancers: [946, 428, 266, 431],
@@ -32,7 +33,7 @@ const cache = new WeakMap();
 
 export function loadCotPhotography(scene, overviewOnly = false) {
   for (const [key, file] of FILES) {
-    if (overviewOnly && (key === COT_PHOTOS.room || key === COT_PHOTOS.hoop)) continue;
+    if (overviewOnly && [COT_PHOTOS.room, COT_PHOTOS.hoop, COT_PHOTOS.materials].includes(key)) continue;
     if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Cot/${file}`);
   }
 }

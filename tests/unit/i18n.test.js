@@ -93,3 +93,20 @@ test('i18n retrieves translated intro, opening, letters, case report, and manor 
   assert.equal(i18n.t('prologue.tonight'), 'Сегодня вечером');
 });
 
+test('i18n retrieves translated floor names', () => {
+  const i18n = new I18n(memory());
+  assert.equal(i18n.getFloorName('The Botany'), 'The Botany');
+  assert.equal(i18n.getFloorName('The Chemistry'), 'The Chemistry');
+  assert.equal(i18n.getFloorName('The Physics'), 'The Physics');
+
+  i18n.setLanguage('ro');
+  assert.equal(i18n.getFloorName('The Botany'), 'Botanica');
+  assert.equal(i18n.getFloorName('The Chemistry'), 'Chimia');
+  assert.equal(i18n.getFloorName('The Physics'), 'Fizica');
+
+  i18n.setLanguage('ru');
+  assert.equal(i18n.getFloorName('The Botany'), 'Ботаника');
+  assert.equal(i18n.getFloorName('The Chemistry'), 'Химия');
+  assert.equal(i18n.getFloorName('The Physics'), 'Физика');
+});
+

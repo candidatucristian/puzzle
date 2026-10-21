@@ -4,6 +4,7 @@ import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { HOUSE_GO, WALK_MS, zoomInto, zoomOutFrom, PLACES } from "../../shared/house.js";
 import { chime } from "../../shared/paint.js";
 import { GOLD_CHEST, GOLD_CHEST_URL } from './chestArt.js';
+import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
 
 /** A room off the hall. Not a level, and with no code of its own: it is where
  *  some of them are found. Each thing that opens a puzzle glints until the
@@ -70,6 +71,9 @@ export default class RoomScene extends BasePuzzleScene {
     if (L.chest && this.textures.exists(GOLD_CHEST)) L.chest.art = this.textures.get(GOLD_CHEST).getSourceImage();
     const k = this.paint(L);
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
+    // the rain on its window, if it is raining there (the room's `rain`:
+    // its panes and what stands in front of them, as shared/rainGlass.js has it)
+    if (L.rain) addRainGlass(this, { ...L.rain, rect: boxOf(L.rain.panes, 2), picture: this.textures.get(k.room).getSourceImage() });
 
     // a warm light over the painting, for whatever burns in the room
     const glow = (at, alpha, tint = 0xffc078) =>

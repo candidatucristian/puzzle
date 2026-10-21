@@ -70,6 +70,13 @@ export const ro = {
     keyWordSingular: 'cheie',
     keyWordPlural: 'chei',
     roomLocked: 'Rezolvă camera anterioară pentru deblocare',
+    floorPrefix: 'Etajul {number}',
+  },
+  floors: {
+    botany: 'Botanica',
+    chemistry: 'Chimia',
+    physics: 'Fizica',
+    basement: 'Subsol',
   },
   veil: {
     caption: 'Răspuns acceptat',
@@ -441,6 +448,13 @@ export const ro = {
       story: [
         'Domul lui Orion. Întregul cer se vede de aici.',
         'Același telescop pe care l-am primit când aveam zece ani. Al meu a sosit fără nicio felicitare.',
+      ],
+    },
+    Room11: {
+      name: 'Camera XI',
+      story: [
+        'Camera de fizică a lui Orion. Bobine, lentile și un galvanometru pe masa de experimente.',
+        'Pe tablă, unde și un pendul. Ploaia bate în fereastra înaltă.',
       ],
     },
     TopHall: {

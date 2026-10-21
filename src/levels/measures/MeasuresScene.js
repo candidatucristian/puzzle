@@ -4,6 +4,7 @@ import { noiseBurst, addCanvasTexture } from "../../shared/paint.js";
 import { KEYS, glassBox, layoutSink, paintLitmus, paintSink, releaseSink, waterIn } from "./art.js";
 import { BOTTLES, pour, toTheLine } from "./puzzle.js";
 import { loadMeasuresPhotography, alignMeasuresPhotography } from "./photography.js";
+import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "MEASURES"  ·  code: ACID  ·  to the line
@@ -20,10 +21,21 @@ import { loadMeasuresPhotography, alignMeasuresPhotography } from "./photography
 //
 // The water is level in a tilted bottle and keeps its volume (art.js
 // waterIn). Nothing on screen says what to measure.
+//
+// The two bottles are made in three dimensions (stage3d.js, three.js, loaded
+// with this level alone) and drawn where the scene has them; a bottle can be
+// taken up and carried — to the tap, the sink, the other bottle or the
+// flask — and let go there, it does what a click there would.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const WATER = 0x9fc4d4;
 const BURN_MS = 4600;
+const STAGE = "ms_stage"; // the picture the bottles are drawn on, in three dimensions
+// what a bottle carried somewhere and let go there will do
+const DROP = {
+  tap: "Fill it at the tap", sink: "Empty it into the sink",
+  bottle: "Pour it into the other bottle", flask: "Pour into the flask",
+};
 
 export default class MeasuresScene extends BasePuzzleScene {
   constructor() {
@@ -47,8 +59,15 @@ export default class MeasuresScene extends BasePuzzleScene {
     this._atLine = false;
     this._pendingContents = null;
     this._burnEndsAt = null;
-    this._build(this.cameras.main.width, this.cameras.main.height);
-    this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
+    this.input.dragDistanceThreshold = 8;
+    // the bottles, in three dimensions: three.js comes with this level alone
+    import("./stage3d.js").then(({ MeasuresStage }) => {
+      if (!this.sys.isActive()) return;
+      this._stage = new MeasuresStage();
+      this._sceneCleanups.add(() => { this._stage?.dispose(); this._stage = null; });
+      this._build(this.cameras.main.width, this.cameras.main.height);
+      this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
+    });
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
@@ -81,9 +100,30 @@ export default class MeasuresScene extends BasePuzzleScene {
       const hit = this.add.zone(v.x, v.y + (v.top + v.bottom) / 2, box.w, v.bottom - v.top + 10 * u).setDepth(9)
         .setName(`measures-vessel-${i}`)
         .setInteractive({ useHandCursor: true }).setData("interactionLabel", v.kind === "flask" ? "Pour into the flask" : "Take up the bottle");
-      hit.on("pointerdown", () => this._click(i));
-      return { v, i, c, water, litmus, hit, shadow, home: { x: v.x, y: v.y }, angle: 0 };
+      const vessel = { v, i, c, water, litmus, hit, shadow, glass, home: { x: v.x, y: v.y }, angle: 0, moved: false };
+      // a click does what it did; a bottle can also be taken up and carried
+      hit.on("pointerdown", () => { vessel.moved = false; });
+      hit.on("pointerup", () => { if (!vessel.moved) this._click(i); });
+      if (v.kind === "bottle") {
+        this.input.setDraggable(hit);
+        hit.on("dragstart", (pointer) => this._takeUp(vessel, pointer));
+        hit.on("drag", (pointer) => this._carryTo(vessel, pointer));
+        hit.on("dragend", () => this._letGo(vessel));
+      }
+      return vessel;
     });
+    // the bottles drawn in three dimensions, over the photograph: their drawn
+    // glass and water stood aside
+    const stage = this._stage;
+    stage.fit(W, H, L, BOTTLES.map((ml) => `${ml} ml`), this.textures.get(KEYS.room).getSourceImage());
+    if (this.textures.exists(STAGE)) this.textures.remove(STAGE);
+    this._stageTexture = this.textures.addImage(STAGE, stage.canvas);
+    // (the photograph is drawn with them, behind them, to be seen through them)
+    this.add.image(0, 0, STAGE).setOrigin(0, 0).setDepth(4);
+    // the rain on the window, over that picture (a bottle is never lifted so high)
+    if (L.rain) addRainGlass(this, { ...L.rain, rect: boxOf(L.rain.panes, 2), picture: this.textures.get(KEYS.room).getSourceImage(), depth: 4.5 });
+    for (const b of this._vessels) if (b.v.kind === "bottle") { b.glass.setVisible(false); b.water.setVisible(false); b.shadow.setVisible(false); }
+    this._drawn = null;
     this._paintLitmus();
     this._makeBurn();
     // the tap and the sink
@@ -95,6 +135,77 @@ export default class MeasuresScene extends BasePuzzleScene {
       .setData("interactionLabel", "Empty it into the sink").on("pointerdown", () => this._sink());
     this._built = true;
     if (this._atLine && this._turned < 1) this._turn({ sound: false });
+  }
+
+  // ── a bottle carried ───────────────────────────────────────────────────────
+
+  _takeUp(b, pointer) {
+    if (this._busy) { b.carried = null; return; }
+    // another one taken up by a click is set down first
+    if (this._held !== null && this._held !== b.i) this._lift(this._held, false);
+    this.tweens.killTweensOf(b.c); this.tweens.killTweensOf(b);
+    this._held = b.i;
+    b.carried = { dx: b.c.x - pointer.x, dy: b.c.y - pointer.y, at: null, vx: 0, x: b.c.x, t: this.time.now };
+    noiseBurst(this, { dur: 0.06, type: "bandpass", freq: 2600, q: 3, gain: 0.12, env: (x) => (1 - x) ** 3 });
+  }
+
+  _carryTo(b, pointer) {
+    if (!b.carried) return;
+    b.moved = true;
+    const L = this._L, u = L.u;
+    const x = Math.max(L.W * 0.03, Math.min(L.W * 0.97, pointer.x + b.carried.dx));
+    // no higher than the foot of the window
+    const y = Math.max((L.sill ?? -Infinity) - b.v.top, Math.min(b.home.y, pointer.y + b.carried.dy));
+    const now = this.time.now, dt = Math.max(1, now - b.carried.t);
+    b.carried.vx += ((x - b.carried.x) / dt - b.carried.vx) * 0.35;
+    b.carried.x = x; b.carried.t = now;
+    b.c.setPosition(x, y);
+    // carried, it sways back against the way it goes
+    b.angle = this.reducedMotion ? 0 : Math.max(-0.22, Math.min(0.22, -b.carried.vx * 0.12));
+    b.c.setRotation(b.angle);
+    // where it would be let go, said as it is held there
+    const at = this._dropAt(b);
+    if (at !== b.carried.at) {
+      b.carried.at = at;
+      this.game.events.emit("puzzle:interaction", { label: at ? DROP[at.kind] : "" });
+    }
+    void u;
+  }
+
+  // what it is held over: the tap's mouth, the other bottle, the flask, the sink
+  _dropAt(b) {
+    const L = this._L, u = L.u, mouth = { x: b.c.x, y: b.c.y + b.v.top }, sp = L.tap.spout;
+    if (Math.abs(mouth.x - sp.x) < 70 * u && mouth.y > sp.y - 40 * u && mouth.y < sp.y + 190 * u) return { kind: "tap" };
+    for (const o of this._vessels) {
+      if (o === b) continue;
+      const reach = o.v.kind === "flask" ? o.v.r * 1.4 : (o.v.w + b.v.w) * 0.45;
+      if (Math.abs(b.c.x - o.home.x) < reach && b.c.y < o.home.y + 10 * u) return { kind: o.v.kind === "flask" ? "flask" : "bottle", into: o.i };
+    }
+    const s = L.sink;
+    if (b.c.x > s.x0 && b.c.x < s.x1) return { kind: "sink" };
+    return null;
+  }
+
+  _letGo(b) {
+    if (!b.carried) return;
+    const at = this._dropAt(b);
+    b.carried = null;
+    this.game.events.emit("puzzle:interaction", { label: "" });
+    // stood upright again before it does anything
+    this.tweens.add({ targets: b, angle: 0, duration: this.reducedMotion ? 0 : 160, ease: "Sine.easeOut", onUpdate: () => b.c.setRotation(b.angle) });
+    const i = b.i;
+    this._held = i;
+    if (at?.kind === "tap") this._tap();
+    else if (at?.kind === "sink") this._sink();
+    else if (at?.kind === "bottle") this._pourInto(i, at.into);
+    else if (at?.kind === "flask" && !this._atLine) this._pourIntoFlask(i);
+    // nothing to be done there (or it could not be): carried home again
+    if (!this._busy) {
+      this._held = null;
+      this.tweens.killTweensOf(b.c);
+      this.tweens.add({ targets: b.c, x: b.home.x, y: b.home.y, duration: this.reducedMotion ? 0 : 360, ease: "Sine.easeInOut" });
+      noiseBurst(this, { dur: 0.06, type: "bandpass", freq: 1800, q: 3, gain: 0.12, env: (x) => (1 - x) ** 3 });
+    }
   }
 
   // ── what is done with them ─────────────────────────────────────────────────
@@ -354,7 +465,11 @@ export default class MeasuresScene extends BasePuzzleScene {
   update(time) {
     if (!this._built) return;
     const u = this._L.u;
+    this._drawBottles();
     for (const b of this._vessels) {
+      // what the hand finds it by, kept to where it is
+      b.hit.setPosition(b.c.x, b.c.y + (b.v.top + b.v.bottom) / 2);
+      if (b.v.kind === "bottle" && this._stage) continue;
       const lift = Math.max(0, b.home.y - b.c.y);
       b.shadow.setX(b.c.x).setAlpha(.6 * Math.max(0, 1 - lift / (240 * u)));
       const g = b.water.clear(), w = waterIn(b.v, this._frac(b), b.angle);
@@ -371,6 +486,21 @@ export default class MeasuresScene extends BasePuzzleScene {
       }
     }
     this._updateBurn(time);
+  }
+
+  // the bottles, in three dimensions, as they stand now — drawn again only
+  // when one of them has moved, tipped, or filled
+  _drawBottles() {
+    const stage = this._stage;
+    if (!stage) return;
+    const now = this._vessels.filter((b) => b.v.kind === "bottle")
+      .map((b) => ({ x: b.c.x, y: b.c.y, angle: b.angle, frac: this._frac(b) }));
+    const key = now.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)},${p.angle.toFixed(3)},${p.frac.toFixed(4)}`).join("|");
+    if (key === this._drawn) return;
+    this._drawn = key;
+    now.forEach((p, i) => stage.setBottle(i, p));
+    stage.render();
+    this._stageTexture.source[0].update();
   }
 
   // ── sounds ─────────────────────────────────────────────────────────────────
@@ -403,9 +533,11 @@ export default class MeasuresScene extends BasePuzzleScene {
     for (const obj of this.children.list.slice()) obj.destroy();
     releaseSink(this.textures);
     if (this.textures.exists("ms_litmus")) this.textures.remove("ms_litmus");
+    if (this.textures.exists(STAGE)) this.textures.remove(STAGE);
   }
 
   shutdown() {
+    if (this.textures.exists(STAGE)) this.textures.remove(STAGE);
     this._built = false;
     this.clearSceneTimeout(this._drainTimer); this._drainTimer = null;
     this.tweens.killAll();

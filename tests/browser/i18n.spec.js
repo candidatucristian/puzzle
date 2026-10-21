@@ -80,3 +80,36 @@ test('i18n switcher dynamically updates UI language and persists preference', as
   await expect(page.locator('#language-select')).toHaveValue('ro');
   await expect(page.locator('#btn-map [data-i18n="header.map"]')).toHaveText('Hartă');
 });
+
+test('hall and room floor names are properly translated in Romanian and Russian', async ({ page }) => {
+  await open(page);
+
+  // Set Romanian language
+  await evaluateApp(page, ({ services }) => services.i18n.setLanguage('ro'));
+
+  // Go to Hall
+  await evaluateApp(page, ({ services }) => services.levels.enterHall());
+  const floorEl = page.locator('#header-floor');
+  await expect(floorEl.locator('.floor-name')).toHaveText('Holul Botanicii');
+  await expect(floorEl.locator('.floor-where')).toHaveCount(0); // not duplicated in its own hall
+
+  // Enter Room I (Study)
+  await evaluateApp(page, ({ services }) => services.levels.enterPlace('Study'));
+  await expect(floorEl.locator('.floor-name')).toHaveText('Camera I');
+  await expect(floorEl.locator('.floor-where')).toHaveText('Botanica'); // translated, NOT "The Botany"
+
+  // Open a puzzle in Room I (BinaryTree)
+  await evaluateApp(page, ({ services }) => services.levels.navigate(0));
+  await expect(floorEl.locator('.floor-where')).toHaveText('Botanica');
+
+  // Switch to Russian
+  await evaluateApp(page, ({ services }) => services.i18n.setLanguage('ru'));
+  await evaluateApp(page, ({ services }) => services.levels.enterPlace('Study'));
+  await expect(floorEl.locator('.floor-name')).toHaveText('Комната I');
+  await expect(floorEl.locator('.floor-where')).toHaveText('Ботаника');
+
+  // Switch to English
+  await evaluateApp(page, ({ services }) => services.i18n.setLanguage('en'));
+  await expect(floorEl.locator('.floor-name')).toHaveText('Room I');
+  await expect(floorEl.locator('.floor-where')).toHaveText('The Botany');
+});

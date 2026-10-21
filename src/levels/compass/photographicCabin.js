@@ -1,20 +1,19 @@
-import { makeCanvas, polygon, vignette } from "../../shared/paint.js";
+import { makeCanvas, vignette } from "../../shared/paint.js";
 
-export const CABIN_PHOTOGRAPH = "compass_photographic_cabin_v1";
+export const CABIN_PHOTOGRAPH = "compass_photographic_cabin_solid_oak_v2";
 const PROPS = "compass_photographic_props_v1";
 const cache = new WeakMap();
 
 export function loadCabinPhotography(scene) {
-  for (const [key, file] of [[CABIN_PHOTOGRAPH, "cabin-photographic-v1.webp"], [PROPS, "nautical-props-v1.webp"]]) {
+  for (const [key, file] of [[CABIN_PHOTOGRAPH, "cabin-solid-oak-v2.webp"], [PROPS, "nautical-props-v1.webp"]]) {
     if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Compass/${file}`);
   }
 }
 
-function cell(image, col, row, trim = true) {
+function cell(image, col, row) {
   const w = Math.floor(image.width / 2), h = Math.floor(image.height / 2);
   const canvas = makeCanvas(w, h), ctx = canvas.getContext("2d", { willReadFrequently: true });
   ctx.drawImage(image, col * w, row * h, w, h, 0, 0, w, h);
-  if (!trim) return canvas;
   const { data } = ctx.getImageData(0, 0, w, h);
   let left = w, right = -1, top = h, bottom = -1;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -31,7 +30,7 @@ export function cabinPhotography(scene) {
   if (![CABIN_PHOTOGRAPH, PROPS].every(key => scene.textures.exists(key))) return null;
   const image = scene.textures.get(PROPS).getSourceImage();
   if (cache.has(image)) return cache.get(image);
-  const art = { compass: cell(image, 0, 0), lantern: cell(image, 1, 0), candle: cell(image, 0, 1), sea: cell(image, 1, 1, false) };
+  const art = { compass: cell(image, 0, 0), lantern: cell(image, 1, 0), candle: cell(image, 0, 1) };
   cache.set(image, art);
   return art;
 }
@@ -40,11 +39,6 @@ export function alignCabinPhotography(L, art) {
   if (!art) return;
   const sx = L.W / 1659, sy = L.H / 948;
   L.nauticalPhoto = art;
-  L.win = { ...L.win, x: 830 * sx, top: 208 * sy, spring: 208 * sy, sill: 466 * sy, hw: 268 * sx, cy: 337 * sy };
-  L.beam.top = {
-    x0: L.win.x - L.win.hw * 0.9, x1: L.win.x + L.win.hw * 0.85,
-    y: L.win.sill - (L.win.sill - L.win.top) * 0.1,
-  };
   L.candle = { ...L.candle, x: 681 * sx, y: 617 * sy, flameY: 543 * sy, size: 22 * sy };
   L.map = { ...L.map, x: 650 * sx, y: 740 * sy, w: 220 * sx, h: 80 * sy };
 }
@@ -52,34 +46,9 @@ export function alignCabinPhotography(L, art) {
 export function paintCabinPhotography(ctx, scene, L) {
   if (!L.nauticalPhoto) return false;
   ctx.drawImage(scene.textures.get(CABIN_PHOTOGRAPH).getSourceImage(), 0, 0, L.W, L.H);
-  // Only the glass openings are transparent. The photographed timber, bolts,
-  // curtains and mullions stay in front of the moving photographic sea.
-  const panes = [
-    [[580, 208], [716, 208], [716, 466], [562, 466]],
-    [[747, 208], [912, 208], [912, 466], [747, 466]],
-    [[943, 208], [1078, 208], [1097, 466], [943, 466]],
-  ];
-  ctx.save(); ctx.globalCompositeOperation = "destination-out"; ctx.fillStyle = "#000";
-  for (const pane of panes) {
-    polygon(ctx, pane.map(([x, y]) => ({ x: x * L.W / 1659, y: y * L.H / 948 }))); ctx.fill();
-  }
-  ctx.restore(); vignette(ctx, L.W, L.H, 0.15);
+  // The solid oak wall stays opaque; no exterior layer shows through it.
+  vignette(ctx, L.W, L.H, 0.15);
   return true;
-}
-
-export function paintPhotographicSea(L) {
-  if (!L.nauticalPhoto) return null;
-  const w = Math.ceil(L.win.hw * 2.6), h = Math.ceil((L.win.sill - L.win.top) * 1.4);
-  const sky = makeCanvas(w, h), g = sky.getContext("2d", { willReadFrequently: true });
-  const image = L.nauticalPhoto.sea, cropH = Math.min(image.height, image.width * h / w);
-  g.drawImage(image, 0, (image.height - cropH) * 0.3, image.width, cropH, 0, 0, w, h);
-  const glitter = makeCanvas(w, h), gc = glitter.getContext("2d"), pixels = g.getImageData(0, 0, w, h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const i = (y * w + x) * 4, luma = pixels.data[i] * 0.25 + pixels.data[i + 1] * 0.5 + pixels.data[i + 2] * 0.25;
-    pixels.data[i + 3] = y < h * 0.5 ? 0 : Math.min(56, Math.max(0, luma - 45));
-  }
-  gc.putImageData(pixels, 0, 0);
-  return { sky, glitter };
 }
 
 export function paintPhotographicCompass(ctx, L, cx, cy) {

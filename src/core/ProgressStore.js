@@ -7,15 +7,17 @@ export const PROGRESS_VERSION = 3;
 export class ProgressStore {
   #storage;
   #definitions;
+  #legacyLevelIds;
   #state;
 
-  constructor(storage, definitions) {
+  constructor(storage, definitions, {legacyLevelIds} = {}) {
     if (!definitions?.length || new Set(definitions.map(({ id }) => id)).size !== definitions.length ||
       definitions.some(({ id }) => typeof id !== "string" || !id)) {
       throw new TypeError("Progress requires non-empty, unique level IDs.");
     }
     this.#storage = storage instanceof SafeStorage ? storage : new SafeStorage(storage);
     this.#definitions = definitions.map(({ id }) => ({ id }));
+    this.#legacyLevelIds = legacyLevelIds ?? this.#definitions.map(({id})=>id);
     this.#state = this.#load();
     this.#save();
   }
@@ -187,13 +189,21 @@ export class ProgressStore {
       else if (index === 14) index = 13;
       else if (index >= 12) index = 12;
     }
-    index = Math.min(index, this.#definitions.length - 1);
+    index = Math.min(index, this.#legacyLevelIds.length - 1);
+    const valid = new Set(this.#definitions.map(({id})=>id));
+    const completedLevelIds = this.#legacyLevelIds.slice(0,index).filter(id=>valid.has(id));
+    // A retired numeric slot advances to the next surviving identity. Other
+    // completed puzzles, house keys and modern ID saves keep their meaning.
+    const lastPlayedLevelId = this.#legacyLevelIds.slice(index).find(id=>valid.has(id)) ?? this.#definitions.at(-1).id;
+    const unlockedLevelIds = [...new Set([
+      ...this.#legacyLevelIds.slice(0,index+1).filter(id=>valid.has(id)),lastPlayedLevelId,
+    ])];
     return {
       version: PROGRESS_VERSION,
       // The legacy value was highest unlocked, not highest completed.
-      completedLevelIds: this.#definitions.slice(0, index).map(({ id }) => id),
-      unlockedLevelIds: this.#definitions.slice(0, index + 1).map(({ id }) => id),
-      lastPlayedLevelId: this.#definitions[index].id,
+      completedLevelIds,
+      unlockedLevelIds,
+      lastPlayedLevelId,
       keys: [],
       usedKeys: [],
       visitedPlaces: [],

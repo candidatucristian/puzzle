@@ -1,10 +1,11 @@
 import { soft, grain, vignette, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 import { MOLECULES } from "./puzzle.js";
+import { drawMoleculeSketch } from "./sketch.js";
 
 /** Silas's laboratory notebook, open on his desk under the lamp: an old
  *  green cloth binding, the block of pages thick at either side, the paper
  *  aged and faintly squared. On each page one molecule, drawn in ink — the
- *  atoms as shaded spheres, the bonds between them, those behind fainter —
+ *  atoms as graphite outlines and single bonds, hidden edges dashed —
  *  and under it a few words of his; nothing names it. The page's number at
  *  its foot.
  *
@@ -15,9 +16,7 @@ import { MOLECULES } from "./puzzle.js";
 
 export const BOOK = { desk: "mo_desk", light: "mo_light", flip: "mo_flip" };
 export const NOTEBOOK_PHOTO = "mo_open_book_photo";
-export const MOLECULAR_MODELS = "mo_molecular_models";
 const R = 2; // the pages are painted at twice their size, for crisp ink
-const _INK = "#2a1f14";
 const HAND = '"Cormorant Garamond", Georgia, "Times New Roman", serif'; // his hand: an old book's italic
 
 // The photographed notebook's own measure, in its pixels (1536 x 1024): the
@@ -64,10 +63,10 @@ export function layoutBook(W, H, near = 1) {
 
 // the desk is a texture; the pages and the spine's shading are canvases,
 // handed to the page turner, which draws them
-export function paintBook(textures, L, photo, models) {
+export function paintBook(textures, L, photo) {
   addCanvasTexture(textures, BOOK.desk, paintDesk(L, photo));
   addCanvasTexture(textures, BOOK.light, paintLight(L));
-  return { shade: paintShade(L), faces: MOLECULES.map((m, i) => paintPage(L, m, i, photo, models)) };
+  return { shade: paintShade(L), faces: MOLECULES.map((m, i) => paintPage(L, m, i, photo)) };
 }
 
 export function releaseBook(textures) {
@@ -152,7 +151,7 @@ function paintShade(L) {
 // leaf is turned: the whole reach of a leaf from the spine, out of the
 // photograph, cut to the top sheet's own shape — so a leaf lifted is one
 // sheet, and the edges of the pages under it stay where they are.
-function paintPage(L, m, index, photo, models) {
+function paintPage(L, m, index, photo) {
   const lw = Math.round(L.pw * R), lh = Math.round(L.ph * R);
   const c = makeCanvas(lw, lh);
   const g = c.getContext("2d");
@@ -166,12 +165,12 @@ function paintPage(L, m, index, photo, models) {
   const pw = N.box.w * k, ph = N.box.h * k;
   g.save();
   g.translate(((right ? N.box.right : N.box.left) - x0) * k, (N.box.top - N.top) * k);
-  // Real molecular-model cutouts replace the old pencil-style illustrations.
-  const cx = pw / 2, cy = ph * 0.44, size = pw * 0.3;
-  if (m.symbol === "S") drawCrown(g, cx, cy, size, m.color);
-  else drawModelCutout(g, models, m.symbol, pw, ph);
-  // A short, story-like observation sits below each model, without naming it.
-  drawDescription(g, m.description, pw, ph);
+  drawPageHeading(g, pw, ph, index);
+  const caption=drawMoleculeSketch(g,m,pw*.5,ph*.37,pw*.24);
+  g.fillStyle="rgba(53,43,31,.65)";g.textAlign="center";
+  g.font=`italic 500 ${Math.round(ph*.027)}px ${HAND}`;
+  g.fillText(caption,pw*.5,ph*.55);
+  drawNotes(g,m.notes,pw,ph);
   g.restore();
   // the page's number, at the outer foot, a little in from the sheet's edge
   g.font = `400 ${Math.round(ph * 0.036)}px Georgia, "Times New Roman", serif`;
@@ -190,120 +189,38 @@ function paintPage(L, m, index, photo, models) {
   return c;
 }
 
-function drawModelCutout(g, models, symbol, pw, ph) {
-  const cell = 627;
-  const source = {
-    H: { x: cell, y: 0 },
-    I: { x: 0, y: cell },
-    P: { x: cell, y: cell },
-  }[symbol];
-  if (!source) return;
-  g.imageSmoothingQuality = "high";
-  g.drawImage(models, source.x, source.y, cell, cell, pw * 0.06, ph * 0.15, pw * 0.88, ph * 0.58);
+function drawPageHeading(g, pw, ph, index) {
+  g.fillStyle="rgba(54,44,32,.68)";
+  g.font=`500 ${Math.round(ph*.024)}px Georgia, serif`;
+  g.textAlign="left";g.textBaseline="alphabetic";
+  g.fillText("LABORATORY NOTES",pw*.15,ph*.13);
+  g.textAlign="right";
+  g.fillText(["I","II","III","IV"][index],pw*.85,ph*.13);
+  g.strokeStyle="rgba(70,51,30,.25)";g.lineWidth=Math.max(1,ph*.001);
+  g.beginPath();g.moveTo(pw*.15,ph*.16);g.lineTo(pw*.85,ph*.16);g.stroke();
 }
 
-function drawDescription(g, text, pw, ph) {
-  const x = pw * 0.13;
-  const maxWidth = pw * 0.74;
-  const fontSize = Math.max(18 * R, Math.round(ph * 0.039));
-  g.fillStyle = "rgba(48,35,24,0.88)";
-  g.textAlign = "left";
-  g.textBaseline = "alphabetic";
-  g.font = `italic 500 ${fontSize}px ${HAND}`;
-  const words = text.split(/\s+/);
-  const lines = [];
-  let line = "";
-  for (const word of words) {
-    const test = line ? `${line} ${word}` : word;
-    if (line && g.measureText(test).width > maxWidth) {
-      lines.push(line);
-      line = word;
-    } else line = test;
+function drawNotes(g, notes, pw, ph) {
+  const x=pw*.15,maxWidth=pw*.7;
+  const fontSize=Math.max(20,ph*.028),lineHeight=fontSize*1.28;
+  g.textAlign="left";g.textBaseline="alphabetic";
+  g.fillStyle="rgba(48,39,29,.83)";
+  g.font=`italic 500 ${Math.round(ph*.035)}px ${HAND}`;
+  g.fillText("Observations",x,ph*.62);
+  g.font=`500 ${fontSize}px ${HAND}`;
+  let y=ph*.675;
+  for(const text of notes) {
+    const words=text.split(/\s+/),lines=[];let line="";
+    for(const word of words) {
+      const next=line?line+" "+word:word;
+      if(line&&g.measureText(next).width>maxWidth-fontSize*.9){lines.push(line);line=word;}else line=next;
+    }
+    if(line)lines.push(line);
+    g.fillStyle="rgba(48,39,29,.7)";g.fillText("–",x,y);
+    g.fillStyle="rgba(48,39,29,.92)";
+    for(const part of lines){g.fillText(part,x+fontSize*.9,y);y+=lineHeight;}
+    y+=fontSize*.34;
   }
-  if (line) lines.push(line);
-  const lineHeight = fontSize * 1.22;
-  const firstY = ph * 0.76;
-  lines.slice(0, 3).forEach((part, i) => g.fillText(part, x, firstY + i * lineHeight, maxWidth));
-}
-
-// ── the molecules ───────────────────────────────────────────────────────────
-
-// Smooth, glossy molecular-model spheres in familiar laboratory colors.
-function atom(g, x, y, r, color, back = false) {
-  g.save();
-  g.globalAlpha = back ? 0.68 : 1;
-  g.shadowColor = "rgba(20,15,10,0.32)";
-  g.shadowBlur = r * 0.16;
-  g.shadowOffsetX = r * 0.08;
-  g.shadowOffsetY = r * 0.1;
-  const s = g.createRadialGradient(x - r * 0.38, y - r * 0.42, r * 0.06, x + r * 0.12, y + r * 0.12, r * 1.08);
-  s.addColorStop(0, "#fffdf4");
-  s.addColorStop(0.12, tint(color, 1.18));
-  s.addColorStop(0.55, color);
-  s.addColorStop(0.84, tint(color, 0.68));
-  s.addColorStop(1, tint(color, 0.38));
-  g.fillStyle = s; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-  g.shadowColor = "transparent";
-  g.strokeStyle = "rgba(255,248,227,0.42)"; g.lineWidth = Math.max(0.8 * R, r * 0.018);
-  g.beginPath(); g.arc(x, y, r * 0.985, 0, Math.PI * 2); g.stroke();
-  const glint = g.createRadialGradient(x - r * 0.38, y - r * 0.42, 0, x - r * 0.32, y - r * 0.35, r * 0.43);
-  glint.addColorStop(0, "rgba(255,255,255,0.92)");
-  glint.addColorStop(0.24, "rgba(255,255,255,0.45)");
-  glint.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = glint; g.beginPath(); g.ellipse(x - r * 0.3, y - r * 0.34, r * 0.32, r * 0.23, -0.6, 0, Math.PI * 2); g.fill();
-  g.restore();
-}
-function tint(hex, factor) {
-  const value = Number.parseInt(hex.slice(1), 16);
-  const r = Math.min(255, Math.round(((value >> 16) & 255) * factor));
-  const g = Math.min(255, Math.round(((value >> 8) & 255) * factor));
-  const b = Math.min(255, Math.round((value & 255) * factor));
-  return `rgb(${r},${g},${b})`;
-}
-function bond(g, a, b, back = false) {
-  g.save();
-  g.globalAlpha = back ? 0.62 : 1;
-  g.lineCap = "round";
-  g.strokeStyle = "rgba(29,34,34,0.64)"; g.lineWidth = 8 * R;
-  g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
-  const shine = g.createLinearGradient(a[0], a[1] - 3 * R, b[0], b[1] + 3 * R);
-  shine.addColorStop(0, "#d3cdb7"); shine.addColorStop(0.45, "#797f78"); shine.addColorStop(1, "#e8e0c8");
-  g.strokeStyle = shine; g.lineWidth = 4.3 * R;
-  g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
-  g.strokeStyle = "rgba(255,255,255,0.34)"; g.lineWidth = 0.85 * R;
-  g.beginPath(); g.moveTo(a[0], a[1] - 1.1 * R); g.lineTo(b[0], b[1] - 1.1 * R); g.stroke();
-  g.restore();
-}
-
-// sulfur: eight atoms in a puckered ring, a crown seen a little from above
-function drawCrown(g, cx, cy, R0, color) {
-  const pts = Array.from({ length: 8 }, (_, i) => {
-    const a = (i / 8) * Math.PI * 2;
-    return { x: cx + Math.cos(a) * R0, y: cy + Math.sin(a) * R0 * 0.42 + (i % 2 ? -R0 * 0.24 : R0 * 0.24), depth: Math.sin(a) };
-  });
-  const r = R0 * 0.2;
-  for (let i = 0; i < 8; i++) {
-    const p = pts[i], q = pts[(i + 1) % 8];
-    bond(g, [p.x, p.y], [q.x, q.y], (p.depth + q.depth) / 2 < 0);
-  }
-  for (const p of [...pts].sort((a, b) => a.depth - b.depth)) atom(g, p.x, p.y, r, color, p.depth < -0.3);
-}
-
-// hydrogen, iodine: two atoms held together — small or large
-function _drawPair(g, cx, cy, r, color) {
-  const d = r * 0.95;
-  bond(g, [cx - d, cy], [cx + d, cy]);
-  atom(g, cx - d, cy, r, color);
-  atom(g, cx + d, cy, r, color);
-}
-
-// phosphorus: four atoms at the corners of a pyramid, the bonds behind dashed
-function _drawTetra(g, cx, cy, R0, color) {
-  const A = [cx - R0 * 0.95, cy + R0 * 0.5], B = [cx + R0 * 0.95, cy + R0 * 0.5], C = [cx + R0 * 0.2, cy + R0 * 0.02], D = [cx - R0 * 0.05, cy - R0 * 0.9];
-  bond(g, A, C, true); bond(g, B, C, true); bond(g, C, D, true);
-  atom(g, C[0], C[1], R0 * 0.24, color, true);
-  bond(g, A, B); bond(g, A, D); bond(g, B, D);
-  for (const p of [A, B, D]) atom(g, p[0], p[1], R0 * 0.26, color);
 }
 
 // ── on the desk ─────────────────────────────────────────────────────────────

@@ -29,14 +29,14 @@ test('the production build opens every level through the real UI from a subdirec
       failedAssets.push(`${resource.failure()?.errorText} ${resource.url()}`);
     }
   });
-  await page.addInitScript(lastIndex => {
+  await page.addInitScript(() => {
     localStorage.setItem('puzzleProgressSchema', '2');
-    localStorage.setItem('puzzleUnlockedLevel', String(lastIndex));
+    localStorage.setItem('puzzleUnlockedLevel', '40');
     localStorage.setItem('hasPlayedBefore', 'true');
     localStorage.setItem('house:entered', 'true');
     localStorage.setItem('caseFile:letters', JSON.stringify(['invitation']));
     localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced' }));
-  }, LEVEL_METADATA.length - 1);
+  });
   await page.goto('/');
   await expect(page).toHaveURL(/\/puzzle\/$/);
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });

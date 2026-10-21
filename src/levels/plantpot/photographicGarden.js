@@ -1,7 +1,7 @@
 import { makeCanvas, soft } from "../../shared/paint.js";
 
 const GARDEN = { key: "pp_botanical_garden_photo", url: "assets/images/PlantPot/botanical-garden.webp" };
-const BENCH = { key: "pp_potting_bench_photo", url: "assets/images/PlantPot/potting-bench-materials.webp" };
+const BENCH = { key: "pp_potting_bench_night_v2", url: "assets/images/PlantPot/potting-bench-night-v2.webp" };
 const graded = new WeakMap();
 
 export function loadPhotographicGarden(scene) {
@@ -15,9 +15,9 @@ export function gardenPhotographs(scene) {
   const bench = source(BENCH.key);
   if (bench && !graded.has(bench)) {
     const canvas = makeCanvas(bench.width, bench.height), g = canvas.getContext("2d");
-    // Grade once, retaining the alpha between the legs. Projection uses
-    // plain strips, without applying a filter separately to every strip.
-    g.filter = "brightness(0.72) saturate(0.78)";
+    // One photographic object, with the same restrained night exposure as
+    // the terrace. Alpha stays intact between all four legs.
+    g.filter = "brightness(.86) saturate(.8)";
     g.drawImage(bench, 0, 0);
     graded.set(bench, canvas);
   }
@@ -30,28 +30,20 @@ export function paintGardenPhotograph(L, photo) {
   return canvas;
 }
 
-export function paintPhotographicBench(ctx, L, depth) {
+export function paintPhotographicBench(ctx, L) {
   const photo = L.benchPhoto;
   if (!photo) return false;
-  const { cm, bench, at, H } = L;
+  const { cm, bench, at } = L;
   const x0 = at(bench.x0 - 3, 0).x, x1 = at(bench.x1 + 2, 0).x;
-  const back = at(0, -depth / 2).y, front = at(0, depth / 2).y;
-  const bottom = H * 0.97;
-  soft(ctx, (x0 + x1) / 2, bottom, (x1 - x0) * 0.53, 5 * cm, "0,0,0", 0.42);
-
-  // Photographic landmarks: the far and near tabletop edges and the feet.
-  // Follow the original bench plane so the existing pot, bucket and lantern
-  // keep their positions and rest on the same working surface at every size.
-  const sy0 = photo.height * 0.073, sy1 = photo.height * 0.348;
-  for (let sy = sy0; sy < sy1; sy += 2) {
-    const sh = Math.min(2, sy1 - sy), t = (sy - sy0) / (sy1 - sy0);
-    const left = photo.width * (0.081 + (0.004 - 0.081) * t);
-    const right = photo.width * (0.922 + (0.996 - 0.922) * t);
-    const dx = x0 + 5 * cm * (1 - t), dw = x1 - x0 - 10 * cm * (1 - t);
-    const y = back + (front - back) * t;
-    ctx.drawImage(photo, left, sy, right - left, sh, dx, y, dw, (front - back) * sh / (sy1 - sy0) + 0.4);
+  // Keep the photographed perspective and proportions: no separate stretch
+  // of tabletop strips or legs. The middle of its top is the working plane.
+  const width=(x1-x0)/.98,height=width*photo.height/photo.width;
+  const x=x0-width*.01,y=bench.y-height*.174,feet=y+height*.943;
+  soft(ctx,x+width*.5,feet-1.2*cm,width*.48,5.5*cm,"0,0,0",.18);
+  for(const fx of [.081,.918]) {
+    soft(ctx,x+width*fx,feet,4.6*cm,1.35*cm,"0,0,0",.58);
+    soft(ctx,x+width*fx+4*cm,feet-.5*cm,8*cm,2*cm,"0,0,0",.2);
   }
-  ctx.drawImage(photo, photo.width * 0.004, sy1, photo.width * 0.992, photo.height * 0.932 - sy1,
-    x0, front, x1 - x0, bottom - front);
+  ctx.drawImage(photo,x,y,width,height);
   return true;
 }

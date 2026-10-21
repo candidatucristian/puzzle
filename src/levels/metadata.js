@@ -33,11 +33,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Dragging the bucket to the pot waters the plant; five pours add branches with 1, 1, 2, 3 and 5 leaves. The growing pattern is the Fibonacci sequence. An outdoor botanical garden surrounds the oak potting bench: mature trees, flower beds, ferns and a distant glasshouse. The lantern, pot and bucket remain on the bench; the scenery contains no written formula. The name of the sequence gives FIBO or FIBONACCI.",
+    "description": "Dragging the bucket to the pot waters the plant; five pours add branches with 1, 1, 2, 3 and 5 leaves. Four photographic laurel leaf variants unfold from fine curved stems with photographed bark, rooted in real compost in a weathered terracotta pot. The growing pattern is the Fibonacci sequence. An outdoor botanical garden surrounds an oak potting table, shown in its natural proportions with warm lantern light, cool moonlight and foot contact shadows. Mature trees, flower beds, ferns and a distant glasshouse surround it. The lantern, pot and bucket rest on the tabletop; the scenery contains no written formula. The name of the sequence gives FIBO or FIBONACCI.",
     "references": [
       "LEAF_DEFS (PlantPotScene.js) — the leaves each pour brings: 1, 1, 2, 3 and 5, and where on the new branch they grow",
       "SEGMENTS — the plant's five branches, one per pour, in cm from the soil; paintStems() (plant.js) draws them as they grow",
-      "triggerPour() / _pourPoint() — dragging the bucket over the pot tips it and pours"
+      "triggerPour() / _pourPoint() — dragging the bucket over the pot tips it and pours",
+      "plantpot/photographicPlant.js and photographicGarden.js — alpha-cropped botanical sprites, petiole anchors and a uniformly scaled photographic table; realism-assets.md records assets and prompts"
     ]
   },
   {
@@ -200,7 +201,7 @@ const metadata = [
     "id": "wires",
     "key": "Wires",
     "name": "Before Sunrise",
-    "summary": "Birds settle on the wires above a farmhouse at dawn.",
+    "summary": "A framed farmhouse at dawn, with six birds perched on five wires.",
     "code": "FACADE",
     "altCode": null,
     "hint": {
@@ -208,10 +209,10 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "Six birds perch on five overhead wires, read bottom to top as D, F, A, C, E. From left to right their positions spell F, A, C, A, D, E. The scene is the minute before sunrise on a country hill — the dawn's early light the Star-Spangled Banner opens with — with a farmhouse below, its porch lantern still lit and an old man in a rocking chair playing the harmonica. The harmonica recording and drifting notes are atmosphere; listening and playing an instrument are not required to solve the puzzle.",
+    "description": "Room IV's framed picture shows the minute before sunrise on a country hill: a photographic farmhouse, its warm porch lantern, and an old man in a rocking chair playing the harmonica. Six real sparrows perch on five overhead wires, read bottom to top as D, F, A, C, E. From left to right their positions spell F, A, C, A, D, E. The small picture on the room wall and its framed close-up use the same exact composition. The picture is still; the optional harmonica recording is atmosphere. Listening or playing an instrument is not required. This picture replaces the former pedestrian-crossing puzzle.",
     "references": [
-      "WI_BIRDS — each bird’s wire position encodes one letter",
-      "meadow.js wireY() — the five wires the birds are placed on",
+      "wires/puzzle.js WIRE_BIRDS and WIRE_NOTES — six birds, five wire positions, FACADE",
+      "wires/photographicPainting.js — exact native wires and photographed sparrows composed over the farmhouse, shared by the room and framed close-up",
       "Optional ambience: assets/sounds/Wires/music.mp3"
     ]
   },
@@ -255,6 +256,7 @@ const metadata = [
   },
   {
     "id": "crossing",
+    "retired": true,
     "key": "Crossing",
     "name": "The Painted Crossing",
     "summary": "A painting of a quiet street at night, and its worn pedestrian crossing.",
@@ -325,8 +327,9 @@ const metadata = [
     "description": "In Room VI, the boy's dark mahogany cot and its mobile use the same photographic toys as the close-up. Inside, moonlight falls on worn turned wood, an ivory moon-and-star cotton sheet and a teal nursery wall. Twenty objects fill the mattress. Fifteen are fixed decorations: his pillow, knitted bootees, mohair teddy, wooden rattle, knitted rabbit, folded blanket, wooden duck, tin locomotive, rocking horse, building cubes, leather ball, stacking rings, spinning top, fire engine and linen elephant. Only the five clue objects can be moved and clicked; the rest have no interaction or hover effect. Positions and active interactions survive resizing. Initially, left to right, the five are a walnut tango music box with turning porcelain dancers, a gold Oscar replica, a red book inscribed Romeo and Juliet, a Chaplin figurine that raises its felt bowler, and a cream wooden hotel with an entrance canopy, HOTEL sign, reception bell and guest-room windows that light when the bell rings. The room's story mentions the little hotel among his belongings, making its identity explicit. Their radio-alphabet words give TORCH. Clicking activates each toy; dragging moves it without accidentally triggering its action. Reduced motion keeps the toys usable with restrained effects.",
     "references": [
       "TOYS (cot/puzzle.js) — the five left to right, the radio word each is and where each lies in the cot; cotWord() spells TORCH",
-      "cot/photography.js and art.js — photographic nursery plate, isolated real toys, soft belongings, felt mobile shapes and calibrated moving parts; fifteen fixed belongings are painted into the mattress while only the five clues remain live objects; a photographic mahogany hoop and cotton suspension lines replace the drawn mobile ring",
-      "CotScene — the five answer a click (the tango and its turning dancers, a glint, the book lifted, the hat raised, the bell and the lit windows); the mobile turns on its own",
+      "cot/photography.js and art.js — photographic nursery, fifteen fixed belongings, a mahogany mobile hoop and cotton suspension lines",
+      "cot/stage3d.js, toys3d.js and materials3d.js — five true 3D toys with sculpted figures, rounded joinery, photographic wood and textile surfaces, brass hardware, framed hotel windows and live shadows; toy-materials.md records the generated atlas and prompt",
+      "CotScene — the five answer a click (the tango and its turning dancers, a glint, the book opened, the hat raised, the bell and the lit windows), can be carried within reach, and keep their positions on resize; the mobile turns on its own",
       "cot/inRoom.js and room6/photographicRoom.js — a matching photographic cot and mobile in the room overview, the same five toy photos behind a front-spindle mask, and the calibrated cot interaction area"
     ]
   },
@@ -429,7 +432,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A pirate ship at night, the captain’s cabin seen whole: the hull’s ribs, the deck beams, a cannon at its port, barrels and rope, the ship’s colours, a swinging lantern, the timbers creaking, and at the far end the stern window open on the moonlit sea. On the chart table stands a brass compass in its box, its card ruled to the degree (0 to 330 numbered, N E S W lettered), and its needle has gone mad: it spins, then stops on one bearing after another. Beside it lies an envelope sealed in red wax; clicked, it opens on a map showing an island with a dotted way to an X and a treasure chest, and four lines of bearings: 180 180 90 / 270 180 180 90 90 0 0 270 / 270 270 180 90 90 180 270 270 / 90 90 270 180 180. North is 0, east 90, south 180, west 270; each bearing is one step that way and each line draws one letter — down, down, right is L — so the four walks write L O S T. The needle points out the same bearings line by line, a spin between letters, a kick off and back where a bearing repeats; a tap on the glass starts it again from the first letter.",
+    "description": "A pirate ship at night, the captain’s cabin seen whole: the hull’s ribs, the deck beams, a cannon at its port, barrels and rope, the ship’s colours, a swinging lantern, the timbers creaking, and solid oak planking across the stern wall, with no windows or exterior view. On the chart table stands a brass compass in its box, its card ruled to the degree (0 to 330 numbered, N E S W lettered), and its needle has gone mad: it spins, then stops on one bearing after another. Beside it lies an envelope sealed in red wax; clicked, it opens on a map showing an island with a dotted way to an X and a treasure chest, and four lines of bearings: 180 180 90 / 270 180 180 90 90 0 0 270 / 270 270 180 90 90 180 270 270 / 90 90 270 180 180. North is 0, east 90, south 180, west 270; each bearing is one step that way and each line draws one letter — down, down, right is L — so the four walks write L O S T. The needle points out the same bearings line by line, a spin between letters, a kick off and back where a bearing repeats; a tap on the glass starts it again from the first letter.",
     "references": [
       "COMPASS_BEARINGS (compass/puzzle.js) — the four lines of the map, one letter each",
       "walk() / drawBearings() — one unit step per bearing (0 up, 90 right, 180 down, 270 left); drawBearings shows the letter as # marks",
@@ -710,10 +713,10 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "In Silas's laboratory (Room VII) his notebook stands among the books of the bookcase on the right wall — a click draws it a little way out of the shelf and it opens by itself — and it lies open on a desk under the lamp. Its four pages each draw one element as its molecule — sulfur as a crown of eight atoms, hydrogen as a small pair, iodine as a large pair, phosphorus as a tetrahedron of four — with a note of his under it (a crown of eight; the lightest of all; violet, when it is warmed; four, in a pyramid) and no formula or symbol written: the molecules are S₈, H₂, I₂, P₄. Two pages show at a time; clicking the right page turns forward, the left page back. Recognising each element and reading their symbols in page order spells SHIP.",
+    "description": "In Silas's laboratory (Room VII) his notebook stands among the books of the bookcase on the right wall — a click draws it a little way out of the shelf and it opens by itself — and it lies open on a desk under the lamp. Four pages carry graphite chemistry diagrams, each followed by observations about appearance, structure and properties: a puckered ring of eight atoms in a yellow crystalline solid; a small pair in the lightest gas; a larger pair in dark crystals that give a violet vapour; a tetrahedron of four in a white waxy solid. The names, formulas and symbols are not printed: the molecules are S₈, H₂, I₂, P₄. Two pages show at a time; clicking the right page turns forward, the left page back. Recognising each element and reading their symbols in page order spells SHIP.",
     "references": [
       "MOLECULES (molecules/puzzle.js) — the four pages in order; readNotebook() spells SHIP",
-      "molecules/book.js paintPage() — each page's molecule and note, no letters; drawCrown() / drawPair() / drawTetra()",
+      "molecules/book.js paintPage() and molecules/sketch.js drawMoleculeSketch() — graphite diagrams with three observations per page; chemistry-notes.md records sources",
       "MoleculesScene — two pages at a time, turned by clicking the right page (forward) or the left (back)"
     ]
   },
@@ -800,7 +803,9 @@ const metadata = [
   }
 ];
 
-export const LEVEL_METADATA = Object.freeze(metadata.map((level) => Object.freeze({
+// Preserve the pre-retirement numeric save order; current progress uses IDs.
+export const LEGACY_LEVEL_IDS = Object.freeze(metadata.map(level=>level.id));
+export const LEVEL_METADATA = Object.freeze(metadata.filter(level=>!level.retired).map((level) => Object.freeze({
   ...level,
   hint: Object.freeze({ ...level.hint, steps: Object.freeze([level.hint.text, ...HINT_DETAILS[level.id]]) }),
   references: Object.freeze(level.references),

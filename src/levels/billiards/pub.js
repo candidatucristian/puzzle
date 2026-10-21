@@ -299,6 +299,19 @@ function paintWindow(ctx, L, Wp, rect) {
   const y1 = 300;
   const mid = Wp((x0 + x1) / 2, 130);
   L.win = { x: mid.x, y: mid.y, rx: (Wp(x1, 130).x - Wp(x0, 130).x) * 0.8, ry: (Wp(0, y0).y - Wp(0, 190).y) * 0.6 };
+  // its four panes, between the bars, for the rain on them
+  const pane = (xa, ya, xb, yb) => [Wp(xa, yb), Wp(xb, yb), Wp(xb, ya), Wp(xa, ya)].map((p) => [p.x, p.y]);
+  const bar = (x0 + x1) / 2;
+  L.rain = {
+    panes: [pane(x0, y0, bar - 2.6, 128), pane(bar + 2.6, y0, x1, 128), pane(x0, 133, bar - 2.6, y1), pane(bar + 2.6, 133, x1, y1)],
+    drop: Math.max(0.45, (L.W / 1920) * 0.7), fog: 0.5, reach: 22, beyond: 0.55,
+    // the sky's cold light from above; the lamp over the table, warm, from the right
+    lights: [
+      { dir: [-0.2, -0.7, 0.68], colour: [0.1, 0.13, 0.18] },
+      { dir: [0.7, -0.3, 0.65], colour: [0.32, 0.2, 0.08] },
+    ],
+    seed: 3131,
+  };
   // the frame, standing a little proud of the wall
   rect(x0 - 9, y0 - 9, x1 + 9, y1);
   ctx.fillStyle = "#24140b";
@@ -345,33 +358,7 @@ function paintWindow(ctx, L, Wp, rect) {
     soft(ctx, p.x, p.y, rad * p.s, rad * p.s * 0.85, col, a, "lighter");
     soft(ctx, p.x, p.y, rad * p.s * 0.3, rad * p.s * 0.28, "255,250,235", a * 0.8, "lighter");
   }
-  // rain: runs down the pane, and the beads between them
-  ctx.lineCap = "round";
-  for (let i = 0; i < 90; i++) {
-    const X = x0 + rnd() * (x1 - x0);
-    const Y = y0 + rnd() * 120;
-    const len = 6 + rnd() * 26;
-    const a = Wp(X, Y + len);
-    const b = Wp(X + (rnd() - 0.5) * 2.4, Y);
-    ctx.strokeStyle = `rgba(200,220,245,${(0.08 + rnd() * 0.2).toFixed(2)})`;
-    ctx.lineWidth = Math.max(0.6, (0.5 + rnd() * 0.9) * u);
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
-    ctx.fillStyle = "rgba(225,238,255,0.5)";
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, Math.max(0.8, 1.1 * u), 0, Math.PI * 2);
-    ctx.fill();
-  }
-  for (let i = 0; i < 160; i++) {
-    const p = Wp(x0 + rnd() * (x1 - x0), y0 + rnd() * 120);
-    ctx.fillStyle = `rgba(215,230,250,${(0.12 + rnd() * 0.3).toFixed(2)})`;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, (0.5 + rnd() * 1.1) * u, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.lineCap = "butt";
+  // (the rain on it is live, over the painting: shared/rainGlass.js)
   // the room's dark, reflected faintly in the glass
   ctx.fillStyle = "rgba(4,8,14,0.22)";
   ctx.fillRect(0, 0, L.W, L.H);

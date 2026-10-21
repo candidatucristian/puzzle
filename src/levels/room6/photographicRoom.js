@@ -6,6 +6,7 @@ import { HERBARIUM_COVER } from "../herbarium/photography.js";
 import { paintCotInRoom } from "../cot/inRoom.js";
 import { loadCotPhotography } from "../cot/photography.js";
 import { NURSERY_PORTRAIT, paintNurseryPortrait } from "./nurseryPortraits.js";
+import { onScreen } from "../../shared/phaserRain.js";
 import {
   paintMedal, TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL,
   TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL,
@@ -23,6 +24,23 @@ export function room6HerbariumQuad(L) {
   return [[676, 592], [794, 589], [790, 560], [684, 562]].map(([x, y]) => ({ x: x * sx, y: y * sy }));
 }
 const REFERENCE = { width: 1792, height: 1024 };
+// The arched window's six panes, in the photograph's pixels: the two under the
+// arch, then two and two between the bars; and the fern's fronds standing in
+// front of the lowest left one. The rain is on that glass (shared/rainGlass.js).
+const arch = (from, to) => Array.from({ length: 9 }, (_, i) => {
+  const a = ((from + ((to - from) * i) / 8) * Math.PI) / 180;
+  return [677 + 75 * Math.cos(a), 232 - 72 * Math.sin(a)];
+});
+const WINDOW_PANES = [
+  [...arch(180, 95), [671, 270], [602, 270]],
+  [...arch(85, 0), [752, 270], [683, 270]],
+  [[602, 275], [671, 275], [671, 377], [602, 377]],
+  [[683, 275], [752, 275], [752, 377], [683, 377]],
+  [[602, 384], [671, 384], [671, 485], [602, 485]],
+  [[683, 384], [752, 384], [752, 485], [683, 485]],
+];
+const FERN = [[596, 487], [601, 470], [606, 466], [614, 462], [620, 457], [626, 455], [631, 462], [629, 470],
+  [635, 473], [643, 473], [650, 475], [647, 481], [641, 487]];
 
 export function loadRoom6Photography(scene) {
   loadCotPhotography(scene, true);
@@ -55,6 +73,11 @@ export function alignRoom6Photography(L, window) {
     x: window.x * L.half, hw: window.hw * L.half,
   };
   L.photographic = true;
+  L.rain = {
+    panes: WINDOW_PANES.map((points) => onScreen(points, PHOTO, L.W, L.H)),
+    cutouts: [onScreen(FERN, PHOTO, L.W, L.H)],
+    drop: Math.max(0.45, (L.W / 1920) * 0.62), fog: 0.45, reach: 22, beyond: 0.5, seed: 6606,
+  };
 }
 
 // The photographed cabinet sits at a slight angle to the room's side wall.

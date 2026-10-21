@@ -2,7 +2,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { noiseBurst } from "../../shared/paint.js";
 import { cleanBookPhoto } from "../../shared/bookPhoto.js";
 import { PageFlip, holdBook, bringNear } from "../../shared/pageFlip.js";
-import { BOOK, MOLECULAR_MODELS, NOTEBOOK_PHOTO, layoutBook, paintBook, releaseBook } from "./book.js";
+import { BOOK, NOTEBOOK_PHOTO, layoutBook, paintBook, releaseBook } from "./book.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "MOLECULES"  ·  code: SHIP  ·  Silas's notebook
@@ -39,9 +39,6 @@ export default class MoleculesScene extends BasePuzzleScene {
     if (!this.textures.exists(NOTEBOOK_PHOTO)) {
       this.load.image(NOTEBOOK_PHOTO, "assets/images/Molecules/notebook-open.webp");
     }
-    if (!this.textures.exists(MOLECULAR_MODELS)) {
-      this.load.image(MOLECULAR_MODELS, "assets/images/Molecules/molecular-models.webp");
-    }
   }
 
   create() {
@@ -69,8 +66,7 @@ export default class MoleculesScene extends BasePuzzleScene {
     const L = (this._L = layoutBook(W, H, NEAR));
     // (its baked-in chequer cleared, shared/bookPhoto.js)
     const photo = cleanBookPhoto(this.textures.get(NOTEBOOK_PHOTO).getSourceImage());
-    const models = this.textures.get(MOLECULAR_MODELS).getSourceImage();
-    const { faces, shade } = paintBook(this.textures, L, photo, models);
+    const { faces, shade } = paintBook(this.textures, L, photo);
     this.add.image(L.view.x, L.view.y, BOOK.desk).setOrigin(0, 0).setDepth(-10);
     this.add.image(L.view.x, L.view.y, BOOK.light).setOrigin(0, 0).setDepth(5);
     this._flip = new PageFlip(this, {

@@ -234,7 +234,8 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
     for (const [i, floor] of PLAN.entries()) {
       const f = el("g", { transform: `translate(${floor.x},0)` }, ink);
       // the floor's name, lettered over it
-      text(f, 160, 66, "floor-title", floor.title.toUpperCase());
+      const floorTitle = i18n ? i18n.getFloorName(floor.title) : floor.title;
+      text(f, 160, 66, "floor-title", floorTitle.toUpperCase());
       el("path", { d: "M92,78 H146 M174,78 H228", class: "floor-rule" }, f);
       el("path", { d: "M160,74 l4,4 l-4,4 l-4,-4 Z", class: "floor-diamond" }, f);
       text(f, 160, 96, "floor-roman", `— ${floor.roman} —`);

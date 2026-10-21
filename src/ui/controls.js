@@ -158,6 +158,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     if (event?.type === 'keydown' && event.target !== document.body && !start.contains(event.target)) return;
     if (started || prologueOn || transitions.busy || dialogs.isOpen || start.classList.contains('hidden')) return;
     started = true; sessionStart = Date.now();
+    // The fixed door marker must be gone before the manor starts moving.
+    start.classList.add('is-entering');
     // a phone's first tap is the one gesture that may take the whole screen
     if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
     // the way in — the door, or any key — leads to the hall; its doors lead
@@ -190,7 +192,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     }
     film.style.transformOrigin = '0 0';
     const close = film.animate(frames, { duration: WALK_MS, easing: 'linear', fill: 'forwards' });
-    const gone = [door, byId('start-legend'), start.querySelector('.manor-story')].filter(Boolean)
+    const gone = [byId('start-legend'), start.querySelector('.manor-story')].filter(Boolean)
       .map(el => el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out', fill: 'forwards' }));
     entering = [close, ...gone];
     footsteps.walk(WALK_MS + 900);
@@ -240,7 +242,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
   function goOutside() {
     completion.hide(); mobile?.close();
     film = raiseFilm();
-    start.classList.remove('hidden');
+    start.classList.remove('hidden', 'is-entering');
     outside(true);
     started = false;
     progressUI.render();

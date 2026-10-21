@@ -1,7 +1,6 @@
-import { makeCanvas, soft, vignette } from "../../shared/paint.js";
+import { soft, vignette } from "../../shared/paint.js";
 import { roomLayout, thingAt } from "../house/roomKit.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
-import { paintCrossingPhoto, code39Bars } from "../crossing/street.js";
 
 export const ROOM4_INTERIOR = "room4_photographic_interior_v2";
 const REF = { width: 1792, height: 1024 };
@@ -41,7 +40,7 @@ export function alignRoom4PhotoObjects(L) {
   L.win = { ...L.win, cx: 1037 * sx, rx: 60 * sx, top: 138 * sy, sill: 342 * sy };
   L.painting.photoQuad = quad([[110, 230], [232, 269], [230, 408], [109, 410]]);
   L.things[0] = thingAt("sequence", "Look at the cards", quad([[449, 261], [785, 261], [785, 398], [449, 398]]));
-  L.things[1] = thingAt("crossing", "Look at the painting", quad([[93, 192], [251, 247], [245, 436], [90, 436]]));
+  L.things[1] = thingAt("wires", "Look at the painting", quad([[93, 192], [251, 247], [245, 436], [90, 436]]));
   L.glows = {
     desk: { ...point(448, 430), r: 92 * sy },
     picture: { ...point(613, 243), r: 68 * sy },
@@ -52,7 +51,7 @@ export function alignRoom4PhotoObjects(L) {
   L.cabinetCandle = { x: worldX(1023, 574), y: worldY(490, 574), d: 574 };
 }
 
-export function paintRoom4Interior(ctx, scene, L, cards, crossing) {
+export function paintRoom4Interior(ctx, scene, L, cards, painting) {
   if (!L.photographic) return false;
   ctx.drawImage(scene.textures.get(ROOM4_INTERIOR).getSourceImage(), 0, 0, L.W, L.H);
   const sx = L.W / SOURCE.width, sy = L.H / SOURCE.height;
@@ -64,9 +63,7 @@ export function paintRoom4Interior(ctx, scene, L, cards, crossing) {
   const centres = [493, 543, 593, 643, 693, 743];
   cards.forEach((value, index) => ctx.fillText(String(value), centres[index] * sx, 333 * sy));
   ctx.restore();
-  // Keep the original street and exact worn crossing clue inside the real frame.
-  const painting = makeCanvas(640, 360);
-  paintCrossingPhoto(painting.getContext("2d"), 640, 360, crossing, code39Bars("GO"));
+  // The same exact six birds and five wires appear in the room and close-up.
   const [a, b, c, d] = L.painting.photoQuad;
   paintProjectedMaterial(ctx, painting, (u, v) => ({
     x: a.x * (1 - u) * (1 - v) + b.x * u * (1 - v) + c.x * u * v + d.x * (1 - u) * v,

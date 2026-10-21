@@ -1,4 +1,5 @@
 import { makeCanvas, vignette } from "../../shared/paint.js";
+import { onScreen } from "../../shared/phaserRain.js";
 
 const ROOM = "measures_laboratory_photo_v1";
 const GLASS = "measures_glass_photo_v1";
@@ -13,6 +14,20 @@ export function loadMeasuresPhotography(scene) {
   }
 }
 
+// The window over the sink, in the photograph's pixels (1586 x 992): its four
+// panes, the oil can standing on the sill in front of the last of them, and
+// the foot of the window, which nothing carried is lifted past.
+const PHOTO = { width: 1586, height: 992 };
+const WINDOW_PANES = [
+  [[597, 0], [737, 0], [737, 158], [597, 158]],
+  [[748, 0], [890, 0], [890, 158], [748, 158]],
+  [[900, 0], [1047, 0], [1047, 158], [900, 158]],
+  [[1060, 0], [1201, 0], [1201, 158], [1060, 158]],
+];
+const OIL_CAN = [[1129, 111], [1136, 109], [1192, 121], [1203, 121], [1203, 162], [1166, 162], [1170, 150],
+  [1184, 147], [1186, 132], [1130, 118]];
+const SILL = 176;
+
 export function alignMeasuresPhotography(scene, L) {
   if (!scene.textures.exists(ROOM)) return;
   L.photographic = true;
@@ -21,6 +36,18 @@ export function alignMeasuresPhotography(scene, L) {
   L.sink.drain = { x: L.W * .186, y: L.H * .723 };
   L.sink.hitY = L.H * .65;
   L.sink.hitH = L.H * .20;
+  L.sill = L.H * SILL / PHOTO.height;
+  L.rain = {
+    panes: WINDOW_PANES.map((points) => onScreen(points, PHOTO, L.W, L.H)),
+    cutouts: [onScreen(OIL_CAN, PHOTO, L.W, L.H)],
+    drop: Math.max(0.5, (L.W / 1920) * 0.85), fog: 0.5, reach: 24, beyond: 0.5,
+    // the moon, over the trees; the lamp on the wall, warm, on the right
+    lights: [
+      { dir: [-0.1, -0.75, 0.65], colour: [0.14, 0.18, 0.25] },
+      { dir: [0.75, -0.15, 0.65], colour: [0.26, 0.17, 0.08] },
+    ],
+    seed: 9902,
+  };
 }
 
 export function photographRoom(scene, L) {

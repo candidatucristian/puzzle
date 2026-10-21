@@ -15,6 +15,7 @@ if (handheld) {
 // Do not even import Phaser's game entry on a phone or tablet. The device
 // check is independent of viewport size and orientation.
 export const ready = handheld ? Promise.resolve(null) : startGame();
+ready.then(app => { if (app && typeof window !== 'undefined') window.__descipher = app; });
 
 function startGame() {
   const loading = createLoadingScreen();

@@ -9,6 +9,7 @@ import { chemistryHallMaterials, paintChemistryBulb, paintHallSconcePhoto } from
 import { botanicHallMaterials, paintBotanicFloor, paintBotanicGrass } from "./botanicMaterials.js";
 import { atticMaterials } from "../top/atticMaterials.js";
 import { paintAtticForeground, paintAtticShade } from "../top/attic.js";
+import { paintAtticDoorHandle } from "../top/atticDoor.js";
 import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
 import { paintChemistryStairs, staircaseArt } from "./staircase.js";
 
@@ -1256,6 +1257,10 @@ function paintDoor(ctx, L, d) {
 
 // The knob turns before the latch releases, then its spring returns it.
 function paintDoorHandle(ctx, L, d, f) {
+  if (L.theme === "attic") {
+    paintAtticDoorHandle(ctx, L, d, f);
+    return;
+  }
   const k = f(0.86, 0.53);
   const kr = Math.max(2, (9 * L.u) / d.z);
   ctx.fillStyle = "#3a2a10";

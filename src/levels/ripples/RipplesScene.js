@@ -2,6 +2,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { makeCanvas, addCanvasTexture, releaseTextures, lcg } from "../../shared/paint.js";
 import { RIPPLE_STONES, RIPPLE_TARGETS, RIPPLE_ROUND_MS, RIPPLE_CYCLE_MS, rippleLayout, rippleFrame, convergence } from "./puzzle.js";
 import { RIPPLE_ART, STONE_FONT, paintStreet, neonReflection } from "./street.js";
+import { addRainFall } from "../../shared/phaserRain.js";
 
 export default class RipplesScene extends BasePuzzleScene {
   constructor() { super({ key: "Ripples" }); }
@@ -25,7 +26,10 @@ export default class RipplesScene extends BasePuzzleScene {
     this._reflection = neonReflection(this._waterCanvas.width, this._waterCanvas.height);
     this.add.image(0, 0, RIPPLE_ART.water).setOrigin(0).setDisplaySize(W, H).setDepth(-9);
     this._rings = this.add.graphics().setDepth(-5);
-    this._rain = this.add.graphics().setDepth(4);
+    // the rain falling over it all, lit by the neon it falls past; it rings
+    // nothing — the rings on the water are the puzzle's own
+    const falling = addRainFall(this, { picture: this.textures.get(RIPPLE_ART.street).getSourceImage(), width: W, height: H, depth: 4, density: 0.32, wind: 0.2, seed: 2607 });
+    this._rain = falling ? null : this.add.graphics().setDepth(4);
     const random = lcg(2607);
     this._rainLines = Array.from({ length: 80 }, () => ({ x: random(), y: random(), speed: 0.3 + random() * 0.65, length: 5 + random() * 14 }));
     this._letters = RIPPLE_STONES.map(stone => ({
@@ -103,8 +107,8 @@ export default class RipplesScene extends BasePuzzleScene {
       this._drawWater(waves);
       this._waterAt = this._elapsed;
     }
-    this._rain.clear();
-    if (this.ambientMotion) {
+    this._rain?.clear();
+    if (this._rain && this.ambientMotion) {
       for (const line of this._rainLines) {
         const y = ((line.y + this._elapsed * 0.00035 * line.speed) % 1) * L.height;
         const x = line.x * L.width;

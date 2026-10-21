@@ -1,4 +1,5 @@
 import { makeCanvas, addCanvas, softEllipse, lcg } from "./garden.js";
+import { plantPhotographs } from "./photographicPlant.js";
 
 /** The things on the bench that the puzzle is made of: the terracotta pot,
  *  the plant that grows from it, and the zinc bucket of water — painted in
@@ -7,7 +8,7 @@ import { makeCanvas, addCanvas, softEllipse, lcg } from "./garden.js";
  *
  *  The pot comes in two images, so the stems rise from the soil behind its
  *  rim. The stems are painted live onto a canvas as they grow (paintStems);
- *  the leaves are the level's own leaf image, placed by the scene. The
+ *  the leaves are four botanical photographs, placed by the scene. The
  *  bucket is painted once per water level, full to empty. */
 
 export const RES = 2; // texture pixels per screen pixel
@@ -25,6 +26,7 @@ const K = {
   bucket: "pp_bucket_",
   shadow: "pp_bucket_shadow",
   drop: "pp_drop",
+  leaf: "pp_laurel_leaf_",
 };
 export const WATER_LEVELS = 6; // full … empty
 
@@ -32,7 +34,8 @@ export const WATER_LEVELS = 6; // full … empty
  *  centimetre. */
 export function paintPlantArt(textures, cm) {
   const px = cm * RES;
-  const pot = paintPot(px);
+  const photographs = plantPhotographs(textures);
+  const pot = paintPot(px, photographs?.pot);
   addCanvas(textures, K.potBack, pot.back);
   addCanvas(textures, K.potFront, pot.front);
   addCanvas(textures, K.wet, pot.wet);
@@ -46,18 +49,25 @@ export function paintPlantArt(textures, cm) {
   }
   addCanvas(textures, K.shadow, paintBucketShadow(px));
   addCanvas(textures, K.drop, paintDrop());
+  const leaves = photographs?.leaves.map((leaf,i) => {
+    const key=K.leaf+i;addCanvas(textures,key,leaf.image);
+    return {key,ox:leaf.ox,oy:leaf.oy,height:leaf.image.height};
+  });
   return {
     pot: { back: K.potBack, front: K.potFront, wet: K.wet, ox: pot.ox, oy: pot.oy, wetAt: pot.wetAt },
     buckets,
     bucketOrigin,
     shadow: K.shadow,
     drop: K.drop,
+    leaves,
+    bark: photographs?.stem,
   };
 }
 
 export function releasePlantArt(textures) {
   const keys = [K.potBack, K.potFront, K.wet, K.shadow, K.drop];
   for (let i = 0; i < WATER_LEVELS; i++) keys.push(K.bucket + i);
+  for (let i = 0; i < 4; i++) keys.push(K.leaf + i);
   for (const key of keys) if (textures.exists(key)) textures.remove(key);
 }
 
@@ -70,7 +80,7 @@ export function releasePlantArt(textures) {
 // warm and bright there and goes to shadow round the right, with a thread
 // of moonlight on the far edge. Throwing rings, salt bloom, a little moss
 // low down, a chip out of the rim, as old pots have.
-function paintPot(px) {
+function paintPot(px, photograph) {
   const P = POT;
   const pad = 2;
   const x0 = -P.rimR - pad;
@@ -301,6 +311,14 @@ function paintPot(px) {
   g.ellipse(0, yTop, R - 0.1, (R - 0.1) * TILT, 0, Math.PI * 1.55, Math.PI * 2);
   g.stroke();
 
+  if (photograph) {
+    // Keep the pot's physical width and natural aspect. Its compost lies at
+    // the same soil anchor as the live stem, behind the photographed lip.
+    g.clearRect(x0,y0,x1-x0,y1-y0);
+    const height=22*photograph.height/photograph.width;
+    g.drawImage(photograph,-11,-height,22,height);
+  }
+
   // ── the front of the pot goes over the stems: everything this side of the
   // rim's inner edge, taken from what has just been painted
   const f = front.g;
@@ -346,7 +364,7 @@ function paintPot(px) {
  *  the soil; grown[i] 0–1 how much of each; lantern the flame, in the same
  *  cm. Young wood, olive going brown toward the base, lit on the side toward
  *  the lantern and edged with moonlight on the right. */
-export function paintStems(ctx, px, origin, segs, grown, lantern) {
+export function paintStems(ctx, px, origin, segs, grown, lantern, bark) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.setTransform(px, 0, 0, px, origin.x, origin.y);
@@ -390,6 +408,17 @@ export function paintStems(ctx, px, origin, segs, grown, lantern) {
     ctx.fill(path);
     ctx.save();
     ctx.clip(path);
+    if (bark) {
+      // Carry the photographed bark along the curve, rather than stretching
+      // a straight stem across its bounding rectangle.
+      for(let k=1;k<pts.length;k++) {
+        const a=pts[k-1],b=pts[k],length=Math.hypot(b.x-a.x,b.y-a.y);
+        const sy=bark.height*(1-k/N*g),sh=Math.min(bark.height-sy,bark.height*g/N+1);
+        ctx.save();ctx.translate(a.x,a.y);ctx.rotate(Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2);
+        ctx.drawImage(bark,bark.width*.38,sy,bark.width*.24,sh,-a.w*.7,-length-.06,a.w*1.4,length+.12);
+        ctx.restore();
+      }
+    }
     // light from the lantern along the side that faces it, shade on the other
     for (let k = 1; k < pts.length; k++) {
       const p = pts[k];
@@ -402,21 +431,21 @@ export function paintStems(ctx, px, origin, segs, grown, lantern) {
       const warm = 0.25 + 0.75 * near;
       const s0 = facing > 0 ? left : right;
       const s1 = facing > 0 ? right : left;
-      ctx.strokeStyle = `rgba(255,190,120,${0.55 * warm * Math.abs(facing)})`;
+      ctx.strokeStyle = `rgba(255,202,143,${0.42 * warm * Math.abs(facing)})`;
       ctx.lineWidth = p.w * 0.45;
       ctx.beginPath();
       ctx.moveTo((s0[k - 1][0] + pts[k - 1].x) / 2, (s0[k - 1][1] + pts[k - 1].y) / 2);
       ctx.lineTo((s0[k][0] + p.x) / 2, (s0[k][1] + p.y) / 2);
       ctx.stroke();
-      ctx.strokeStyle = "rgba(10,8,4,0.45)";
+      ctx.strokeStyle = "rgba(10,8,4,0.28)";
       ctx.beginPath();
       ctx.moveTo((s1[k - 1][0] + pts[k - 1].x) / 2, (s1[k - 1][1] + pts[k - 1].y) / 2);
       ctx.lineTo((s1[k][0] + p.x) / 2, (s1[k][1] + p.y) / 2);
       ctx.stroke();
     }
     // the moon's thread down the right-hand edge
-    ctx.strokeStyle = "rgba(170,190,225,0.4)";
-    ctx.lineWidth = 0.18;
+    ctx.strokeStyle = "rgba(184,204,229,0.45)";
+    ctx.lineWidth = 0.13;
     ctx.beginPath();
     const rim = left[0][2] > 0 ? left : right;
     rim.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));

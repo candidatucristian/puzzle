@@ -1,13 +1,13 @@
 import { makeCanvas, addCanvasTexture, vignette, soft } from "../../shared/paint.js";
 import { roomLayout } from "../house/roomKit.js";
 
-export const STUDY_PHOTOGRAPH = "study_photographic_room_v1";
+export const STUDY_PHOTOGRAPH = "study_photographic_room_ajar_fixed_v3";
 export const STUDY_FLAME = "sd_photographic_flame";
 const REFERENCE = { width: 1792, height: 1024 };
 
 export function loadStudyPhotography(scene) {
   if (!scene.textures.exists(STUDY_PHOTOGRAPH)) {
-    scene.load.image(STUDY_PHOTOGRAPH, "assets/images/Room1/room1-photographic-v1.webp");
+    scene.load.image(STUDY_PHOTOGRAPH, "assets/images/Room1/room1-window-ajar-fixed-v3.webp");
   }
 }
 

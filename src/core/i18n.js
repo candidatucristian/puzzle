@@ -73,11 +73,25 @@ export class I18n {
     const localePlace = this.#locales[this.#lang]?.places?.[placeKey];
     const defaultPlace = this.#locales[DEFAULT_LANGUAGE]?.places?.[placeKey];
     if (!localePlace && !defaultPlace) return null;
+    const floor = localePlace?.floor ?? defaultPlace?.floor;
     return {
       name: localePlace?.name ?? defaultPlace?.name,
-      floor: localePlace?.floor ?? defaultPlace?.floor,
+      floor: floor ? this.getFloorName(floor) : undefined,
       story: localePlace?.story ?? defaultPlace?.story ?? [],
     };
+  }
+
+  getFloorName(floorKey) {
+    if (!floorKey) return "";
+    const raw = String(floorKey).toLowerCase();
+    let key = "botany";
+    if (raw.includes("botan")) key = "botany";
+    else if (raw.includes("chem") || raw.includes("chim")) key = "chemistry";
+    else if (raw.includes("phys") || raw.includes("fiz")) key = "physics";
+    else if (raw.includes("base") || raw.includes("cellar") || raw.includes("subsol") || raw.includes("podval")) key = "basement";
+
+    const translated = this.t(`floors.${key}`);
+    return translated || floorKey;
   }
 
   getOpening() {

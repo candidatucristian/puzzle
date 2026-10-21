@@ -51,6 +51,7 @@
 /* The front door, in the film: the hand shows over it and it glints, as the
    things to be opened inside the house do. */
 #start-door { position:absolute; z-index:1; cursor:pointer; }
+#start-screen.is-entering #start-door { visibility:hidden; pointer-events:none; }
 /* the glint is drawn on a canvas a little larger than the door, so its stars
    can stand just outside the frame and drift up off it */
 #start-door-glint { position:absolute; left:-40px; top:-40px; pointer-events:none; mix-blend-mode:screen; }

@@ -11,7 +11,6 @@ import TelescopeScene from "./telescope/TelescopeScene.js";
 import WiresScene from "./wires/WiresScene.js";
 import TicketsScene from "./station/TicketsScene.js";
 import TreeScene from "./pi/TreeScene.js";
-import CrossingScene from "./crossing/CrossingScene.js";
 import FlagsScene from "./flags/FlagsScene.js";
 import HerbariumScene from "./herbarium/HerbariumScene.js";
 import CotScene from "./cot/CotScene.js";
@@ -54,7 +53,6 @@ const scenes = {
   Wires: WiresScene,
   Station: TicketsScene,
   Pi: TreeScene,
-  Crossing: CrossingScene,
   Flags: FlagsScene,
   Herbarium: HerbariumScene,
   Cot: CotScene,

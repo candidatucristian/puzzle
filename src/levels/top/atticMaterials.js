@@ -3,7 +3,7 @@ import { makeCanvas } from "../../shared/paint.js";
 const ASSETS = {
   backdrop: { key: "attic_passage_wood_v3", url: "assets/images/Attic/narrow-passage-wood-v3.webp" },
   details: { key: "attic_details_photo", url: "assets/images/Attic/details.webp" },
-  door: { key: "attic_worn_door_photo_v1", url: "assets/images/Attic/walnut-door-worn-v1.webp" },
+  door: { key: "attic_plank_door_photo_v2", url: "assets/images/Attic/aged-plank-door-v2.webp" },
 };
 const cache = new WeakMap();
 
@@ -32,13 +32,15 @@ export function atticMaterials(scene) {
       return x1 < x0 ? raw : crop(raw, x0, y0, x1 - x0 + 1, y1 - y0 + 1, 0.9);
     };
     const wood = sources.door;
-    const oak = crop(wood, 6, 6, wood.width * 0.068, wood.height - 12, 0.43);
+    // An uninterrupted strip from the right plank keeps iron hinges out of
+    // the timber architrave; the same aged oak belongs to both surfaces.
+    const oak = crop(wood, wood.width * 0.9, 8, wood.width * 0.075, wood.height - 16, 0.55);
     const across = makeCanvas(oak.height, oak.width), g = across.getContext("2d");
     g.translate(0, across.height); g.rotate(-Math.PI / 2); g.drawImage(oak, 0, 0);
     const lantern = trim(sources.details, [sources.details.width * 0.72, 0, sources.details.width * 0.28, sources.details.height]);
     cache.set(sources.backdrop, {
       backdrop: sources.backdrop, oak, across, lantern,
-      door: crop(wood, 0, 0, wood.width, wood.height, 0.48),
+      door: crop(wood, 0, 0, wood.width, wood.height, 0.62),
     });
   }
   return cache.get(sources.backdrop);

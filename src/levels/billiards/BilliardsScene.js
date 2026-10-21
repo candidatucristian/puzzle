@@ -23,6 +23,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { noiseBurst, chime } from "../../shared/paint.js";
 import { layoutPub, paintPub, releasePubArt } from "./pub.js";
+import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
 
 export default class BilliardsScene extends BasePuzzleScene {
   constructor() {
@@ -52,6 +53,8 @@ export default class BilliardsScene extends BasePuzzleScene {
     const k = art.keys;
     this._L = L;
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
+    // the rain on the window behind
+    if (L.rain) addRainGlass(this, { ...L.rain, rect: boxOf(L.rain.panes, 2), picture: this.textures.get(k.room).getSourceImage() });
 
     // the balls down in the marked pockets
     for (const p of art.pockets) {

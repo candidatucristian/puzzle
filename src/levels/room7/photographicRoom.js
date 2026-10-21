@@ -1,6 +1,7 @@
 import { addCanvasTexture, glowCanvas, makeCanvas, polygon, soft, vignette } from "../../shared/paint.js";
 import { thingAt } from "../house/roomKit.js";
 import { loadPhialsPhotography, photographPhialRack } from "../phials/photography.js";
+import { onScreen } from "../../shared/phaserRain.js";
 
 export const ROOM7_PHOTOGRAPH = "room7_photographic_interior_v1";
 const SOURCE = { width: 1659, height: 948 };
@@ -10,6 +11,18 @@ const SOURCE = { width: 1659, height: 948 };
 const RACK = { x: 1317, base: 541 };
 // The notebook remains a photographed book when it is pulled from the shelf.
 const NOTEBOOK = [[1507, 391], [1545, 395], [1533, 494], [1492, 488]];
+// The window's six panes, upper sash and lower, in the photograph's pixels,
+// and the catch where the sashes meet. The rain is on that glass
+// (shared/rainGlass.js).
+const WINDOW_PANES = [
+  [[936, 129], [1017, 129], [1017, 251], [936, 251]],
+  [[1029, 129], [1107, 129], [1107, 251], [1029, 251]],
+  [[1119, 129], [1199, 129], [1199, 251], [1119, 251]],
+  [[936, 267], [1018, 267], [1018, 453], [936, 453]],
+  [[1029, 267], [1109, 267], [1109, 453], [1029, 453]],
+  [[1121, 267], [1201, 267], [1201, 453], [1121, 453]],
+];
+const CATCH = [[1061, 244], [1077, 244], [1077, 253], [1061, 253]];
 
 export function loadRoom7Photography(scene) {
   if (!scene.textures.exists(ROOM7_PHOTOGRAPH)) {
@@ -34,6 +47,11 @@ export function alignRoom7Photography(L) {
     burner: { ...point(817, 497), r: 38 * sy },
   };
   L.photoUranium = { ...point(716, 493), r: 16 * sy };
+  L.rain = {
+    panes: WINDOW_PANES.map((points) => onScreen(points, SOURCE, L.W, L.H)),
+    cutouts: [onScreen(CATCH, SOURCE, L.W, L.H)],
+    drop: Math.max(0.45, (L.W / 1920) * 0.66), fog: 0.45, reach: 22, beyond: 0.5, seed: 7707,
+  };
 }
 
 export function paintRoom7Photography(scene, L, keys) {
