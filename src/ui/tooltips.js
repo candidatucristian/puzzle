@@ -1,7 +1,7 @@
 import { applyCursors } from "../shared/cursors.js";
 
-// Small notes that say what a control does: a slip of the notebook's paper
-// with the words in pencil, and the key for it where there is one, held
+// Small notes that say what a control does: a slip of old paper with the
+// words in pencil, and the key for it where there is one, held
 // under (or over) whatever the pointer rests on or the keyboard comes to.
 // Any control with a `title` or a `data-tip` has one — the title is taken
 // over, so the browser's own grey box never shows as well; a button that is

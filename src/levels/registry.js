@@ -14,6 +14,7 @@ import TreeScene from "./pi/TreeScene.js";
 import CrossingScene from "./crossing/CrossingScene.js";
 import FlagsScene from "./flags/FlagsScene.js";
 import HerbariumScene from "./herbarium/HerbariumScene.js";
+import CotScene from "./cot/CotScene.js";
 import TapCodeScene from "./tapcode/TapCodeScene.js";
 import RallyScene from "./rally/RallyScene.js";
 import OvertimeScene from "./overtime/Overtime.js";
@@ -56,6 +57,7 @@ const scenes = {
   Crossing: CrossingScene,
   Flags: FlagsScene,
   Herbarium: HerbariumScene,
+  Cot: CotScene,
   TapCode: TapCodeScene,
   Rally: RallyScene,
   Overtime: OvertimeScene,

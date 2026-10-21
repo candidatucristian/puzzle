@@ -3,15 +3,15 @@ import { PAGES } from "./puzzle.js";
 
 /** Ivy's herbarium, open on the console table under the window in Room VI:
  *  a photographed cloth-bound specimen album, its pages heavy and aged.
- *  On each page four or five real pressed botanical specimens,
+ *  On each page two large pressed botanical specimens,
  *  flat and faded, each held down by narrow
  *  strips of gummed paper, its Latin name under it in her hand; and on each
  *  page one of them drawn round in pencil with a figure of straight sides.
  *
  *  Painted once per screen size: the table with the book's binding on it;
  *  each page apart, to be turned (shared/pageFlip.js turns them); the shading
- *  where the pages curve into the spine. Transparent plant photographs retain
- *  their individual silhouettes. */
+ *  where the pages curve into the spine. Whole-page photographs retain fine leaf veins,
+ *  petal wrinkles, mounting strips and their natural contact shadows. */
 
 export const BOOK = { desk: "hb_desk", light: "hb_light", flip: "hb_flip" };
 export const FACES = PAGES.length + 1; // five pages of plants, and the last, inside the back cover
@@ -49,12 +49,12 @@ export function layoutBook(W, H, near = 1) {
 // the table is a texture; the pages and the spine's shading are canvases,
 // handed to the page turner, which draws them
 export function paintBook(textures, L, photography) {
-  const { book: photo, desk, specimens } = photography;
+  const { book: photo, desk, pages } = photography;
   addCanvasTexture(textures, BOOK.desk, paintDesk(L, photo, desk));
   addCanvasTexture(textures, BOOK.light, paintLight(L));
   return {
     shade: paintShade(L),
-    faces: Array.from({ length: FACES }, (_, i) => paintPage(L, i, photo, specimens)),
+    faces: Array.from({ length: FACES }, (_, i) => paintPage(L, i, photo, pages)),
   };
 }
 
@@ -135,62 +135,40 @@ function paintShade(L) {
 
 // ── a page ─────────────────────────────────────────────────────────────────
 
-// where the specimens lie on a page, as shares of it: five, or four
-const SLOTS = {
-  5: [[0.27, 0.17], [0.73, 0.17], [0.5, 0.47], [0.27, 0.76], [0.73, 0.76]],
-  4: [[0.27, 0.25], [0.73, 0.25], [0.27, 0.69], [0.73, 0.69]],
-};
-
 // A leaf as it is turned: the whole reach of a leaf from the spine, out of
 // the photograph, cut to the top sheet's own shape — so a leaf lifted is one
 // sheet, and the edges of the pages under it stay where they are.
-function paintPage(L, index, photo, specimens) {
+function paintPage(L, index, photo, pages) {
   const pw = Math.round(L.pw * R), ph = Math.round(L.ph * R);
   const c = makeCanvas(pw, ph), g = c.getContext("2d");
   const right = index % 2 === 1;
   const k = pw / ALBUM.leaf, x0 = right ? ALBUM.spine : ALBUM.spine - ALBUM.leaf;
-  // the page's paper, from the photographed book: its foxing and soft curl
   g.imageSmoothingQuality = "high";
   g.filter = "brightness(.83) saturate(.84)";
   g.drawImage(photo, x0, ALBUM.top, ALBUM.leaf, ALBUM.height, 0, 0, pw, ph);
   g.filter = "none";
-  // the sheet, in the leaf's pixels: what is written on is laid out on it
   const [sx0, sy0, sx1, sy1] = ALBUM.sheet[right ? 1 : 0];
   const S = { x: (sx0 - x0) * k, y: (sy0 - ALBUM.top) * k, w: (sx1 - sx0) * k, h: (sy1 - sy0) * k };
-  const page = PAGES[index];
-  if (page) {
-    const slots = SLOTS[page.length];
-    const sw = S.w * 0.36, sh = S.h * (page.length === 5 ? 0.18 : 0.22);
-    const size = Math.round(S.h * 0.026);
-    page.forEach((spec, n) => {
-      const [fx, fy] = slots[n], cx = S.x + S.w * fx, cy = S.y + S.h * fy;
-      const rnd = lcg(1000 + index * 37 + n * 11);
-      g.save();
-      g.translate(cx, cy);
-      g.rotate((rnd() - 0.5) * 0.22);
-      drawSpecimen(g, spec.kind, sw, sh, rnd, specimens.get(spec.name));
-      g.restore();
-      // the one drawn round, in pencil — round the plant; her label stays clear of it, below
-      let below = cy + sh * 0.62;
-      if (spec.sides) {
-        const r = S.w * (page.length === 5 ? .19 : .21), fy0 = cy + sh * 0.08;
-        drawFigure(g, cx, fy0, r, spec.sides, lcg(77 + index * 13));
-        below = Math.max(below, fy0 + r * 0.97 + size * 1.15);
-      }
-      // her label under it
-      g.font = `italic 500 ${size}px ${HAND}`;
-      g.fillStyle = "rgba(48,35,24,0.86)"; g.textAlign = "center"; g.textBaseline = "alphabetic";
-      g.fillText(spec.name, cx, below, S.w * 0.42);
-    });
-    // the page's number at its outer foot, in roman as she numbered them
-    g.font = `italic 500 ${Math.round(S.h * 0.03)}px ${HAND}`;
-    g.fillStyle = "rgba(48,35,24,0.6)"; g.textAlign = right ? "right" : "left";
-    g.fillText(["I", "II", "III", "IV", "V"][index], S.x + S.w * (right ? 0.92 : 0.08), S.y + S.h * 0.965);
+  const specimens = PAGES[index], photograph = pages[index];
+  if (specimens && photograph) {
+    g.save();
+    g.filter = "brightness(.83) saturate(.8)";
+    g.drawImage(photograph, S.x, S.y, S.w, S.h);
+    g.restore();
+    const size = Math.round(S.h * .031);
+    drawFigure(g, S, specimens[0].sides, lcg(77 + index * 13));
+    g.fillStyle = "rgba(45,32,22,.9)"; g.textAlign = "center"; g.textBaseline = "alphabetic";
+    g.font = `italic 500 ${size}px ${HAND}`;
+    g.fillText(specimens[0].name, S.x + S.w * .5, S.y + S.h * .598, S.w * .85);
+    g.font = `italic 500 ${Math.round(size * .88)}px ${HAND}`;
+    g.fillText(specimens[1].name, S.x + S.w * .5, S.y + S.h * .942, S.w * .8);
+    g.font = `italic 500 ${Math.round(S.h * .03)}px ${HAND}`;
+    g.fillStyle = "rgba(48,35,24,.6)"; g.textAlign = right ? "right" : "left";
+    g.fillText(["I", "II", "III", "IV", "V"][index], S.x + S.w * (right ? .92 : .08), S.y + S.h * .975);
   } else {
-    // inside the back cover: her name, small, in the corner, and the year
-    g.font = `italic 500 ${Math.round(S.h * 0.03)}px ${HAND}`;
-    g.fillStyle = "rgba(48,35,24,0.55)"; g.textAlign = "right";
-    g.fillText("I. Ashcombe · Ashcombe House, 1958", S.x + S.w * 0.9, S.y + S.h * 0.92);
+    g.font = `italic 500 ${Math.round(S.h * .03)}px ${HAND}`;
+    g.fillStyle = "rgba(48,35,24,.55)"; g.textAlign = "right";
+    g.fillText("I. Ashcombe · Ashcombe House, 1958", S.x + S.w * .9, S.y + S.h * .92);
   }
   cutToSheet(g, S, right, lcg(5 + index));
   return c;
@@ -219,257 +197,27 @@ function cutToSheet(g, S, right, rnd) {
   g.restore();
 }
 
-// A figure of `n` straight sides drawn round a specimen in pencil, by hand:
-// each side ruled straight, the corners plain — each side drawn a touch past
-// the corner, as a hand draws — so that they can be counted.
-function drawFigure(g, cx, cy, r, n, rnd) {
-  const turn = rnd() * Math.PI * 2;
-  const pts = Array.from({ length: n }, (_, i) => {
-    const a = turn + (i / n) * Math.PI * 2, rr = r * (0.96 + rnd() * 0.08);
-    return { x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr * 0.92 };
-  });
-  g.save();
-  g.lineCap = "round";
-  for (const [width, colour] of [[2.6 * R * 0.6, "rgba(70,72,80,0.5)"], [1.3 * R * 0.6, "rgba(52,54,62,0.85)"]]) {
+// Broad pencil polygons follow the mounting area. Their corners stay on
+// bare paper, outside the actual leaves, so every side can be counted.
+const FIGURES = {
+  4: [[.045, .025], [.955, .025], [.955, .615], [.045, .615]],
+  5: [[.045, .025], [.81, .025], [.955, .13], [.955, .615], [.045, .615]],
+  7: [[.16, .025], [.84, .025], [.955, .1], [.955, .55], [.84, .615], [.045, .615], [.045, .1]],
+  8: [[.13, .025], [.87, .025], [.955, .09], [.955, .55], [.87, .615], [.13, .615], [.045, .55], [.045, .09]],
+};
+
+function drawFigure(g, S, sides, rnd) {
+  const pts = FIGURES[sides].map(([x, y]) => ({ x: S.x + S.w * x, y: S.y + S.h * y }));
+  g.save(); g.lineCap = "round";
+  for (const [width, colour] of [[R * 1.3, "rgba(72,66,57,.24)"], [R * .65, "rgba(60,55,48,.67)"]]) {
     g.strokeStyle = colour; g.lineWidth = width;
-    for (let i = 0; i < n; i++) {
-      const a = pts[i], b = pts[(i + 1) % n];
-      const dx = b.x - a.x, dy = b.y - a.y, over = 0.05;
+    for (let i = 0; i < sides; i++) {
+      const a = pts[i], b = pts[(i + 1) % sides], dx = b.x - a.x, dy = b.y - a.y;
       g.beginPath();
-      g.moveTo(a.x - dx * over + (rnd() - 0.5) * R, a.y - dy * over + (rnd() - 0.5) * R);
-      g.lineTo(b.x + dx * over + (rnd() - 0.5) * R, b.y + dy * over + (rnd() - 0.5) * R);
+      g.moveTo(a.x - dx * .009 + (rnd() - .5) * R, a.y - dy * .009 + (rnd() - .5) * R);
+      g.lineTo(b.x + dx * .009 + (rnd() - .5) * R, b.y + dy * .009 + (rnd() - .5) * R);
       g.stroke();
     }
   }
   g.restore();
 }
-
-// ── the specimens ───────────────────────────────────────────────────────────
-
-// pressed plants: flat, their greens gone olive and brown
-const GREEN = ["#5f6c3c", "#55623a", "#6a7244", "#4e5a33", "#707a48"];
-const VEIN = "rgba(40,48,24,0.55)";
-const STEM = "#5a5432";
-const pick = (rnd, list) => list[Math.floor(rnd() * list.length)];
-
-function drawSpecimen(g, kind, w, h, rnd, photograph = null) {
-  const s = Math.min(w, h * 1.5);
-  const draw = SPECIMENS[kind] ?? SPECIMENS.ovate;
-  if (photograph) {
-    const scale = Math.min(w * .9 / photograph.width, h * .94 / photograph.height);
-    const width = photograph.width * scale, height = photograph.height * scale;
-    g.save();
-    g.shadowColor = "rgba(47,33,18,.3)"; g.shadowBlur = R * .8; g.shadowOffsetY = R * .7;
-    g.filter = "brightness(.83) saturate(.8)";
-    g.drawImage(photograph, -width / 2, -height / 2, width, height);
-    g.restore();
-  } else draw(g, w, h, s, rnd);
-  // the gummed strips that hold it down, across its stem
-  tape(g, (rnd() - 0.5) * w * 0.15, h * 0.3, w * 0.22, rnd);
-  if (rnd() < 0.6) tape(g, (rnd() - 0.5) * w * 0.3, -h * 0.05, w * 0.16, rnd);
-}
-
-function tape(g, x, y, len, rnd) {
-  g.save(); g.translate(x, y); g.rotate((rnd() - 0.5) * 0.5);
-  g.beginPath(); g.moveTo(-len / 2, -len * .14);
-  g.lineTo(len * .49, -len * .13); g.lineTo(len * .5, len * .12);
-  g.lineTo(-len * .48, len * .15); g.closePath();
-  const paper = g.createLinearGradient(0, -len * .14, 0, len * .14);
-  paper.addColorStop(0, "rgba(218,202,166,.8)"); paper.addColorStop(.4, "rgba(235,222,193,.86)");
-  paper.addColorStop(1, "rgba(191,170,130,.7)");
-  g.fillStyle = paper; g.fill();
-  g.strokeStyle = "rgba(117,96,64,.3)"; g.lineWidth = R * .35; g.stroke();
-  g.save(); g.clip();
-  for (let i = 0; i < 25; i++) {
-    g.fillStyle = `rgba(108,91,62,${.025 + rnd() * .08})`;
-    g.fillRect((rnd() - .5) * len, (rnd() - .5) * len * .28, R * .3, (1 + rnd() * 2) * R);
-  }
-  g.restore();
-  g.restore();
-}
-
-function stem(g, x0, y0, x1, y1, width, bend = 0) {
-  g.strokeStyle = STEM; g.lineWidth = width; g.lineCap = "round";
-  g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2 + bend, (y0 + y1) / 2, x1, y1); g.stroke();
-}
-
-// an ovate leaf from its base at (x, y), pointing at `a`, `len` long
-function leaf(g, x, y, a, len, wid, colour, { veins = 3, toothed = false } = {}) {
-  g.save(); g.translate(x, y); g.rotate(a);
-  g.beginPath(); g.moveTo(0, 0);
-  if (toothed) {
-    const n = 7;
-    for (let i = 1; i <= n; i++) { const t = i / n, ww = Math.sin(Math.PI * t) * wid; g.lineTo(len * t, -ww * (i % 2 ? 1.08 : 0.92)); }
-    for (let i = n - 1; i >= 0; i--) { const t = i / n, ww = Math.sin(Math.PI * t) * wid; g.lineTo(len * t, ww * (i % 2 ? 1.08 : 0.92)); }
-  } else {
-    g.quadraticCurveTo(len * 0.4, -wid * 1.25, len, 0);
-    g.quadraticCurveTo(len * 0.4, wid * 1.25, 0, 0);
-  }
-  g.closePath(); g.fillStyle = colour; g.fill();
-  g.strokeStyle = "rgba(30,36,18,0.35)"; g.lineWidth = R * 0.5; g.stroke();
-  g.strokeStyle = VEIN; g.lineWidth = R * 0.55;
-  g.beginPath(); g.moveTo(0, 0); g.lineTo(len * 0.94, 0); g.stroke();
-  for (let i = 1; i <= veins; i++) {
-    const t = i / (veins + 1);
-    g.beginPath(); g.moveTo(len * t, 0); g.lineTo(len * (t + 0.14), -wid * 0.7); g.moveTo(len * t, 0); g.lineTo(len * (t + 0.14), wid * 0.7); g.stroke();
-  }
-  g.restore();
-}
-
-// a leaf of `lobes` points spread like a hand (ivy, maple)
-function palmate(g, x, y, a, size, lobes, colour, depth = 0.45) {
-  g.save(); g.translate(x, y); g.rotate(a);
-  g.beginPath();
-  const n = lobes * 2;
-  for (let i = 0; i <= n; i++) {
-    const t = -Math.PI * 0.85 + (i / n) * Math.PI * 1.7;
-    const rr = i % 2 === 0 ? size * (1 - depth) : size * (i === lobes ? 1 : 0.82);
-    const px = Math.sin(t) * rr, py = -Math.cos(t) * rr;
-    if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
-  }
-  g.lineTo(0, size * 0.12); g.closePath();
-  g.fillStyle = colour; g.fill();
-  g.strokeStyle = "rgba(30,36,18,0.35)"; g.lineWidth = R * 0.5; g.stroke();
-  g.strokeStyle = VEIN; g.lineWidth = R * 0.5;
-  for (let i = 1; i < n; i += 2) {
-    const t = -Math.PI * 0.85 + (i / n) * Math.PI * 1.7;
-    g.beginPath(); g.moveTo(0, size * 0.05); g.lineTo(Math.sin(t) * size * 0.75, -Math.cos(t) * size * 0.75); g.stroke();
-  }
-  g.restore();
-}
-
-function flower(g, x, y, r, petals, colour, centre) {
-  for (let i = 0; i < petals; i++) {
-    const a = (i / petals) * Math.PI * 2;
-    g.save(); g.translate(x, y); g.rotate(a);
-    g.fillStyle = colour; g.beginPath(); g.ellipse(0, -r * 0.55, r * (petals > 8 ? 0.16 : 0.42), r * 0.55, 0, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = "rgba(90,70,50,0.25)"; g.lineWidth = R * 0.4; g.stroke();
-    g.restore();
-  }
-  g.fillStyle = centre; g.beginPath(); g.arc(x, y, r * (petals > 8 ? 0.3 : 0.22), 0, Math.PI * 2); g.fill();
-}
-
-const SPECIMENS = {
-  fern(g, w, h, s, rnd) {
-    const top = -h * 0.48, foot = h * 0.42, col = pick(rnd, GREEN);
-    stem(g, 0, foot, 0, top, R * 1.1, w * 0.04);
-    const n = 9;
-    for (let i = 0; i < n; i++) {
-      const t = i / n, y = foot - (foot - top) * (0.12 + t * 0.85), len = s * 0.34 * (1 - t * 0.75);
-      for (const side of [-1, 1]) leaf(g, side * R * 0.5, y, side > 0 ? -0.35 : Math.PI + 0.35, len, len * 0.22, col, { veins: 1, toothed: true });
-    }
-  },
-  daisy(g, w, h, s, rnd) {
-    stem(g, 0, h * 0.42, w * 0.03, -h * 0.2, R * 0.9, -w * 0.05);
-    for (const [x, a] of [[-w * 0.02, Math.PI * 0.82], [w * 0.02, Math.PI * 0.18]]) leaf(g, x, h * 0.38, -a, s * 0.24, s * 0.08, pick(rnd, GREEN), { veins: 1 });
-    flower(g, w * 0.03, -h * 0.26, s * 0.16, 16, "rgba(236,228,206,0.95)", "#c4a03c");
-  },
-  hawthorn(g, w, h, s, rnd) {
-    stem(g, -w * 0.04, h * 0.42, w * 0.05, -h * 0.44, R * 1.2, w * 0.06);
-    for (let i = 0; i < 4; i++) {
-      const y = h * 0.28 - i * h * 0.22, side = i % 2 ? 1 : -1;
-      palmate(g, side * R, y, side * 1.1, s * 0.13, 3, pick(rnd, GREEN), 0.55);
-      g.strokeStyle = STEM; g.lineWidth = R * 0.7; g.beginPath(); g.moveTo(0, y + h * 0.06); g.lineTo(-side * w * 0.07, y + h * 0.02); g.stroke();
-    }
-    for (let k = 0; k < 5; k++) flower(g, w * 0.05 + (rnd() - 0.5) * w * 0.12, -h * 0.44 + (rnd() - 0.5) * h * 0.1, s * 0.035, 5, "rgba(238,232,214,0.95)", "#9a7a50");
-  },
-  grass(g, w, h, s, rnd) {
-    for (let k = -1; k <= 1; k++) {
-      const x = k * w * 0.06, top = -h * (0.4 - Math.abs(k) * 0.08);
-      stem(g, x * 0.3, h * 0.42, x, top, R * 0.6, k * w * 0.05);
-      for (let i = 0; i < 6; i++) {
-        const y = top + i * h * 0.05;
-        g.fillStyle = "rgba(150,130,80,0.85)";
-        g.beginPath(); g.ellipse(x + (i % 2 ? 1 : -1) * w * 0.03, y + h * 0.02, s * 0.022, s * 0.034, (i % 2 ? 1 : -1) * 0.5, 0, Math.PI * 2); g.fill();
-      }
-    }
-    leaf(g, 0, h * 0.4, -Math.PI * 0.62, s * 0.4, s * 0.03, pick(rnd, GREEN), { veins: 0 });
-  },
-  clover(g, w, h, s, rnd) {
-    stem(g, 0, h * 0.42, w * 0.02, -h * 0.05, R * 0.8, w * 0.04);
-    stem(g, 0, h * 0.42, -w * 0.08, -h * 0.25, R * 0.7, -w * 0.04);
-    const col = pick(rnd, GREEN);
-    for (let i = 0; i < 3; i++) leaf(g, w * 0.02, -h * 0.05, -Math.PI / 2 + (i - 1) * 1.1, s * 0.13, s * 0.08, col, { veins: 1 });
-    // its flower head, a round of small florets
-    g.fillStyle = "rgba(226,214,200,0.92)"; g.beginPath(); g.arc(-w * 0.08, -h * 0.3, s * 0.07, 0, Math.PI * 2); g.fill();
-    for (let k = 0; k < 14; k++) { const a = rnd() * Math.PI * 2, rr = rnd() * s * 0.06; g.fillStyle = "rgba(180,150,140,0.5)"; g.fillRect(-w * 0.08 + Math.cos(a) * rr, -h * 0.3 + Math.sin(a) * rr, R, R); }
-  },
-  oak(g, w, h, s) {
-    stem(g, 0, h * 0.42, 0, h * 0.28, R * 1.2);
-    g.save(); g.translate(0, h * 0.28);
-    g.beginPath(); g.moveTo(0, 0);
-    const len = h * 0.7, n = 5;
-    for (let i = 0; i <= n * 2; i++) { const t = i / (n * 2), ww = Math.sin(Math.PI * t) * s * 0.2 * (i % 2 ? 1 : 0.55); g.lineTo(-ww, -len * t); }
-    for (let i = n * 2; i >= 0; i--) { const t = i / (n * 2), ww = Math.sin(Math.PI * t) * s * 0.2 * (i % 2 ? 1 : 0.55); g.lineTo(ww, -len * t); }
-    g.closePath(); g.fillStyle = "#6b6a3a"; g.fill(); g.strokeStyle = "rgba(30,36,18,0.35)"; g.lineWidth = R * 0.5; g.stroke();
-    g.strokeStyle = VEIN; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -len * 0.95); g.stroke();
-    g.restore();
-  },
-  rose(g, w, h, s, rnd) {
-    stem(g, 0, h * 0.42, w * 0.02, -h * 0.22, R * 1.1, w * 0.05);
-    // a leaf of five leaflets
-    const col = pick(rnd, GREEN);
-    for (let i = 0; i < 2; i++) for (const side of [-1, 1]) leaf(g, w * 0.01, h * 0.22 - i * h * 0.12, side > 0 ? -0.5 : Math.PI + 0.5, s * 0.14, s * 0.06, col, { veins: 1, toothed: true });
-    leaf(g, w * 0.01, h * 0.04, -Math.PI / 2, s * 0.15, s * 0.06, col, { veins: 1, toothed: true });
-    flower(g, w * 0.02, -h * 0.3, s * 0.15, 5, "rgba(206,148,148,0.92)", "#c9a050");
-  },
-  willow(g, w, h, s, rnd) {
-    stem(g, -w * 0.03, h * 0.42, w * 0.04, -h * 0.46, R * 1, w * 0.05);
-    for (let i = 0; i < 6; i++) {
-      const y = h * 0.32 - i * h * 0.14, side = i % 2 ? 1 : -1;
-      leaf(g, 0, y, side > 0 ? -0.7 : Math.PI + 0.7, s * 0.3, s * 0.04, pick(rnd, GREEN), { veins: 0 });
-    }
-  },
-  ovate(g, w, h, s, rnd) {
-    stem(g, 0, h * 0.42, w * 0.02, -h * 0.3, R * 1, w * 0.04);
-    leaf(g, w * 0.02, -h * 0.3, -Math.PI / 2 - 0.15, s * 0.36, s * 0.16, pick(rnd, GREEN), { veins: 4, toothed: rnd() < 0.5 });
-    leaf(g, 0, h * 0.1, -0.5, s * 0.3, s * 0.13, pick(rnd, GREEN), { veins: 3 });
-    leaf(g, 0, h * 0.2, Math.PI + 0.5, s * 0.26, s * 0.11, pick(rnd, GREEN), { veins: 3 });
-  },
-  ivy(g, w, h, s, rnd) {
-    stem(g, -w * 0.08, h * 0.42, w * 0.08, -h * 0.42, R * 1, w * 0.08);
-    for (let i = 0; i < 3; i++) {
-      const y = h * 0.25 - i * h * 0.3, side = i % 2 ? 1 : -1;
-      palmate(g, side * w * 0.02, y, side * 0.5, s * 0.17, 5, pick(rnd, ["#4c5a34", "#45522f", "#56623a"]), 0.42);
-    }
-  },
-  maple(g, w, h, s, rnd) {
-    stem(g, 0, h * 0.42, 0, h * 0.1, R * 1.1);
-    palmate(g, 0, h * 0.06, 0, s * 0.36, 5, pick(rnd, ["#7a6a3e", "#6e6a3c", "#827044"]), 0.5);
-  },
-  dandelion(g, w, h, s, rnd) {
-    stem(g, 0, h * 0.42, w * 0.02, -h * 0.3, R * 0.9, w * 0.03);
-    for (const a of [-2.3, -0.84, -2.7, -0.44]) leaf(g, 0, h * 0.42, a, s * 0.3, s * 0.06, pick(rnd, GREEN), { veins: 1, toothed: true });
-    flower(g, w * 0.02, -h * 0.34, s * 0.12, 20, "rgba(214,178,62,0.95)", "#b8922e");
-  },
-  blackthorn(g, w, h, s, rnd) {
-    g.strokeStyle = "#3a3024"; g.lineWidth = R * 1.4; g.lineCap = "round";
-    g.beginPath(); g.moveTo(-w * 0.05, h * 0.42); g.quadraticCurveTo(w * 0.06, 0, -w * 0.02, -h * 0.45); g.stroke();
-    for (let i = 0; i < 4; i++) {
-      const y = h * 0.28 - i * h * 0.2, side = i % 2 ? 1 : -1;
-      leaf(g, w * 0.02, y, side > 0 ? -0.6 : Math.PI + 0.6, s * 0.15, s * 0.06, pick(rnd, GREEN), { veins: 2, toothed: true });
-      g.strokeStyle = "#3a3024"; g.lineWidth = R * 0.8; g.beginPath(); g.moveTo(w * 0.02, y + h * 0.05); g.lineTo(-side * w * 0.09, y + h * 0.08); g.stroke();
-    }
-    for (let k = 0; k < 4; k++) flower(g, (rnd() - 0.3) * w * 0.12, -h * 0.4 + rnd() * h * 0.12, s * 0.04, 5, "rgba(240,236,222,0.95)", "#9a8050");
-  },
-  privet(g, w, h, s, rnd) {
-    stem(g, 0, h * 0.42, 0, -h * 0.28, R * 1, w * 0.02);
-    for (let i = 0; i < 4; i++) {
-      const y = h * 0.3 - i * h * 0.15;
-      for (const side of [-1, 1]) leaf(g, 0, y, side > 0 ? -0.35 : Math.PI + 0.35, s * 0.16, s * 0.065, pick(rnd, GREEN), { veins: 1 });
-    }
-    // its small white flowers, in a spike at the top
-    for (let k = 0; k < 22; k++) {
-      const t = rnd();
-      g.fillStyle = "rgba(240,236,222,0.95)";
-      g.beginPath(); g.arc((rnd() - 0.5) * s * 0.12 * (1 - t), -h * 0.3 - t * h * 0.16, s * 0.016, 0, Math.PI * 2); g.fill();
-    }
-  },
-  primrose(g, w, h, s, rnd) {
-    for (const a of [-2.4, -0.7, -1.9, -1.2]) leaf(g, 0, h * 0.4, a, s * 0.3, s * 0.1, pick(rnd, GREEN), { veins: 4, toothed: true });
-    for (const [x, y] of [[-w * 0.08, -h * 0.18], [w * 0.09, -h * 0.28]]) {
-      stem(g, 0, h * 0.36, x, y, R * 0.7, x * 0.3);
-      flower(g, x, y, s * 0.1, 5, "rgba(226,214,140,0.95)", "#b89a3a");
-    }
-  },
-};

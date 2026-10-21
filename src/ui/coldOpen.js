@@ -14,23 +14,26 @@ import { sketchLayer, drawHouse, drawThree, drawLock, drawFile, drawDesk, erase,
 //   out underneath (`onUnder`).
 // Esc or "Skip" ends it at any point. Resolves once it has lifted.
 
-export function playColdOpen(scope, { game, audio, reducedMotion = false, onUnder = () => {} }) {
+export function playColdOpen(scope, { game, audio, reducedMotion = false, onUnder = () => {}, i18n = null }) {
   return new Promise((resolve) => {
     const root = document.createElement("div");
     root.id = "cold-open";
     root.setAttribute("role", "dialog");
-    root.setAttribute("aria-label", "Ashcombe Manor: the opening");
+    root.setAttribute("aria-label", i18n ? i18n.t("coldOpen.ariaOpening") : "Ashcombe Manor: the opening");
+    const skipText = i18n ? i18n.t("common.skipShort") : "Skip";
+    const beginText = i18n ? i18n.t("intro.clickToBegin") : "Click to begin";
+    const soundText = i18n ? i18n.t("intro.bestWithSound") : "Best with sound";
     root.innerHTML = `
       <div class="co-vignette" aria-hidden="true"></div>
       <div class="co-grain" aria-hidden="true"></div>
       <div class="co-flicker" aria-hidden="true"></div>
       <div class="co-stage" aria-live="polite"></div>
       <p class="co-caption" aria-live="polite"></p>
-      <button type="button" class="co-skip" hidden>Skip</button>
+      <button type="button" class="co-skip" hidden>${skipText}</button>
       <div class="co-gate">
         <span class="co-gate-rule" aria-hidden="true"></span>
-        <button type="button" class="co-gate-go">Click to begin</button>
-        <p class="co-gate-note">Best with sound</p>
+        <button type="button" class="co-gate-go">${beginText}</button>
+        <p class="co-gate-note">${soundText}</p>
       </div>`;
     root.style.setProperty("--co-grain-img", `url(${noiseImage(256)})`);
     if (reducedMotion) root.classList.add("is-still");
@@ -100,7 +103,7 @@ export function playColdOpen(scope, { game, audio, reducedMotion = false, onUnde
 
     // ── the film ──
     async function film() {
-      const T = INTRO;
+      const T = i18n?.getColdOpen() || INTRO;
       await gate();
       await woken;
       score.start();

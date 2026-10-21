@@ -8,7 +8,7 @@ import { passage } from "./passage.js";
 // stays until Next (or Enter) brings on the one after; the last Next, or
 // Skip, ends it. The house's name and the way in (#start-legend) wait under
 // it and come up once it is told. Going in by the door ends it too.
-export function playManorStory(scope, { reducedMotion = false } = {}) {
+export function playManorStory(scope, { reducedMotion = false, i18n = null } = {}) {
   const start = document.getElementById("start-screen");
   if (!start || start.classList.contains("hidden")) return;
   const root = document.createElement("div");
@@ -22,12 +22,13 @@ export function playManorStory(scope, { reducedMotion = false } = {}) {
   const skip = document.createElement("button");
   skip.type = "button";
   skip.className = "intro-video-skip";
-  skip.textContent = "Skip";
+  skip.textContent = i18n ? i18n.t("common.skipShort") : "Skip";
   root.append(shade, asides, skip);
   start.append(root);
   start.classList.add("is-telling");
   requestAnimationFrame(() => { root.classList.add("has-aside"); skip.classList.add("is-in"); });
 
+  const storyList = i18n?.getManorStory() || MANOR_STORY;
   let index = 0, node = null, done = false, changing = false;
   // the start screen goes in on any click or key: these are only for the story
   const own = (event) => { event.stopPropagation(); event.preventDefault?.(); };
@@ -35,8 +36,8 @@ export function playManorStory(scope, { reducedMotion = false } = {}) {
     if (done || changing) return;
     const going = node;
     if (going) { going.classList.add("is-out"); scope.later(() => going.remove(), reducedMotion ? 0 : 650); }
-    if (index >= MANOR_STORY.length) { end(); return; }
-    const part = MANOR_STORY[index++];
+    if (index >= storyList.length) { end(); return; }
+    const part = storyList[index++];
     node = passage(part);
     const next = document.createElement("button");
     next.type = "button";
@@ -44,8 +45,9 @@ export function playManorStory(scope, { reducedMotion = false } = {}) {
     // how far along the house's story it is: "Next [2/7]"
     const count = document.createElement("span");
     count.className = "next-count";
-    count.textContent = `[${index}/${MANOR_STORY.length}]`;
-    next.append("Next ", count);
+    count.textContent = `[${index}/${storyList.length}]`;
+    const nextLabel = (i18n ? i18n.t("common.next") : "Next") + " ";
+    next.append(nextLabel, count);
     next.addEventListener("click", (event) => { own(event); show(); });
     node.append(next);
     changing = true;

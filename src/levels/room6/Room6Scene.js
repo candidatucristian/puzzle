@@ -3,6 +3,8 @@ import { soft, makeCanvas } from "../../shared/paint.js";
 import { EYE, WARM, block, fillPoly, footShadow, onWall, thingAt } from "../house/roomKit.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
 import { METAL, RIBBON, MEDAL } from "../flags/trophies.js";
+import { cotQuad, paintCotInRoom } from "../cot/inRoom.js";
+import { nurseryPortraitBounds, createNurseryPortraitViewer } from "./nurseryPortraits.js";
 import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint, room6HerbariumQuad } from "./photographicRoom.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12,7 +14,8 @@ import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoo
 // wall a tall walnut cabinet, glazed above, his medals hanging inside on
 // their ribbons under a small brass light that burns until it is solved; and
 // in the right-hand corner a spiral stair, dark, winding up round its iron
-// post through the ceiling.
+// post through the ceiling. Under the window her herbarium; and against the
+// back wall by the stair, the boy's cot, his toys still in it (cot/inRoom.js).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class Room6Scene extends PlainRoomScene {
@@ -34,6 +37,17 @@ export default class Room6Scene extends PlainRoomScene {
     super.preload();
     loadRoom6Photography(this);
   }
+
+  create(data) {
+    super.create(data);
+    const canvas = this.game.canvas;
+    canvas.dataset.sceneColour = "natural";
+    this._sceneCleanups.add(() => { delete canvas.dataset.sceneColour; });
+    this._portraitViewer = createNurseryPortraitViewer(this);
+    this._sceneCleanups.add(() => { this._portraitViewer.dispose(); this._portraitViewer = null; });
+  }
+
+  get usesEscape() { return this._portraitViewer?.isOpen || false; }
 
   layout(W, H, levels) {
     const L = super.layout(W, H);
@@ -61,6 +75,8 @@ export default class Room6Scene extends PlainRoomScene {
       return [{ x: w.cx - w.rx * 0.6, y: y + 14 }, { x: w.cx + w.rx * 0.6, y: y + 14 }, { x: w.cx + w.rx * 0.6, y: y - 14 }, { x: w.cx - w.rx * 0.6, y: y - 14 }];
     })();
     L.things.push(thingAt("herbarium", "Open her herbarium", herbarium));
+    // his cot, against the back wall by the stair
+    L.things.push(thingAt("cot", "Look in the cot", cotQuad(L)));
     // where the room's light is, for the dark and for the scene
     const ml = Q(front - 4, g.y1 - 10, (mc.d0 + mc.d1) / 2);
     const mid = Q(front, (g.y0 + g.y1) / 2, (mc.d0 + mc.d1) / 2);
@@ -86,10 +102,16 @@ export default class Room6Scene extends PlainRoomScene {
   paintDetails(ctx, L) {
     paintSpiralStairs(ctx, L);
     paintMedalCabinet(ctx, L);
+    paintCotInRoom(ctx, L, this);
   }
 
   live(L, k, glow) {
     super.live(L, k);
+    const portrait = nurseryPortraitBounds(L);
+    this._portraitZone = this.add.zone(portrait.x, portrait.y, portrait.width, portrait.height)
+      .setOrigin(0).setDepth(6).setName("nursery-family-portrait")
+      .setInteractive({ cursor: "zoom-in" }).setData("interactionLabel", "Look at the family photograph");
+    this._portraitZone.on("pointerdown", () => this._portraitViewer.open());
     // the cabinet's light while it burns, breathing very slightly
     if (!L.on.flags) return;
     const a = L.photographic ? 0.07 : 0.16;

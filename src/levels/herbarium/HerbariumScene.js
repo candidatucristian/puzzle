@@ -8,7 +8,7 @@ import { herbariumPhotography, loadHerbariumPhotography } from "./photography.js
 // Level — "IVY'S HERBARIUM"  ·  code: HEDGE  ·  her book of pressed plants
 //
 // On the console table under the window in Room VI: Ivy's herbarium, open.
-// Five pages of pressed plants, four or five to a page, each taped down and
+// Five pages of pressed plants, two to a page, each taped down and
 // named in her hand; on every page one of them drawn round in pencil with a
 // figure of straight sides. Counted, the sides are letters (A = 1):
 //
@@ -59,7 +59,7 @@ export default class HerbariumScene extends BasePuzzleScene {
     // as that, so the book first shows as it lay, and then comes closer
     const L = (this._L = layoutBook(W, H, NEAR));
     const photography = herbariumPhotography(this);
-    L.photographic = Boolean(photography.book && photography.desk && [...photography.specimens.values()].every(Boolean));
+    L.photographic = Boolean(photography.book && photography.desk && photography.pages.length === 5 && photography.pages.every(Boolean));
     const { faces, shade } = paintBook(this.textures, L, photography);
     this.add.image(L.view.x, L.view.y, BOOK.desk).setOrigin(0, 0).setDepth(-10);
     this.add.image(L.view.x, L.view.y, BOOK.light).setOrigin(0, 0).setDepth(5);

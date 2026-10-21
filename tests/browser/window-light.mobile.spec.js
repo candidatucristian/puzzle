@@ -9,7 +9,7 @@ test('the curtain and blind accept touch drags in the small native-app layout', 
   await page.addInitScript(() => {
     window.Capacitor = { isNativePlatform: () => true };
     localStorage.setItem('hasPlayedBefore', 'true');
-    localStorage.setItem('puzzleProgressSchema', '2'); localStorage.setItem('puzzleUnlockedLevel', '32');
+    localStorage.setItem('puzzleProgressSchema', '2'); localStorage.setItem('puzzleUnlockedLevel', '39');
     localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced', ambientEffects: false }));
   });
   await page.setViewportSize({ width: 568, height: 320 });
@@ -20,6 +20,7 @@ test('the curtain and blind accept touch drags in the small native-app layout', 
   mkdirSync('.artifacts/after', { recursive: true });
   for (const [key, value] of [['Curtain', CURTAIN_ALIGNMENT], ['Venetian', VENETIAN_ALIGNMENT]]) {
     await evaluateApp(page, ({ ui, services }, key) => ui.navigate(services.levels.definitions.findIndex(level => level.key === key), { quick: true }), key);
+    await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe(key);
     await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
     const point = await evaluateApp(page, ({ services }, { key, value, travel }) => {
       const scene = services.levels.activeScene, L = scene._L;
@@ -37,7 +38,7 @@ test('the curtain and blind accept touch drags in the small native-app layout', 
       await page.waitForTimeout(20);
     }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.position ?? services.levels.activeScene.tilt)).toBeCloseTo(value, 2);
+    await expect.poll(async () => evaluateApp(page, ({ services }) => services.levels.activeScene.position ?? services.levels.activeScene.tilt)).toBeCloseTo(value, 2);
     await page.screenshot({ path: `.artifacts/after/phone-${key}-aligned.png` });
     await expect(page.locator('#btn-inspect, #inspection-tools')).toHaveCount(0);
   }

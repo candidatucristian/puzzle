@@ -47,6 +47,9 @@ export const HINT_DETAILS = {
   herbarium: [
     "On each page one plant is drawn round. Count the sides of each figure, and read the counts as letters.",
   ],
+  cot: [
+    "Five things in the cot answer a touch. Each is a word a policeman would say over the radio for a single letter.",
+  ],
   flags: [
     "Each flag stands for a country, and every country has a short name of just two letters.",
   ],

@@ -22,13 +22,13 @@ const DESK_FILTER = "brightness(.64) contrast(1.12) saturate(.82)";
 // Arthur Wren's story first, then the film when it is asked for;
 // one quiet passage at a time as it plays; then, on its last
 // shot, straight into the game. The desk is laid out and decoded first.
-export function playIntroVideo(parent, { game, audio, reducedMotion = false, onUnder = () => {} }) {
+export function playIntroVideo(parent, { game, audio, reducedMotion = false, onUnder = () => {}, i18n = null }) {
   const scope = new Scope();
   const root = document.createElement("div");
   root.id = "intro-video";
   root.dataset.phase = "loading";
   root.setAttribute("role", "dialog");
-  root.setAttribute("aria-label", "The opening film");
+  root.setAttribute("aria-label", i18n ? i18n.t("intro.ariaFilm") : "The opening film");
 
   const video = document.createElement("video");
   video.className = "intro-video-film";
@@ -36,7 +36,7 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   video.playsInline = true;
   video.disablePictureInPicture = true;
   video.disableRemotePlayback = true;
-  video.setAttribute("aria-label", "Ashcombe Manor introduction");
+  video.setAttribute("aria-label", i18n ? i18n.t("intro.ariaAshcombe") : "Ashcombe Manor introduction");
   const vignette = document.createElement("div");
   vignette.className = "intro-video-vignette opening-vignette";
   vignette.setAttribute("aria-hidden", "true");
@@ -44,12 +44,12 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   play.id = "intro-video-play";
   play.type = "button";
   play.className = "intro-video-play";
-  play.textContent = "Play opening film";
+  play.textContent = i18n ? i18n.t("intro.playFilm") : "Play opening film";
   play.hidden = true;
   const skip = document.createElement("button");
   skip.type = "button";
   skip.className = "intro-video-skip";
-  skip.textContent = "SKIP INTRO";
+  skip.textContent = i18n ? i18n.t("intro.skip") : "SKIP INTRO";
   // not until the film has been asked for: the page before it is read, not skipped
   skip.hidden = true;
   const titles = document.createElement("div");
@@ -251,9 +251,10 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   // themselves one after the other — the case that has never let him go, and
   // tonight's letter — and Begin, into the film.
   let begin = null;
+  const openingData = i18n?.getOpening() || OPENING;
   const runTitles = () => new Promise(resolve => {
     root.dataset.phase = "titles";
-    const { title, place, date, story } = OPENING.page;
+    const { title, place, date, story } = openingData.page;
     // the way on, with how far along the opening it is: "Next [1/2]"
     const button = (label, step) => {
       const b = make("button", "intro-page-play", label);
@@ -262,14 +263,14 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
       return b;
     };
     const opening = make("div", "intro-card is-title");
-    const next = button("Next", 1);
+    const next = button(i18n ? i18n.t("common.next") : "Next", 1);
     opening.append(make("h1", "intro-card-title", title), make("span", "intro-card-rule"),
       make("p", "intro-card-place", place), make("p", "intro-card-date", date), next);
     const page = make("div", "intro-card is-story");
     const paragraphs = story.map((text) => make("p", "intro-story-text", text));
-    const go = button("Begin", 2);
+    const go = button(i18n ? i18n.t("common.begin") : "Begin", 2);
     const way = make("div", "intro-story-way");
-    way.append(go, make("p", "intro-page-hint", "Best with sound"));
+    way.append(go, make("p", "intro-page-hint", i18n ? i18n.t("intro.bestWithSound") : "Best with sound"));
     page.append(...paragraphs, way);
     const reveal = (node) => requestAnimationFrame(() => requestAnimationFrame(() => node.classList.add("is-in")));
     let onPage = false;
@@ -303,11 +304,12 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
 
   // ── the passages on the left of the picture; the shade under them stays
   // from the first to the last, not coming and going between them ──
-  const FIRST = OPENING.asides[0].at[0], LAST = OPENING.asides.at(-1).at[1];
+  const asidesList = openingData.asides;
+  const FIRST = asidesList[0].at[0], LAST = asidesList.at(-1).at[1];
   let aside = null, asideNode = null;
   const showAside = time => {
     root.classList.toggle("has-aside", time !== null && time >= FIRST - .3 && time < LAST);
-    const now = time === null ? null : OPENING.asides.find(({ at: [from, to] }) => time >= from && time < to) ?? null;
+    const now = time === null ? null : asidesList.find(({ at: [from, to] }) => time >= from && time < to) ?? null;
     if (now === aside) return;
     aside = now;
     if (asideNode) {

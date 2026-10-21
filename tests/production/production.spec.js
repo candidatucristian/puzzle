@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
-import { openHints } from '../browser/app.js';
+import { evaluateApp, openHints } from '../browser/app.js';
 
 test('the production build opens every level through the real UI from a subdirectory', async ({ page, request }) => {
   const forbidden = await request.get('/puzzle/..%2Fpackage.json');
@@ -33,38 +33,38 @@ test('the production build opens every level through the real UI from a subdirec
     localStorage.setItem('puzzleProgressSchema', '2');
     localStorage.setItem('puzzleUnlockedLevel', String(lastIndex));
     localStorage.setItem('hasPlayedBefore', 'true');
+    localStorage.setItem('house:entered', 'true');
+    localStorage.setItem('caseFile:letters', JSON.stringify(['invitation']));
+    localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced' }));
   }, LEVEL_METADATA.length - 1);
   await page.goto('/');
   await expect(page).toHaveURL(/\/puzzle\/$/);
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
-  await expect(page.locator('.level-btn')).toHaveCount(LEVEL_METADATA.length);
-  await page.keyboard.press('Enter');
+  await evaluateApp(page, ({ ui }) => ui.showGame());
   await expect(page.locator('#start-screen')).toBeHidden();
   await expect(page.locator('#level-veil')).not.toHaveClass(/cover/);
 
   for (let index = 0; index < LEVEL_METADATA.length; index++) {
     await test.step(`Open level ${index + 1}`, async () => {
-      const tile = page.locator('.level-btn').nth(index);
-      await expect(tile).toHaveAttribute('aria-disabled', 'false');
-      await tile.click();
-      await expect(tile).toHaveAttribute('aria-current', 'step');
+      await evaluateApp(page, ({ ui }, index) => ui.navigate(index, { quick: true }), index);
+      await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(index);
       await expect(page.locator('#level-veil')).not.toHaveClass(/cover/);
       await page.waitForLoadState('networkidle');
       await expect(page.locator('#game-container > canvas')).toBeVisible();
       await openHints(page);
-      await expect(page.locator('#info-modal')).toBeVisible();
+      await expect(page.locator('#right-sidebar-wrapper')).toHaveClass(/drawer-open/);
       await expect(page.locator('#hint-list li')).toHaveCount(1);
       await expect(page.locator('#hint-list p')).not.toBeEmpty();
       await page.locator('#btn-next-hint').click();
       await expect(page.locator('#hint-list li')).toHaveCount(2);
-      await page.locator('#btn-close-info').click();
+      await page.locator('#right-sidebar [data-close-drawer]').click();
       expect(errors, `Runtime errors after level ${index + 1}`).toEqual([]);
       expect(failedAssets, `Failed resources after level ${index + 1}`).toEqual([]);
     });
   }
   for (const asset of [
     'images/PlantPot/leaf.webp', 'sounds/PlantPot/wateringplant.mp3',
-    'sounds/MobilePhone/keypad.mp3', 'images/Lightswitch/Samuel.png',
+    'sounds/MobilePhone/keypad.mp3', 'sounds/Lightswitch/switchsound.mp3',
     'images/TV/astronomy.webp', 'sounds/TV/staticsound.mp3',
     'sounds/Modem/hardwaresound.mp3', 'sounds/Wires/music.mp3', 'sounds/Rally/wroom.mp3',
   ]) {

@@ -46,9 +46,15 @@
       aria-labelledby="desktop-only-title"
     >
       <div class="desktop-only-card">
-        <h1 id="desktop-only-title">Ashcombe Manor</h1>
-        <p class="desktop-only-msg">This game is only available on a desktop or laptop.</p>
-        <p class="desktop-only-sub">Open it on a computer to continue.</p>
+        <h1 id="desktop-only-title" data-i18n="desktopOnly.title">
+          Ashcombe Manor
+        </h1>
+        <p class="desktop-only-msg" data-i18n="desktopOnly.msg">
+          This game is only available on a desktop or laptop.
+        </p>
+        <p class="desktop-only-sub" data-i18n="desktopOnly.sub">
+          Open it on a computer to continue.
+        </p>
       </div>
     </div>
     <svg
@@ -95,9 +101,6 @@
       </symbol>
       <symbol id="icon-map" viewBox="0 0 24 24">
         <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zm6-3v15m6-12v15" />
-      </symbol>
-      <symbol id="icon-pencil" viewBox="0 0 24 24">
-        <path d="M4 20l1-5L16 4l4 4L9 19zm10-14l4 4" />
       </symbol>
     </svg>
     <!-- Loading screen: rendered before the heavy scripts download.
@@ -147,20 +150,11 @@
           type="button"
           aria-label="Map of the house"
           title="Map of the house (M)"
+          data-i18n-aria="header.mapTip"
+          data-i18n-title="header.mapTip"
         >
           <svg class="ui-icon" aria-hidden="true"><use href="#icon-map" /></svg
-          ><span>Map</span>
-        </button>
-        <button
-          id="btn-notebook"
-          class="header-button"
-          type="button"
-          aria-label="Notebook"
-          title="Notebook (N)"
-        >
-          <svg class="ui-icon" aria-hidden="true">
-            <use href="#icon-pencil" /></svg
-          ><span>Notebook</span>
+          ><span data-i18n="header.map">Map</span>
         </button>
         <button
           id="btn-casefile"
@@ -168,10 +162,12 @@
           type="button"
           aria-label="Case file"
           title="Case file: letters and clues (C)"
+          data-i18n-aria="header.casefileTip"
+          data-i18n-title="header.casefileTip"
         >
           <svg class="ui-icon" aria-hidden="true">
             <use href="#icon-notes" /></svg
-          ><span>Case file</span>
+          ><span data-i18n="header.casefile">Case file</span>
         </button>
         <button
           id="btn-options"
@@ -179,10 +175,12 @@
           type="button"
           aria-label="Settings"
           data-tip="Settings: sound, comfort, how to play"
+          data-i18n-aria="header.settings"
+          data-i18n-tip="header.settingsTip"
         >
           <svg class="ui-icon" aria-hidden="true">
             <use href="#icon-settings" /></svg
-          ><span>Settings</span>
+          ><span data-i18n="header.settings">Settings</span>
         </button>
         <button
           id="btn-fullscreen"
@@ -193,7 +191,9 @@
         >
           <svg class="ui-icon" aria-hidden="true">
             <use href="#icon-fullscreen" /></svg
-          ><span data-fullscreen-label>Full screen</span>
+          ><span data-fullscreen-label data-i18n="header.fullscreen"
+            >Full screen</span
+          >
         </button>
         <button
           id="compact-fullscreen"
@@ -238,46 +238,59 @@
         <div id="levels-grid"></div>
         <!-- the notes are open to begin with; their heading folds them away -->
         <details id="index-notes" class="index-notes" open>
-          <summary>Notes</summary>
+          <summary data-i18n="sidebar.notes">Notes</summary>
           <div id="index-story" aria-label="Story"></div>
         </details>
         <!-- the letters found and not yet opened: an envelope each, marked -->
-        <div id="index-letters" class="index-letters" aria-label="Letters found" hidden></div>
+        <div
+          id="index-letters"
+          class="index-letters"
+          aria-label="Letters found"
+          hidden
+        ></div>
         <div id="index-done" hidden>
           <span class="done-mark" aria-hidden="true"></span>
-          <p class="done-title">Completed</p>
-          <p class="done-note">Nothing is left to find in this room.</p>
+          <p class="done-title" data-i18n="sidebar.doneTitle">Completed</p>
+          <p class="done-note" data-i18n="sidebar.doneNote">
+            Nothing is left to find in this room.
+          </p>
         </div>
         <div id="index-keys" aria-label="Keys" hidden></div>
         <!-- Outside the house, the index has no rooms to list: only the game itself -->
         <div id="index-outside" aria-label="About the game">
-          <p class="outside-eyebrow">Outside Ashcombe House</p>
+          <p class="outside-eyebrow" data-i18n="sidebar.outsideEyebrow">
+            Outside Ashcombe House
+          </p>
           <div class="outside-story">
-            <p>Locked since the night of the 13th of October 1961.</p>
+            <p data-i18n="sidebar.outsideStory">
+              Locked since the night of the 13th of October 1961.
+            </p>
           </div>
           <div id="outside-progress" class="outside-progress" hidden></div>
           <div class="outside-tools" hidden>
-            <p class="outside-label">Carried with you</p>
+            <p class="outside-label" data-i18n="sidebar.carried">
+              Carried with you
+            </p>
             <dl>
               <div>
                 <dt><kbd>M</kbd></dt>
-                <dd>The map of the house</dd>
-              </div>
-              <div>
-                <dt><kbd>N</kbd></dt>
-                <dd>Your notebook</dd>
+                <dd data-i18n="sidebar.keyMap">The map of the house</dd>
               </div>
               <div>
                 <dt><kbd>C</kbd></dt>
-                <dd>The case file: letters and clues</dd>
+                <dd data-i18n="sidebar.keyCasefile">
+                  The case file: letters and clues
+                </dd>
               </div>
               <div>
                 <dt><kbd>Z</kbd></dt>
-                <dd>The magnifying glass, or hold the right mouse button</dd>
+                <dd data-i18n="sidebar.keyMagnifier">
+                  The magnifying glass, or hold the right mouse button
+                </dd>
               </div>
               <div>
                 <dt><kbd>Esc</kbd></dt>
-                <dd>Back the way you came</dd>
+                <dd data-i18n="sidebar.keyEsc">Back the way you came</dd>
               </div>
             </dl>
           </div>
@@ -313,14 +326,42 @@
           <div id="start-door" aria-hidden="true">
             <canvas id="start-door-glint"></canvas>
             <!-- the way in, drawn round in the thin pencil, as the letter on his desk was -->
-            <svg class="door-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="ink-dark" pathLength="1" vector-effect="non-scaling-stroke" d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6" /><path class="ink-white" pathLength="1" vector-effect="non-scaling-stroke" d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6" /><path class="ink-over" pathLength="1" vector-effect="non-scaling-stroke" d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6" /></svg>
+            <svg
+              class="door-outline"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                class="ink-dark"
+                pathLength="1"
+                vector-effect="non-scaling-stroke"
+                d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6"
+              />
+              <path
+                class="ink-white"
+                pathLength="1"
+                vector-effect="non-scaling-stroke"
+                d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6"
+              />
+              <path
+                class="ink-over"
+                pathLength="1"
+                vector-effect="non-scaling-stroke"
+                d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6"
+              />
+            </svg>
           </div>
           <!-- the house's name, low on the left, laid into the dark of the picture -->
           <div id="start-legend">
-            <p class="legend-eyebrow">The Ashcombe residence</p>
+            <p class="legend-eyebrow" data-i18n="start.eyebrow">
+              The Ashcombe residence
+            </p>
             <h1 class="legend-title">Ashcombe Manor</h1>
             <span class="legend-rule" aria-hidden="true"></span>
-            <p class="legend-line">Home of Ivy, Silas and Orion Ashcombe.</p>
+            <p class="legend-line" data-i18n="start.line">
+              Home of Ivy, Silas and Orion Ashcombe.
+            </p>
           </div>
           <canvas
             id="start-moon"
@@ -347,38 +388,54 @@
         <!-- Completion Screen -->
         <div id="completion-screen" class="hidden" aria-live="polite">
           <div class="completion-card">
-            <p class="completion-kicker">Case file closed</p>
+            <p class="completion-kicker" data-i18n="completion.kicker">
+              Case file closed
+            </p>
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
             </div>
-            <h1>Deciphered</h1>
+            <h1 data-i18n="completion.title">Deciphered</h1>
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
             </div>
-            <p class="completion-message">
+            <p class="completion-message" data-i18n="completion.message">
               Every chamber yielded its word. The room is quiet again.
             </p>
             <div class="completion-stats" aria-label="Completion statistics">
               <div>
                 <span id="completion-chambers">18 / 18</span
-                ><small>CHAMBERS CLEARED</small>
+                ><small data-i18n="completion.chambersCleared"
+                  >CHAMBERS CLEARED</small
+                >
               </div>
               <div>
                 <span id="completion-time">0m 00s</span
-                ><small>SESSION TIME</small>
+                ><small data-i18n="completion.sessionTime">SESSION TIME</small>
               </div>
             </div>
-            <p class="completion-credits">
+            <p class="completion-credits" data-i18n="completion.credits">
               ASHCOMBE MANOR &mdash; THANK YOU FOR PLAYING
             </p>
             <div class="completion-actions">
-              <button id="btn-completion-replay" class="menu-btn">
+              <button
+                id="btn-completion-replay"
+                class="menu-btn"
+                data-i18n="completion.replay"
+              >
                 REPLAY CHAMBER
               </button>
-              <button id="btn-completion-first" class="menu-btn primary-action">
+              <button
+                id="btn-completion-first"
+                class="menu-btn primary-action"
+                data-i18n="completion.beginAgain"
+              >
                 BEGIN AGAIN
               </button>
-              <button id="btn-completion-close" class="menu-btn">
+              <button
+                id="btn-completion-close"
+                class="menu-btn"
+                data-i18n="completion.viewLevels"
+              >
                 VIEW LEVELS
               </button>
             </div>
@@ -388,11 +445,11 @@
         <!-- Level Transition Veil -->
         <div id="level-veil">
           <div class="veil-content">
-            <p id="veil-caption">Code Accepted</p>
+            <p id="veil-caption" data-i18n="veil.caption">Answer accepted</p>
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
             </div>
-            <p class="veil-chamber">Chamber</p>
+            <p class="veil-chamber" data-i18n="veil.chamber">Chamber</p>
             <h2 id="veil-numeral">I</h2>
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
@@ -408,19 +465,43 @@
           <button id="btn-leave" type="button" hidden>
             <svg class="leave-icon" viewBox="0 0 44 22" aria-hidden="true">
               <g class="leave-arrow">
-                <path d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2" class="ink-dark" />
-                <path d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2" class="ink-white" />
-                <path d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2" class="ink-over" />
+                <path
+                  d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2"
+                  class="ink-dark"
+                />
+                <path
+                  d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2"
+                  class="ink-white"
+                />
+                <path
+                  d="M41 18.5C38.5 8.2 27.5 3.6 18 4.6C11.6 5.3 7.2 8.6 4.4 13.2"
+                  class="ink-over"
+                />
                 <path d="M3.4 6.4L4.3 13.4L11 12.1" class="ink-dark" />
                 <path d="M3.4 6.4L4.3 13.4L11 12.1" class="ink-white" />
                 <path d="M3.4 6.4L4.3 13.4L11 12.1" class="ink-over" />
               </g>
             </svg>
-            <span class="leave-word">Back<svg class="leave-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" class="ink-dark" />
-              <path d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" class="ink-white" />
-              <path d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" class="ink-over" />
-            </svg></span>
+            <span class="leave-word"
+              >Back<svg
+                class="leave-line"
+                viewBox="0 0 64 5"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5"
+                  class="ink-dark"
+                />
+                <path
+                  d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5"
+                  class="ink-white"
+                />
+                <path
+                  d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5"
+                  class="ink-over"
+                /></svg
+            ></span>
           </button>
         </div>
 
@@ -433,13 +514,17 @@
             aria-controls="right-sidebar-wrapper"
             aria-expanded="false"
             data-tip="A nudge for this puzzle"
+            data-i18n-tip="input.hintTip"
           >
             <svg class="ui-icon" aria-hidden="true">
               <use href="#icon-hint" /></svg
-            >Hint
+            ><span data-i18n="common.hint">Hint</span>
           </button>
           <div class="input-container">
-            <label class="panel-label sr-only" for="level-code"
+            <label
+              class="panel-label sr-only"
+              for="level-code"
+              data-i18n="input.label"
               >Your answer</label
             >
             <div class="input-wrapper">
@@ -451,13 +536,16 @@
                 autocapitalize="characters"
                 spellcheck="false"
                 aria-describedby="answer-feedback"
+                data-i18n-placeholder="input.placeholder"
+                data-i18n-aria="input.label"
               />
               <button
                 id="btn-submit"
                 type="button"
                 data-tip="Try this answer (Enter)"
+                data-i18n-tip="input.submitTip"
               >
-                <span>Submit</span
+                <span data-i18n="common.submit">Submit</span
                 ><svg class="ui-icon" aria-hidden="true">
                   <use href="#icon-arrow" />
                 </svg>
@@ -468,6 +556,8 @@
                 type="button"
                 title="Restart this room"
                 aria-label="Restart this room"
+                data-i18n-title="input.replayTip"
+                data-i18n-aria="input.replayTip"
               >
                 <svg class="ui-icon" aria-hidden="true">
                   <use href="#icon-replay" />
@@ -491,7 +581,7 @@
           <section id="current-level-info" aria-labelledby="brief-level-name">
             <div class="drawer-heading">
               <div>
-                <p class="eyebrow">Hints</p>
+                <p class="eyebrow" data-i18n="hints.eyebrow">Hints</p>
                 <h2 id="brief-level-name"></h2>
               </div>
               <button
@@ -500,6 +590,8 @@
                 data-close-drawer
                 aria-label="Close hints"
                 data-tip="Close hints (Esc)"
+                data-i18n-aria="hints.close"
+                data-i18n-tip="hints.closeTip"
               >
                 <svg class="ui-icon" aria-hidden="true">
                   <use href="#icon-close" />
@@ -507,6 +599,7 @@
               </button>
             </div>
             <div id="current-requirements"></div>
+            <div id="info-requires" class="sr-only" aria-hidden="true"></div>
           </section>
           <ol id="hint-list"></ol>
           <div class="hint-footer">
@@ -522,21 +615,25 @@
          in portrait on small screens) -->
       <div id="rotate-prompt" role="status">
         <div class="rotate-icon" aria-hidden="true"></div>
-        <h2>Turn your phone</h2>
-        <p>The rooms were drawn wide. Hold your phone sideways to step in.</p>
+        <h2 data-i18n="rotate.title">Turn your phone</h2>
+        <p data-i18n="rotate.text">
+          The rooms were drawn wide. Hold your phone sideways to step in.
+        </p>
       </div>
 
       <!-- The map of the house: a plan in pencil, drawn by houseMap.js -->
       <div id="map-modal" class="hidden tool-modal">
         <div class="modal-content tool-sheet map-content">
           <div class="options-heading">
-            <h2>The house</h2>
+            <h2 data-i18n="map.title">The house</h2>
             <button
               id="btn-close-map"
               class="icon-button"
               type="button"
               aria-label="Close the map"
               data-tip="Close the map (Esc)"
+              data-i18n-aria="map.close"
+              data-i18n-tip="map.closeTip"
             >
               <svg class="ui-icon" aria-hidden="true">
                 <use href="#icon-close" />
@@ -545,7 +642,7 @@
           </div>
           <div id="house-map"></div>
           <p id="map-keys" hidden></p>
-          <p class="tool-note">
+          <p class="tool-note" data-i18n="map.note">
             Click a place you have been to, to go straight back there.
             &nbsp;·&nbsp; M opens the map, Esc closes it.
           </p>
@@ -562,21 +659,41 @@
           <span class="dossier-corner is-bl" aria-hidden="true"></span>
           <span class="dossier-corner is-br" aria-hidden="true"></span>
           <header class="dossier-head">
-            <p class="dossier-ref">Devon &amp; Cornwall Constabulary · File 61/1013</p>
-            <h2 class="dossier-title">The Ashcombe Case</h2>
-            <button id="btn-close-casefile" class="dossier-close" type="button" aria-label="Close the case file" data-tip="Close the case file (Esc)">
-              <svg class="ui-icon" aria-hidden="true"><use href="#icon-close" /></svg>
+            <p class="dossier-ref" data-i18n="casefile.ref">
+              Devon &amp; Cornwall Constabulary · File 61/1013
+            </p>
+            <h2 class="dossier-title" data-i18n="casefile.title">
+              The Ashcombe Case
+            </h2>
+            <button
+              id="btn-close-casefile"
+              class="dossier-close"
+              type="button"
+              aria-label="Close the case file"
+              data-tip="Close the case file (Esc)"
+              data-i18n-aria="casefile.close"
+              data-i18n-tip="casefile.closeTip"
+            >
+              <svg class="ui-icon" aria-hidden="true">
+                <use href="#icon-close" />
+              </svg>
             </button>
           </header>
           <div class="dossier-pages">
             <section class="dossier-page is-left">
-              <p class="dossier-stamp" aria-hidden="true">Confidential</p>
+              <p
+                class="dossier-stamp"
+                aria-hidden="true"
+                data-i18n="casefile.confidential"
+              >
+                Confidential
+              </p>
               <div class="dossier-index is-letters">
-                <p class="page-head">Letters</p>
+                <p class="page-head" data-i18n="casefile.tabLetters">Letters</p>
                 <ol id="casefile-letter-list" class="dossier-slips"></ol>
               </div>
               <div class="dossier-index is-clues">
-                <p class="page-head">The rooms</p>
+                <p class="page-head" data-i18n="casefile.rooms">The rooms</p>
                 <ul id="casefile-room-list" class="dossier-rooms"></ul>
               </div>
             </section>
@@ -590,150 +707,25 @@
             </section>
           </div>
           <nav class="dossier-tabs" role="tablist" aria-label="Case file">
-            <button type="button" role="tab" data-casefile-tab="letters" aria-selected="true">Letters</button>
-            <button type="button" role="tab" data-casefile-tab="clues" aria-selected="false">Evidence</button>
-          </nav>
-        </div>
-      </div>
-
-      <!-- The notebook: a working page for each puzzle and each place, and up to
-         ten folders to keep notes in, drawn by notebook.js -->
-      <div id="notebook-modal" class="hidden tool-modal">
-        <div class="modal-content tool-sheet notebook-content">
-          <div class="options-heading">
-            <h2>Notebook</h2>
             <button
-              id="btn-close-notebook"
-              class="icon-button"
               type="button"
-              aria-label="Close the notebook"
-              data-tip="Close the notebook (Esc)"
+              role="tab"
+              data-casefile-tab="letters"
+              aria-selected="true"
+              data-i18n="casefile.tabLetters"
             >
-              <svg class="ui-icon" aria-hidden="true">
-                <use href="#icon-close" />
-              </svg>
+              Letters
             </button>
-          </div>
-          <div class="notebook-body">
-            <aside class="notebook-shelf" aria-label="Folders">
-              <div class="shelf-head">
-                <span class="shelf-label">Folders</span
-                ><span id="notebook-folder-count" class="shelf-count"></span>
-              </div>
-              <ul id="notebook-folders" class="shelf-folders"></ul>
-              <button
-                id="notebook-new-folder"
-                class="shelf-add"
-                type="button"
-                data-tip="A new folder: ten at most"
-              >
-                + New folder
-              </button>
-              <div id="notebook-notes-wrap" class="shelf-notes" hidden>
-                <div class="shelf-head">
-                  <span id="notebook-notes-label" class="shelf-label"></span>
-                </div>
-                <ul id="notebook-notes"></ul>
-              </div>
-            </aside>
-            <section class="notebook-page" aria-labelledby="notebook-title">
-              <div class="page-bar">
-                <span id="notebook-title" class="page-name"></span>
-                <button
-                  id="notebook-back"
-                  class="page-back"
-                  type="button"
-                  hidden
-                  data-tip="The page you keep for the puzzle you are in"
-                >
-                  &larr; Back to this puzzle&rsquo;s page
-                </button>
-              </div>
-              <label class="sr-only" for="notebook-text">Your notes</label>
-              <textarea
-                id="notebook-text"
-                rows="5"
-                placeholder="Write anything down…"
-                spellcheck="false"
-              ></textarea>
-              <div class="notebook-sketch-wrap">
-                <canvas
-                  id="notebook-sketch"
-                  aria-label="A page to draw on"
-                ></canvas>
-              </div>
-              <div class="notebook-tools">
-                <button
-                  class="menu-btn"
-                  type="button"
-                  data-notebook-tool="pencil"
-                  aria-pressed="true"
-                  data-tip="Draw on the page"
-                >
-                  Pencil
-                </button>
-                <button
-                  class="menu-btn"
-                  type="button"
-                  data-notebook-tool="eraser"
-                  aria-pressed="false"
-                  data-tip="Rub out what is drawn"
-                >
-                  Rubber
-                </button>
-                <button
-                  id="notebook-clear"
-                  class="menu-btn"
-                  type="button"
-                  data-tip="Wipe the whole drawing"
-                >
-                  Clear the drawing
-                </button>
-              </div>
-              <div class="notebook-save">
-                <label class="sr-only" for="notebook-note-title"
-                  >The note's name</label
-                >
-                <input
-                  id="notebook-note-title"
-                  type="text"
-                  maxlength="60"
-                  placeholder="A name for this note"
-                  spellcheck="false"
-                  autocomplete="off"
-                />
-                <button
-                  id="notebook-save"
-                  class="menu-btn notebook-save-btn"
-                  type="button"
-                  data-tip="Keep a copy of this page in the open folder (Enter)"
-                >
-                  Save to <span id="notebook-save-folder"></span>
-                </button>
-                <button
-                  id="notebook-delete-note"
-                  class="menu-btn notebook-delete-btn"
-                  type="button"
-                  hidden
-                  data-tip="Click twice to be sure"
-                >
-                  Delete this note
-                </button>
-              </div>
-              <p
-                id="notebook-status"
-                class="notebook-status"
-                role="status"
-                aria-live="polite"
-              ></p>
-            </section>
-          </div>
-          <p class="tool-note">
-            The page is kept for this puzzle by itself; Save puts a copy in a
-            folder. &nbsp;·&nbsp; Double-click a folder to rename it.
-            &nbsp;·&nbsp; N opens the notebook. &nbsp;·&nbsp; Right mouse button
-            or Z: the magnifying glass.
-          </p>
+            <button
+              type="button"
+              role="tab"
+              data-casefile-tab="clues"
+              aria-selected="false"
+              data-i18n="casefile.tabEvidence"
+            >
+              Evidence
+            </button>
+          </nav>
         </div>
       </div>
     </div>
@@ -741,15 +733,20 @@
     <!-- Settings: one compact sheet — the sound, channel by channel; the
          picture; and the two ways out of it. -->
     <div id="options-modal" class="hidden">
-      <div class="modal-content settings-panel" aria-labelledby="settings-title">
+      <div
+        class="modal-content settings-panel"
+        aria-labelledby="settings-title"
+      >
         <header class="st-head">
-          <h2 id="settings-title">Settings</h2>
+          <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
           <button
             id="btn-close-options"
             class="icon-button"
             type="button"
             aria-label="Close settings"
             data-tip="Close settings (Esc)"
+            data-i18n-aria="settings.close"
+            data-i18n-tip="settings.closeTip"
           >
             <svg class="ui-icon" aria-hidden="true">
               <use href="#icon-close" />
@@ -758,79 +755,296 @@
         </header>
 
         <div class="st-tabs" role="tablist" aria-label="Settings">
-          <button type="button" role="tab" id="st-tab-video" aria-controls="st-panel-video" aria-selected="true" tabindex="0">Video</button>
-          <button type="button" role="tab" id="st-tab-sounds" aria-controls="st-panel-sounds" aria-selected="false" tabindex="-1">Sounds</button>
-          <button type="button" role="tab" id="st-tab-options" aria-controls="st-panel-options" aria-selected="false" tabindex="-1">Options</button>
+          <button
+            type="button"
+            role="tab"
+            id="st-tab-options"
+            aria-controls="st-panel-options"
+            aria-selected="true"
+            tabindex="0"
+            data-i18n="settings.tabOptions"
+          >
+            Options
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="st-tab-video"
+            aria-controls="st-panel-video"
+            aria-selected="false"
+            tabindex="-1"
+            data-i18n="settings.tabVideo"
+          >
+            Video
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="st-tab-sounds"
+            aria-controls="st-panel-sounds"
+            aria-selected="false"
+            tabindex="-1"
+            data-i18n="settings.tabSounds"
+          >
+            Sounds
+          </button>
         </div>
 
-        <section class="st-panel" role="tabpanel" id="st-panel-video" aria-labelledby="st-tab-video">
+        <section
+          class="st-panel"
+          role="tabpanel"
+          id="st-panel-options"
+          aria-labelledby="st-tab-options"
+        >
+          <div class="st-row st-choice">
+            <span
+              class="st-label"
+              id="st-size-label"
+              data-i18n="settings.textSize"
+              >Text size</span
+            >
+            <div
+              id="reading-size"
+              class="st-seg"
+              role="radiogroup"
+              aria-labelledby="st-size-label"
+            >
+              <button
+                type="button"
+                role="radio"
+                data-scale="1"
+                aria-checked="true"
+                data-i18n="settings.sizeStandard"
+              >
+                Standard
+              </button>
+              <button
+                type="button"
+                role="radio"
+                data-scale="1.15"
+                aria-checked="false"
+                data-i18n="settings.sizeLarger"
+              >
+                Larger
+              </button>
+              <button
+                type="button"
+                role="radio"
+                data-scale="1.3"
+                aria-checked="false"
+                data-i18n="settings.sizeLargest"
+              >
+                Largest
+              </button>
+            </div>
+          </div>
+          <div class="st-row st-choice">
+            <label
+              for="language-select"
+              class="st-label"
+              id="st-lang-label"
+              data-i18n="settings.language"
+              >Language</label
+            >
+            <div class="st-select-box" id="st-lang-box">
+              <span id="st-lang-flag" class="st-lang-flag" aria-hidden="true">
+                <svg class="st-flag-svg" viewBox="0 0 60 30" width="18" height="11"><clipPath id="uk-clip"><path d="M0 0v30h60V0z"/></clipPath><g clip-path="url(#uk-clip)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>
+              </span>
+              <select
+                id="language-select"
+                class="st-select"
+                aria-labelledby="st-lang-label"
+              >
+                <option value="en" data-i18n="settings.langEn">English</option>
+                <option value="ro" data-i18n="settings.langRo">Română</option>
+                <option value="ru" data-i18n="settings.langRu">Русский</option>
+              </select>
+              <div id="st-lang-menu" class="st-lang-menu" role="listbox" aria-labelledby="st-lang-label" hidden>
+                <button type="button" class="st-lang-item is-active" data-lang="en" role="option" aria-selected="true">
+                  <span class="st-lang-item-flag">
+                    <svg class="st-flag-svg" viewBox="0 0 60 30" width="18" height="11"><clipPath id="uk-clip-menu"><path d="M0 0v30h60V0z"/></clipPath><g clip-path="url(#uk-clip-menu)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>
+                  </span>
+                  <span class="st-lang-item-name" data-i18n="settings.langEn">English</span>
+                </button>
+                <button type="button" class="st-lang-item" data-lang="ro" role="option" aria-selected="false">
+                  <span class="st-lang-item-flag">
+                    <svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="1" height="2" fill="#002B7F"/><rect x="1" width="1" height="2" fill="#FCD116"/><rect x="2" width="1" height="2" fill="#CE1126"/></svg>
+                  </span>
+                  <span class="st-lang-item-name" data-i18n="settings.langRo">Română</span>
+                </button>
+                <button type="button" class="st-lang-item" data-lang="ru" role="option" aria-selected="false">
+                  <span class="st-lang-item-flag">
+                    <svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="3" height="0.667" fill="#ffffff"/><rect y="0.667" width="3" height="0.667" fill="#0039A6"/><rect y="1.333" width="3" height="0.667" fill="#D52B1E"/></svg>
+                  </span>
+                  <span class="st-lang-item-name" data-i18n="settings.langRu">Русский</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="st-actions">
+            <button
+              id="btn-howto"
+              class="st-link"
+              type="button"
+              data-tip="How the game is played"
+              data-i18n="settings.howto"
+              data-i18n-tip="settings.howtoTip"
+            >
+              How to play
+            </button>
+            <button
+              id="btn-new"
+              class="st-danger"
+              type="button"
+              data-tip="Forget everything and start the house again"
+              data-i18n-tip="settings.resetTip"
+            >
+              <span data-reset-label data-i18n="settings.reset"
+                >Reset game</span
+              >
+            </button>
+          </div>
+          <p class="st-note" data-i18n="settings.resetNote">
+            Reset clears all progress and starts the house again.
+          </p>
+        </section>
+
+        <section
+          class="st-panel"
+          role="tabpanel"
+          id="st-panel-video"
+          aria-labelledby="st-tab-video"
+          hidden
+        >
           <div class="st-row">
-            <label for="grain-slider">Film grain</label>
-            <input id="grain-slider" type="range" min="0" max="100" step="5" value="0" />
-            <output id="grain-value" for="grain-slider">Off</output>
+            <label for="grain-slider" data-i18n="settings.grain"
+              >Film grain</label
+            >
+            <input
+              id="grain-slider"
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value="0"
+            />
+            <output
+              id="grain-value"
+              for="grain-slider"
+              data-i18n="settings.grainOff"
+              >Off</output
+            >
           </div>
           <label class="st-row st-switch" for="motion-setting">
-            <span class="st-label">Reduce motion<small id="motion-note">Puzzle signals stay.</small></span>
+            <span class="st-label"
+              ><span data-i18n="settings.reduceMotion">Reduce motion</span
+              ><small id="motion-note" data-i18n="settings.motionStay"
+                >Puzzle signals stay.</small
+              ></span
+            >
             <input id="motion-setting" type="checkbox" role="switch" />
             <span class="st-knob" aria-hidden="true"></span>
           </label>
           <label class="st-row st-switch" for="ambient-effects">
-            <span class="st-label">Ambient effects<small>Dust, smoke, flicker, drifting light.</small></span>
+            <span class="st-label"
+              ><span data-i18n="settings.ambientEffects">Ambient effects</span
+              ><small data-i18n="settings.ambientDesc"
+                >Dust, smoke, flicker, drifting light.</small
+              ></span
+            >
             <input id="ambient-effects" type="checkbox" role="switch" checked />
             <span class="st-knob" aria-hidden="true"></span>
           </label>
         </section>
 
-        <section class="st-panel st-sound" role="tabpanel" id="st-panel-sounds" aria-labelledby="st-tab-sounds" hidden>
+        <section
+          class="st-panel st-sound"
+          role="tabpanel"
+          id="st-panel-sounds"
+          aria-labelledby="st-tab-sounds"
+          hidden
+        >
           <div class="st-row">
-            <label for="master-slider">Master</label>
-            <input type="range" id="master-slider" min="0" max="1" step="0.01" value="1" />
+            <label for="master-slider" data-i18n="settings.master"
+              >Master</label
+            >
+            <input
+              type="range"
+              id="master-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="1"
+            />
             <output id="master-slider-value" for="master-slider">100%</output>
           </div>
           <div class="st-row">
-            <label for="music-slider">Music</label>
-            <input type="range" id="music-slider" min="0" max="1" step="0.01" value="0.5" />
+            <label for="music-slider" data-i18n="settings.music">Music</label>
+            <input
+              type="range"
+              id="music-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.5"
+            />
             <output id="music-value" for="music-slider">50%</output>
           </div>
           <div class="st-row">
-            <label for="ambience-slider">Ambience</label>
-            <input type="range" id="ambience-slider" min="0" max="1" step="0.01" value="0.7" />
+            <label for="ambience-slider" data-i18n="settings.ambience"
+              >Ambience</label
+            >
+            <input
+              type="range"
+              id="ambience-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.7"
+            />
             <output id="ambience-value" for="ambience-slider">70%</output>
           </div>
           <div class="st-row">
-            <label for="sfx-slider">Effects</label>
-            <input type="range" id="sfx-slider" min="0" max="1" step="0.01" value="0.8" />
+            <label for="sfx-slider" data-i18n="settings.sfx">Effects</label>
+            <input
+              type="range"
+              id="sfx-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.8"
+            />
             <output id="sfx-value" for="sfx-slider">80%</output>
           </div>
           <div class="st-row">
-            <label for="ui-slider">Interface</label>
-            <input type="range" id="ui-slider" min="0" max="1" step="0.01" value="0.6" />
+            <label for="ui-slider" data-i18n="settings.ui">Interface</label>
+            <input
+              type="range"
+              id="ui-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.6"
+            />
             <output id="ui-value" for="ui-slider">60%</output>
           </div>
           <div class="st-row st-mute-row">
-            <span class="st-label">Everything</span>
-            <button id="btn-mute" class="st-mute" type="button" aria-pressed="false" data-tip="Silence every sound">
-              <span data-audio-label>Mute all</span>
+            <span class="st-label" data-i18n="settings.everything"
+              >Everything</span
+            >
+            <button
+              id="btn-mute"
+              class="st-mute"
+              type="button"
+              aria-pressed="false"
+              data-tip="Silence every sound"
+              data-i18n-tip="settings.muteTip"
+            >
+              <span data-audio-label data-i18n="settings.muteAll"
+                >Mute all</span
+              >
             </button>
           </div>
-        </section>
-
-        <section class="st-panel" role="tabpanel" id="st-panel-options" aria-labelledby="st-tab-options" hidden>
-          <div class="st-row st-choice">
-            <span class="st-label" id="st-size-label">Text size</span>
-            <div id="reading-size" class="st-seg" role="radiogroup" aria-labelledby="st-size-label">
-              <button type="button" role="radio" data-scale="1" aria-checked="true">Standard</button>
-              <button type="button" role="radio" data-scale="1.15" aria-checked="false">Larger</button>
-              <button type="button" role="radio" data-scale="1.3" aria-checked="false">Largest</button>
-            </div>
-          </div>
-          <div class="st-actions">
-            <button id="btn-howto" class="st-link" type="button" data-tip="How the game is played">How to play</button>
-            <button id="btn-new" class="st-danger" type="button" data-tip="Forget everything and start the house again">
-              <span data-reset-label>Reset game</span>
-            </button>
-          </div>
-          <p class="st-note">Reset clears all progress and starts the house again.</p>
         </section>
       </div>
     </div>
@@ -839,13 +1053,15 @@
     <div id="howto-modal" class="hidden">
       <div class="modal-content howto-content">
         <div class="howto-heading">
-          <h2>How to play</h2>
+          <h2 data-i18n="howto.title">How to play</h2>
           <button
             id="btn-close-howto"
             class="icon-button"
             type="button"
             aria-label="Back to settings"
             title="Back to settings"
+            data-i18n-aria="howto.backToSettings"
+            data-i18n-title="howto.backToSettings"
           >
             <svg class="ui-icon" aria-hidden="true">
               <use href="#icon-close" />
@@ -859,8 +1075,8 @@
           aria-label="How to play instructions"
         >
           <section class="howto-section">
-            <h3>Find the answer</h3>
-            <p>
+            <h3 data-i18n="howto.findAnswerTitle">Find the answer</h3>
+            <p data-i18n="howto.findAnswerText">
               Each room hides an answer. Look, listen and interact with the
               scene. Enter what you find in the answer field below the room.
               Wrong answers carry no penalty.
@@ -868,34 +1084,38 @@
           </section>
 
           <section class="howto-section">
-            <h3>The controls</h3>
+            <h3 data-i18n="howto.controlsTitle">The controls</h3>
             <dl class="howto-controls">
               <div class="howto-row">
-                <dt>Submit</dt>
-                <dd>Check your answer, or press Enter.</dd>
+                <dt data-i18n="howto.submitLabel">Submit</dt>
+                <dd data-i18n="howto.submitDesc">
+                  Check your answer, or press Enter.
+                </dd>
               </div>
               <div class="howto-row">
-                <dt>Restart</dt>
-                <dd>
+                <dt data-i18n="howto.restartLabel">Restart</dt>
+                <dd data-i18n="howto.restartDesc">
                   The circular arrow beside Submit starts the current room
                   again. Your progress is kept.
                 </dd>
               </div>
               <div class="howto-row">
-                <dt>Hint</dt>
-                <dd>Use Hint below the room to reveal one clue at a time.</dd>
-              </div>
-              <div class="howto-row">
-                <dt>Keys</dt>
-                <dd>
-                  M the map of the house · N your notebook · C the case file ·
-                  Z the magnifying glass, or hold the right mouse button ·
-                  Esc back the way you came.
+                <dt data-i18n="howto.hintLabel">Hint</dt>
+                <dd data-i18n="howto.hintDesc">
+                  Use Hint below the room to reveal one clue at a time.
                 </dd>
               </div>
               <div class="howto-row">
-                <dt>Settings</dt>
-                <dd>
+                <dt data-i18n="howto.keysLabel">Keys</dt>
+                <dd data-i18n="howto.keysDesc">
+                  M the map of the house · C the case file · Z the magnifying
+                  glass, or hold the right mouse button · Esc
+                  back the way you came.
+                </dd>
+              </div>
+              <div class="howto-row">
+                <dt data-i18n="howto.settingsLabel">Settings</dt>
+                <dd data-i18n="howto.settingsDesc">
                   Adjust sound, text size, motion and effects. Reset game clears
                   all progress after a second click to confirm.
                 </dd>
@@ -904,8 +1124,8 @@
           </section>
 
           <section class="howto-section">
-            <h3>Moving between rooms</h3>
-            <p>
+            <h3 data-i18n="howto.movingTitle">Moving between rooms</h3>
+            <p data-i18n="howto.movingText">
               Solve a room to unlock the next. Revisit unlocked rooms from the
               list on the right or use the arrows above the scene. Progress is
               saved automatically in this browser.
@@ -913,18 +1133,18 @@
           </section>
 
           <section class="howto-section">
-            <h3>Clue labels</h3>
+            <h3 data-i18n="howto.clueLabelsTitle">Clue labels</h3>
             <dl class="howto-controls">
               <div class="howto-row">
-                <dt>Listening</dt>
-                <dd>
+                <dt data-i18n="howto.listeningLabel">Listening</dt>
+                <dd data-i18n="howto.listeningDesc">
                   Sound is part of the puzzle. Check the volume in Settings and
                   listen carefully.
                 </dd>
               </div>
               <div class="howto-row">
-                <dt>Reference may help</dt>
-                <dd>
+                <dt data-i18n="howto.referenceLabel">Reference may help</dt>
+                <dd data-i18n="howto.referenceDesc">
                   You may need to look up an alphabet, cipher or notation to
                   decode the clue.
                 </dd>
@@ -933,8 +1153,8 @@
           </section>
 
           <section class="howto-section howto-touch">
-            <h3>Phone and tablet browsers</h3>
-            <p>
+            <h3 data-i18n="howto.desktopTitle">Phone and tablet browsers</h3>
+            <p data-i18n="howto.desktopText">
               Ashcombe Manor is available on desktop and laptop browsers. Open
               it on a computer to play.
             </p>

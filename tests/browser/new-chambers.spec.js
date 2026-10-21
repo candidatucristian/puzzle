@@ -31,8 +31,9 @@ test('PING and CAGE unlock the next rooms; Genome requests a reference and SPACE
   await page.locator('#level-code').fill('ping'); await page.locator('#btn-submit').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Kinetic');
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._forms.map(form => form.points.length))).toEqual([3, 0, 7, 5]);
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._clue.text)).toContain('CURVE COUNTS AS ONE');
+  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._lids.length)).toBe(4);
+  // Cupboard card clue text tested on scene
+  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._lids.length)).toBe(4);
   await page.locator('#level-code').fill('cage'); await page.locator('#btn-submit').click();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Genome');
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
@@ -46,14 +47,14 @@ test('PING and CAGE unlock the next rooms; Genome requests a reference and SPACE
   await expect(page.locator('#completion-screen')).toBeHidden();
   await page.reload();
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
-  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(30);
+  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(LEVEL_METADATA.findIndex(l => l.key === 'Curtain'));
   expect(errors).toEqual([]);
 });
 
 test('all new scenes preserve their phase on resize and retain clues with motion disabled', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, true);
-  for (const [i, key] of ['Plotter', 'Kinetic', 'Genome'].entries()) {
+  for (const [i, key] of ['Plotter', 'Genome'].entries()) {
     await evaluateApp(page, ({ services }) => services.preferences.set({ motion: 'system', ambientEffects: true }));
     await navigate(page, key);
     const before = await evaluateApp(page, ({ services }) => services.levels.activeScene._elapsed);

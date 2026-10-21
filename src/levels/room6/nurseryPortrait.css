@@ -1,0 +1,56 @@
+.nursery-portrait-viewer {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+  background: transparent;
+  color: #d9cdb3;
+  overflow: hidden;
+  outline: none;
+  cursor: default;
+}
+.nursery-portrait-viewer:not([open]) { display: none; }
+.nursery-portrait-viewer[open] { display: grid; place-items: center; }
+.nursery-portrait-viewer::backdrop {
+  background: rgba(4, 7, 6, .88);
+  backdrop-filter: blur(8px);
+}
+.nursery-portrait-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: calc(100vw - 96px);
+  max-height: calc(100dvh - 48px);
+  object-fit: contain;
+  box-shadow: 0 18px 65px rgba(0, 0, 0, .65);
+  filter: brightness(.68) saturate(.88);
+}
+.nursery-portrait-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(204, 182, 137, .26);
+  border-radius: 50%;
+  background: rgba(12, 16, 13, .8);
+  color: #d9cdb3;
+  font: 300 29px/1 Georgia, serif;
+  cursor: pointer;
+}
+.nursery-portrait-close:hover { background: #262a21; border-color: #9f8d64; }
+.nursery-portrait-close:focus-visible { outline: 2px solid #c6b184; outline-offset: 4px; }
+@media (max-height: 500px) {
+  .nursery-portrait-viewer { padding: 12px; }
+  .nursery-portrait-image { max-height: calc(100dvh - 24px); }
+  .nursery-portrait-close { top: 10px; right: 12px; }
+}

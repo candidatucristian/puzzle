@@ -1,4 +1,4 @@
-/* ── The house's tools: the map, the notebook, the magnifying glass ──────── */
+/* ── The house's tools: the map, the magnifying glass ──────────────────────── */
 
 /* their sheets: old paper on the dark, lettered in pencil */
 .tool-modal {
@@ -97,95 +97,6 @@
 #map-keys { margin: 0; font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; }
 #map-keys[hidden] { display: none; }
 
-/* ── the notebook: a shelf of folders beside the page ── */
-.notebook-content { width: min(1000px, calc(100vw - 60px)); }
-.notebook-body { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 22px; align-items: start; }
-/* the shelf */
-.notebook-shelf { display: grid; gap: 8px; padding: 12px 12px 14px; border-radius: 3px;
-  background: linear-gradient(180deg, #00000012, #0000000a); box-shadow: inset 0 0 0 1px #5a46282e, inset 0 2px 8px #3a2a1418; }
-.shelf-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
-.shelf-label { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .16em; text-transform: uppercase; color: #5a4e3c; }
-.shelf-count { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: #7a6a50; }
-.shelf-folders, #notebook-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
-/* a folder: a manila one, its tab on top, the open one standing out and lighter */
-.shelf-folder { position: relative; display: flex; align-items: stretch; }
-.folder-tab { position: relative; flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 9px 30px 8px 36px; border: 0; border-radius: 2px 5px 5px 5px; cursor: pointer; text-align: left;
-  font: 400 calc(14.5px * var(--reading-scale, 1))/1.2 "Architects Daughter", cursive; color: #3a2a12;
-  background: linear-gradient(180deg, #d4b072, #c19a58); box-shadow: 0 1px 0 #6a4a1a66, 0 2px 4px #3a2a1426, inset 0 1px 0 #fff3d044;
-  transition: transform .15s, background .15s; }
-.folder-tab::before { content: ''; position: absolute; left: 11px; top: 50%; width: 17px; height: 13px; margin-top: -6.5px;
-  background: linear-gradient(180deg, #8a6430, #6a4a20); clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 100%, 0 100%); }
-.folder-tab:hover { background: linear-gradient(180deg, #dcba7c, #c9a260); transform: translateX(2px); }
-.folder-tab:focus-visible { outline: 2px solid #2a241c; outline-offset: 1px; }
-.shelf-folder.open .folder-tab { background: linear-gradient(180deg, #f0dfb4, #e2cc94); transform: translateX(6px);
-  box-shadow: 0 1px 0 #6a4a1a66, 0 4px 10px #3a2a1433, inset 3px 0 0 #8e2a20; }
-.shelf-folder.open .folder-tab::before { clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 38%, 18% 38%, 0 100%); }
-.folder-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.folder-count { flex: none; min-width: 20px; padding: 1px 6px; border-radius: 9px; text-align: center;
-  font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: #f2e6c8; background: #3a2a12b0; }
-.folder-bin { position: absolute; right: 4px; top: 50%; translate: 0 -50%; z-index: 1; height: 22px; min-width: 22px; padding: 0 5px;
-  border: 0; border-radius: 11px; cursor: pointer; font: 400 14px/1 var(--ui-font); color: #5a1a12; background: transparent; opacity: 0; transition: opacity .15s, background .15s; }
-.shelf-folder.open .folder-bin { right: -2px; }
-.shelf-folder:hover .folder-bin, .folder-bin:focus-visible, .folder-bin[data-armed="true"] { opacity: 1; }
-.folder-bin:hover { background: #8e2a2022; }
-.folder-bin[data-armed="true"] { font-size: 11px; color: #f2e6c8; background: #8e2a20; }
-.folder-input { width: 100%; padding: 8px 12px; border: 1px dashed #5a4628; border-radius: 3px; outline: none;
-  font: 400 calc(14.5px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; background: #efe6cc; }
-.shelf-add { justify-self: start; padding: 6px 10px; border: 1px dashed #5a462888; border-radius: 3px; cursor: pointer;
-  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: #3a2e20; background: transparent; }
-.shelf-add:hover:not(:disabled) { background: #00000010; border-style: solid; }
-.shelf-add:disabled { cursor: default; opacity: .6; }
-/* the notes in the open folder: index cards, a red rule down their margin */
-.shelf-notes { display: grid; gap: 6px; margin-top: 8px; padding-top: 12px; border-top: 1px solid #5a46283a; }
-.shelf-notes[hidden] { display: none; }
-#notebook-notes { max-height: 236px; overflow-y: auto; padding: 2px 4px 4px 2px; }
-.shelf-note { width: 100%; display: grid; gap: 2px; padding: 7px 10px 7px 14px; border: 0; border-radius: 2px; cursor: pointer; text-align: left;
-  background: repeating-linear-gradient(180deg, #0000 0 15px, #5a6e9a26 15px 16px) 0 6px, #f3ecd6;
-  box-shadow: inset 2px 0 0 #b8443a99, 0 1px 3px #3a2a1430; transition: transform .15s; }
-.shelf-note:hover { transform: translateX(2px) rotate(-.4deg); }
-.shelf-note.open { box-shadow: inset 2px 0 0 #b8443a, 0 0 0 2px #2a241c, 0 2px 6px #3a2a1440; }
-.shelf-note.just-kept { animation: note-filed .8s cubic-bezier(.3, 1.3, .5, 1); }
-@keyframes note-filed { 0% { transform: translate(60px, -10px) rotate(6deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
-.note-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(14px * var(--reading-scale, 1))/1.25 "Architects Daughter", cursive; color: #2a241c; }
-.note-meta { font: 400 calc(10px * var(--reading-scale, 1)) var(--ui-font); color: #7a6a50; letter-spacing: .03em; }
-.shelf-empty { padding: 6px 4px; font: italic 400 calc(12px * var(--reading-scale, 1)) Georgia, serif; color: #7a6a50; }
-/* the page */
-.notebook-page { display: grid; gap: 10px; min-width: 0; }
-.page-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; min-height: 22px; }
-.page-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(17px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #3a2e20; }
-.page-back { flex: none; padding: 3px 8px; border: 0; border-radius: 3px; cursor: pointer; font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: #3a2e20; background: #00000012; }
-.page-back:hover { background: #00000022; }
-.page-back[hidden] { display: none; }
-#notebook-text {
-  width: 100%; box-sizing: border-box; resize: vertical; min-height: 96px; padding: 10px 12px;
-  font: 400 calc(16px * var(--reading-scale, 1))/28px "Architects Daughter", cursive; color: #2a241c;
-  background: repeating-linear-gradient(180deg, transparent 0 27px, #5a6e9a40 27px 28px), #ece4cc;
-  border: 1px solid #8a7a5a80; border-radius: 2px; outline: none;
-}
-#notebook-text:focus { border-color: #2a241c; }
-.notebook-sketch-wrap { border: 1px solid #8a7a5a80; background: #ece4cc; border-radius: 2px; line-height: 0; }
-#notebook-sketch { width: 100%; aspect-ratio: 640 / 300; cursor: crosshair; touch-action: none; }
-.notebook-tools { display: flex; gap: 8px; flex-wrap: wrap; }
-.notebook-tools .menu-btn, .notebook-save .menu-btn { color: #2a241c; background: #00000010; border-color: #2a241c55; }
-.notebook-tools .menu-btn[aria-pressed="true"] { background: #2a241c; color: #ece4cc; }
-/* putting it away: a name for it, and the button that files it */
-.notebook-save { display: flex; gap: 8px; align-items: stretch; padding-top: 10px; border-top: 1px dashed #5a462855; }
-#notebook-note-title { flex: 1; min-width: 0; padding: 8px 10px; border: 0; border-bottom: 1.5px solid #2a241c88; border-radius: 0; outline: none;
-  font: 400 calc(15px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; background: transparent; }
-#notebook-note-title:focus { border-bottom-color: #2a241c; background: #ffffff1c; }
-#notebook-note-title::placeholder { color: #7a6a5099; }
-.notebook-save .notebook-save-btn { color: #f2e6c8; background: #2a241c; border-color: #2a241c; white-space: nowrap; }
-.notebook-save .notebook-save-btn:hover { background: #3c3326; }
-.notebook-save .notebook-delete-btn { color: #8e2a20; border-color: #8e2a2088; white-space: nowrap; }
-.notebook-save .notebook-delete-btn[data-armed="true"] { color: #f2e6c8; background: #8e2a20; }
-.notebook-save [hidden] { display: none; }
-.notebook-status { margin: -2px 0 0; min-height: 18px; font: 400 calc(13px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2f5a2a;
-  opacity: 0; transition: opacity .3s; }
-.notebook-status[data-kind="warn"] { color: #8e2a20; }
-.notebook-status.shown { opacity: 1; }
-[data-reduced-motion="true"] .shelf-note.just-kept { animation: none; }
-
 /* ── the magnifying glass: the chemistry bench's own, painted by magnifier.js ── */
 #magnifier {
   position: absolute; z-index: 7; width: 500px; height: 500px; pointer-events: none;
@@ -253,11 +164,8 @@ body.magnifying #game-container canvas { cursor: none !important; }
 /* ── sketched pointers for the page around the picture (set by cursors.js) ── */
 :is(button, [role="button"], a[href], select, summary, label[for], input[type="checkbox"], input[type="range"]):not(:disabled) { cursor: var(--cursor-hand, pointer) !important; }
 #start-door { cursor: var(--cursor-door, pointer) !important; }
-.folder-tab { cursor: var(--cursor-hand, pointer) !important; }
-#notebook-sketch { cursor: var(--cursor-pencil, crosshair); }
-#notebook-sketch[data-tool="eraser"] { cursor: var(--cursor-rubber, crosshair); }
 
-/* ── a tooltip: a slip of the notebook's paper, in pencil, with its key ── */
+/* ── a tooltip: a slip of old paper, in pencil, with its key ── */
 #tooltip { position: fixed; z-index: 1000; left: 0; top: 0; pointer-events: none; max-width: 280px;
   display: flex; align-items: center; gap: 9px; padding: 6px 11px 5px;
   font: 400 calc(14px * var(--reading-scale, 1))/1.25 "Architects Daughter", cursive; color: #2a241c;
@@ -395,10 +303,10 @@ body.in-house #game-container canvas { scale: 1.028; }
 .letter-words { position: relative; z-index: 1; }
 .letter-words p { margin: 0 0 14px; }
 /* a found letter, as it opens: the sheet is blank while it unfolds, and then
-   the words come up on it as if written there by an unseen hand — top to
-   bottom in two seconds whatever its length (a longer letter is written
-   faster), the ink darkening as it goes; the pen's sound runs the same two
-   seconds (letterArrival.js, paperSounds.js) */
+   the words come up on it as if typed there — top to bottom in two seconds
+   whatever its length (a longer letter comes up faster), the ink darkening as
+   it goes; the typewriter's keys run the same two seconds, its bell and
+   carriage at the end (letterArrival.js, paperSounds.js) */
 @property --ink { syntax: "<percentage>"; inherits: false; initial-value: 110%; }
 .letter-page.is-unwritten .letter-words { visibility: hidden; }
 .letter-page.is-writing .letter-words {
@@ -707,18 +615,18 @@ li.dossier-slip.is-missing { padding: 12px 14px 11px 30px; display: grid; outlin
 
 /* ══ One face for everything: IBM Plex Sans, the face of the index's small
    capitals — titles, buttons, the dossier, the cards, the map.
-   Only the letters have their own hand: a clear cursive, sized by its
-   x-height so it reads as large as the typewriter did. (The scenes paint
-   their own lettering into their pictures; this is the page around them.) ══ */
+   Only the letters have their own face: typed, on a typewriter. (The scenes
+   paint their own lettering into their pictures; this is the page around
+   them.) ══ */
 body, body *, body svg text { font-family: var(--ui-font) !important; }
-.letter-page, .letter-page * { font-family: "Dancing Script", "Segoe Script", cursive !important; }
+.letter-page, .letter-page * { font-family: "Special Elite", "Courier New", monospace !important; }
 /* under a letter, in pencil, in Arthur's own hand: what he makes of it
    (story.js `margin`) — a different hand from the letter's, graphite grey,
    set a little askew, as a note added afterwards is */
 .letter-page .letter-margin { margin-top: 26px !important; padding-top: 12px; border-top: 1px dashed #5b5f6633; transform: rotate(-1.2deg); transform-origin: 0 50%;
   font-family: "Architects Daughter", "Segoe Print", cursive !important; font-size: 1.04em; line-height: 1.45; letter-spacing: .01em; color: #373b43; }
 .letter-page .letter-margin::after { content: "  — A. W."; color: #4b505999; }
-.letter-page { font-size-adjust: ex-height .5; font-weight: 500; letter-spacing: .01em; }
+.letter-page { font-weight: 400; letter-spacing: .01em; }
 
 /* ══ The cold open (coldOpen.js): black with grain on it, and the story so far
    told on it a paragraph at a time, the words coming up out of focus; then
@@ -830,14 +738,132 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 #options-modal .settings-panel #btn-mute:hover, #options-modal .settings-panel #btn-mute:focus-visible { border-color: #ffffff3a; color: #f0ede6; outline: none; }
 #options-modal .settings-panel #btn-mute[aria-pressed="true"] { border-color: #d8d2c3; background: #d8d2c3; color: #141413; }
 
-/* text size: three buttons, one pressed */
+/* text size & language: choice buttons & black dropdown */
 #options-modal .settings-panel .st-choice { grid-template-columns: 92px minmax(0, 1fr); }
+#options-modal .settings-panel #st-panel-options .st-choice + .st-choice { margin-top: 14px; }
 #options-modal .settings-panel .st-seg { display: grid; grid-template-columns: repeat(3, 1fr); padding: 2px; border-radius: 7px; background: #1e1e1c; }
 #options-modal .settings-panel .st-seg button { min-height: 0; padding: 5px 4px; border: 0; border-radius: 5px; background: transparent;
   font: 400 calc(11.5px * var(--reading-scale, 1)) var(--ui-font); color: #9f9c93; cursor: var(--cursor-hand, pointer); transition: background .15s, color .15s; }
 #options-modal .settings-panel .st-seg button:hover { color: #e9e6de; }
 #options-modal .settings-panel .st-seg button[aria-checked="true"] { background: #36352f; color: #f2efe7; }
 #options-modal .settings-panel .st-seg button:focus-visible { outline: 1px solid #d8d2c380; outline-offset: -1px; }
+
+/* black dropdown for language without borders */
+#options-modal .settings-panel .st-select-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #1e1e1c;
+  border-radius: 7px;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  padding-left: 10px;
+  transition: background-color .15s ease;
+}
+#options-modal .settings-panel .st-select-box:hover,
+#options-modal .settings-panel .st-select-box:focus-within {
+  background: #282825;
+  outline: none;
+  box-shadow: none;
+  border: 0;
+}
+#options-modal .settings-panel .st-lang-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+#options-modal .settings-panel .st-flag-svg {
+  border-radius: 2px;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.6);
+  display: block;
+}
+#options-modal .settings-panel .st-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 28px 0 8px;
+  border: 0;
+  outline: none;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239f9c93' d='M1.4 1 6 5.6 10.6 1 12 2.4l-6 6-6-6z'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: #e9e6de;
+  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font);
+  cursor: var(--cursor-hand, pointer);
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#options-modal .settings-panel .st-select:focus,
+#options-modal .settings-panel .st-select:focus-visible,
+#options-modal .settings-panel .st-select:active {
+  outline: none;
+  box-shadow: none;
+  border: 0;
+}
+#options-modal .settings-panel .st-select option {
+  background: #1e1e1c;
+  color: #e9e6de;
+  padding: 8px 10px;
+}
+
+/* Custom dropdown menu with SVG flags */
+#options-modal .settings-panel .st-lang-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #1e1e1c;
+  border-radius: 7px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#options-modal .settings-panel .st-lang-menu[hidden] {
+  display: none;
+}
+#options-modal .settings-panel .st-lang-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 32px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #e9e6de;
+  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font);
+  cursor: var(--cursor-hand, pointer);
+  text-align: left;
+  outline: none;
+  box-shadow: none;
+  transition: background .15s ease, color .15s ease;
+}
+#options-modal .settings-panel .st-lang-item:hover,
+#options-modal .settings-panel .st-lang-item:focus-visible {
+  background: #282825;
+  color: #f2efe7;
+  outline: none;
+}
+#options-modal .settings-panel .st-lang-item.is-active,
+#options-modal .settings-panel .st-lang-item[aria-selected="true"] {
+  background: #36352f;
+  color: #ffffff;
+}
+#options-modal .settings-panel .st-lang-item-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  pointer-events: none;
+}
 
 /* the switches: the whole row toggles; the knob slides */
 #options-modal .settings-panel .st-switch { position: relative; grid-template-columns: minmax(0, 1fr) 34px; padding: 4px 0; cursor: var(--cursor-hand, pointer); }
@@ -1056,9 +1082,9 @@ body.outside .index-letters { display: none; }
 
 /* through the opening — the cold open and the desk — the header stays over
    it, with only the sound, the settings and the full screen: no map, no
-   notebook, no case file yet, and no floor; the settings open over it too */
+   case file yet, and no floor; the settings open over it too */
 :is(body.cold-open-on, body.prologue-on) #compact-bar { position: relative; z-index: 600; }
-:is(body.cold-open-on, body.prologue-on) :is(#btn-map, #btn-notebook, #btn-casefile) { display: none; }
+:is(body.cold-open-on, body.prologue-on) :is(#btn-map, #btn-casefile) { display: none; }
 :is(body.cold-open-on, body.prologue-on) #header-floor { visibility: hidden; }
 :is(body.cold-open-on, body.prologue-on) :is(#options-modal, #howto-modal) { z-index: 620; }
 

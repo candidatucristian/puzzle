@@ -15,12 +15,13 @@ const SEEN = "story:seen"; // the chapters already shown
 // whose floor each is: the emblem drawn on its chapter card
 const EMBLEM = { 1: "ivy", 2: "silas", 3: "orion" };
 
-export function mountCinema(scope, { storage, reducedMotion = () => false }) {
+export function mountCinema(scope, { storage, reducedMotion = () => false, i18n = null }) {
   let seen = read(), busy = 0;
   function read() {
     try { const kept = JSON.parse(storage.getItem(SEEN) || "[]"); return Array.isArray(kept) ? kept : []; } catch { return []; }
   }
   const mark = (id) => { if (!seen.includes(id)) { seen.push(id); storage.setItem(SEEN, JSON.stringify(seen)); } };
+  const getChapterData = (storey) => (i18n?.getChapters() || CHAPTERS)[storey];
 
   // ── a card: black; its lines come up out of the dark one after another,
   // as a film's titles do; held, and the black lifts ──
@@ -91,7 +92,7 @@ export function mountCinema(scope, { storage, reducedMotion = () => false }) {
     const storey = chapterOf(key);
     if (!storey) return false;
     mark(`chapter:${storey}`);
-    card(CHAPTERS[storey], { onDark: go, sketch: EMBLEM[storey], brief: true });
+    card(getChapterData(storey), { onDark: go, sketch: EMBLEM[storey], brief: true });
     return true;
   }
 
@@ -101,7 +102,7 @@ export function mountCinema(scope, { storage, reducedMotion = () => false }) {
   function enterHouse(goIn) {
     if (seen.includes("chapter:1")) { goIn(); return; }
     mark("chapter:1");
-    card(CHAPTERS[1], { onDark: goIn, sketch: EMBLEM[1], brief: true });
+    card(getChapterData(1), { onDark: goIn, sketch: EMBLEM[1], brief: true });
   }
 
   return {

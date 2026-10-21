@@ -103,10 +103,11 @@ export const PLACES = Object.freeze([
       "The room of their last evening: the table still laid for four, the fire let die, the television never switched off.",
       "The file says three people lived here.",
     ] },
-  { key: "Room6", name: "Room VI", back: "Hall", holds: ["flags", "herbarium"], needsKey: true,
+  { key: "Room6", name: "Room VI", back: "Hall", holds: ["flags", "herbarium", "cot"], needsKey: true,
     story: [
       "A child's room, kept as if he might come back for it.",
       "His medals, still behind their glass. Somebody has kept it clean.",
+      "A little wooden hotel waits among his toys, its reception bell beside the door.",
     ] },
 ]);
 

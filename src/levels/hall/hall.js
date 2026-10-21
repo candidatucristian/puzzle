@@ -358,7 +358,7 @@ export function paintDoorSwing(scene, L, d, lit) {
     }
     ctx.restore();
     ctx.drawImage(foreground, 0, 0);
-    texture.refresh();
+    if (t.exists(key) && texture?.source?.[0]) texture.refresh();
     return shape;
   };
   draw(0);

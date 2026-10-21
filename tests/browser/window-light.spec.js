@@ -9,7 +9,7 @@ async function open(page, all = false) {
   await page.addInitScript(({ ids, all }) => {
     localStorage.setItem('hasPlayedBefore', 'true');
     if (!localStorage.getItem('puzzleProgress')) localStorage.setItem('puzzleProgress', JSON.stringify({
-      version: 3, completedLevelIds: ids.slice(0, 30), unlockedLevelIds: all ? ids : ids.slice(0, 30), lastPlayedLevelId: 'genome',
+      version: 3, completedLevelIds: ids.slice(0, ids.indexOf('curtain')), unlockedLevelIds: all ? ids : ids.slice(0, ids.indexOf('curtain') + 1), lastPlayedLevelId: 'genome',
     }));
     localStorage.setItem('puzzleComfort', JSON.stringify({ motion: 'reduced', ambientEffects: false }));
   }, { ids: LEVEL_METADATA.map(level => level.id), all });
@@ -45,8 +45,8 @@ async function drag(page, key, value) {
 test('the three moonlit rooms solve from a completed 30-level save, using real drags and the answer console', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await open(page); await navigate(page, 'Curtain');
-  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(30);
-  expect(await evaluateApp(page, ({ services }) => services.levels.canAccess(31))).toBe(false);
+  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(LEVEL_METADATA.findIndex(l => l.key === 'Curtain'));
+  expect(await evaluateApp(page, ({ services }, idx) => services.levels.canAccess(idx + 1), LEVEL_METADATA.findIndex(l => l.key === 'Curtain'))).toBe(false);
   await page.screenshot({ path: '.artifacts/after/Curtain-open.png' });
   await drag(page, 'Curtain', CURTAIN_ALIGNMENT);
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.position)).toBeCloseTo(CURTAIN_ALIGNMENT, 2);
@@ -66,10 +66,11 @@ test('the three moonlit rooms solve from a completed 30-level save, using real d
   await page.mouse.move(10, 10);
   await page.screenshot({ path: '.artifacts/after/Venetian-aligned.png' });
   await page.locator('#level-code').fill('city'); await page.locator('#btn-submit').click();
-  await expect(page.locator('#completion-screen')).toBeVisible();
-  await expect(page.locator('#completion-chambers')).toHaveText('33 / 33');
-  await page.reload(); await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
-  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(33);
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Molecules');
+  await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
+  await page.reload();
+  await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
+  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(LEVEL_METADATA.findIndex(l => l.key === 'Venetian') + 1);
   expect(errors).toEqual([]);
 });
 

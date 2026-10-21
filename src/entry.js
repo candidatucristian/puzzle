@@ -4,17 +4,12 @@ import './ui/styles/letter-arrival.css';
 import './ui/styles/desktopOnly.css';
 import './levels/cryptex/scene.css';
 import { createLoadingScreen } from './ui/loading.js';
-import { isHandheld } from './ui/platform.js';
+import { desktopOnly, showDesktopOnly } from './ui/platform.js';
 
-const handheld = navigator.userAgentData?.mobile === true || isHandheld({
-  userAgent: navigator.userAgent,
-  maxTouchPoints: navigator.maxTouchPoints,
-  media: query => window.matchMedia(query).matches,
-});
+const handheld = desktopOnly();
 
 if (handheld) {
-  document.documentElement.dataset.desktopOnly = 'true';
-  document.getElementById('desktop-only')?.removeAttribute('hidden');
+  showDesktopOnly();
 }
 
 // Do not even import Phaser's game entry on a phone or tablet. The device
@@ -28,3 +23,4 @@ function startGame() {
     return app;
   }).catch(error => { loading.fail(error); return null; });
 }
+

@@ -81,7 +81,7 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       // Paint the canvases before making the matching panel copies.
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       if (!alive()) return;
-      if (still) { page.style.visibility = 'visible'; pen = sounds?.writing?.() ?? null; return; }
+      if (still) { page.style.visibility = 'visible'; typist = sounds?.typing?.() ?? null; return; }
       const folds = letterFolds(article, root, true), { rig, box } = folds;
       const area = page.getBoundingClientRect();
       const fit = Math.min(1, (area.height - 44) / box.height);
@@ -93,44 +93,44 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       await finished(animate(rig, [
         { transform: `translate(${dx}px,${dy}px) scale(${from.width / box.width}) rotate(-2deg)` },
         { transform: restPose },
-      ], { duration: 540, easing: 'cubic-bezier(.22,.65,.3,1)' }));
+      ], { duration: 300, easing: 'cubic-bezier(.22,.65,.3,1)' }));
       if (!alive()) return;
       setState('unfolding'); sounds?.unfold();
-      const top = animate(folds.top, [{ transform: 'rotateX(-179deg)' }, { transform: 'rotateX(-78deg)', offset: .55 }, { transform: 'rotateX(0deg)' }], { duration: 780, easing: 'cubic-bezier(.25,.55,.25,1)' });
-      await wait(380);
+      const top = animate(folds.top, [{ transform: 'rotateX(-179deg)' }, { transform: 'rotateX(-78deg)', offset: .55 }, { transform: 'rotateX(0deg)' }], { duration: 420, easing: 'cubic-bezier(.25,.55,.25,1)' });
+      await wait(160);
       if (!alive()) return;
-      const bottom = animate(folds.bottom, [{ transform: 'rotateX(179deg)' }, { transform: 'rotateX(65deg)', offset: .65 }, { transform: 'rotateX(0deg)' }], { duration: 740, easing: 'cubic-bezier(.25,.55,.25,1)' });
+      const bottom = animate(folds.bottom, [{ transform: 'rotateX(179deg)' }, { transform: 'rotateX(65deg)', offset: .65 }, { transform: 'rotateX(0deg)' }], { duration: 400, easing: 'cubic-bezier(.25,.55,.25,1)' });
       await Promise.all([finished(top), finished(bottom)]);
       if (!alive()) return;
-      await finished(animate(rig, [{ transform: restPose }, { transform: 'translate(0,0) scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3,.65,.3,1)' }));
+      await finished(animate(rig, [{ transform: restPose }, { transform: 'translate(0,0) scale(1)' }], { duration: 240, easing: 'cubic-bezier(.3,.65,.3,1)' }));
       page.style.visibility = 'visible'; rig.remove();
       article.classList.replace('is-unwritten', 'is-writing');
-      pen = sounds?.writing?.() ?? null;
+      typist = sounds?.typing?.() ?? null;
       life.later(() => article.classList.remove('is-writing'), 2100);
     };
-    // the pen on paper, as the letter lies open to be read
-    let pen = null;
+    // the typewriter's keys, as the letter lies open to be read
+    let typist = null;
 
     const open = async () => {
       if (state !== 'waiting') return;
       setState('breaking'); env.tabIndex = -1;
       root.classList.remove('is-waiting'); root.focus({ preventScroll: true });
-      await finished(animate(flap, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-5deg)' }, { transform: 'rotateX(-2deg)' }], { duration: 310, easing: 'ease-in-out' }));
+      await finished(animate(flap, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-5deg)' }, { transform: 'rotateX(-2deg)' }], { duration: 120, easing: 'ease-in-out' }));
       if (!alive()) return;
       sounds?.crack(); fractureWax(seal, flap, env, animate);
       caption.classList.add('is-away');
-      await wait(170);
+      await wait(60);
       if (!alive()) return;
       setState('opening'); sounds?.open();
-      animate(flapOut, [{ opacity: 1 }, { opacity: .72, offset: .5 }, { opacity: .9 }], { duration: 880 });
-      await finished(animate(flap, [{ transform: 'rotateX(-2deg)' }, { transform: 'rotateX(-100deg)', offset: .62 }, { transform: 'rotateX(-168deg)' }], { duration: 880, easing: 'cubic-bezier(.3,.55,.3,1)' }));
+      animate(flapOut, [{ opacity: 1 }, { opacity: .72, offset: .5 }, { opacity: .9 }], { duration: 420 });
+      await finished(animate(flap, [{ transform: 'rotateX(-2deg)' }, { transform: 'rotateX(-100deg)', offset: .62 }, { transform: 'rotateX(-168deg)' }], { duration: 420, easing: 'cubic-bezier(.3,.55,.3,1)' }));
       if (!alive()) return;
       flap.style.zIndex = '0'; setState('drawing'); sounds?.open();
-      await finished(animate(sheet, [{ transform: 'translateY(0)' }, { transform: `translateY(${-H * .95}px) rotate(-1deg)` }], { duration: 700, easing: 'cubic-bezier(.3,.2,.2,1)' }));
+      await finished(animate(sheet, [{ transform: 'translateY(0)' }, { transform: `translateY(${-H * .95}px) rotate(-1deg)` }], { duration: 380, easing: 'cubic-bezier(.3,.2,.2,1)' }));
       if (!alive()) return;
       const from = sheet.getBoundingClientRect();
-      animate(env, [{ transform: resting, opacity: 1 }, { transform: 'translate(12px,90px) rotateX(8deg) rotate(2deg)', opacity: 0 }], { duration: 600, easing: 'ease-in' });
-      animate(shadow, [{ opacity: .65 }, { opacity: 0 }], { duration: 600 });
+      animate(env, [{ transform: resting, opacity: 1 }, { transform: 'translate(12px,90px) rotateX(8deg) rotate(2deg)', opacity: 0 }], { duration: 380, easing: 'ease-in' });
+      animate(shadow, [{ opacity: .65 }, { opacity: 0 }], { duration: 380 });
       await unfold(from);
       if (!alive()) return;
       setState('reading'); file.disabled = false;
@@ -141,7 +141,7 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
       if (state !== 'reading') return;
       setState('filing');
       file.disabled = true;
-      pen?.stop(); pen = null;
+      typist?.stop(); typist = null;
       sounds?.file();
       let node = page, from = env.getBoundingClientRect();
       if (!still) {
@@ -183,7 +183,7 @@ export async function playArrival(scope, { letter, sounds, target, reducedMotion
 
     const resting = 'translate(0,0) rotateX(3deg) rotate(-2deg)';
     setState('arriving'); requestAnimationFrame(() => root.classList.add('is-shown'));
-    sounds?.whoosh(); sounds?.prepareWriting?.();
+    sounds?.whoosh();
     animate(shadow, [{ opacity: 0, transform: 'translate(22px,30px) scale(.82)' }, { opacity: .65, transform: 'translate(0,0) scale(1)' }], { duration: 1050, easing: 'ease-out' });
     finished(animate(env, [
       { transform: 'translate(45px,110px) rotateX(22deg) rotate(-7deg)', opacity: 0 },

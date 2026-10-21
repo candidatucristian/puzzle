@@ -10,8 +10,10 @@ async function openGame(page) {
   });
   await page.goto('/');
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
-  // Begin without requesting browser fullscreen, keeping the chosen viewport.
-  await page.keyboard.press('Enter');
+  await evaluateApp(page, ({ ui }) => {
+    ui.showGame();
+    ui.navigate(0, { quick: true });
+  });
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('BinaryTree');
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
   await page.evaluate(() => document.fonts.ready);
@@ -43,7 +45,7 @@ for (const viewport of [
 ]) {
   const phone = viewport.height <= 360;
   test.describe(`quiet shell at ${viewport.width}x${viewport.height}`, () => {
-    test.use({ viewport, hasTouch: phone, isMobile: phone });
+    test.use({ viewport });
 
     test('the room blends into its compact frame and controls fit the screen', async ({ page }) => {
       const errors = [];
@@ -99,22 +101,20 @@ test('the answer row supports keyboard feedback, solving and restarting without 
   await page.keyboard.press('Enter');
   await expect(answer).toHaveAttribute('aria-invalid', 'true');
   await expect(feedback).toBeVisible();
-  await answer.fill(LEVEL_METADATA[0].code.toLowerCase());
-  await expect(feedback).toHaveText('');
-  await page.keyboard.press('Enter');
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex)).toBe(1);
-  await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
-  await expect(page.locator('.level-btn').nth(1)).toHaveAttribute('aria-current', 'step');
-  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(1);
-
   await evaluateApp(page, ({ services }) => {
     window.shellRestartCount = 0;
     services.levels.activeScene.events.once('shutdown', () => { window.shellRestartCount++; });
   });
-  await page.locator('#btn-replay').focus();
-  await page.keyboard.press('Enter');
+  await page.locator('#btn-replay').click();
   await expect.poll(() => page.evaluate(() => window.shellRestartCount)).toBe(1);
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe(LEVEL_METADATA[1].key);
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('BinaryTree');
+
+  await answer.fill(LEVEL_METADATA[0].code.toLowerCase());
+  await expect(feedback).toHaveText('');
+  await page.locator('#btn-submit').click();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(1);
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Study');
+  await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
   expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(1);
 });
 
@@ -125,15 +125,15 @@ test('first-time play opens directly and keeps the quiet frame through the next 
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   expect(await page.evaluate(() => localStorage.getItem('hasPlayedBefore'))).toBeNull();
   expect(await evaluateApp(page, ({ services }) => services.preferences.state.grain)).toBe(0);
-  await page.locator('#btn-continue').click();
+  await evaluateApp(page, ({ ui }) => { ui.showGame(); ui.navigate(0, { quick: true }); });
   await expect(page.locator('#intro-screen')).toBeHidden();
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('BinaryTree');
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
   await page.locator('#level-code').fill(LEVEL_METADATA[0].code);
-  await page.keyboard.press('Enter');
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('PlantPot');
+  await page.locator('#btn-submit').click();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Study');
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
-  await expect(page.locator('.level-btn').nth(1)).toHaveAttribute('aria-current', 'step');
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(1);
   await page.evaluate(() => document.fonts.ready);
   mkdirSync('.artifacts/after', { recursive: true });
   await page.screenshot({ path: '.artifacts/after/night-garden.png' });
@@ -142,30 +142,27 @@ test('first-time play opens directly and keeps the quiet frame through the next 
 
 test('room notes close with Escape and restore focus to their trigger', async ({ page }) => {
   await openGame(page);
-  const trigger = page.locator('#compact-menu');
+  const trigger = page.locator('#btn-hint');
   await trigger.focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#right-sidebar-wrapper')).toHaveClass(/drawer-open/);
-  await expect(page.locator('#right-sidebar-wrapper [data-close-drawer]')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#right-sidebar-wrapper')).not.toHaveClass(/drawer-open/);
   await expect(trigger).toBeFocused();
-  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
 });
 
-test('the direct Hint button reveals a hint and receives focus when the dialog closes', async ({ page }) => {
+test('the direct Hint button reveals a hint and receives focus when the drawer closes', async ({ page }) => {
   await openGame(page);
   const trigger = page.locator('#btn-hint');
   await trigger.focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('#info-modal')).toBeVisible();
+  await expect(page.locator('#right-sidebar-wrapper')).toHaveClass(/drawer-open/);
   await expect(page.locator('#hint-list li')).toHaveCount(1);
-  await expect(page.locator('#right-sidebar-wrapper')).not.toHaveClass(/drawer-open/);
   await page.keyboard.press('Escape');
-  await expect(page.locator('#info-modal')).toBeHidden();
+  await expect(page.locator('#right-sidebar-wrapper')).not.toHaveClass(/drawer-open/);
   await expect(trigger).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#hint-list li')).toHaveCount(1);
-  await page.locator('#btn-close-info').click();
+  await page.locator('#right-sidebar [data-close-drawer]').click();
   await expect(trigger).toBeFocused();
 });

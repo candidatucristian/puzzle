@@ -153,8 +153,8 @@ export default class TreeScene extends BasePuzzleScene {
   // Mouse hover draws the line until the pointer leaves. A touch pins it
   // until the next tap, so a finger never has to cover the clue to see it.
   _makeMoon({ x: mx, y: my, r }) {
-    const line = this.add.graphics().setDepth(-13).setVisible(false);
-    const area = this.add.circle(mx, my, r * 2.2, 0xffffff, 0.001).setDepth(-12).setInteractive({ useHandCursor: true });
+    const line = (this._secantGraphics = this.add.graphics().setDepth(-13).setVisible(false));
+    const area = (this._moonHitArea = this.add.circle(mx, my, r * 2.2, 0xffffff, 0.001).setDepth(-12).setInteractive({ useHandCursor: true }));
     let drawing = null;
     const show = () => {
       if (drawing?.isPlaying()) return;

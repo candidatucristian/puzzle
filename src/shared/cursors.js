@@ -4,8 +4,8 @@
 // in a puzzle; only the ways through the house say where they go: a doorway
 // with an arrow going into it for a door, the arrow alone once it stands
 // open, stairs, a ladder, an archway for a passage, a padlock for a locked
-// door and a key for one its key will open.
-// And the notebook's pencil and rubber. Each falls back to the ordinary pointer.
+// door and a key for one its key will open. Each falls back to the ordinary
+// pointer.
 
 const svg = (body, x, y) =>
   `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g fill='none' stroke-linecap='round' stroke-linejoin='round'>${body}</g></svg>`)}") ${x} ${y}`;
@@ -34,10 +34,8 @@ const SHAPES = {
   locked: ["M10 14V10a6 6 0 0 1 12 0v4M7 14h18v14H7zM16 19v4", 16, 18],
   hand: ["M12.5 20.3V5.2a2.1 2.1 0 0 1 4.2 0V14M16.7 13.2v-1.6a2.1 2.1 0 0 1 4.2 0v3M20.9 13.8a2.1 2.1 0 0 1 4.2 0v5.7c0 5.4-3.4 9.5-8.6 9.5h-1.6c-3 0-5-1.3-6.6-3.9l-3.6-5.6a2.1 2.1 0 0 1 3.5-2.4l2.3 3.1H12.5", 14, 3],
   key: ["M3.5 16a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0-11 0zM14.5 16H29M24 16v4.5M28 16v3.5M7.4 16h3.2", 16, 16],
-  pencil: ["M4.5 27.5l1.6-6.1L21 6.5l4.5 4.5-14.9 14.9zM18.5 9l4.5 4.5M6.1 21.4l4.5 4.5", 4, 27],
-  rubber: ["M5 21.5L16.5 10l7.5 7.5L12.5 29h-4zM10.5 16l7.5 7.5M12.5 29H27", 7, 27],
 };
-const FALLBACK = { locked: "not-allowed", pencil: "crosshair", rubber: "crosshair" };
+const FALLBACK = { locked: "not-allowed" };
 const ARROWS = {
   door: ["M4.7 16.15H14.8V12.3L22.2 17l-7.4 4.7v-3.85H4.7z", "M5.3 16.45h9.5"],
   doorLeft: ["M27.3 16.15H17.2V12.3L9.8 17l7.4 4.7v-3.85H27.3z", "M26.7 16.45h-9.5"],

@@ -3,7 +3,7 @@
 // the music, the places' ambience, the effects, the interface's clicks — and
 // the one switch that silences everything. Each slider shows how full it is
 // along its track (`--fill`), and the settings dim them while muted.
-export function mountAudioControls(audio, scope) {
+export function mountAudioControls(audio, scope, i18n = null) {
   const byId = id => document.getElementById(id);
   const header = byId('vol-slider-ui'), mute = byId('btn-mute'), icon = byId('vol-icon-ui');
   const panel = byId('options-modal');
@@ -27,13 +27,17 @@ export function mountAudioControls(audio, scope) {
     for (const { slider, out, get } of channels) show(slider, get(state), out);
     if (header) show(header, state.muted ? 0 : state.masterVol, byId('master-value'));
     const label = mute.querySelector('[data-audio-label]') || mute;
-    label.textContent = state.muted ? 'Unmute all' : 'Mute all';
+    label.textContent = state.muted
+      ? (i18n ? i18n.t('settings.unmute') : 'Unmute all')
+      : (i18n ? i18n.t('settings.muteAll') : 'Mute all');
     mute.dataset.muted = String(state.muted);
     mute.setAttribute('aria-pressed', String(state.muted));
     panel?.classList.toggle('is-muted', state.muted);
     icon.dataset.muted = String(state.muted || state.masterVol === 0);
     icon.setAttribute('aria-pressed', String(state.muted));
-    icon.setAttribute('aria-label', state.muted ? 'Unmute all audio' : 'Mute all audio');
+    icon.setAttribute('aria-label', state.muted
+      ? (i18n ? i18n.t('settings.unmute') : 'Unmute all audio')
+      : (i18n ? i18n.t('header.mute') : 'Mute all audio'));
   }
   for (const { slider, set } of channels) scope.on(slider, 'input', e => { set(e.target.value); sync(); });
   if (header) scope.on(header, 'input', e => { audio.setMasterVolume(e.target.value); sync(); });
@@ -52,5 +56,6 @@ export function mountAudioControls(audio, scope) {
   scope.on(document.body, 'click', e => { if (e.detail === 0) click(e); });
   // changed from elsewhere (the cold open's own control): shown here too
   if (audio.subscribe) scope.add(audio.subscribe(sync));
+  if (i18n) scope.add(i18n.subscribe(sync));
   sync();
 }

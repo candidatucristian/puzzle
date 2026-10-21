@@ -52,6 +52,7 @@ function playDesk(
     sounds = null,
     revealImmediately = false,
     deferInteraction = false,
+    i18n = null,
   } = {},
 ) {
   const root = document.createElement("div");
@@ -59,7 +60,7 @@ function playDesk(
   root.setAttribute("role", "dialog");
   root.setAttribute(
     "aria-label",
-    "The Ashcombe file, on Inspector Wren's desk",
+    i18n ? i18n.t("prologue.ariaDesk") : "The Ashcombe file, on Inspector Wren's desk",
   );
   root.dataset.phase = deferInteraction ? "opening" : "ready";
   root.inert = deferInteraction;
@@ -88,19 +89,19 @@ function playDesk(
   const envelope = document.createElement("button");
   envelope.type = "button";
   envelope.className = "prologue-envelope";
-  envelope.setAttribute("aria-label", "Open the letter");
-  envelope.title = "Open the letter";
+  envelope.setAttribute("aria-label", i18n ? i18n.t("prologue.openLetter") : "Open the letter");
+  envelope.title = i18n ? i18n.t("prologue.openLetter") : "Open the letter";
   const dossier = document.createElement("button");
   dossier.type = "button";
   dossier.className = "prologue-envelope prologue-dossier";
-  dossier.setAttribute("aria-label", "Open the Ashcombe file");
+  dossier.setAttribute("aria-label", i18n ? i18n.t("prologue.ariaOpenFile") : "Open the Ashcombe file");
   // no "Open the file" over it until it is its turn
   dossier.disabled = true;
 
   const nameplate = document.createElement("div");
   nameplate.className = "prologue-desk-nameplate";
   nameplate.setAttribute("role", "img");
-  nameplate.setAttribute("aria-label", "Inspector Arthur Wren");
+  nameplate.setAttribute("aria-label", i18n ? i18n.t("prologue.nameplate") : "Inspector Arthur Wren");
   // The physical plaque and folder label are in the photograph, with the
   // same light and perspective as the film. No bright plates are laid over it.
   camera.append(dossier, nameplate, envelope);
@@ -129,9 +130,9 @@ function playDesk(
   // ticked when done, and the next coming in under it
   const tasks = taskCard(
     [
-      ["letter", "Read the letter"],
-      ["file", "Open the case file", { later: true }],
-      ["house", "Go to Ashcombe Manor", { later: true }],
+      ["letter", i18n ? i18n.t("tasks.letter") : "Read the letter"],
+      ["file", i18n ? i18n.t("tasks.file") : "Open the case file", { later: true }],
+      ["house", i18n ? i18n.t("tasks.house") : "Go to Ashcombe Manor", { later: true }],
     ],
     { sounds },
   );
@@ -142,7 +143,8 @@ function playDesk(
   onward.type = "button";
   onward.className = "prologue-onward";
   onward.hidden = true;
-  onward.innerHTML = `<span class="onward-word">Ashcombe Manor<svg class="onward-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
+  const onwardWord = i18n ? i18n.t("prologue.ashcombeManor") : "Ashcombe Manor";
+  onward.innerHTML = `<span class="onward-word">${onwardWord}<svg class="onward-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
       ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" />`).join("")}
     </svg></span><svg class="onward-icon" viewBox="0 0 44 22" aria-hidden="true"><g class="onward-arrow">
       ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M3 18.5C5.5 8.2 16.5 3.6 26 4.6C32.4 5.3 36.8 8.6 39.6 13.2" /><path class="${c}" d="M40.6 6.4L39.7 13.4L33 12.1" />`).join("")}
@@ -150,14 +152,16 @@ function playDesk(
 
   const panel = document.createElement("aside");
   panel.className = "prologue-panel";
-  panel.setAttribute("aria-label", "Tonight");
+  panel.setAttribute("aria-label", i18n ? i18n.t("prologue.tonight") : "Tonight");
   const head = document.createElement("header");
   head.className = "prologue-panel-head";
   // headed as the game's own index heads a floor: its mark in a box, a rule, the name
-  head.innerHTML = `<span class="pf-numeral">P</span><span class="pf-rule"></span><span class="pf-words"><span class="pf-name">Inspector Wren's Study</span><span class="pf-where">Prologue · Exeter, 2001</span></span>`;
+  const studyName = i18n ? i18n.t("prologue.studyName") : "Inspector Wren's Study";
+  const studyWhere = i18n ? i18n.t("prologue.studyWhere") : "Prologue · Exeter, 2001";
+  head.innerHTML = `<span class="pf-numeral">P</span><span class="pf-rule"></span><span class="pf-words"><span class="pf-name">${studyName}</span><span class="pf-where">${studyWhere}</span></span>`;
   const label = document.createElement("p");
   label.className = "prologue-panel-label";
-  label.textContent = "Tonight";
+  label.textContent = i18n ? i18n.t("prologue.tonight") : "Tonight";
   panel.append(head, label, tasks.node, onward);
   root.append(camera, panel);
   const reading = readingStage(scope, root);
@@ -214,14 +218,16 @@ function playDesk(
     envelope.disabled = true;
     envelope.removeAttribute("title");
     delete envelope.dataset.tip;
-    reading.show(letterById("invitation"), {}, "Put it down", () => {
+    const invitationLetter = i18n?.getLetter("invitation") || letterById("invitation");
+    const putDownText = i18n ? i18n.t("prologue.putDown") : "Put it down";
+    reading.show(invitationLetter, {}, putDownText, () => {
       reading.hide();
       root.dataset.step = "file";
       tasks.tick("letter");
       // a moment after the tick, the next task
       scope.later(() => tasks.show("file"), reducedMotion ? 0 : 700);
       dossier.disabled = false;
-      dossier.dataset.tip = "Open the file";
+      dossier.dataset.tip = i18n ? i18n.t("prologue.openFile") : "Open the file";
       sparkle(dossier, "file");
       dossier.focus({ preventScroll: true });
     });
@@ -231,7 +237,9 @@ function playDesk(
     root.dataset.step = "read";
     dossier.disabled = true;
     delete dossier.dataset.tip;
-    reading.show(CASE_REPORT, { seal: false }, "Put it down", () => {
+    const caseReportDoc = i18n?.getCaseReport() || CASE_REPORT;
+    const closeFileText = i18n ? i18n.t("prologue.closeFile") : "Close the file";
+    reading.show(caseReportDoc, { seal: false }, closeFileText, () => {
       reading.hide();
       root.dataset.step = "done";
       tasks.tick("file");

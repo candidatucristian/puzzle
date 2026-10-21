@@ -1,9 +1,9 @@
 // IVY'S HERBARIUM — what the puzzle is, apart from how it is painted.
 //
-// Her book of pressed plants, five pages of it, four or five specimens to a
+// Her book of pressed plants, five pages of it, two large specimens to a
 // page, each taped down with its name in her hand. On every page one of them
 // has been drawn round in pencil with a figure of straight sides: an octagon,
-// a pentagon, a square, a heptagon, a pentagon. Its sides, counted, are a
+// a pentagon, a quadrilateral, a heptagon, a pentagon. Its sides, counted, are a
 // letter's place in the alphabet:
 //
 //   8 H · 5 E · 4 D · 7 G · 5 E   →   HEDGE
@@ -16,37 +16,24 @@ export const HERBARIUM_WORD = "HEDGE";
 // drawn round on its page, the number of the figure's sides.
 export const PAGES = Object.freeze([
   [
-    { kind: "fern", name: "Adiantum capillus-veneris" },
-    { kind: "daisy", name: "Bellis perennis" },
     { kind: "hawthorn", name: "Crataegus monogyna", sides: 8 },
-    { kind: "grass", name: "Briza media" },
-    { kind: "clover", name: "Trifolium repens" },
+    { kind: "daisy", name: "Bellis perennis" },
   ],
   [
-    { kind: "oak", name: "Quercus robur" },
     { kind: "rose", name: "Rosa canina", sides: 5 },
-    { kind: "fern", name: "Polypodium vulgare" },
-    { kind: "willow", name: "Salix alba" },
+    { kind: "oak", name: "Quercus robur" },
   ],
   [
-    { kind: "ovate", name: "Corylus avellana" },
-    { kind: "grass", name: "Plantago lanceolata" },
     { kind: "ivy", name: "Hedera helix", sides: 4 },
-    { kind: "maple", name: "Acer campestre" },
-    { kind: "dandelion", name: "Taraxacum officinale" },
+    { kind: "grass", name: "Plantago lanceolata" },
   ],
   [
     { kind: "blackthorn", name: "Prunus spinosa", sides: 7 },
     { kind: "ovate", name: "Fagus sylvatica" },
-    { kind: "fern", name: "Dryopteris filix-mas" },
-    { kind: "clover", name: "Fragaria vesca" },
   ],
   [
-    { kind: "grass", name: "Festuca rubra" },
     { kind: "privet", name: "Ligustrum vulgare", sides: 5 },
     { kind: "primrose", name: "Primula vulgaris" },
-    { kind: "clover", name: "Trifolium pratense" },
-    { kind: "ovate", name: "Mentha aquatica" },
   ],
 ].map(Object.freeze));
 

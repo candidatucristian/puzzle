@@ -453,8 +453,9 @@ export default class HallScene extends BasePuzzleScene {
   // room's light coming out round it and across the hall's boards — and it
   // stands open. Only another click goes through it. One door stands open at
   // a time: opening another swings the first shut again, the way it opened.
-  _open(d, room, zone) {
+  _open(d, room, zone = this._doorZones?.get(d.number)) {
     if (this._opening || !this.input.enabled) return;
+    if (this._doorOpening?.number === d.number) return;
     // a door still swinging shut from before is simply shut
     this._shutDone();
     if (this._doorArt) {
@@ -464,10 +465,13 @@ export default class HallScene extends BasePuzzleScene {
     }
     this._doorArt = null;
     this._latch();
-    // (with motion reduced it is simply open)
-    this._doorOpening = { number: d.number, room, elapsed: this.reducedMotion ? 1e6 : 0, entering: false, walking: false };
+    if (this.reducedMotion) {
+      this._go(d.box, { place: room.key });
+      return;
+    }
+    this._doorOpening = { number: d.number, room, elapsed: 0, walked: 0, entering: true, walking: false };
     this._mountDoor();
-    zone.setData("interactionLabel", "Go in");
+    zone?.setData("interactionLabel", "Go in");
     this.game.events.emit("puzzle:interaction", { label: "Go in" });
     // the pointer is still on it: now only the way on in
     this.game.canvas.style.cursor = cursorFor("Go in", d.side);

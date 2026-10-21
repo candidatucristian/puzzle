@@ -11,9 +11,9 @@
 //   unfold   the sheet opened out, fold by fold
 //   file     the letter slid into the dossier
 //   ping     something new in the case file
-//   writing  a pen on paper as a found letter is opened out: two seconds of
-//            the recording (assets/sounds/writingonpaper.mp3), as long as the
-//            words take to be written; returns { stop() }
+//   typing   a typewriter as a found letter is opened out: its keys for the
+//            two seconds the words take to come up, then its bell and the
+//            carriage thrown back; returns { stop() }
 
 export function mountPaperSounds({ game, audio }) {
   const ctx = () => {
@@ -56,54 +56,49 @@ export function mountPaperSounds({ game, audio }) {
     }
   }
   const swell = (k) => Math.sin(Math.PI * k) ** 1.5;
-  // the recording of the pen, fetched once and kept decoded
-  // (the recording is very quiet, near -48 dB: it is brought up to a clear
-  // level by what it measures, its peaks kept clear of clipping)
-  // two seconds: exactly as long as the words take to be written (letter-ink)
-  const WRITING = { url: "assets/sounds/writingonpaper.mp3", seconds: 2, loudness: 0.11, gain: 0.8 };
-  let writingBuffer = null, writingLoad = null, writingLift = 1;
-  function loadWriting(ac) {
-    if (writingBuffer) return Promise.resolve(writingBuffer);
-    writingLoad ??= fetch(WRITING.url).then((r) => r.arrayBuffer()).then((b) => ac.decodeAudioData(b)).then((buf) => {
-      const n = Math.min(buf.length, Math.floor(buf.sampleRate * WRITING.seconds));
-      let sum = 0, peak = 0, count = 0;
-      for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-        const d = buf.getChannelData(ch);
-        for (let i = 0; i < n; i++) { const v = Math.abs(d[i]); sum += v * v; if (v > peak) peak = v; count++; }
-      }
-      const rms = Math.sqrt(sum / Math.max(1, count));
-      writingLift = Math.max(1, Math.min(WRITING.loudness / Math.max(1e-5, rms), 0.95 / Math.max(1e-5, peak)));
-      return (writingBuffer = buf);
-    }).catch(() => { writingLoad = null; return null; });
-    return writingLoad;
-  }
-  function writing() {
-    let stopped = false, gainNode = null, src = null;
+  // a typewriter: each key the type-bar striking the platen — a dry click —
+  // and the thump of the carriage stepping on, a space now and then a little
+  // heavier and longer; at the end of the line its bell, and the carriage
+  // thrown back on its ratchet. All under one gain, so it can be cut short.
+  const TYPING_S = 2;
+  function typing() {
     const c = ctx();
-    if (c) loadWriting(c.ac).then((buf) => {
-      const now = ctx();
-      if (!buf || !now || stopped) return;
-      const { ac, out, vol } = now, t = ac.currentTime, len = Math.min(WRITING.seconds, buf.duration);
-      src = ac.createBufferSource(); gainNode = ac.createGain();
-      src.buffer = buf;
-      const peak = WRITING.gain * writingLift * vol;
-      gainNode.gain.setValueAtTime(0.0001, t);
-      gainNode.gain.exponentialRampToValueAtTime(peak, t + 0.12);
-      gainNode.gain.setValueAtTime(peak, t + Math.max(0.12, len - 0.3));
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, t + len);
-      src.connect(gainNode).connect(out);
-      src.start(t, 0, len);
-    });
+    if (!c) return { stop() {} };
+    const { ac, out, vol } = c, t0 = ac.currentTime + 0.03, master = ac.createGain(), sources = [];
+    master.gain.value = vol; master.connect(out);
+    const burst = (at, dur, type, freq, q, gain, env) => {
+      const buf = ac.createBuffer(1, Math.max(1, Math.floor(ac.sampleRate * dur)), ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * env(i / d.length);
+      const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = buf; f.type = type; f.frequency.value = freq; f.Q.value = q; g.gain.value = gain;
+      src.connect(f).connect(g).connect(master); src.start(t0 + at); sources.push(src);
+    };
+    for (let at = 0, n = 0; at < TYPING_S - 0.3; n++) {
+      const space = n > 2 && Math.random() < 0.14, hit = 0.7 + Math.random() * 0.3;
+      burst(at, 0.012, "highpass", 2600 + Math.random() * 1500, 0.8, 0.32 * hit, (k) => (1 - k) ** 2);
+      burst(at + 0.004, space ? 0.07 : 0.035, "lowpass", space ? 170 : 320, 0.9, (space ? 0.42 : 0.3) * hit, (k) => (1 - k) ** 3);
+      at += space ? 0.12 + Math.random() * 0.06 : 0.055 + Math.random() * 0.05;
+    }
+    // the bell, and the carriage going back
+    const bell = TYPING_S - 0.22;
+    for (const [f, g0] of [[2093, 0.07], [4186, 0.02], [3136, 0.015]]) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + bell);
+      g.gain.exponentialRampToValueAtTime(g0, t0 + bell + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + bell + 1.1);
+      o.connect(g).connect(master); o.start(t0 + bell); o.stop(t0 + bell + 1.15); sources.push(o);
+    }
+    burst(TYPING_S - 0.1, 0.3, "bandpass", 1300, 1.4, 0.2, (k) => Math.sin(Math.PI * k) * (0.55 + 0.45 * Math.random()));
+    burst(TYPING_S + 0.18, 0.05, "lowpass", 260, 0.9, 0.4, (k) => (1 - k) ** 3);
     return {
-      // put down early: it dies away quickly instead of running on
+      // put down early: it dies away at once instead of running on
       stop() {
-        stopped = true;
-        if (!src || !gainNode) return;
-        const t = gainNode.context.currentTime;
-        gainNode.gain.cancelScheduledValues(t);
-        gainNode.gain.setValueAtTime(Math.max(0.0001, gainNode.gain.value), t);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
-        try { src.stop(t + 0.3); } catch { /* already stopped */ }
+        const t = ac.currentTime;
+        master.gain.cancelScheduledValues(t);
+        master.gain.setValueAtTime(Math.max(0.0001, master.gain.value), t);
+        master.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+        for (const src of sources) { try { src.stop(t + 0.2); } catch { /* already stopped */ } }
       },
     };
   }
@@ -126,8 +121,6 @@ export function mountPaperSounds({ game, audio }) {
       noise({ at: 0.36, dur: 0.08, type: "lowpass", freq: 700, gain: 0.3, env: (k) => (1 - k) ** 3 });
     },
     ping() { tones([[880, 0.05], [1318.5, 0.04, 0.09]], { decay: 0.7 }); },
-    writing,
-    // fetched and decoded ahead, so the pen starts with the words, not after them
-    prepareWriting() { const c = ctx(); if (c) void loadWriting(c.ac); },
+    typing,
   };
 }

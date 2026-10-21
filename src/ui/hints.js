@@ -1,7 +1,7 @@
 /** The hints for the puzzle in hand. The Hint button slides the drawer out
  *  from the left (mobile.js keeps the drawer); the first hint is revealed as
  *  it opens, and each further one only when asked for. */
-export function mountHints(scope, { levels, hints }) {
+export function mountHints(scope, { levels, hints, i18n = null }) {
   const list = document.getElementById('hint-list');
   const next = document.getElementById('btn-next-hint');
   const count = document.getElementById('hint-count');
@@ -18,23 +18,35 @@ export function mountHints(scope, { levels, hints }) {
       const item = document.createElement('li');
       const label = document.createElement('span');
       label.className = 'hint-step-label';
-      label.textContent = `Hint ${i + 1}`;
+      label.textContent = i18n ? i18n.t('hints.step', { n: i + 1 }) : `Hint ${i + 1}`;
       const text = document.createElement('p');
-      text.textContent = level.hint.steps[i];
+      text.textContent = (i18n ? i18n.getHint(level.id, i) : null) || level.hint.steps[i];
       item.append(label, text);
       list.append(item);
     }
-    count.textContent = `${revealed} of ${level.hint.steps.length} hints revealed`;
+    count.textContent = i18n
+      ? i18n.t('hints.revealedCount', { revealed, total: level.hint.steps.length })
+      : `${revealed} of ${level.hint.steps.length} hints revealed`;
     next.disabled = revealed === level.hint.steps.length;
-    next.textContent = next.disabled ? 'All hints revealed' : `Reveal hint ${revealed + 1}`;
+    next.textContent = next.disabled
+      ? (i18n ? i18n.t('hints.allRevealed') : 'All hints revealed')
+      : (i18n ? i18n.t('hints.revealNext', { n: revealed + 1 }) : `Reveal hint ${revealed + 1}`);
     const requirements = document.getElementById('current-requirements');
+    const legacyRequires = document.getElementById('info-requires');
     requirements.replaceChildren();
     requirements.hidden = !level.hint.sound && !level.hint.tool;
-    for (const [needed, text] of [[level.hint.sound, 'Listening'], [level.hint.tool, 'Reference may help']]) {
+    if (legacyRequires) {
+      legacyRequires.replaceChildren();
+      legacyRequires.hidden = requirements.hidden;
+    }
+    const soundText = i18n ? i18n.t('hints.listening') : 'Listening';
+    const toolText = i18n ? i18n.t('hints.reference') : 'Reference may help';
+    for (const [needed, text] of [[level.hint.sound, soundText], [level.hint.tool, toolText]]) {
       if (!needed) continue;
       const badge = document.createElement('span');
       badge.className = 'info-badge'; badge.textContent = text;
       requirements.append(badge);
+      if (legacyRequires) legacyRequires.append(badge.cloneNode(true));
     }
   }
 
@@ -51,6 +63,10 @@ export function mountHints(scope, { levels, hints }) {
     if (next.disabled) document.querySelector('#right-sidebar-wrapper [data-close-drawer]').focus();
   });
   scope.add(levels.subscribe(render));
+  if (i18n) scope.add(i18n.subscribe(() => { roomId = undefined; list.replaceChildren(); render(); }));
   render();
-  return { reset() { roomId = undefined; list.replaceChildren(); hints.reset(); render(); } };
+  return {
+    render,
+    reset() { roomId = undefined; list.replaceChildren(); hints.reset(); render(); },
+  };
 }

@@ -73,7 +73,7 @@ function defs(svg) {
   el("stop", { offset: "1", "stop-color": "#5a3e1a", "stop-opacity": ".42" }, edge);
 }
 
-export function mountHouseMap(scope, { levels, dialogs, travel }) {
+export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
   const modal = document.getElementById("map-modal");
   const holder = document.getElementById("house-map");
   const keysLine = document.getElementById("map-keys");
@@ -86,14 +86,15 @@ export function mountHouseMap(scope, { levels, dialogs, travel }) {
     g.classList.toggle("here", Boolean(state?.here));
     g.classList.toggle("done", Boolean(state?.finished));
     if (state?.visited && state.open && !state.here) {
+      const labelText = i18n ? i18n.t('map.goTo', { label }) : `Go to ${label}`;
       g.classList.add("go");
       g.setAttribute("role", "button");
       g.setAttribute("tabindex", "0");
-      g.setAttribute("aria-label", `Go to ${label}`);
+      g.setAttribute("aria-label", labelText);
       const act = () => { dialogs.close(); travel(state.key); };
       g.addEventListener("click", act);
       g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } });
-      g.dataset.tip = `Go to ${label}`;
+      g.dataset.tip = labelText;
     }
     return g;
   }
@@ -315,7 +316,12 @@ export function mountHouseMap(scope, { levels, dialogs, travel }) {
 
     // the keys in hand, under the plan
     const keys = levels.keys;
-    keysLine.textContent = keys.length ? `In your pocket: ${keys.map((k) => `the key to door ${ROMAN[k.door - 1]}`).join(", ")}.` : "";
+    if (keys.length) {
+      const formatted = keys.map((k) => i18n ? i18n.t('map.keyToDoor', { door: ROMAN[k.door - 1] }) : `the key to door ${ROMAN[k.door - 1]}`).join(", ");
+      keysLine.textContent = i18n ? i18n.t('map.pocketKeys', { keys: formatted }) : `In your pocket: ${formatted}.`;
+    } else {
+      keysLine.textContent = "";
+    }
     keysLine.hidden = !keys.length;
   }
 
@@ -337,10 +343,10 @@ export function mountHouseMap(scope, { levels, dialogs, travel }) {
   function legend(g, x, y) {
     const l = el("g", { class: "legend", transform: `translate(${x},${y})` }, g);
     const row = (i, draw, words) => { const r = el("g", { transform: `translate(${(i % 2) * 170},${Math.floor(i / 2) * 26})` }, l); draw(r); text(r, 22, 5, "legend-text", words); };
-    row(0, (r) => { el("circle", { cx: 4, cy: 0, r: 3.1, class: "dot solved" }, r); el("circle", { cx: 14, cy: 0, r: 3.1, class: "dot" }, r); }, "a puzzle, solved or not");
-    row(1, (r) => seal(r, 9, 0, 3, 18), "everything in it solved");
-    row(2, (r) => here(r, 9, 8), "where you stand");
-    row(3, (r) => el("path", { d: "M0,-4 h18 v8 h-18 Z", class: "pencil" }, r), "not yet been in");
+    row(0, (r) => { el("circle", { cx: 4, cy: 0, r: 3.1, class: "dot solved" }, r); el("circle", { cx: 14, cy: 0, r: 3.1, class: "dot" }, r); }, i18n ? i18n.t('map.legendPuzzle') : "a puzzle, solved or not");
+    row(1, (r) => seal(r, 9, 0, 3, 18), i18n ? i18n.t('map.legendDone') : "everything in it solved");
+    row(2, (r) => here(r, 9, 8), i18n ? i18n.t('map.legendHere') : "where you stand");
+    row(3, (r) => el("path", { d: "M0,-4 h18 v8 h-18 Z", class: "pencil" }, r), i18n ? i18n.t('map.legendUnvisited') : "not yet been in");
   }
   function scaleBar(g, x, y) {
     const s = el("g", { class: "scale", transform: `translate(${x},${y})` }, g);
@@ -351,11 +357,13 @@ export function mountHouseMap(scope, { levels, dialogs, travel }) {
     const c = el("g", { class: "cartouche", transform: `translate(${x},${y})` }, g);
     el("rect", { x: 0, y: 0, width: 210, height: 88, class: "rule thick" }, c);
     el("rect", { x: 4, y: 4, width: 202, height: 80, class: "rule" }, c);
-    text(c, 105, 28, "cartouche-title", "THE HOUSE");
+    text(c, 105, 28, "cartouche-title", i18n ? i18n.t('map.cartoucheTitle') : "THE HOUSE");
     el("path", { d: "M40,36 H170", class: "rule faint" }, c);
-    text(c, 105, 51, "cartouche-sub", "three floors, as far as seen");
+    text(c, 105, 51, "cartouche-sub", i18n ? i18n.t('map.cartoucheSub') : "three floors, as far as seen");
     scaleBar(c, 45, 66);
   }
+
+  if (i18n) scope.add(i18n.subscribe(() => { if (modal && !modal.classList.contains("hidden")) render(); }));
 
   return {
     open(trigger) { render(); dialogs.open("map-modal", trigger); },

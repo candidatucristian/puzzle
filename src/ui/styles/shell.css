@@ -52,6 +52,7 @@ body { display:flex; flex-direction:column; height:100dvh; background:var(--ui-b
 }
 #game-container { position:absolute; inset:0; height:100%; width:100%; overflow:hidden; display:flex; align-items:center; justify-content:center; }
 #game-container canvas { filter:grayscale(40%); flex-shrink:0; }
+#game-container canvas[data-scene-colour="natural"] { filter:none; }
 #interaction-cue { position:absolute; bottom:18px; left:18px; z-index:22; margin:0; padding:7px 10px; max-width:55%; background:#141414ed; border:1px solid #42423e; border-radius:4px; color:var(--ui-text); font:400 12px/1.5 var(--ui-font); pointer-events:none; }
 #interaction-cue[hidden],#interaction-pulse { display:none; }
 #game-container .scene-interactive:focus-visible,#game-container [data-interaction]:focus-visible { outline:1px solid #c5d6df; outline-offset:3px; }

@@ -1,0 +1,18 @@
+# Room VI — one botanical family photograph
+
+Created with the built-in image_gen tool using `sisters-portraits-v1.webp` as the facial-identity reference. Final image: `public/assets/images/Room6/botanical-family-portrait-v2.webp`, WebP quality 95, preserving alpha.
+
+Replaces the two individual wall portraits with one framed black-and-white greenhouse photograph of Ivy, Rose and Rose's baby. The caption reads exactly `Ivy and Rose Ashcome` and `1959`. The year follows the established story; the surname follows the user's requested caption spelling. The original frame and caption are part of the image. The renderer excludes only the surrounding margin and places the complete frame above the cot.
+
+## Final prompt
+
+Use case: historical-scene.
+Asset type: ONE complete antique framed black-and-white family photograph for the wall above a cot in a botanical room of an English manor. Landscape 1536x1024, one horizontal rectangular frame, true alpha transparency only outside the frame.
+Input image 1 is an IDENTITY REFERENCE ONLY: the woman in its left portrait is Rose, the younger sister with dark softly waved shoulder-length hair and rounded-collar blouse; the woman in its right portrait is Ivy, the older sister with pinned dark hair and a cardigan. Preserve both women's facial identities and family resemblance. REPLACE the two separate portraits with ONE single coherent group photograph, not a collage or split picture.
+Inside this one photograph: Ivy on the LEFT and Rose on the RIGHT, sitting closely together on a simple garden bench in a real English botanical glasshouse in 1959. Rose gently holds her swaddled newborn baby in her arms, the baby visible between the two women; Ivy leans close with a kind natural smile and one hand lightly near the baby's blanket. Exactly TWO adult women and ONE infant, no one else. Natural believable hands and anatomy, tender unposed family moment, all faces readable and no cut-off heads. Medium waist-up framing. In the glasshouse around and behind them are graceful fern fronds, ivy leaves, a flowering rose bush, some small daisies and a few terracotta pots on an old wooden potting shelf. Real, restrained botanical surroundings, flowers clearly visible but not obscuring the faces, no symbolic collage. Subtle blurred greenhouse glazing behind the foliage.
+Photographic style: authentic late-1950s silver-gelatin BLACK AND WHITE family photograph, neutral greys, delicate grain, soft daylight, genuine skin texture, quiet warm human expressions, slightly aged print, NOT illustration, painting, modern AI beauty portrait or 3D rendering.
+Physical prop: the single landscape photograph under old glass, a narrow ivory mount around it, a modestly deeper ivory mount below for the caption, one slim dark walnut wooden frame with real grain and tiny nicks. Frame directly front facing, no perspective tilt or rotation, all four corners intact and perfectly rectangular. Full frame spans approximately x4%..96%, y5%..95%; transparent margins outside. No room, no wall, no extra frames, no unrelated objects outside the photograph, no cast shadow outside the frame.
+Text on the lower ivory mount, clearly legible, dark charcoal elegant small period serif lettering, centered, exactly TWO lines:
+"Ivy and Rose Ashcome"
+"1959"
+Use that exact spelling: Ashcome, without a b. No other text, no extra captions, no signatures, no watermark. The text should be large enough to remain recognizable when the frame is reduced in a game room, but still be a tasteful caption. The faces and baby must remain the main subject. Only the photograph is monochrome; the dark walnut frame and aged ivory mount retain subtle natural material colour.

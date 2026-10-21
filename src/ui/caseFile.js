@@ -45,7 +45,7 @@ function envelopeIcon() {
   return c;
 }
 
-export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, reducedMotion = () => false, isBusy = () => false }) {
+export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, reducedMotion = () => false, isBusy = () => false, i18n = null }) {
   const $ = (id) => document.getElementById(id);
   const modal = $("casefile-modal"), button = $("btn-casefile");
   const letterList = $("casefile-letter-list"), roomList = $("casefile-room-list"), reader = $("casefile-reader");
@@ -92,11 +92,13 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   // ── the letters: the index, and the one being read ──
   function renderLetters() {
     letterList.replaceChildren();
-    LETTERS.forEach((letter, n) => {
+    LETTERS.forEach((baseLetter, n) => {
+      const letter = i18n?.getLetter(baseLetter.id) || baseLetter;
       const item = document.createElement("li");
       if (!filed(letter.id)) {
         item.className = "dossier-slip is-missing";
-        item.innerHTML = `<span class="slip-no"></span><span class="slip-title">Not yet found</span>`;
+        const notFoundText = i18n ? i18n.t('casefile.notYetFound') : "Not yet found";
+        item.innerHTML = `<span class="slip-no"></span><span class="slip-title">${notFoundText}</span>`;
         item.querySelector(".slip-no").textContent = `No. ${n + 1}`;
         letterList.append(item);
         return;
@@ -107,18 +109,20 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
       slip.innerHTML = `<span class="slip-clip" aria-hidden="true"></span><span class="slip-no"></span><span class="slip-title"></span><span class="slip-where"></span>`;
       slip.querySelector(".slip-no").textContent = `No. ${n + 1}`;
       slip.querySelector(".slip-title").textContent = letter.title;
-      slip.querySelector(".slip-where").textContent = `Found ${letter.found}`;
+      const foundLabel = i18n ? i18n.t('casefile.foundWhere', { where: letter.found }) : `Found ${letter.found}`;
+      slip.querySelector(".slip-where").textContent = foundLabel;
       scope.on(slip, "click", () => { showLetter(letter.id); sounds?.open(); });
       item.append(slip);
       letterList.append(item);
     });
   }
   function showLetter(id) {
-    const letter = letterById(id);
+    const letter = i18n?.getLetter(id) || letterById(id);
     current = letter ? id : null;
     if (!letter) {
       reader.replaceChildren();
-      const empty = document.createElement("p"); empty.className = "dossier-empty"; empty.textContent = "No letters yet.";
+      const empty = document.createElement("p"); empty.className = "dossier-empty";
+      empty.textContent = i18n ? i18n.t('casefile.noLetters') : "No letters yet.";
       reader.append(empty);
     } else {
       renderLetter(reader, letter);
@@ -142,7 +146,8 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
       const row = document.createElement("li");
       row.className = "dossier-room" + (solved === held.length ? " is-done" : "");
       row.innerHTML = `<span class="room-name"></span><span class="room-dots" aria-hidden="true"></span><span class="room-count"></span>`;
-      row.querySelector(".room-name").textContent = place.name;
+      const placeName = (i18n?.getPlace(place.key)?.name) ?? place.name;
+      row.querySelector(".room-name").textContent = placeName;
       row.querySelector(".room-dots").textContent = held.map((i) => (levels.isCompleted(i) ? "●" : "○")).join(" ");
       row.querySelector(".room-count").textContent = `${solved}/${held.length}`;
       roomList.append(row);
@@ -153,12 +158,12 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
         const tag = document.createElement("li");
         tag.className = "evidence-tag" + (won ? "" : " is-missing") + (won && !seen.includes(level.id) ? " is-new" : "");
         tag.innerHTML = `<span class="tag-word"></span><span class="tag-where"></span>`;
-        tag.querySelector(".tag-word").textContent = won ? level.code : "NOT FOUND";
-        tag.querySelector(".tag-where").textContent = won ? `${level.name} · ${place.name}` : place.name;
+        tag.querySelector(".tag-word").textContent = won ? level.code : (i18n ? i18n.t('casefile.notFound') : "NOT FOUND");
+        tag.querySelector(".tag-where").textContent = won ? `${level.name} · ${placeName}` : placeName;
         clues.append(tag);
       }
     }
-    count.textContent = `Evidence ${found} of ${all}`;
+    count.textContent = i18n ? i18n.t('casefile.evidenceCount', { found, all }) : `Evidence ${found} of ${all}`;
   }
 
   function setTab(name) {
@@ -205,7 +210,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     if (!shelf) return;
     const list = kept.filter(waits);
     shelf.replaceChildren(...list.map((id) => {
-      const letter = letterById(id);
+      const letter = i18n?.getLetter(id) || letterById(id);
       const env = document.createElement("button");
       env.type = "button";
       env.className = "waiting-letter" + (id === fresh ? " is-new" : "");
@@ -224,7 +229,8 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   async function openWaiting(id) {
     if (arriving || dialogs.isOpen || isBusy() || !waits(id)) return;
     arriving = true;
-    const how = await playArrival(scope, { letter: letterById(id), sounds, target: button, reducedMotion: reducedMotion() });
+    const letter = i18n?.getLetter(id) || letterById(id);
+    const how = await playArrival(scope, { letter, sounds, target: button, reducedMotion: reducedMotion() });
     arriving = false;
     if (how === "read") { markRead(id); current = id; badge(true); }
     renderWaiting();
@@ -234,7 +240,8 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     if (dialogs.isOpen || isBusy()) { scope.later(flush, 900); return; }
     const id = queue.shift();
     arriving = true;
-    const how = await playArrival(scope, { letter: letterById(id), sounds, target: button, reducedMotion: reducedMotion() });
+    const letter = i18n?.getLetter(id) || letterById(id);
+    const how = await playArrival(scope, { letter, sounds, target: button, reducedMotion: reducedMotion() });
     arriving = false;
     if (how === "read") markRead(id);
     current = id;
@@ -263,6 +270,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   }));
   badge();
   renderWaiting();
+  if (i18n) scope.add(i18n.subscribe(() => { if (modal && !modal.classList.contains("hidden")) setTab(tab); }));
 
   return {
     open, has, reveal,

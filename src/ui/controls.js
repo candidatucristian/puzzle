@@ -16,7 +16,6 @@ import { mountStartFilm } from './startFilm.js';
 import { mountStartManor } from './startManor.js';
 import { HOUSE_GO, HOUSE_BACK, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
 import { mountHouseMap } from './houseMap.js';
-import { mountNotebook } from './notebook.js';
 import { mountMagnifier } from './magnifier.js';
 import { mountAmbience } from './ambience.js';
 import { mountTooltips } from './tooltips.js';
@@ -30,8 +29,9 @@ import { mountPaperSounds } from './paperSounds.js';
 import { playIntroVideo } from './introVideo.js';
 import { playManorStory } from './manorStory.js';
 import { taskCard } from './tasks.js';
+import { applyI18nToDOM } from '../core/i18n.js';
 
-export function mountUI(game, { levels, audio, storage, preferences, hints }) {
+export function mountUI(game, { levels, audio, storage, preferences, hints, i18n = null }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
   const start = byId('start-screen');
   const moon = byId('start-moon');
@@ -109,11 +109,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   let entering = []; // the walk up to the front door, while it runs
   let sessionStart = null;
   const touch = isTouchDevice();
+  let stopOpening = () => {};
 
   // in front of the house the index tells of the game, not of any room
   const outside = on => document.body.classList.toggle('outside', on);
   outside(!start.classList.contains('hidden'));
   function showGame() {
+    stopOpening();
     if (!start.classList.contains('hidden')) film.stop();
     start.classList.add('hidden'); storage.setItem('hasPlayedBefore', 'true'); storage.setItem('house:entered', 'true');
     outside(false);
@@ -140,9 +142,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   });
   const transitions = createTransitions({ levels, showGame, preferences, onNavigate() { completion.hide(); mobile?.close(); } });
   const navigate = (index, options) => transitions.go(index, options);
-  const progressUI = mountProgress(scope, { game, levels, storage });
-  mountComfort(scope, preferences);
-  const hintUI = mountHints(scope, { levels, hints });
+  const progressUI = mountProgress(scope, { game, levels, storage, i18n });
+  mountComfort(scope, preferences, i18n);
+  const hintUI = mountHints(scope, { levels, hints, i18n });
   mountInteractionFeedback(scope, game);
   mobile = mountMobile(scope, {
     canOpenDrawer: () => !transitions.busy && !dialogs.isOpen,
@@ -261,16 +263,15 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (walking || transitions.busy || levels.place?.key === key) return;
     if (!cinema.chapterBefore(key, () => levels.enterPlace(key))) walk(() => levels.enterPlace(key), 260, 0, true);
   }
-  const map = mountHouseMap(scope, { levels, dialogs, travel });
-  const notebook = mountNotebook(scope, { levels, dialogs, storage });
-  const cinema = mountCinema(scope, { storage, reducedMotion: () => Boolean(preferences?.reducedMotion) });
+  const map = mountHouseMap(scope, { levels, dialogs, travel, i18n });
+  const cinema = mountCinema(scope, { storage, reducedMotion: () => Boolean(preferences?.reducedMotion), i18n });
   const paperSounds = mountPaperSounds({ game, audio });
-  const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || cinema.busy });
+  const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || cinema.busy, i18n });
   // A new case opens with the supplied film, then dissolves directly onto
   // the Inspector's desk. Each run owns its listeners and media playback.
   let prologueOn = false;
   let openingScope = null;
-  const stopOpening = () => { openingScope?.dispose(); openingScope = null; prologueOn = false; };
+  stopOpening = () => { openingScope?.dispose(); openingScope = null; prologueOn = false; };
   scope.add(stopOpening);
   function openCase() {
     if (prologueOn || caseFile.has('invitation')) return;
@@ -284,6 +285,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
         reducedMotion: preferences?.reducedMotion,
         revealImmediately: true,
         sounds: paperSounds,
+        i18n,
         // A plain black covers the desk before the manor appears.
         onDone: async (dismiss) => {
           caseFile.unlock('invitation');
@@ -293,7 +295,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
           // (its name and its door wait under the story)
           await cinema.card([], { hold: 300, onDark: () => {
             dismiss();
-            playManorStory(scope, { reducedMotion: Boolean(preferences?.reducedMotion) });
+            playManorStory(scope, { reducedMotion: Boolean(preferences?.reducedMotion), i18n });
           } });
           if (!opening.closed) stopOpening();
         },
@@ -302,7 +304,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     // at once, under the loading screen: its black is what the loading
     // screen fades into, and its titles wait for that (introVideo.js)
     void preloadPrologueDesk();
-    playIntroVideo(opening, { game, audio, reducedMotion: Boolean(preferences?.reducedMotion), onUnder: prologue });
+    playIntroVideo(opening, { game, audio, reducedMotion: Boolean(preferences?.reducedMotion), onUnder: prologue, i18n });
   }
   openCase();
   // In front of the house, until he first goes in: tonight's tasks carried on
@@ -318,17 +320,17 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     const host = byId('index-outside');
     if (!host) return;
     doorTasks = taskCard([
-      ['letter', 'Read the letter'],
-      ['file', 'Open the case file'],
-      ['house', 'Go to Ashcombe Manor'],
-      ['door', 'Click on the door to enter the manor'],
+      ['letter', i18n ? i18n.t('tasks.letter') : 'Read the letter'],
+      ['file', i18n ? i18n.t('tasks.file') : 'Open the case file'],
+      ['house', i18n ? (i18n.language === 'ro' ? 'Mergi la Conacul Ashcombe' : 'Go to Ashcombe Manor') : 'Go to Ashcombe Manor'],
+      ['door', i18n ? (i18n.language === 'ro' ? 'Apasă pe ușă pentru a intra' : 'Click on the door to enter the manor') : 'Click on the door to enter the manor'],
     ]);
     for (const done of ['letter', 'file', 'house']) doorTasks.tick(done);
     const list = document.createElement('div');
     list.className = 'outside-tasks';
     const label = document.createElement('p');
     label.className = 'outside-label';
-    label.textContent = 'Tonight';
+    label.textContent = i18n ? i18n.t('tasks.tonight') : 'Tonight';
     list.append(label, doorTasks.node);
     host.querySelector('.outside-story')?.after(list);
   }
@@ -340,9 +342,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
   mountAhas(scope, { game, audio });
   scope.on(byId('btn-map'), 'click', event => { if (!transitions.busy) map.open(event.currentTarget); });
   scope.on(byId('btn-close-map'), 'click', () => dialogs.close());
-  scope.on(byId('btn-notebook'), 'click', event => { if (!transitions.busy) notebook.open(event.currentTarget); });
   scope.on(byId('btn-casefile'), 'click', event => { if (!transitions.busy) caseFile.open(event.currentTarget); });
-  // M the map, N the notebook, C the case file, Z the glass; Esc the way back. Never while
+  // M the map, C the case file, Z the glass; Esc the way back. Never while
   // something is being typed, nor before the house has been come into.
   scope.on(window, 'keydown', event => {
     // (an Esc that has just closed a dialog is spent)
@@ -351,7 +352,6 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     if (dialogs.isOpen || transitions.busy || walking) return;
     const key = event.key.toLowerCase();
     if (key === 'm') { event.preventDefault(); map.open(byId('btn-map')); }
-    else if (key === 'n') { event.preventDefault(); notebook.open(byId('btn-notebook')); }
     else if (key === 'c') { event.preventDefault(); caseFile.open(byId('btn-casefile')); }
     else if (key === 'z') { event.preventDefault(); glass.toggle(); }
     else if (key === 'escape') {
@@ -362,12 +362,12 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       if (!leave.hidden) leave.click();
     }
   });
-  mountFullscreenControl(scope, byId('btn-fullscreen'));
+  mountFullscreenControl(scope, byId('btn-fullscreen'), i18n);
 
   scope.on(byId('btn-submit'), 'click', () => {
     if (transitions.busy || dialogs.isOpen) return;
     if (!input.value.trim()) {
-      answerFeedback('Enter the answer you found in the room.', 'info');
+      answerFeedback(i18n ? i18n.t('feedback.enterAnswer') : 'Enter the answer you found in the room.', 'info');
       input.focus();
       return;
     }
@@ -378,7 +378,12 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
     const onStage = Boolean(levels.place); // answered standing in the place it is played in
     const result = levels.submit(input.value);
     if (result.correct) {
-      answerFeedback(result.nextIndex === null ? 'Answer accepted. Every room is solved.' : home ? 'Answer accepted.' : 'Answer accepted. Opening the next room.', 'success');
+      const acceptedMsg = result.nextIndex === null
+        ? (i18n ? i18n.t('feedback.allSolved') : 'Answer accepted. Every room is solved.')
+        : home
+        ? (i18n ? i18n.t('feedback.accepted') : 'Answer accepted.')
+        : (i18n ? i18n.t('feedback.acceptedNext') : 'Answer accepted. Opening the next room.');
+      answerFeedback(acceptedMsg, 'success');
       input.classList.add('success-flash', 'ink-sets'); scope.later(() => input.classList.remove('success-flash', 'ink-sets'), 1200);
       if (result.nextIndex === null) {
         completion.show();
@@ -389,11 +394,11 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
         // room, which opens on the thing just solved and draws back from it
         if (onStage) game.events.emit(HOUSE_SOLVED, solvedId); // nowhere to go back to: the place itself takes note
         else if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, 700, true);
-        else navigate(result.nextIndex, { caption: 'Answer accepted' });
+        else navigate(result.nextIndex, { caption: i18n ? i18n.t('veil.caption') : 'Answer accepted' });
       }
       input.value = '';
     } else {
-      answerFeedback('Look again. That answer does not unlock this room.', 'error');
+      answerFeedback(i18n ? i18n.t('feedback.incorrect') : 'Look again. That answer does not unlock this room.', 'error');
       audio.playErrorSound();
       input.classList.remove('error-flash', 'ink-runs'); void input.offsetWidth;
       input.classList.add('error-flash', 'ink-runs');
@@ -433,14 +438,25 @@ export function mountUI(game, { levels, audio, storage, preferences, hints }) {
       goOutside();
       openCase();
     },
+    i18n,
   });
   scope.on(byId('btn-howto'), 'click', event => { reset.disarm(); dialogs.open('howto-modal', event.currentTarget, { nested: true }); });
   scope.on(byId('btn-close-howto'), 'click', () => dialogs.close());
   scope.on(byId('btn-options'), 'click', event => { reset.disarm(); dialogs.open('options-modal', event.currentTarget); });
   scope.on(byId('btn-close-options'), 'click', () => { reset.disarm(); dialogs.close(); });
-  mountAudioControls(audio, scope);
+  mountAudioControls(audio, scope, i18n);
   // while the code box has the on-screen keyboard up, the room waits to be repainted
   observeViewport(game, scope, { defer: () => touch && document.activeElement === input });
+
+  if (i18n) {
+    applyI18nToDOM(i18n);
+    scope.add(i18n.subscribe(() => {
+      applyI18nToDOM(i18n);
+      progressUI.render();
+      hintUI.render?.();
+    }));
+  }
+
   return { navigate, showGame, get busy() { return transitions.busy; },
     dispose() { transitions.dispose(); dialogs.closeAll(); scope.dispose(); } };
 }

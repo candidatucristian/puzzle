@@ -42,7 +42,7 @@ export function cupboardLayout(W, H) {
   // the doors stand open either side; the card is pinned inside the right one
   const door = { w: cw * 0.22 };
   const card = { x: x1 + door.w * 0.12, y: y0 + ch * 0.34, w: door.w * 0.76, h: door.w * 0.5 };
-  return { W, H, u, x0, x1, y0, y1, frame, inner, shelves, lids, door, card };
+  return { W, H, width: W, height: H, u, x0, x1, y0, y1, frame, inner, shelves, lids, door, card };
 }
 
 /** Reading order is spatial — left to right along the shelf. */

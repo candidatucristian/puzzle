@@ -302,12 +302,32 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "In Room VI, Ivy's herbarium lies on the console table under the window; opened, it shows five pages of pressed plants, four or five to a page, each taped down with its Latin name under it in her hand. On every page one specimen has been drawn round in pencil with a figure of straight sides: page I an octagon round the hawthorn, II a pentagon round the dog rose, III a square round the ivy, IV a heptagon round the blackthorn, V a pentagon round the privet. Each figure's sides, counted, are a letter's place in the alphabet — 8 H, 5 E, 4 D, 7 G, 5 E — and in page order they spell HEDGE (all five ringed plants are hedgerow plants). Two pages show at a time: the right page turns forward, the left back. Nothing on screen says to count.",
+    "description": "In Room VI, Ivy's herbarium lies on the console table under the window. It opens to five photographic pages with two physically mounted pressed specimens per page: one large hedgerow cutting and one smaller supporting specimen. Fine leaf veins, dry petal wrinkles, translucent mounting strips and their contact shadows are captured together on aged cotton paper. Latin names are written below each plant. On each page the large specimen has a pencil figure around it: page I eight sides round the hawthorn, II five round the dog rose, III four round the ivy, IV seven round the blackthorn, V five round the privet. Counting the sides as alphabet positions gives HEDGE. Two pages show at a time; a click or drag turns a leaf. Nothing on screen says to count.",
     "references": [
       "PAGES (herbarium/puzzle.js) — the specimens of each page, the ringed one carrying its figure's sides [8, 5, 4, 7, 5]; herbariumWord() spells HEDGE",
-      "herbarium/photography.js and book.js — a photographed walnut table and sewn green-cloth album, plain aged paper, 23 transparent pressed specimens with their Latin labels, gummed mounting strips and the pencilled figure drawFigure(); the last face inside the back cover",
+      "herbarium/photography.js and book.js — a photographed walnut table and sewn green-cloth album; five whole-page macro photographs with ten mounted specimens in total, drawn Latin labels and pencil figures; page-v2 assets replace the small specimen atlases",
       "HerbariumScene — two pages at a time, turned by clicking the right page (forward) or the left (back)",
       "room6/photographicRoom.js — the matching photographed green-cloth cover projected onto the closed book on the console table under the window, and the thing that opens it"
+    ]
+  },
+  {
+    "id": "cot",
+    "key": "Cot",
+    "name": "His Cot",
+    "summary": "The boy's cot, made up as if for the night, his mobile over it and his things on the sheet.",
+    "code": "TORCH",
+    "altCode": null,
+    "hint": {
+      "text": "HIS COT.\nWhat answers your hand, left to right.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "In Room VI, the boy's dark mahogany cot and its mobile use the same photographic toys as the close-up. Inside, moonlight falls on worn turned wood, an ivory moon-and-star cotton sheet and a teal nursery wall. Twenty objects fill the mattress. Fifteen are fixed decorations: his pillow, knitted bootees, mohair teddy, wooden rattle, knitted rabbit, folded blanket, wooden duck, tin locomotive, rocking horse, building cubes, leather ball, stacking rings, spinning top, fire engine and linen elephant. Only the five clue objects can be moved and clicked; the rest have no interaction or hover effect. Positions and active interactions survive resizing. Initially, left to right, the five are a walnut tango music box with turning porcelain dancers, a gold Oscar replica, a red book inscribed Romeo and Juliet, a Chaplin figurine that raises its felt bowler, and a cream wooden hotel with an entrance canopy, HOTEL sign, reception bell and guest-room windows that light when the bell rings. The room's story mentions the little hotel among his belongings, making its identity explicit. Their radio-alphabet words give TORCH. Clicking activates each toy; dragging moves it without accidentally triggering its action. Reduced motion keeps the toys usable with restrained effects.",
+    "references": [
+      "TOYS (cot/puzzle.js) — the five left to right, the radio word each is and where each lies in the cot; cotWord() spells TORCH",
+      "cot/photography.js and art.js — photographic nursery plate, isolated real toys, soft belongings, felt mobile shapes and calibrated moving parts; fifteen fixed belongings are painted into the mattress while only the five clues remain live objects; a photographic mahogany hoop and cotton suspension lines replace the drawn mobile ring",
+      "CotScene — the five answer a click (the tango and its turning dancers, a glint, the book lifted, the hat raised, the bell and the lit windows); the mobile turns on its own",
+      "cot/inRoom.js and room6/photographicRoom.js — a matching photographic cot and mobile in the room overview, the same five toy photos behind a front-spindle mask, and the calibrated cot interaction area"
     ]
   },
   {

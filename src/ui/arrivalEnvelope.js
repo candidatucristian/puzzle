@@ -52,7 +52,7 @@ export function fractureWax(seal, flap, env, animate) {
     piece.getContext('2d').drawImage(seal, 0, 0);
     Object.assign(piece.style, { width: seal.style.width, height: seal.style.height, left: seal.style.left, top: seal.style.top, clipPath: `polygon(${polygon})` });
     (i === 0 ? flap : env).append(piece);
-    animate(piece, [{ transform: 'translate(0,0) rotate(0deg)' }, { transform: ['translate(0,-2px) rotate(-2deg)', 'translate(-3px,2px) rotate(-4deg)', 'translate(3px,2px) rotate(4deg)'][i] }], { duration: 260, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    animate(piece, [{ transform: 'translate(0,0) rotate(0deg)' }, { transform: ['translate(0,-2px) rotate(-2deg)', 'translate(-3px,2px) rotate(-4deg)', 'translate(3px,2px) rotate(4deg)'][i] }], { duration: 160, easing: 'cubic-bezier(.2,.7,.2,1)' });
   });
   seal.style.visibility = 'hidden';
 }

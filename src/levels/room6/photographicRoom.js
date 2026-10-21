@@ -3,6 +3,9 @@ import { BACK, roomLayout } from "../house/roomKit.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
 import { HERBARIUM_COVER } from "../herbarium/photography.js";
+import { paintCotInRoom } from "../cot/inRoom.js";
+import { loadCotPhotography } from "../cot/photography.js";
+import { NURSERY_PORTRAIT, paintNurseryPortrait } from "./nurseryPortraits.js";
 import {
   paintMedal, TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL,
   TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL,
@@ -22,8 +25,10 @@ export function room6HerbariumQuad(L) {
 const REFERENCE = { width: 1792, height: 1024 };
 
 export function loadRoom6Photography(scene) {
+  loadCotPhotography(scene, true);
   for (const [key, url] of [
     [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-photographic-v1.webp"],
+    [NURSERY_PORTRAIT.key, NURSERY_PORTRAIT.url],
     [HERBARIUM_COVER.key, HERBARIUM_COVER.url],
     [TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL],
     [TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL],
@@ -98,6 +103,7 @@ function medals(scene, L) {
 export function paintRoom6Photography(scene, L, keys) {
   const canvas = makeCanvas(L.W, L.H), ctx = canvas.getContext("2d");
   ctx.drawImage(scene.textures.get(ROOM6_PHOTOGRAPH).getSourceImage(), 0, 0, L.W, L.H);
+  paintNurseryPortrait(ctx, L, scene);
   const c = L.cabinet;
   const face = (u, v) => room6CabinetPoint(L, u, v);
   paintProjectedMaterial(ctx, medals(scene, L), face, 0.9, 20, 4);
@@ -115,6 +121,8 @@ export function paintRoom6Photography(scene, L, keys) {
     soft(ctx, lamp.x, lamp.y, lamp.r * 0.8, lamp.r * 1.3, "255,195,130", 0.055, "lighter");
   }
   paintHerbarium(ctx, L, scene.textures.exists(HERBARIUM_COVER.key) ? scene.textures.get(HERBARIUM_COVER.key).getSourceImage() : null);
+  // the boy's cot against the back wall, his toys in it
+  paintCotInRoom(ctx, L, scene);
   ctx.fillStyle = "rgba(2,4,6,0.1)"; ctx.fillRect(0, 0, L.W, L.H);
   vignette(ctx, L.W, L.H, 0.28, "source-over");
   grain(ctx, L.W, L.H, 0.006);
