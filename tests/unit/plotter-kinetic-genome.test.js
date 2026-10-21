@@ -34,7 +34,7 @@ test('Plotter instructions actually draw P, I, N and G in that order', () => {
       .map(([, x, y]) => ({ x: Number(x), y: Number(y) }));
     assert.deepEqual(printed, block, 'wrapping must preserve every coordinate and its order');
   }
-  assert.equal(LEVEL_METADATA[27].code, 'PING');
+  assert.equal(LEVEL_METADATA.find(l => l.id === 'plotter').code, 'PING');
 });
 
 test('the four game pieces keep their side counts and left-to-right order', () => {
@@ -49,7 +49,7 @@ test('the four game pieces keep their side counts and left-to-right order', () =
       assert.ok(edges.every(edge => Math.abs(edge - edges[0]) < 1e-10));
     }
   }
-  assert.equal(LEVEL_METADATA[28].code, readKinetic());
+  assert.equal(LEVEL_METADATA.find(l => l.id === 'kinetic').code, readKinetic());
 });
 
 test('the standard genetic code translates the displayed coding DNA and corresponding RNA to SPACE', () => {
@@ -64,8 +64,9 @@ test('the standard genetic code translates the displayed coding DNA and correspo
   assert.equal(aminoAcid('GGG'), 'G');
   for (const invalid of ['T', 'TCTC', 'XXX', '', null, 4]) assert.equal(aminoAcid(invalid), null);
   assert.equal(translateFragment(['TCT', '???']), null);
-  assert.equal(LEVEL_METADATA[29].code, translateFragment());
-  assert.equal(LEVEL_METADATA[29].hint.tool, true);
+  const genome = LEVEL_METADATA.find(l => l.id === 'genome');
+  assert.equal(genome.code, translateFragment());
+  assert.equal(genome.hint.tool, true);
 });
 
 test('the games cupboard keeps every lid on its shelf, apart, in order and inside the picture', () => {

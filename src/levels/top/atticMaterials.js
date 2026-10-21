@@ -1,9 +1,9 @@
 import { makeCanvas } from "../../shared/paint.js";
 
 const ASSETS = {
-  backdrop: { key: "attic_passage_wood_v3", url: "assets/images/Attic/narrow-passage-wood-v3.png" },
-  details: { key: "attic_details_photo", url: "assets/images/Attic/details.png" },
-  door: { key: "attic_worn_door_photo_v1", url: "assets/images/Attic/walnut-door-worn-v1.png" },
+  backdrop: { key: "attic_passage_wood_v3", url: "assets/images/Attic/narrow-passage-wood-v3.webp" },
+  details: { key: "attic_details_photo", url: "assets/images/Attic/details.webp" },
+  door: { key: "attic_worn_door_photo_v1", url: "assets/images/Attic/walnut-door-worn-v1.webp" },
 };
 const cache = new WeakMap();
 

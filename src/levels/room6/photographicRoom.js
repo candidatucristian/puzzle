@@ -23,7 +23,7 @@ const REFERENCE = { width: 1792, height: 1024 };
 
 export function loadRoom6Photography(scene) {
   for (const [key, url] of [
-    [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-photographic-v1.png"],
+    [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-photographic-v1.webp"],
     [HERBARIUM_COVER.key, HERBARIUM_COVER.url],
     [TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL],
     [TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL],

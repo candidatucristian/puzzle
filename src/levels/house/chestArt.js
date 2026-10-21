@@ -1,7 +1,7 @@
 import { soft } from '../../shared/paint.js';
 
 export const GOLD_CHEST = 'house_gold_chest';
-export const GOLD_CHEST_URL = `${import.meta.env?.BASE_URL ?? '/'}assets/images/Chest/gold-chest-states.png`;
+export const GOLD_CHEST_URL = `${import.meta.env?.BASE_URL ?? '/'}assets/images/Chest/gold-chest-states.webp`;
 
 // Two photographs of the same coffer. The body is registered separately from
 // the lid, so switching states cannot make the chest grow or move on the desk.

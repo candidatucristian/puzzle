@@ -29,10 +29,10 @@ const SPARKLE = "tv_sparkle";
 // Channel images — sampled by the CRT shader as the broadcast picture.
 // Order matches the channels below so each text sits on its own image.
 const DEADAIR_IMAGES = [
-  "assets/images/TV/astronomy.jpg", // 0 → COSMOS NET (supervoid)
-  "assets/images/TV/court.jpg", // 1 → LAWCOURT
-  "assets/images/TV/coding.jpg", // 2 → CODE REVIEW
-  "assets/images/TV/science.jpg", // 3 → SCIENCE FOUND.
+  "assets/images/TV/astronomy.webp", // 0 → COSMOS NET (supervoid)
+  "assets/images/TV/court.webp", // 1 → LAWCOURT
+  "assets/images/TV/coding.webp", // 2 → CODE REVIEW
+  "assets/images/TV/science.webp", // 3 → SCIENCE FOUND.
 ];
 
 // The exact fragment shader from TV.html (Shadertoy-style CRT)

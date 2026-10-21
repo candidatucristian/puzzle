@@ -7,7 +7,7 @@ const REFERENCE = { width: 1792, height: 1024 };
 
 export function loadStudyPhotography(scene) {
   if (!scene.textures.exists(STUDY_PHOTOGRAPH)) {
-    scene.load.image(STUDY_PHOTOGRAPH, "assets/images/Room1/room1-photographic-v1.png");
+    scene.load.image(STUDY_PHOTOGRAPH, "assets/images/Room1/room1-photographic-v1.webp");
   }
 }
 

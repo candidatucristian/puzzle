@@ -8,7 +8,7 @@ const glassCache = new WeakMap();
 const GLASS_BOUNDS = [[96, 200, 385, 785], [594, 296, 337, 691], [1005, 10, 493, 981]];
 
 export function loadMeasuresPhotography(scene) {
-  for (const [key, file] of [[ROOM, "laboratory-sink-v1.png"], [GLASS, "laboratory-glass-v1.png"]]) {
+  for (const [key, file] of [[ROOM, "laboratory-sink-v1.webp"], [GLASS, "laboratory-glass-v1.webp"]]) {
     if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Measures/${file}`);
   }
 }

@@ -7,8 +7,8 @@ const propsCache = new WeakMap();
 
 export function loadTreePhotography(scene) {
   for (const [key, url] of [
-    [TREE_PHOTOGRAPH, "assets/images/Pi/lit-tree-photographic-v2.png"],
-    [PROPS, "assets/images/Pi/tree-props-photographic-v1.png"],
+    [TREE_PHOTOGRAPH, "assets/images/Pi/lit-tree-photographic-v2.webp"],
+    [PROPS, "assets/images/Pi/tree-props-photographic-v1.webp"],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 

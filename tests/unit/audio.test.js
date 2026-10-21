@@ -52,7 +52,7 @@ function setup(values = {}, { locked = false, missing = [] } = {}) {
 test("stored channel levels are validated without replacing intentional zeroes", () => {
   const { audio } = setup({ masterVol: "0", musicVol: "invalid", sfxVol: "-1", muted: "true" });
   assert.deepEqual(audio.state, {
-    masterVol: 0, musicVol: 0.5, sfxVol: 0, muted: true, bgmInstance: null,
+    masterVol: 0, musicVol: 0.5, sfxVol: 0, ambienceVol: 0.7, uiVol: 0.6, muted: true, bgmInstance: null,
   });
   assert.equal(setup({ masterVol: "   ", musicVol: "2", sfxVol: "Infinity" }).audio.state.masterVol, 1);
   assert.equal(setup({ musicVol: "2" }).audio.state.musicVol, 1);
@@ -67,6 +67,7 @@ test("master scales all music and SFX once while channel sliders retain their ba
   audio.setMasterVolume(0.25);
   audio.setMusicVolume(0.6);
   audio.setSfxVolume(0.4);
+  audio.setUiVolume(0.4);
   audio.playClick();
 
   assert.equal(manager.volume, 0.25);
@@ -76,9 +77,11 @@ test("master scales all music and SFX once while channel sliders retain their ba
   assert.equal(saved.get("masterVol"), "0.25");
   assert.equal(saved.get("musicVol"), "0.6");
   assert.equal(saved.get("sfxVol"), "0.4");
+  assert.equal(saved.get("uiVol"), "0.4");
 
   audio.setMusicVolume(0);
   audio.setSfxVolume(0);
+  audio.setUiVolume(0);
   assert.equal(audio.state.bgmInstance.volume, 0);
   assert.equal(ambience.volume, 0);
   assert.equal(audio.playClick(), false);

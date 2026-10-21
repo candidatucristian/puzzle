@@ -13,7 +13,7 @@ const NOTEBOOK = [[1507, 391], [1545, 395], [1533, 494], [1492, 488]];
 
 export function loadRoom7Photography(scene) {
   if (!scene.textures.exists(ROOM7_PHOTOGRAPH)) {
-    scene.load.image(ROOM7_PHOTOGRAPH, "assets/images/Room7/room7-photographic-v1.png");
+    scene.load.image(ROOM7_PHOTOGRAPH, "assets/images/Room7/room7-photographic-v1.webp");
   }
   loadPhialsPhotography(scene);
 }

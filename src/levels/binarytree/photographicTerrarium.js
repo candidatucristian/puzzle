@@ -9,10 +9,10 @@ const cache = new WeakMap();
 
 export function loadTerrariumPhotography(scene) {
   const files = [
-    [PHOTOGRAPH, "terrarium-photographic-v1.png"],
-    [SPROUT, "sprout-photographic-v1.png"],
-    [PAPER, "specimen-paper-v1.png"],
-    [PLATES, "gold-plaques-photographic-v1.png"],
+    [PHOTOGRAPH, "terrarium-photographic-v1.webp"],
+    [SPROUT, "sprout-photographic-v1.webp"],
+    [PAPER, "specimen-paper-v1.webp"],
+    [PLATES, "gold-plaques-photographic-v1.webp"],
   ];
   for (const [key, file] of files) {
     if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/BinaryTree/${file}`);

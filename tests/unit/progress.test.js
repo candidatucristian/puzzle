@@ -45,18 +45,19 @@ test("malformed or absent legacy progress starts at the first level", () => {
 });
 
 test("schema 2 saves preserve highest unlocked without completing that level", () => {
+  const rallyIndex = LEVEL_METADATA.findIndex(l => l.id === "rally");
   const progress = new ProgressStore(memory({
-    puzzleProgressSchema: "2", puzzleUnlockedLevel: "16",
+    puzzleProgressSchema: "2", puzzleUnlockedLevel: String(rallyIndex),
   }), LEVEL_METADATA);
-  assert.equal(progress.currentIndex, 16);
+  assert.equal(progress.currentIndex, rallyIndex);
   assert.equal(progress.state.lastPlayedLevelId, "rally");
-  assert.equal(progress.unlockedIndex, 16);
-  assert.equal(progress.state.completedLevelIds.length, 16);
+  assert.equal(progress.unlockedIndex, rallyIndex);
+  assert.equal(progress.state.completedLevelIds.length, rallyIndex);
   assert.equal(progress.completed, false);
   // finishing Rally unlocks the level after it, Overtime, and so on to the
   // last one; only then is the game complete
   const last = LEVEL_METADATA.length - 1;
-  for (let i = 16; i < last; i++) {
+  for (let i = rallyIndex; i < last; i++) {
     assert.equal(progress.complete(i), true);
     assert.equal(progress.completed, false);
     assert.equal(progress.unlockedIndex, i + 1);

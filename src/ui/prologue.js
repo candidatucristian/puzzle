@@ -4,7 +4,7 @@ import { glint } from "./startFilm.js";
 import { taskCard } from "./tasks.js";
 import { mountWindowRain } from "./windowRain.js";
 
-const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-film-match-v2.png`;
+const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-film-match-v2.webp`;
 const DESK_WIDTH = 1672,
   DESK_HEIGHT = 941;
 // Out of the film, into the game: the desk fills the screen, the matte gone,

@@ -7,11 +7,11 @@ import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } 
 const K = { room: "fl_room", glow: "fl_glow", glint: "fl_glint" };
 const HANG = { ribbon: "fl_ribbon_", disc: "fl_disc_", sheen: "fl_sheen_" }; // + the medal's index
 export const TROPHY_BACKGROUND = "fl_trophy_background";
-export const TROPHY_BACKGROUND_URL = "assets/images/Flags/trophy-wall-background.png";
+export const TROPHY_BACKGROUND_URL = "assets/images/Flags/trophy-wall-background.webp";
 export const TROPHY_MEDAL_FACES = "fl_trophy_medal_faces";
-export const TROPHY_MEDAL_FACES_URL = "assets/images/Flags/trophy-medal-faces.png";
+export const TROPHY_MEDAL_FACES_URL = "assets/images/Flags/trophy-medal-faces.webp";
 export const TROPHY_BRAZIL_MEDAL = "fl_trophy_brazil_medal";
-export const TROPHY_BRAZIL_MEDAL_URL = "assets/images/Flags/trophy-brazil-medal.png";
+export const TROPHY_BRAZIL_MEDAL_URL = "assets/images/Flags/trophy-brazil-medal.webp";
 
 // what is won, across a polished curve: the dark edge, the shadow, the body,
 // the light, the body, the room reflected, a lighter band, the far edge

@@ -4,9 +4,9 @@ import { writingDesk } from "../house/furniture.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
 const ASSETS = {
-  surfaces: { key: "r4_photographic_surfaces", url: "assets/images/Room4/surface-atlas.png" },
-  furniture: { key: "r4_photographic_furniture", url: "assets/images/Room4/furniture-fronts.png" },
-  props: { key: "r4_photographic_props", url: "assets/images/Room4/room-props.png" },
+  surfaces: { key: "r4_photographic_surfaces", url: "assets/images/Room4/surface-atlas.webp" },
+  furniture: { key: "r4_photographic_furniture", url: "assets/images/Room4/furniture-fronts.webp" },
+  props: { key: "r4_photographic_props", url: "assets/images/Room4/room-props.webp" },
 };
 const cache = new WeakMap();
 

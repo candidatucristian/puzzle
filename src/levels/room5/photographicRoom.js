@@ -8,7 +8,7 @@ export const ROOM5_REFERENCE = { width: 1792, height: 1024 };
 const SOURCE = { width: 1659, height: 948 };
 
 export function loadRoom5Photography(scene) {
-  if (!scene.textures.exists(ROOM5_PHOTOGRAPH)) scene.load.image(ROOM5_PHOTOGRAPH, "assets/images/Room5/room5-photographic-v2.png");
+  if (!scene.textures.exists(ROOM5_PHOTOGRAPH)) scene.load.image(ROOM5_PHOTOGRAPH, "assets/images/Room5/room5-photographic-v2.webp");
 }
 
 export function alignRoom5Photography(L, W, H) {

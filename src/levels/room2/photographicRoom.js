@@ -13,7 +13,7 @@ const DISPLAYS = [
 ];
 
 export function loadRoom2Photography(scene) {
-  if (!scene.textures.exists(ROOM2_PHOTOGRAPH)) scene.load.image(ROOM2_PHOTOGRAPH, "assets/images/Room2/room2-photographic-v1.png");
+  if (!scene.textures.exists(ROOM2_PHOTOGRAPH)) scene.load.image(ROOM2_PHOTOGRAPH, "assets/images/Room2/room2-photographic-v1.webp");
 }
 
 export function alignRoom2Photography(L) {

@@ -2,15 +2,15 @@ import { makeCanvas, soft } from "../../shared/paint.js";
 import { laboratoryFrames } from "../room7/laboratoryArt.js";
 
 const ASSETS = {
-  surfaces: { key: "chemhall_surfaces_photo", url: "assets/images/Chemistry/hall-surface-atlas.png" },
-  apparatus: { key: "chemhall_apparatus_photo", url: "assets/images/Chemistry/hall-apparatus.png" },
-  bulb: { key: "chemhall_bulb_photo", url: "assets/images/Chemistry/hall-bulb.png" },
-  paper: { key: "hall_chart_paper_photo", url: "assets/images/CaseFile/letter-paper-v2.png" },
-  sconces: { key: "hall_sconces_photo", url: "assets/images/Physics/observatory-fixtures.png" },
-  laboratoryGlassware: { key: "chemhall_laboratory_glassware", url: "assets/images/Chemistry/hall-laboratory-glassware.png" },
-  laboratoryFixtures: { key: "chemhall_laboratory_fixtures", url: "assets/images/Chemistry/hall-laboratory-fixtures.png" },
-  laboratoryDoor: { key: "chemhall_laboratory_door", url: "assets/images/Chemistry/hall-laboratory-door.png" },
-  whiteWalls: { key: "chemhall_white_walls", url: "assets/images/Chemistry/hall-white-walls.png" },
+  surfaces: { key: "chemhall_surfaces_photo", url: "assets/images/Chemistry/hall-surface-atlas.webp" },
+  apparatus: { key: "chemhall_apparatus_photo", url: "assets/images/Chemistry/hall-apparatus.webp" },
+  bulb: { key: "chemhall_bulb_photo", url: "assets/images/Chemistry/hall-bulb.webp" },
+  paper: { key: "hall_chart_paper_photo", url: "assets/images/CaseFile/letter-paper-v2.webp" },
+  sconces: { key: "hall_sconces_photo", url: "assets/images/Physics/observatory-fixtures.webp" },
+  laboratoryGlassware: { key: "chemhall_laboratory_glassware", url: "assets/images/Chemistry/hall-laboratory-glassware.webp" },
+  laboratoryFixtures: { key: "chemhall_laboratory_fixtures", url: "assets/images/Chemistry/hall-laboratory-fixtures.webp" },
+  laboratoryDoor: { key: "chemhall_laboratory_door", url: "assets/images/Chemistry/hall-laboratory-door.webp" },
+  whiteWalls: { key: "chemhall_white_walls", url: "assets/images/Chemistry/hall-white-walls.webp" },
 };
 const cache = new WeakMap();
 

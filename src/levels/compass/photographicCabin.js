@@ -5,7 +5,7 @@ const PROPS = "compass_photographic_props_v1";
 const cache = new WeakMap();
 
 export function loadCabinPhotography(scene) {
-  for (const [key, file] of [[CABIN_PHOTOGRAPH, "cabin-photographic-v1.png"], [PROPS, "nautical-props-v1.png"]]) {
+  for (const [key, file] of [[CABIN_PHOTOGRAPH, "cabin-photographic-v1.webp"], [PROPS, "nautical-props-v1.webp"]]) {
     if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Compass/${file}`);
   }
 }

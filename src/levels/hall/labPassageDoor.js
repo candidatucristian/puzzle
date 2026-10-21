@@ -8,8 +8,8 @@ const cache = new WeakMap();
 const frameCache = new WeakMap();
 
 export function loadLabPassageDoor(scene) {
-  if (!scene.textures.exists(KEY)) scene.load.image(KEY, "assets/images/Chemistry/hall-single-laboratory-door-v3.png");
-  if (!scene.textures.exists(FRAME)) scene.load.image(FRAME, "assets/images/Chemistry/hall-double-door-frame-v2.png");
+  if (!scene.textures.exists(KEY)) scene.load.image(KEY, "assets/images/Chemistry/hall-single-laboratory-door-v3.webp");
+  if (!scene.textures.exists(FRAME)) scene.load.image(FRAME, "assets/images/Chemistry/hall-double-door-frame-v2.webp");
 }
 
 export function labPassageMaterial(scene) {

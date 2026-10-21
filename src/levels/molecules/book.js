@@ -17,7 +17,7 @@ export const BOOK = { desk: "mo_desk", light: "mo_light", flip: "mo_flip" };
 export const NOTEBOOK_PHOTO = "mo_open_book_photo";
 export const MOLECULAR_MODELS = "mo_molecular_models";
 const R = 2; // the pages are painted at twice their size, for crisp ink
-const INK = "#2a1f14";
+const _INK = "#2a1f14";
 const HAND = '"Cormorant Garamond", Georgia, "Times New Roman", serif'; // his hand: an old book's italic
 
 // The photographed notebook's own measure, in its pixels (1536 x 1024): the
@@ -290,7 +290,7 @@ function drawCrown(g, cx, cy, R0, color) {
 }
 
 // hydrogen, iodine: two atoms held together — small or large
-function drawPair(g, cx, cy, r, color) {
+function _drawPair(g, cx, cy, r, color) {
   const d = r * 0.95;
   bond(g, [cx - d, cy], [cx + d, cy]);
   atom(g, cx - d, cy, r, color);
@@ -298,7 +298,7 @@ function drawPair(g, cx, cy, r, color) {
 }
 
 // phosphorus: four atoms at the corners of a pyramid, the bonds behind dashed
-function drawTetra(g, cx, cy, R0, color) {
+function _drawTetra(g, cx, cy, R0, color) {
   const A = [cx - R0 * 0.95, cy + R0 * 0.5], B = [cx + R0 * 0.95, cy + R0 * 0.5], C = [cx + R0 * 0.2, cy + R0 * 0.02], D = [cx - R0 * 0.05, cy - R0 * 0.9];
   bond(g, A, C, true); bond(g, B, C, true); bond(g, C, D, true);
   atom(g, C[0], C[1], R0 * 0.24, color, true);

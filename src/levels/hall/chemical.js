@@ -9,9 +9,9 @@ import { paintHallApparatus } from "./chemicalMaterials.js";
 const END = 4.7;
 const TAU = Math.PI * 2;
 export const CHEMISTRY_TUBE_RACK = "chemistry_tube_rack_photo";
-export const CHEMISTRY_TUBE_RACK_URL = "assets/images/Chemistry/test-tube-rack.png";
+export const CHEMISTRY_TUBE_RACK_URL = "assets/images/Chemistry/test-tube-rack.webp";
 export const CHEMISTRY_VESSELS = "chemistry_vessels_photo";
-export const CHEMISTRY_VESSELS_URL = "assets/images/Chemistry/vessels.png";
+export const CHEMISTRY_VESSELS_URL = "assets/images/Chemistry/vessels.webp";
 const charts = new Map();
 const fill = (ctx, points, color) => { polygon(ctx, points); ctx.fillStyle = color; ctx.fill(); };
 const line = (ctx, points, color, width = 1) => {

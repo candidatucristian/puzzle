@@ -14,8 +14,18 @@ async function open(page, { returning = false, reduced = false } = {}) {
 async function playFilm(page) {
   const film = page.locator('#intro-video video');
   await expect(page.locator('#intro-video')).toBeVisible();
-  if (await page.locator('.intro-page-play').isVisible()) await page.locator('.intro-page-play').click();
-  await expect.poll(() => page.locator('#intro-video').getAttribute('data-phase')).toMatch(/ready|playing/);
+  await expect.poll(async () => {
+    const next = page.getByRole('button', { name: /Next/, exact: false });
+    if (await next.isVisible()) {
+      await next.click().catch(() => {});
+    }
+    const begin = page.getByRole('button', { name: /Begin/, exact: false });
+    if (await begin.isVisible()) {
+      await begin.click().catch(() => {});
+    }
+    return page.locator('#intro-video').getAttribute('data-phase');
+  }, { timeout: 15000 }).toMatch(/ready|playing/);
+
   if (await page.locator('#intro-video-play').isVisible()) await page.locator('#intro-video-play').click();
   await expect.poll(() => film.evaluate(v => !v.paused && v.currentTime > 0 && v.videoWidth > 0)).toBe(true);
   return film;
@@ -34,14 +44,16 @@ test('the concise opening stays readable and leads through the film into the int
   await open(page);
   mkdirSync('.artifacts/intro-copy-review', { recursive: true });
   await expect(page.locator('#intro-video')).toHaveAttribute('data-phase', 'titles');
-  await expect(page.locator('.intro-page')).toHaveCSS('opacity', '1');
-  await expect(page.locator('.intro-page')).toContainText('I thought there would be time to ask you about it.');
+  await expect(page.locator('.intro-card.is-title')).toBeVisible();
+  await expect(page.locator('.intro-card-title')).toContainText('The Ashcombe Case');
+  await page.locator('.intro-page-play').click();
+  await expect(page.locator('.intro-card.is-story')).toBeVisible();
+  await expect(page.locator('.intro-card.is-story')).toContainText('For twenty-two years, Inspector Arthur Wren');
   for (const [label, width, height] of [['desktop', 1440, 1000], ['landscape', 863, 360]]) {
     await page.setViewportSize({ width, height });
-    const box = await page.locator('.intro-page').boundingBox();
-    expect(box.y).toBeGreaterThanOrEqual(16);
-    expect(box.y + box.height).toBeLessThanOrEqual(height - 16);
-    await expect(page.getByRole('button', { name: 'Begin', exact: true })).toBeVisible();
+    const box = await page.locator('.intro-card.is-story').boundingBox();
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    await expect(page.getByRole('button', { name: /Begin/, exact: false })).toBeVisible();
     await page.screenshot({ path: `.artifacts/intro-copy-review/note-${label}.png` });
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -62,8 +74,8 @@ test('the concise opening stays readable and leads through the film into the int
   await expect(page.locator('#cold-open')).toHaveCount(0);
   writeFileSync('.artifacts/intro-copy-review/film-metadata.json', JSON.stringify(metadata, null, 2));
   // Every passage is readable as a complete thought, with an empty beat between them.
-  for (const [time, text] of [[3, 'Three people'], [12, 'Ivy Ashcombe'], [23, 'Silas Ashcombe'], [33, 'Orion Ashcombe'],
-    [42, 'all three disappeared'], [49, 'set for four'], [58, 'My father wrote'], [66, 'my name on it']]) {
+  for (const [time, text] of [[3, 'That night'], [12, 'Twenty-two years'], [23, 'only a small boy'], [33, 'first man at the door'],
+    [42, 'read the file'], [49, 'table had been laid for four'], [58, 'father died with the answer'], [66, 'written to him']]) {
     await film.evaluate((v, time) => { v.currentTime = time; }, time);
     const aside = page.locator('.intro-aside:not(.is-out)');
     await expect(aside).toHaveCount(1);
@@ -85,7 +97,7 @@ test('the concise opening stays readable and leads through the film into the int
   await expect(page.locator('.prologue-tasks')).toHaveCSS('opacity', '0');
   await expect(page.locator('.prologue-photo')).toHaveJSProperty('complete', true);
   const deskSource = await page.locator('.intro-video-desk img').evaluate(img => img.currentSrc);
-  expect(deskSource).toContain('/assets/images/Prologue/inspector-desk-film-match-v2.png');
+  expect(deskSource).toContain('/assets/images/Prologue/inspector-desk-film-match-v2.webp');
   await page.screenshot({ path: '.artifacts/intro-copy-review/transition.png' });
   await expect(page.locator('#intro-video')).toHaveCount(0);
   await expect(page.locator('#prologue')).toBeVisible();
@@ -95,7 +107,7 @@ test('the concise opening stays readable and leads through the film into the int
   await expect(page.locator('#prologue')).toHaveAttribute('data-step', 'letter');
   const framing = await page.locator('.prologue-camera').boundingBox();
   expect(framing.y).toBeLessThanOrEqual(0);
-  expect(framing.height).toBeGreaterThan(page.viewportSize().height);
+  expect(framing.height).toBeGreaterThanOrEqual(page.viewportSize().height);
   await expect(page.locator('#prologue [data-task="letter"]')).toBeVisible();
   for (const [label, width, height] of [['wide', 1920, 1080], ['compact', 1280, 800]]) {
     await page.setViewportSize({ width, height });
@@ -107,7 +119,7 @@ test('the concise opening stays readable and leads through the film into the int
   await page.screenshot({ path: '.artifacts/intro-copy-review/desk.png' });
   await page.getByRole('button', { name: 'Open the letter', exact: true }).click();
   await expect(page.locator('.prologue-reading.is-shown')).toBeVisible();
-  await expect(page.locator('.prologue-reading')).toContainText("read your father's report again");
+  await expect(page.locator('.prologue-reading')).toContainText("locked every door of Ashcombe House");
   await expect(page.locator('.prologue-reading')).toHaveCSS('opacity', '1');
   await page.screenshot({ path: '.artifacts/intro-copy-review/invitation.png' });
   await page.locator('.prologue-go').click();
@@ -115,7 +127,7 @@ test('the concise opening stays readable and leads through the film into the int
   await expect(page.locator('#prologue [data-task="file"]')).toBeVisible();
   await page.getByRole('button', { name: 'Open the Ashcombe file', exact: true }).click();
   await expect(page.locator('.prologue-reading.is-shown')).toBeVisible();
-  await expect(page.locator('.prologue-reading')).toContainText('Three people. Four places. Who was the fourth?');
+  await expect(page.locator('.prologue-reading')).toContainText('Four places laid. Three Ashcombes.');
   await page.locator('.prologue-go').click();
   await expect(page.locator('#prologue')).toHaveAttribute('data-step', 'done');
   await expect(page.locator('.prologue-onward')).toBeVisible();

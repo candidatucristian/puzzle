@@ -2,7 +2,7 @@
 
 const CITY = "cr_city";
 export const CROSSING_BACKGROUND = "cr_photo_background";
-export const CROSSING_BACKGROUND_URL = "assets/images/Crossing/street-background.png";
+export const CROSSING_BACKGROUND_URL = "assets/images/Crossing/street-background.webp";
 const WIN = "cr_win_";
 const GLOW = "cr_glow";
 const PUFF = "cr_puff";

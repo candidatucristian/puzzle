@@ -1,6 +1,6 @@
 import { makeCanvas } from "./paint.js";
 
-// The photographed open book (assets/images/Molecules/notebook-open.png) was
+// The photographed open book (assets/images/Molecules/notebook-open.webp) was
 // saved with a grey-and-white chequer baked in round it, where it was meant to
 // be transparent. Cleared here once per image: from the picture's edges
 // inward, every pixel that is light and colourless (the chequer) is made

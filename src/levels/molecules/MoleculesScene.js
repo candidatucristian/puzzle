@@ -37,10 +37,10 @@ export default class MoleculesScene extends BasePuzzleScene {
 
   preload() {
     if (!this.textures.exists(NOTEBOOK_PHOTO)) {
-      this.load.image(NOTEBOOK_PHOTO, "assets/images/Molecules/notebook-open.png");
+      this.load.image(NOTEBOOK_PHOTO, "assets/images/Molecules/notebook-open.webp");
     }
     if (!this.textures.exists(MOLECULAR_MODELS)) {
-      this.load.image(MOLECULAR_MODELS, "assets/images/Molecules/molecular-models.png");
+      this.load.image(MOLECULAR_MODELS, "assets/images/Molecules/molecular-models.webp");
     }
   }
 

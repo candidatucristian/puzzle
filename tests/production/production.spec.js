@@ -63,9 +63,9 @@ test('the production build opens every level through the real UI from a subdirec
     });
   }
   for (const asset of [
-    'images/PlantPot/leaf.png', 'sounds/PlantPot/wateringplant.mp3',
+    'images/PlantPot/leaf.webp', 'sounds/PlantPot/wateringplant.mp3',
     'sounds/MobilePhone/keypad.mp3', 'images/Lightswitch/Samuel.png',
-    'images/TV/astronomy.jpg', 'sounds/TV/staticsound.mp3',
+    'images/TV/astronomy.webp', 'sounds/TV/staticsound.mp3',
     'sounds/Modem/hardwaresound.mp3', 'sounds/Wires/music.mp3', 'sounds/Rally/wroom.mp3',
   ]) {
     expect(localRequests.has(`/puzzle/assets/${asset}`), `The published level requested ${asset}`).toBe(true);

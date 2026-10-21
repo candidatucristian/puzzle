@@ -5,9 +5,9 @@ import { caseBody, solidBox, solidSurface, recessedPanel } from "../house/solidF
 import { laboratoryFrames } from "./laboratoryArt.js";
 
 const ASSETS = {
-  cabinet: { key: "r7_cabinet_front", url: "assets/images/Room7/cabinet-front.png" },
-  sinks: { key: "r7_sink_top", url: "assets/images/Room7/sink-countertop.png" },
-  faucets: { key: "r7_faucets", url: "assets/images/Room7/laboratory-faucets.png" },
+  cabinet: { key: "r7_cabinet_front", url: "assets/images/Room7/cabinet-front.webp" },
+  sinks: { key: "r7_sink_top", url: "assets/images/Room7/sink-countertop.webp" },
+  faucets: { key: "r7_faucets", url: "assets/images/Room7/laboratory-faucets.webp" },
 };
 const cache = new WeakMap(), stationCache = new WeakMap();
 

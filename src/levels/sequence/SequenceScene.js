@@ -46,10 +46,10 @@ export default class SequenceScene extends BasePuzzleScene {
 
   preload() {
     if (!this.textures.exists(STUDY_BACKGROUND)) {
-      this.load.image(STUDY_BACKGROUND, "assets/images/Sequence/study-background.png");
+      this.load.image(STUDY_BACKGROUND, "assets/images/Sequence/study-background.webp");
     }
     if (!this.textures.exists(STUDY_CARD)) {
-      this.load.image(STUDY_CARD, "assets/images/Sequence/sticky-note-cutout.png");
+      this.load.image(STUDY_CARD, "assets/images/Sequence/sticky-note-cutout.webp");
     }
   }
 

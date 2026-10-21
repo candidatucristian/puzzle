@@ -1,7 +1,7 @@
 import { makeCanvas, soft } from "../../shared/paint.js";
 
-const GARDEN = { key: "pp_botanical_garden_photo", url: "assets/images/PlantPot/botanical-garden.png" };
-const BENCH = { key: "pp_potting_bench_photo", url: "assets/images/PlantPot/potting-bench-materials.png" };
+const GARDEN = { key: "pp_botanical_garden_photo", url: "assets/images/PlantPot/botanical-garden.webp" };
+const BENCH = { key: "pp_potting_bench_photo", url: "assets/images/PlantPot/potting-bench-materials.webp" };
 const graded = new WeakMap();
 
 export function loadPhotographicGarden(scene) {

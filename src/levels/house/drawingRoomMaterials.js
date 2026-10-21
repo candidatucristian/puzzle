@@ -1,14 +1,14 @@
 import { makeCanvas } from "../../shared/paint.js";
 
 const KEY = "drawing_room_surface_materials";
-const URL = "assets/images/Room5/drawing-room-background.png";
+const URL = "assets/images/Room5/drawing-room-background.webp";
 const cache = new WeakMap();
 const FINISHES = "room5_material_atlas";
 
 // Room V gets material scans only. The separate loader keeps the tree puzzle
 // and the other rooms on their existing artwork.
 export function loadDrawingRoomFinishes(scene) {
-  if (!scene.textures.exists(FINISHES)) scene.load.image(FINISHES, "assets/images/Room5/surface-atlas.png");
+  if (!scene.textures.exists(FINISHES)) scene.load.image(FINISHES, "assets/images/Room5/surface-atlas.webp");
 }
 
 export function drawingRoomFinishes(scene) {

@@ -93,7 +93,7 @@ export default class TelescopeScene extends BasePuzzleScene {
     if (!this.textures.exists(TELESCOPE_PHOTO)) {
       this.load.image(
         TELESCOPE_PHOTO,
-        "assets/images/Telescope/refractor.png?v=1",
+        "assets/images/Telescope/refractor.webp?v=1",
       );
     }
   }

@@ -9,7 +9,7 @@ const SHADOW = "seq_card_shadow";
 const MOTE = "seq_mote";
 export const STUDY_BACKGROUND = "seq_study_background";
 export const STUDY_CARD = "seq_sticky_card_v3";
-const INK = "rgba(48,35,24,";
+const _INK = "rgba(48,35,24,";
 
 export function paintStudy(scene, W, H, L) {
   const S = Math.min(W, H);
@@ -122,7 +122,7 @@ function paintOrderNote(ctx, note, image) {
   ctx.restore();
 }
 
-function paintPencil(ctx, L, S) {
+function _paintPencil(ctx, L, S) {
   const note = L.note;
   const length = Math.min(note.w * 0.9, S * 0.2);
   const thickness = Math.max(4, S * 0.008);

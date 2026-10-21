@@ -20,8 +20,9 @@ test("three real circular fronts meet at each answer stone in the same frame", (
     assert.deepEqual(meeting.map(s => s.id), [target.id]);
   }
   assert.equal(readConvergences(), "DROP");
-  assert.equal(LEVEL_METADATA[25].id, "ripples");
-  assert.equal(LEVEL_METADATA[25].code, readConvergences());
+  const ripples = LEVEL_METADATA.find(l => l.id === "ripples");
+  assert.equal(ripples.id, "ripples");
+  assert.equal(ripples.code, readConvergences());
 });
 
 test("rain repeats without changing its sources, and circles survive different aspect ratios", () => {
@@ -48,8 +49,9 @@ test("Vertex's displayed graph has precisely the four degrees for FACE", () => {
   }
   assert.deepEqual(VERTEX_MARKED.map(id => degree(id)), [6, 1, 3, 5]);
   assert.equal(readVertex(), "FACE");
-  assert.equal(LEVEL_METADATA[26].id, "vertex");
-  assert.equal(LEVEL_METADATA[26].code, readVertex());
+  const vertex = LEVEL_METADATA.find(l => l.id === "vertex");
+  assert.equal(vertex.id, "vertex");
+  assert.equal(vertex.code, readVertex());
 });
 
 test("marked nodes have distinct outgoing directions and no false nearby connections", () => {

@@ -11,8 +11,8 @@ const TYPES = ["R_w", "K_w", "P_w", "Q_b", "K_b", "N_b", "B_w", "B_b"];
 const WIDTH = { K: 48, Q: 46, B: 44, N: 45, R: 46, P: 40 };
 
 export function loadChessPhotography(scene, { table = true } = {}) {
-  const files = [[MATERIALS, "board-materials-v1.png"], [PIECES, "staunton-pieces-v1.png"]];
-  if (table) files.push([CHESS_TABLE_PHOTOGRAPH, "chess-table-photographic-v1.png"]);
+  const files = [[MATERIALS, "board-materials-v1.webp"], [PIECES, "staunton-pieces-v1.webp"]];
+  if (table) files.push([CHESS_TABLE_PHOTOGRAPH, "chess-table-photographic-v1.webp"]);
   for (const [key, file] of files) if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Chessboard/${file}`);
 }
 

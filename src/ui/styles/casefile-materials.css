@@ -1,7 +1,7 @@
 /* Physical dossier materials; all words, tabs and document controls are HTML. */
 .dossier {
   padding: 22px 30px 30px;
-  background: url('/assets/images/CaseFile/dossier-cover.png') center / 104% 110% no-repeat;
+  background: url('/assets/images/CaseFile/dossier-cover.webp') center / 104% 110% no-repeat;
   box-shadow: 0 36px 80px #000b;
   filter: drop-shadow(0 6px 5px #0008);
 }
@@ -9,7 +9,7 @@
 .dossier-head { padding: 6px 76px 18px; min-height: 77px; }
 .dossier-head::before {
   content: ''; position: absolute; left: 10px; top: -1px; width: 58px; height: 58px;
-  background: url('/assets/images/CaseFile/red-wax-seal.png') center / contain no-repeat;
+  background: url('/assets/images/CaseFile/red-wax-seal.webp') center / contain no-repeat;
   filter: drop-shadow(1px 3px 2px #100400a0); transform: rotate(-13deg); pointer-events: none;
 }
 .dossier-ref { color: #dec5a4; text-shadow: 0 1px 2px #130703; }
@@ -18,14 +18,14 @@
 .dossier-page { padding: 22px 24px 28px; }
 .dossier-page.is-left {
   background-color: #e4d5b4;
-  background-image: linear-gradient(90deg, #60422018, transparent 20%, #fff8df12 70%, #543a1f16), url('/assets/images/CaseFile/letter-paper.png');
+  background-image: linear-gradient(90deg, #60422018, transparent 20%, #fff8df12 70%, #543a1f16), url('/assets/images/CaseFile/letter-paper.webp');
   background-size: 100% 100%; background-attachment: local;
   box-shadow: inset 0 0 20px #51371918;
 }
 /* One sheet shared by Letters and Evidence, with the leather visible at its
    worn edges. The letter's standalone paper belongs to arrival/prologue only. */
 .dossier-page.is-right {
-  background: url('/assets/images/CaseFile/letter-paper-v2.png') center top / 100% 100% no-repeat local;
+  background: url('/assets/images/CaseFile/letter-paper-v2.webp') center top / 100% 100% no-repeat local;
   border-radius: 0;
   box-shadow: none;
 }
@@ -58,31 +58,31 @@
 .prologue-sheet, .prologue-go { flex-shrink: 0; }
 button.dossier-slip {
   padding-right: 54px;
-  background: linear-gradient(105deg, #fff9e640, #fff8df10), url('/assets/images/CaseFile/letter-paper.png') center 25% / cover;
+  background: linear-gradient(105deg, #fff9e640, #fff8df10), url('/assets/images/CaseFile/letter-paper.webp') center 25% / cover;
   box-shadow: 0 2px 2px #34220c35, 0 5px 8px #34220c16, inset 0 0 0 1px #fff8e650;
 }
 button.dossier-slip::after, .dossier-slip.is-unread::after {
   content: ''; position: absolute; right: 10px; top: 14px; width: 33px; height: 33px;
-  background: url('/assets/images/CaseFile/red-wax-seal.png') center / contain no-repeat;
+  background: url('/assets/images/CaseFile/red-wax-seal.webp') center / contain no-repeat;
   border-radius: 0; box-shadow: none; filter: drop-shadow(0 2px 1px #48160e60); animation: none;
   transform: rotate(14deg); pointer-events: none;
 }
 .dossier-slip.is-unread::after { width: 39px; height: 39px; filter: drop-shadow(0 2px 1px #48160e60) drop-shadow(0 0 4px #bd2f2345); }
 .slip-clip { background: linear-gradient(90deg, #4c514e, #e6e6dd 28%, #8b908b 60%, #373c38); border-color: #a2a69e; box-shadow: inset 0 0 0 2px #e4d5b4, 1px 2px 2px #30220e50; }
 .evidence-tag, .evidence-tag.is-missing {
-  background-image: linear-gradient(105deg, #b48e3f25, #f5e8c438), url('/assets/images/CaseFile/letter-paper.png');
+  background-image: linear-gradient(105deg, #b48e3f25, #f5e8c438), url('/assets/images/CaseFile/letter-paper.webp');
   background-size: 100% 100%, cover;
   background-position: center, center 25%;
 }
 .evidence-tag:not(.is-missing) { padding-right: 38px; }
 .evidence-tag:not(.is-missing):not(.is-new)::after {
   content: ''; position: absolute; right: 8px; top: 50%; margin-top: -13px; width: 26px; height: 26px;
-  background: url('/assets/images/CaseFile/red-wax-seal.png') center / contain no-repeat; transform: rotate(-16deg);
+  background: url('/assets/images/CaseFile/red-wax-seal.webp') center / contain no-repeat; transform: rotate(-16deg);
 }
-.dossier-tabs button { background: url('/assets/images/CaseFile/dossier-cover.png') 75% 50% / 900% 400%; }
-.dossier-tabs button[aria-selected='true'] { background: #e4d5b4 url('/assets/images/CaseFile/letter-paper.png') center / cover; }
-.env-letter { background: #eee2c8 url('/assets/images/CaseFile/letter-paper.png') center / 100% 100%; }
-.env-shard { background-image: url('/assets/images/CaseFile/red-wax-seal.png'); background-size: 170%; background-position: center; }
+.dossier-tabs button { background: url('/assets/images/CaseFile/dossier-cover.webp') 75% 50% / 900% 400%; }
+.dossier-tabs button[aria-selected='true'] { background: #e4d5b4 url('/assets/images/CaseFile/letter-paper.webp') center / cover; }
+.env-letter { background: #eee2c8 url('/assets/images/CaseFile/letter-paper.webp') center / 100% 100%; }
+.env-shard { background-image: url('/assets/images/CaseFile/red-wax-seal.webp'); background-size: 170%; background-position: center; }
 .arrival.is-waiting .env-seal { animation: none; filter: drop-shadow(0 2px 2px #4c0e0c50); }
 .arrival-file:disabled { opacity: .55; cursor: progress; }
 

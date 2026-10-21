@@ -43,9 +43,9 @@ export default class OvertimeScene extends BasePuzzleScene {
 
   preload() {
     if (!this.textures.exists(BOTANICAL_PHOTO_KEY))
-      this.load.image(BOTANICAL_PHOTO_KEY, "/assets/images/Overtime/after-hours-botanical.png");
+      this.load.image(BOTANICAL_PHOTO_KEY, "/assets/images/Overtime/after-hours-botanical.webp");
     if (!this.textures.exists(DESK_PROPS_KEY))
-      this.load.image(DESK_PROPS_KEY, "/assets/images/Overtime/after-hours-desk-props.png");
+      this.load.image(DESK_PROPS_KEY, "/assets/images/Overtime/after-hours-desk-props.webp");
   }
 
   create() {

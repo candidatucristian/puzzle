@@ -2,9 +2,9 @@ import { makeCanvas, soft } from "../../shared/paint.js";
 import { BACK, footShadow, onWall } from "../house/roomKit.js";
 
 export const LAB_FIXTURES = {
-  cabinet: { key: "lab_glassware_cabinet_photo", url: "assets/images/Room7/glassware-cabinet.png?v=2" },
-  rack: { key: "lab_test_tube_rack", url: "assets/images/Room7/test-tube-rack.png" },
-  washing: { key: "lab_washing_station", url: "assets/images/Room7/washing-station.png" },
+  cabinet: { key: "lab_glassware_cabinet_photo", url: "assets/images/Room7/glassware-cabinet.webp?v=2" },
+  rack: { key: "lab_test_tube_rack", url: "assets/images/Room7/test-tube-rack.webp" },
+  washing: { key: "lab_washing_station", url: "assets/images/Room7/washing-station.webp" },
 };
 
 // Trim only the transparent margins; material detail and the alpha of the

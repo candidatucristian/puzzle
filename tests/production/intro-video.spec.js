@@ -13,6 +13,6 @@ test('the opening film and desk work below the deployed subdirectory', async ({ 
   await expect(page.locator('#intro-video')).toHaveCount(0);
   await expect(page.locator('#prologue')).toBeVisible();
   await expect.poll(() => page.locator('.prologue-photo').evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
-  expect(await page.locator('.prologue-photo').evaluate(img => new URL(img.src).pathname)).toBe('/puzzle/assets/images/Prologue/inspector-desk-film-match-v2.png');
+  expect(await page.locator('.prologue-photo').evaluate(img => new URL(img.src).pathname)).toBe('/puzzle/assets/images/Prologue/inspector-desk-film-match-v2.webp');
   await expect(page.locator('#cold-open')).toHaveCount(0);
 });

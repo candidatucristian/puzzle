@@ -518,7 +518,7 @@ function paintSparkle() {
 // with the edge of a drawn-back curtain falling in front of it, and along
 // the bottom the sill — the stone one outside, pale under the moon, and the
 // broad wooden board inside it, which is what we lean on.
-function paintFrame(L) {
+function _paintFrame(L) {
   const { W, H, S, lw, sill } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");

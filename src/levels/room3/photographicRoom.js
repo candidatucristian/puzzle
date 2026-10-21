@@ -7,7 +7,7 @@ export const ROOM3_FLAME = "r3_photographic_flame";
 const REF = { width: 1792, height: 1024 };
 
 export function loadRoom3Photography(scene) {
-  if (!scene.textures.exists(ROOM3_PHOTOGRAPH)) scene.load.image(ROOM3_PHOTOGRAPH, "assets/images/Room3/room3-photographic-v2.png");
+  if (!scene.textures.exists(ROOM3_PHOTOGRAPH)) scene.load.image(ROOM3_PHOTOGRAPH, "assets/images/Room3/room3-photographic-v2.webp");
 }
 
 export function alignRoom3Photography(L) {

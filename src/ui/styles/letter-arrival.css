@@ -29,7 +29,7 @@
 .arrival .env-pocket { filter: drop-shadow(0 1px 1px #4c331c50); }
 .arrival .env-flap-out { filter: drop-shadow(0 1px 1px #4c331c50); }
 .arrival .env-letter {
-  background: #eee8d7 url('/assets/images/CaseFile/letter-paper-v2.png') center 25% / cover;
+  background: #eee8d7 url('/assets/images/CaseFile/letter-paper-v2.webp') center 25% / cover;
   border: 1px solid #b4a17b55; border-radius: 2px;
   box-shadow: 0 2px 0 #d6c6a5, 0 3px 0 #a79371, 0 8px 12px #31200d40;
 }
@@ -71,7 +71,7 @@
 }
 .letter-fold-back {
   transform: rotateX(180deg); border: 1px solid #b6a17a30;
-  background: #eee8d7 url('/assets/images/CaseFile/letter-paper-v2.png') center 25% / 100% 300%;
+  background: #eee8d7 url('/assets/images/CaseFile/letter-paper-v2.webp') center 25% / 100% 300%;
   box-shadow: 0 2px 8px #26180c50; border-radius: 2px;
 }
 .fold-0 .letter-fold-back { background-position: center 10%; }

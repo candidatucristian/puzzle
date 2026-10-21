@@ -1,10 +1,10 @@
 import { makeCanvas, soft } from "../../shared/paint.js";
 
 const ASSETS = {
-  surfaces: { key: "physics_surface_atlas", url: "assets/images/Physics/surface-atlas.png" },
-  window: { key: "physics_window_photo", url: "assets/images/Physics/arched-window.png" },
-  telescope: { key: "physics_scope_photo", url: "assets/images/Physics/observatory-telescope.png" },
-  fixtures: { key: "physics_fixtures_photo", url: "assets/images/Physics/observatory-fixtures.png" },
+  surfaces: { key: "physics_surface_atlas", url: "assets/images/Physics/surface-atlas.webp" },
+  window: { key: "physics_window_photo", url: "assets/images/Physics/arched-window.webp" },
+  telescope: { key: "physics_scope_photo", url: "assets/images/Physics/observatory-telescope.webp" },
+  fixtures: { key: "physics_fixtures_photo", url: "assets/images/Physics/observatory-fixtures.webp" },
 };
 const cache = new WeakMap();
 

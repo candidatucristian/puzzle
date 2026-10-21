@@ -13,7 +13,7 @@ const AMB = [0.17, 0.18, 0.24]; // what light there is without the lamp
 const LAMP = [1, 0.78, 0.52]; // the lamp's colour
 const LAMP_POWER = 2.5;
 const MOON = [0.6, 0.7, 1]; // the moonlight's colour
-const MOON_POWER = 0.55;
+const _MOON_POWER = 0.55;
 const MOON_DIR = unit(v3(0.25, 0.6, 0.76)); // from the desk toward the moon
 const NZ = v3(0, 0, -1);
 const UP = v3(0, 1, 0);
@@ -238,7 +238,7 @@ function shade(base, p, n, lay, gloss = 0) {
 // how much moonlight reaches a point on the desk: the ray toward the moon
 // must pass out through the window's glass — not through its bars, and not
 // through the router — with a soft edge to it
-function moonOn(p, lay) {
+function _moonOn(p, lay) {
   const w = lay.win;
   const t = (ZW + w.depth - p.z) / MOON_DIR.z;
   const x = p.x + MOON_DIR.x * t;
@@ -498,7 +498,7 @@ function packet(ctx, x, y, scale, kind) {
 }
 
 // ── router ──────────────────────────────────────────────────────────────────
-function paintRouter(ctx, cam, lay, image) {
+function _paintRouter(ctx, cam, lay, image) {
   const r = lay.router;
   const w = (r.x1 - r.x0) * cam.k((r.z0 + r.z1) / 2);
   const h = w * (image.height / image.width);
@@ -527,7 +527,7 @@ function paintRouter(ctx, cam, lay, image) {
 // glazing bars, and beyond the glass the night over the valley — the moon,
 // the stars, the hills, the cypresses — as through the telescope's window.
 
-function paintWindow(ctx, cam, lay, moonImg, rnd) {
+function _paintWindow(ctx, cam, lay, moonImg, rnd) {
   const w = lay.win;
   const zg = ZW + w.depth; // the glass
   const P = (x, y, z) => cam.P(x, y, z);

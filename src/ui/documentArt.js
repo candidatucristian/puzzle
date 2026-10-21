@@ -6,7 +6,7 @@ export function loadArrivalArt() {
   if (!envelopePending) envelopePending = Promise.all([loadDocumentArt(), (async () => {
     const image = new Image();
     image.decoding = 'async';
-    image.src = `${import.meta.env.BASE_URL}assets/images/CaseFile/envelope-back.png`;
+    image.src = `${import.meta.env.BASE_URL}assets/images/CaseFile/envelope-back.webp`;
     try { await image.decode(); return image; } catch { return null; }
   })()]).then(([art, envelope]) => ({ ...art, envelope }));
   return envelopePending;

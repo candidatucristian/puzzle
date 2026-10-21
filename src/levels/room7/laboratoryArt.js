@@ -4,9 +4,9 @@ import { paintTestTubeRack } from "../chemistry/glassware.js";
 import { drawPhotographicLoupe } from "../../shared/photographicLoupe.js";
 
 const ASSETS = {
-  vessels: { key: "r7_bench_vessels", url: "assets/images/Room7/bench-vessels.png" },
-  apparatus: { key: "r7_bench_apparatus", url: "assets/images/Room7/bench-apparatus.png" },
-  materials: { key: "r7_laboratory_materials", url: "assets/images/Room7/laboratory-materials.png" },
+  vessels: { key: "r7_bench_vessels", url: "assets/images/Room7/bench-vessels.webp" },
+  apparatus: { key: "r7_bench_apparatus", url: "assets/images/Room7/bench-apparatus.webp" },
+  materials: { key: "r7_laboratory_materials", url: "assets/images/Room7/laboratory-materials.webp" },
 };
 const cache = new WeakMap();
 

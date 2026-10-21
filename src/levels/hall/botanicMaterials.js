@@ -2,14 +2,14 @@ import { makeCanvas, soft } from "../../shared/paint.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
 const ASSETS = {
-  surfaces: { key: "botany_hall_finishes_v2", url: "assets/images/Botany/hall-finishes-v2.png" },
-  plants: { key: "botany_hall_greenery_v2", url: "assets/images/Botany/hall-greenery-v2.png" },
-  door: { key: "botany_hall_walnut_door_v2", url: "assets/images/Botany/walnut-door-v2.png" },
-  herbarium: { key: "botany_hall_herbarium_photo", url: "assets/images/Botany/herbarium-frames.png" },
-  sconces: { key: "hall_sconces_photo", url: "assets/images/Physics/observatory-fixtures.png" },
+  surfaces: { key: "botany_hall_finishes_v2", url: "assets/images/Botany/hall-finishes-v2.webp" },
+  plants: { key: "botany_hall_greenery_v2", url: "assets/images/Botany/hall-greenery-v2.webp" },
+  door: { key: "botany_hall_walnut_door_v2", url: "assets/images/Botany/walnut-door-v2.webp" },
+  herbarium: { key: "botany_hall_herbarium_photo", url: "assets/images/Botany/herbarium-frames.webp" },
+  sconces: { key: "hall_sconces_photo", url: "assets/images/Physics/observatory-fixtures.webp" },
 };
 const cache = new WeakMap();
-const FLOOR_PHOTO = { key: "botany_hall_floor_photographic_v3", url: "assets/images/Botany/hall-floor-photographic-v3.png" };
+const FLOOR_PHOTO = { key: "botany_hall_floor_photographic_v3", url: "assets/images/Botany/hall-floor-photographic-v3.webp" };
 
 export function loadBotanicHallMaterials(scene) {
   for (const { key, url } of [...Object.values(ASSETS), FLOOR_PHOTO]) if (!scene.textures.exists(key)) scene.load.image(key, url);

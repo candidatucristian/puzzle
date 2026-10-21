@@ -24,7 +24,7 @@ import {
 //
 // The garden is painted once per screen size (garden.js), the pot and the
 // bucket too (plant.js); the stems are painted live as they grow, and the
-// leaves are the level's own leaf image (assets/images/PlantPot/leaf.png).
+// leaves are the level's own leaf image (assets/images/PlantPot/leaf.webp).
 // What moves is driven from here: the lantern's flame, fireflies over the
 // grass, the stars, now and then a shooting star.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ const LEAF_DEFS = [
   ],
 ];
 
-// the leaf image (assets/images/PlantPot/leaf.png, 378 × 508): its stalk at
+// the leaf image (assets/images/PlantPot/leaf.webp, 378 × 508): its stalk at
 // the lower left, the leaf leaning 45° right of upright; drawn the size it
 // always was — 0.034 cm to one of its pixels, a leaf about 17 cm long
 const LEAF_IMAGE = { ox: 0.05, oy: 0.95, turn: -45, cmPerPx: 0.034 };
@@ -83,7 +83,7 @@ export default class PlantPotScene extends BasePuzzleScene {
   }
 
   preload() {
-    this.load.image("leaf", "assets/images/PlantPot/leaf.png");
+    this.load.image("leaf", "assets/images/PlantPot/leaf.webp");
     loadPhotographicGarden(this);
     this.load.audio("wateringplant", "assets/sounds/PlantPot/wateringplant.mp3");
   }

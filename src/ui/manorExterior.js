@@ -6,7 +6,7 @@ export function loadManorExterior() {
   if (!pending) pending = (async () => {
     const image = new Image();
     image.decoding = 'async';
-    image.src = `${import.meta.env.BASE_URL}assets/images/Manor/ashcombe-exterior-photographic-v2.png`;
+    image.src = `${import.meta.env.BASE_URL}assets/images/Manor/ashcombe-exterior-photographic-v2.webp`;
     await image.decode();
     return image;
   })();

@@ -8,10 +8,10 @@ const cache = new WeakMap();
 
 export function loadCryptexPhotography(scene) {
   for (const [key, path] of [
-    [MATERIALS, "assets/images/Cryptex/materials-photographic-v1.png"],
-    [PROPS, "assets/images/Cryptex/props-photographic-v1.png"],
-    [WHEEL, "assets/images/Cryptex/rotor-square-photographic-v2.png"],
-    [BOOKS, "assets/images/Cryptex/books-photographic-v2.png"],
+    [MATERIALS, "assets/images/Cryptex/materials-photographic-v1.webp"],
+    [PROPS, "assets/images/Cryptex/props-photographic-v1.webp"],
+    [WHEEL, "assets/images/Cryptex/rotor-square-photographic-v2.webp"],
+    [BOOKS, "assets/images/Cryptex/books-photographic-v2.webp"],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, path);
 }
 

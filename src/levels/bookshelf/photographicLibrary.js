@@ -8,9 +8,9 @@ const cache = new WeakMap();
 
 export function loadLibraryPhotography(scene) {
   for (const [key, url] of [
-    [LIBRARY_PHOTOGRAPH, "assets/images/Bookshelf/library-photographic-v1.png"],
-    [BINDINGS, "assets/images/Bookshelf/bindings-photographic-v1.png"],
-    [ROW, "assets/images/Bookshelf/book-row-photographic-v1.png"],
+    [LIBRARY_PHOTOGRAPH, "assets/images/Bookshelf/library-photographic-v1.webp"],
+    [BINDINGS, "assets/images/Bookshelf/bindings-photographic-v1.webp"],
+    [ROW, "assets/images/Bookshelf/book-row-photographic-v1.webp"],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 

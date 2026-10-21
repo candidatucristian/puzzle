@@ -2,7 +2,7 @@ import { makeCanvas, soft } from "../../shared/paint.js";
 
 export const GARDEN_TREES = {
   key: "pp_mature_trees",
-  url: "assets/images/PlantPot/mature-trees.png",
+  url: "assets/images/PlantPot/mature-trees.webp",
 };
 
 // The two cutouts share the same scale and ground line. Keep their original

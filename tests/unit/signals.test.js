@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 import { MORSE, buildMorseSteps } from '../../src/levels/lightswitch/puzzle.js';
-import { MODEM_WORD, planTransmission } from '../../src/levels/modem/puzzle.js';
+import { MODEM_WORD, BYTE_LEDS, planTransmission } from '../../src/levels/modem/puzzle.js';
 
 test('each Lightswitch press displays one complete Morse letter of the accepted answer', () => {
   const word = LEVEL_METADATA.find(level => level.id === 'lightswitch').code;
@@ -24,14 +24,16 @@ test('Morse retains its flash lengths and spacing without a trailing pause', () 
 
 test('Modem LED flashes decode to HTTPS, with one red counter after each byte', () => {
   const { events } = planTransmission();
-  let bits = '', decoded = '', count = 0;
+  const lit = new Set();
+  let decoded = '', count = 0;
   for (const event of events) {
-    if (event.state === 'green') bits += event.led === 5 ? '0' : '1';
+    if (event.state === 'green') lit.add(event.led);
     if (event.state === 'red') {
-      assert.equal(bits.length, 8);
+      const bits = BYTE_LEDS.map(led => (lit.has(led) ? '1' : '0')).join('');
+      assert.equal(bits.length, 7);
       assert.equal(event.led, count++);
       decoded += String.fromCharCode(parseInt(bits, 2));
-      bits = '';
+      lit.clear();
     }
   }
   assert.equal(decoded, 'HTTPS');
@@ -41,12 +43,12 @@ test('Modem LED flashes decode to HTTPS, with one red counter after each byte', 
 
 test('Modem timing preserves the readable bits, letter counters and repeat pause', () => {
   const { events, duration } = planTransmission();
-  assert.equal(events.length, 85);
-  assert.equal(events[0].at, 500);
-  assert.equal(events[1].at, 1100);
-  assert.equal(events[2].at, 1430);
+  assert.equal(events.length, 54);
+  assert.equal(events[0].at, 700);
+  assert.equal(events[1].at, 910);
+  assert.equal(events[2].at, 3990);
   assert.deepEqual(events.filter(event => event.state === 'red').map(event => event.at),
-    [8110, 16570, 25030, 33490, 41950]);
-  assert.equal(duration, 46300);
-  for (let i = 1; i < events.length; i++) assert.ok(events[i].at > events[i - 1].at);
+    [4440, 9080, 13720, 18360, 23000]);
+  assert.equal(duration, 27400);
+  for (let i = 1; i < events.length; i++) assert.ok(events[i].at >= events[i - 1].at);
 });

@@ -79,19 +79,26 @@ test('light puzzles keep their apertures and controls inside small and large vie
   }
 });
 
-test('a completed thirty-room save unlocks Curtain and reaches completion only after CITY', () => {
+test('a completed save up to Curtain unlocks Curtain and reaches completion only after the final room', () => {
   const values = new Map();
   const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
-  const old = new ProgressStore(storage, LEVEL_METADATA.slice(0, 30));
-  for (let i = 0; i < 30; i++) old.complete(i);
+  const curtainIndex = LEVEL_METADATA.findIndex(l => l.id === 'curtain');
+  const old = new ProgressStore(storage, LEVEL_METADATA.slice(0, curtainIndex));
+  for (let i = 0; i < curtainIndex; i++) old.complete(i);
   const current = new ProgressStore(storage, LEVEL_METADATA);
-  assert.equal(current.state.completedLevelIds.length, 30);
-  assert.equal(current.canAccess(30), true); assert.equal(current.canAccess(31), false); assert.equal(current.canAccess(32), false);
+  assert.equal(current.state.completedLevelIds.length, curtainIndex);
+  assert.equal(current.canAccess(curtainIndex), true);
+  assert.equal(current.canAccess(curtainIndex + 1), false);
   assert.equal(current.completed, false);
-  current.complete(30); assert.equal(current.canAccess(31), true);
-  current.complete(31); assert.equal(current.canAccess(32), true); assert.equal(current.completed, false);
-  current.complete(32); assert.equal(current.completed, true);
-  assert.deepEqual(LEVEL_METADATA.slice(30).map(({ id, key, code, hint }) => [id,key,code,hint.tool,hint.sound]), [
+  for (let i = curtainIndex; i < LEVEL_METADATA.length - 1; i++) {
+    current.complete(i);
+    assert.equal(current.canAccess(i + 1), true);
+    assert.equal(current.completed, false);
+  }
+  current.complete(LEVEL_METADATA.length - 1);
+  assert.equal(current.completed, true);
+  const curtainGroup = LEVEL_METADATA.slice(curtainIndex, curtainIndex + 3);
+  assert.deepEqual(curtainGroup.map(({ id, key, code, hint }) => [id,key,code,hint.tool,hint.sound]), [
     ['curtain','Curtain','MOTH',false,false], ['thesill','TheSill','WAKE',false,false], ['venetian','Venetian','CITY',false,false],
   ]);
 });

@@ -8,7 +8,7 @@ const REF = { width: 1792, height: 1024 };
 const SOURCE = { width: 1659, height: 948 };
 
 export function loadRoom4Interior(scene) {
-  if (!scene.textures.exists(ROOM4_INTERIOR)) scene.load.image(ROOM4_INTERIOR, "assets/images/Room4/room4-photographic-v2.png");
+  if (!scene.textures.exists(ROOM4_INTERIOR)) scene.load.image(ROOM4_INTERIOR, "assets/images/Room4/room4-photographic-v2.webp");
 }
 
 export function alignRoom4Perspective(L) {

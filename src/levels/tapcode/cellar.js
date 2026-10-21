@@ -23,7 +23,7 @@ import { cellarPhotographicMaterials, paintCellarPhotography, paintCellarSurface
 
 const K = { room: "tc_room", flame: "tc_flame", glow: "tc_glow", fog: "tc_fog" };
 export const CELLAR_MATERIALS_KEY = "tc_cellar_materials";
-export const CELLAR_MATERIALS_URL = "assets/images/TapCode/cellar-background.png";
+export const CELLAR_MATERIALS_URL = "assets/images/TapCode/cellar-background.webp";
 const WARM = "255,182,104";
 const PALE = "150,170,214"; // what comes down the hatch
 const BRICK_SURFACES = [[430, 205, 105, 35], [650, 252, 100, 34], [495, 390, 90, 35], [680, 440, 95, 32]];

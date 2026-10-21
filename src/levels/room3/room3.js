@@ -34,7 +34,7 @@ import {
 
 // The source image stays cached across room visits; viewport canvases in K
 // are the resources rebuilt and released when the room changes size.
-export const SHIP_BOTTLE = { key: "r3_ship_bottle_v2", url: "assets/images/Room3/ship-in-bottle-v2.png" };
+export const SHIP_BOTTLE = { key: "r3_ship_bottle_v2", url: "assets/images/Room3/ship-in-bottle-v2.webp" };
 
 const K = { room: "r3_room", glow: "r3_glow", shut: "r3_chest_shut", open: "r3_chest_open", key: "r3_key" };
 

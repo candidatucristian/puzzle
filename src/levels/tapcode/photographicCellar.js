@@ -7,9 +7,9 @@ const cache = new WeakMap();
 
 export function loadCellarPhotography(scene) {
   for (const [key, url] of [
-    [PHOTOGRAPH, "assets/images/TapCode/cellar-photographic-v4.png"],
-    [SURFACES, "assets/images/TapCode/original-cellar-surfaces-v3.png"],
-    [PROPS, "assets/images/TapCode/original-cellar-props-v3.png"],
+    [PHOTOGRAPH, "assets/images/TapCode/cellar-photographic-v4.webp"],
+    [SURFACES, "assets/images/TapCode/original-cellar-surfaces-v3.webp"],
+    [PROPS, "assets/images/TapCode/original-cellar-props-v3.webp"],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 

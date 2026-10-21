@@ -6,7 +6,7 @@ const SOURCE = { width: 1659, height: 948 };
 
 export function loadRoom8Photography(scene) {
   if (!scene.textures.exists(ROOM8_PHOTOGRAPH)) {
-    scene.load.image(ROOM8_PHOTOGRAPH, "assets/images/Room8/room8-photographic-v2.png");
+    scene.load.image(ROOM8_PHOTOGRAPH, "assets/images/Room8/room8-photographic-v2.webp");
   }
 }
 

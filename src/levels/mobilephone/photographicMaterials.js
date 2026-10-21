@@ -9,9 +9,9 @@ const capKey = frame => `mp_photographic_cap_${frame}_v1`;
 
 export function loadPhonePhotography(scene) {
   for (const [key, url] of [
-    [HANDSET, "assets/images/MobilePhone/handset-photographic-v1.png"],
-    [DESK_PHOTOGRAPH, "assets/images/MobilePhone/frontal-desk-photographic-v2.png"],
-    [PHONE_CRADLE, "assets/images/MobilePhone/charging-cradle-photographic-v1.png"],
+    [HANDSET, "assets/images/MobilePhone/handset-photographic-v1.webp"],
+    [DESK_PHOTOGRAPH, "assets/images/MobilePhone/frontal-desk-photographic-v2.webp"],
+    [PHONE_CRADLE, "assets/images/MobilePhone/charging-cradle-photographic-v1.webp"],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 

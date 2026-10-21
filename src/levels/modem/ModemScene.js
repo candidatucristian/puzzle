@@ -41,7 +41,7 @@ export default class ModemScene extends BasePuzzleScene {
   preload() {
     this.load.audio("hardware", "assets/sounds/Modem/hardwaresound.mp3");
     if (!this.textures.exists("md_room_photo")) {
-      this.load.image("md_room_photo", "assets/images/Modem/room-photoreal.png?v=2");
+      this.load.image("md_room_photo", "assets/images/Modem/room-photoreal.webp?v=2");
     }
   }
 

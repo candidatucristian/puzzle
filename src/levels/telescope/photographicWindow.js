@@ -7,8 +7,8 @@ const MOON = "tele_moon_photographic_v1";
 
 export function loadWindowPhotography(scene) {
   for (const [key, url] of [
-    [WINDOW, "assets/images/Telescope/window-photographic-v1.png"],
-    [MOON_SOURCE, "assets/images/Telescope/moon-photographic-v1.png"],
+    [WINDOW, "assets/images/Telescope/window-photographic-v1.webp"],
+    [MOON_SOURCE, "assets/images/Telescope/moon-photographic-v1.webp"],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 

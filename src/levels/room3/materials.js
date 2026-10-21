@@ -4,8 +4,8 @@ const ATLAS = "r3_surface_atlas", PORT = "r3_porthole_photo";
 const cache = new WeakMap();
 
 export function loadRoom3Materials(scene) {
-  if (!scene.textures.exists(ATLAS)) scene.load.image(ATLAS, "assets/images/Room3/surface-atlas.png");
-  if (!scene.textures.exists(PORT)) scene.load.image(PORT, "assets/images/Room3/porthole-real.png");
+  if (!scene.textures.exists(ATLAS)) scene.load.image(ATLAS, "assets/images/Room3/surface-atlas.webp");
+  if (!scene.textures.exists(PORT)) scene.load.image(PORT, "assets/images/Room3/porthole-real.webp");
 }
 
 export function room3Materials(scene) {

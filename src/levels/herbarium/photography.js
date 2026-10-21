@@ -1,7 +1,7 @@
 import { makeCanvas } from "../../shared/paint.js";
 import { PAGES } from "./puzzle.js";
 
-export const HERBARIUM_COVER = { key: "herbarium_cloth_cover_v1", url: "assets/images/Herbarium/cloth-cover-v1.png" };
+export const HERBARIUM_COVER = { key: "herbarium_cloth_cover_v1", url: "assets/images/Herbarium/cloth-cover-v1.webp" };
 
 export const HERBARIUM_PHOTOS = {
   book: "herbarium_open_album_v1",
@@ -9,10 +9,10 @@ export const HERBARIUM_PHOTOS = {
   specimens: ["herbarium_pressed_plants_a_v1", "herbarium_pressed_plants_b_v1"],
 };
 const FILES = [
-  [HERBARIUM_PHOTOS.book, "open-album-v1.png"],
-  [HERBARIUM_PHOTOS.desk, "walnut-table-v1.png"],
-  [HERBARIUM_PHOTOS.specimens[0], "pressed-plants-a-v1.png"],
-  [HERBARIUM_PHOTOS.specimens[1], "pressed-plants-b-v1.png"],
+  [HERBARIUM_PHOTOS.book, "open-album-v1.webp"],
+  [HERBARIUM_PHOTOS.desk, "walnut-table-v1.webp"],
+  [HERBARIUM_PHOTOS.specimens[0], "pressed-plants-a-v1.webp"],
+  [HERBARIUM_PHOTOS.specimens[1], "pressed-plants-b-v1.webp"],
 ];
 const sheets = new WeakMap();
 

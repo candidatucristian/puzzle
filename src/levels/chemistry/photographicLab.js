@@ -2,11 +2,11 @@ import { makeCanvas, soft } from "../../shared/paint.js";
 import { drawPhotographicLoupe } from "../../shared/photographicLoupe.js";
 
 const ASSETS = {
-  vessels: { key: "ch_photo_vessels", url: "assets/images/Room7/puzzle-vessels.png" },
-  loupe: { key: "ch_photo_magnifier", url: "assets/images/Room7/magnifying-glass.png" },
-  shelf: { key: "ch_photo_shelf", url: "assets/images/Room7/apothecary-shelf.png" },
-  props: { key: "ch_photo_small_props", url: "assets/images/Room7/lab-small-props.png" },
-  paper: { key: "ch_photo_chart_paper", url: "assets/images/CaseFile/letter-paper-v2.png" },
+  vessels: { key: "ch_photo_vessels", url: "assets/images/Room7/puzzle-vessels.webp" },
+  loupe: { key: "ch_photo_magnifier", url: "assets/images/Room7/magnifying-glass.webp" },
+  shelf: { key: "ch_photo_shelf", url: "assets/images/Room7/apothecary-shelf.webp" },
+  props: { key: "ch_photo_small_props", url: "assets/images/Room7/lab-small-props.webp" },
+  paper: { key: "ch_photo_chart_paper", url: "assets/images/CaseFile/letter-paper-v2.webp" },
 };
 const cache = new WeakMap();
 

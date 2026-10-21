@@ -2,7 +2,7 @@ import { makeCanvas, polygon } from "../../shared/paint.js";
 import { buildSpiralStaircase, paintSpiralFallback } from "./spiralStaircase.js";
 
 const KEY = "chemistry_spiral_stairwell_v4";
-const URL = "assets/images/Chemistry/spiral-stairwell-photographic-v4.png";
+const URL = "assets/images/Chemistry/spiral-stairwell-photographic-v4.webp";
 const cache = new WeakMap();
 
 export function loadStaircaseArt(scene) {

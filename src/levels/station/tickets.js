@@ -17,9 +17,9 @@ import { paintDrawerDepth, paintSewingBits } from "./drawerDetails.js";
 
 const K = { drawer: "tk_drawer", glow: "tk_glow" };
 export const STATION_DRAWER_PHOTO = "st_drawer_photo";
-export const STATION_DRAWER_PHOTO_URL = "assets/images/Station/drawer-interior.png";
+export const STATION_DRAWER_PHOTO_URL = "assets/images/Station/drawer-interior.webp";
 export const STATION_TICKET_CARD = "st_ticket_card";
-export const STATION_TICKET_CARD_URL = "assets/images/Station/ticket-card.png";
+export const STATION_TICKET_CARD_URL = "assets/images/Station/ticket-card.webp";
 const WARM = "255,190,120";
 const CARD = ["#e1d6b7", "#ded3b4", "#e4dabc", "#ddd1b2"];
 const PRESS = '"Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif';

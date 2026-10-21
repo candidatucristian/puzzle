@@ -11,7 +11,7 @@ const rackCache = new WeakMap();
 const FRONT = [[509, 522], [1049, 524], [1049, 558], [509, 557]];
 
 export function loadPhialsPhotography(scene) {
-  for (const [key, file] of [[ROOM, "laboratory-rack-v1.png"], [GLASS, "glass-phials-v1.png"]]) {
+  for (const [key, file] of [[ROOM, "laboratory-rack-v1.webp"], [GLASS, "glass-phials-v1.webp"]]) {
     if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Phials/${file}`);
   }
 }

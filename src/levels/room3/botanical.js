@@ -3,9 +3,9 @@ import { BACK, fillPoly } from "../house/roomKit.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
 const ART = {
-  flowers: { key: "r3_botanical_flowers", url: "assets/images/Room3/botanical-flowers.png" },
-  seeds: { key: "r3_seed_sacks", url: "assets/images/Room3/seed-sacks.png" },
-  herbarium: { key: "r3_framed_herbarium", url: "assets/images/Room3/framed-herbarium.png" },
+  flowers: { key: "r3_botanical_flowers", url: "assets/images/Room3/botanical-flowers.webp" },
+  seeds: { key: "r3_seed_sacks", url: "assets/images/Room3/seed-sacks.webp" },
+  herbarium: { key: "r3_framed_herbarium", url: "assets/images/Room3/framed-herbarium.webp" },
 };
 
 export function loadRoom3Botanicals(scene) {
