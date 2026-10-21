@@ -96,6 +96,7 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
       );
       if (current) tile.setAttribute("aria-current", "step");
       else tile.removeAttribute("aria-current");
+      tile.setAttribute("aria-disabled", String(!allowed));
       tile.title = allowed
         ? `${level.name}${solved ? ` · ${solvedText}` : ""}`
         : i18n

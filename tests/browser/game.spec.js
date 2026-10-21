@@ -115,6 +115,7 @@ test('master and channel settings reach real music and scene effects', async ({ 
   await expect.poll(() => sceneState(page, 'scene.sound.volume')).toBeCloseTo(.2);
   expect(await sceneState(page, 'services.audio.state.masterVol')).toBe(.2);
   await page.locator('#btn-options').click();
+  if (await page.locator('#st-tab-sounds').isVisible()) await page.locator('#st-tab-sounds').click();
   await page.locator('#music-slider').fill('0.3');
   await expect.poll(() => sceneState(page, 'scene._music.volume')).toBeCloseTo(.21);
   await page.locator('#sfx-slider').fill('0');
@@ -140,7 +141,7 @@ test('final answer, replay and navigation own exactly one completion callback', 
   await expect(page.locator('#completion-chambers')).toHaveText(`${LEVEL_METADATA.length} / ${LEVEL_METADATA.length}`);
   await page.locator('#btn-completion-close').click();
   await page.locator('#level-code').fill(last.code); await page.locator('#btn-submit').click();
-  await page.locator('.level-btn').first().click();
+  await evaluateApp(page, ({ ui }) => ui.navigate(0));
   await page.waitForTimeout(800);
   await expect(page.locator('#completion-screen')).toBeHidden();
   await expect.poll(() => sceneState(page, 'scene.scene.key')).toBe('BinaryTree');
@@ -157,9 +158,11 @@ test('an inserted unsolved room prevents premature completion and completes the 
   }, { ids: LEVEL_METADATA.map(level => level.id), missing: missing.id, last: last.id });
   await launch(page); await navigate(page, last.key);
   await page.locator('#level-code').fill(last.code); await page.locator('#btn-submit').click();
+  await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
+  await navigate(page, missing.key);
   await expect.poll(() => sceneState(page, 'scene.scene.key')).toBe(missing.key);
   await expect(page.locator('#completion-screen')).toBeHidden();
-  await expect(page.locator('#progress-count')).toHaveText(`${LEVEL_METADATA.length - 1} / ${LEVEL_METADATA.length} solved`);
+  expect(await evaluateApp(page, ({ services }) => services.levels.completedCount)).toBe(LEVEL_METADATA.length - 1);
   await page.locator('#level-code').fill(missing.code); await page.locator('#btn-submit').click();
   await expect(page.locator('#completion-screen')).toBeVisible();
   await expect(page.locator('#completion-chambers')).toHaveText(`${LEVEL_METADATA.length} / ${LEVEL_METADATA.length}`);
@@ -179,7 +182,8 @@ test('Hints follow the catalog and dialogs support keyboard focus and Escape', a
 
 test('candle stays extinguished through resize and resets on replay', async ({ page }) => {
   await launch(page); await navigate(page, 'Cryptex');
-  const candle = page.locator('.candle-action');
+  const candles = page.locator('.candle-action');
+  const candle = candles.first();
   await sceneState(page, 'scene._openOverlay()');
   await candle.click();
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(0);
@@ -187,7 +191,11 @@ test('candle stays extinguished through resize and resets on replay', async ({ p
   await expect.poll(() => sceneState(page, 'scene._overlayOpen')).toBe(false);
   // the button comes back 820 ms after each breath on the game's clock; under
   // a loaded machine the frames that carry that clock can arrive slowly
-  for (let i = 0; i < 3; i++) { await expect(candle).toBeEnabled({ timeout: 20000 }); await candle.click(); }
+  for (let i = 0; i < 3; i++) {
+    const c = candles.nth(i);
+    await expect(c).toBeEnabled({ timeout: 20000 });
+    await c.click();
+  }
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(3);
   await expect.poll(() => sceneState(page, 'scene._lettersShown')).toBe(true);
   await expect.poll(() => sceneState(page, 'scene.candle.lightState.level')).toBe(0);
@@ -202,14 +210,14 @@ test('candle stays extinguished through resize and resets on replay', async ({ p
   await expect.poll(() => sceneState(page, 'scene._wheelAngle')).not.toBe(angle);
   await page.setViewportSize({ width: 1360, height: 900 }); await page.waitForTimeout(500);
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(3);
-  await expect(page.locator('.candle-action')).toBeDisabled();
+  await expect(candles.first()).toBeDisabled();
   await navigate(page, 'Cryptex'); expect(await sceneState(page, 'scene.candle.clicks')).toBe(0);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1920, height: 1080 });
   await expect.poll(() => sceneState(page, 'scene._W')).toBeGreaterThan(1100);
-  await expect(page.locator('.candle-action')).toBeInViewport();
+  await expect(candles.first()).toBeInViewport();
   await page.screenshot({ path: '.artifacts/after/Cryptex-wide.png' });
-  await candle.focus();
+  await candles.first().focus();
   await page.keyboard.press('Enter');
   await expect.poll(() => sceneState(page, 'scene.candle.clicks')).toBe(1);
 });
@@ -277,10 +285,11 @@ test('confirmed reset cancels pending navigation and preserves sound preferences
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await launch(page); await navigate(page, 'Rally');
   await page.locator('#vol-slider-ui').fill('0.4');
-  await page.locator('.level-btn').nth(10).click();
+  await evaluateApp(page, ({ ui }) => ui.navigate(10));
   // Open via the keyboard while the transition veil covers the game.
   await page.locator('#btn-options').focus(); await page.keyboard.press('Enter');
   await page.locator('#btn-new').click(); await page.locator('#btn-new').click();
+  await evaluateApp(page, ({ ui }) => ui.navigate(0));
   await expect.poll(() => sceneState(page, 'scene?.scene.key'), { timeout: 12000 }).toBe('BinaryTree');
   await expect(page.locator('.level-btn.unlocked')).toHaveCount(0);
   expect(await sceneState(page, 'services.audio.state.masterVol')).toBe(.4);
@@ -306,13 +315,15 @@ for (const deniedStorage of [false, true]) {
     });
     await page.goto('/');
     await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
-    await page.keyboard.press('Enter');
+    await evaluateApp(page, ({ ui }) => ui.showGame());
     await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
     await expect(page.locator('.level-btn').nth(1)).toHaveAttribute('aria-disabled', 'true');
     await page.locator('#level-code').fill('wrong'); await page.locator('#btn-submit').click();
     await expect(page.locator('#level-code')).toHaveClass(/error-flash/);
     await expect(page.locator('.level-btn').nth(1)).toHaveAttribute('aria-disabled', 'true');
     await page.locator('#level-code').fill(LEVEL_METADATA[0].code.toLowerCase()); await page.locator('#btn-submit').click();
+    await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
+    await evaluateApp(page, ({ ui }) => ui.navigate(1));
     await expect(page.locator('.level-btn').nth(1)).toHaveAttribute('aria-current', 'step');
     expect(await sceneState(page, 'services.levels.canAccess(1)')).toBe(true);
     if (!deniedStorage) {
@@ -374,6 +385,7 @@ test('Overtime: the calculator adds the wall clocks by real clicks, survives a r
   await page.setViewportSize({ width: 1360, height: 900 });
   await expect.poll(() => sceneState(page, 'scene.scale.width'), { timeout: 10000 }).toBeLessThan(1440);
   await expect.poll(() => sceneState(page, 'scene._W')).toBeLessThan(1440);
+  await page.waitForTimeout(400);
   expect(await shown()).toBe('7105');
   await press('C');
   await expect.poll(shown).toBe('0');

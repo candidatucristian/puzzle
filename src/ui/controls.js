@@ -457,6 +457,6 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     }));
   }
 
-  return { navigate, showGame, get busy() { return transitions.busy; },
+  return { navigate, showGame, get busy() { return transitions.busy || walking; },
     dispose() { transitions.dispose(); dialogs.closeAll(); scope.dispose(); } };
 }
