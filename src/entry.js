@@ -1,5 +1,6 @@
 import './ui/styles/index.css';
 import './ui/styles/casefile-materials.css';
+import './ui/styles/notebook-materials.css';
 import './ui/styles/letter-arrival.css';
 import './ui/styles/desktopOnly.css';
 import './levels/cryptex/scene.css';

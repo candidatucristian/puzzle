@@ -72,7 +72,7 @@ export const PLACES = Object.freeze([
       "Rain in the roof, and two more doors.",
       "The house goes further than the plans say. So, it seems, does this case.",
     ] },
-  // the rooms behind the last doors, empty as yet (house/emptyRooms.js)
+  // The remaining upstairs rooms (registered in house/emptyRooms.js).
   { key: "Room9", name: "Room IX", back: "Upper", holds: [],
     story: [
       "An empty room. Dust on the floor, and the fire laid but never lit.",

@@ -16,6 +16,7 @@ import { mountStartFilm } from './startFilm.js';
 import { mountStartManor } from './startManor.js';
 import { HOUSE_GO, HOUSE_BACK, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
 import { mountHouseMap } from './houseMap.js';
+import { mountNotebook } from './notebook.js';
 import { mountMagnifier } from './magnifier.js';
 import { mountAmbience } from './ambience.js';
 import { mountTooltips } from './tooltips.js';
@@ -266,6 +267,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     if (!cinema.chapterBefore(key, () => levels.enterPlace(key))) walk(() => levels.enterPlace(key), 260, 0, true);
   }
   const map = mountHouseMap(scope, { levels, dialogs, travel, i18n });
+  const notebook = mountNotebook(scope, { levels, dialogs, storage, i18n });
   const cinema = mountCinema(scope, { storage, reducedMotion: () => Boolean(preferences?.reducedMotion), i18n });
   const paperSounds = mountPaperSounds({ game, audio });
   const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || cinema.busy, i18n });
@@ -344,8 +346,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
   mountAhas(scope, { game, audio });
   scope.on(byId('btn-map'), 'click', event => { if (!transitions.busy) map.open(event.currentTarget); });
   scope.on(byId('btn-close-map'), 'click', () => dialogs.close());
+  // the notebook's button opens it, and puts it away again
+  scope.on(byId('btn-notebook'), 'click', event => {
+    if (notebook.isOpen) notebook.close();
+    else if (!transitions.busy) notebook.open(event.currentTarget);
+  });
   scope.on(byId('btn-casefile'), 'click', event => { if (!transitions.busy) caseFile.open(event.currentTarget); });
-  // M the map, C the case file, Z the glass; Esc the way back. Never while
+  // M the map, N the notebook, C the case file, Z the glass; Esc the way back. Never while
   // something is being typed, nor before the house has been come into.
   scope.on(window, 'keydown', event => {
     // (an Esc that has just closed a dialog is spent)
@@ -354,6 +361,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     if (dialogs.isOpen || transitions.busy || walking) return;
     const key = event.key.toLowerCase();
     if (key === 'm') { event.preventDefault(); map.open(byId('btn-map')); }
+    else if (key === 'n') { event.preventDefault(); notebook.open(byId('btn-notebook')); }
     else if (key === 'c') { event.preventDefault(); caseFile.open(byId('btn-casefile')); }
     else if (key === 'z') { event.preventDefault(); glass.toggle(); }
     else if (key === 'escape') {

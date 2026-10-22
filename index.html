@@ -102,6 +102,9 @@
       <symbol id="icon-map" viewBox="0 0 24 24">
         <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zm6-3v15m6-12v15" />
       </symbol>
+      <symbol id="icon-pencil" viewBox="0 0 24 24">
+        <path d="M4 20l1-5L16 4l4 4L9 19zm10-14l4 4" />
+      </symbol>
     </svg>
     <!-- Loading screen: rendered before the heavy scripts download.
          An inline script right below drives it; the Phaser BootScene
@@ -155,6 +158,19 @@
         >
           <svg class="ui-icon" aria-hidden="true"><use href="#icon-map" /></svg
           ><span data-i18n="header.map">Map</span>
+        </button>
+        <button
+          id="btn-notebook"
+          class="header-button"
+          type="button"
+          aria-label="Notebook"
+          title="Notebook (N)"
+          data-i18n-aria="header.notebookTip"
+          data-i18n-title="header.notebookTip"
+        >
+          <svg class="ui-icon" aria-hidden="true">
+            <use href="#icon-pencil" /></svg
+          ><span data-i18n="header.notebook">Notebook</span>
         </button>
         <button
           id="btn-casefile"
@@ -277,6 +293,10 @@
                 <dd data-i18n="sidebar.keyMap">The map of the house</dd>
               </div>
               <div>
+                <dt><kbd>N</kbd></dt>
+                <dd data-i18n="sidebar.keyNotebook">Your notebook</dd>
+              </div>
+              <div>
                 <dt><kbd>C</kbd></dt>
                 <dd data-i18n="sidebar.keyCasefile">
                   The case file: letters and clues
@@ -297,6 +317,170 @@
         </div>
         <!-- The way back: sketched in white like the pointers, at the foot of the index -->
       </aside>
+
+      <!-- The notebook: a working page for each puzzle and each place, and up to
+         ten folders to keep notes in, drawn by notebook.js. It comes out of
+         the index: the side panel widens to the left, and the notebook is
+         written in its place. -->
+      <div id="notebook-modal" class="hidden notebook-drawer">
+        <button
+          id="btn-close-notebook"
+          class="document-close"
+          type="button"
+          aria-label="Close the notebook"
+          data-tip="Close the notebook (Esc)"
+          data-i18n-aria="notebook.close"
+          data-i18n-tip="notebook.closeTip"
+        >
+          <svg class="ui-icon" aria-hidden="true">
+            <use href="#icon-close" />
+          </svg>
+        </button>
+        <div class="notebook-content">
+          <div class="notebook-leaf">
+          <div class="options-heading">
+            <h2 data-i18n="notebook.title">Notebook</h2>
+          </div>
+          <div class="notebook-body">
+            <aside class="notebook-shelf" aria-label="Folders">
+              <div class="shelf-head">
+                <span class="shelf-label" data-i18n="notebook.folders"
+                  >Folders</span
+                ><span id="notebook-folder-count" class="shelf-count"></span>
+              </div>
+              <ul id="notebook-folders" class="shelf-folders"></ul>
+              <button
+                id="notebook-new-folder"
+                class="shelf-add"
+                type="button"
+                data-tip="A new folder: ten at most"
+                data-i18n="notebook.newFolder"
+                data-i18n-tip="notebook.newFolderTip"
+              >
+                + New folder
+              </button>
+              <div id="notebook-notes-wrap" class="shelf-notes" hidden>
+                <div class="shelf-head">
+                  <span id="notebook-notes-label" class="shelf-label"></span>
+                </div>
+                <ul id="notebook-notes"></ul>
+              </div>
+            </aside>
+            <section class="notebook-page" aria-labelledby="notebook-title">
+              <div class="page-bar">
+                <span id="notebook-title" class="page-name"></span>
+                <button
+                  id="notebook-back"
+                  class="page-back"
+                  type="button"
+                  hidden
+                  data-tip="The page you keep for the puzzle you are in"
+                  data-i18n="notebook.backToPuzzle"
+                  data-i18n-tip="notebook.backToPuzzleTip"
+                >
+                  &larr; Back to this puzzle&rsquo;s page
+                </button>
+              </div>
+              <label class="sr-only" for="notebook-text">Your notes</label>
+              <textarea
+                id="notebook-text"
+                rows="5"
+                placeholder="Write anything down…"
+                spellcheck="false"
+                data-i18n-placeholder="notebook.placeholder"
+              ></textarea>
+              <div class="notebook-sketch-wrap">
+                <canvas
+                  id="notebook-sketch"
+                  aria-label="A page to draw on"
+                ></canvas>
+              </div>
+              <div class="notebook-tools">
+                <button
+                  class="menu-btn"
+                  type="button"
+                  data-notebook-tool="pencil"
+                  aria-pressed="true"
+                  data-tip="Draw on the page"
+                  data-i18n="notebook.pencil"
+                  data-i18n-tip="notebook.pencilTip"
+                >
+                  Pencil
+                </button>
+                <button
+                  class="menu-btn"
+                  type="button"
+                  data-notebook-tool="eraser"
+                  aria-pressed="false"
+                  data-tip="Rub out what is drawn"
+                  data-i18n="notebook.rubber"
+                  data-i18n-tip="notebook.rubberTip"
+                >
+                  Rubber
+                </button>
+                <button
+                  id="notebook-clear"
+                  class="menu-btn"
+                  type="button"
+                  data-tip="Wipe the whole drawing"
+                  data-i18n="notebook.clear"
+                  data-i18n-tip="notebook.clearTip"
+                >
+                  Clear the drawing
+                </button>
+              </div>
+              <div class="notebook-save">
+                <label class="sr-only" for="notebook-note-title"
+                  >The note's name</label
+                >
+                <input
+                  id="notebook-note-title"
+                  type="text"
+                  maxlength="60"
+                  placeholder="A name for this note"
+                  spellcheck="false"
+                  autocomplete="off"
+                  data-i18n-placeholder="notebook.noteNamePlaceholder"
+                />
+                <button
+                  id="notebook-save"
+                  class="menu-btn notebook-save-btn"
+                  type="button"
+                  data-tip="Keep a copy of this page in the open folder (Enter)"
+                  data-i18n-tip="notebook.saveTip"
+                >
+                  <span data-i18n="notebook.saveTo">Save to</span>
+                  <span id="notebook-save-folder"></span>
+                </button>
+                <button
+                  id="notebook-delete-note"
+                  class="menu-btn notebook-delete-btn"
+                  type="button"
+                  hidden
+                  data-tip="Click twice to be sure"
+                  data-i18n="notebook.deleteNote"
+                  data-i18n-tip="notebook.deleteTip"
+                >
+                  Delete this note
+                </button>
+              </div>
+              <p
+                id="notebook-status"
+                class="notebook-status"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </section>
+          </div>
+          <p class="tool-note" data-i18n="notebook.note">
+            The page is kept for this puzzle by itself; Save puts a copy in a
+            folder. &nbsp;·&nbsp; Double-click a folder to rename it.
+            &nbsp;·&nbsp; N opens the notebook. &nbsp;·&nbsp; Right mouse button
+            or Z: the magnifying glass.
+          </p>
+          </div>
+        </div>
+      </div>
 
       <!-- Game Area -->
       <div id="game-wrapper">
@@ -647,25 +831,18 @@
         </div>
       </div>
 
-      <!-- The case file: an old leather police dossier, opened like a book —
-         the index on the left page, the letter or the evidence on the right,
-         index tabs down its edge; drawn by caseFile.js -->
+      <!-- The archival dossier: aged paper on a leather cover, held by a
+           photographic steel binding. All text stays on the paper leaves. -->
       <div id="casefile-modal" class="hidden casefile-modal" data-tab="letters">
         <div class="dossier">
-          <span class="dossier-corner is-tl" aria-hidden="true"></span>
-          <span class="dossier-corner is-tr" aria-hidden="true"></span>
-          <span class="dossier-corner is-bl" aria-hidden="true"></span>
-          <span class="dossier-corner is-br" aria-hidden="true"></span>
-          <header class="dossier-head">
-            <p class="dossier-ref" data-i18n="casefile.ref">
-              Devon &amp; Cornwall Constabulary · File 61/1013
-            </p>
-            <h2 class="dossier-title" data-i18n="casefile.title">
-              The Ashcombe Case
-            </h2>
+          <div class="dossier-material" aria-hidden="true">
+            <span class="dossier-cover-hinge"></span>
+            <span class="dossier-cover is-front"></span>
+            <span class="dossier-cover is-back"></span>
+          </div>
             <button
               id="btn-close-casefile"
-              class="dossier-close"
+              class="document-close dossier-close"
               type="button"
               aria-label="Close the case file"
               data-tip="Close the case file (Esc)"
@@ -676,54 +853,71 @@
                 <use href="#icon-close" />
               </svg>
             </button>
-          </header>
           <div class="dossier-pages">
-            <section class="dossier-page is-left">
-              <p
-                class="dossier-stamp"
-                aria-hidden="true"
-                data-i18n="casefile.confidential"
-              >
-                Confidential
-              </p>
-              <div class="dossier-index is-letters">
-                <p class="page-head" data-i18n="casefile.tabLetters">Letters</p>
+            <aside class="dossier-page is-left">
+              <header class="dossier-head">
+                <p class="dossier-ref" data-i18n="casefile.ref">
+                  Devon &amp; Cornwall Constabulary · File 61/1013
+                </p>
+                <h2 class="dossier-title" data-i18n="casefile.title">
+                  The Ashcombe Case
+                </h2>
+              </header>
+              <nav class="dossier-tabs" role="tablist" aria-label="Case file" data-i18n-aria="header.casefile">
+                <button id="casefile-tab-letters" type="button" role="tab"
+                  data-casefile-tab="letters" aria-selected="true"
+                  aria-controls="casefile-letter-index casefile-letters-panel"
+                  data-i18n="casefile.tabLetters">Letters</button>
+                <button id="casefile-tab-clues" type="button" role="tab"
+                  data-casefile-tab="clues" aria-selected="false" tabindex="-1"
+                  aria-controls="casefile-room-index casefile-evidence-panel"
+                  data-i18n="casefile.tabEvidence">Evidence</button>
+              </nav>
+              <div id="casefile-letter-index" class="dossier-index is-letters" role="tabpanel" aria-labelledby="casefile-tab-letters">
+                <p id="casefile-letter-count" class="page-head"></p>
                 <ol id="casefile-letter-list" class="dossier-slips"></ol>
               </div>
-              <div class="dossier-index is-clues">
+              <div id="casefile-room-index" class="dossier-index is-clues" role="tabpanel" aria-labelledby="casefile-tab-clues" hidden>
                 <p class="page-head" data-i18n="casefile.rooms">The rooms</p>
                 <ul id="casefile-room-list" class="dossier-rooms"></ul>
               </div>
-            </section>
-            <span class="dossier-spine" aria-hidden="true"></span>
+              <footer class="dossier-index-foot">
+                <p class="dossier-stamp" data-i18n="casefile.confidential">Confidential</p>
+                <span class="dossier-file-number" aria-hidden="true">61 / 1013</span>
+              </footer>
+            </aside>
+            <span class="dossier-spine" aria-hidden="true">
+              <span class="dossier-mechanism">
+                <img class="dossier-binding is-back" src="/assets/images/CaseFile/dossier-steel-binding-v3.webp" alt="" draggable="false" />
+                <i class="dossier-punch is-upper on-left"></i>
+                <i class="dossier-punch is-upper on-right"></i>
+                <i class="dossier-punch is-lower on-left"></i>
+                <i class="dossier-punch is-lower on-right"></i>
+                <img class="dossier-binding is-front" src="/assets/images/CaseFile/dossier-steel-binding-v3.webp" alt="" draggable="false" />
+              </span>
+            </span>
             <section class="dossier-page is-right">
-              <div id="casefile-reader" class="dossier-reader"></div>
-              <div class="dossier-evidence">
-                <p id="casefile-clue-count" class="page-head"></p>
-                <ul id="casefile-clue-list" class="evidence-tags"></ul>
-              </div>
+              <section id="casefile-letters-panel" class="dossier-correspondence" role="tabpanel" aria-labelledby="casefile-tab-letters">
+                <header class="dossier-document-head">
+                  <div class="dossier-document-identity">
+                    <h3 id="casefile-document-title" class="dossier-document-title"></h3>
+                    <p id="casefile-document-origin" class="dossier-document-origin"></p>
+                  </div>
+                  <span id="casefile-document-number" class="dossier-document-number" aria-hidden="true"></span>
+                </header>
+                <div class="dossier-reading" tabindex="0" role="region" aria-labelledby="casefile-document-title">
+                  <div id="casefile-reader" class="dossier-reader"></div>
+                </div>
+              </section>
+              <section id="casefile-evidence-panel" class="dossier-evidence" role="tabpanel" aria-labelledby="casefile-tab-clues" hidden>
+                <header class="dossier-document-head">
+                  <h3 id="casefile-evidence-title" class="dossier-document-title" data-i18n="casefile.tabEvidence">Evidence</h3>
+                  <p id="casefile-clue-count" class="page-head"></p>
+                </header>
+                <ul id="casefile-clue-list" class="evidence-tags" tabindex="0" aria-labelledby="casefile-evidence-title"></ul>
+              </section>
             </section>
           </div>
-          <nav class="dossier-tabs" role="tablist" aria-label="Case file">
-            <button
-              type="button"
-              role="tab"
-              data-casefile-tab="letters"
-              aria-selected="true"
-              data-i18n="casefile.tabLetters"
-            >
-              Letters
-            </button>
-            <button
-              type="button"
-              role="tab"
-              data-casefile-tab="clues"
-              aria-selected="false"
-              data-i18n="casefile.tabEvidence"
-            >
-              Evidence
-            </button>
-          </nav>
         </div>
       </div>
     </div>
@@ -1106,8 +1300,8 @@
               <div class="howto-row">
                 <dt data-i18n="howto.keysLabel">Keys</dt>
                 <dd data-i18n="howto.keysDesc">
-                  M the map of the house · C the case file · Z the magnifying
-                  glass, or hold the right mouse button · Esc
+                  M the map of the house · N your notebook · C the case file · Z
+                  the magnifying glass, or hold the right mouse button · Esc
                   back the way you came.
                 </dd>
               </div>

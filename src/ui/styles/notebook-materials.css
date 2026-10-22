@@ -1,0 +1,111 @@
+/* One unframed writing sheet on a leather cover. The title, tools, saved
+   notes and instructions all sit on the same paper, including while scrolling. */
+#notebook-modal {
+  top: 68px; clip-path: inset(-68px -10px -10px -10px);
+  border: 0; background: #2d2018 url('/assets/images/CaseFile/dossier-leather-real-v1.webp') 65% 30% / auto 1050px;
+  box-shadow: -18px 0 45px #0009;
+}
+#btn-close-notebook { position: absolute; z-index: 4; top: -64px; right: 4px; }
+#notebook-modal .notebook-content {
+  position: relative; padding: 14px 10px 14px 14px; gap: 0;
+  background: transparent; color: #504430; box-shadow: none;
+  scrollbar-color: #9a826055 transparent;
+}
+#notebook-modal .notebook-content::before { content: none; }
+#notebook-modal .notebook-leaf {
+  position: relative; isolation: isolate; flex: 0 0 auto; min-height: 100%; min-width: 0;
+  display: flex; flex-direction: column; gap: 20px; padding: 28px 24px 30px;
+  color: #504430; border: 0; background: transparent;
+}
+#notebook-modal .notebook-leaf::before {
+  content: ""; position: absolute; z-index: -1; inset: 0; pointer-events: none;
+  background: url('/assets/images/CaseFile/dossier-sheet-v2.webp') center / 100% 100% no-repeat;
+  filter: brightness(.94) saturate(.75) drop-shadow(1px 3px 3px #170b0880);
+}
+#notebook-modal .options-heading { padding: 0 0 4px; border: 0; }
+#notebook-modal h2 {
+  color: #4c3d2d; font-size: calc(21px * var(--reading-scale,1)); font-weight: 400;
+  text-shadow: none; font-family: "Special Elite", "Courier New", monospace !important;
+}
+#notebook-modal .icon-button {
+  color: #85745c; background: transparent; border: 0; border-radius: 0; box-shadow: none;
+}
+#notebook-modal .icon-button:hover { color: #4c3926; background: transparent; }
+#notebook-modal .tool-note { color: #8b7b61; font-size: calc(10px * var(--reading-scale,1)); line-height: 1.7; }
+#notebook-modal .notebook-body { gap: 26px; }
+#notebook-modal .notebook-page {
+  position: relative; gap: 12px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+}
+#notebook-modal .notebook-page::before { content: none; }
+#notebook-modal .page-bar { gap: 8px; flex-wrap: wrap; }
+#notebook-modal .page-name { color: #827158; font-size: calc(12px * var(--reading-scale,1)); }
+#notebook-modal .page-back {
+  max-width: 100%; padding: 4px 0; border: 0; border-radius: 0; box-shadow: none;
+  white-space: normal; color: #73513b; background: transparent;
+}
+#notebook-modal .page-back:hover { color: #4f3323; background: transparent; }
+#notebook-text {
+  padding: 5px 0; color: #4b4438; caret-color: #4a3a26;
+  font-family: "Architects Daughter", "Segoe Print", cursive !important;
+  border: 0; border-radius: 0; box-shadow: none;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, #8d938d2b 27px 28px) 0 5px;
+  background-attachment: local;
+}
+#notebook-text:focus { box-shadow: none; outline: none; }
+#notebook-text::placeholder { color: #9a8b71; opacity: 1; }
+#notebook-modal .notebook-sketch-wrap {
+  border: 0; border-radius: 0; background: transparent; box-shadow: none;
+}
+#notebook-sketch { mix-blend-mode: multiply; }
+#notebook-modal .notebook-tools { gap: 18px; }
+#notebook-modal .notebook-tools .menu-btn {
+  padding: 5px 0; border: 0; border-radius: 0; color: #8a7960; background: transparent; box-shadow: none;
+}
+#notebook-modal .notebook-tools .menu-btn:hover { color: #61422f; background: transparent; }
+#notebook-modal .notebook-tools .menu-btn[aria-pressed="true"] { color: #67412f; background: transparent; border: 0; font-weight: 700; }
+#notebook-modal .notebook-save { flex-wrap: wrap; gap: 8px 18px; padding-top: 5px; border: 0; }
+#notebook-note-title {
+  flex-basis: 100%; padding: 8px 0; color: #5c4d37;
+  border: 0; border-radius: 0; box-shadow: none; background: transparent;
+  font-family: "Architects Daughter", "Segoe Print", cursive !important;
+}
+#notebook-note-title::placeholder { color: #9a886b; }
+#notebook-note-title:focus { outline: none; border: 0; box-shadow: none; }
+#notebook-modal .notebook-save .menu-btn {
+  max-width: 100%; padding: 6px 0; white-space: normal; overflow-wrap: anywhere;
+  border: 0; border-radius: 0; color: #77513a; background: transparent; box-shadow: none;
+}
+#notebook-modal .notebook-save .notebook-save-btn { color: #67412f; font-weight: 600; }
+#notebook-modal .notebook-save .notebook-save-btn:hover { color: #3e281c; background: transparent; }
+#notebook-modal .notebook-save .notebook-delete-btn { color: #9a5b47; background: transparent; }
+#notebook-modal .notebook-save .notebook-delete-btn[data-armed="true"] { color: #883526; background: transparent; font-weight: 700; }
+#notebook-modal .notebook-status { color: #647050; font-size: calc(11px * var(--reading-scale,1)); }
+#notebook-modal .notebook-status[data-kind="warn"] { color: #99513b; }
+#notebook-modal .notebook-shelf { padding: 0; gap: 12px; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+#notebook-modal .shelf-head { gap: 12px; padding: 0; }
+#notebook-modal .shelf-label { min-width: 0; overflow-wrap: anywhere; color: #8d7d64; font-size: calc(10px * var(--reading-scale,1)); }
+#notebook-modal .shelf-count { flex-shrink: 0; color: #94836a; }
+#notebook-modal .shelf-empty { padding-left: 0; color: #94836a; }
+#notebook-modal .shelf-notes { border: 0; margin-top: 10px; padding-top: 0; }
+#notebook-modal .folder-tab, #notebook-modal .folder-tab:hover, #notebook-modal .shelf-folder.open .folder-tab {
+  padding: 8px 28px 8px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; transform: none; color: #695a43;
+}
+#notebook-modal .shelf-folder.open .folder-name { color: #67412f; font-weight: 700; }
+#notebook-modal .folder-tab::before { content: none; }
+#notebook-modal .folder-count { padding: 0; color: #99876c; background: transparent; border-radius: 0; }
+#notebook-modal .folder-bin { color: #9c624d; }
+#notebook-modal .folder-bin:hover { background: transparent; color: #6d3827; }
+#notebook-modal .folder-bin[data-armed="true"] { color: #883526; background: transparent; }
+#notebook-modal .folder-input {
+  padding: 8px 0; border: 0; border-radius: 0; background: transparent; color: #5c4d37; outline: none;
+}
+#notebook-modal .shelf-add { padding: 6px 0; border: 0; color: #77513a; background: transparent; }
+#notebook-modal .shelf-add:hover:not(:disabled) { border: 0; color: #483021; background: transparent; }
+#notebook-modal .shelf-note, #notebook-modal .shelf-note:hover, #notebook-modal .shelf-note.open {
+  padding: 8px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; transform: none;
+}
+#notebook-modal .note-name { color: #6b5b44; font-size: calc(13px * var(--reading-scale,1)); }
+#notebook-modal .shelf-note.open .note-name { color: #67412f; font-weight: 700; }
+#notebook-modal .note-meta { color: #9b8a6d; font-size: calc(10px * var(--reading-scale,1)); }
+#notebook-modal button:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 4px; }
+#notebook-modal .icon-button:focus-visible { outline: 1px dotted #8a785b; outline-offset: -5px; }

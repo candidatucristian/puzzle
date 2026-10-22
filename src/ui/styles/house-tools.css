@@ -1,4 +1,4 @@
-/* ── The house's tools: the map, the magnifying glass ──────────────────────── */
+/* ── The house's tools: the map, the notebook, the magnifying glass ──────── */
 
 /* their sheets: old paper on the dark, lettered in pencil */
 .tool-modal {
@@ -25,11 +25,19 @@
 .tool-note { margin: 0; font: 400 calc(11.5px * var(--reading-scale, 1)) var(--ui-font); color: #5a4e3c; letter-spacing: .03em; }
 
 /* ── the map: an architect's plan, inked on old paper (drawn by houseMap.js) ── */
-.map-content { width: min(1080px, calc(100vw - 60px)); }
+/* only the plan itself, on the dark: no sheet round it, its X just off its
+   top corner, its one line of help under it */
+#map-modal .map-content { position: relative; overflow: visible; gap: 10px; padding: 0; max-height: none;
+  width: min(1080px, calc(100vw - 60px), calc((100dvh - 130px) * 1000 / 610));
+  background: none; border: 0; border-radius: 0; box-shadow: none; }
+#map-modal .map-content::before, #map-modal .map-content::after { display: none; }
 .map-content h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.map-content .options-heading { justify-content: flex-end; margin-bottom: -6px; }
+#map-modal .map-content .options-heading { position: absolute; top: -48px; right: -6px; margin: 0; }
+#map-modal .map-content .icon-button { color: #d8d3c6; background: transparent; border-color: transparent; }
+#map-modal .map-content .icon-button:hover { color: #fff; }
+#map-modal .map-content .tool-note { text-align: center; color: #9d978a; }
 #house-map { width: 100%; }
-.map-sheet { display: block; width: 100%; height: auto; border-radius: 2px; box-shadow: 0 2px 10px #0006; font-family: "Architects Daughter", cursive; }
+.map-sheet { display: block; width: 100%; height: auto; border-radius: 2px; box-shadow: 0 24px 70px #000d, 0 2px 10px #0006; font-family: "Architects Daughter", cursive; }
 .map-sheet .frame .rule, .map-sheet .compass .rule, .map-sheet .cartouche .rule { fill: none; stroke: #2a2118; stroke-width: .8; }
 .map-sheet .rule.thick { stroke-width: 2.2; }
 .map-sheet .rule.faint { stroke-opacity: .5; }
@@ -96,6 +104,112 @@
 .map-place.go:focus { outline: none; }
 #map-keys { margin: 0; font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; }
 #map-keys[hidden] { display: none; }
+
+/* ── the notebook: it comes out of the index — the side panel widens to the
+   left over the picture, its own lines stand aside, and the notebook is
+   written in its place: the panel's own dark, a clear rule down its edge, the
+   page itself paper (notebook.js) ── */
+#notebook-modal { position: absolute; z-index: 60; top: 0; right: 0; bottom: 0; display: flex;
+  width: min(460px, 42vw); background: var(--ui-bg); border-left: 1px solid #55554f;
+  box-shadow: -1px 0 0 #000, -34px 0 60px #000b;
+  clip-path: inset(0 0 0 0); transition: clip-path .32s cubic-bezier(.22, .8, .24, 1); }
+#notebook-modal.hidden { clip-path: inset(0 0 0 calc(100% - var(--index-width))); visibility: hidden; pointer-events: none;
+  transition: clip-path .24s ease-in, visibility 0s linear .24s; }
+.notebook-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 22px 24px 18px 22px;
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #3a3a36 transparent;
+  color: var(--ui-text); font-family: var(--ui-font); transition: opacity .2s ease .16s; }
+#notebook-modal.hidden .notebook-content { opacity: 0; transition: opacity .1s ease; }
+:root:has(#notebook-modal:not(.hidden)) #sidebar { opacity: 0; visibility: hidden; transition: opacity .15s ease, visibility 0s linear .15s; }
+#sidebar { transition: opacity .25s ease .1s; }
+.notebook-content .options-heading { flex-wrap: nowrap; padding-bottom: 12px; border-bottom: 1px solid #3a3a36; }
+.notebook-content h2 { margin: 0; color: var(--ui-text); font: 500 calc(19px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: .02em; }
+.notebook-content .tool-note { margin: 0; color: var(--ui-muted); font: 400 calc(11px * var(--reading-scale, 1))/1.55 var(--ui-font); }
+/* the page first, the shelf of folders under it */
+.notebook-body { display: flex; flex-direction: column; gap: 16px; }
+.notebook-page { order: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.notebook-shelf { order: 1; display: grid; gap: 8px; padding: 12px 12px 14px; border: 1px solid #3a3a36; border-radius: 4px; background: var(--ui-panel); }
+.shelf-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
+.shelf-label { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .16em; text-transform: uppercase; color: var(--ui-muted); }
+.shelf-count { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: var(--ui-muted); }
+.shelf-folders, #notebook-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+/* a folder: a manila one, its tab on top, the open one standing out and lighter */
+.shelf-folder { position: relative; display: flex; align-items: stretch; }
+.folder-tab { position: relative; flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 8px 30px 7px 36px; border: 0; border-radius: 2px 5px 5px 5px; text-align: left;
+  font: 400 calc(14px * var(--reading-scale, 1))/1.2 "Architects Daughter", cursive; color: #3a2a12;
+  background: linear-gradient(180deg, #d4b072, #c19a58); box-shadow: 0 1px 0 #6a4a1a66, inset 0 1px 0 #fff3d044;
+  transition: transform .15s, background .15s; }
+.folder-tab::before { content: ""; position: absolute; left: 11px; top: 50%; width: 17px; height: 13px; margin-top: -6.5px;
+  background: linear-gradient(180deg, #8a6430, #6a4a20); clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 100%, 0 100%); }
+.folder-tab:hover { background: linear-gradient(180deg, #dcba7c, #c9a260); transform: translateX(2px); }
+.folder-tab:focus-visible { outline: 2px solid #d8d3c6; outline-offset: 1px; }
+.shelf-folder.open .folder-tab { background: linear-gradient(180deg, #f0dfb4, #e2cc94); transform: translateX(4px); box-shadow: 0 1px 0 #6a4a1a66, inset 3px 0 0 #8e2a20; }
+.shelf-folder.open .folder-tab::before { clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 38%, 18% 38%, 0 100%); }
+.folder-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-count { flex: none; min-width: 20px; padding: 1px 6px; border-radius: 9px; text-align: center;
+  font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: #f2e6c8; background: #3a2a12b0; }
+.folder-bin { position: absolute; right: 4px; top: 50%; translate: 0 -50%; z-index: 1; height: 22px; min-width: 22px; padding: 0 5px;
+  border: 0; border-radius: 11px; font: 400 14px/1 var(--ui-font); color: #5a1a12; background: transparent; opacity: 0; transition: opacity .15s, background .15s; }
+.shelf-folder.open .folder-bin { right: -2px; }
+.shelf-folder:hover .folder-bin, .folder-bin:focus-visible, .folder-bin[data-armed="true"] { opacity: 1; }
+.folder-bin:hover { background: #8e2a2022; }
+.folder-bin[data-armed="true"] { font-size: 11px; color: #f2e6c8; background: #8e2a20; }
+.folder-input { width: 100%; padding: 8px 12px; border: 1px dashed #8a8a84; border-radius: 3px; outline: none;
+  font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; background: #efe6cc; }
+.shelf-add { justify-self: start; padding: 6px 10px; border: 1px dashed #5a5a55; border-radius: 3px;
+  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); background: transparent; }
+.shelf-add:hover:not(:disabled) { background: #ffffff0d; border-style: solid; }
+.shelf-add:disabled { cursor: default; opacity: .55; }
+/* the notes in the open folder: index cards, a red rule down their margin */
+.shelf-notes { display: grid; gap: 6px; margin-top: 6px; padding-top: 10px; border-top: 1px solid #ffffff14; }
+.shelf-notes[hidden] { display: none; }
+#notebook-notes { max-height: 220px; overflow-y: auto; padding: 2px 4px 4px 2px; }
+.shelf-note { width: 100%; display: grid; gap: 2px; padding: 7px 10px 7px 14px; border: 0; border-radius: 2px; text-align: left;
+  background: repeating-linear-gradient(180deg, #0000 0 15px, #5a6e9a26 15px 16px) 0 6px, #f3ecd6;
+  box-shadow: inset 2px 0 0 #b8443a99; transition: transform .15s; }
+.shelf-note:hover { transform: translateX(2px); }
+.shelf-note.open { box-shadow: inset 2px 0 0 #b8443a, 0 0 0 2px #d8d3c6; }
+.shelf-note.just-kept { animation: note-filed .8s cubic-bezier(.3, 1.3, .5, 1); }
+@keyframes note-filed { 0% { transform: translate(60px, -10px) rotate(6deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.note-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(14px * var(--reading-scale, 1))/1.25 "Architects Daughter", cursive; color: #2a241c; }
+.note-meta { font: 400 calc(10px * var(--reading-scale, 1)) var(--ui-font); color: #6a5a40; letter-spacing: .03em; }
+.shelf-empty { padding: 4px; font: italic 400 calc(12px * var(--reading-scale, 1)) Georgia, serif; color: var(--ui-muted); }
+/* the page: lined paper to write on, and a sheet to draw on, each with a clear edge */
+.page-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; min-height: 22px; }
+.page-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(16px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: var(--ui-text); }
+.page-back { flex: none; padding: 3px 8px; border: 1px solid #3a3a36; border-radius: 3px; font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); background: transparent; }
+.page-back:hover { background: #ffffff0d; }
+.page-back[hidden] { display: none; }
+#notebook-text { width: 100%; box-sizing: border-box; resize: vertical; height: 168px; min-height: 112px; padding: 4px 12px; margin: 0;
+  font: 400 calc(16px * var(--reading-scale, 1))/28px "Architects Daughter", cursive; color: #2a241c;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, #5a6e9a40 27px 28px) 0 4px, #ece4cc;
+  border: 1px solid #000; border-radius: 3px; box-shadow: 0 0 0 1px #6a6a64; outline: none; }
+#notebook-text:focus { box-shadow: 0 0 0 2px #d8d3c6; }
+.notebook-sketch-wrap { position: relative; border: 1px solid #000; border-radius: 3px; box-shadow: 0 0 0 1px #6a6a64; background: #ece4cc; line-height: 0; }
+/* the pencil that sketches on an empty sheet, and is gone (notebookPencil.js) */
+.notebook-pencil { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; opacity: 0; }
+#notebook-sketch { border-radius: 2px; width: 100%; aspect-ratio: 640 / 300; touch-action: none; cursor: var(--cursor-pencil, crosshair); }
+#notebook-sketch[data-tool="eraser"] { cursor: var(--cursor-rubber, crosshair); }
+.notebook-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.notebook-tools .menu-btn { min-height: 34px; padding: 6px 12px; font-size: calc(12px * var(--reading-scale, 1)); }
+.notebook-tools .menu-btn[aria-pressed="true"] { background: var(--ui-text); border-color: var(--ui-text); color: #111; }
+/* putting it away: a name for it, and the button that files it */
+.notebook-save { display: flex; gap: 8px; align-items: stretch; padding-top: 12px; border-top: 1px solid #3a3a36; }
+#notebook-note-title { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid #3a3a36; border-radius: 4px; outline: none;
+  font: 400 calc(13px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); background: #141414; }
+#notebook-note-title:focus { border-color: #8a8a84; }
+#notebook-note-title::placeholder { color: #6e6e69; }
+.notebook-save .menu-btn { min-height: 36px; padding: 6px 12px; font-size: calc(12px * var(--reading-scale, 1)); white-space: nowrap; }
+.notebook-save .notebook-save-btn { color: #111; background: var(--ui-text); border-color: var(--ui-text); }
+.notebook-save .notebook-save-btn:hover { color: #000; background: #fff; }
+.notebook-save .notebook-delete-btn { color: #e0897e; border-color: #8e2a20; }
+.notebook-save .notebook-delete-btn[data-armed="true"] { color: #f2e6c8; background: #8e2a20; }
+.notebook-save [hidden] { display: none; }
+.notebook-status { margin: -4px 0 0; min-height: 18px; font: 400 calc(12.5px * var(--reading-scale, 1)) var(--ui-font); color: #9ec392; opacity: 0; transition: opacity .3s; }
+.notebook-status[data-kind="warn"] { color: #e0897e; }
+.notebook-status.shown { opacity: 1; }
+[data-reduced-motion="true"] .shelf-note.just-kept { animation: none; }
+[data-reduced-motion="true"] :is(#notebook-modal, #notebook-modal.hidden, .notebook-content, #sidebar) { transition: none; }
 
 /* ── the magnifying glass: the chemistry bench's own, painted by magnifier.js ── */
 #magnifier {
@@ -437,99 +551,7 @@ body.in-house #game-container canvas { scale: 1.028; }
 .prologue-skip:hover { background: #000c; }
 .prologue-skip[hidden], .prologue-begin[hidden] { display: none; }
 
-/* ══ The case file as an old leather police dossier (caseFile.js) ═════════ */
-.casefile-modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; perspective: 1600px;
-  background: radial-gradient(ellipse at 50% 45%, rgba(26, 16, 8, 0.72), rgba(4, 3, 2, 0.94)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  transition: opacity .3s ease; }
-.casefile-modal.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
-.casefile-modal:not(.hidden) .dossier { animation: dossier-in .6s cubic-bezier(.2, .8, .2, 1) both; }
-@keyframes dossier-in { from { transform: translateY(46px) rotateX(16deg) scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
-/* the leather: oxblood, grained, worn paler at its edges, stitched round */
-.dossier { position: relative; width: min(1080px, calc(100vw - 110px)); height: min(700px, calc(100dvh - 60px));
-  display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 18px 26px 26px; border-radius: 12px;
-  background:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
-    radial-gradient(ellipse 80% 70% at 50% 45%, #4a2016, #2e130c 70%, #1c0b06);
-  box-shadow: 0 40px 90px #000e, 0 0 0 1px #0008, inset 0 0 0 1px #6a3a2a66, inset 0 0 50px #0009; }
-.dossier::before { content: ""; position: absolute; inset: 9px; border: 1.5px dashed #c8a07a70; border-radius: 9px; pointer-events: none; }
-/* brass corners */
-.dossier-corner { position: absolute; z-index: 2; width: 44px; height: 44px; pointer-events: none;
-  background: linear-gradient(135deg, #f6dc98, #b8903e 45%, #6a4c1a); clip-path: polygon(0 0, 100% 0, 0 100%); filter: drop-shadow(0 2px 2px #000a); }
-.dossier-corner.is-tl { left: -3px; top: -3px; }
-.dossier-corner.is-tr { right: -3px; top: -3px; transform: scaleX(-1); }
-.dossier-corner.is-bl { left: -3px; bottom: -3px; transform: scaleY(-1); }
-.dossier-corner.is-br { right: -3px; bottom: -3px; transform: scale(-1, -1); }
-/* the cover's lettering, pressed in gold */
-.dossier-head { position: relative; display: grid; justify-items: center; gap: 2px; padding: 4px 60px 14px; }
-.dossier-ref { margin: 0; font: 400 10.5px var(--ui-font); letter-spacing: .26em; text-transform: uppercase; color: #c8a07acc; }
-.dossier-title { margin: 0; font: 600 clamp(22px, 2.4vw, 30px) Georgia, "Times New Roman", serif; font-variant: small-caps; letter-spacing: .16em;
-  color: #e2c27a; background: linear-gradient(180deg, #f8e3a8, #c89a46 55%, #9a7030); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 0 #0009) drop-shadow(0 -1px 0 #ffe9b026); }
-.dossier-close { position: absolute; right: 6px; top: 2px; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #c8a07a55;
-  border-radius: 50%; background: #1a0a06aa; color: #e2c27a; cursor: var(--cursor-hand, pointer); }
-.dossier-close:hover, .dossier-close:focus-visible { background: #3a1a10; outline: none; }
-/* the two pages, a shadowed fold between them */
-.dossier-pages { display: grid; grid-template-columns: minmax(0, .82fr) 22px minmax(0, 1.18fr); min-height: 0; border-radius: 4px; box-shadow: 0 2px 10px #000a; }
-.dossier-page { position: relative; min-height: 0; overflow-y: auto; padding: 22px 26px 26px; color: #2a2016; scrollbar-width: thin; scrollbar-color: #8a7a5a55 transparent; }
-.dossier-page.is-left { background: linear-gradient(90deg, #d4c49c, #e6d9b6 70%, #d8c9a2); border-radius: 4px 0 0 4px; }
-.dossier-page.is-right { background: linear-gradient(90deg, #d8c9a2, #ebdfbf 20%, #e3d6b2); border-radius: 0 4px 4px 0; }
-.dossier-spine { background: linear-gradient(90deg, #d8c9a2, #8a7552 40%, #5a4a30 50%, #8a7552 60%, #d8c9a2); }
-.page-head { margin: 0 0 14px; padding-bottom: 6px; border-bottom: 1px solid #5a4a3044; font: 400 11px var(--ui-font); letter-spacing: .3em;
-  text-transform: uppercase; color: #6a5434; }
-.dossier-stamp { position: absolute; right: 16px; bottom: 18px; margin: 0; padding: 4px 12px; border: 2.5px solid #9a2a2088; border-radius: 3px;
-  color: #9a2a2088; font: 700 15px "Special Elite", "Courier New", monospace; letter-spacing: .2em; text-transform: uppercase; transform: rotate(-11deg); pointer-events: none; }
-/* which side shows what */
-.casefile-modal[data-tab="letters"] .is-clues, .casefile-modal[data-tab="letters"] .dossier-evidence,
-.casefile-modal[data-tab="clues"] .is-letters, .casefile-modal[data-tab="clues"] .dossier-reader { display: none; }
-/* the letters, clipped slips in the order they came */
-.dossier-slips { list-style: none; margin: 0; padding: 0 0 50px; display: grid; gap: 12px; }
-.dossier-slip { position: relative; width: 100%; display: grid; gap: 1px; text-align: left; padding: 12px 14px 11px 30px; border: 0; border-radius: 2px;
-  background: linear-gradient(170deg, #f6eed8, #ece0c2); color: #2a2016; box-shadow: 0 2px 5px #0003; transform: rotate(-.5deg);
-  transition: transform .2s ease, box-shadow .2s ease; cursor: var(--cursor-hand, pointer); }
-li:nth-child(even) > .dossier-slip { transform: rotate(.6deg); }
-.dossier-slip:hover { transform: translateX(4px) rotate(0); box-shadow: 0 4px 10px #0004; }
-.dossier-slip.is-current { transform: translateX(8px) rotate(0); box-shadow: 0 6px 14px #0005, inset 3px 0 0 #8a2a20; }
-.slip-clip { position: absolute; left: 10px; top: -7px; width: 10px; height: 30px; border: 2px solid #9aa2aa; border-radius: 6px;
-  box-shadow: inset 0 0 0 2px #e6d9b6, 0 1px 1px #0004; }
-.slip-no { font: 400 10px "Special Elite", "Courier New", monospace; letter-spacing: .14em; color: #8a2a20; }
-.slip-title { font: 400 calc(16px * var(--reading-scale, 1)) / 1.25 "Architects Daughter", var(--ui-font); }
-.slip-where { font: italic 400 calc(11px * var(--reading-scale, 1)) Georgia, serif; color: #6a5434; }
-.dossier-slip.is-unread::after { content: ""; position: absolute; right: 10px; top: 10px; width: 12px; height: 12px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #d8584a, #8a1a12); box-shadow: 0 0 8px #c8382a88; animation: alert-pulse 1.8s ease-in-out infinite; }
-li.dossier-slip.is-missing { padding: 12px 14px 11px 30px; display: grid; outline: 1px dashed #6a543466; outline-offset: -2px; color: #8a7a5a; background: none; box-shadow: none; transform: none; }
-/* the rooms: how much of each has given up its word */
-.dossier-rooms { list-style: none; margin: 0; padding: 0 0 50px; display: grid; gap: 2px; }
-.dossier-room { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: baseline; padding: 7px 4px; border-bottom: 1px dotted #6a543455;
-  font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", var(--ui-font); }
-.room-dots { color: #8a2a20; letter-spacing: .1em; font-size: 12px; }
-.room-count { font: 400 11px "Special Elite", monospace; color: #6a5434; }
-.dossier-room.is-done .room-name { text-decoration: line-through; text-decoration-color: #8a2a20aa; }
-/* the letter being read, on its own paper on the page */
-.dossier-reader { display: flex; justify-content: center; padding: 14px 6px 10px; }
-.dossier-reader .letter-page { width: min(520px, 100%); }
-.dossier-empty { margin: 40px 0; color: #6a5434; font: italic 400 15px Georgia, serif; }
-/* the evidence: a typed tag for every word */
-.evidence-tags { list-style: none; margin: 0; padding: 4px 2px 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px 12px; }
-.evidence-tag { position: relative; display: grid; gap: 3px; padding: 13px 12px 11px 34px; transform: rotate(-.7deg);
-  background: linear-gradient(170deg, #e9d6a2, #d6bf86); clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
-  filter: drop-shadow(0 2px 3px #0004); }
-.evidence-tag:nth-child(even) { transform: rotate(.6deg); }
-.evidence-tag::before { content: ""; position: absolute; left: 12px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%;
-  background: #6a5434; box-shadow: 0 0 0 2.5px #f0dfae, 0 0 0 3.5px #8a7552; }
-.tag-word { font: 400 calc(19px * var(--reading-scale, 1)) "Special Elite", "Courier New", monospace; letter-spacing: .2em; color: #2a2016; }
-.tag-where { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); color: #5a4a30; }
-.evidence-tag.is-missing { background: linear-gradient(170deg, #ddd0ae, #cfc19c); }
-.evidence-tag.is-missing .tag-word { color: #9a8a68; font-size: 13px; letter-spacing: .3em; }
-.evidence-tag.is-new::after { content: "New"; position: absolute; right: 8px; top: 6px; padding: 1px 6px; border: 2px solid #a82a1e; color: #a82a1e;
-  font: 700 10px "Special Elite", monospace; letter-spacing: .14em; text-transform: uppercase; transform: rotate(8deg); animation: stamp-in .5s cubic-bezier(.3, 1.6, .5, 1) both; }
-@keyframes stamp-in { from { transform: rotate(8deg) scale(2.4); opacity: 0; } to { transform: rotate(8deg) scale(1); opacity: 1; } }
-/* the index tabs down the dossier's edge */
-.dossier-tabs { position: absolute; right: -40px; top: 110px; display: flex; flex-direction: column; gap: 8px; }
-.dossier-tabs button { writing-mode: vertical-rl; padding: 16px 9px; border: 0; border-radius: 0 8px 8px 0; cursor: var(--cursor-hand, pointer);
-  background: linear-gradient(90deg, #3a1a10, #5a2e1e); color: #e2c27a; box-shadow: 3px 3px 8px #0008;
-  font: 400 12px var(--ui-font); letter-spacing: .24em; text-transform: uppercase; transition: transform .2s ease, background .2s ease; }
-.dossier-tabs button:hover { transform: translateX(3px); }
-.dossier-tabs button[aria-selected="true"] { background: linear-gradient(90deg, #d8c9a2, #ebdfbf); color: #2a2016; transform: translateX(-4px); }
+/* The case file's layout and materials live in casefile-materials.css. */
 
 /* ── the red mark on the Case file button: something not yet looked at ── */
 #btn-casefile { position: relative; }
@@ -1084,7 +1106,7 @@ body.outside .index-letters { display: none; }
    it, with only the sound, the settings and the full screen: no map, no
    case file yet, and no floor; the settings open over it too */
 :is(body.cold-open-on, body.prologue-on) #compact-bar { position: relative; z-index: 600; }
-:is(body.cold-open-on, body.prologue-on) :is(#btn-map, #btn-casefile) { display: none; }
+:is(body.cold-open-on, body.prologue-on) :is(#btn-map, #btn-notebook, #btn-casefile) { display: none; }
 :is(body.cold-open-on, body.prologue-on) #header-floor { visibility: hidden; }
 :is(body.cold-open-on, body.prologue-on) :is(#options-modal, #howto-modal) { z-index: 620; }
 
