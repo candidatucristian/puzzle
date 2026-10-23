@@ -93,7 +93,9 @@
   color: var(--bone);
   box-shadow: none;
   text-shadow: none;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 :is(#btn-howto, #btn-options, #btn-info, #btn-fullscreen)::after {

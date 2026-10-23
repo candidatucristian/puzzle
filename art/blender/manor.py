@@ -1194,13 +1194,28 @@ def update_3d_wind_leaves(phase_norm=0.0):
     fly_me.vertices.foreach_set("co", co_f.ravel())
     fly_me.update()
 
-def set_storm_phase(phase_norm=0.0):
-    update_drive_ripples(phase_norm)
-    update_3d_tree_wind(phase_norm)
-    update_3d_rain(phase_norm)
-    update_3d_wind_leaves(phase_norm)
+def set_storm_phase(phase_norm=0.0, active=True):
+    if active:
+        update_drive_ripples(phase_norm)
+        update_3d_tree_wind(phase_norm)
+        update_3d_rain(phase_norm)
+        update_3d_wind_leaves(phase_norm)
+        rain_ob.hide_render = False
+        fly_ob.hide_render = False
+    else:
+        px_ = np.zeros((RIPPLE_H, RIPPLE_W, 4), np.float32)
+        px_[..., 0] = 0.5
+        px_[..., 3] = 1.0
+        new_im = bpy.data.images.new("drive_ripples_clean", RIPPLE_W, RIPPLE_H, alpha=False, float_buffer=True)
+        new_im.colorspace_settings.name = "Non-Color"
+        new_im.pixels.foreach_set(px_.ravel())
+        new_im.update()
+        rim_node = DRIVE.node_tree.nodes.get("drive_ripples")
+        if rim_node: rim_node.image = new_im
+        rain_ob.hide_render = True
+        fly_ob.hide_render = True
 
-set_storm_phase(float(arg("--phase", "0.0")))
+set_storm_phase(float(arg("--phase", "0.0")), active=int(arg("--frames", "0")) > 0 or "--bake-weather" in ARGS)
 
 # ── light: a storm sky made night, a moon behind cloud ────────────────────
 world = bpy.data.worlds.new("night"); scene.world = world; world.use_nodes = True

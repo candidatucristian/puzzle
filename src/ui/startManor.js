@@ -78,16 +78,10 @@ export function mountStartManor(scope, preferences) {
     const background = document.createElement('canvas');
     background.width = scene.W; background.height = scene.H;
     paintManorExterior(background.getContext('2d'), scene.W, scene.H, details.wind.background);
-    const frames = details.wind.frames?.map(frameImage => {
-      const c = document.createElement('canvas');
-      c.width = scene.W; c.height = scene.H;
-      paintManorExterior(c.getContext('2d'), scene.W, scene.H, frameImage);
-      return c;
-    });
-    wind = createManorWind({ source: base, background, mask: details.wind.mask, photo: scene.photo, frames, onFailure: dropWind });
+    wind = createManorWind({ source: base, background, mask: details.wind.mask, photo: scene.photo, weather: true, onFailure: dropWind });
     if (!wind) return;
-    scene.storm3D = Boolean(frames?.length);
-    if (scene.storm3D) dropRain();
+    scene.storm3D = true;
+    dropRain();
     base.after(wind.canvas);
     wind.draw(clock);
     // Exactly one copy receives the shared CSS edge mask and colour grade.
