@@ -34,7 +34,7 @@ from room_furnish import *
 OUT = os.path.join(ROOT, ".artifacts/room-counting")
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")
-SAMPLES = int(arg("--samples", "256"))
+SAMPLES = int(arg("--samples", "700"))
 WIDTH = int(arg("--width", "2560"))
 ONLY = set(arg("--only", "plates,chest,drawer").split(","))
 RNG = random.Random(1913)
@@ -167,7 +167,7 @@ board_l.visible_camera = False
 box_cm("bench", X0 + 2, X0 + 40, 44, 48, bd["d0"] + 6, bd["d1"] - 6, OAK_X, 0.8)
 for d in (bd["d0"] + 12, bd["d1"] - 12):
     box_cm("bench end", X0 + 4, X0 + 38, 0, 44, d - 2, d + 2, OAK, 0.5)
-spines = picture("register spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3)
+spines = bound(picture("register spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3))
 PAGES = plain("pages", (0.3, 0.26, 0.19), rough=0.9)
 COVERS = cover_materials()
 for k in range(5):
@@ -339,15 +339,19 @@ world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.004, 0.00
 lamp("the moon", "SUN", tuple(P(300, 2000, 2700)), aim=tuple(P(90, 0, 330)), energy=float(arg("--moon", "3.5")), colour=(0.55, 0.68, 1.0), angle=math.radians(1.5))
 sky_l = lamp("sky through the window", "AREA", tuple(P(WIN["x"], 225, D1 + 30)), aim=tuple(P(40, 20, 400)), energy=float(arg("--sky", "12")), colour=(0.5, 0.62, 0.95), size=0.5, size_y=0.7)
 sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
-fill_l = lamp("fill", "AREA", tuple(P(120, 240, 20)), aim=tuple(P(-60, 60, D1)), energy=float(arg("--fill", "38")), colour=(0.95, 0.9, 0.88), size=2.2)
+fill_l = lamp("fill", "AREA", tuple(P(120, 240, 20)), aim=tuple(P(-60, 60, D1)), energy=float(arg("--fill", "38")), colour=(0.8, 0.85, 1.0), size=2.2)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
+eye_fill(float(arg("--eyefill", "65")))                # (the halls' fill: nothing the eye sees falls to black)
 for (at, aim) in ((P(-20, 200, 360), P(-20, 140, D1)), (P(-100, 200, 330), P(X0, 130, 350)), (P(150, 200, 380), P(150, 130, D1))):
-    wash = lamp("on the walls", "AREA", tuple(at), aim=tuple(aim), energy=float(arg("--wash", "15")), colour=(1.0, 0.85, 0.68), size=1.0)
+    wash = lamp("on the walls", "AREA", tuple(at), aim=tuple(aim), energy=float(arg("--wash", "15")), colour=(0.82, 0.86, 1.0), size=1.0)
     wash.visible_camera = False; wash.visible_glossy = False
-LIGHTS = [Light("cards", [board_l, desk_l], [BOARD_BULB, GREEN_GLASS]), Light("painting", [paint_l], [PAINT_BULB]),
-          Light("drawer", [candle_l], [CANDLE_FLAME], after=lambda on: pull(0 if on else DRAWER["pull"]))]
+# (one light: the green lamp on the counting table; the picture lights and
+# the candle are out, the stove cold)
+ONE = Light("lamp", [desk_l], [GREEN_GLASS])
+OUT_LIGHTS = [Light("board", [board_l], [BOARD_BULB]), Light("painting", [paint_l], [PAINT_BULB]), Light("candle", [candle_l], [CANDLE_FLAME]), Light("stove", [stove_l], [FIRE])]
+FIRE.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.02, 0.018, 0.016, 1)
 clear_glass()
-air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0.01")))
+air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0")))
 
 # ── what the game is told ──────────────────────────────────────────────────
 LAYOUT.thing("sequence", "Look at the cards", corners(X0, X0 + 4, bd["y0"], bd["y1"], bd["d0"], bd["d1"]))
@@ -378,11 +382,12 @@ if arg("--probe", "") == "1":
     raise SystemExit
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.35")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "-0.2")))
 scene.cycles.volume_bounces = 1
-plates = {k: v for k, v in light_states(LIGHTS).items() if "plates" in ONLY or k in ONLY}
+GLOSSY = ("green glass shade",)                # (what keeps its shine: glazes, screens, lamp glass)
+finish(scene, SAMPLES, keep_gloss=GLOSSY)
+plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
-for l_ in LIGHTS: l_.set(True)
 if "chest" in ONLY:
     air.hide_render = True
     chest_sprites(scene, OUT, LAYOUT.data["chest"]["box"], chest_body, chest_hinge, lid_parts)

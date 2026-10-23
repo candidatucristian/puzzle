@@ -32,7 +32,7 @@ from room_furnish import *
 OUT = os.path.join(ROOT, ".artifacts/room-weighing")
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")
-SAMPLES = int(arg("--samples", "256"))
+SAMPLES = int(arg("--samples", "700"))
 WIDTH = int(arg("--width", "2560"))
 ONLY = set(arg("--only", "plates").split(","))
 RNG = random.Random(1869)
@@ -64,39 +64,8 @@ FRAME = plain("window paint", (0.86, 0.85, 0.8), rough=0.5)
 ENAMEL = plain("green enamel", (0.03, 0.16, 0.07), rough=0.25, coat=0.8)
 ENAMEL_IN = plain("enamel inside", (0.9, 0.9, 0.86), rough=0.3, emit=(1.0, 0.85, 0.6), strength=0.6)
 LAYOUT = Layout("Room8")
-def chalkboard():
-    """black slate, the ghosts of old wiping, three lines of small chalk"""
-    m = bpy.data.materials.new("blackboard"); m.use_nodes = True
-    N = m.node_tree.nodes; Lk = m.node_tree.links.new; b = N["Principled BSDF"]
-    tc = N.new("ShaderNodeTexCoord"); nz = N.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 3; nz.inputs["Detail"].default_value = 6
-    Lk(tc.outputs["UV"], nz.inputs["Vector"])
-    ramp = N.new("ShaderNodeValToRGB"); ramp.color_ramp.elements[0].color = (0.012, 0.022, 0.018, 1); ramp.color_ramp.elements[1].color = (0.06, 0.075, 0.07, 1)
-    Lk(nz.outputs["Fac"], ramp.inputs["Fac"])
-    # (three lines of writing: bands of broken chalk strokes)
-    sep = N.new("ShaderNodeSeparateXYZ"); Lk(tc.outputs["UV"], sep.inputs["Vector"])
-    lines = None
-    for k, v in enumerate((0.7, 0.5, 0.3)):
-        band = N.new("ShaderNodeMapRange"); band.interpolation_type = "SMOOTHERSTEP"
-        dist = N.new("ShaderNodeMath"); dist.operation = "ABSOLUTE"
-        sub = N.new("ShaderNodeMath"); sub.operation = "SUBTRACT"; sub.inputs[1].default_value = v
-        Lk(sep.outputs["Y"], sub.inputs[0]); Lk(sub.outputs[0], dist.inputs[0])
-        band.inputs["From Min"].default_value = 0.035; band.inputs["From Max"].default_value = 0.0; Lk(dist.outputs[0], band.inputs["Value"])
-        if lines is None: lines = band
-        else:
-            mx = N.new("ShaderNodeMath"); mx.operation = "MAXIMUM"
-            Lk(lines.outputs[0], mx.inputs[0]); Lk(band.outputs[0], mx.inputs[1]); lines = mx
-    strokes = N.new("ShaderNodeTexNoise"); strokes.inputs["Scale"].default_value = 60; strokes.inputs["Detail"].default_value = 2
-    mp = N.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = (1, 8, 1); Lk(tc.outputs["UV"], mp.inputs["Vector"]); Lk(mp.outputs["Vector"], strokes.inputs["Vector"])
-    th = N.new("ShaderNodeMath"); th.operation = "GREATER_THAN"; th.inputs[1].default_value = 0.52; Lk(strokes.outputs["Fac"], th.inputs[0])
-    right = N.new("ShaderNodeMath"); right.operation = "LESS_THAN"; right.inputs[1].default_value = 0.78; Lk(sep.outputs["X"], right.inputs[0])
-    left = N.new("ShaderNodeMath"); left.operation = "GREATER_THAN"; left.inputs[1].default_value = 0.1; Lk(sep.outputs["X"], left.inputs[0])
-    chalk = N.new("ShaderNodeMath"); chalk.operation = "MULTIPLY"; Lk(lines.outputs[0], chalk.inputs[0]); Lk(th.outputs[0], chalk.inputs[1])
-    c2 = N.new("ShaderNodeMath"); c2.operation = "MULTIPLY"; Lk(chalk.outputs[0], c2.inputs[0]); Lk(right.outputs[0], c2.inputs[1])
-    c3 = N.new("ShaderNodeMath"); c3.operation = "MULTIPLY"; Lk(c2.outputs[0], c3.inputs[0]); Lk(left.outputs[0], c3.inputs[1])
-    mix = N.new("ShaderNodeMix"); mix.data_type = "RGBA"; Lk(c3.outputs[0], mix.inputs["Factor"]); Lk(ramp.outputs["Color"], mix.inputs[6]); mix.inputs[7].default_value = (0.62, 0.62, 0.58, 1)
-    Lk(mix.outputs[2], b.inputs["Base Color"]); b.inputs["Roughness"].default_value = 0.88
-    return m
-BOARD_MAT = chalkboard()
+# the board's slate and his chalk (weighing_board.mjs)
+BOARD_MAT = picture("blackboard", os.path.join(DRAWN, "weighing-board.png"), rough=0.9, bump=0.15)
 
 # ── the shell: tiles to the dado, plaster over, chequered floor ────────────
 box_cm("floor", X0 - 20, X1 + 20, -6, 0, -40, D1 + 20, CHEQUER)
@@ -294,6 +263,8 @@ def cabinet():
     """built as if against a back wall at d 0, running along x"""
     L_ = CAB["d1"] - CAB["d0"]; dp = CAB["depth"]
     box_cm("cabinet carcass", 0, L_, 0, CAB["h"], -dp, 0, MAHOGANY, 0.8, keep=False)
+    # (its inside painted pale, as such cabinets were: the bottles stand against it)
+    box_cm("cabinet inside", 2, L_ - 2, 86, CAB["h"] - 4, -2, -1.2, plain("cabinet paint", (0.62, 0.62, 0.56), rough=0.8), keep=False)
     for k, y in enumerate((96, 136, 176)):
         box_cm("cabinet shelf", 3, L_ - 3, y - 1.5, y, -dp + 2, -1, plain("shelf glass", (0.85, 0.9, 0.88), rough=0.05, transmission=0.9), keep=False)
         x = 8
@@ -325,14 +296,17 @@ world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.004, 0.00
 lamp("the moon", "SUN", tuple(P(500, 2600, 2900)), aim=tuple(P(20, 0, 380)), energy=float(arg("--moon", "2.6")), colour=(0.55, 0.68, 1.0), angle=math.radians(1.5))
 sky_l = lamp("sky through the window", "AREA", tuple(P(WIN["x"], 190, D1 + 14)), aim=tuple(P(WIN["x"], 60, 400)), energy=float(arg("--sky", "20")), colour=(0.5, 0.62, 0.95), size=1.2, size_y=1.4)
 sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
-fill_l = lamp("fill", "AREA", tuple(P(0, 230, 20)), aim=tuple(P(0, 80, D1)), energy=float(arg("--fill", "45")), colour=(0.95, 0.92, 0.88), size=1.6)
+fill_l = lamp("fill", "AREA", tuple(P(0, 230, 20)), aim=tuple(P(0, 80, D1)), energy=float(arg("--fill", "42")), colour=(0.8, 0.85, 1.0), size=1.6)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
+eye_fill(float(arg("--eyefill", "83")))                # (the halls' fill: nothing the eye sees falls to black)
 for (at_, aim) in ((P(-60, 220, 300), P(X0, 140, 340)), (P(60, 220, 420), P(X1, 140, 440)), (P(0, 220, 560), P(0, 140, D1))):
-    wash = lamp("on the walls", "AREA", tuple(at_), aim=tuple(aim), energy=float(arg("--wash", "14")), colour=(1.0, 0.88, 0.72), size=1.0)
+    wash = lamp("on the walls", "AREA", tuple(at_), aim=tuple(aim), energy=float(arg("--wash", "14")), colour=(0.82, 0.86, 1.0), size=1.0)
     wash.visible_camera = False; wash.visible_glossy = False
-LIGHTS = [Light("balance", [hang_l], [BULB, ENAMEL_IN], after=lean), Light("equations", [board_l], [BOARD_GLOW]), Light("measures", [wall_l], [WALL_BULB])]
+# (one light: the green lamp hung over the bench; the board's lamp and the
+# lamp by the sink are out)
+ONE = Light("balance", [hang_l], [BULB, ENAMEL_IN]); OUT_LIGHTS = [Light("equations", [board_l], [BOARD_GLOW]), Light("measures", [wall_l], [WALL_BULB])]
 clear_glass()
-air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0.01")))
+air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0")))
 
 # ── what the game is told ──────────────────────────────────────────────────
 BAF = framed((BAL["x"], ib["h"], BAL["d"]), math.radians(-14))
@@ -348,8 +322,10 @@ LAYOUT.dust([P(wx0, WIN["top"], D1), P(wx1, WIN["sill"], D1), P(-40, 0, 420), P(
 LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.3")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "-0.55")))
 scene.cycles.volume_bounces = 1
-plates = {k: v for k, v in light_states(LIGHTS).items() if "plates" in ONLY or k in ONLY}
+GLOSSY = ("blackboard", "white tiles", "tile cap", "tile cap back", "fireclay", "green enamel", "enamel inside", "hung bulb", "wall lamp glass", "board lamp bulb")                # (what keeps its shine: glazes, screens, lamp glass)
+finish(scene, SAMPLES, keep_gloss=GLOSSY)
+plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, variants=plates)
 print("ROOM_DONE")

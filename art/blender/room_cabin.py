@@ -34,7 +34,7 @@ from room_furnish import *
 OUT = os.path.join(ROOT, ".artifacts/room-cabin")
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")
-SAMPLES = int(arg("--samples", "256"))
+SAMPLES = int(arg("--samples", "700"))
 WIDTH = int(arg("--width", "2560"))
 ONLY = set(arg("--only", "plates,chest").split(","))
 RNG = random.Random(1849)
@@ -440,11 +440,14 @@ lamp("the moon", "SUN", tuple(P(-2500, 1600, 1100)), aim=tuple(P(0, 0, 250)), en
 for c in PORTS:
     sky_l = lamp("sky through the port", "AREA", tuple(on_side(-20, PORT_Y / math.cos(LEAN), c)), aim=tuple(P(0, 60, c - 60)), energy=float(arg("--sky", "6")), colour=(0.5, 0.62, 0.95), size=0.4)
     sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
-fill_l = lamp("fill", "AREA", tuple(P(40, 150, -20)), aim=tuple(P(-40, 70, D1)), energy=float(arg("--fill", "45")), colour=(0.92, 0.9, 1.0), size=1.6)
+fill_l = lamp("fill", "AREA", tuple(P(40, 150, -20)), aim=tuple(P(-40, 70, D1)), energy=float(arg("--fill", "38")), colour=(0.8, 0.85, 1.0), size=1.6)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
-LIGHTS = [Light("ship", [lantern_l], [FLAME_GLOW]), Light("chess", [candle_l]), Light("phone", [desk_l], [GREEN_GLASS, SCREEN])]
+eye_fill(float(arg("--eyefill", "19")))                # (the halls' fill: nothing the eye sees falls to black)
+# (one light: the storm lantern; the candle and the green lamp are out — the
+# telephone's screen stays alight)
+ONE = Light("ship", [lantern_l], [FLAME_GLOW]); OUT_LIGHTS = [Light("chess", [candle_l]), Light("phone", [desk_l, chart_l], [GREEN_GLASS])]
 clear_glass()
-air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0.01")))
+air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0")))
 
 # ── what the game is told ──────────────────────────────────────────────────
 x0b, x1b = -B["body"] / 2, B["body"] / 2 + B["neck"] + 4
@@ -463,9 +466,11 @@ LAYOUT.dust([on_side(0, PORT_Y / math.cos(LEAN) + PORT_R, PORTS[0] - PORT_R), on
 LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.3")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.55")))
 scene.cycles.volume_bounces = 1
-plates = {k: v for k, v in light_states(LIGHTS).items() if "plates" in ONLY or k in ONLY}
+GLOSSY = ("green glass shade", "phone screen", "putty sea", "hull", "gilt line")                # (what keeps its shine: glazes, screens, lamp glass)
+finish(scene, SAMPLES, keep_gloss=GLOSSY)
+plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

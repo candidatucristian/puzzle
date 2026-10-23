@@ -11,7 +11,33 @@ from room_common import *
 
 # ── books ──────────────────────────────────────────────────────────────────
 def cover_materials():
-    return [plain(f"cover {i}", c, rough=0.55, sheen=0.3) for i, c in enumerate([(0.15, 0.03, 0.025), (0.03, 0.08, 0.04), (0.02, 0.03, 0.08), (0.1, 0.05, 0.02), (0.02, 0.02, 0.02), (0.18, 0.11, 0.04)])]
+    """bookbinders' cloth and leather, in the old colours: the grain of a scan
+    of leather under each"""
+    tints = [(0.62, 0.16, 0.12), (0.16, 0.34, 0.2), (0.14, 0.18, 0.42), (0.5, 0.3, 0.14), (0.12, 0.11, 0.1), (0.7, 0.52, 0.26)]
+    return [scan(f"cover {i}", "fabric_leather_02", size=0.22, tint=t, bright=0.55, sat=0.0, rough=(0.45, 0.8), bump=0.5, vary=0.25) for i, t in enumerate(tints)]
+
+def bound(m, grain="fabric_leather_02", size=0.22):
+    """a picture printed on a binding (a spine's lettering): the binding's own
+    grain worked into it, light and dark and in its bump"""
+    N = m.node_tree.nodes; Lk = m.node_tree.links.new; b = N["Principled BSDF"]
+    pic = b.inputs["Base Color"].links[0].from_socket
+    tc = N.new("ShaderNodeTexCoord"); mp = N.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = (1 / size,) * 3
+    Lk(tc.outputs["Object"], mp.inputs["Vector"])
+    g = N.new("ShaderNodeTexImage"); g.image = bpy.data.images.load(f"{ASSETS}/textures/{grain}/Diffuse.jpg", check_existing=True); g.projection = "BOX"; g.projection_blend = 0.2
+    Lk(mp.outputs["Vector"], g.inputs["Vector"])
+    bw = N.new("ShaderNodeRGBToBW"); Lk(g.outputs["Color"], bw.inputs["Color"])
+    lift = N.new("ShaderNodeMapRange"); lift.inputs["To Min"].default_value = 0.55; lift.inputs["To Max"].default_value = 1.25; Lk(bw.outputs["Val"], lift.inputs["Value"])
+    mul = N.new("ShaderNodeMix"); mul.data_type = "RGBA"; mul.blend_type = "MULTIPLY"; mul.inputs["Factor"].default_value = 1.0
+    Lk(pic, mul.inputs[6]); Lk(lift.outputs["Result"], mul.inputs[7]); Lk(mul.outputs[2], b.inputs["Base Color"])
+    nt = N.new("ShaderNodeTexImage"); nt.image = bpy.data.images.load(f"{ASSETS}/textures/{grain}/nor_gl.jpg", check_existing=True); nt.image.colorspace_settings.name = "Non-Color"; nt.projection = "BOX"; nt.projection_blend = 0.2
+    Lk(mp.outputs["Vector"], nt.inputs["Vector"])
+    nm = N.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = 0.8; Lk(nt.outputs["Color"], nm.inputs["Color"])
+    nrm = b.inputs["Normal"]
+    if nrm.is_linked and nrm.links[0].from_node.type == "BUMP": Lk(nm.outputs["Normal"], nrm.links[0].from_node.inputs["Normal"])
+    else: Lk(nm.outputs["Normal"], nrm)
+    b.inputs["Roughness"].default_value = 0.6
+    m["detailed"] = True
+    return m
 
 def book(rng, x_back, d0, y, w, h, depth, spines, covers, pages, lean=0.0, side=-1):
     """a book standing on a shelf against a side wall, its spine to the room
@@ -195,4 +221,72 @@ def garden(moon_at, trees, lawn, sky_at, sky_size=45):
     x0, x1, d0, d1, y = lawn
     for (mid, x, d, h, rot) in trees:
         import_model(mid, height=h, at=tuple(P(x, y, d)), rot=rot)
-    box_cm("lawn", x0, x1, y - 5, y, d0, d1, scan("lawn", "leafy_grass", size=1.5, bright=0.07, sat=0.6, rough=(0.35, 0.6), coat=0.15), keep=False)
+    box_cm("lawn", x0, x1, y - 5, y, d0, d1, scan("lawn", "leafy_grass", size=1.5, bright=0.035, sat=0.8, rough=(0.5, 0.8), coat=0.0), keep=False)
+
+# ── windows, lanterns, roofs ───────────────────────────────────────────────
+def sash_window_back(wall, x, hw, sill, top, D1, reveal, frame, glass, plaster, sill_mat, bars=(0.5,), wall_mat_cut=None):
+    """a sash window in a back wall (at d D1): the opening cut through `wall`,
+    reveals, a sill, two sashes (the upper outside the lower), glazing bars;
+    returns its panes (Blender points) for the rain"""
+    x0, x1 = x - hw, x + hw
+    # (old thin glass, reflecting the lit room only a little against the night)
+    glass = bpy.data.materials.get("window glass") or plain("window glass", (0.96, 0.97, 0.96), rough=0.0, transmission=1.0, ior=1.12)
+    boolean_cut(wall, box("cut", M(x0), M(x1), M(D1 - 10), M(D1 + reveal + 30), M(sill), M(top), plaster))
+    box_cm("reveal", x0 - 3, x0, sill, top, D1, D1 + reveal, plaster)
+    box_cm("reveal", x1, x1 + 3, sill, top, D1, D1 + reveal, plaster)
+    box_cm("reveal head", x0 - 3, x1 + 3, top, top + 3, D1, D1 + reveal, plaster)
+    box_cm("sill", x0 - 8, x1 + 8, sill - 4, sill, D1 - 8, D1 + reveal - 6, sill_mat, 0.8)
+    mid = (sill + top) / 2; panes = []
+    for (y0, y1, dd) in ((sill + 1, mid + 2, D1 + reveal - 8), (mid - 2, top - 1, D1 + reveal - 13)):
+        box_cm("sash", x0 + 1, x0 + 6, y0, y1, dd - 2.5, dd + 2.5, frame, 0.5); box_cm("sash", x1 - 6, x1 - 1, y0, y1, dd - 2.5, dd + 2.5, frame, 0.5)
+        box_cm("sash", x0 + 1, x1 - 1, y0, y0 + 6, dd - 2.5, dd + 2.5, frame, 0.5); box_cm("sash", x0 + 1, x1 - 1, y1 - 6, y1, dd - 2.5, dd + 2.5, frame, 0.5)
+        for f in bars:
+            bx = x0 + (x1 - x0) * f
+            box_cm("glazing bar", bx - 1.1, bx + 1.1, y0 + 6, y1 - 6, dd - 1.5, dd + 1.5, frame, 0.3)
+        box_cm("glass", x0 + 5, x1 - 5, y0 + 5, y1 - 5, dd - 0.3, dd + 0.3, glass)
+        panes.append([P(px, py, dd) for px, py in ((x0 + 5, y0 + 5), (x1 - 5, y0 + 5), (x1 - 5, y1 - 5), (x0 + 5, y1 - 5))])
+    return panes
+
+def oil_lantern(x, y, d, tin, glass_mat, energy=12.0, hanging=False):
+    """a storm lantern standing (or hung) at x, y, d: its tin tank and cap, the
+    glass globe in a wire guard, its bail, the flame; returns (lamp, flame
+    material, where its flame is)"""
+    lathe("lantern tank", [(0, 0), (0.065, 0), (0.07, 0.01), (0.07, 0.04), (0.045, 0.06), (0.03, 0.065), (0, 0.065)], tin, at=tuple(P(x, y, d)), steps=40)
+    lathe("lantern globe", [(0.0, 0.0), (0.028, 0.0), (0.05, 0.03), (0.056, 0.07), (0.05, 0.11), (0.032, 0.135), (0.031, 0.14), (0.0, 0.14)], glass_mat, at=tuple(P(x, y + 6.5, d)), steps=40)
+    lathe("lantern cap", [(0, 0), (0.042, 0), (0.05, 0.015), (0.035, 0.04), (0.02, 0.06), (0.025, 0.07), (0, 0.075)], tin, at=tuple(P(x, y + 20, d)), steps=40)
+    for k in range(4):
+        a = k / 4 * math.tau + 0.4
+        rod("guard", P(x + math.cos(a) * 5.8, y + 6.5, d + math.sin(a) * 5.8), P(x + math.cos(a) * 4.0, y + 20.5, d + math.sin(a) * 4.0), M(0.25), tin, verts=6)
+    tube("bail", [(-0.045, 0.21), (-0.035, 0.31 if hanging else 0.27), (0.035, 0.31 if hanging else 0.27), (0.045, 0.21)], 0.002, tin, at=tuple(P(x, y, d)), rot=0.6)
+    flame = plain("lantern flame", (1.0, 0.6, 0.2), emit=(1.0, 0.55, 0.18), strength=40)
+    sphere("lantern flame", tuple(P(x, y + 11.5, d)), M(0.9), flame, squash=(0.6, 0.6, 1.8))
+    l = lamp("lantern", "POINT", tuple(P(x, y + 12, d)), energy=energy, colour=(1.0, 0.52, 0.22), size=0.02)
+    return l, flame, P(x, y + 12, d)
+
+def pitched_roof(x0, x1, d0, d1, eaves, ridge, boards, rafter_mat, every=60):
+    """an attic's roof: boards laid on rafters pitched from the eaves (at x0
+    and x1, `eaves` up) to the ridge over the middle, purlins along it, a
+    ridge beam, collar ties"""
+    xm = (x0 + x1) / 2; run = (x1 - x0) / 2; rise = ridge - eaves
+    pitch = math.atan2(rise, run); length = math.hypot(run, rise)
+    for side in (-1, 1):
+        # (the roof's boards: one slab each side, under the rafters)
+        sl = box("roof boards", M(-length / 2 - 4), M(length / 2 + 4), M(d0 - 30), M(d1 + 30), M(0), M(3), boards)
+        # (rotated about the room's d: the left pitch rising toward the ridge, the right falling from it)
+        tilt = -pitch if side < 0 else pitch
+        sl.rotation_euler = (0, tilt, 0)
+        sl.location = P(xm + side * run / 2, eaves + rise / 2, 0)
+        arch(sl)
+        for d in range(int(d0), int(d1) + 1, every):
+            r = box("rafter", M(-length / 2), M(length / 2), M(d - 4), M(d + 4), M(-12), M(0), rafter_mat)
+            r.rotation_euler = (0, tilt, 0)
+            r.location = P(xm + side * run / 2, eaves + rise / 2, 0)
+            arch(r)
+        for t in (0.35, 0.7):
+            px = xm + side * run * (1 - t); py = eaves + rise * t
+            pu = box("purlin", M(-6), M(6), M(d0 - 30), M(d1 + 30), M(-10), M(0), rafter_mat)
+            pu.rotation_euler = (0, tilt, 0); pu.location = P(px, py - 12, 0); arch(pu)
+    box_cm("ridge beam", xm - 6, xm + 6, ridge - 22, ridge - 4, d0 - 30, d1 + 30, rafter_mat, 1.0)
+    for d in range(int(d0) + every // 2, int(d1), every * 2):
+        box_cm("collar tie", xm - run * 0.42, xm + run * 0.42, eaves + rise * 0.62 - 14, eaves + rise * 0.62 - 2, d - 5, d + 5, rafter_mat, 1.0)
+    return pitch

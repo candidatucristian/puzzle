@@ -5,10 +5,11 @@ import { renderedLayout, paintRoomRender, roomRenderChest, hasRoomRender } from 
 import STUDY from "../house/rooms/Study.json";
 
 /** The study, the first room off the hall, at night, seen from the corner by
- *  its door. Close at hand a round table with a lamp lit on it, and beside the
- *  lamp a glass case of earth with something growing in it. Further in,
- *  standing free in the floor, a writing desk with a candle burning on it and
- *  a small gilt chest; a green armchair pushed back toward the hearth. Over
+ *  its door, by the light of one candle burning on the writing desk and the
+ *  moon. Close at hand a round table, a lamp on it, cold, and beside the lamp
+ *  a glass case of earth with something growing in it. Further in, standing
+ *  free in the floor, the writing desk with its candle and a small gilt
+ *  chest; a green armchair pushed back toward the hearth, its fire dead. Over
  *  the mantel a brass cipher wheel on its walnut plaque. In the back wall a
  *  tall window, one leaf swung open on the garden and the moon, a terracotta
  *  pot on its sill with something just come up in it. Books to the cornice
@@ -17,20 +18,14 @@ import STUDY from "../house/rooms/Study.json";
  *  The case, the window and the wheel open puzzles; the chest is shut until
  *  all three are solved, then opens of itself and gives up a key.
  *
- *  The room is a Blender render (art/blender/room_study.py): a plate for each
- *  way the lamp and the candle can stand, and the chest apart. Blender wrote
- *  down where everything fell in the picture (house/rooms/Study.json). */
+ *  The room is a Blender render (art/blender/room_study.py), the chest apart.
+ *  Blender wrote down where everything fell in the picture
+ *  (house/rooms/Study.json). */
 
 const K = { room: "sd_room", glow: "sd_glow", shut: "sd_chest_shut", open: "sd_chest_open", key: "sd_key" };
 
-/** `lampOn`: whether the lamp on the table is alight — it is, until the case
- *  beside it has given up its puzzle; after that it is turned right down.
- *  `candleOn`: the candle on the desk, which burns until the cipher wheel has
- *  been solved, and is then out. */
-export function layoutStudy(W, H, { lampOn = true, candleOn = true } = {}) {
+export function layoutStudy(W, H) {
   const L = renderedLayout(W, H, STUDY);
-  L.lampOn = lampOn;
-  L.candleOn = candleOn;
   if (L.rain) L.rain.seed = 1101;
   return L;
 }
@@ -42,7 +37,7 @@ export function paintStudy(scene, L) {
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, L.W, L.H);
   const rendered = hasRoomRender(scene, "Study");
-  if (rendered) paintRoomRender(ctx, scene, "Study", L, [L.lampOn, L.candleOn]);
+  if (rendered) paintRoomRender(ctx, scene, "Study", L);
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, rendered ? roomRenderChest(scene, "Study", false) : makeCanvas(1, 1));

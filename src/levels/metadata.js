@@ -737,7 +737,7 @@ const metadata = [
       "PHIALS_WORD = 'GREEN' (phials/puzzle.js); RACK — yellow, the empty tube, blue; TAG = 'For my sister.'",
       "phials/photography.js and art.js — a photographic slate worktop, glazed tiles, brass tap, walnut rack and paper tag; separate transparent glass phials with yellow and blue liquid, cork stoppers and an empty centre tube",
       "PhialsScene — a click lifts a tube vertically through its rack hole before it tilts toward the light; another puts it back. The rack's photographic front face hides the seated tubes correctly; raised positions survive resizing and respect reduced motion. The tubes are never mixed",
-      "room7/photographicRoom.js — the rack painted on the counter at the right of the sinks, and the thing that opens the puzzle"
+      "room7/Room7Scene.js and art/blender/room_lab.py — the walnut rack rendered at the end of the counter of sinks, its tag tied to the post, and the thing that opens the puzzle"
     ]
   },
   {

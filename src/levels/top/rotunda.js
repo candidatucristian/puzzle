@@ -5,8 +5,11 @@ import { paintPassage } from "./doorway.js";
 import { paintPlanetarium, paintArmillaryBase, createArmillaryArt, paintPendulum } from "./observatory.js";
 import { physicsMaterials, paintPhysicsWindow, paintPhysicsTelescope } from "./materials.js";
 import { paintFlatMaterial, paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
+import { paintPhysicsPlate, createPhysicsArmillary } from "./physicsRender.js";
 
-/** The top floor of the manor: not a passage but a round room under a dome,
+/** The native observatory plate uses these measures and this perspective.
+ *  The procedural room below is retained as an asset-loading fallback.
+ *  The top floor of the manor: not a passage but a round room under a dome,
  *  and of a piece with the halls below — the same drab striped paper over
  *  the same oak dado, the same oak doors — and as long shut up. We stand
  *  just inside it, in very little light. Its wall goes round in front of us,
@@ -108,6 +111,13 @@ export function paintRotunda(scene, L, armillaryPhase = 0) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#04060b";
   ctx.fillRect(0, 0, W, H);
+  if (paintPhysicsPlate(scene, L, ctx)) {
+    addCanvasTexture(t, K.room, c);
+    addCanvasTexture(t, K.glow, glowCanvas());
+    const armillary = createPhysicsArmillary(scene, L, armillaryPhase)
+      || createArmillaryArt(scene, L, K.armillary, () => {}, armillaryPhase);
+    return { keys: K, armillary };
+  }
   paintDome(ctx, L);
   paintFloor(ctx, L);
   paintWall(ctx, L);

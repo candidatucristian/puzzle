@@ -17,7 +17,7 @@ let seed = 4040;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const write = (name, svg) => sharp(Buffer.from(svg)).png().toFile(`${out}${name}.png`);
 // chemistry, with its figures set below the line: "H_2O" → H₂O
-const formula = (text, size) => text.replace(/_(\d+)/g, (_, n) => `<tspan dy="${size * 0.22}" font-size="${size * 0.68}">${n}</tspan><tspan dy="${-size * 0.22}">​</tspan>`);
+const formula = (text, size) => text.replace(/_(\d+)/g, (_, n) => `<tspan dy="${size * 0.22}" font-size="${size * 0.68}">${n}</tspan><tspan dy="${-size * 0.22}">\u200b</tspan>`);
 
 // ── the blackboard ──────────────────────────────────────────────────────────
 {

@@ -12,6 +12,7 @@ import { LightSwitch, loadLightSwitch } from "./lightSwitch.js";
 import { loadHallRender } from "./hallRender.js";
 import { loadIronGate, createIronGate } from "./ironGate.js";
 import { loadAtticMaterials } from "../top/atticMaterials.js";
+import { loadPassageRender } from "../top/passageRender.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The hall: the ground floor of the manor, where the player stands on coming
@@ -57,7 +58,7 @@ export default class HallScene extends BasePuzzleScene {
     // the iron gates across the stairs, swinging open (ground floor only)
     if (!this.upper && !this.wing) this.load.audio("irongateopen", "assets/sounds/irongateopensound.mp3");
     if (!this.upper && !this.wing) { loadHallRender(this, "ground"); loadIronGate(this); }
-    if (this.wing) loadAtticMaterials(this);
+    if (this.wing) { loadAtticMaterials(this); loadPassageRender(this); }
     if (this.upper) { loadHallRender(this, "upper"); loadLightSwitch(this); }
   }
 
@@ -101,8 +102,8 @@ export default class HallScene extends BasePuzzleScene {
     // the candles in the sconces, never quite still
     this._candles = L.sconces.filter((s) => !s.dead).map((s) =>
       this.add
-        .image(s.x - s.side * (20 * L.u) / s.z, s.y - (24 * L.u) / s.z, k.glow)
-        .setDisplaySize((150 * L.u) / s.z, (150 * L.u) / s.z)
+        .image(s.flame?.x ?? s.x - s.side * (20 * L.u) / s.z, s.flame?.y ?? s.y - (24 * L.u) / s.z, k.glow)
+        .setDisplaySize((L.passageRender ? 38 : 150) * L.u / s.z, (L.passageRender ? 38 : 150) * L.u / s.z)
         .setTint(0xffc078)
         .setBlendMode(Phaser.BlendModes.ADD)
         .setAlpha(0.3 * ambientLight)
@@ -387,7 +388,7 @@ export default class HallScene extends BasePuzzleScene {
   // press the next letter, round and round; after each letter the wiring
   // shorts — sparks fly from the switch, it springs back off, the bulb
   // stutters and is dark. The answer is written in the box below.
-  // Solved, the switch is dead and stops glinting.
+  // Solved, the switch stops glinting, and still flashes its word when thrown.
   _light(L, k) {
     const levels = this.services.levels, b = L.bulb, thing = L.thing;
     const index = levels.indexOf(thing.level);
@@ -399,9 +400,8 @@ export default class HallScene extends BasePuzzleScene {
     this._bulbLight = k.lit && this.textures.exists(k.lit) ? this.add.image(0, 0, k.lit).setOrigin(0, 0).setDepth(-9.8).setAlpha(0) : null;
     this._lever = new LightSwitch(this, L, k.glow);
     this._busy = false;
-    this._answer = null;
-    if (levels.isCompleted(index)) return;
     this._answer = levels.definitions[index].code;
+    const solved = levels.isCompleted(index);
     // it takes a click anywhere on its panel, or on the blades fallen out from it
     const h = this._lever.hit, t = thing.box;
     const x0 = Math.min(t.x, h.x), y0 = Math.min(t.y, h.y);
@@ -413,7 +413,7 @@ export default class HallScene extends BasePuzzleScene {
       .setData("interactionLabel", thing.label)
       .setDepth(5);
     zone.on("pointerdown", () => this._press());
-    this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => box, enabled: () => !this._busy }));
+    if (!solved) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => box, enabled: () => !this._busy }));
   }
 
   _lit(on, level = 1) {
@@ -512,7 +512,7 @@ export default class HallScene extends BasePuzzleScene {
       const bot = { x: bl.x + (br.x - bl.x) * a, y: bl.y + (br.y - bl.y) * a };
       return { x: top.x + (bot.x - top.x) * b, y: top.y + (bot.y - top.y) * b };
     };
-    const hole = at(0.86, 0.6);
+    const hole = d.keyhole ?? at(0.86, 0.6);
     const len = Math.max(34, (at(0.86, 1).y - at(0.86, 0).y) * 0.22);
     const side = d.side > 0 ? 1 : -1;
     if (!this.textures.exists("hall-key")) addCanvasTexture(this.textures, "hall-key", paintKey());
@@ -585,6 +585,7 @@ export default class HallScene extends BasePuzzleScene {
     const art = paintDoorSwing(this, L, d, lit);
     const doorway = this.add.image(art.box.x, art.box.y, art.key).setOrigin(0, 0)
       .setDisplaySize(art.box.width, art.box.height).setDepth(-9.7);
+    art.attach?.(doorway);
     const spill = this.add
       .image(d.sill.x, d.sill.y, this._art.keys.glow)
       .setTint(lit ? 0xffc078 : 0x9fb6e8)
@@ -596,6 +597,7 @@ export default class HallScene extends BasePuzzleScene {
 
   // where the room's light lies on the hall's floor, for how far the door stands open
   _spill(art, aperture) {
+    if (art.native) { art.spill.setAlpha(0); return; }
     const { d, spill, lit } = art, L = this._L;
     spill.setDisplaySize((L.wall * (0.2 + aperture * 0.9)) / d.z, (L.H * (0.06 + aperture * 0.24)) / d.z)
       .setAlpha(aperture * (lit ? 0.48 : 0.2) * (L.ambientLight ?? 1));

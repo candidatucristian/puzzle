@@ -12,6 +12,7 @@ import { paintAtticForeground, paintAtticShade } from "../top/attic.js";
 import { paintAtticDoorHandle } from "../top/atticDoor.js";
 import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
 import { paintChemistryStairs } from "./staircase.js";
+import { passageRender, alignPassageLayout, paintPassageRender, createPassageDoorArt } from "../top/passageRender.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
  *  length, three closed doors along either wall, and at its far end the
@@ -182,14 +183,19 @@ export function paintHall(scene, L) {
   const t = scene.textures;
   if (!L.wing) L.render = hallRender(scene, L.upper ? "upper" : "ground");
   if (L.theme === "botanic" && !L.render) L.botanicMaterials = botanicHallMaterials(scene);
-  if (L.wing) L.atticMaterials = atticMaterials(scene);
+  if (L.wing) {
+    L.atticMaterials = atticMaterials(scene);
+    L.passageRender = passageRender(scene);
+    if (L.passageRender) alignPassageLayout(L);
+  }
   const { W, H } = L;
   const K = L.wing ? KEYS.wing : L.upper ? KEYS.upper : KEYS.ground;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, W, H);
-  if (L.render) paintHallRender(ctx, L, "plate");
+  if (L.passageRender) paintPassageRender(ctx, L);
+  else if (L.render) paintHallRender(ctx, L, "plate");
   else paintHallOn(ctx, L);
   addCanvasTexture(t, K.room, c);
   // the chemist's hall with its bulb alight, for the scene to show it by
@@ -213,6 +219,8 @@ export function paintHall(scene, L) {
  *  door at its exact angle each frame, with supersampled edges. Nothing is
  *  quantized into animation frames, and the surrounding hall stays still. */
 export function paintDoorSwing(scene, L, d, lit) {
+  const native = createPassageDoorArt(scene, L, d);
+  if (native) return native;
   const t = scene.textures;
   const X = d.side * L.wall, into = (dist) => d.side * (L.wall + dist);
   const z0 = d.z, z1 = d.z + DOOR_LEN, top = L.doorTop, floor = L.floor, tall = floor - top;

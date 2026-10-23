@@ -2,19 +2,22 @@ import { makeCanvas } from "../../shared/paint.js";
 import { thingAt } from "./roomKit.js";
 
 // The rooms off the halls, rendered in Blender (art/blender/room_common.py,
-// room_<name>.py, room_publish.mjs): a plate for every way the room's lights
-// can stand — `lights-101` with the first and the third of them on, in the
-// order the room names them — the room's gilt chest, shut and open, and any
-// frames of its own (a drawer sliding out). Each room is seen from where it is
+// room_<name>.py, room_publish.mjs): each room by its one light, as the halls
+// are — one plate, `lights-1`, the same whatever has been solved in it — the
+// room's gilt chest, shut and open, and any frames of its own (a drawer
+// sliding out). Each room is seen from where it is
 // best seen; Blender says where everything the scene keeps alive fell in the
 // picture (house/rooms/<Room>.json), and the render is laid over the screen
 // covering it, never stretched.
 const ROOMS = {
-  Study: { folder: "Room1", lights: 2 },
-  Room2: { folder: "Room2", lights: 3 },
-  Room3: { folder: "Room3", lights: 3 },
-  Room4: { folder: "Room4", lights: 3, extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
-  Room5: { folder: "Room5", lights: 3 },
+  Study: { folder: "Room1" },
+  Room2: { folder: "Room2" },
+  Room3: { folder: "Room3" },
+  Room4: { folder: "Room4", extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
+  Room5: { folder: "Room5" },
+  Room7: { folder: "Room7", chest: false, extra: Array.from({ length: 6 }, (_, i) => `notebook-${i}`) },
+  Room8: { folder: "Room8", chest: false },
+  ...Object.fromEntries([9, 10, 11, 12, 13].map((n) => [`Room${n}`, { folder: `Room${n}`, chest: false }])),
 };
 const keyOf = (room, name) => `${room}_render_${name}`;
 const urlOf = (room, name) => {
@@ -22,9 +25,8 @@ const urlOf = (room, name) => {
   return `assets/images/${folder}/${folder.toLowerCase()}-${name}-render-v1.webp`;
 };
 const picturesOf = (room) => {
-  const n = ROOMS[room].lights;
-  const plates = Array.from({ length: 2 ** n }, (_, mask) => `lights-${mask.toString(2).padStart(n, "0")}`);
-  return [...plates, "chest-shut", "chest-open", ...(ROOMS[room].extra ?? [])];
+  const chest = ROOMS[room].chest === false ? [] : ["chest-shut", "chest-open"];
+  return ["lights-1", ...chest, ...(ROOMS[room].extra ?? [])];
 };
 
 export function loadRoomRender(scene, room) {
@@ -76,11 +78,9 @@ export function renderedLayout(W, H, spec) {
   return L;
 }
 
-/** The plate for the way the lights stand now (`lit`: each light on or off),
- *  laid as the room's layout lays it, covering the screen. */
-export function paintRoomRender(ctx, scene, room, L, lit) {
-  const name = `lights-${lit.map((on) => (on ? 1 : 0)).join("")}`;
-  const image = scene.textures.get(keyOf(room, name)).getSourceImage();
+/** The room's plate, laid as the room's layout lays it, covering the screen. */
+export function paintRoomRender(ctx, scene, room, L) {
+  const image = scene.textures.get(keyOf(room, "lights-1")).getSourceImage();
   ctx.drawImage(image, L.fit.x, L.fit.y, L.fit.width, L.fit.height);
 }
 

@@ -234,19 +234,6 @@ class Light:
         for m in self.glows: m.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = self.strength[m.name] if on else 0.0
         if self.after: self.after(on)
 
-def light_states(lights):
-    """a plate for every way the lights can stand: `lights-101` has the first
-    and the third on — in the order the room's scene names them"""
-    variants = {}
-    for mask in range(2 ** len(lights)):
-        bits = [(mask >> (len(lights) - 1 - i)) & 1 for i in range(len(lights))]
-        def on(bits=bits):
-            for light, bit in zip(lights, bits): light.set(bool(bit))
-        def off():
-            for light in lights: light.set(True)
-        variants["lights-" + "".join(map(str, bits))] = (on, off)
-    return variants
-
 def room_haze(x0, x1, d0, d1, y1, density):
     """dust in the room's air, for the moon's light to be seen in"""
     me = bpy.data.meshes.new("air"); bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
@@ -260,6 +247,9 @@ def room_haze(x0, x1, d0, d1, y1, density):
     an = am.node_tree.nodes; an.remove(an["Principled BSDF"]); vol = an.new("ShaderNodeVolumePrincipled"); vol.inputs["Density"].default_value = density; vol.inputs["Anisotropy"].default_value = 0.55
     am.node_tree.links.new(vol.outputs["Volume"], an["Material Output"].inputs["Volume"])
     air.data.materials.append(am); air.visible_shadow = False; ARCH.append(air)
+    if density <= 0:
+        # (no haze: the rooms are as clear as the halls — kept only so the passes have it to hide)
+        for k in ("visible_camera", "visible_diffuse", "visible_glossy", "visible_transmission", "visible_volume_scatter"): setattr(air, k, False)
     return air
 
 def night_sky(at, size, moon_at):
@@ -360,3 +350,123 @@ def model_top(root):
     """how high a model brought in stands (cm), as it is placed"""
     bpy.context.view_layer.update()
     return max((bpy.data.objects[n].matrix_world @ Vector(c)).z for n in root["meshes"] for c in bpy.data.objects[n].bound_box) * 100
+
+AMBIENT = ("fill", "fill at the eye", "fill on the right", "on the walls", "bookcase glow", "end wall glow")
+def finish(scene, samples, keep_gloss=()):
+    """What makes a room as clean as the halls: enough samples that the
+    denoiser has little to guess (it smears grain and print when it has to),
+    stray bright paths clamped, and no varnish shine — coat taken off and a
+    floor under the roughness of everything that is not metal or glass
+    (`keep_gloss`: materials left as they are)."""
+    c = scene.cycles
+    c.samples = samples; c.adaptive_threshold = 0.006; c.adaptive_min_samples = 64
+    c.sample_clamp_indirect = 4.0; c.sample_clamp_direct = 0.0
+    detail_scans()
+    # (the room's own light at night is the halls': cool, soft, even — every
+    # light that is only there to fill is given the moon's colour)
+    for o in bpy.data.objects:
+        if o.type == "LIGHT" and o.data.type == "AREA" and o.name.split(".")[0] in AMBIENT: o.data.color = (0.8, 0.85, 1.0)
+    c.use_denoising = True; c.denoiser = "OPENIMAGEDENOISE"
+    c.denoising_input_passes = "RGB_ALBEDO_NORMAL"; c.denoising_prefilter = "ACCURATE"
+    try: c.denoising_quality = "HIGH"
+    except Exception: pass
+    for mat in bpy.data.materials:
+        if mat.name in keep_gloss or not mat.use_nodes: continue
+        for node in [n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"]:
+            metal = node.inputs["Metallic"]; glass = node.inputs["Transmission Weight"]
+            if metal.is_linked or metal.default_value > 0.5 or glass.default_value > 0.5: continue
+            node.inputs["Coat Weight"].default_value = min(node.inputs["Coat Weight"].default_value, 0.08)
+            r = node.inputs["Roughness"]
+            if r.is_linked:
+                mx = mat.node_tree.nodes.new("ShaderNodeMath"); mx.operation = "MAXIMUM"; mx.inputs[1].default_value = 0.42
+                mat.node_tree.links.new(r.links[0].from_socket, mx.inputs[0]); mat.node_tree.links.new(mx.outputs[0], r)
+            else:
+                r.default_value = max(r.default_value, 0.42)
+
+def detail_scans():
+    """Every scanned material given its scan's own normal map (nor_gl, beside
+    its Diffuse), under whatever bump it already has: the grain of the wood,
+    the weave, the pits in plaster, as the halls show them."""
+    for mat in bpy.data.materials:
+        if not mat.use_nodes or mat.get("detailed"): continue
+        N = mat.node_tree.nodes; Lk = mat.node_tree.links.new
+        diff = next((n for n in N if n.type == "TEX_IMAGE" and n.image and os.path.basename(n.image.filepath).lower().startswith("diffuse")), None)
+        bsdf = next((n for n in N if n.type == "BSDF_PRINCIPLED"), None)
+        if not diff or not bsdf: continue
+        path = os.path.join(os.path.dirname(bpy.path.abspath(diff.image.filepath)), "nor_gl.jpg")
+        if not os.path.exists(path): continue
+        t = N.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(path, check_existing=True); t.image.colorspace_settings.name = "Non-Color"
+        t.projection = diff.projection; t.projection_blend = diff.projection_blend
+        if diff.inputs["Vector"].is_linked: Lk(diff.inputs["Vector"].links[0].from_socket, t.inputs["Vector"])
+        nm = N.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = 0.9
+        Lk(t.outputs["Color"], nm.inputs["Color"])
+        nrm = bsdf.inputs["Normal"]
+        if nrm.is_linked and nrm.links[0].from_node.type == "BUMP":
+            Lk(nm.outputs["Normal"], nrm.links[0].from_node.inputs["Normal"])
+        elif not nrm.is_linked:
+            Lk(nm.outputs["Normal"], nrm)
+        mat["detailed"] = True
+
+def probe(px, py):
+    """what is seen at a point of the reference picture (a debugging aid):
+    the first things a ray from the eye through it meets"""
+    cam = SCENE.camera; bpy.context.view_layer.update()
+    frame = [cam.matrix_world @ v for v in cam.data.view_frame(scene=SCENE)]   # top right, bottom right, bottom left, top left
+    u, v = px / RW, py / RH
+    top = frame[3].lerp(frame[0], u); bottom = frame[2].lerp(frame[1], u)
+    target = top.lerp(bottom, v); origin = cam.matrix_world.translation
+    d = (target - origin).normalized(); o = origin.copy()
+    dg = bpy.context.evaluated_depsgraph_get()
+    for _ in range(6):
+        hit, loc, nrm, idx, obj, mat = SCENE.ray_cast(dg, o, d)
+        if not hit: print("PROBE", px, py, "nothing"); return
+        print("PROBE", px, py, obj.name, [round(c * 100) for c in loc], obj.active_material.name if obj.active_material else None)
+        o = loc + d * 0.001
+
+EYE = {}
+def eye_fill(energy, size=1.6):
+    """The halls' fill: a broad, soft, cool light a little ahead of the eye and
+    above it, shining almost level into the room, the way the eye looks — so
+    that whatever faces the eye (a desk's front, a chair, the floor before
+    it, the wall up to its cornice) is never quite black, as nothing in the
+    halls is. It is lifted half the way to whatever is overhead, at most
+    40 cm, so it stays under the ceiling; it is not seen and puts no shine on
+    anything."""
+    cam = SCENE.camera; bpy.context.view_layer.update()
+    eye = cam.matrix_world.translation.copy()
+    look = cam.matrix_world.to_3x3() @ Vector((0, 0, -1))
+    ahead = Vector((look.x, look.y, 0)).normalized()
+    hit, loc, *_ = SCENE.ray_cast(bpy.context.evaluated_depsgraph_get(), eye, Vector((0, 0, 1)))
+    up = min(0.4, 0.5 * (loc.z - eye.z)) if hit else 0.4
+    at = eye + ahead * 0.3 + Vector((0, 0, up))
+    o = lamp("fill at the eye", "AREA", tuple(at), aim=tuple(at + ahead * 4 + Vector((0, 0, -0.6))), energy=energy, colour=(0.8, 0.85, 1.0), size=size)
+    o.visible_camera = False; o.visible_glossy = False
+    EYE["fill"] = o
+    return o
+
+def sweep(lit, plates):
+    """(calibrating against the halls: `--sweep 1,2,4/-0.5,0,0.5` adds a plate
+    `sweep-i-j` for each strength of the fill at the eye — times its own —
+    at each step of exposure from the room's own)"""
+    spec, fill = arg("--sweep", ""), EYE.get("fill")
+    if not spec or not fill: return plates
+    strengths, steps = ([float(v) for v in part.split(",")] for part in spec.split("/"))
+    energy, exposure = fill.data.energy, SCENE.view_settings.exposure
+    def off():
+        fill.data.energy = energy; SCENE.view_settings.exposure = exposure
+    for i, k in enumerate(strengths):
+        for j, s in enumerate(steps):
+            def on(k=k, s=s):
+                lit.set(True); fill.data.energy = energy * k; SCENE.view_settings.exposure = exposure + s
+            plates[f"sweep-{i}-{j}"] = (on, off)
+    return plates
+
+def one_light(lit, out=()):
+    """A room by one light, as the halls are: `lit` the Light that burns —
+    always — and `out` every other, put out for good (lamps dark, shades and
+    bulbs cold). Returns the single plate to render, `lights-1`."""
+    for light in out:
+        for l in light.lamps: l.data.energy = 0.0
+        for m in light.glows: m.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 0.0
+    lit.set(True)
+    return sweep(lit, {"lights-1": (lambda: lit.set(True), lambda: lit.set(True))})

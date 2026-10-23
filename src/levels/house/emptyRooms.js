@@ -1,43 +1,37 @@
-import PlainRoomScene from "./plainRoom.js";
-import Room11Scene from "../room11/Room11Scene.js";
-import { Room12Scene, Room13Scene } from "../atticRooms/AtticRoomScene.js";
-
-export { Room11Scene, Room12Scene, Room13Scene };
+import QuietRoomScene from "./quietRoom.js";
+import ROOM9 from "./rooms/Room9.json";
+import ROOM10 from "./rooms/Room10.json";
+import ROOM11 from "./rooms/Room11.json";
+import ROOM12 from "./rooms/Room12.json";
+import ROOM13 from "./rooms/Room13.json";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// IX and X keep the plain rooms off the chemistry hall. XI is the furnished
-// physics study; XII and XIII are the archive and workshop under the roof.
+// The rooms with nothing in them to solve (house/quietRoom.js), each a
+// Blender render of its own (art/blender/room_<name>.py):
+//   IX    off the chemist's hall: empty, the fire laid and never lit, only the
+//         moon on the dusty flags (room_nine.py)
+//   X     off the chemist's hall: bare, the door open on the hall, nail holes
+//         round its frame where boards were (room_ten.py)
+//   XI    Orion's physics study: his workbench of apparatus, the slate, the
+//         tall sash window (room_physics.py)
+//   XII   under the roof: the archive, charts and instrument cases under the
+//         eaves, a lantern (room_archive.py)
+//   XIII  under the roof: the workshop, tools on the bench, the hearth swept
+//         and cold, a lantern (room_workshop.py)
 // Their scene keys and registration order stay together here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const room = (key, plan) => class extends PlainRoomScene {
+const WARM = 0xffb66c;
+const room = (key, spec, lights) => class extends QuietRoomScene {
   constructor() {
-    super(key, plan);
+    super(key, spec, lights);
   }
 };
 
-// off the chemist's hall: plaster and flagstones, as his laboratory
-export const Room9Scene = room("Room9", {
-  style: {
-    wall: "plaster", near: "#1e2624", far: "#0e1312", back: "#141a19", rail: 0,
-    dado: { kind: "boards", h: 92, near: "#1a2320", far: "#0c110f", back: "#121916", rail: "#3a2c1c", railFar: "#1a130c", railBack: "#2c2216" },
-    floor: "flags", floorNear: "#2a2c2b", floorFar: "#121414", ceiling: "beams", ceilingCol: "#0c0d0d", window: "sash",
-  },
-  window: { x: -0.25, hw: 0.2, top: 240, sill: 110 },
-  hearth: 0.45,
-  chest: null,
-  rug: ["#16191a", "#34383a", "#1c2022"],
-});
-
-export const Room10Scene = room("Room10", {
-  style: {
-    wall: "plaster", near: "#24262a", far: "#101215", back: "#171a1e", rail: 0,
-    floor: "boards", floorNear: "#2a2118", floorFar: "#14100b", ceiling: "beams", ceilingCol: "#0c0d0e", window: "leaded",
-  },
-  window: { x: 0.3, hw: 0.18, top: 246, sill: 112 },
-  hearth: null,
-  chest: null,
-  rug: ["#1a1614", "#4a3a2c", "#241e1a"],
-});
+export const Room9Scene = room("Room9", ROOM9);
+export const Room10Scene = room("Room10", ROOM10, { door: 0xffc07a });
+export const Room11Scene = room("Room11", ROOM11, { lamp: 0xffc078 });
+export const Room12Scene = room("Room12", ROOM12, { lantern: WARM });
+export const Room13Scene = room("Room13", ROOM13, { lantern: WARM });
 
 export const EMPTY_ROOMS = [Room9Scene, Room10Scene, Room11Scene, Room12Scene, Room13Scene];

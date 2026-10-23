@@ -9,7 +9,7 @@ import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
 /** A room off the hall. Not a level, and with no code of its own: it is where
  *  some of them are found. Each thing that opens a puzzle glints until the
  *  puzzle has been solved, and a click on it walks up to it and opens it;
- *  solved, it stops glinting and is only furniture.
+ *  solved, it stops glinting, and can still be gone back into.
  *
  *  Every room keeps a small gilt chest, glinting very faintly. It cannot be
  *  opened — pointed at, it only says it is locked. It opens of itself once
@@ -88,11 +88,11 @@ export default class RoomScene extends BasePuzzleScene {
         .setDepth(-8);
     this.live?.(L, k, glow);
 
-    // the things that open puzzles; one already solved is only furniture. A
-    // thing with a `first` (a drawer, shut) is opened by a first click, and
-    // only then gone into
+    // the things that open puzzles: one already solved can be gone back into
+    // as any other, it only no longer glints. A thing with a `first` (a
+    // drawer, shut) is opened by a first click, and only then gone into
     for (const thing of L.things) {
-      if (levels.isCompleted(levels.indexOf(thing.level))) continue;
+      const solved = levels.isCompleted(levels.indexOf(thing.level));
       const shut = () => thing.first && !this._opened.has(thing.level);
       const now = () => (shut() ? thing.first : thing);
       if (!shut() && thing.first) this.open(thing, L, k, false);
@@ -124,7 +124,7 @@ export default class RoomScene extends BasePuzzleScene {
         }
         go();
       });
-      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => now().box }));
+      if (!solved) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => now().box }));
     }
 
     if (L.chest) this._setChest(L, k);

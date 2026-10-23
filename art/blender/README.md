@@ -179,35 +179,84 @@ node art/blender/hall_chem_publish.mjs
 
 Use `--samples 64 --width 1400 --only plate` for trials.
 
-## The rooms off the halls (I, II, III)
+## The physics observatory (second floor)
 
-Each room is built in 3D through the eye every room is seen with
-(`levels/house/roomKit.js` `roomLayout`, at its 1792 × 1024 reference). The
-room's own layout code (`study.js`, `room2.js`, `room3.js`) gives the numbers,
-so every clickable thing, glow, flame and chest falls where the game expects
-it.
+`physics_rotunda.py` rebuilds the circular hall in real scale, with walnut
+joinery, chevron parquet, a plaster dome, a glazed night window, the XI door,
+gallery passage and spiral stairs. The telescope and animated armillary are
+modeled brass instruments. Its overscan camera matches `layoutRotunda` at
+every viewport; the room plate is scaled uniformly. Lighting follows the
+chemistry hall. See [physics-sources.md](physics-sources.md) for materials,
+camera measurements and the complete render/publish commands.
 
-- `room_common.py`: the camera, the gilt chest (rendered shut and open, alone,
-  in the box the game draws it in), and a plate for every combination of the
-  room's lights.
-- `room_furnish.py`: books and bookcases, curtains, tables and desks, lamp
-  shades, rugs, and the garden at night beyond a window.
-- `room_study.py`, `room_library.py`, `room_cabin.py`: the rooms themselves.
-- `room_boards.mjs`: the flat things, drawn in code (wallpaper, prints, the
-  cipher wheel, book spines, rugs, the sea chart).
-- `clock_faces.mjs`: the library's clock faces, drawn from the puzzle's own
-  times (`overtime/puzzle.js`).
+The publisher writes `observatory-native-v2.webp`, a grid of 64 armillary
+poses and the camera/crop metadata used by `levels/top/physicsRender.js`.
+The original procedural observatory remains the asset-loading fallback.
 
-A light goes out when its puzzle is solved, so a room renders one plate per
-way its lights can stand (`lights-101`: the first and third on). The game
-shows the plate for the current state (`levels/house/roomRender.js`).
+## The Top Passage
+
+`top_passage.py` constructs the timber attic corridor, pegged roof trusses,
+floorboards, lanterns, stored belongings and the working XII/XIII doorways.
+It shares Physics' overscan perspective and the chemistry hall's lighting.
+Each door has 41 native hinge poses and 7 latch poses; the publisher packs
+them into two grids within 4096 px limits. Runtime uses the exported door,
+lamp and lock landmarks. See [top-passage-sources.md](top-passage-sources.md)
+for sources and render commands.
+
+## The rooms off the halls (I–V, VII–XIII)
+
+Every room is its own place, seen from wherever it is best seen: its own
+camera (a corner, down a long gallery, sitting at a table, from a step above,
+back at its own door), its furniture standing where it would stand, not all
+along the walls. Blender then writes down where everything the game keeps alive
+fell in the picture — the things that open puzzles, the chest, glows, flames,
+window panes, the moonbeam, screens to draw over — by projecting them, into
+`src/levels/house/rooms/<Room>.json`. The game lays the render over its screen
+covering it (`renderedLayout` in `levels/house/roomRender.js`).
+
+- `room_common.py`: `stage` (the free camera), `assembled`/`framed` (build
+  something about the origin and stand it anywhere, turned), `Layout` (what the
+  game is told), the gilt chest (rendered shut and open, alone, in the box the
+  game draws it in, a light on it alone so its gold reads), `one_light` (the
+  room's one light on, every other put out), `crop_frames` (a drawer, a notebook
+  sliding out), and `finish`: what makes a room as clean as the halls — no
+  haze, enough samples that the denoiser need not smear, stray paths clamped,
+  the scans' own normal maps, no varnish shine.
+- `room_furnish.py`: books (bound in leather grain) and bookcases, curtains,
+  tables and desks, lamp shades, rugs, the garden at night, sash windows, oil
+  lanterns, pitched roofs. `room_attic.py`: the rooms under the roof.
+- The rooms: `room_study.py` (I), `room_library.py` (II), `room_cabin.py`
+  (III), `room_counting.py` (IV), `room_drawing.py` (V), `room_lab.py` (VII),
+  `room_weighing.py` (VIII), `room_nine.py`, `room_ten.py`, `room_physics.py`
+  (XI), `room_archive.py` (XII), `room_workshop.py` (XIII).
+- Drawn in code: `room_boards.mjs` (wallpaper, prints, cipher wheel, spines,
+  rugs, sea chart), `clock_faces.mjs` (the library's clocks, from
+  `overtime/puzzle.js`), `counting_boards.mjs` (the cards, the birds),
+  `weighing_board.mjs`, `lab_boards.mjs` (periodic table, the phials' tag),
+  `physics_boards.mjs` (the slate, the galvanometer).
+
+Puzzle clues in a room are the puzzle's own: the clocks' times, the chess
+position, the marked books, the cards, the birds on the wires, the Christmas
+tree's lamps (3 1 4 1 5 9 2 6 5 alight, top to bottom), the five bottles.
+
+Every room is lit as the chemistry hall is: by one light, always on, and the
+moon. Nothing in a room changes when its puzzles are solved (a solved thing
+only stops glinting, and can still be gone back into), so each room renders
+one plate, `lights-1`. Rooms are exposed to the hall's brightness: a mean of
+about 40 (out of 255) over the plate in greyscale.
+
+`--only` picks what to render: `plates`, `chest` (rooms I–V), `drawer`
+(counting), `notebook` (lab).
 
 ```powershell
-node art/blender/room_boards.mjs
-node art/blender/clock_faces.mjs
-& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_study.py -- --samples 256 --width 2560
+node art/blender/room_boards.mjs; node art/blender/clock_faces.mjs; node art/blender/counting_boards.mjs
+node art/blender/weighing_board.mjs; node art/blender/lab_boards.mjs; node art/blender/physics_boards.mjs
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_study.py -- --width 2560
 node art/blender/room_publish.mjs study Room1
-# likewise room_library.py → library Room2, room_cabin.py → cabin Room3
+# likewise library Room2, cabin Room3, counting Room4 (--only plates,chest,drawer),
+# drawing Room5, lab Room7 (--only plates,notebook), weighing Room8, nine Room9,
+# ten Room10, physics Room11, archive Room12, workshop Room13
 ```
 
-Use `--samples 48 --width 1400 --only lights-11` (or `lights-111`) for trials.
+Use `--samples 64 --width 1100 --only plates` for trials. Room VI has its own
+pipeline (above).

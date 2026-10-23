@@ -29,7 +29,7 @@ from room_furnish import *
 OUT = os.path.join(ROOT, ".artifacts/room-study")
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")       # room_boards.mjs
-SAMPLES = int(arg("--samples", "256"))
+SAMPLES = int(arg("--samples", "700"))
 WIDTH = int(arg("--width", "2560"))
 ONLY = set(arg("--only", "plates,chest").split(","))
 RNG = random.Random(1888)
@@ -85,7 +85,7 @@ PAPER = wallpaper()
 CIPHER = picture("cipher face", os.path.join(DRAWN, "cipher.png"), rough=0.3, coat=0.2, bump=0.4)
 CIPHER.node_tree.nodes["Principled BSDF"].inputs["Metallic"].default_value = 0.85
 PRINT = picture("botanical print", os.path.join(DRAWN, "study-print.png"), rough=0.9)
-spine_mat = picture("spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3)
+spine_mat = bound(picture("spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3))
 COVERS = cover_materials()
 VELVET = scan("velvet", "velour_velvet", size=0.5, tint=(0.1, 0.42, 0.22), bright=0.3, sat=1.0, rough=(0.6, 0.85), bump=0.3)
 VELVET.node_tree.nodes["Principled BSDF"].inputs["Sheen Weight"].default_value = 0.35
@@ -215,7 +215,7 @@ ty = LT["h"]
 # the lamp, to the right of the case
 lx, ld = LT["x"] + 25, LT["d"] - 6
 lathe("lamp", [(0, 0), (0.075, 0), (0.078, 0.01), (0.06, 0.025), (0.03, 0.04), (0.02, 0.1), (0.032, 0.14), (0.016, 0.17), (0.014, 0.25), (0.02, 0.27), (0.012, 0.29), (0, 0.29)], BRASS, at=tuple(P(lx, ty, ld)), steps=40)
-SHADE = shade_material("lamp shade", (0.78, 0.66, 0.44), glow=(1.0, 0.6, 0.28), strength=float(arg("--shade", "0.5")), through=float(arg("--through", "0.04")))
+SHADE = shade_material("lamp shade", (0.5, 0.41, 0.27), glow=(1.0, 0.6, 0.28), strength=float(arg("--shade", "0.5")), through=float(arg("--through", "0.04")))
 pleated_shade(lx, ld, ty + 24, ty + 46, 16.5, 8.5, SHADE)
 lamp_l = lamp("lamp bulb", "POINT", tuple(P(lx, ty + 33, ld)), energy=float(arg("--lamp", "32")), colour=(1.0, 0.68, 0.36), size=0.03)
 # the glass case: a brass frame round glass, earth halfway up it, a seedling,
@@ -459,15 +459,18 @@ world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.004, 0.00
 lamp("the moon", "SUN", tuple(P(400, 1900, 2800)), aim=tuple(P(60, 0, 300)), energy=float(arg("--moon", "1.6")), colour=(0.55, 0.68, 1.0), angle=math.radians(1.5))
 sky_l = lamp("sky through the window", "AREA", tuple(P(WIN["x"], 190, D1 + 14)), aim=tuple(P(WIN["x"] - 30, 60, 320)), energy=float(arg("--sky", "30")), colour=(0.5, 0.62, 0.95), size=1.0, size_y=1.8)
 sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
-fill_l = lamp("fill", "AREA", tuple(P(-150, 250, 40)), aim=tuple(P(80, 90, 420)), energy=float(arg("--fill", "45")), colour=(0.95, 0.88, 0.85), size=2.2)
+fill_l = lamp("fill", "AREA", tuple(P(-150, 250, 40)), aim=tuple(P(80, 90, 420)), energy=float(arg("--fill", "55")), colour=(0.8, 0.85, 1.0), size=2.2)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
+eye_fill(float(arg("--eyefill", "16")))                # (the halls' fill: nothing the eye sees falls to black)
 shelf_l = lamp("bookcase glow", "AREA", tuple(P(-90, 280, D1 - 90)), aim=tuple(P(-90, 110, D1)), energy=float(arg("--shelf", "26")), colour=(1.0, 0.72, 0.45), size=2.2, size_y=0.3)
 shelf_l.visible_camera = False; shelf_l.visible_glossy = False
-side_l = lamp("fill on the right", "AREA", tuple(P(60, 250, 40)), aim=tuple(P(240, 150, 220)), energy=float(arg("--side", "18")), colour=(1.0, 0.86, 0.72), size=1.6)
+side_l = lamp("fill on the right", "AREA", tuple(P(60, 250, 40)), aim=tuple(P(240, 150, 220)), energy=float(arg("--side", "18")), colour=(0.82, 0.86, 1.0), size=1.6)
 side_l.visible_camera = False; side_l.visible_glossy = False
-LIGHTS = [Light("lamp", [lamp_l], [SHADE]), Light("candle", [candle_l])]
+# (one light: the candle on the desk; the lamp is out, the fire dead)
+ONE = Light("candle", [candle_l]); OUT_LIGHTS = [Light("lamp", [lamp_l], [SHADE]), Light("fire", [fire_l])]
+_mul.inputs[1].default_value = 0.0                # (the fire in the grate dead too: only cold ash)
 clear_glass()
-air = room_haze(X0, X1, 0, D1, TOP, float(arg("--haze", "0.012")))
+air = room_haze(X0, X1, 0, D1, TOP, float(arg("--haze", "0")))
 
 # ── what the game is told ──────────────────────────────────────────────────
 LAYOUT.thing("binarytree", "Look into the glass case", corners(cx0 - 1.5, cx1 + 1.5, cy0, cy1 + 9, cd0 - 1.5, cd1 + 1.5))
@@ -488,9 +491,11 @@ LAYOUT.dust([P(wx0, WIN["sill"], GD), P(wx1, SPRING + WIN["hw"], GD), P(51, 0, 4
 LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.3")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.8")))
 scene.cycles.volume_bounces = 1
-plates = {k: v for k, v in light_states(LIGHTS).items() if "plates" in ONLY or k in ONLY}
+GLOSSY = ()                # (what keeps its shine: glazes, screens, lamp glass)
+finish(scene, SAMPLES, keep_gloss=GLOSSY)
+plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

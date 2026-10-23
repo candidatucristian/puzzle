@@ -35,7 +35,7 @@ from room_furnish import *
 OUT = os.path.join(ROOT, ".artifacts/room-library")
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")        # room_boards.mjs, clock_faces.mjs
-SAMPLES = int(arg("--samples", "256"))
+SAMPLES = int(arg("--samples", "700"))
 WIDTH = int(arg("--width", "2560"))
 ONLY = set(arg("--only", "plates,chest").split(","))
 RNG = random.Random(1961)
@@ -70,7 +70,7 @@ RED_VELVET = scan("red velvet", "velour_velvet", size=0.5, tint=(0.62, 0.2, 0.18
 RED_VELVET.node_tree.nodes["Principled BSDF"].inputs["Sheen Weight"].default_value = 0.2
 RED_VELVET.node_tree.nodes["Principled BSDF"].inputs["Specular IOR Level"].default_value = 0.2
 PRINT = picture("botanical print", os.path.join(DRAWN, "study-print.png"), rough=0.9)
-spine_mat = picture("spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3)
+spine_mat = bound(picture("spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3))
 COVERS = cover_materials()
 LAYOUT = Layout("Room2")
 
@@ -200,7 +200,7 @@ rod("ladder rail", P(CASE_X[0], 318, D1 - 36), P(CASE_X[1], 318, D1 - 36), M(1.2
 darken_model(import_model("ArmChair_01", height=M(98), at=tuple(P(-172, 0, 468)), rot=float(arg("--armchair", "0.7"))), (0.3, 0.17, 0.1))
 sx, sd = STAND["x"], STAND["d"]
 lathe("standard lamp", [(0, 0), (0.15, 0), (0.15, 0.02), (0.06, 0.05), (0.02, 0.1), (0.014, 0.2), (0.014, M(STAND["shade"] - 5)), (0.02, M(STAND["shade"] - 3)), (0.008, M(STAND["shade"] + 8)), (0, M(STAND["shade"] + 8))], BRASS, at=tuple(P(sx, 0, sd)), steps=40)
-STAND_SHADE = shade_material("standard lamp shade", (0.72, 0.58, 0.38), glow=(1.0, 0.6, 0.28), strength=0.5, through=0.05)
+STAND_SHADE = shade_material("standard lamp shade", (0.48, 0.39, 0.26), glow=(1.0, 0.6, 0.28), strength=0.5, through=0.05)
 pleated_shade(sx, sd, STAND["shade"] - 2, STAND["shade"] + 26, 24, 15, STAND_SHADE)
 stand_l = lamp("standard lamp bulb", "POINT", tuple(P(sx, STAND["shade"] + 12, sd)), energy=float(arg("--stand", "70")), colour=(1.0, 0.68, 0.36), size=0.03)
 darken_model(import_model("side_table_01", height=M(58), at=tuple(P(-200, 0, 392)), rot=0.4), (0.34, 0.22, 0.15))
@@ -350,16 +350,19 @@ lamp("the moon", "SUN", tuple(MOON_FROM), aim=tuple(MOON_TO), energy=float(arg("
 for c in WINDOWS:
     sky_l = lamp("sky through the window", "AREA", tuple(P(X1 + 14, 190, c)), aim=tuple(P(0, 60, c - 40)), energy=float(arg("--sky", "18")), colour=(0.5, 0.62, 0.95), size=1.8, size_y=1.0)
     sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
-fill_l = lamp("fill", "AREA", tuple(P(0, 260, 40)), aim=tuple(P(0, 90, D1)), energy=float(arg("--fill", "60")), colour=(0.95, 0.88, 0.85), size=2.4)
+fill_l = lamp("fill", "AREA", tuple(P(0, 260, 40)), aim=tuple(P(0, 90, D1)), energy=float(arg("--fill", "55")), colour=(0.8, 0.85, 1.0), size=2.4)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
+eye_fill(float(arg("--eyefill", "15")))                # (the halls' fill: nothing the eye sees falls to black)
 for d in (300, 640):
     l_ = lamp("bookcase glow", "AREA", tuple(P(X0 + 110, TOP - 40, d)), aim=tuple(P(X0, 120, d)), energy=float(arg("--shelf", "22")), colour=(1.0, 0.72, 0.45), size=0.4, size_y=2.4)
     l_.visible_camera = False; l_.visible_glossy = False
 end_l = lamp("end wall glow", "AREA", tuple(P(110, TOP - 40, D1 - 160)), aim=tuple(P(110, 110, D1)), energy=float(arg("--end", "26")), colour=(1.0, 0.72, 0.45), size=2.4, size_y=0.4)
 end_l.visible_camera = False; end_l.visible_glossy = False
-LIGHTS = [Light("shelf", [stand_l], [STAND_SHADE]), Light("desk", [desk_l], [GREEN_GLASS, LED_ON]), Light("clock", [office_l], [OFFICE_BULB] + FACES)]
+# (one light: the green lamp on the reading table; the standard lamp and the
+# clerk's lamp are out — the clocks' faces and the router's light stay on)
+ONE = Light("desk", [desk_l], [GREEN_GLASS]); OUT_LIGHTS = [Light("shelf", [stand_l], [STAND_SHADE]), Light("clerk", [office_l], [OFFICE_BULB])]
 clear_glass()
-air = room_haze(X0, X1, 0, D1, TOP, float(arg("--haze", "0.014")))
+air = room_haze(X0, X1, 0, D1, TOP, float(arg("--haze", "0")))
 
 # ── what the game is told ──────────────────────────────────────────────────
 EB = framed((CASE_X[0], 0, D1), -math.pi / 2)
@@ -387,9 +390,11 @@ if arg("--top", "") == "1":
     cam = scene.camera; cam.data.type = "ORTHO"; cam.data.ortho_scale = 11; cam.data.shift_y = 0
     cam.location = P(0, 1500, 420); cam.rotation_euler = (0, 0, 0)
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.4")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.9")))
 scene.cycles.volume_bounces = 1
-plates = {k: v for k, v in light_states(LIGHTS).items() if "plates" in ONLY or k in ONLY}
+GLOSSY = ("green glass shade", "clock face 0", "clock face 1", "clock face 2", "clock face 3", "smoked glass", "radio glass", "red filter", "led lit", "led")                # (what keeps its shine: glazes, screens, lamp glass)
+finish(scene, SAMPLES, keep_gloss=GLOSSY)
+plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

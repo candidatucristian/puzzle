@@ -4,6 +4,7 @@ import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { HOUSE_GO, zoomInto, zoomOutFrom } from "../../shared/house.js";
 import { layoutRotunda, paintRotunda, releaseRotundaArt } from "./rotunda.js";
 import { loadPhysicsMaterials } from "./materials.js";
+import { loadPhysicsRender } from "./physicsRender.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The top floor: the last, and not a hall at all but a round room under the
@@ -16,7 +17,8 @@ import { loadPhysicsMaterials } from "./materials.js";
 // On the left a doorway with nothing hung in it any more opens on a gallery
 // gone to ruin, with two doors more, facing; a click goes down it.
 //
-// The room is painted (rotunda.js). Live over it: the candles, the light
+// The native Blender plate follows rotunda.js's responsive camera. Live
+// over it: the candles, the light
 // under a door that calls, dust in the moonlight, the glints, and the slow
 // rotation of the armillary's inner rings.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,6 +30,7 @@ export default class TopScene extends BasePuzzleScene {
 
   preload() {
     loadPhysicsMaterials(this);
+    loadPhysicsRender(this);
   }
 
   create(data) {
@@ -64,10 +67,10 @@ export default class TopScene extends BasePuzzleScene {
     this._candles = L.sconces.filter((s) => !s.dead).map((s) =>
       this.add
         .image(s.x, s.y - 21 * s.s, k.glow)
-        .setDisplaySize(120 * s.s, 120 * s.s)
+        .setDisplaySize((L.rendered ? 52 : 120) * s.s, (L.rendered ? 52 : 120) * s.s)
         .setTint(0xffc078)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(0.2)
+        .setAlpha(L.rendered ? 0.07 : 0.2)
         .setDepth(-8),
     );
 
@@ -90,28 +93,26 @@ export default class TopScene extends BasePuzzleScene {
       const sill = { x: (d.quad[2].x + d.quad[3].x) / 2, y: (d.quad[2].y + d.quad[3].y) / 2 };
       const glow = this.add
         .image(sill.x, sill.y, k.glow)
-        .setDisplaySize(d.box.width * 1.5, d.box.height * 0.16)
+        .setDisplaySize(d.box.width * (L.rendered ? 1.1 : 1.5), d.box.height * (L.rendered ? 0.055 : 0.16))
         .setTint(0xffc078)
         .setBlendMode(Phaser.BlendModes.ADD)
         .setDepth(-8);
-      this.ambientTween({ targets: glow, alpha: { from: 0.22, to: 0.5 }, duration: 2200 + n * 260, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      this.ambientTween({ targets: glow, alpha: { from: L.rendered ? 0.12 : 0.22, to: L.rendered ? 0.25 : 0.5 }, duration: 2200 + n * 260, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => d.box }));
     });
 
     this._passage(L);
 
-    // the telescope: it glints until its puzzle is solved
+    // the telescope: it glints until its puzzle is solved, and can be gone back to after
     const levels = this.services.levels, thing = L.thing;
-    if (!levels.isCompleted(levels.indexOf(thing.level))) {
-      const zone = this.add
-        .zone(thing.box.x, thing.box.y, thing.box.width, thing.box.height)
-        .setOrigin(0, 0)
-        .setInteractive({ useHandCursor: true })
-        .setData("interactionLabel", thing.label)
-        .setDepth(5);
-      zone.on("pointerdown", () => this._go(thing.box, { level: thing.level }));
-      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box }));
-    }
+    const zone = this.add
+      .zone(thing.box.x, thing.box.y, thing.box.width, thing.box.height)
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true })
+      .setData("interactionLabel", thing.label)
+      .setDepth(5);
+    zone.on("pointerdown", () => this._go(thing.box, { level: thing.level }));
+    if (!levels.isCompleted(levels.indexOf(thing.level))) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box }));
 
     // dust turning in the moonlight before the window
     const w = L.win;
@@ -164,7 +165,7 @@ export default class TopScene extends BasePuzzleScene {
     if (!this._L || !this.ambientMotion || this.reducedMotion) return;
     this._armillary?.update(delta);
     const t = time / 1000;
-    this._candles.forEach((g, i) => g.setAlpha(0.17 + 0.04 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.03));
+    this._candles.forEach((g, i) => g.setAlpha((0.17 + 0.04 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.03) * (this._L.rendered ? 0.38 : 1)));
   }
 
   _teardown() {

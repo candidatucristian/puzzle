@@ -32,7 +32,7 @@ from room_furnish import *
 OUT = os.path.join(ROOT, ".artifacts/room-drawing")
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")
-SAMPLES = int(arg("--samples", "256"))
+SAMPLES = int(arg("--samples", "700"))
 WIDTH = int(arg("--width", "2560"))
 ONLY = set(arg("--only", "plates,chest").split(","))
 RNG = random.Random(1225)
@@ -250,7 +250,7 @@ _sl(_stc.outputs["Object"], _smp.inputs["Vector"]); _sl(_smp.outputs["Vector"], 
 _sr = _sn.new("ShaderNodeValToRGB"); _sr.color_ramp.elements[0].color = (0.05, 0.05, 0.06, 1); _sr.color_ramp.elements[1].color = (0.85, 0.9, 1.0, 1)
 _sl(_snz.outputs["Value"], _sr.inputs["Fac"]); _sl(_sr.outputs["Color"], _sb.inputs["Emission Color"])
 _sb.inputs["Base Color"].default_value = (0.01, 0.01, 0.012, 1); _sb.inputs["Roughness"].default_value = 0.08; _sb.inputs["Coat Weight"].default_value = 0.8
-_sb.inputs["Emission Strength"].default_value = float(arg("--snow", "0.3"))
+_sb.inputs["Emission Strength"].default_value = float(arg("--snow", "0.03"))
 tv = TV
 box_cm("television", tv["x0"], tv["x1"], tv["y0"], tv["y1"], D1 - 4, D1 - 1.5, BEZEL, 0.4)
 GLASS_D = D1 - 4.05
@@ -464,14 +464,19 @@ world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.004, 0.00
 lamp("the moon", "SUN", tuple(P(-300, 2600, 2600)), aim=tuple(P(-20, 0, 300)), energy=float(arg("--moon", "2.4")), colour=(0.55, 0.68, 1.0), angle=math.radians(1.5))
 sky_l = lamp("sky through the window", "AREA", tuple(P(WIN["x"], 190, D1 + 14)), aim=tuple(P(WIN["x"], 60, 320)), energy=float(arg("--sky", "26")), colour=(0.5, 0.62, 0.95), size=1.4, size_y=1.9)
 sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
-fill_l = lamp("fill", "AREA", tuple(P(150, 220, 20)), aim=tuple(P(-120, 80, 420)), energy=float(arg("--fill", "45")), colour=(0.95, 0.88, 0.85), size=1.8)
+fill_l = lamp("fill", "AREA", tuple(P(150, 220, 20)), aim=tuple(P(-120, 80, 420)), energy=float(arg("--fill", "50")), colour=(0.8, 0.85, 1.0), size=1.8)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
+eye_fill(float(arg("--eyefill", "19")))                # (the halls' fill: nothing the eye sees falls to black)
 for (at, aim) in ((P(-80, 210, 330), P(X0, 150, 330)), (P(-40, 210, 440), P(-40, 150, D1))):
-    wash = lamp("on the walls", "AREA", tuple(at), aim=tuple(aim), energy=float(arg("--wash", "18")), colour=(1.0, 0.82, 0.62), size=1.0)
+    wash = lamp("on the walls", "AREA", tuple(at), aim=tuple(aim), energy=float(arg("--wash", "18")), colour=(0.82, 0.86, 1.0), size=1.0)
     wash.visible_camera = False; wash.visible_glossy = False
-LIGHTS = [Light("trap", [candle_l]), Light("tree", [tree_l], [BULB_LIT]), Light("tv", [], [SNOW, TV_LAMP])]
+# (one light: the tree's lamps — just so many alight on each tier as the
+# puzzle has them; the candle by the trap is out, the fire dead; the
+# television's snow stays on)
+ONE = Light("tree", [tree_l], [BULB_LIT]); OUT_LIGHTS = [Light("trap", [candle_l]), Light("fire", [fire_l])]
+_mul.inputs[1].default_value = 0.0
 clear_glass()
-air = room_haze(X0, X1, -40, D1, TOP, float(arg("--haze", "0.01")))
+air = room_haze(X0, X1, -40, D1, TOP, float(arg("--haze", "0")))
 
 # ── what the game is told ──────────────────────────────────────────────────
 LAYOUT.thing("tapcode", "Climb down the ladder", corners(tp["x0"] - 5, tp["x1"] + 5, 0, 66, ld0, tp["d1"] + 5))
@@ -490,9 +495,11 @@ LAYOUT.dust([P(wx0, WIN["top"], D1), P(wx1, WIN["sill"], D1), P(wx0 + 10, 0, 345
 LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.35")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.6")))
 scene.cycles.volume_bounces = 1
-plates = {k: v for k, v in light_states(LIGHTS).items() if "plates" in ONLY or k in ONLY}
+GLOSSY = ("snow", "standby lamp", "lamp alight", "lamp dark")                # (what keeps its shine: glazes, screens, lamp glass)
+finish(scene, SAMPLES, keep_gloss=GLOSSY)
+plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

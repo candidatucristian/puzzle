@@ -10,15 +10,10 @@ import { loadRoomRender } from "../house/roomRender.js";
 // birds on wires on the back wall, and the drawer of old tickets pulled out
 // of the chest under the window. The gilt chest is on the counting table.
 //
-// The room is a Blender render (room4.js; house/roomRender.js). Each puzzle's
-// light — the picture light over the board and the lamp on the table, the
-// light over the painting, the candle on the chest of drawers — burns only
-// until that puzzle is solved. Live over the render: those lights, the embers
-// in the stove (which stay in), and dust in the moonbeam.
+// The room is a Blender render (room4.js; house/roomRender.js), lit by the
+// green lamp on the counting table and the moon. Live over it: that lamp,
+// breathing; dust in the moonbeam.
 // ─────────────────────────────────────────────────────────────────────────────
-
-// which puzzle each of the room's lights is lit for
-const LIT_FOR = { cards: "sequence", painting: "wires", drawer: "station" };
 
 export default class Room4Scene extends RoomScene {
   constructor() {
@@ -30,10 +25,8 @@ export default class Room4Scene extends RoomScene {
     loadRoomRender(this, "Room4");
   }
 
-  layout(W, H, levels) {
-    const on = {};
-    for (const [light, level] of Object.entries(LIT_FOR)) on[light] = !levels.isCompleted(levels.indexOf(level));
-    return layoutRoom4(W, H, on);
+  layout(W, H) {
+    return layoutRoom4(W, H);
   }
 
   paint(L) {
@@ -45,17 +38,9 @@ export default class Room4Scene extends RoomScene {
   }
 
   live(L, k, glow) {
-    // the stove's embers, always
-    this._embers = glow(L.glows.stove, 0.3, 0xff7a28);
-    // whichever lamps still burn, breathing very slightly
-    const lamps = [];
-    if (L.on.cards) lamps.push([L.glows.desk, 0.18], [L.glows.picture, 0.14]);
-    if (L.on.painting) lamps.push([L.glows.painting, 0.14]);
-    if (L.on.drawer) lamps.push([L.glows.candle, 0.2]);
-    for (const [at, a] of lamps) {
-      const lamp = glow(at, a);
-      this.ambientTween({ targets: lamp, alpha: { from: a * 0.85, to: a * 1.2 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-    }
+    // the green lamp, breathing very slightly
+    const lamp = glow(L.glows.desk, 0.16);
+    this.ambientTween({ targets: lamp, alpha: { from: 0.14, to: 0.19 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   }
 
   // The top drawer, shut until it is pulled: it slides out of the chest, on
@@ -71,15 +56,6 @@ export default class Room4Scene extends RoomScene {
     noiseBurst(this, { dur: ms / 1000, freq: 520, q: 0.9, gain: 0.32, env: (x) => Math.min(1, x / 0.08) * (1 - x) ** 1.6 * (0.75 + 0.25 * Math.sin(x * 90)) });
     this.time.delayedCall(ms - 90, () => noiseBurst(this, { dur: 0.14, type: "lowpass", freq: 220, gain: 0.9, env: (x) => (1 - x) ** 3 }));
     return ms;
-  }
-
-  tick(t) {
-    this._embers.setAlpha(0.26 + 0.07 * Math.sin(t * 1.7) + 0.04 * Math.sin(t * 7.3));
-  }
-
-  // with the lamps out there is only the moon on the chest
-  chestTint(L) {
-    return L.on.cards ? null : 0x9aa0b8;
   }
 
   dustIn(L) {
