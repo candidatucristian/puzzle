@@ -6,6 +6,7 @@
   box-shadow: -18px 0 45px #0009;
 }
 #btn-close-notebook { position: absolute; z-index: 4; top: -64px; right: 4px; }
+:root:has(#notebook-modal:not(.hidden)) #header-floor { visibility: hidden; }
 #notebook-modal .notebook-content {
   position: relative; padding: 14px 10px 14px 14px; gap: 0;
   background: transparent; color: #504430; box-shadow: none;
@@ -109,3 +110,13 @@
 #notebook-modal .note-meta { color: #9b8a6d; font-size: calc(10px * var(--reading-scale,1)); }
 #notebook-modal button:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 4px; }
 #notebook-modal .icon-button:focus-visible { outline: 1px dotted #8a785b; outline-offset: -5px; }
+
+/* The drawing sheet: a white card laid on the page, and under it the pencil's
+   three widths and three colours, inked like the rest of the sheet. */
+#notebook-modal .notebook-sketch-wrap { background: #fff; border: 1px solid #b9ab8e; border-radius: 2px; box-shadow: 0 1px 4px #3a2a1430; }
+#notebook-modal .pen-size, #notebook-modal .pen-colour { border-color: #b9ab8e; background: transparent; }
+#notebook-modal .pen-size span { background: #5c4d37; }
+#notebook-modal .pen-colour span { box-shadow: 0 0 0 1px #8d7d64; }
+#notebook-modal .pen-size:hover, #notebook-modal .pen-colour:hover { border-color: #8d7d64; }
+#notebook-modal .pen-size[aria-pressed="true"], #notebook-modal .pen-colour[aria-pressed="true"] { border-color: #67412f; background: #67412f12; box-shadow: 0 0 0 1px #67412f; }
+#notebook-modal .pen-size:focus-visible, #notebook-modal .pen-colour:focus-visible { outline: 1px dotted #67412f; outline-offset: 2px; text-decoration: none; }

@@ -292,7 +292,6 @@ function paintWall(ctx, L) {
 // the window: a tall sash, the night and the rain on it, street lamps blurred
 // beyond the wet glass
 function paintWindow(ctx, L, Wp, rect) {
-  const { u } = L;
   const x0 = -312;
   const x1 = -182;
   const y0 = 72;

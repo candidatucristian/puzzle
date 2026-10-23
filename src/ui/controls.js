@@ -17,6 +17,7 @@ import { mountStartManor } from './startManor.js';
 import { HOUSE_GO, HOUSE_BACK, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
 import { mountHouseMap } from './houseMap.js';
 import { mountNotebook } from './notebook.js';
+import { mountManual } from './manual/manual.js';
 import { mountMagnifier } from './magnifier.js';
 import { mountAmbience } from './ambience.js';
 import { mountTooltips } from './tooltips.js';
@@ -450,7 +451,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     },
     i18n,
   });
-  scope.on(byId('btn-howto'), 'click', event => { reset.disarm(); dialogs.open('howto-modal', event.currentTarget, { nested: true }); });
+  // how to play: the inspector's manual, opened over the settings
+  const manual = mountManual(scope, { dialogs, i18n, sounds: paperSounds });
+  scope.on(byId('btn-howto'), 'click', event => { reset.disarm(); manual.open(event.currentTarget); });
   scope.on(byId('btn-close-howto'), 'click', () => dialogs.close());
   scope.on(byId('btn-options'), 'click', event => { reset.disarm(); dialogs.open('options-modal', event.currentTarget); });
   scope.on(byId('btn-close-options'), 'click', () => { reset.disarm(); dialogs.close(); });

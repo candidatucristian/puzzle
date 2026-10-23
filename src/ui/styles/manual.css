@@ -1,0 +1,29 @@
+/* ── How to play: the inspector's manual — a book open on the dark, its
+   leaves turned as the herbarium's are, ribbons standing out of its edge for
+   its chapters (ui/manual/manual.js) ── */
+#howto-modal .manual { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+#howto-modal .manual-book { position: relative; }
+/* the boards, a little larger than the pages, dark cloth worn at its edges */
+#howto-modal .manual-board { position: absolute; border-radius: 9px;
+  background: radial-gradient(ellipse 80% 70% at 50% 40%, #2c2620, #1a1612 70%, #120f0c);
+  box-shadow: 0 40px 100px #000d, 0 0 0 1px #3b332a, inset 0 0 0 4px #15110d, inset 0 0 0 5px #4a3f3266, inset 0 0 50px #000a; }
+#howto-modal .manual-board::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 22px; translate: -50% 0;
+  background: linear-gradient(90deg, transparent, #000a, transparent); }
+#howto-modal .manual-canvas { position: relative; display: block; touch-action: none; }
+/* the ribbons: one for the contents, one for each chapter; the open one out, gilt */
+#howto-modal .manual-marks { position: absolute; z-index: 1; display: flex; flex-direction: column; gap: 5px; }
+#howto-modal .manual-mark { appearance: none; width: 52px; height: 34px; padding: 0 0 0 14px; text-align: left; cursor: var(--cursor-hand, pointer);
+  border: 1px solid #4a3f32; border-left: 0; border-radius: 0 6px 6px 0; background: linear-gradient(90deg, #1d1915, #2a241d);
+  color: #cfc6b2; font: 400 15px/1 "DM Serif Display", Georgia, serif; letter-spacing: .04em;
+  translate: -16px 0; box-shadow: 4px 3px 10px #0007; transition: translate .18s ease, background .18s ease, color .18s ease; }
+#howto-modal .manual-mark:hover { translate: -7px 0; color: #fff; }
+#howto-modal .manual-mark.is-here { translate: 0 0; color: #1b1712; border-color: #dcb768; background: linear-gradient(90deg, #b8944e, #dcb768); }
+#howto-modal .manual-mark:focus-visible { outline: 2px solid #ebe5d6; outline-offset: 2px; }
+#howto-modal .manual-close { position: fixed; z-index: 2; top: 16px; right: 18px; color: #d8d3c6; background: transparent; border-color: transparent; }
+#howto-modal .manual-close:hover { color: #fff; }
+/* under the book: back a page, where it is open, on a page */
+#howto-modal .manual-foot { display: flex; align-items: center; gap: 18px; color: #a7a196; font: 400 calc(13px * var(--reading-scale, 1))/1.4 var(--ui-font); letter-spacing: .02em; }
+#howto-modal .manual-foot .icon-button { min-height: 36px; padding: 6px 12px; background: transparent; border-color: #3a3a36; }
+#howto-modal .manual-foot .icon-button:disabled { opacity: .3; cursor: default; }
+#howto-modal .manual-folio { min-width: 280px; text-align: center; }
+:root[data-reduced-motion="true"] #howto-modal .manual-mark { transition: none; }

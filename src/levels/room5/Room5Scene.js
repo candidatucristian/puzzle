@@ -1,99 +1,89 @@
 import Phaser from "phaser";
-import PlainRoomScene from "../house/plainRoom.js";
-import { layoutTrap, paintTrap } from "./trapdoor.js";
-import { layoutRoomTree, paintRoomTree } from "./roomTree.js";
-import { layoutRoomTv, paintRoomTv, paintSnow } from "./roomTv.js";
-import { addCanvasTexture } from "../../shared/paint.js";
-import { loadDrawingRoomFinishes, drawingRoomFinishes } from "../house/drawingRoomMaterials.js";
-import { ROOM5_PHOTOGRAPH, ROOM5_REFERENCE, loadRoom5Photography, alignRoom5Photography, alignRoom5PhotoObjects, paintRoom5Photography } from "./photographicRoom.js";
+import RoomScene from "../house/RoomScene.js";
+import { layoutRoom5, paintRoom5, releaseRoom5Art, ROOM5_SNOW } from "./room5.js";
+import { loadRoomRender } from "../house/roomRender.js";
+import { addCandleFlame, flickerCandleFlame } from "../../shared/candleFlame.js";
 
-const SNOW = "room5_snow"; // the television's snow, kept moving over its glass
+// ─────────────────────────────────────────────────────────────────────────────
+// Room 5, the drawing room (see house/RoomScene.js for what every room does).
+// It keeps the key to the last door. Three puzzles are found in it: the trap
+// open in the floor before the hearth, the ladder going down it to the cellar;
+// the Christmas tree in the far corner; the television left on, on the far
+// wall.
+//
+// The room is a Blender render (room5.js; house/roomRender.js). Each puzzle's
+// light burns only until that puzzle is solved: the candle by the trap, the
+// lamps on the tree, the television. Live over the render: those lights, the
+// snow on the television's glass, the embers in the grate (which stay in),
+// dust in the moonbeam.
+// ─────────────────────────────────────────────────────────────────────────────
 
-/** Room 5, the drawing room: deep red paper over a dark dado, parquet, a tall
- *  sash window between its curtains, a hearth on the left. It keeps the key
- *  to the last door. Three puzzles are found in it. A trap stands open in the
- *  floor before the hearth, and an iron ladder goes down it to the cellar
- *  (trapdoor.js); the candle left beside the trap burns until that puzzle
- *  is solved. And between the hearth and the window stands a Christmas tree
- *  (roomTree.js), whose lamps burn until its puzzle is. And on the right-hand wall
- *  corner a television has been left on, its tube full of snow (roomTv.js),
- *  until its puzzle is. */
-export default class Room5Scene extends PlainRoomScene {
+// which puzzle each of the room's lights is lit for
+const LIT_FOR = { trap: "tapcode", tree: "pi", tv: "rally" };
+
+export default class Room5Scene extends RoomScene {
   constructor() {
-    super("Room5", {
-      style: {
-        wall: "paper", near: "#2c1418", far: "#150a0c", back: "#1c0e11", mark: "rgba(230,170,170,0.035)",
-        floor: "herringbone", floorNear: "#33200f", floorFar: "#180e08", ceiling: "plain", ceilingCol: "#0c0a0a", window: "sash",
-      },
-      window: { x: 0.36, hw: 0.15, top: 266, sill: 104 },
-      hearth: -0.36,
-      chest: 0.74,
-      rug: ["#0e1626", "#5a5440", "#12203a"],
-    });
+    super("Room5");
   }
 
   preload() {
     super.preload();
-    loadDrawingRoomFinishes(this);
-    loadRoom5Photography(this);
+    loadRoomRender(this, "Room5");
   }
 
   layout(W, H, levels) {
-    const photographic = this.textures.exists(ROOM5_PHOTOGRAPH);
-    const L = super.layout(photographic ? ROOM5_REFERENCE.width : W, photographic ? ROOM5_REFERENCE.height : H);
-    if (photographic) alignRoom5Photography(L, W, H);
-    L.surfaceMaterials = drawingRoomFinishes(this);
-    layoutTrap(L, !levels.isCompleted(levels.indexOf("tapcode")));
-    layoutRoomTree(L, !levels.isCompleted(levels.indexOf("pi")));
-    layoutRoomTv(L, !levels.isCompleted(levels.indexOf("rally")));
-    if (photographic) alignRoom5PhotoObjects(L);
-    return L;
+    const on = {};
+    for (const [light, level] of Object.entries(LIT_FOR)) on[light] = !levels.isCompleted(levels.indexOf(level));
+    return layoutRoom5(W, H, on);
   }
 
   paint(L) {
-    return L.photographic ? paintRoom5Photography(this, L, this._keys) : super.paint(L);
-  }
-
-  paintDetails(ctx, L) {
-    paintRoomTv(ctx, L);
-    paintRoomTree(ctx, L);
-    paintTrap(ctx, L);
-  }
-
-  live(L, k) {
-    super.live(L, k);
-    this._tube = null;
-    // the candle by the trap and the lamps on the tree, each while it
-    // burns, breathing very slightly; the television's light, while it is
-    // on, never still
-    for (const [thing, a] of [[L.trap, 0.2], [L.tree, 0.16], [L.tv, 0.2]]) {
-      if (!thing.on) continue;
-      const g = thing.glow;
-      const lamp = this.add.image(g.x, g.y, k.glow).setDisplaySize(g.r * 2, g.r * 2).setTint(g.tint ?? 0xffc078).setBlendMode(Phaser.BlendModes.ADD).setAlpha(a).setDepth(-8);
-      if (thing === L.tv) { this._tube = lamp; continue; }
-      this.ambientTween({ targets: lamp, alpha: { from: a * 0.85, to: a * 1.25 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-    }
-    // the snow on the television's glass: one square of it, shifted every
-    // frame, shown through the shape the glass has from here
-    this._snowMask?.destroy();
-    this._snow = this._snowMask = null;
-    if (!L.tv.on) return;
-    const g = L.tv.glass;
-    addCanvasTexture(this.textures, SNOW, paintSnow());
-    this._snowMask = this.make.graphics().fillStyle(0xffffff).fillPoints(g.quad, true);
-    this._snow = this.add.tileSprite(g.box.x, g.box.y, g.box.width, g.box.height, SNOW).setOrigin(0, 0).setTileScale(Math.max(1, g.grain * 2.4)).setAlpha(0.78).setDepth(-9);
-    this._snow.setMask(this._snowMask.createGeometryMask());
+    return paintRoom5(this, L).keys;
   }
 
   release() {
-    super.release();
-    if (this.textures.exists(SNOW)) this.textures.remove(SNOW);
+    releaseRoom5Art(this.textures);
+  }
+
+  live(L, k, glow) {
+    const on = L.on, g = L.glows;
+    // the coals in the grate, glowing up and dying down
+    this._embers = glow(g.embers, 0.3, 0xff7a28);
+    // the candle by the trap, never still; the tree's lamps, breathing
+    this._candle = on.trap ? glow(g.trap, 0.36) : null;
+    this._flame = on.trap ? addCandleFlame(this, L.flames.candle) : null;
+    if (on.tree) {
+      const lamps = glow(g.tree, 0.16);
+      this.ambientTween({ targets: lamps, alpha: { from: 0.14, to: 0.2 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    }
+    // the television's light, and the snow on its glass: one square of it,
+    // shifted every frame, shown through the shape the glass has from here
+    this._tube = on.tv ? glow(L.tv.glow, 0.2, L.tv.glow.tint) : null;
+    this._snowMask?.destroy();
+    this._snow = this._snowMask = null;
+    if (!on.tv) return;
+    const glass = L.tv.glass;
+    this._snowMask = this.make.graphics().fillStyle(0xffffff).fillPoints(glass.quad, true);
+    this._snow = this.add.tileSprite(glass.box.x, glass.box.y, glass.box.width, glass.box.height, ROOM5_SNOW)
+      .setOrigin(0, 0).setTileScale(Math.max(1, 0.42 * glass.s * 2.4)).setAlpha(0.78).setDepth(-9).setBlendMode(Phaser.BlendModes.SCREEN);
+    this._snow.setMask(this._snowMask.createGeometryMask());
   }
 
   tick(t) {
-    super.tick(t);
+    this._embers?.setAlpha(0.26 + 0.07 * Math.sin(t * 1.7) + 0.04 * Math.sin(t * 7.3));
+    this._candle?.setAlpha(0.33 + 0.06 * Math.sin(t * 9) + Math.random() * 0.05);
+    flickerCandleFlame(this._flame, t);
     // nothing on but snow: it never holds still, and nor does its light on the room
     this._snow?.setTilePosition(Math.random() * 256, Math.random() * 256);
     this._tube?.setAlpha(0.18 + 0.03 * Math.sin(t * 17.3) + Math.random() * 0.04);
+  }
+
+  // with the candle out there is only the moon and the fire on the chest
+  chestTint(L) {
+    return L.on.trap ? null : 0xa8a0b0;
+  }
+
+  dustIn(L) {
+    return L.dust;
   }
 }

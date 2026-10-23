@@ -1,4 +1,5 @@
-import { soft, lcg } from '../shared/paint.js';
+import { soft, lcg, makeCanvas } from '../shared/paint.js';
+import { MANOR_PICTURE, PHOTO, DOOR, LANTERN, WINDOWS, GROUND, HORIZON } from './manorPlate.js';
 
 let pending;
 
@@ -6,7 +7,8 @@ export function loadManorExterior() {
   if (!pending) pending = (async () => {
     const image = new Image();
     image.decoding = 'async';
-    image.src = `${import.meta.env.BASE_URL}assets/images/Manor/ashcombe-exterior-photographic-v2.webp`;
+    // (rendered in Blender from CC0 scans and modelled stone: art/blender/manor.py)
+    image.src = `${import.meta.env.BASE_URL}assets/images/Manor/${MANOR_PICTURE}`;
     await image.decode();
     return image;
   })();
@@ -20,10 +22,12 @@ export function paintManorExterior(ctx, W, H, image) {
   const fit = Math.min(W / sourceW, H / sourceH);
   const width = Math.min(W, sourceW * fit * 1.1), height = Math.min(H, sourceH * fit * 1.1);
   const left = (W - width) / 2, top = (H - height) / 2;
-  const point = (x, y) => ({ x: left + x / 1740 * width, y: top + y / 904 * height });
+  const point = (x, y) => ({ x: left + x / PHOTO.width * width, y: top + y / PHOTO.height * height });
+  const across = width / PHOTO.width, down = height / PHOTO.height;
   ctx.fillStyle = '#03050a'; ctx.fillRect(0, 0, W, H);
   ctx.save();
-  ctx.filter = 'brightness(0.53) saturate(0.78)';
+  // (the render is already the night it should be; only a touch quieter)
+  ctx.filter = 'brightness(0.94) saturate(0.92)';
   ctx.drawImage(image, left, top, width, height);
   ctx.restore();
   const shade = ctx.createRadialGradient(W * 0.55, H * 0.5, H * 0.2, W * 0.53, H * 0.52, Math.hypot(W, H) * 0.65);
@@ -31,24 +35,20 @@ export function paintManorExterior(ctx, W, H, image) {
   shade.addColorStop(0.6, 'rgba(2,4,9,0.08)');
   shade.addColorStop(1, 'rgba(2,4,9,0.38)');
   ctx.fillStyle = shade; ctx.fillRect(0, 0, W, H);
-  const entrance = point(906, 595);
-  // the wet drive, from the steps out through the gates (not their leaves
-  // and posts), and the puddled ground in front of them: where the rain
-  // rings the water (shared/rainFall.js)
-  const ground = [[690, 752], [1125, 752], [1125, 848], [1740, 866], [1740, 904], [0, 904], [0, 866], [684, 848]]
-    .map(([x, y]) => { const p = point(x, y); return [p.x, p.y]; });
+  const entrance = point(DOOR.x, DOOR.y);
+  // the wet drive and forecourt, from the steps out through the gates: where
+  // the rain rings the water (shared/rainFall.js)
+  const ground = GROUND.map(([x, y]) => { const p = point(x, y); return [p.x, p.y]; });
   return {
     photographic: true,
     W, H,
     rain: makeRain(width, height),
-    ground, horizon: point(0, 746).y,
+    fog: FOG.map(makeFog),
+    ground, horizon: point(0, HORIZON).y,
     photo: { left, top, width, height },
-    door: { x: entrance.x, y: entrance.y, w: 82 / 1740 * width, h: 108 / 904 * height },
-    lantern: { ...point(948, 572), rx: width * 0.018, ry: height * 0.04 },
-    windows: [
-      { ...point(777, 645), rx: width * 0.024, ry: height * 0.05 },
-      { ...point(749, 357), rx: width * 0.01, ry: height * 0.025 },
-    ],
+    door: { x: entrance.x, y: entrance.y, w: DOOR.w * across, h: DOOR.h * down },
+    lantern: { ...point(LANTERN.x, LANTERN.y), rx: LANTERN.rx * across, ry: LANTERN.ry * down },
+    windows: WINDOWS.map((w) => ({ ...point(w.x, w.y), rx: w.rx * across, ry: w.ry * down })),
   };
 }
 
@@ -58,21 +58,118 @@ export function drawManorExteriorLive(ctx, scene, time, frozen) {
   ctx.clearRect(0, 0, W, H);
   ctx.save();
   ctx.beginPath(); ctx.rect(photo.left, photo.top, photo.width, photo.height); ctx.clip();
-  // Low, soft mist drifts across the approach; it leaves the facade and
-  // ironwork sharp instead of moving or warping the photograph itself.
-  for (let i = 0; i < 5; i++) {
-    const phase = (i / 5 + t * 0.006) % 1;
-    const x = photo.left + (-0.25 + phase * 1.5) * photo.width;
-    const y = photo.top + photo.height * (0.826 + (i % 3) * 0.034);
-    const alpha = 0.026 * Math.sin(phase * Math.PI);
-    soft(ctx, x, y, photo.width * 0.24, photo.height * (0.013 + i % 2 * 0.006), '118,132,151', alpha);
-  }
+  // the fog, coming across the park with the wind; the leaves it tears off
+  const air = scene.air ?? { gust: 0.6, lean: 0.6, still: frozen };
+  drawFog(ctx, scene, t, air);
+  if (!frozen && !air.still) blowLeaves(ctx, scene, t, air);
   const warmth = 0.024 + (frozen ? 0 : 0.004 * Math.sin(t * 1.7) + 0.002 * Math.sin(t * 5.1));
   soft(ctx, lantern.x, lantern.y, lantern.rx, lantern.ry, '255,189,109', warmth, 'lighter');
+  // and the lantern's light caught in the fog round it
+  soft(ctx, lantern.x, lantern.y + lantern.ry * 0.6, lantern.rx * 4.5, lantern.ry * 3, '255,189,109', warmth * 0.9, 'lighter');
   for (const window of windows) soft(ctx, window.x, window.y, window.rx, window.ry, '255,194,121', 0.016, 'lighter');
   // (the rain itself is drawn with WebGL where it can be: startManor.js)
   if (!scene.rainLive) drawRain(ctx, scene, t, frozen);
   ctx.restore();
+}
+
+// ── the fog ──────────────────────────────────────────────────────────────────
+// A trace of ground mist below the steps (the drive starts at 0.775 of the
+// picture). Shallow, overlapping wisps fade at both edges; their height
+// varies across the drive so they never read as straight horizontal strips.
+// The noise wraps across, drifting slowly even when the trees catch a gust.
+const FOG = [
+  { top: 0.79, depth: 0.09, across: 1.3, pace: 4, alpha: 0.055, lumps: 4, seed: 71 },
+  { top: 0.845, depth: 0.12, across: 1.1, pace: 7, alpha: 0.04, lumps: 6, seed: 83 },
+  { top: 0.905, depth: 0.085, across: 0.9, pace: 10, alpha: 0.025, lumps: 3, seed: 97 },
+];
+function makeFog({ lumps, seed }) {
+  const w = 384, h = 64, rnd = lcg(seed);
+  // value noise on grids that wrap across: a coarse one and two finer
+  const octave = (cx, cy) => {
+    const g = Array.from({ length: (cy + 1) * cx }, () => rnd());
+    const at = (i, j) => g[j * cx + (i % cx)];
+    return (x, y) => {
+      const u = (x / w) * cx, v = (y / h) * cy, i = Math.floor(u), j = Math.floor(v);
+      const fx = u - i, fy = v - j, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+      const upper = at(i, j) + (at(i + 1, j) - at(i, j)) * sx, lower = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * sx;
+      return upper + (lower - upper) * sy;
+    };
+  };
+  const octaves = [[octave(lumps, 2), 0.55], [octave(lumps * 2 + 1, 4), 0.3], [octave(lumps * 4 + 3, 8), 0.15]];
+  const c = makeCanvas(w, h), g = c.getContext('2d'), img = g.createImageData(w, h);
+  for (let x = 0; x < w; x++) {
+    const shape = octaves[0][0](x, h * 0.5);
+    const centre = 0.5 + (shape - 0.5) * 0.2, spread = 0.36 + shape * 0.09;
+    for (let y = 0; y < h; y++) {
+      const edge = Math.max(0, 1 - Math.abs((y / (h - 1) - centre) / spread));
+      const profile = edge * edge * (3 - 2 * edge);
+      const n = octaves.reduce((sum, [noise, k]) => sum + noise(x, y) * k, 0);
+      const density = n ** 1.5 * profile;
+      const o = (y * w + x) * 4;
+      img.data[o] = 132; img.data[o + 1] = 143; img.data[o + 2] = 153; img.data[o + 3] = Math.round(density * 255);
+    }
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}
+function drawFog(ctx, scene, t, air) {
+  const { photo, fog } = scene;
+  // Keep gusts gentle at ground level, with no jump after a hidden tab.
+  scene.fogRun ??= FOG.map(() => 0);
+  const dt = Math.min(0.05, Math.max(0, t - (scene.fogClock ?? t)));
+  scene.fogClock = t;
+  ctx.save();
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  FOG.forEach((layer, i) => {
+    scene.fogRun[i] += layer.pace * (air.still ? 0.25 : 0.65 + 0.35 * air.gust) * (photo.width / 2560) * dt;
+    const w = photo.width * layer.across, h = photo.height * layer.depth, y = photo.top + photo.height * layer.top;
+    // Only a slight, slow change in density, so it stays almost imperceptible.
+    ctx.globalAlpha = layer.alpha * (0.88 + 0.12 * Math.sin(t * 0.035 + i * 2.1));
+    for (let x = photo.left - (scene.fogRun[i] % w); x < photo.left + photo.width; x += w) ctx.drawImage(fog[i], x, y, w + 1, h);
+  });
+  ctx.restore();
+}
+
+// ── the leaves the wind takes ────────────────────────────────────────────────
+// A few at a time torn off the trees in front and carried across: dark, small,
+// tumbling and turning over as they go, falling slowly, faster across in a
+// gust; one passing the lantern catches its light.
+function leaf(scene, anywhere) {
+  const { photo } = scene, rnd = Math.random;
+  const z = 0.6 + rnd() * 1.1;
+  return {
+    // from the crowns of the two trees, or (at the start) anywhere
+    x: photo.left + (anywhere ? rnd() : rnd() < 0.5 ? 0.02 + rnd() * 0.22 : 0.7 + rnd() * 0.18) * photo.width,
+    y: photo.top + (anywhere ? 0.1 + rnd() * 0.75 : 0.12 + rnd() * 0.42) * photo.height,
+    z, size: 3.5 + rnd() * 3.5, fall: 16 + rnd() * 26, drift: -10 + rnd() * 30,
+    flutter: 1.5 + rnd() * 2.5, spin: 2 + rnd() * 5, angle: rnd() * Math.PI, phase: rnd() * 6.28,
+    tone: rnd() < 0.25 ? [58, 44, 68] : [34 + rnd() * 12, 33 + rnd() * 8, 20 + rnd() * 6],
+  };
+}
+function blowLeaves(ctx, scene, t, air) {
+  const { photo, lantern } = scene, px = photo.width / 2560;
+  scene.leaves ??= Array.from({ length: 26 }, () => leaf(scene, true));
+  const dt = Math.min(0.05, Math.max(0, t - (scene.leafClock ?? t)));
+  scene.leafClock = t;
+  for (const f of scene.leaves) {
+    f.x += (air.gust * 130 + f.drift) * f.z * px * dt;
+    f.y += (f.fall + Math.sin(t * f.flutter + f.phase) * 22) * f.z * px * dt;
+    if (f.x > photo.left + photo.width + 30 * px || f.y > photo.top + photo.height * 0.97) Object.assign(f, leaf(scene, false));
+    const turn = Math.cos(t * f.spin + f.phase), size = f.size * f.z * px * 1.6;
+    // lit as it passes the lantern
+    const near = Math.max(0, 1 - Math.hypot((f.x - lantern.x) / (lantern.rx * 6), (f.y - lantern.y) / (lantern.ry * 5)));
+    const [r, g, b] = f.tone.map((c, k) => (c + near * [150, 96, 40][k]) | 0);
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.rotate(f.angle + Math.sin(t * f.spin * 0.4 + f.phase) * 1.2);
+    ctx.scale(1, Math.max(0.12, Math.abs(turn)));
+    ctx.fillStyle = `rgba(${r},${g},${b},0.92)`;
+    ctx.beginPath(); ctx.ellipse(0, 0, size, size * 0.42, 0, 0, Math.PI * 2); ctx.fill();
+    // its stalk
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.8)`; ctx.lineWidth = Math.max(0.5, size * 0.12);
+    ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(size * 1.45, size * 0.12); ctx.stroke();
+    ctx.restore();
+  }
 }
 
 // ── the rain ─────────────────────────────────────────────────────────────────

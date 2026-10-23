@@ -1,15 +1,17 @@
 import { makeCanvas, soft } from "../../shared/paint.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
+// (rendered in Blender from CC0 scans and models, in the layouts read below:
+// art/blender/botany_hall.py, botany_hall_publish.mjs)
 const ASSETS = {
-  surfaces: { key: "botany_hall_finishes_v2", url: "assets/images/Botany/hall-finishes-v2.webp" },
-  plants: { key: "botany_hall_greenery_v2", url: "assets/images/Botany/hall-greenery-v2.webp" },
-  door: { key: "botany_hall_walnut_door_v2", url: "assets/images/Botany/walnut-door-v2.webp" },
-  herbarium: { key: "botany_hall_herbarium_photo", url: "assets/images/Botany/herbarium-frames.webp" },
-  sconces: { key: "hall_sconces_photo", url: "assets/images/Physics/observatory-fixtures.webp" },
+  surfaces: { key: "botany_hall_finishes_render_v1", url: "assets/images/Botany/hall-finishes-render-v1.webp" },
+  plants: { key: "botany_hall_greenery_render_v1", url: "assets/images/Botany/hall-greenery-render-v1.webp" },
+  door: { key: "botany_hall_walnut_door_render_v1", url: "assets/images/Botany/walnut-door-render-v1.webp" },
+  herbarium: { key: "botany_hall_herbarium_render_v1", url: "assets/images/Botany/herbarium-frames-render-v1.webp" },
+  sconces: { key: "botany_hall_sconce_render_v1", url: "assets/images/Botany/hall-sconce-render-v1.webp" },
 };
 const cache = new WeakMap();
-const FLOOR_PHOTO = { key: "botany_hall_floor_photographic_v3", url: "assets/images/Botany/hall-floor-photographic-v3.webp" };
+const FLOOR_PHOTO = { key: "botany_hall_floor_render_v1", url: "assets/images/Botany/hall-floor-render-v1.webp" };
 
 export function loadBotanicHallMaterials(scene) {
   for (const { key, url } of [...Object.values(ASSETS), FLOOR_PHOTO]) if (!scene.textures.exists(key)) scene.load.image(key, url);

@@ -1,19 +1,19 @@
 import Phaser from "phaser";
 import RoomScene from "../house/RoomScene.js";
 import { layoutRoom2, paintRoom2, releaseRoom2Art } from "./room2.js";
-import { ROOM2_PHOTOGRAPH, loadRoom2Photography } from "./photographicRoom.js";
+import { loadRoomRender } from "../house/roomRender.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The library: the second room off the hall (see house/RoomScene.js for what
-// every room does). Three puzzles are found in it: the bookshelves down the
-// left wall, the clocks on and over the clerk's desk, the router on the
-// writing desk. The gilt chest is on that desk's far end.
+// every room does). Three puzzles are found in it: the books across the far
+// wall, the clocks on and over the clerk's desk, the router on the reading
+// table. The gilt chest is on the table too.
 //
-// The room is painted (room2.js). Each puzzle has its own light, and each
-// light burns only until its puzzle is solved: the standard lamp by the
-// bookshelves, the clerk's lamp and the clocks' digits, the lamp over the
-// router. Live over the painting: those lights, two of the router's lights
-// flashing, the clock's colon, dust in the moonbeam.
+// The room is a Blender render (room2.js; house/roomRender.js). Each puzzle
+// has its own light, and each light burns only until its puzzle is solved:
+// the standard lamp by the armchair, the clerk's lamp and the clocks' digits,
+// the green lamp over the router. Live over the render: those lights, two of
+// the router's lights flashing, the clock's colon, dust in the moonbeams.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // which puzzle each of the room's lights is lit for
@@ -26,13 +26,13 @@ export default class Room2Scene extends RoomScene {
 
   preload() {
     super.preload();
-    loadRoom2Photography(this);
+    loadRoomRender(this, "Room2");
   }
 
   layout(W, H, levels) {
     const on = {};
     for (const [light, level] of Object.entries(LIT_FOR)) on[light] = !levels.isCompleted(levels.indexOf(level));
-    return layoutRoom2(W, H, on, { photographic: this.textures.exists(ROOM2_PHOTOGRAPH) });
+    return layoutRoom2(W, H, on);
   }
 
   paint(L) {
@@ -72,7 +72,6 @@ export default class Room2Scene extends RoomScene {
   }
 
   dustIn(L) {
-    const w = L.win;
-    return { x: w.cx - w.rx * 1.8, y: w.top, width: w.rx * 3, height: L.H * 0.8 - w.top };
+    return L.dust;
   }
 }

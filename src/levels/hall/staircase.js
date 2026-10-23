@@ -1,25 +1,5 @@
-import { makeCanvas, polygon } from "../../shared/paint.js";
+import { polygon } from "../../shared/paint.js";
 import { buildSpiralStaircase, paintSpiralFallback } from "./spiralStaircase.js";
-
-const KEY = "chemistry_spiral_stairwell_v4";
-const URL = "assets/images/Chemistry/spiral-stairwell-photographic-v4.webp";
-const cache = new WeakMap();
-
-export function loadStaircaseArt(scene) {
-  if (!scene.textures.exists(KEY)) scene.load.image(KEY, URL);
-}
-
-export function staircaseArt(scene) {
-  if (!scene.textures.exists(KEY)) return null;
-  const source = scene.textures.get(KEY).getSourceImage();
-  if (!cache.has(source)) {
-    const canvas = makeCanvas(source.width, source.height), ctx = canvas.getContext("2d");
-    ctx.filter = "brightness(0.86) saturate(0.72)";
-    ctx.drawImage(source, 0, 0);
-    cache.set(source, canvas);
-  }
-  return cache.get(source);
-}
 
 export function paintChemistryStairs(ctx, L, span) {
   const { P, wall, floor, H, u } = L, { z0, z1, head } = span;
@@ -34,19 +14,7 @@ export function paintChemistryStairs(ctx, L, span) {
 
   ctx.save(); polygon(ctx,opening); ctx.clip();
   fill(opening,"#1a1c1b");
-  if (L.staircaseArt) {
-    const image = L.staircaseArt;
-    const x = Math.min(...opening.map(p => p.x)), y = Math.min(...opening.map(p => p.y));
-    const width = Math.max(...opening.map(p => p.x))-x, height = Math.max(...opening.map(p => p.y))-y;
-    // Crop a coherent photograph behind the opening. The architecture inside
-    // keeps its own depth and proportions instead of being flattened onto the wall.
-    const scale = Math.max(width/image.width,height/image.height);
-    const sw = width/scale, sh = height/scale;
-    const sx = Math.max(0,Math.min(image.width-sw,image.width*0.55-sw/2));
-    const sy = Math.max(0,Math.min(image.height-sh,image.height*0.52-sh/2));
-    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(image,sx,sy,sw,sh,x,y,width,height);
-  } else paintSpiralFallback(ctx,L,buildSpiralStaircase(L,span));
+  paintSpiralFallback(ctx,L,buildSpiralStaircase(L,span));
 
   const depth = H*0.028;
   // A narrow plaster reveal and a single stone sill meet the existing floor.

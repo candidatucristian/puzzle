@@ -5,7 +5,7 @@
 const NS = "http://www.w3.org/2000/svg";
 const SHEET = { w: 640, h: 300 }; // the drawing's own size (notebook.js PAGE)
 const GRAPHITE = "rgba(38,34,28,0.9)"; // the notebook's own pencil line
-const SPEED = 1000; // how fast the point runs, in the sheet's units a second
+const SPEED = 3600; // how fast the point runs, in the sheet's units a second
 const FAINT = 0.3; // how strongly it is seen at most: a ghost of a scribble
 const SIZE = 0.6; // the pencil, smaller than life
 
@@ -16,22 +16,23 @@ const el = (name, attrs = {}, parent = null) => {
   return node;
 };
 
-// a scribble: one quick line of loops run across the sheet without a
-// thought, each loop a little larger or smaller, a little higher or lower
-// than the last, the hand drifting as it goes
+// a scribble: one quick line of loops run from one side of the sheet to the
+// other without a thought, each loop a little larger or smaller, a little
+// higher or lower than the last, the hand drifting as it goes
 function scribble(random) {
   const points = [];
-  let x = 282, drift = 0;
-  const loops = 5 + Math.floor(random() * 2);
+  let x = 40, drift = 0;
+  const loops = 9;
+  const across = (SHEET.w - 80) / loops / (Math.PI * 2); // so that it ends at the far side
   for (let l = 0; l < loops; l++) {
-    const r = 8 + random() * 6; // how tall the loop
-    const a = 1.6 + random() * 0.8; // how far on it goes, a radian
-    const b = r * (0.55 + random() * 0.35); // how far back it comes round
-    drift += (random() - 0.5) * 5;
+    const r = 48 + random() * 42; // how tall the loop
+    const a = across * (0.85 + random() * 0.3); // how far on it goes, a radian
+    const b = r * (0.45 + random() * 0.3); // how far back it comes round
+    drift = Math.max(-30, Math.min(30, drift + (random() - 0.5) * 24));
     const cy = 150 + drift;
     for (let i = l ? 1 : 0; i <= 22; i++) {
       const t = (i / 22) * Math.PI * 2;
-      points.push([x + a * t - b * Math.sin(t) + (random() - 0.5) * 0.6, cy + r * Math.cos(t) * (0.9 + 0.1 * Math.sin(t * 3)) + (random() - 0.5) * 0.6]);
+      points.push([x + a * t - b * Math.sin(t) + (random() - 0.5) * 1.2, cy + r * Math.cos(t) * (0.9 + 0.1 * Math.sin(t * 3)) + (random() - 0.5) * 1.2]);
     }
     x += a * Math.PI * 2;
   }

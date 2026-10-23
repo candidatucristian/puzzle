@@ -14,7 +14,7 @@ import { EMPTY_ROOMS } from '../levels/house/emptyRooms.js';
 
 export function gameConfig(services, definitions) {
   return {
-    type: Phaser.AUTO, backgroundColor: '#0a0a10', parent: 'game-container',
+    type: Phaser.AUTO, backgroundColor: '#0a0a10', transparent: true, parent: 'game-container',
     dom: { createContainer: true },
     scale: { mode: Phaser.Scale.NONE, parent: 'game-container', width: '100%', height: '100%' },
     scene: [BootScene, HallScene, UpperHallScene, TopScene, TopWingScene, StudyScene, Room2Scene, Room3Scene, Room4Scene, Room5Scene, Room6Scene, Room7Scene, Room8Scene, ...EMPTY_ROOMS, ...definitions.map(level => level.scene)],

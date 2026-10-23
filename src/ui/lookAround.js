@@ -3,7 +3,8 @@
 // late, as a head turns to look — which gives the painted rooms a little
 // depth. The picture is held a touch larger meanwhile, so its edges never
 // show. Never over a puzzle, where the picture keeps still; never with
-// motion reduced or the room's own motion turned off.
+// motion reduced or the room's own motion turned off; never in a room that
+// asks to be held still (the canvas's data-look="still": a live room).
 //
 // The pointer is mapped onto the picture by where the canvas is on the page:
 // while it drifts (and breathes) Phaser is told each frame where it now is,
@@ -19,7 +20,7 @@ export function mountLookAround(scope, game) {
   let last = performance.now(), frame = 0;
 
   const still = () => root.dataset.reducedMotion === "true" || root.dataset.ambientMotion === "false";
-  const looking = () => document.body.classList.contains("in-house") && !still();
+  const looking = () => document.body.classList.contains("in-house") && !still() && canvas()?.dataset.look !== "still";
 
   scope.on(window, "pointermove", (e) => {
     if (e.pointerType === "touch") return;

@@ -19,12 +19,25 @@
 
     <link
       rel="icon"
-      href="assets/images/favicon/favicon-32x32.png"
-      type="image/x-icon"
+      href="assets/images/favicon/manor.svg"
+      type="image/svg+xml"
+      sizes="any"
+    />
+    <link
+      rel="icon"
+      href="assets/images/favicon/manor-32.png"
+      type="image/png"
+      sizes="32x32"
+    />
+    <link
+      rel="icon"
+      href="assets/images/favicon/manor-16.png"
+      type="image/png"
+      sizes="16x16"
     />
     <link
       rel="apple-touch-icon"
-      href="assets/images/favicon/apple-touch-icon.png"
+      href="assets/images/favicon/manor-180.png"
     />
     <link rel="manifest" href="assets/images/favicon/site.webmanifest" />
 
@@ -395,6 +408,73 @@
                   aria-label="A page to draw on"
                 ></canvas>
               </div>
+              <!-- the pencil: how thick its line, and what colour -->
+              <div class="notebook-pens">
+                <div class="pen-group" role="group" aria-label="How thick" data-i18n-aria="notebook.sizes">
+                <button
+                  class="pen-size"
+                  type="button"
+                  data-notebook-size="0"
+                  aria-pressed="true"
+                  aria-label="A fine line"
+                  data-tip="A fine line"
+                  data-i18n-aria="notebook.sizeThin"
+                  data-i18n-tip="notebook.sizeThin"
+                ><span></span></button>
+                <button
+                  class="pen-size"
+                  type="button"
+                  data-notebook-size="1"
+                  aria-pressed="false"
+                  aria-label="A middling line"
+                  data-tip="A middling line"
+                  data-i18n-aria="notebook.sizeMedium"
+                  data-i18n-tip="notebook.sizeMedium"
+                ><span></span></button>
+                <button
+                  class="pen-size"
+                  type="button"
+                  data-notebook-size="2"
+                  aria-pressed="false"
+                  aria-label="A thick line"
+                  data-tip="A thick line"
+                  data-i18n-aria="notebook.sizeThick"
+                  data-i18n-tip="notebook.sizeThick"
+                ><span></span></button>
+                </div>
+                <div class="pen-group" role="group" aria-label="What colour" data-i18n-aria="notebook.colours">
+                <button
+                  class="pen-colour"
+                  type="button"
+                  data-notebook-colour="0"
+                  aria-pressed="true"
+                  aria-label="Graphite"
+                  data-tip="Graphite"
+                  data-i18n-aria="notebook.colourGraphite"
+                  data-i18n-tip="notebook.colourGraphite" style="--pen: #24211c"
+                ><span></span></button>
+                <button
+                  class="pen-colour"
+                  type="button"
+                  data-notebook-colour="1"
+                  aria-pressed="false"
+                  aria-label="Blue"
+                  data-tip="Blue"
+                  data-i18n-aria="notebook.colourBlue"
+                  data-i18n-tip="notebook.colourBlue" style="--pen: #1e4eaa"
+                ><span></span></button>
+                <button
+                  class="pen-colour"
+                  type="button"
+                  data-notebook-colour="2"
+                  aria-pressed="false"
+                  aria-label="Red"
+                  data-tip="Red"
+                  data-i18n-aria="notebook.colourRed"
+                  data-i18n-tip="notebook.colourRed" style="--pen: #b2261e"
+                ><span></span></button>
+                </div>
+              </div>
               <div class="notebook-tools">
                 <button
                   class="menu-btn"
@@ -507,32 +587,6 @@
           <!-- the front door in the film: it glints, and a click on it goes in -->
           <div id="start-door" aria-hidden="true">
             <canvas id="start-door-glint"></canvas>
-            <!-- the way in, drawn round in the thin pencil, as the letter on his desk was -->
-            <svg
-              class="door-outline"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <path
-                class="ink-dark"
-                pathLength="1"
-                vector-effect="non-scaling-stroke"
-                d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6"
-              />
-              <path
-                class="ink-white"
-                pathLength="1"
-                vector-effect="non-scaling-stroke"
-                d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6"
-              />
-              <path
-                class="ink-over"
-                pathLength="1"
-                vector-effect="non-scaling-stroke"
-                d="M-6.2 101.5 L-6.8 62 Q-7.3 30 -6.6 6 C-6 -21 51 -36 57 -33 C84 -29 108.4 -14 108.8 5.6 Q109.4 40 108.5 101 Q60 101.8 -2 100.6"
-              />
-            </svg>
           </div>
           <!-- the house's name, low on the left, laid into the dark of the picture -->
           <div id="start-legend">
@@ -1243,116 +1297,49 @@
 
     <!-- How to play: an open guide with a persistent close control. -->
     <div id="howto-modal" class="hidden">
-      <div class="modal-content howto-content">
-        <div class="howto-heading">
-          <h2 data-i18n="howto.title">How to play</h2>
+        <!-- How to play: the inspector's manual, a book whose leaves turn,
+             drawn by ui/manual/manual.js -->
+        <div class="manual">
+          <h2 class="sr-only" data-i18n="manual.title">The Inspector's Manual</h2>
           <button
             id="btn-close-howto"
-            class="icon-button"
+            class="icon-button manual-close"
             type="button"
-            aria-label="Back to settings"
-            title="Back to settings"
-            data-i18n-aria="howto.backToSettings"
-            data-i18n-title="howto.backToSettings"
+            aria-label="Close the manual"
+            data-tip="Close the manual (Esc)"
+            data-i18n-aria="manual.close"
+            data-i18n-tip="manual.closeTip"
           >
             <svg class="ui-icon" aria-hidden="true">
               <use href="#icon-close" />
             </svg>
           </button>
+          <div class="manual-book">
+            <div class="manual-board" aria-hidden="true"></div>
+            <canvas class="manual-canvas" aria-hidden="true"></canvas>
+            <nav class="manual-marks" aria-label="Chapters"></nav>
+          </div>
+          <div class="manual-foot">
+            <button
+              class="icon-button manual-prev"
+              type="button"
+              aria-label="The page before"
+              data-i18n-aria="manual.previous"
+            >
+              <svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg>
+            </button>
+            <span class="manual-folio"></span>
+            <button
+              class="icon-button manual-next"
+              type="button"
+              aria-label="The next page"
+              data-i18n-aria="manual.next"
+            >
+              <svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+          <div class="manual-reader sr-only" aria-live="polite"></div>
         </div>
-        <div
-          class="howto-body"
-          tabindex="0"
-          role="region"
-          aria-label="How to play instructions"
-        >
-          <section class="howto-section">
-            <h3 data-i18n="howto.findAnswerTitle">Find the answer</h3>
-            <p data-i18n="howto.findAnswerText">
-              Each room hides an answer. Look, listen and interact with the
-              scene. Enter what you find in the answer field below the room.
-              Wrong answers carry no penalty.
-            </p>
-          </section>
-
-          <section class="howto-section">
-            <h3 data-i18n="howto.controlsTitle">The controls</h3>
-            <dl class="howto-controls">
-              <div class="howto-row">
-                <dt data-i18n="howto.submitLabel">Submit</dt>
-                <dd data-i18n="howto.submitDesc">
-                  Check your answer, or press Enter.
-                </dd>
-              </div>
-              <div class="howto-row">
-                <dt data-i18n="howto.restartLabel">Restart</dt>
-                <dd data-i18n="howto.restartDesc">
-                  The circular arrow beside Submit starts the current room
-                  again. Your progress is kept.
-                </dd>
-              </div>
-              <div class="howto-row">
-                <dt data-i18n="howto.hintLabel">Hint</dt>
-                <dd data-i18n="howto.hintDesc">
-                  Use Hint below the room to reveal one clue at a time.
-                </dd>
-              </div>
-              <div class="howto-row">
-                <dt data-i18n="howto.keysLabel">Keys</dt>
-                <dd data-i18n="howto.keysDesc">
-                  M the map of the house · N your notebook · C the case file · Z
-                  the magnifying glass, or hold the right mouse button · Esc
-                  back the way you came.
-                </dd>
-              </div>
-              <div class="howto-row">
-                <dt data-i18n="howto.settingsLabel">Settings</dt>
-                <dd data-i18n="howto.settingsDesc">
-                  Adjust sound, text size, motion and effects. Reset game clears
-                  all progress after a second click to confirm.
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section class="howto-section">
-            <h3 data-i18n="howto.movingTitle">Moving between rooms</h3>
-            <p data-i18n="howto.movingText">
-              Solve a room to unlock the next. Revisit unlocked rooms from the
-              list on the right or use the arrows above the scene. Progress is
-              saved automatically in this browser.
-            </p>
-          </section>
-
-          <section class="howto-section">
-            <h3 data-i18n="howto.clueLabelsTitle">Clue labels</h3>
-            <dl class="howto-controls">
-              <div class="howto-row">
-                <dt data-i18n="howto.listeningLabel">Listening</dt>
-                <dd data-i18n="howto.listeningDesc">
-                  Sound is part of the puzzle. Check the volume in Settings and
-                  listen carefully.
-                </dd>
-              </div>
-              <div class="howto-row">
-                <dt data-i18n="howto.referenceLabel">Reference may help</dt>
-                <dd data-i18n="howto.referenceDesc">
-                  You may need to look up an alphabet, cipher or notation to
-                  decode the clue.
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section class="howto-section howto-touch">
-            <h3 data-i18n="howto.desktopTitle">Phone and tablet browsers</h3>
-            <p data-i18n="howto.desktopText">
-              Ashcombe Manor is available on desktop and laptop browsers. Open
-              it on a computer to play.
-            </p>
-          </section>
-        </div>
-      </div>
     </div>
 
     <script type="module" src="/src/entry.js"></script>

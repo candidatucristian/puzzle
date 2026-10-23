@@ -1,6 +1,8 @@
-This favicon was generated using the following font:
+Ashcombe Manor favicon
 
-- Font Title: Labrada
-- Font Author: undefined
-- Font Source: https://fonts.gstatic.com/s/labrada/v3/ieVh2Y9HLWefIpOyF1Vi3ZqDss1Px9VTSwM4QPdUej17.ttf
-- Font License: undefined)
+Source: manor.svg, a native vector drawing of a three-gabled manor facade.
+No fonts, stock icons or AI image generation are used.
+PNG sizes: 16, 32, 180, 192 and 512 pixels; a separate maskable 512 icon
+keeps the manor within the central safe area.
+Packaging: .artifacts/casefile-redesign/package-manor-icons.mjs (Sharp).
+The versioned manor filenames replace the old Descipher favicon references.

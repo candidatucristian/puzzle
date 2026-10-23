@@ -33,7 +33,7 @@ const state = (page) => evaluateApp(page, ({ services }) => {
   };
 });
 
-test('the iron lever pulls down, holds each Morse letter, sparks and springs back for every pull', async ({ page }) => {
+test('the knife switch is thrown, holds each Morse letter, sparks and springs open for every throw', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await upperHall(page);
@@ -85,7 +85,7 @@ test('the iron lever pulls down, holds each Morse letter, sparks and springs bac
   expect(errors).toEqual([]);
 });
 
-test('resize and leaving mid-signal release the lever without stale callbacks or textures', async ({ page }) => {
+test('resize and leaving mid-signal release the switch without stale callbacks or images', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await upperHall(page);
@@ -97,17 +97,20 @@ test('resize and leaving mid-signal release the lever without stale callbacks or
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect.poll(async () => (await state(page)).phase).toBe('rest');
   expect((await state(page)).letter).toBe(1);
-  expect(await evaluateApp(page, ({ game }) => game.textures.getTextureKeys().filter(key => key.endsWith('_iron_lever')))).toEqual(['Upper_iron_lever']);
+  const switchImages = (sceneKey) => evaluateApp(page, ({ game }, key) =>
+    game.scene.getScene(key).children.list.filter(o => o.texture?.key === 'hall_chem_switch_render_v1').length, sceneKey);
+  // its blades and their lit twin, once: nothing left over from before the resize
+  expect(await switchImages('Upper')).toBe(2);
   await pull(page);
   await expect.poll(async () => (await state(page)).busy).toBe(true);
   await evaluateApp(page, ({ services }) => services.levels.enterHall());
   await page.waitForTimeout(3800);
-  expect(await evaluateApp(page, ({ game }) => game.textures.getTextureKeys().filter(key => key.endsWith('_iron_lever')))).toEqual([]);
+  expect(await switchImages('Upper')).toBe(0);
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Hall');
   expect(errors).toEqual([]);
 });
 
-test('reduced motion keeps the Morse interaction and returns the lever without flying sparks', async ({ page }) => {
+test('reduced motion keeps the Morse interaction and opens the switch without flying sparks', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await upperHall(page, true);

@@ -156,7 +156,7 @@ export function createRainFall({ width: W, height: H, source, ground = null, hor
   const rand = (a, z) => a + random() * (z - a);
   const px = H / 1080, k = (W / H / (16 / 9)) * density;
   const owned = [];
-  let streaks, rings, buffers, textures;
+  let streaks, rings, buffers;
   try {
     streaks = program(gl, STREAK_VERTEX, STREAK_FRAGMENT);
     rings = program(gl, RING_VERTEX, RING_FRAGMENT);
@@ -181,7 +181,8 @@ export function createRainFall({ width: W, height: H, source, ground = null, hor
     const i = ((y / 2) | 0) * mask.width + ((x / 2) | 0);
     return x >= 0 && y >= 0 && x < W && y < H ? look[i * 4 + 3] / 255 : 0;
   };
-  textures = [lightOf(source), source, mask].map((image, unit) => {
+  // (each bound to its unit for good, and let go of with the rest)
+  [lightOf(source), source, mask].forEach((image, unit) => {
     const t = gl.createTexture();
     owned.push(() => gl.deleteTexture(t));
     gl.activeTexture(gl.TEXTURE0 + unit);
@@ -189,7 +190,6 @@ export function createRainFall({ width: W, height: H, source, ground = null, hor
     for (const p of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T]) gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE);
     for (const p of [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER]) gl.texParameteri(gl.TEXTURE_2D, p, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    return t;
   });
   buffers = [gl.createBuffer(), gl.createBuffer()];
   owned.push(() => buffers.forEach((b) => gl.deleteBuffer(b)));
@@ -227,8 +227,9 @@ export function createRainFall({ width: W, height: H, source, ground = null, hor
   };
 
   // the wind, never quite steady; and the sheets the rain comes in
-  let clock = rand(0, 100), gust = 0, gustAt = rand(4, 10);
-  const windNow = () => wind + 0.045 * Math.sin(clock * 0.21) + 0.025 * Math.sin(clock * 0.57 + 1.3) + gust;
+  // (and whatever wind the scene round it has: setWind)
+  let clock = rand(0, 100), gust = 0, gustAt = rand(4, 10), outside = 0;
+  const windNow = () => wind + 0.045 * Math.sin(clock * 0.21) + 0.025 * Math.sin(clock * 0.57 + 1.3) + gust + outside;
   const sheet = (x) => 0.76 + 0.24 * Math.sin(x * 0.0042 / px - clock * 0.85 + 2 * Math.sin(x * 0.0011 / px + clock * 0.23));
 
   const streakData = new Float32Array((drops.length + 200) * 6 * 5);
@@ -318,6 +319,8 @@ export function createRainFall({ width: W, height: H, source, ground = null, hor
     canvas,
     advance(dt) { if (!disposed) advance(Math.min(0.05, dt)); },
     draw() { if (!disposed) draw(); },
+    /** More lean (or less) from the wind of the scene it falls in. */
+    setWind(extra) { outside = extra; },
     dispose() {
       if (disposed) return;
       disposed = true;

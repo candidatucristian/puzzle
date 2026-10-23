@@ -26,6 +26,8 @@ import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
  *    release()              lets those textures go
  *    live(L, k, glow)       optional: what is alive over the painting
  *    tick(t)                optional: each frame, t in seconds
+ *    (a room may set L.rainPicture: the picture under its rain, when its own
+ *    canvas is clear and the room is drawn behind it — shared/liveRoom.js)
  *    dustIn(L)              optional: { x, y, width, height } the moonbeam's
  *                           dust turns in
  *    chestTint(L)           optional: a tint for the chest in a darkened room
@@ -73,7 +75,7 @@ export default class RoomScene extends BasePuzzleScene {
     this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
     // the rain on its window, if it is raining there (the room's `rain`:
     // its panes and what stands in front of them, as shared/rainGlass.js has it)
-    if (L.rain) addRainGlass(this, { ...L.rain, rect: boxOf(L.rain.panes, 2), picture: this.textures.get(k.room).getSourceImage() });
+    this._rain = L.rain ? addRainGlass(this, { ...L.rain, rect: boxOf(L.rain.panes, 2), picture: L.rainPicture ?? this.textures.get(k.room).getSourceImage() }) : null;
 
     // a warm light over the painting, for whatever burns in the room
     const glow = (at, alpha, tint = 0xffc078) =>

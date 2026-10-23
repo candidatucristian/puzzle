@@ -6,6 +6,8 @@ import { METAL, RIBBON, MEDAL } from "../flags/trophies.js";
 import { cotQuad, paintCotInRoom } from "../cot/inRoom.js";
 import { nurseryPortraitBounds, createNurseryPortraitViewer } from "./nurseryPortraits.js";
 import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint, room6HerbariumQuad } from "./photographicRoom.js";
+import { sketching, paintRoom6Sketch } from "./sketchRoom.js";
+import { loadRoom6Live, room6LiveReady, room6LivePlate, mountRoom6Live } from "./liveRoom6.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Room 6, the last along the hall: grey-green plaster under a coffered
@@ -36,22 +38,49 @@ export default class Room6Scene extends PlainRoomScene {
   preload() {
     super.preload();
     loadRoom6Photography(this);
+    if (!sketching()) loadRoom6Live(this);
   }
 
   create(data) {
     super.create(data);
     const canvas = this.game.canvas;
     canvas.dataset.sceneColour = "natural";
-    this._sceneCleanups.add(() => { delete canvas.dataset.sceneColour; });
+    // (alive, the room is held still under the pointer: no looking about)
+    if (this._L?.live) canvas.dataset.look = "still";
+    this._sceneCleanups.add(() => { delete canvas.dataset.sceneColour; delete canvas.dataset.look; });
     this._portraitViewer = createNurseryPortraitViewer(this);
     this._sceneCleanups.add(() => { this._portraitViewer.dispose(); this._portraitViewer = null; });
+    // the room alive behind the canvas: drawn each frame after the scene has
+    // moved, through the scene's camera as it walks; the rain on the window
+    // moving with the eye
+    const step = (time) => {
+      if (!this._live) return;
+      const hold = !this.ambientMotion || this.reducedMotion;
+      this._live.frame(time / 1000, this.cameras.main, hold);
+      const rain = this._rain?.image;
+      if (rain && this._rainAt) {
+        const at = this._live.offsetAt(7.74);
+        rain.setPosition(this._rainAt.x + at.x, this._rainAt.y + at.y);
+      }
+    };
+    this.events.on("postupdate", step);
+    this._sceneCleanups.add(() => {
+      this.events.off("postupdate", step);
+      this._live?.dispose();
+      this._live = null;
+    });
   }
+
+  get previewSource() { return this._L?.live ? room6LivePlate(this) : undefined; }
+
+  dustIn(L) { return L.live ? null : super.dustIn(L); }
 
   get usesEscape() { return this._portraitViewer?.isOpen || false; }
 
   layout(W, H, levels) {
     const L = super.layout(W, H);
     if (this.textures.exists(ROOM6_PHOTOGRAPH)) alignRoom6Photography(L, this.plan.window);
+    L.live = Boolean(L.blender) && !sketching() && room6LiveReady(this);
     const { Q, half: hx } = L;
     const lit = (id) => !levels.isCompleted(levels.indexOf(id));
     L.on = { flags: lit("flags") };
@@ -96,6 +125,8 @@ export default class Room6Scene extends PlainRoomScene {
   }
 
   paint(L) {
+    // (a trial: the room drawn, not photographed, when the address asks — ?sketch)
+    if (L.photographic && sketching()) return paintRoom6Sketch(this, L, this._keys);
     return L.photographic ? paintRoom6Photography(this, L, this._keys) : super.paint(L);
   }
 
@@ -107,6 +138,10 @@ export default class Room6Scene extends PlainRoomScene {
 
   live(L, k, glow) {
     super.live(L, k);
+    if (L.live) {
+      this._live ??= mountRoom6Live(this, { lit: L.on.flags });
+      this._rainAt = this._rain?.image ? { x: this._rain.image.x, y: this._rain.image.y } : null;
+    }
     const portrait = nurseryPortraitBounds(L);
     this._portraitZone = this.add.zone(portrait.x, portrait.y, portrait.width, portrait.height)
       .setOrigin(0).setDepth(6).setName("nursery-family-portrait")

@@ -2,23 +2,18 @@ import { addCanvasTexture, glowCanvas, grain, makeCanvas, polygon, soft, vignett
 import { BACK, roomLayout } from "../house/roomKit.js";
 import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
-import { HERBARIUM_COVER } from "../herbarium/photography.js";
-import { paintCotInRoom } from "../cot/inRoom.js";
-import { loadCotPhotography } from "../cot/photography.js";
-import { NURSERY_PORTRAIT, paintNurseryPortrait } from "./nurseryPortraits.js";
+import { NURSERY_PORTRAIT } from "./nurseryPortraits.js";
 import { onScreen } from "../../shared/phaserRain.js";
+import { room6LivePlate } from "./liveRoom6.js";
 import {
   paintMedal, TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL,
   TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL,
 } from "../flags/trophies.js";
 
-export const ROOM6_PHOTOGRAPH = "room6_photographic_interior_v1";
-// Ivy's herbarium, shut, on the console table under the window beside the
-// fern (the photograph's own pixels, 1659 x 948): its cover's four corners as
-// seen from the door, front left first. Painted on the photograph, and what
-// is clicked to open it.
+export const ROOM6_PHOTOGRAPH = "room6_blender_realistic_v4";
+// Blender's camera preserves the original 1659 x 948 logical composition.
+// The rendered cot, herbarium and family print share their old click areas.
 const PHOTO = { width: 1659, height: 948 };
-const HERBARIUM = [[684, 584], [786, 581], [779, 569], [692, 571]];
 export function room6HerbariumQuad(L) {
   const sx = L.W / PHOTO.width, sy = L.H / PHOTO.height;
   return [[676, 592], [794, 589], [790, 560], [684, 562]].map(([x, y]) => ({ x: x * sx, y: y * sy }));
@@ -43,11 +38,9 @@ const FERN = [[596, 487], [601, 470], [606, 466], [614, 462], [620, 457], [626, 
   [635, 473], [643, 473], [650, 475], [647, 481], [641, 487]];
 
 export function loadRoom6Photography(scene) {
-  loadCotPhotography(scene, true);
   for (const [key, url] of [
-    [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-photographic-v1.webp"],
+    [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-blender-realistic-v4.webp"],
     [NURSERY_PORTRAIT.key, NURSERY_PORTRAIT.url],
-    [HERBARIUM_COVER.key, HERBARIUM_COVER.url],
     [TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL],
     [TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL],
   ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
@@ -73,9 +66,10 @@ export function alignRoom6Photography(L, window) {
     x: window.x * L.half, hw: window.hw * L.half,
   };
   L.photographic = true;
+  L.blender = !(typeof location !== "undefined" && new URLSearchParams(location.search).has("sketch"));
   L.rain = {
     panes: WINDOW_PANES.map((points) => onScreen(points, PHOTO, L.W, L.H)),
-    cutouts: [onScreen(FERN, PHOTO, L.W, L.H)],
+    cutouts: [onScreen(L.blender ? [[547,510],[554,489],[579,481],[584,469],[601,465],[616,466],[625,473],[642,474],[653,488],[653,510]] : FERN, PHOTO, L.W, L.H)],
     drop: Math.max(0.45, (L.W / 1920) * 0.62), fog: 0.45, reach: 22, beyond: 0.5, seed: 6606,
   };
 }
@@ -84,6 +78,17 @@ export function alignRoom6Photography(L, window) {
 // Calibrate its front independently so each suspension loop meets the actual
 // brass rod, and both the clue surface and hit area follow the same face.
 export function room6CabinetPoint(L, u, v) {
+  if (L.blender) {
+    // Project the actual rod plane from the saved Blender camera (24 mm,
+    // 36 mm sensor, eye 1.72 m). Equal hanging positions stay equal in 3D,
+    // with their perspective contraction towards the far end of the case.
+    const depth = 4.56 + (6.10 - 4.56) * u;
+    const focal = 1106 / depth;
+    return {
+      x: (860 - 2.793 * focal) * L.W / PHOTO.width,
+      y: (430 + (v * 2.65 - 1.024) * focal) * L.H / PHOTO.height,
+    };
+  }
   const scaleY = 3.05 + (2.28 - 3.05) * u;
   const rodY = 252 + (313.34 - 252) * u;
   return {
@@ -91,6 +96,9 @@ export function room6CabinetPoint(L, u, v) {
     y: (rodY + (v * L.cabinet.h - 24) * scaleY) * L.H / 948,
   };
 }
+
+// (the drawn room hangs the same medals in its cabinet: sketchRoom.js)
+export { medals as room6Medals };
 
 function medals(scene, L) {
   const c = L.cabinet, pixels = 6, width = c.d1 - c.d0;
@@ -125,11 +133,21 @@ function medals(scene, L) {
 
 export function paintRoom6Photography(scene, L, keys) {
   const canvas = makeCanvas(L.W, L.H), ctx = canvas.getContext("2d");
-  ctx.drawImage(scene.textures.get(ROOM6_PHOTOGRAPH).getSourceImage(), 0, 0, L.W, L.H);
-  paintNurseryPortrait(ctx, L, scene);
   const c = L.cabinet;
   const face = (u, v) => room6CabinetPoint(L, u, v);
-  paintProjectedMaterial(ctx, medals(scene, L), face, 0.9, 20, 4);
+  // Alive (liveRoom6.js), the room and its medals are drawn behind this
+  // canvas, in three dimensions; here only what lies over them. Otherwise
+  // the render, and the medals painted on their plane.
+  if (L.live) {
+    // (the rain takes its picture at the screen's size, as the room is shown)
+    const plate = makeCanvas(L.W, L.H);
+    plate.getContext("2d").drawImage(room6LivePlate(scene), 0, 0, L.W, L.H);
+    L.rainPicture = plate;
+  }
+  else {
+    ctx.drawImage(scene.textures.get(ROOM6_PHOTOGRAPH).getSourceImage(), 0, 0, L.W, L.H);
+    paintProjectedMaterial(ctx, medals(scene, L), face, 0.9, 20, 4);
+  }
   if (!L.on.flags) {
     ctx.save();
     polygon(ctx, [face(0,(c.h-c.glass.y1)/c.h),face(1,(c.h-c.glass.y1)/c.h),face(1,(c.h-c.glass.y0)/c.h),face(0,(c.h-c.glass.y0)/c.h)]);
@@ -143,55 +161,12 @@ export function paintRoom6Photography(scene, L, keys) {
     const lamp = L.glows.flags;
     soft(ctx, lamp.x, lamp.y, lamp.r * 0.8, lamp.r * 1.3, "255,195,130", 0.055, "lighter");
   }
-  paintHerbarium(ctx, L, scene.textures.exists(HERBARIUM_COVER.key) ? scene.textures.get(HERBARIUM_COVER.key).getSourceImage() : null);
-  // the boy's cot against the back wall, his toys in it
-  paintCotInRoom(ctx, L, scene);
-  ctx.fillStyle = "rgba(2,4,6,0.1)"; ctx.fillRect(0, 0, L.W, L.H);
-  vignette(ctx, L.W, L.H, 0.28, "source-over");
-  grain(ctx, L.W, L.H, 0.006);
+  // Night lighting, cloth, plants and framed artwork are already rendered
+  // in Cycles. A light edge grade preserves their material response.
+  vignette(ctx, L.W, L.H, 0.12, "source-over");
+  grain(ctx, L.W, L.H, 0.003);
   addCanvasTexture(scene.textures, keys.room, canvas);
   addCanvasTexture(scene.textures, keys.glow, glowCanvas());
   return keys;
 }
 
-// The herbarium, shut, lying on the table: a deep green cloth cover, the
-// cream of its page block along the front and the side, a paler label on it,
-// its shadow on the wood.
-function paintHerbarium(ctx, L, photograph) {
-  ctx.save();
-  ctx.scale(L.W / PHOTO.width, L.H / PHOTO.height);
-  const [fl, fr, br, bl] = HERBARIUM.map(([x, y]) => ({ x, y }));
-  const down = 7; // the book's thickness, as it is seen
-  soft(ctx, (fl.x + fr.x) / 2 + 4, fl.y + down + 1, 62, 6, "0,0,0", 0.6);
-  // the page block: along the front, and down the right-hand side
-  polygon(ctx, [fl, fr, { x: fr.x, y: fr.y + down }, { x: fl.x, y: fl.y + down }]);
-  ctx.fillStyle = "#b9ab88"; ctx.fill();
-  ctx.strokeStyle = "rgba(90,70,40,0.35)"; ctx.lineWidth = 0.6;
-  for (let i = 1; i < 5; i++) { const y = fl.y + (down * i) / 5; ctx.beginPath(); ctx.moveTo(fl.x + 2, y); ctx.lineTo(fr.x - 1, y - 2); ctx.stroke(); }
-  polygon(ctx, [fr, br, { x: br.x, y: br.y + down }, { x: fr.x, y: fr.y + down }]);
-  ctx.fillStyle = "#9e916f"; ctx.fill();
-  // the cloth of its boards, a little over the pages at the front and the spine down the left
-  polygon(ctx, [fl, fr, br, bl]);
-  const cloth = ctx.createLinearGradient(fl.x, fl.y, br.x, br.y);
-  cloth.addColorStop(0, "#22341f"); cloth.addColorStop(0.6, "#2f4529"); cloth.addColorStop(1, "#1b2a18");
-  ctx.fillStyle = cloth; ctx.fill();
-  ctx.strokeStyle = "rgba(10,16,8,0.7)"; ctx.lineWidth = 1; ctx.stroke();
-  if (photograph) {
-    const coverPoint = (u, v) => {
-      const left = { x: bl.x + (fl.x - bl.x) * v, y: bl.y + (fl.y - bl.y) * v };
-      const right = { x: br.x + (fr.x - br.x) * v, y: br.y + (fr.y - br.y) * v };
-      return { x: left.x + (right.x - left.x) * u, y: left.y + (right.y - left.y) * u };
-    };
-    ctx.save(); ctx.filter = "brightness(.65) saturate(.76)";
-    paintProjectedMaterial(ctx, photograph, coverPoint, 1, 8, 4); ctx.restore();
-  }
-  polygon(ctx, [fl, bl, { x: bl.x - 3, y: bl.y + 2 }, { x: fl.x - 3, y: fl.y + down }]);
-  ctx.fillStyle = "#16220f"; ctx.fill();
-  // a label on the cover, and the lamp's warm across it
-  if (!photograph) {
-    polygon(ctx, [{ x: 720, y: 578 }, { x: 750, y: 577 }, { x: 748, y: 573 }, { x: 722, y: 574 }]);
-    ctx.fillStyle = "rgba(214,200,160,0.85)"; ctx.fill();
-  }
-  soft(ctx, 735, 575, 50, 8, "255,190,120", 0.12, "lighter");
-  ctx.restore();
-}

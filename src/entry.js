@@ -18,6 +18,25 @@ if (handheld) {
 export const ready = handheld ? Promise.resolve(null) : startGame();
 ready.then(app => { if (app && typeof window !== 'undefined') window.__descipher = app; });
 
+// A trial of the house drawn (?sketch) or rendered (?render) instead of
+// photographed: straight into Room VI, the room tried so far
+// (levels/room6/), once the game has loaded — even if its door is still
+// locked in this browser.
+const trial = new URLSearchParams(location.search);
+if (!handheld && (trial.has('sketch') || trial.has('render'))) {
+  ready.then(app => {
+    if (!app) return;
+    const go = () => {
+      if (document.getElementById('loading-screen') || !app.ui || !app.services) { setTimeout(go, 300); return; }
+      app.ui.showGame();
+      if (app.services.levels.enterPlace('Room6')) return;
+      for (const scene of app.game.scene.getScenes(true)) scene.scene.stop();
+      app.game.scene.start('Room6');
+    };
+    go();
+  });
+}
+
 function startGame() {
   const loading = createLoadingScreen();
   return import('./main.js').then(app => {

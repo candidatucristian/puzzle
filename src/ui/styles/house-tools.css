@@ -117,8 +117,7 @@
   transition: clip-path .24s ease-in, visibility 0s linear .24s; }
 .notebook-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 22px 24px 18px 22px;
   overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #3a3a36 transparent;
-  color: var(--ui-text); font-family: var(--ui-font); transition: opacity .2s ease .16s; }
-#notebook-modal.hidden .notebook-content { opacity: 0; transition: opacity .1s ease; }
+  color: var(--ui-text); font-family: var(--ui-font); }
 :root:has(#notebook-modal:not(.hidden)) #sidebar { opacity: 0; visibility: hidden; transition: opacity .15s ease, visibility 0s linear .15s; }
 #sidebar { transition: opacity .25s ease .1s; }
 .notebook-content .options-heading { flex-wrap: nowrap; padding-bottom: 12px; border-bottom: 1px solid #3a3a36; }
@@ -185,11 +184,24 @@
   background: repeating-linear-gradient(180deg, transparent 0 27px, #5a6e9a40 27px 28px) 0 4px, #ece4cc;
   border: 1px solid #000; border-radius: 3px; box-shadow: 0 0 0 1px #6a6a64; outline: none; }
 #notebook-text:focus { box-shadow: 0 0 0 2px #d8d3c6; }
-.notebook-sketch-wrap { position: relative; border: 1px solid #000; border-radius: 3px; box-shadow: 0 0 0 1px #6a6a64; background: #ece4cc; line-height: 0; }
+.notebook-sketch-wrap { position: relative; border: 1px solid #000; border-radius: 3px; box-shadow: 0 0 0 1px #6a6a64; background: #fff; line-height: 0; }
 /* the pencil that sketches on an empty sheet, and is gone (notebookPencil.js) */
 .notebook-pencil { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; opacity: 0; }
 #notebook-sketch { border-radius: 2px; width: 100%; aspect-ratio: 640 / 300; touch-action: none; cursor: var(--cursor-pencil, crosshair); }
 #notebook-sketch[data-tool="eraser"] { cursor: var(--cursor-rubber, crosshair); }
+/* the pencil's widths and colours, under the sheet */
+.notebook-pens { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pen-group { display: flex; align-items: center; gap: 6px; }
+.pen-size, .pen-colour { appearance: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border-radius: 50%;
+  border: 1px solid #3a3a36; background: transparent; cursor: var(--cursor-hand, pointer); transition: border-color .15s, background .15s; }
+.pen-size span { display: block; border-radius: 50%; background: #d8d3c6; }
+.pen-size[data-notebook-size="0"] span { width: 4px; height: 4px; }
+.pen-size[data-notebook-size="1"] span { width: 8px; height: 8px; }
+.pen-size[data-notebook-size="2"] span { width: 13px; height: 13px; }
+.pen-colour span { display: block; width: 20px; height: 20px; border-radius: 50%; background: var(--pen); box-shadow: 0 0 0 1px #8a8a84; }
+.pen-size:hover, .pen-colour:hover { border-color: #6a6a64; }
+.pen-size[aria-pressed="true"], .pen-colour[aria-pressed="true"] { border-color: #d8d3c6; background: #ffffff14; box-shadow: 0 0 0 1px #d8d3c6; }
+.pen-size:focus-visible, .pen-colour:focus-visible { outline: 2px solid #d8d3c6; outline-offset: 2px; }
 .notebook-tools { display: flex; gap: 6px; flex-wrap: wrap; }
 .notebook-tools .menu-btn { min-height: 34px; padding: 6px 12px; font-size: calc(12px * var(--reading-scale, 1)); }
 .notebook-tools .menu-btn[aria-pressed="true"] { background: var(--ui-text); border-color: var(--ui-text); color: #111; }
@@ -209,7 +221,7 @@
 .notebook-status[data-kind="warn"] { color: #e0897e; }
 .notebook-status.shown { opacity: 1; }
 [data-reduced-motion="true"] .shelf-note.just-kept { animation: none; }
-[data-reduced-motion="true"] :is(#notebook-modal, #notebook-modal.hidden, .notebook-content, #sidebar) { transition: none; }
+[data-reduced-motion="true"] :is(#notebook-modal, #notebook-modal.hidden, #sidebar) { transition: none; }
 
 /* ── the magnifying glass: the chemistry bench's own, painted by magnifier.js ── */
 #magnifier {
@@ -1158,18 +1170,3 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, body *::-webkit-scrollbar { di
 .outside-tasks { display: grid; gap: 8px; }
 .outside-tasks .outside-label { margin-left: 2px; }
 
-/* the front door drawn round in the thin pencil, as the letter on his desk
-   is (prologue.js outlines): drawn in, then breathing; brighter under the
-   hand; not while the house's story is being told over the picture */
-#start-door .door-outline { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; opacity: .75;
-  animation: outline-breathe 2.6s ease-in-out 2.2s infinite; transition: opacity .5s ease; }
-#start-door .door-outline path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1;
-  animation: door-outline-draw 1.4s cubic-bezier(.45, .05, .3, 1) .8s forwards; }
-#start-door .door-outline .ink-dark { stroke: #000; stroke-opacity: .7; stroke-width: 2.4; }
-#start-door .door-outline .ink-white { stroke: #ece7db; stroke-width: 1.05; }
-#start-door .door-outline .ink-over { stroke: #fff; stroke-opacity: .45; stroke-width: .45; transform: translate(.6px, -.45px); }
-#start-door:hover .door-outline { opacity: 1; animation: none; }
-#start-screen.is-telling #start-door .door-outline { opacity: 0; animation: none; }
-@keyframes door-outline-draw { to { stroke-dashoffset: 0; } }
-[data-reduced-motion="true"] #start-door .door-outline { animation: none; }
-[data-reduced-motion="true"] #start-door .door-outline path { animation: none; stroke-dashoffset: 0; }

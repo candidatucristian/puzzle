@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Ashcombe Manor</title>
+  <rect width="64" height="64" rx="12" fill="#0e1315"/>
+  <path d="M12 17h4v11h-4zm36 0h4v11h-4z" fill="#c9b793"/>
+  <path d="M8 50V31l9-10 8 9v-7l7-9 7 9v7l8-9 9 10v19z" fill="#dccdad"/>
+  <path d="M25 50V24l7-9 7 9v26z" fill="#bca780"/>
+  <path d="M7 31l10-11 8 9m-1-5 8-11 8 11m-1 5 8-9 10 11" fill="none" stroke="#e8dabc" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M13 34h6v7h-6zm32 0h6v7h-6zM13 45h6v5h-6zm32 0h6v5h-6z" fill="#192024"/>
+  <path d="M29 28h6v7h-6z" fill="#e7bb66"/>
+  <path d="M27 51V45a5 5 0 0 1 10 0v6z" fill="#11191c"/>
+  <path d="M30 46a2 2 0 0 1 4 0v5h-4z" fill="#a48045"/>
+  <path d="M7 52h50" fill="none" stroke="#dccdad" stroke-width="3" stroke-linecap="square"/>
+</svg>
+

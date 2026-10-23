@@ -113,6 +113,8 @@ export function mountPaperSounds({ game, audio }) {
       for (let i = 0; i < 5; i++) noise({ at: 0.03 + i * 0.03 + Math.random() * 0.02, dur: 0.03, type: "bandpass", freq: 2200 + Math.random() * 2400, q: 2, gain: 0.18, env: (k) => (1 - k) ** 2 });
     },
     open() { noise({ dur: 0.45, type: "bandpass", freq: 3800, to: 1600, q: 0.7, gain: 0.14, env: (k) => swell(k) * (0.6 + 0.4 * Math.random()) }); },
+    // a leaf of a book turned over (the manual's)
+    page(quick = false) { noise({ dur: quick ? 0.22 : 0.5, type: "bandpass", freq: 2000, to: 1500, q: 0.7, gain: quick ? 0.12 : 0.2, env: (k) => Math.sin(Math.PI * k) ** 1.6 * (0.6 + 0.4 * Math.random()) }); },
     unfold() {
       for (let i = 0; i < 3; i++) noise({ at: i * 0.17, dur: 0.16, type: "highpass", freq: 2400, gain: 0.16, env: (k) => Math.sin(Math.PI * k) * (0.5 + 0.5 * Math.random()) });
     },

@@ -3,15 +3,11 @@ import { paintTurfBase, paintGrass } from "./turf.js";
 import { paintShrub, paintHedge, paintFern } from "./foliage.js";
 import { GARDEN_TREES, paintMatureTree } from "./matureTrees.js";
 import { gardenPhotographs, paintGardenPhotograph, paintPhotographicBench } from "./photographicGarden.js";
+import { hasFibonacciRender, alignFibonacciGarden, paintFibonacciGarden, paintFibonacciWindow } from "./blenderPlant.js";
 
-/** The outdoor botanical garden for PLANT POT: photographed trees, flower
- *  beds and paths behind an oak potting bench. There is no indoor window
- *  frame. The older procedural landscape remains a missing-asset fallback.
- *
- *  The moon and stars, fireflies and lantern flame remain live. The pot,
- *  bucket and growing plant belong to plant.js. The bench keeps its natural
- *  photographed proportions; the pot and leaves use botanical photographs.
- *  The landscape and bench canvases are painted once per screen size. */
+/** The Blender/Cycles botanical garden and its camera-derived bench layout.
+ *  Live parts use that same camera's scale and landmarks. Older procedural
+ *  painters remain available as a missing-asset fallback. */
 
 const K = {
   sky: "pp_sky",
@@ -21,6 +17,7 @@ const K = {
   firefly: "pp_firefly",
   star: "pp_star",
   sparkle: "pp_sparkle",
+  window: "pp_window",
 };
 
 // the lantern, standing on the bench's left end (cm from the bench-top
@@ -68,15 +65,17 @@ function layoutGarden(W, H) {
 export function paintGarden(scene, W, H) {
   const L = layoutGarden(W, H);
   const t = scene.textures;
-  const photos = gardenPhotographs(scene);
-  L.photographic = Boolean(photos.garden);
+  const blender = hasFibonacciRender(t);
+  if (blender) alignFibonacciGarden(L);
+  const photos = blender ? {garden: null, bench: null} : gardenPhotographs(scene);
+  L.photographic = blender || Boolean(photos.garden);
   L.benchPhoto = photos.bench;
   if (L.photographic) {
     const openSky = L.inSky;
     // Keep animated stars in the opening between the photographed canopies.
     L.inSky = (x, y) => x > W * 0.58 && x < W * 0.86 && openSky(x, y);
   }
-  addCanvas(t, K.sky, photos.garden ? paintGardenPhotograph(L, photos.garden) : paintSky(L));
+  addCanvas(t, K.sky, blender ? paintFibonacciGarden(L, t) : photos.garden ? paintGardenPhotograph(L, photos.garden) : paintSky(L));
   const trees = t.exists(GARDEN_TREES.key) ? t.get(GARDEN_TREES.key).getSourceImage() : null;
   addCanvas(t, K.land, paintLand(L, trees));
   addCanvas(t, K.veil, paintVeil(L));
@@ -110,6 +109,8 @@ export function paintGarden(scene, W, H) {
     ]),
   );
   addCanvas(t, K.sparkle, paintSparkle());
+  const window=blender?paintFibonacciWindow(L,t):null;
+  if(window)addCanvas(t,K.window,window);
   return { L, keys: K };
 }
 
@@ -158,6 +159,7 @@ function paintSky(L) {
 function paintLand(L, trees) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
+  if (L.blender) return c;
   const ctx = c.getContext("2d");
   const rnd = lcg(2718);
   if (!L.photographic) {

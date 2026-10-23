@@ -99,6 +99,10 @@ body * {
 /* the room takes every touch itself: no page scroll, no double-tap zoom,
    no long-press selection over a puzzle */
 #game-container {
+  /* (the game's canvas is clear where nothing is drawn: under it, this
+     colour, or a live room — shared/liveRoom.js — kept within the container) */
+  background: #0a0a10;
+  isolation: isolate;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;

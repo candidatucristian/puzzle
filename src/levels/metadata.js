@@ -25,7 +25,7 @@ const metadata = [
     "id": "plantpot",
     "key": "PlantPot",
     "name": "The Moonlit Garden",
-    "summary": "A lantern lights a quiet potting bench in the moonlit garden.",
+    "summary": "An oil lamp lights a potting bench on the manor's open garden terrace.",
     "code": "FIBO",
     "altCode": "FIBONACCI",
     "hint": {
@@ -33,12 +33,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Dragging the bucket to the pot waters the plant; five pours add branches with 1, 1, 2, 3 and 5 leaves. Four photographic laurel leaf variants unfold from fine curved stems with photographed bark, rooted in real compost in a weathered terracotta pot. The growing pattern is the Fibonacci sequence. An outdoor botanical garden surrounds an oak potting table, shown in its natural proportions with warm lantern light, cool moonlight and foot contact shadows. Mature trees, flower beds, ferns and a distant glasshouse surround it. The lantern, pot and bucket rest on the tabletop; the scenery contains no written formula. The name of the sequence gives FIBO or FIBONACCI.",
+    "description": "Dragging the galvanized pail to the terracotta pot waters the plant; five pours add 1, 1, 2, 3 and 5 leaves. One Pelargonium specimen grows on the worn oak workbench outside, seen through an open manor window. Its individual leaf meshes retain the photographed specimen's folds, lobed margins, veins and surface detail. Moonlight and an old oil lamp illuminate the workbench and wet stone; beyond the terrace steps, a narrow track disappears into dark woodland, with dense crowns, irregular trunks and faint cool haze between distant trees. The scene contains no written formula. The growing pattern is the Fibonacci sequence; its name gives FIBO or FIBONACCI.",
     "references": [
       "LEAF_DEFS (PlantPotScene.js) — the leaves each pour brings: 1, 1, 2, 3 and 5, and where on the new branch they grow",
       "SEGMENTS — the plant's five branches, one per pour, in cm from the soil; paintStems() (plant.js) draws them as they grow",
       "triggerPour() / _pourPoint() — dragging the bucket over the pot tips it and pours",
-      "plantpot/photographicPlant.js and photographicGarden.js — alpha-cropped botanical sprites, petiole anchors and a uniformly scaled photographic table; realism-assets.md records assets and prompts"
+      "art/blender/fibonacci_garden.py and fibonacci_geranium.py — complete Blender exterior and original photographed leaf meshes; the same source supplies gameplay branch and leaf positions. fibonacci_publish.mjs exports Cycles layers and the actual bucket contact shadow."
     ]
   },
   {

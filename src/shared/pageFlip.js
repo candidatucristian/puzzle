@@ -99,11 +99,13 @@ export class PageFlip {
     else { s.mode = "back"; s.from = { ...s.P }; s.t = 0; }
   }
 
-  /** turned from outside (a key, say): the next leaf or the one before */
-  turn(dir) {
+  /** turned from outside (a key, say): the next leaf or the one before —
+   *  in `ms`, if it is to go quicker than a leaf turned by hand (leafing on
+   *  through several) */
+  turn(dir, ms = null) {
     if (this.state && this.state.mode !== "hover") return;
     if ((dir > 0 && this.spread >= this.spreads - 1) || (dir < 0 && this.spread <= 0)) return;
-    this.state = { dir, top: false, P: this._corner(false), mode: "drag", start: { x: 0, y: 0 } };
+    this.state = { dir, top: false, P: this._corner(false), mode: "drag", start: { x: 0, y: 0 }, ms };
     this._turnOver(this.state);
   }
 
@@ -140,7 +142,7 @@ export class PageFlip {
       const k = 1 - Math.exp(-dt * (s.mode === "drag" ? 22 : 12));
       s.P = this._limit(s.top, { x: s.P.x + (s.goal.x - s.P.x) * k, y: s.P.y + (s.goal.y - s.P.y) * k });
     } else {
-      const ms = s.mode === "turn" ? TURN_MS : BACK_MS;
+      const ms = s.mode === "turn" ? (s.ms ?? TURN_MS) : BACK_MS;
       s.t = Math.min(1, s.t + (dt * 1000) / ms);
       const e = s.t < 0.5 ? 2 * s.t * s.t : 1 - (-2 * s.t + 2) ** 2 / 2;
       const C = this._corner(s.top);

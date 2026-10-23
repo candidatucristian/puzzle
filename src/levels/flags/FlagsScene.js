@@ -13,24 +13,10 @@ import {
 import { FLAG_CODES } from "./flagDesigns.js";
 import { chime } from "../../shared/paint.js";
 import { addRainGlass, onScreen } from "../../shared/phaserRain.js";
-
-// the window's glass, in the photo's own pixels (1672 × 941); the leading
-// across it, in which the glass is set; and the microscope standing in front
-// of it: the rain is on the glass, never on the lead or the brass
-const PHOTO = { width: 1672, height: 941 };
-const GLASS = [[1405, 0], [1672, 0], [1672, 690], [1405, 690]];
-const LEADING = [
-  [[1400, 52], [1672, 23]], [[1400, 330], [1672, 300]], [[1400, 548], [1672, 535]],
-  [[1426, 0], [1449, 44]], [[1464, 0], [1449, 44]], [[1541, 0], [1541, 40]],
-  [[1405, 137], [1447, 67], [1493, 125], [1539, 50], [1587, 110], [1641, 33], [1672, 80]],
-  [[1493, 125], [1496, 507]], [[1588, 110], [1595, 536]],
-  [[1470, 545], [1497, 507], [1528, 538]], [[1472, 548], [1472, 704]],
-];
-const MICROSCOPE = [
-  [1546, 474], [1608, 474], [1614, 556], [1644, 598], [1638, 700], [1660, 786], [1660, 826],
-  [1460, 826], [1460, 782], [1496, 766], [1492, 738], [1516, 700], [1484, 672], [1482, 636],
-  [1516, 596], [1536, 540],
-];
+// the window's glass, in the render's own pixels; the leads and iron bars
+// across it; and the microscope standing in front of it, a part at a time:
+// the rain is on the glass, never on the lead or the brass
+import { PHOTO, GLASS, LEADING, MICROSCOPE } from "./trophyWall.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "FLAGS"  ·  code: DEBRIEFING   ·  the trophy wall
@@ -50,7 +36,7 @@ const MICROSCOPE = [
 // Nothing on screen names a country or a code. The cups and the loose medals
 // carry no flag; they are only what was won.
 //
-// A photoreal cabinet backdrop supports the live, precisely rendered medals;
+// A rendered bookcase (render/trophies.py) supports the live, precise medals;
 // on the window, rain as it is on glass (shared/rainGlass.js): the glass
 // misted, beads held all over it, and now and then one grown heavy enough to
 // run, clearing a track through the mist; beyond the glass, rain falling. A
@@ -108,8 +94,8 @@ export default class FlagsScene extends BasePuzzleScene {
     addRainGlass(this, {
       rect: { x: Math.floor(glass[0][0]), y: 0, w: Math.ceil(W - glass[0][0]), h: Math.ceil(glass[2][1]) },
       picture: this.textures.get(K.room).getSourceImage(),
-      panes: [glass], cutouts: [onScreen(MICROSCOPE, PHOTO, W, H)],
-      bars: LEADING.map((points) => ({ points: onScreen(points, PHOTO, W, H), width: 6 * sx })),
+      panes: [glass], cutouts: MICROSCOPE.map((part) => onScreen(part, PHOTO, W, H)),
+      bars: LEADING.map((lead) => ({ points: onScreen(lead.points, PHOTO, W, H), width: lead.width * sx })),
       drop: Math.max(0.55, (W / 1920) * 1.1), fog: 0.5, reach: 22, beyond: 0.45,
       // the moon's light, cold, from above; the room's lamp, warm, from the left
       lights: [

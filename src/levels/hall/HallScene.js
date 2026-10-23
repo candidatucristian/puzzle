@@ -6,13 +6,11 @@ import { buildMorseSteps } from "../lightswitch/puzzle.js";
 import { addCanvasTexture, chime, noiseBurst } from "../../shared/paint.js";
 import { paintKey } from "../../shared/keyArt.js";
 import { cursorFor } from "../../shared/cursors.js";
-import * as chemical from "./chemical.js";
 import { layoutHall, paintHall, paintDoorSwing, releaseHallArt } from "./hall.js";
 import { doorMotion, DOOR_WALK_START_MS, DOOR_LATCH_MS, DOOR_SWING_MS } from "./doorMotion.js";
-import { IronLever } from "./ironLever.js";
-import { loadChemistryHallMaterials } from "./chemicalMaterials.js";
-import { loadStaircaseArt } from "./staircase.js";
-import { loadBotanicHallMaterials } from "./botanicMaterials.js";
+import { LightSwitch, loadLightSwitch } from "./lightSwitch.js";
+import { loadHallRender } from "./hallRender.js";
+import { loadIronGate, createIronGate } from "./ironGate.js";
 import { loadAtticMaterials } from "../top/atticMaterials.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,18 +56,9 @@ export default class HallScene extends BasePuzzleScene {
     this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
     // the iron gates across the stairs, swinging open (ground floor only)
     if (!this.upper && !this.wing) this.load.audio("irongateopen", "assets/sounds/irongateopensound.mp3");
-    if (!this.upper && !this.wing) loadBotanicHallMaterials(this);
+    if (!this.upper && !this.wing) { loadHallRender(this, "ground"); loadIronGate(this); }
     if (this.wing) loadAtticMaterials(this);
-    if (this.upper) {
-      loadChemistryHallMaterials(this);
-      loadStaircaseArt(this);
-      if (!this.textures.exists(chemical.CHEMISTRY_TUBE_RACK)) {
-        this.load.image(chemical.CHEMISTRY_TUBE_RACK, chemical.CHEMISTRY_TUBE_RACK_URL);
-      }
-      if (!this.textures.exists(chemical.CHEMISTRY_VESSELS)) {
-        this.load.image(chemical.CHEMISTRY_VESSELS, chemical.CHEMISTRY_VESSELS_URL);
-      }
-    }
+    if (this.upper) { loadHallRender(this, "upper"); loadLightSwitch(this); }
   }
 
   create(data) {
@@ -182,7 +171,8 @@ export default class HallScene extends BasePuzzleScene {
     if (L.thing && this.upper) this._light(L, k);
     if (L.up) this._stairsUp(L);
 
-    if (k.fog) this._fog(L, k.fog);
+    // The Blender hall uses the same physical volume as the chemistry hall.
+    if (k.fog && !L.render) this._fog(L, k.fog);
     if (L.leak) this._drip(L, k.glow);
     // a door caught swinging shut by a resize is simply shut
     this._shutting = null;
@@ -254,24 +244,25 @@ export default class HallScene extends BasePuzzleScene {
   // A thin mist in the hall: banks of it lying low along the floor at
   // different depths, each drifting slowly across and back, the nearest
   // the faintest so that it never hides the doors, and dim, the hall being
-  // dark — it catches only what light there is; and a haze hanging at
-  // the far end, in the moon from the stairs.
+  // dark — it catches only what light there is. At the far end, keep it
+  // faint and down by the threshold so the ironwork stays clear and dark.
   _fog(L, key) {
     const { H } = L;
     for (const [i, z] of [1.15, 1.5, 2.0, 2.7, 3.6].entries()) {
-      const p = L.P(0, L.floor - H * 0.1, z), wide = (L.wall * 3) / z, side = i % 2 ? 1 : -1;
+      const distant = i >= 3;
+      const p = L.P(0, L.floor - H * (distant ? 0.04 : 0.1), z), wide = (L.wall * 3) / z, side = i % 2 ? 1 : -1;
       const bank = this.add
         .image(p.x - side * wide * 0.14, p.y, key)
-        .setDisplaySize(wide, (H * 0.52) / z)
+        .setDisplaySize(wide, (H * (distant ? 0.28 : 0.52)) / z)
         .setTint(0x7d8698)
-        .setAlpha(0.18 + i * 0.05)
+        .setAlpha((0.18 + i * 0.05) * (distant ? 0.22 : 1))
         .setDepth(-7.4);
       this.ambientTween({ targets: bank, x: p.x + side * wide * 0.14, duration: 19000 + i * 4200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       this.ambientTween({ targets: bank, alpha: bank.alpha * 0.6, duration: 7000 + i * 1900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
-    const far = L.P(0, -H * 0.05, 4.4);
-    const haze = this.add.image(far.x, far.y, key).setDisplaySize(L.wall * 0.9, H * 0.34).setTint(0xa4b2cc).setAlpha(0.28).setDepth(-7.4);
-    this.ambientTween({ targets: haze, alpha: 0.16, scaleX: haze.scaleX * 1.12, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    const far = L.P(0, L.floor - H * 0.08, 4.4);
+    const haze = this.add.image(far.x, far.y, key).setDisplaySize(L.wall * 0.9, H * 0.09).setTint(0x687080).setAlpha(0.035).setDepth(-7.4);
+    this.ambientTween({ targets: haze, alpha: 0.018, scaleX: haze.scaleX * 1.12, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   }
 
   // What makes the ground floor's hall a place somebody lives in — or did.
@@ -283,7 +274,7 @@ export default class HallScene extends BasePuzzleScene {
     const pendulum = this.add.image(L.clock.x, L.clock.y, k.pendulum).setOrigin(0.5, 0).setDisplaySize(L.clock.bob * 2, L.clock.len + L.clock.bob).setAngle(-2.3).setDepth(-9);
     this.ambientTween({ targets: pendulum, angle: 2.3, duration: 1000, yoyo: true, repeat: -1, ease: "Sine.easeInOut", onYoyo: tick, onRepeat: tick });
     // ── the gate's bars, shadowed long down the runner by the moon behind them
-    if (!levels.hasKey(GATES)) {
+    if (!L.render && !levels.hasKey(GATES)) {
       const g = (this._bars = this.add.graphics().setDepth(-9.5));
       for (const [a, b] of L.bars) {
         for (let i = 0; i < 8; i++) {
@@ -322,12 +313,13 @@ export default class HallScene extends BasePuzzleScene {
   _gate(L, k) {
     const levels = this.services.levels, g = L.gate;
     const OPEN = 0.13; // how much of a leaf's width shows when it stands open
-    const leaves = [
+    const rendered = createIronGate(this, L);
+    const leaves = rendered ? [] : [
       this.add.image(g.x, g.y, k.gateL).setOrigin(0, 0),
       this.add.image(g.x + g.width, g.y, k.gateR).setOrigin(1, 0),
     ];
     for (const leaf of leaves) leaf.setDisplaySize(g.width / 2, g.height).setDepth(-9);
-    const shut = leaves[0].scaleX;
+    const shut = leaves[0]?.scaleX ?? 0;
     // the stairs beyond, once the way to them is open
     const stairs = () => {
       const steps = this.add
@@ -340,6 +332,7 @@ export default class HallScene extends BasePuzzleScene {
       this._sparkles.push(attachMovableSparkles(this, steps, { padding: 2, bounds: () => g }));
     };
     if (levels.hasKey(GATES)) {
+      if (rendered) { rendered.amount = 1; rendered.draw(); }
       for (const leaf of leaves) leaf.setScale(shut * OPEN, leaf.scaleY);
       stairs();
       return;
@@ -362,9 +355,11 @@ export default class HallScene extends BasePuzzleScene {
       if (this._bars) this.tweens.add({ targets: this._bars, alpha: 0, duration: 900, onComplete: () => { this._bars?.destroy(); this._bars = null; } });
       // the gates heard opening, recorded (assets/sounds/irongateopensound.mp3)
       this.services.audio.playSfx("irongateopen", 0.8, this);
+      const motion = rendered
+        ? { targets: rendered, amount: 1, onUpdate: () => rendered.draw() }
+        : { targets: leaves, scaleX: shut * OPEN };
       this.tweens.add({
-        targets: leaves,
-        scaleX: shut * OPEN,
+        ...motion,
         duration: this.reducedMotion ? 1 : 1700,
         delay: this.reducedMotion ? 0 : 260,
         ease: "Sine.easeInOut",
@@ -400,24 +395,33 @@ export default class HallScene extends BasePuzzleScene {
       this.add.image(b.x, b.y, k.glow).setDisplaySize(b.r * 18, b.r * 18).setTint(0xffc078).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-8),
       this.add.image(b.x, b.y, k.glow).setDisplaySize(b.r * 3.2, b.r * 3.2).setTint(0xfff2cc).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-7.5),
     ];
-    this._lever = new IronLever(this, L.switch, k.glow);
+    // the hall by its light: the render of it with the bulb alight, over the dark one
+    this._bulbLight = k.lit && this.textures.exists(k.lit) ? this.add.image(0, 0, k.lit).setOrigin(0, 0).setDepth(-9.8).setAlpha(0) : null;
+    this._lever = new LightSwitch(this, L, k.glow);
     this._busy = false;
     this._answer = null;
     if (levels.isCompleted(index)) return;
     this._answer = levels.definitions[index].code;
+    // it takes a click anywhere on its panel, or on the blades fallen out from it
+    const h = this._lever.hit, t = thing.box;
+    const x0 = Math.min(t.x, h.x), y0 = Math.min(t.y, h.y);
+    const box = { x: x0, y: y0, width: Math.max(t.x + t.width, h.x + h.width) - x0, height: Math.max(t.y + t.height, h.y + h.height) - y0 };
     const zone = this.add
-      .zone(thing.box.x, thing.box.y, thing.box.width, thing.box.height)
+      .zone(box.x, box.y, box.width, box.height)
       .setOrigin(0, 0)
       .setInteractive({ useHandCursor: true })
       .setData("interactionLabel", thing.label)
       .setDepth(5);
     zone.on("pointerdown", () => this._press());
-    this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box, enabled: () => !this._busy }));
+    this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => box, enabled: () => !this._busy }));
   }
 
   _lit(on, level = 1) {
-    this._bulb[0].setAlpha(on ? 0.55 * level : 0);
+    // (where the hall is rendered lit, its glow is in the picture already)
+    this._bulb[0].setAlpha(on ? (this._bulbLight ? 0.25 : 0.55) * level : 0);
     this._bulb[1].setAlpha(on ? level : 0);
+    this._bulbLight?.setAlpha(on ? level : 0);
+    this._lever?.light(on ? level : 0);
   }
 
   _press() {

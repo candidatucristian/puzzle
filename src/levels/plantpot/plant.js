@@ -1,15 +1,12 @@
 import { makeCanvas, addCanvas, softEllipse, lcg } from "./garden.js";
 import { plantPhotographs } from "./photographicPlant.js";
+import { fibonacciParts } from "./blenderPlant.js";
 
-/** The things on the bench that the puzzle is made of: the terracotta pot,
- *  the plant that grows from it, and the zinc bucket of water — painted in
- *  centimetres, lit by the lantern standing just to their left and by the
- *  moon high on the right.
- *
- *  The pot comes in two images, so the stems rise from the soil behind its
- *  rim. The stems are painted live onto a canvas as they grow (paintStems);
- *  the leaves are four botanical photographs, placed by the scene. The
- *  bucket is painted once per water level, full to empty. */
+/** Live objects from the Blender garden, positioned in centimetres.
+ *  Stems progressively reveal the actual render, with 3D pot-rim occlusion.
+ *  Twelve separate curved leaf renders grow from their petiole anchors;
+ *  six pail renders preserve the changing water level. Legacy procedural
+ *  painters below provide a fallback if the rendered assets are absent. */
 
 export const RES = 2; // texture pixels per screen pixel
 
@@ -34,14 +31,15 @@ export const WATER_LEVELS = 6; // full … empty
  *  centimetre. */
 export function paintPlantArt(textures, cm) {
   const px = cm * RES;
-  const photographs = plantPhotographs(textures);
-  const pot = paintPot(px, photographs?.pot);
+  const rendered = fibonacciParts(textures);
+  const photographs = rendered ? null : plantPhotographs(textures);
+  const pot = rendered ? paintRenderedPot(px) : paintPot(px, photographs?.pot);
   addCanvas(textures, K.potBack, pot.back);
   addCanvas(textures, K.potFront, pot.front);
   addCanvas(textures, K.wet, pot.wet);
   const buckets = [];
   let bucketOrigin = null;
-  for (let i = 0; i < WATER_LEVELS; i++) {
+  for (let i = 0; !rendered && i < WATER_LEVELS; i++) {
     const b = paintBucket(px, 1 - i / (WATER_LEVELS - 1));
     addCanvas(textures, K.bucket + i, b.canvas);
     buckets.push(K.bucket + i);
@@ -55,13 +53,29 @@ export function paintPlantArt(textures, cm) {
   });
   return {
     pot: { back: K.potBack, front: K.potFront, wet: K.wet, ox: pot.ox, oy: pot.oy, wetAt: pot.wetAt },
-    buckets,
-    bucketOrigin,
-    shadow: K.shadow,
+    buckets: rendered?.buckets ?? buckets,
+    bucketOrigin: rendered?.bucketOrigin ?? bucketOrigin,
+    spriteScale: rendered?.spriteScale,
+    bucketLip: rendered?.bucketLip,
+    shadow: rendered?.shadow?.key ?? K.shadow,
+    shadowOrigin: rendered?.shadow,
+    shadowScale: rendered?.shadow?.scale,
+    shadowY: rendered?.shadow ? 0 : -.3,
     drop: K.drop,
-    leaves,
+    leaves: rendered?.leaves ?? leaves,
+    leafRenders: rendered?.leaves,
+    stemRender: rendered?.stems,
     bark: photographs?.stem,
   };
+}
+
+// The real pot, soil and contact shadow are already in the Cycles plate.
+// The stem layer has exact 3D rim occlusion. At this camera angle the front
+// rim covers the soil; an artificial dark oval would paint over the clay.
+function paintRenderedPot(px) {
+  const width=26, height=28, top=-25;
+  const back=makeCanvas(width*px,height*px),front=makeCanvas(width*px,height*px),wet=makeCanvas(width*px,height*px);
+  return {back,front,wet,ox:.5,oy:-top/height,wetAt:{x:0,y:POT.soilY}};
 }
 
 export function releasePlantArt(textures) {
@@ -364,7 +378,7 @@ function paintPot(px, photograph) {
  *  the soil; grown[i] 0–1 how much of each; lantern the flame, in the same
  *  cm. Young wood, olive going brown toward the base, lit on the side toward
  *  the lantern and edged with moonlight on the right. */
-export function paintStems(ctx, px, origin, segs, grown, lantern, bark) {
+export function paintStems(ctx, px, origin, segs, grown, lantern, bark, rendered) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.setTransform(px, 0, 0, px, origin.x, origin.y);
@@ -391,7 +405,7 @@ export function paintStems(ctx, px, origin, segs, grown, lantern, bark) {
       const l = Math.hypot(nx, ny) || 1;
       nx /= l;
       ny /= l;
-      const h = pts[k].w / 2;
+      const h = pts[k].w / 2 + (rendered ? .12 : 0);
       left.push([pts[k].x + nx * h, pts[k].y + ny * h, nx, ny]);
       right.push([pts[k].x - nx * h, pts[k].y - ny * h, nx, ny]);
     }
@@ -401,6 +415,12 @@ export function paintStems(ctx, px, origin, segs, grown, lantern, bark) {
     path.arc(tip.x, tip.y, tip.w / 2, Math.atan2(left.at(-1)[3], left.at(-1)[2]), Math.atan2(-right.at(-1)[3], -right.at(-1)[2]));
     for (let k = right.length - 1; k >= 0; k--) path.lineTo(right[k][0], right[k][1]);
     path.closePath();
+    if (rendered) {
+      ctx.save();ctx.clip(path);
+      ctx.drawImage(rendered.image,...rendered.box);
+      ctx.restore();
+      return;
+    }
     // the bark: brown low down, greener up in the young growth
     const young = i >= 2 ? 1 : i === 1 ? 0.55 : 0.2;
     const base = [74 - young * 12, 58 + young * 8, 34 + young * 4];

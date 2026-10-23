@@ -1,4 +1,19 @@
-# The Moonlit Garden: plant and bench realism
+# The Moonlit Garden: Blender artwork
+
+The active level now uses `public/assets/images/PlantPot/Blender/` exclusively:
+a complete Blender/Cycles exterior garden terrace, scanned oak bench, clay pot,
+galvanized pail and twelve original photographed Pelargonium leaf meshes.
+The foreground oak window and its deep sill are a separate transparent
+Cycles render, kept at the viewport edges so the view reads as looking
+through an open manor window without obstructing the watering puzzle.
+The background is now a dense dark woodland, with several distances of
+instanced photographic tree scans, a damp leaf floor and faint cool haze.
+No AI-generated garden or plant images
+are loaded by the active scene. The editable source is
+`art/blender/fibonacci.blend`; provenance and render commands are in
+`art/blender/fibonacci-sources.md`.
+
+## Historical assets, superseded by the Blender scene
 
 Original assets generated with the built-in imagegen tool and encoded as WebP with alpha preserved.
 

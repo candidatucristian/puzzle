@@ -10,6 +10,10 @@
 import { mountNotebookPencil } from "./notebookPencil.js";
 
 const PAGE = { w: 640, h: 300 }; // the sketch's own size, in its pixels
+// the pencil's three widths (and the rubber's, with each), its three colours
+const SIZES = [2, 4, 8], RUBBERS = [10, 18, 32];
+const COLOURS = ["rgba(36,33,28,0.92)", "rgba(30,78,170,0.92)", "rgba(178,38,30,0.92)"];
+const PEN = "notebook:pen"; // the width and colour last chosen
 const MAX_FOLDERS = 10;
 const SHELF = "notebook:folders"; // the folders and the notes in them
 const OPEN = "notebook:open-folder"; // the folder last opened
@@ -51,6 +55,7 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
   const modal = $("notebook-modal");
   const title = $("notebook-title"), text = $("notebook-text"), sketch = $("notebook-sketch");
   const tools = document.querySelectorAll("[data-notebook-tool]");
+  const sizes = document.querySelectorAll("[data-notebook-size]"), colours = document.querySelectorAll("[data-notebook-colour]");
   const folderList = $("notebook-folders"), folderCount = $("notebook-folder-count"), newFolder = $("notebook-new-folder");
   const notesWrap = $("notebook-notes-wrap"), notesLabel = $("notebook-notes-label"), noteList = $("notebook-notes");
   const back = $("notebook-back"), noteTitle = $("notebook-note-title"), saveButton = $("notebook-save");
@@ -67,6 +72,8 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
   const when = (at) => new Date(at).toLocaleDateString(DATES[i18n?.language] ?? "en-GB", { day: "numeric", month: "short" });
   // `page` is what lies open: the working page of a puzzle or place, or a note
   let page = null, tool = "pencil", drawing = null, saveTimer = null, statusTimer = null;
+  let pen = { size: 0, colour: 0 };
+  try { const kept = JSON.parse(storage.getItem(PEN) || "null"); if (kept) pen = { size: Math.min(2, Math.max(0, kept.size | 0)), colour: Math.min(2, Math.max(0, kept.colour | 0)) }; } catch { /* the first one, then */ }
   let folders = readShelf(), openId = storage.getItem(OPEN);
 
   // ── keeping things ──
@@ -414,10 +421,10 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
     ctx.lineJoin = "round";
     if (tool === "eraser") {
       ctx.globalCompositeOperation = "destination-out";
-      ctx.lineWidth = 18;
+      ctx.lineWidth = RUBBERS[pen.size];
     } else {
-      ctx.strokeStyle = "rgba(38,34,28,0.9)";
-      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = COLOURS[pen.colour];
+      ctx.lineWidth = SIZES[pen.size];
     }
     ctx.beginPath();
     ctx.moveTo(drawing.x, drawing.y);
@@ -435,13 +442,27 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
   };
   scope.on(sketch, "pointerup", lift);
   scope.on(sketch, "pointercancel", lift);
-  for (const button of tools) {
-    scope.on(button, "click", () => {
-      tool = button.dataset.notebookTool;
-      sketch.dataset.tool = tool;
-      for (const b of tools) b.setAttribute("aria-pressed", String(b === button));
-    });
-  }
+  const useTool = (name) => {
+    tool = name;
+    sketch.dataset.tool = tool;
+    for (const b of tools) b.setAttribute("aria-pressed", String(b.dataset.notebookTool === name));
+  };
+  for (const button of tools) scope.on(button, "click", () => useTool(button.dataset.notebookTool));
+  // a width, or a colour: kept for next time; a colour takes the pencil up again
+  const showPen = () => {
+    sizes.forEach((b, i) => b.setAttribute("aria-pressed", String(i === pen.size)));
+    colours.forEach((b, i) => b.setAttribute("aria-pressed", String(i === pen.colour)));
+    sketch.style.setProperty("--pen", COLOURS[pen.colour]);
+  };
+  const choose = (change, pencil) => {
+    Object.assign(pen, change);
+    storage.setItem(PEN, JSON.stringify(pen));
+    if (pencil) useTool("pencil");
+    showPen();
+  };
+  sizes.forEach((b, i) => scope.on(b, "click", () => choose({ size: i }, false)));
+  colours.forEach((b, i) => scope.on(b, "click", () => choose({ colour: i }, true)));
+  showPen();
   scope.on($("notebook-clear"), "click", () => {
     ctx.clearRect(0, 0, PAGE.w, PAGE.h);
     page.drawn = false;

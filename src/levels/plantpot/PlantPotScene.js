@@ -1,7 +1,6 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { makeMoonTexture } from "../../shared/moon.js";
-import { loadPhotographicGarden } from "./photographicGarden.js";
-import { loadPlantPhotography } from "./photographicPlant.js";
+import { loadFibonacciRender, fibonacciSkeleton, fibonacciLeafDefinitions } from "./blenderPlant.js";
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
   paintPlantArt,
@@ -16,23 +15,21 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "PLANT POT"  ·  code: FIBO / FIBONACCI  ·  water the plant
 //
-// An outdoor botanical garden at night under a full moon. On the oak bench,
-// beside a storm lantern, stand a terracotta pot and a zinc bucket of water. Drag the
+// The manor garden's uncovered terrace at night. On the worn oak bench,
+// beside an oil lamp, stand a terracotta pot and a zinc bucket of water. Drag the
 // bucket to the pot and it pours; each pour grows the plant one branch, and
 // each new branch brings its leaves: 1, 1, 2, 3, 5. Five pours, and the plant
 // has grown the sequence that bears a name. The scenery holds no formula and
 // nothing on screen explains the counting.
 //
-// The garden, oak table and terracotta pot are photographic. Four leaf
-// variants and a bark photograph give the living plant its texture; its
-// stems and leaves still grow separately, preserving the counting puzzle.
-// What moves is driven from here: the lantern's flame, fireflies over the
-// grass, the stars, now and then a shooting star.
+// Blender/Cycles supplies the exterior garden and its workbench. Twelve
+// photographed Pelargonium leaf meshes preserve the counting puzzle. Their
+// positions and growing shoots come from the same editable Blender source.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // the plant's skeleton, in cm from the middle of the soil: one segment per
 // pour, each a curve from `from` to `to`, `w0` to `w1` thick
-const SEGMENTS = [
+const SEGMENTS = fibonacciSkeleton ?? [
   { from: { x: 0, y: 0 }, cp: { x: 2, y: -12 }, to: { x: -1.5, y: -23 }, w0: 1.6, w1: 1.05 },
   { from: { x: -1.5, y: -23 }, cp: { x: -5, y: -34 }, to: { x: 3, y: -43 }, w0: 1.05, w1: .78 },
   { from: { x: -1.5, y: -23 }, cp: { x: 12, y: -25 }, to: { x: 26, y: -33 }, w0: .78, w1: .42 },
@@ -42,7 +39,7 @@ const SEGMENTS = [
 
 // the leaves each pour brings — 1, 1, 2, 3 and 5 — where on the new branch
 // (t along it) and which way they point (0 up, + clockwise)
-const LEAF_DEFS = [
+const LEAF_DEFS = fibonacciLeafDefinitions ?? [
   [{ seg: 0, t: .96, angle: -48, scale: .95 }],
   [{ seg: 1, t: .82, angle: 35, scale: 1 }],
   [
@@ -86,9 +83,7 @@ export default class PlantPotScene extends BasePuzzleScene {
   }
 
   preload() {
-    this.load.image("leaf", "assets/images/PlantPot/leaf.webp");
-    loadPhotographicGarden(this);
-    loadPlantPhotography(this);
+    loadFibonacciRender(this);
     this.load.audio("wateringplant", "assets/sounds/PlantPot/wateringplant.mp3");
   }
 
@@ -185,12 +180,14 @@ export default class PlantPotScene extends BasePuzzleScene {
     this._makeBench(L);
     this._makeLantern(L);
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
+    if(this.textures.exists(K.window))this._windowFrame=this.add.image(0,0,K.window).setOrigin(0,0).setDepth(30);
     this._built = true;
   }
 
   // the same moon that hangs over the valley through the telescope: one
   // texture, painted once and kept for the session
   _makeMoon(L) {
+    if (L.blender) return;
     makeMoonTexture(this.textures, "tele_moon");
     const { x, y, r } = L.moon;
     this.add
@@ -202,6 +199,7 @@ export default class PlantPotScene extends BasePuzzleScene {
   // stars in the open sky: most of them faint points, a few bright ones
   // that glint, each breathing at its own pace
   _makeStars(L, K) {
+    if (L.blender) return;
     const { W, H, S } = L;
     const rnd = this._rng(8123);
     const k = Math.max(0.8, Math.min(1.4, S / 800));
@@ -234,16 +232,17 @@ export default class PlantPotScene extends BasePuzzleScene {
   }
 
   _makeFireflies() {
+    if (this._L.conservatory) return;
     const { W, H } = this._L;
     const rnd = this._rng(777);
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < (this._L.blender ? 5 : 16); i++) {
       const front = rnd() < 0.25;
       const img = this.add
         .image(0, 0, this._art.keys.firefly)
         .setBlendMode("ADD")
         .setDepth(front ? 6 : -9)
         .setAlpha(0);
-      const s = (front ? 18 : 10 + rnd() * 6) * this._L.u;
+      const s = this._L.blender ? (3 + rnd() * 2) * this._L.u : (front ? 18 : 10 + rnd() * 6) * this._L.u;
       img.setDisplaySize(s, s);
       this._fireflies.push({
         img,
@@ -293,13 +292,14 @@ export default class PlantPotScene extends BasePuzzleScene {
     for (let s = 0; s < Math.min(this.currentStep, 5); s++) this._addLeaves(s, false);
 
     // the bucket: its shadow on the planks, then the bucket, at its level
-    this.bucketShadow = this.add.image(BUCKET_X, -0.3, art.shadow).setOrigin(0.44, 0.5).setScale(k);
+    this.bucketShadow = this.add.image(BUCKET_X, art.shadowY, art.shadow)
+      .setOrigin(art.shadowOrigin?.ox ?? .44, art.shadowOrigin?.oy ?? .5).setScale(art.shadowScale ?? k);
     const level = Math.min(WATER_LEVELS - 1, this.currentStep);
     this.bucket = this.add
       .image(BUCKET_X, -BUCKET.h / 2, art.buckets[level])
       .setOrigin(art.bucketOrigin.ox, art.bucketOrigin.oy)
-      .setScale(k);
-    if (!this.isSolved && this.currentStep < 5) {
+      .setScale(art.spriteScale ?? k);
+    if (!L.blender && !this.isSolved && this.currentStep < 5) {
       this.bucketGlints = this.add.container(BUCKET_X, -BUCKET.h / 2);
       this._bucketSparklePool = [];
       for (const [i, x, y] of [
@@ -355,11 +355,11 @@ export default class PlantPotScene extends BasePuzzleScene {
   _makeLantern(L) {
     const f = L.flame;
     const glow = this.add.image(f.x, f.y, this._art.keys.glow).setBlendMode("ADD").setDepth(1);
-    const size = 44 * L.cm;
-    glow.setDisplaySize(size, size).setAlpha(0.55);
+    const size = (L.blender ? 14 : 44) * L.cm;
+    glow.setDisplaySize(size, size).setAlpha(L.blender ? 0.14 : 0.55);
     const core = this.add.image(f.x, f.y, this._art.keys.glow).setBlendMode("ADD").setDepth(1.1);
-    core.setDisplaySize(12 * L.cm, 16 * L.cm).setAlpha(0.8);
-    this._flame = { glow, core, size };
+    core.setDisplaySize((L.blender ? 3 : 12) * L.cm, (L.blender ? 5 : 16) * L.cm).setAlpha(L.blender ? 0.18 : 0.8);
+    this._flame = { glow, core, size, gain: L.blender ? 0.14 : 0.5, coreGain: L.blender ? 0.18 : 0.75 };
   }
 
   // ── what moves ─────────────────────────────────────────────────────────────
@@ -381,9 +381,9 @@ export default class PlantPotScene extends BasePuzzleScene {
     // the flame
     const f = this._flame;
     const flick = 0.9 + 0.06 * Math.sin(t * 13.1) + 0.04 * Math.sin(t * 23.7 + 1) + 0.05 * Math.sin(t * 2.3);
-    f.glow.setAlpha(0.5 * flick);
+    f.glow.setAlpha(f.gain * flick);
     f.glow.setDisplaySize(f.size * (0.97 + 0.03 * flick), f.size * (0.97 + 0.03 * flick));
-    f.core.setAlpha(0.75 * flick);
+    f.core.setAlpha(f.coreGain * flick);
 
     this._updateFireflies(t, dt);
     this._updateShootingStar(dt);
@@ -475,8 +475,7 @@ export default class PlantPotScene extends BasePuzzleScene {
   // the pouring lip (the rim's left end), from the bucket's middle, tipped
   _lipOffset(deg) {
     const a = deg * DEG;
-    const lx = -(BUCKET.topR - 0.3);
-    const ly = -BUCKET.h / 2;
+    const [lx, ly] = this._plantArt?.bucketLip ?? [-(BUCKET.topR - 0.3), -BUCKET.h / 2];
     return { x: lx * Math.cos(a) - ly * Math.sin(a), y: lx * Math.sin(a) + ly * Math.cos(a) };
   }
 
@@ -685,7 +684,7 @@ export default class PlantPotScene extends BasePuzzleScene {
 
   _paintStems() {
     const ctx = this._stemsCanvas.getContext("2d");
-    paintStems(ctx, this._stemPx, this._stemsOrigin, SEGMENTS, this._grown, this._lantern, this._plantArt.bark);
+    paintStems(ctx, this._stemPx, this._stemsOrigin, SEGMENTS, this._grown, this._lantern, this._plantArt.bark, this._plantArt.stemRender);
     this._stemsTex.refresh();
   }
 
@@ -705,15 +704,16 @@ export default class PlantPotScene extends BasePuzzleScene {
     defs.forEach((d, i) => {
       const seg = SEGMENTS[d.seg];
       const p = this._segPoint(seg, d.t);
-      const photograph = this._plantArt.leaves?.[(step + i) % 4];
-      const angle = d.angle + (photograph ? 0 : LEAF_IMAGE.turn);
+      const rendered = this._plantArt.leafRenders?.[[0, 1, 2, 4, 7][step] + i];
+      const photograph = rendered ?? this._plantArt.leaves?.[(step + i) % 4];
+      const angle = rendered ? 0 : d.angle + (photograph ? 0 : LEAF_IMAGE.turn);
       const leaf = this.add
         .image(this._soil.x + p.x, this._soil.y + p.y, photograph?.key ?? "leaf")
         .setOrigin(photograph?.ox ?? LEAF_IMAGE.ox, photograph?.oy ?? LEAF_IMAGE.oy)
         .setAngle(angle);
       leaf.baseAngle = angle;
-      const full = (photograph ? 17 / photograph.height : LEAF_IMAGE.cmPerPx) * d.scale;
-      const width=full*1.12;
+      const full = rendered ? rendered.cmPerPixel : (photograph ? 17 / photograph.height : LEAF_IMAGE.cmPerPx) * d.scale;
+      const width = rendered ? full : full * 1.12;
       leaf.setScale(grow ? width*.08 : width, grow ? full*.16 : full);
       leaf.setInteractive({ cursor: "pointer" });
       leaf.on("pointerdown", () => this._swing(leaf));

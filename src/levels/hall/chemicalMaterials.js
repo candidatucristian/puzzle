@@ -1,78 +1,9 @@
-import { makeCanvas, soft } from "../../shared/paint.js";
-import { laboratoryFrames } from "../room7/laboratoryArt.js";
-
-const ASSETS = {
-  surfaces: { key: "chemhall_surfaces_photo", url: "assets/images/Chemistry/hall-surface-atlas.webp" },
-  apparatus: { key: "chemhall_apparatus_photo", url: "assets/images/Chemistry/hall-apparatus.webp" },
-  bulb: { key: "chemhall_bulb_photo", url: "assets/images/Chemistry/hall-bulb.webp" },
-  paper: { key: "hall_chart_paper_photo", url: "assets/images/CaseFile/letter-paper-v2.webp" },
-  sconces: { key: "hall_sconces_photo", url: "assets/images/Physics/observatory-fixtures.webp" },
-  laboratoryGlassware: { key: "chemhall_laboratory_glassware", url: "assets/images/Chemistry/hall-laboratory-glassware.webp" },
-  laboratoryFixtures: { key: "chemhall_laboratory_fixtures", url: "assets/images/Chemistry/hall-laboratory-fixtures.webp" },
-  laboratoryDoor: { key: "chemhall_laboratory_door", url: "assets/images/Chemistry/hall-laboratory-door.webp" },
-  whiteWalls: { key: "chemhall_white_walls", url: "assets/images/Chemistry/hall-white-walls.webp" },
-};
-const cache = new WeakMap();
-
-export function loadChemistryHallMaterials(scene) {
-  for (const { key, url } of Object.values(ASSETS)) if (!scene.textures.exists(key)) scene.load.image(key, url);
-}
-
-export function chemistryHallMaterials(scene) {
-  if (!Object.values(ASSETS).every(({ key }) => scene.textures.exists(key))) return null;
-  const sources = Object.fromEntries(Object.entries(ASSETS).map(([name, { key }]) => [name, scene.textures.get(key).getSourceImage()]));
-  if (!cache.has(sources.surfaces)) {
-    const crop = (source, x, y, w, h, brightness = 1, saturation = 0.76) => {
-      const c = makeCanvas(w, h), g = c.getContext("2d");
-      g.filter = `brightness(${brightness}) saturate(${saturation})`;
-      g.drawImage(source, x, y, w, h, 0, 0, w, h);
-      return c;
-    };
-    const cutout = (source, box) => laboratoryFrames(crop(source, ...box, 1, 1), [0, 1])[0];
-    const atlas = sources.surfaces, w = atlas.width / 3, h = atlas.height / 3;
-    const tile = (col, row, brightness) => crop(atlas, col * w + 3, row * h + 3, w - 6, h - 6, brightness);
-    const oak = tile(2, 1, 0.72), across = makeCanvas(oak.height, oak.width), g = across.getContext("2d");
-    g.translate(0, across.height); g.rotate(-Math.PI / 2); g.drawImage(oak, 0, 0);
-    const gw = sources.laboratoryGlassware.width, gh = sources.laboratoryGlassware.height;
-    // Actual atlas gaps keep complete flask bases and the entire tube rack.
-    const workgroups = [[0, 0, gw * 0.565, gh * 0.65], [gw * 0.565, 0, gw * 0.435, gh * 0.65], [0, gh * 0.65, gw * 0.55, gh * 0.35], [gw * 0.55, gh * 0.65, gw * 0.45, gh * 0.35]].map(box => cutout(sources.laboratoryGlassware, box));
-    const fixtures = laboratoryFrames(sources.laboratoryFixtures, [0, 0.458, 0.789, 1]);
-    const white = sources.whiteWalls, whiteWidth = white.width / 2;
-    cache.set(atlas, {
-      whiteWalls: true,
-      // The stairwell belongs to the dark passage toward Physics; only the
-      // chemistry hall uses the white plaster and laboratory tiles below.
-      stairPlaster: tile(0, 0, 0.48),
-      plaster: crop(white, 3, 3, whiteWidth - 6, white.height - 6, 0.74, 0.94),
-      tile: crop(white, whiteWidth + 3, 3, whiteWidth - 6, white.height - 6, 0.78, 0.94),
-      paleFloor: tile(2, 0, 0.66),
-      darkFloor: tile(0, 1, 0.8), paint: tile(1, 1, 0.9), oak, across,
-      copper: tile(0, 2, 0.7), slate: tile(1, 2, 0.58), ceiling: tile(2, 2, 0.36),
-      workgroups, counterFront: fixtures[0], reagentShelf: fixtures[1], drawerFace: fixtures[2],
-      door: crop(sources.laboratoryDoor, 0, 0, sources.laboratoryDoor.width, sources.laboratoryDoor.height, 0.75, 0.94),
-      apparatus: laboratoryFrames(sources.apparatus, [0, 0.5, 1]),
-      bulb: laboratoryFrames(sources.bulb, [0, 1])[0],
-      paper: crop(sources.paper, 31, 50, 964, 1425, 0.83),
-      sconce: crop(sources.sconces, 250, 20, 383, 970, 0.85),
-      stubHolder: crop(sources.sconces, 250, 470, 383, 520, 0.66),
-      wax: crop(sources.sconces, 478, 150, 65, 135, 0.65),
-    });
-  }
-  return cache.get(sources.surfaces);
-}
+import { soft } from "../../shared/paint.js";
 
 export function paintHallApparatus(ctx, image, x, y, height) {
   const width = height * image.width / image.height;
   soft(ctx, x, y + 1, width * 0.48, height * 0.025, "0,0,0", 0.6);
   ctx.drawImage(image, x - width / 2, y - height, width, height);
-}
-
-export function paintChemistryBulb(ctx, L) {
-  const image = L.chemicalMaterials?.bulb;
-  if (!image) return false;
-  const b = L.bulb;
-  ctx.drawImage(image, b.x - b.r * 0.94, b.y - b.r * 2.02, b.r * 1.88, b.r * 3.02);
-  return true;
 }
 
 export function paintHallSconcePhoto(ctx, L, s, materials) {

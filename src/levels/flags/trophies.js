@@ -1,17 +1,20 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
+import { PHOTO, CUPS } from "./trophyWall.js";
 
-/** The botanical trophy wall for FLAGS: a photoreal walnut cabinet and rainy
- *  laboratory window, with photoreal struck medal faces and exact live flag
- *  ribbons so the visual code remains precise. */
+/** The botanical trophy wall for FLAGS: a walnut bookcase and a rainy leaded
+ *  window, built in 3D from CC0 scans and rendered in Blender (the scene and
+ *  the medals' dies: render/trophies.py, medals.py, reliefs.mjs), with the
+ *  struck medal faces rendered the same way and exact live flag ribbons so
+ *  the visual code remains precise. */
 
 const K = { room: "fl_room", glow: "fl_glow", glint: "fl_glint" };
 const HANG = { ribbon: "fl_ribbon_", disc: "fl_disc_", sheen: "fl_sheen_" }; // + the medal's index
 export const TROPHY_BACKGROUND = "fl_trophy_background";
-export const TROPHY_BACKGROUND_URL = "assets/images/Flags/trophy-wall-background.webp";
+export const TROPHY_BACKGROUND_URL = "assets/images/Flags/trophy-wall-render-v1.webp";
 export const TROPHY_MEDAL_FACES = "fl_trophy_medal_faces";
-export const TROPHY_MEDAL_FACES_URL = "assets/images/Flags/trophy-medal-faces.webp";
+export const TROPHY_MEDAL_FACES_URL = "assets/images/Flags/trophy-medal-faces-render-v1.webp";
 export const TROPHY_BRAZIL_MEDAL = "fl_trophy_brazil_medal";
-export const TROPHY_BRAZIL_MEDAL_URL = "assets/images/Flags/trophy-brazil-medal.webp";
+export const TROPHY_BRAZIL_MEDAL_URL = "assets/images/Flags/trophy-brazil-medal-render-v1.webp";
 
 // what is won, across a polished curve: the dark edge, the shadow, the body,
 // the light, the body, the room reflected, a lighter band, the far edge
@@ -115,8 +118,13 @@ export function paintTrophies(scene, W, H, codes) {
     : null;
   if (background) {
     g.drawImage(background, 0, 0, W, H);
-    // The photograph supplies the cabinet and awards; keep the five puzzle
-    // medals live so every ribbon keeps its exact national flag.
+    // The render supplies the bookcase and its awards; keep the five puzzle
+    // medals live so every ribbon keeps its exact national flag. The light
+    // catches the render's own cups, where they stand in it.
+    L.glints = [
+      ...CUPS.map((c) => ({ x: (c.x / PHOTO.width) * W, y: (c.y / PHOTO.height) * H, s: (c.height / PHOTO.height) * H * 0.8 })),
+      ...L.glints.slice(L.cups.length),
+    ];
     for (const m of L.medals) paintMedal(g, L, m, medalFaces, brazilMedal, "shadow");
     vignette(g, W, H, 0.18);
     grain(g, W, H, 0.012);
@@ -608,14 +616,13 @@ export function paintMedal(g, L, m, medalFaces, brazilMedal, part = "all") {
     g.closePath();
   };
   if (medalFaces || (m.index === 1 && brazilMedal)) {
-    // These five photographed faces were generated as a clean sprite strip;
-    // crop the exact medal bounds and keep the national-flag silk ribbons live.
+    // The five rendered faces stand in a strip of square cells, each medal
+    // filling its cell edge to edge; the national-flag silk ribbons stay live.
     if (m.index === 1 && brazilMedal) {
       g.drawImage(brazilMedal, x - r, my - r, r * 2, r * 2);
     } else if (medalFaces) {
-      const faceBounds = [28, 456, 880, 1306, 1732];
-      const size = 412;
-      g.drawImage(medalFaces, faceBounds[m.index], 128, size, size, x - r, my - r, r * 2, r * 2);
+      const cell = medalFaces.height;
+      g.drawImage(medalFaces, m.index * cell, 0, cell, cell, x - r, my - r, r * 2, r * 2);
     }
     // The suspension eyelet sits over the face where the ribbon meets it.
     g.lineWidth = Math.max(1.2, r * 0.055);

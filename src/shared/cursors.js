@@ -38,12 +38,16 @@ const SHAPES = {
   key: ["M3.5 16a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0-11 0zM14.5 16H29M24 16v4.5M28 16v3.5M7.4 16h3.2", 16, 16],
 };
 const FALLBACK = { locked: "not-allowed", pencil: "crosshair", rubber: "crosshair" };
+// (the same shapes, for drawing a pointer as a picture of itself: the manual's demonstrations)
+export const CURSOR_SHAPES = SHAPES;
 const ARROWS = {
   door: ["M4.7 16.15H14.8V12.3L22.2 17l-7.4 4.7v-3.85H4.7z", "M5.3 16.45h9.5"],
   doorLeft: ["M27.3 16.15H17.2V12.3L9.8 17l7.4 4.7v-3.85H27.3z", "M26.7 16.45h-9.5"],
   enter: ["M5 15.15h13.8V11.8L27 16l-8.2 4.2v-4.35H5z", "M5.7 15.5h12.8"],
   enterLeft: ["M27 15.15H13.2V11.8L5 16l8.2 4.2v-4.35H27z", "M26.3 15.5H13.5"],
 };
+
+export const CURSOR_ARROWS = ARROWS;
 
 export const CURSORS = Object.fromEntries(Object.entries(SHAPES).map(([name, [path, x, y]]) => {
   const [arrow, highlight] = ARROWS[name] ?? [];

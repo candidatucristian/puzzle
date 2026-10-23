@@ -1,17 +1,17 @@
 import { soft, grain, vignette, glowCanvas, makeCanvas, addCanvasTexture, lcg, polygon } from "../../shared/paint.js";
 import { archGeo, paintSkyOn, paintWindowOn, openingPath } from "../telescope/window.js";
 import { projectDoor, DOOR_LENGTH as DOOR_LEN } from "./doorMotion.js";
-import { paintLeverMount } from "./ironLever.js";
 import { layoutGallery, paintGallery } from "../top/gallery.js";
 import * as botanic from "./botanic.js";
 import * as chemical from "./chemical.js";
-import { chemistryHallMaterials, paintChemistryBulb, paintHallSconcePhoto } from "./chemicalMaterials.js";
+import { paintHallSconcePhoto } from "./chemicalMaterials.js";
 import { botanicHallMaterials, paintBotanicFloor, paintBotanicGrass } from "./botanicMaterials.js";
+import { hallRender, paintHallRender, hallRenderPart } from "./hallRender.js";
 import { atticMaterials } from "../top/atticMaterials.js";
 import { paintAtticForeground, paintAtticShade } from "../top/attic.js";
 import { paintAtticDoorHandle } from "../top/atticDoor.js";
 import { paintProjectedMaterial, paintFlatMaterial } from "../house/drawingRoomMaterials.js";
-import { paintChemistryStairs, staircaseArt } from "./staircase.js";
+import { paintChemistryStairs } from "./staircase.js";
 
 /** The ground-floor hall of the manor, at night: a long passage seen down its
  *  length, three closed doors along either wall, and at its far end the
@@ -30,14 +30,16 @@ import { paintChemistryStairs, staircaseArt } from "./staircase.js";
  *  The floor above has a hall of the same plan (`upper`), far gone and put
  *  to chemistry: four doors, a spiral stair going up to the right where
  *  the sixth would be, tiled walls and floor, copper pipes and laboratory
- *  cupboards. A bare bulb on a flex is worked by the iron lever.
+ *  cupboards. A bare bulb on a flex is worked by a knife switch.
  *
- *  Painted once per screen size: the hall; a glow; the gate's two leaves. */
+ *  Painted once per screen size: the hall; a glow; the gate's two leaves.
+ *  The ground floor's and the chemist's halls are Blender renders of all this
+ *  (hallRender.js), through the same eye; painted only if those have not come. */
 
 // each floor's hall has its own pictures
 const KEYS = {
   ground: { room: "hl_hall", glow: "hl_glow", gateL: "hl_gate_l", gateR: "hl_gate_r", fog: "hl_fog", pendulum: "hl_pendulum" },
-  upper: { room: "hu_hall", glow: "hu_glow" },
+  upper: { room: "hu_hall", glow: "hu_glow", lit: "hu_lit" },
   wing: { room: "hw_hall", glow: "hw_glow" },
 };
 // Only the small doorway is uploaded while its leaf moves.
@@ -129,14 +131,14 @@ export function layoutHall(W, H, { upper = false, wing = false, bulbOn = true } 
     L.bulb = { x: b.x, y: b.y, r, top: top.y };
     // the switch that works it, on the right-hand wall between the stairs and the next door
     const sw = L.P(L.wall, H * 0.06, 2.05), sr = (38 * u) / 2.05;
-    // A compact iron lever on the wall, standing proud of its slanted mount.
+    // A knife switch on its panel on the wall (lightSwitch.js): where it is, its measure.
     const slant = 0.62, ph = sr * 2.45, pw = sr * 1.32;
     L.switch = {
       x: sw.x, y: sw.y, r: sr, slant,
       plate: { w: pw, h: ph },
       contact: { x: sw.x - sr * 0.12, y: sw.y + sr * 0.69 },
     };
-    L.thing = { level: "lightswitch", label: "Pull the iron lever", box: { x: sw.x - Math.max(30, sr * 1.4), y: sw.y - ph * 0.5 - 5, width: Math.max(46, sr * 2.1), height: ph + 10 } };
+    L.thing = { level: "lightswitch", label: "Throw the switch", box: { x: sw.x - Math.max(30, sr * 1.4), y: sw.y - ph * 0.5 - 5, width: Math.max(46, sr * 2.1), height: ph + 10 } };
     // the spiral going up to Physics, where the first right-hand door is below
     L.stairs = { z0: 1.46, z1: 1.91, head: L.floor - H * 0.76 };
     // where they are on the screen, to be clicked: the way to the top floor
@@ -178,33 +180,32 @@ export function paintHallOn(ctx, L) {
 
 export function paintHall(scene, L) {
   const t = scene.textures;
-  if (L.theme === "chemistry") {
-    L.chemicalMaterials = chemistryHallMaterials(scene);
-    L.staircaseArt = staircaseArt(scene);
-  }
-  if (L.theme === "botanic") L.botanicMaterials = botanicHallMaterials(scene);
+  if (!L.wing) L.render = hallRender(scene, L.upper ? "upper" : "ground");
+  if (L.theme === "botanic" && !L.render) L.botanicMaterials = botanicHallMaterials(scene);
   if (L.wing) L.atticMaterials = atticMaterials(scene);
   const { W, H } = L;
-  if (L.theme === "chemistry" && t.exists(chemical.CHEMISTRY_TUBE_RACK)) {
-    L.tubeRackPhoto = t.get(chemical.CHEMISTRY_TUBE_RACK).getSourceImage();
-  }
-  if (L.theme === "chemistry" && t.exists(chemical.CHEMISTRY_VESSELS)) {
-    L.vesselPhotoSheet = t.get(chemical.CHEMISTRY_VESSELS).getSourceImage();
-  }
   const K = L.wing ? KEYS.wing : L.upper ? KEYS.upper : KEYS.ground;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#050506";
   ctx.fillRect(0, 0, W, H);
-  paintHallOn(ctx, L);
+  if (L.render) paintHallRender(ctx, L, "plate");
+  else paintHallOn(ctx, L);
   addCanvasTexture(t, K.room, c);
+  // the chemist's hall with its bulb alight, for the scene to show it by
+  if (K.lit && L.render?.lit) {
+    const lit = makeCanvas(W, H), g = lit.getContext("2d");
+    g.fillStyle = "#050506"; g.fillRect(0, 0, W, H);
+    paintHallRender(g, L, "lit");
+    addCanvasTexture(t, K.lit, lit);
+  }
   addCanvasTexture(t, K.glow, glowCanvas());
   if (L.gate) {
-    addCanvasTexture(t, K.gateL, paintGateLeaf(L, -1));
-    addCanvasTexture(t, K.gateR, paintGateLeaf(L, 1));
+    addCanvasTexture(t, K.gateL, L.render ? hallRenderPart(L, "gateL") : paintGateLeaf(L, -1));
+    addCanvasTexture(t, K.gateR, L.render ? hallRenderPart(L, "gateR") : paintGateLeaf(L, 1));
   }
   if (K.fog) addCanvasTexture(t, K.fog, paintFogBank());
-  if (K.pendulum) addCanvasTexture(t, K.pendulum, paintPendulum(L.clock));
+  if (K.pendulum) addCanvasTexture(t, K.pendulum, L.render ? hallRenderPart(L, "pendulum") : paintPendulum(L.clock));
   return { keys: K };
 }
 
@@ -304,6 +305,10 @@ export function paintDoorSwing(scene, L, d, lit) {
   // Preserve objects in front of the door, and the hall's original shade.
   // They must not jump in brightness or move with the opening leaf.
   const foreground = sheet((ctx) => {
+    if (L.render) {
+      paintHallRender(ctx, L, "front");
+      return;
+    }
     if (L.atticMaterials) {
       paintAtticForeground(ctx, L);
       paintAtticShade(ctx, L);
@@ -319,7 +324,8 @@ export function paintDoorSwing(scene, L, d, lit) {
   });
   // Keep the wood, panels and carved number in a single material. Project
   // that material instead of rasterizing hundreds of strokes per frame.
-  const face = sheet((ctx) => paintDoor(ctx, L, { ...d, hideHandle: true }));
+  // (the render's door has its knob on it, and nothing stood in front of it)
+  const face = sheet((ctx) => (L.render ? paintHallRender(ctx, L, "doors") : paintDoor(ctx, L, { ...d, hideHandle: true })));
   const canvas = document.createElement("canvas");
   canvas.width = room.width;
   canvas.height = room.height;
@@ -345,7 +351,7 @@ export function paintDoorSwing(scene, L, d, lit) {
       const Xf = into(wide * Math.sin(angle)), zf = z0 + DOOR_LEN * Math.cos(angle);
       fill(ctx, [quad[3], quad[2], L.P(Xf + d.side * wide * 0.3, floor, zf + 0.05), L.P(X + d.side * wide * 0.3, floor, z0 + 0.05)], `rgba(0,0,0,${0.4 * aperture})`);
       paintMovingDoorFace(ctx, face, box, resolution, d.quad, shape);
-      paintDoorHandle(ctx, L, { ...d, handle }, shape.surface);
+      if (!L.render) paintDoorHandle(ctx, L, { ...d, handle }, shape.surface);
       fill(ctx, quad, `rgba(3,2,2,${0.32 * Math.sin(angle)})`);
       // The oak has thickness; its moving edge catches the room's light.
       fill(ctx, shape.edge, `rgba(${lit ? "112,73,36" : "48,52,63"},${aperture})`);
@@ -990,9 +996,9 @@ function paintDecay(ctx, L) {
 // where the chandelier hangs on the floor below: a brass cap, a brown
 // bakelite holder with its skirt, the pear of glass with the filament
 // standing in it on its glass stem. On the right-hand wall, between the
-// stairs and the next door, a little iron lever works it — and from it a
+// stairs and the next door, a knife switch works it — and from it a
 // cloth-covered wire clipped up the wall and across the ceiling to the
-// rose. Painted dark: the scene moves the lever and lights the bulb.
+// rose. Painted dark: the scene throws the switch and lights the bulb.
 function paintBulb(ctx, L) {
   const { P, wall, ceil, u } = L;
   const b = L.bulb, r = b.r;
@@ -1009,7 +1015,6 @@ function paintBulb(ctx, L) {
   for (const k of [0.3, 0.62, 0.9]) ctx.fillRect(sw.x - sr * 0.14, sw.y - sr * 0.9 + (up.y - sw.y + sr * 0.9) * k, sr * 0.28, Math.max(1, sr * 0.07));
   for (const k of [0.25, 0.5, 0.75]) { const x = up.x + (rose.x - up.x) * k, y = up.y + (rose.y - up.y) * k; ctx.fillRect(x - sr * 0.1, y - sr * 0.05, sr * 0.2, sr * 0.1); }
 
-  paintLeverMount(ctx, sw);
 
   // ── the rose on the ceiling, cracked across
   ctx.fillStyle = "#0c0c0d";
@@ -1034,7 +1039,6 @@ function paintBulb(ctx, L) {
   ctx.fillStyle = "#2a2016";
   ctx.beginPath(); ctx.ellipse(b.x, fy1 - r * 0.06, r * 0.13, r * 0.1, 0, 0, Math.PI * 2); ctx.fill();
   // ── the holder: a bakelite cap and skirt, ribbed, a brass collar under it
-  if (paintChemistryBulb(ctx, L)) return;
   const hx = (y0, y1, w0, w1, fill) => {
     ctx.fillStyle = fill;
     ctx.beginPath();

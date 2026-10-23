@@ -4,6 +4,7 @@ import { glint } from './startFilm.js';
 import { loadManorArchitecture, paintManorMaterial, paintManorWindow, paintManorEntrance } from './manorArchitecture.js';
 import { loadManorExterior, paintManorExterior, drawManorExteriorLive } from './manorExterior.js';
 import { createRainFall } from '../shared/rainFall.js';
+import { loadManorWind, createManorWind, windAt } from './manorWind.js';
 
 /** The manor behind the title, painted — by the same hand as the hall and the
  *  rooms inside it — instead of filmed. Deep night, and seen from close to.
@@ -49,7 +50,9 @@ export function mountStartManor(scope, preferences) {
   const film = document.getElementById('start-film');
   const door = document.getElementById('start-door');
   if (!film) return { stop() {} };
-  const still = () => preferences?.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const still = () => preferences?.reducedMotion || motion.matches;
+  const windStill = () => still() || preferences?.ambientMotion === false;
   for (const reel of film.querySelectorAll('.start-reel')) { reel.removeAttribute('src'); reel.hidden = true; }
   // its two canvases — the ones it left, when it is being put up again
   let [base, live] = film.querySelectorAll('.start-painting');
@@ -64,6 +67,24 @@ export function mountStartManor(scope, preferences) {
     film.append(base, live);
   }
   let scene = null, stopped = false, frame = 0, details = null, paintedDetails = null, disposed = false;
+  let wind = null;
+  const dropWind = () => {
+    wind?.dispose(); wind = null;
+    base.style.visibility = '';
+  };
+  const mountWind = () => {
+    if (wind || !scene?.photographic || !details?.wind || stopped || disposed || windStill()) return;
+    const background = document.createElement('canvas');
+    background.width = scene.W; background.height = scene.H;
+    paintManorExterior(background.getContext('2d'), scene.W, scene.H, details.wind.background);
+    wind = createManorWind({ source: base, background, mask: details.wind.mask, photo: scene.photo, onFailure: dropWind });
+    if (!wind) return;
+    base.after(wind.canvas);
+    wind.draw(clock);
+    // Exactly one copy receives the shared CSS edge mask and colour grade.
+    // The still canvas remains available to light the rain and for fallback.
+    base.style.visibility = 'hidden';
+  };
   // the rain falling in front of the house, over both: drawn with WebGL where
   // it can be, on a canvas of its own (otherwise the live canvas draws it)
   let rain = null;
@@ -90,18 +111,21 @@ export function mountStartManor(scope, preferences) {
   };
   film.dataset.architecture = 'loading';
   const architecture = loadManorExterior()
-    .then(exterior => ({ exterior }))
+    .then(async exterior => ({ exterior, wind: await loadManorWind().catch(() => null) }))
     .catch(() => loadManorArchitecture());
 
   function layout() {
+    if (stopped || disposed) return;
     const box = film.getBoundingClientRect();
     if (!box.width || !box.height) return;
     const ratio = Math.min(1.5, window.devicePixelRatio || 1);
     const W = Math.round(box.width * ratio), H = Math.round(box.height * ratio);
     if (scene && scene.W === W && scene.H === H && paintedDetails === details) return;
+    dropWind();
     for (const c of [base, live]) { c.width = W; c.height = H; }
     scene = paintManor(base.getContext('2d'), W, H, details);
     paintedDetails = details;
+    mountWind();
     mountRain();
     // the front door's place in the picture, in screen pixels
     if (door) {
@@ -113,7 +137,9 @@ export function mountStartManor(scope, preferences) {
   // The picture's own clock: it runs only while the picture is seen, and never
   // leaps — back from a hidden window the cloud and the mist go on from where
   // they were instead of jumping.
-  let clock = 0, last = null;
+  // The wind goes by the same clock: the trees lean after a gust with a
+  // tree's slowness, the leaves and the fog go with it at once, the rain leans.
+  let clock = 0, last = null, lean = windAt(0);
   function tick(time) {
     if (stopped) return;
     frame = requestAnimationFrame(tick);
@@ -121,8 +147,12 @@ export function mountStartManor(scope, preferences) {
     clock += dt;
     last = time;
     if (!scene || still()) return;
+    const gust = windStill() ? 0.5 : windAt(clock);
+    lean += (gust - lean) * (1 - Math.exp(-dt / 0.7));
+    scene.air = { gust, lean, still: windStill() };
     drawLive(live.getContext('2d'), scene, clock, false);
-    if (rain) { rain.advance(dt); rain.draw(); }
+    wind?.draw(clock, lean, gust);
+    if (rain) { rain.setWind((gust - 0.6) * 0.07); rain.advance(dt); rain.draw(); }
   }
   // hidden and shown again: the clock picks up again without a leap
   scope.on(document, 'visibilitychange', () => { last = null; });
@@ -138,20 +168,27 @@ export function mountStartManor(scope, preferences) {
   }).catch(() => {
     if (!disposed && !stopped) film.dataset.architecture = 'fallback';
   });
-  scope.add(() => { disposed = true; dropRain(); });
+  scope.add(() => { disposed = true; dropWind(); dropRain(); });
   scope.on(window, 'resize', layout);
   if (typeof ResizeObserver === 'function') {
     const watch = new ResizeObserver(layout);
     watch.observe(film);
     scope.add(() => watch.disconnect());
   }
-  if (preferences?.subscribe) scope.add(preferences.subscribe(() => { if (scene && still()) drawLive(live.getContext('2d'), scene, 0, true); }));
+  const refreshMotion = () => {
+    if (!scene || stopped || disposed) return;
+    if (windStill()) dropWind();
+    else mountWind();
+    if (still()) drawLive(live.getContext('2d'), scene, 0, true);
+  };
+  scope.on(motion, 'change', refreshMotion);
+  if (preferences?.subscribe) scope.add(preferences.subscribe(refreshMotion));
   glint(scope, door, still, () => stopped);
   frame = requestAnimationFrame(tick);
   scope.add(() => cancelAnimationFrame(frame));
   return {
     /** The title is gone: the picture stops moving and lets go of the screen. */
-    stop() { stopped = true; cancelAnimationFrame(frame); dropRain(); },
+    stop() { stopped = true; cancelAnimationFrame(frame); dropWind(); dropRain(); },
   };
 }
 
