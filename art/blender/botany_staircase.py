@@ -94,8 +94,8 @@ def build_staircase(end_wall, opening_half, head, oak, brass, glass):
                    tint=(0.34, 0.31, 0.27), bright=0.37, sat=0.35,
                    rough=(0.68, 0.93), bump=0.7, vary=0.12)
     paving = scan('stair | worn dark treads', 'slate_driveway', size=0.9,
-                  tint=(0.62, 0.61, 0.58), bright=0.6, sat=0.2,
-                  rough=(0.48, 0.76), bump=0.32, coat=0.06, vary=0.06)
+                  tint=(0.62, 0.61, 0.58), bright=0.56, sat=0.2,
+                  rough=(0.56, 0.84), bump=0.38, coat=0.0, vary=0.06, dirt=0.22, grime=0.14)
     mortar = plain('stair | recessed charcoal mortar', (0.055, 0.052, 0.043), rough=0.97)
     iron = aged_metal('stair | hand-forged black iron', (0.105, 0.11, 0.105),
                        (0.025, 0.022, 0.017), rough=(0.36, 0.67), scale=55,
@@ -208,11 +208,18 @@ def build_staircase(end_wall, opening_half, head, oak, brass, glass):
         block('stair | window jamb', x, x + 0.045, rear - 0.035, rear + 0.12, window_z0 - 0.045, window_z1 + 0.045, stone)
     for z in (window_z0 - 0.045, window_z1):
         block('stair | window sill', window_x0 - 0.07, window_x1 + 0.07, rear - 0.07, rear + 0.12, z, z + 0.045, stone)
-    block('stair | window glass', window_x0, window_x1, rear + 0.06, rear + 0.064, window_z0, window_z1, glass, edge=0)
-    for x in (-0.19, 0.19):
-        block('stair | window mullion', x - 0.012, x + 0.012, rear + 0.015, rear + 0.06, window_z0, window_z1, iron, edge=0.002)
-    for z in (3.2, 3.85):
-        block('stair | window transom', window_x0, window_x1, rear + 0.015, rear + 0.06, z - 0.01, z + 0.01, iron, edge=0.002)
+    window_glass = plain('stair | thin leaded glass', (0.92, 0.95, 0.97), rough=0.04, transmission=1.0, ior=1.12)
+    block('stair | window glass', window_x0, window_x1, rear + 0.06, rear + 0.064, window_z0, window_z1, window_glass, edge=0)
+    for x in (-0.2, 0.2):
+        block('stair | window mullion', x - 0.018, x + 0.018, rear - 0.01, rear + 0.065, window_z0, window_z1, iron, edge=0.003)
+    for z in (3.08, 3.56, 4.04):
+        block('stair | window transom', window_x0, window_x1, rear - 0.01, rear + 0.065, z - 0.015, z + 0.015, iron, edge=0.003)
+    stair_sky = bpy.data.materials.new('stair | night sky'); stair_sky.use_nodes = True
+    sn = stair_sky.node_tree.nodes; sn.remove(sn['Principled BSDF']); em = sn.new('ShaderNodeEmission')
+    em.inputs['Color'].default_value = (0.01, 0.022, 0.055, 1); em.inputs['Strength'].default_value = 0.55
+    stair_sky.node_tree.links.new(em.outputs['Emission'], sn['Material Output'].inputs['Surface'])
+    sky_backdrop = block('stair | night sky backdrop', -2.4, 2.4, rear + 2.2, rear + 2.25, 1.5, 6.2, stair_sky, edge=0)
+    sky_backdrop.visible_shadow = False
 
     # Wall-mounted handrail, turned ends, forged brackets and square fixings.
     for side in (-1, 1):
@@ -295,18 +302,19 @@ def build_staircase(end_wall, opening_half, head, oak, brass, glass):
     bar('stair | sconce arm', [(left + 0.07, sconce_y, sconce_z - 0.13), (sconce_x, sconce_y, sconce_z - 0.12),
                              (sconce_x, sconce_y, sconce_z)], 0.012, iron)
     arch(lathe('stair | candle pan', [(0, 0), (0.015, 0), (0.065, 0.01), (0.07, 0.022), (0.02, 0.03), (0, 0.03)], bronze, at=(sconce_x, sconce_y, sconce_z)))
-    wax = plain('stair | aged candle wax', (0.64, 0.59, 0.46), rough=0.46)
+    wax = plain('stair | aged candle wax', (0.38, 0.31, 0.21), rough=0.52)
     arch(cylinder('stair | candle', sconce_x, sconce_y, sconce_z + 0.02, sconce_z + 0.16, 0.02, wax, verts=24))
-    flame = plain('stair | candle flame', (1, 0.5, 0.12), emit=(1, 0.48, 0.1), strength=5)
-    arch(lathe('stair | flame', [(0, 0), (0.006, 0.008), (0.008, 0.02), (0.004, 0.033), (0, 0.05)], flame,
-               at=(sconce_x, sconce_y, sconce_z + 0.16), steps=16))
+    flame = plain('stair | candle flame', (1, 0.55, 0.18), emit=(1, 0.52, 0.14), strength=14)
+    fl_obj = arch(lathe('stair | flame', [(0, 0), (0.006, 0.008), (0.008, 0.02), (0.004, 0.033), (0, 0.05)], flame,
+                        at=(sconce_x, sconce_y, sconce_z + 0.16), steps=16))
+    fl_obj.visible_shadow = False
     lamp('stair | candle light', 'POINT', (sconce_x + 0.02, sconce_y, sconce_z + 0.18),
-         energy=7, colour=(1, 0.55, 0.22), size=0.015)
+         energy=8.5, colour=(1, 0.55, 0.22), size=0.015)
     moon = lamp('stair | cool window light', 'AREA', (0, rear + 0.42, 3.75),
-                aim=(0, y0 + 1.6, 0.7), energy=110, colour=(0.55, 0.68, 1), size=0.9)
+                aim=(0, y0 + 1.6, 0.7), energy=75, colour=(0.52, 0.66, 1), size=0.85)
     moon.visible_camera = False; moon.visible_transmission = False; moon.visible_glossy = False
     bounce = lamp('stair | landing bounce', 'AREA', (0.7, landing_y + 0.4, 5.4),
-                  aim=(0, y0 + 1.1, 0.5), energy=45, colour=(0.55, 0.68, 1), size=1.2)
+                  aim=(0, y0 + 1.1, 0.5), energy=20, colour=(0.52, 0.66, 1), size=1.2)
     bounce.visible_camera = False; bounce.visible_transmission = False; bounce.visible_glossy = False
     return gates
 
@@ -332,11 +340,14 @@ def render_gate_motion(scene, gates, air, out, opening_half, head, frames=49):
             obj.is_holdout = obj not in gates
     air.hide_render = True
     for obj in gates: obj.hide_render = False
+    prev_samples = scene.cycles.samples
+    scene.cycles.samples = min(prev_samples, 96)
     hinges = {part.parent for part in gates}
     for i in range(frames):
         angle = math.radians(82) * i / (frames - 1)
         for hinge in hinges: hinge.rotation_euler.z = -hinge['side'] * angle
         render(scene, os.path.join(out, f'gate-pose-{i:02d}.png'))
+    scene.cycles.samples = prev_samples
     with open(os.path.join(out, 'gate-motion.json'), 'w') as handle:
         json.dump({'frames': frames, 'columns': 8,
                    'box': [x0 / w * WR, (h - y1) / h * HR,

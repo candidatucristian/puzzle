@@ -46,14 +46,14 @@ EYE_AT = Vector((0, 0, EYE))
 scene, HEIGHT = stage(WIDTH)
 
 # ── materials ──────────────────────────────────────────────────────────────
-OAK = scan("oak", "dark_wood", size=1.2, tint=(0.8, 0.62, 0.45), bright=0.5, rough=(0.3, 0.55), bump=0.3, coat=0.3, upright=True)
-OAK_X = scan("oak across", "dark_wood", size=1.2, tint=(0.8, 0.62, 0.45), bright=0.48, rough=(0.3, 0.55), bump=0.3, coat=0.3)
-FLOOR = scan("tiled floor", "checkered_pavement_tiles", size=3.0, tint=(1.0, 0.93, 0.82), bright=0.6, rough=(0.28, 0.7), bump=0.5, coat=0.18)
-TILES = scan("white tiles", "long_white_tiles", size=1.75, tint=(0.96, 0.97, 0.93), bright=0.8, sat=0.6, rough=(0.04, 0.3), bump=0.5, coat=0.6, rot=(math.pi / 2, 0, 0))
-TILES_END = scan("white tiles, end", "long_white_tiles", size=1.75, tint=(0.96, 0.97, 0.93), bright=0.8, sat=0.6, rough=(0.04, 0.3), bump=0.5, coat=0.6, rot=(0, math.pi / 2, 0))
-PLASTER = scan("lime plaster", "white_plaster_rough_01", size=2.5, tint=(0.94, 0.95, 0.91), bright=0.76, sat=0.45, rough=(0.8, 0.95), bump=0.5)
-CEILING = scan("ceiling boards", "dark_wooden_planks", size=2.2, tint=(0.8, 0.7, 0.6), bright=0.5, rough=(0.5, 0.8), bump=0.4)
-SLATE = scan("slate", "slate_driveway", size=1.0, bright=0.32, sat=0.3, rough=(0.3, 0.55), bump=0.3, coat=0.25)
+OAK = scan("oak", "dark_wood", size=1.2, tint=(0.78, 0.6, 0.44), bright=0.48, rough=(0.48, 0.76), bump=0.38, coat=0.0, upright=True, dirt=0.2, grime=0.12)
+OAK_X = scan("oak across", "dark_wood", size=1.2, tint=(0.78, 0.6, 0.44), bright=0.46, rough=(0.48, 0.76), bump=0.38, coat=0.0, dirt=0.2, grime=0.12)
+FLOOR = scan("tiled floor", "checkered_pavement_tiles", size=3.0, tint=(0.98, 0.91, 0.8), bright=0.58, rough=(0.46, 0.78), bump=0.52, coat=0.0, dirt=0.22, grime=0.14)
+TILES = scan("white tiles", "long_white_tiles", size=1.75, tint=(0.95, 0.96, 0.92), bright=0.78, sat=0.6, rough=(0.14, 0.36), bump=0.5, coat=0.35, rot=(math.pi / 2, 0, 0), dirt=0.18, grime=0.12)
+TILES_END = scan("white tiles, end", "long_white_tiles", size=1.75, tint=(0.95, 0.96, 0.92), bright=0.78, sat=0.6, rough=(0.14, 0.36), bump=0.5, coat=0.35, rot=(0, math.pi / 2, 0), dirt=0.18, grime=0.12)
+PLASTER = scan("lime plaster", "white_plaster_rough_01", size=2.5, tint=(0.94, 0.95, 0.91), bright=0.76, sat=0.45, rough=(0.8, 0.95), bump=0.55, dirt=0.22, stains=0.15, grime=0.12)
+CEILING = scan("ceiling boards", "dark_wooden_planks", size=2.2, tint=(0.8, 0.7, 0.6), bright=0.5, rough=(0.55, 0.85), bump=0.45, dirt=0.22)
+SLATE = scan("slate", "slate_driveway", size=1.0, bright=0.32, sat=0.3, rough=(0.48, 0.72), bump=0.38, coat=0.0, dirt=0.2)
 GREEN_GLAZE = plain("green glaze", (0.025, 0.075, 0.05), rough=0.12, coat=0.8)
 BLACK_GLAZE = plain("black glaze", (0.012, 0.012, 0.012), rough=0.15, coat=0.8)
 BRASS = aged_metal("brass", (0.52, 0.37, 0.17), (0.07, 0.05, 0.025), rough=(0.25, 0.55), scale=30, tarnish=0.65)
@@ -69,8 +69,9 @@ BOTTLE_GREEN = plain("green glass", (0.3, 0.5, 0.32), rough=0.04, transmission=1
 BAKELITE = plain("bakelite", (0.035, 0.018, 0.01), rough=0.25, coat=0.5)
 PORCELAIN = plain("porcelain", (0.8, 0.79, 0.74), rough=0.15, coat=0.6)
 WAX = bpy.data.materials.new("wax"); WAX.use_nodes = True
-_w = WAX.node_tree.nodes["Principled BSDF"]; _w.inputs["Base Color"].default_value = (0.8, 0.72, 0.56, 1); _w.inputs["Subsurface Weight"].default_value = 0.6; _w.inputs["Subsurface Radius"].default_value = (0.02, 0.012, 0.006); _w.inputs["Roughness"].default_value = 0.42
+_w = WAX.node_tree.nodes["Principled BSDF"]; _w.inputs["Base Color"].default_value = (0.38, 0.31, 0.21, 1); _w.inputs["Subsurface Weight"].default_value = 0.22; _w.inputs["Subsurface Radius"].default_value = (0.012, 0.007, 0.003); _w.inputs["Roughness"].default_value = 0.52
 WICK = plain("wick", (0.01, 0.01, 0.01), rough=0.9)
+FLAME = plain("candle flame", (1.0, 0.62, 0.22), emit=(1.0, 0.56, 0.18), strength=14.0)
 CHALK = plain("chalk", (0.85, 0.85, 0.82), rough=0.95)
 FELT = plain("felt", (0.05, 0.045, 0.04), rough=1.0, sheen=0.6)
 CORK = plain("cork", (0.32, 0.2, 0.1), rough=0.9)
@@ -542,7 +543,11 @@ for side in (-1, 1):
     for i, zs in enumerate(SCONCES[side]):
         tip = sconce_tip(side, zs); lit = side < 0 and i == 0
         candle_sconce(side, tip, BRASS, WAX, WICK, candle=0.2 if lit else RNG.choice((0.03, 0.0)), lit=lit)
-        if lit: CANDLES.append(tip)
+        if lit:
+            sfl = arch(lathe("sconce flame", [(0, 0), (0.005, 0.007), (0.0068, 0.018), (0.0035, 0.03), (0, 0.042)],
+                             FLAME, at=(tip.x, tip.y, tip.z - 0.004), steps=14))
+            sfl.visible_shadow = False
+            CANDLES.append(tip)
 
 # ── furniture: the trade's drawers and cabinets, their glass on them ───────
 def surfaces(x, y, top, bottom=0.2):
@@ -558,7 +563,8 @@ def surfaces(x, y, top, bottom=0.2):
 # left, between doors VII and VIII: an apothecary's chest of drawers, a still
 # on it under the burning candle, a shelf of reagents over it
 CHEST_Y = 4.45
-import_model("vintage_wooden_drawer_01", width=1.4, at=(-WALL + 0.38, CHEST_Y, 0), rot=math.pi / 2)
+drw = import_model("vintage_wooden_drawer_01", width=1.4, at=(-WALL + 0.38, CHEST_Y, 0), rot=math.pi / 2)
+darken_model(drw, (0.42, 0.32, 0.24), rough_floor=0.58)
 ctop = surfaces(-WALL + 0.38, CHEST_Y, 2.0)[0]
 def still(x, y, z):
     """a distillation set up and left: a stand, a flask over a spirit lamp,
@@ -693,6 +699,14 @@ air = haze(float(arg("--haze", "0.02")))
 # ── the passes ─────────────────────────────────────────────────────────────
 cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.5")))
 scene.cycles.volume_bounces = 1
+scene.render.use_persistent_data = True
+finish_hall(scene, SAMPLES, keep_gloss=(
+    "white tiles", "white tiles, end", "green glaze", "black glaze",
+    "bakelite", "porcelain", "ebonite", "gauge dial",
+    "glass", "bulb glass", "frosted glass", "amber glass", "cobalt glass",
+    "green glass", "dusty glass", "blue vitriol", "tincture", "green salts",
+    "water", "permanganate", "cochineal",
+))
 passes(scene, OUT, ONLY, air, apart={"blades": BLADES}, variants={"lit": (bulb_on, bulb_off)})
 
 # ── the switch's blades, at every angle they swing through ─────────────────

@@ -298,7 +298,7 @@ sky_l = lamp("sky through the window", "AREA", tuple(P(WIN["x"], 190, D1 + 14)),
 sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
 fill_l = lamp("fill", "AREA", tuple(P(0, 230, 20)), aim=tuple(P(0, 80, D1)), energy=float(arg("--fill", "42")), colour=(0.8, 0.85, 1.0), size=1.6)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
-eye_fill(float(arg("--eyefill", "83")))                # (the halls' fill: nothing the eye sees falls to black)
+eye_fill(float(arg("--eyefill", "83")), ahead=220)                # (the halls' fill: nothing the eye sees falls to black)
 for (at_, aim) in ((P(-60, 220, 300), P(X0, 140, 340)), (P(60, 220, 420), P(X1, 140, 440)), (P(0, 220, 560), P(0, 140, D1))):
     wash = lamp("on the walls", "AREA", tuple(at_), aim=tuple(aim), energy=float(arg("--wash", "14")), colour=(0.82, 0.86, 1.0), size=1.0)
     wash.visible_camera = False; wash.visible_glossy = False

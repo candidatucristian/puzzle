@@ -1,7 +1,8 @@
 import { TAP_WORD, tapPair } from "./puzzle.js";
 import { paintMaps } from "./maps.js";
 import { soft, grain, vignette, glowCanvas, rgb, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
-import { cellarPhotographicMaterials, paintCellarPhotography, paintCellarSurface } from "./photographicCellar.js";
+import { paintCellarSurface } from "./photographicCellar.js";
+import { paintNativeCellar } from "./nativeCellar.js";
 
 /** The cellar for TAPCODE, under the house: no window, and no light but what
  *  comes down the hatch and a candle on a stool. A brick wall, damp to the
@@ -22,8 +23,6 @@ import { cellarPhotographicMaterials, paintCellarPhotography, paintCellarSurface
  *  drip and the damp air are live in the scene. */
 
 const K = { room: "tc_room", flame: "tc_flame", glow: "tc_glow", fog: "tc_fog" };
-export const CELLAR_MATERIALS_KEY = "tc_cellar_materials";
-export const CELLAR_MATERIALS_URL = "assets/images/TapCode/cellar-background.webp";
 const WARM = "255,182,104";
 const PALE = "150,170,214"; // what comes down the hatch
 const BRICK_SURFACES = [[430, 205, 105, 35], [650, 252, 100, 34], [495, 390, 90, 35], [680, 440, 95, 32]];
@@ -66,16 +65,10 @@ export function paintCellar(scene, L) {
   const { W, H } = L;
   const c = makeCanvas(W, H);
   const ctx = c.getContext("2d");
-  if (paintCellarPhotography(ctx, scene, L)) {
-    // The exact six clue pairs remain native; the photographed Z and square
-    // lattice are part of the room, with no duplicate geometry on top.
-    paintSlabMarks(ctx, L);
-  } else {
-    L.photographicMaterials = cellarPhotographicMaterials(scene);
-    // Keep the accepted material-by-material scene as the fallback.
-    const materials = t.exists(CELLAR_MATERIALS_KEY)
-      ? t.get(CELLAR_MATERIALS_KEY).getSourceImage()
-      : null;
+  if (!paintNativeCellar(ctx, scene, L)) {
+    // The fallback is drawn entirely in code. The native render already
+    // contains the six engraved clues and the Z beside the square rack.
+    const materials = null;
     paintWall(ctx, L, materials);
     paintJoists(ctx, L);
     paintFloor(ctx, L, materials);

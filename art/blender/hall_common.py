@@ -50,9 +50,10 @@ def stage(width):
     return scene, round(width * HR / WR)
 
 # ── materials ──────────────────────────────────────────────────────────────
-def scan(name, tid, size=1.0, tint=(1, 1, 1), bright=1.0, sat=1.0, rough=(0.4, 0.8), bump=0.4, coat=0.0, upright=False, uvs=False, rot=None, vary=0.0):
+def scan(name, tid, size=1.0, tint=(1, 1, 1), bright=1.0, sat=1.0, rough=(0.48, 0.84), bump=0.4, coat=0.0, upright=False, uvs=False, rot=None, vary=0.0, **age):
     """a Poly Haven scan, laid by the object's own coordinates; darker in its
-    corners and joins; `vary` each piece a little lighter or darker"""
+    corners and joins; `vary` each piece a little lighter or darker, with true
+    tangent/box normal maps (`nor_gl`) and optional surface wear."""
     m = bpy.data.materials.new(name); m.use_nodes = True
     N = m.node_tree.nodes; L = m.node_tree.links.new; b = N["Principled BSDF"]
     tc = N.new("ShaderNodeTexCoord"); mp = N.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = (1 / size,) * 3
@@ -80,22 +81,124 @@ def scan(name, tid, size=1.0, tint=(1, 1, 1), bright=1.0, sat=1.0, rough=(0.4, 0
     L(h.outputs["Color"], t.inputs[6])
     # (age: darker in the corners and joins)
     ao = N.new("ShaderNodeAmbientOcclusion"); ao.inputs["Distance"].default_value = 0.25
-    ar = N.new("ShaderNodeValToRGB"); ar.color_ramp.elements[0].color = (0.45, 0.43, 0.4, 1)
+    ar = N.new("ShaderNodeValToRGB"); ar.color_ramp.elements[0].color = (0.42, 0.4, 0.37, 1)
     L(ao.outputs["AO"], ar.inputs["Fac"])
     am = N.new("ShaderNodeMix"); am.data_type = "RGBA"; am.blend_type = "MULTIPLY"; am.inputs["Factor"].default_value = 1
-    L(t.outputs[2], am.inputs[6]); L(ar.outputs["Color"], am.inputs[7]); L(am.outputs[2], b.inputs["Base Color"])
+    L(t.outputs[2], am.inputs[6]); L(ar.outputs["Color"], am.inputs[7])
+    color_out = wear(N, L, am.outputs[2], tc, **age) if age else am.outputs[2]
+    L(color_out, b.inputs["Base Color"])
     r = tex("Rough")
     if r:
         mr = N.new("ShaderNodeMapRange"); mr.inputs["To Min"].default_value = rough[0]; mr.inputs["To Max"].default_value = rough[1]
         L(r.outputs["Color"], mr.inputs["Value"]); L(mr.outputs["Result"], b.inputs["Roughness"])
     else:
         b.inputs["Roughness"].default_value = sum(rough) / 2
+    nor = tex("nor_gl") or tex("Normal")
+    nrm_out = None
+    if nor:
+        nm = N.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = min(1.0, max(0.35, bump * 1.6))
+        L(nor.outputs["Color"], nm.inputs["Color"])
+        nrm_out = nm.outputs["Normal"]
+        m["detailed"] = True
     hgt = tex("Displacement") or r
     if hgt:
-        bp = N.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = bump; bp.inputs["Distance"].default_value = 0.002
-        L(hgt.outputs["Color"], bp.inputs["Height"]); L(bp.outputs["Normal"], b.inputs["Normal"])
-    b.inputs["Coat Weight"].default_value = coat; b.inputs["Coat Roughness"].default_value = 0.12
+        bp = N.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = bump * (0.55 if nrm_out else 1.0); bp.inputs["Distance"].default_value = 0.0016
+        L(hgt.outputs["Color"], bp.inputs["Height"])
+        if nrm_out: L(nrm_out, bp.inputs["Normal"])
+        nrm_out = bp.outputs["Normal"]
+    if nrm_out:
+        L(nrm_out, b.inputs["Normal"])
+    b.inputs["Coat Weight"].default_value = coat; b.inputs["Coat Roughness"].default_value = 0.28
+    b.inputs["Specular IOR Level"].default_value = 0.32
     return m
+
+def detail_scans():
+    """Ensure every scanned material in the scene has its `nor_gl` normal map
+    wired under its bump node for crisp wood grain, stone and plaster relief."""
+    for mat in bpy.data.materials:
+        if not mat.use_nodes or mat.get("detailed"): continue
+        N = mat.node_tree.nodes; Lk = mat.node_tree.links.new
+        diff = next((n for n in N if n.type == "TEX_IMAGE" and n.image and os.path.basename(n.image.filepath).lower().startswith("diffuse")), None)
+        bsdf = next((n for n in N if n.type == "BSDF_PRINCIPLED"), None)
+        if not diff or not bsdf: continue
+        path = os.path.join(os.path.dirname(bpy.path.abspath(diff.image.filepath)), "nor_gl.jpg")
+        if not os.path.exists(path): continue
+        t = N.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(path, check_existing=True); t.image.colorspace_settings.name = "Non-Color"
+        t.projection = diff.projection; t.projection_blend = diff.projection_blend
+        if diff.inputs["Vector"].is_linked: Lk(diff.inputs["Vector"].links[0].from_socket, t.inputs["Vector"])
+        nm = N.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = 0.9
+        Lk(t.outputs["Color"], nm.inputs["Color"])
+        nrm = bsdf.inputs["Normal"]
+        if nrm.is_linked and nrm.links[0].from_node.type == "BUMP":
+            Lk(nm.outputs["Normal"], nrm.links[0].from_node.inputs["Normal"])
+        elif not nrm.is_linked:
+            Lk(nm.outputs["Normal"], nrm)
+        mat["detailed"] = True
+
+def darken_model(root, k=(0.52, 0.47, 0.41), rough_floor=0.55):
+    """Dim and matte an imported Poly Haven model so it sits naturally in the
+    dark 19th-century manor without bright modern varnish."""
+    seen = set()
+    for name in root.get("meshes", []):
+        obj = bpy.data.objects.get(name)
+        if not obj: continue
+        for slot in obj.material_slots:
+            mat = slot.material
+            if not mat or mat.name in seen or not mat.use_nodes: continue
+            seen.add(mat.name)
+            for node in [n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"]:
+                node.inputs["Coat Weight"].default_value = 0.0
+                node.inputs["Specular IOR Level"].default_value = min(node.inputs["Specular IOR Level"].default_value, 0.3)
+                bc = node.inputs["Base Color"]
+                if bc.is_linked:
+                    mul = mat.node_tree.nodes.new("ShaderNodeMix"); mul.data_type = "RGBA"; mul.blend_type = "MULTIPLY"; mul.inputs["Factor"].default_value = 1.0
+                    mul.inputs[7].default_value = (*k, 1)
+                    mat.node_tree.links.new(bc.links[0].from_socket, mul.inputs[6]); mat.node_tree.links.new(mul.outputs[2], bc)
+                else:
+                    c = bc.default_value; bc.default_value = (c[0] * k[0], c[1] * k[1], c[2] * k[2], c[3])
+                r = node.inputs["Roughness"]
+                if r.is_linked:
+                    mx = mat.node_tree.nodes.new("ShaderNodeMath"); mx.operation = "MAXIMUM"; mx.inputs[1].default_value = rough_floor
+                    mat.node_tree.links.new(r.links[0].from_socket, mx.inputs[0]); mat.node_tree.links.new(mx.outputs[0], r)
+                else:
+                    r.default_value = max(r.default_value, rough_floor)
+    return root
+
+def finish_hall(scene, samples, keep_gloss=()):
+    """Configure denoiser with albedo+normal passes, clamp fireflies, hide area
+    fill lights from specular reflections, and eliminate artificial plastic
+    gloss/varnish across all non-metallic, non-glass materials."""
+    c = scene.cycles
+    c.samples = samples
+    c.use_auto_tile = False
+    c.adaptive_threshold = 0.008
+    c.adaptive_min_samples = min(64, max(16, samples // 4))
+    c.sample_clamp_indirect = 4.0
+    c.sample_clamp_direct = 0.0
+    detail_scans()
+    c.use_denoising = True
+    c.denoiser = "OPENIMAGEDENOISE"
+    c.denoising_input_passes = "RGB_ALBEDO_NORMAL"
+    c.denoising_prefilter = "ACCURATE"
+    try: c.denoising_quality = "HIGH"
+    except Exception: pass
+    for o in bpy.data.objects:
+        if o.type == "LIGHT" and o.data.type == "AREA":
+            o.visible_camera = False
+            o.visible_glossy = False
+    for mat in bpy.data.materials:
+        if mat.name in keep_gloss or not mat.use_nodes: continue
+        for node in [n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"]:
+            metal = node.inputs["Metallic"]; glass = node.inputs["Transmission Weight"]
+            if metal.is_linked or metal.default_value > 0.5 or glass.default_value > 0.5: continue
+            node.inputs["Coat Weight"].default_value = 0.0
+            node.inputs["Specular IOR Level"].default_value = min(node.inputs["Specular IOR Level"].default_value, 0.32)
+            r = node.inputs["Roughness"]
+            if r.is_linked:
+                mx = mat.node_tree.nodes.new("ShaderNodeMath"); mx.operation = "MAXIMUM"; mx.inputs[1].default_value = 0.46
+                mat.node_tree.links.new(r.links[0].from_socket, mx.inputs[0]); mat.node_tree.links.new(mx.outputs[0], r)
+            else:
+                r.default_value = max(r.default_value, 0.46)
 
 # ── what is architecture: held out of the furniture's own pass ─────────────
 ARCH = []

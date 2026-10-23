@@ -19,7 +19,7 @@
 #   blender -b --factory-startup -P art/blender/manor.py -- --out manor.png [--samples 512] [--width 2560] [--data manor.json]
 
 import bpy, bmesh, math, json, random, sys, os
-from mathutils import Vector, Matrix
+from mathutils import Vector, Matrix, Euler
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 
@@ -136,80 +136,67 @@ def outdoor(name, tid, size=2.0, tint=(1, 1, 1), bright=1.0, sat=1.0, rough=(0.5
         sx = N.new("ShaderNodeMix"); sx.data_type = "RGBA"; sx.blend_type = "MULTIPLY"; sx.inputs["Factor"].default_value = 1
         L(col, sx.inputs[6]); L(sr.outputs["Color"], sx.inputs[7]); col = sx.outputs[2]
     # wet: darker, a little richer
-    dk = N.new("ShaderNodeHueSaturation"); dk.inputs["Saturation"].default_value = 1 + 0.25 * wet; dk.inputs["Value"].default_value = 1 - 0.38 * wet
+    dk = N.new("ShaderNodeHueSaturation"); dk.inputs["Saturation"].default_value = 1 + 0.22 * wet; dk.inputs["Value"].default_value = 1 - 0.35 * wet
     L(col, dk.inputs["Color"]); col = dk.outputs["Color"]
-    rr = N.new("ShaderNodeMapRange"); rr.inputs["To Min"].default_value = rough[0] * (1 - 0.55 * wet); rr.inputs["To Max"].default_value = rough[1] * (1 - 0.45 * wet)
+    rr = N.new("ShaderNodeMapRange"); rr.inputs["To Min"].default_value = rough[0] * (1 - 0.45 * wet); rr.inputs["To Max"].default_value = rough[1] * (1 - 0.35 * wet)
     if rough_map: L(rough_map.outputs["Color"], rr.inputs["Value"])
     rough_out = rr.outputs["Result"]
     nrm = None
+    nrm_tex = tex(tid, "nor_gl", False) or tex(tid, "Normal", False)
+    if nrm_tex:
+        nm = N.new("ShaderNodeNormalMap")
+        nm.inputs["Strength"].default_value = min(1.35, 0.75 + bump * 0.5)
+        L(nrm_tex.outputs["Color"], nm.inputs["Color"])
+        nrm = nm
     if height:
-        bp = N.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = bump; bp.inputs["Distance"].default_value = 0.02 * size
-        L(height.outputs["Color"], bp.inputs["Height"]); nrm = bp
+        bp = N.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = bump; bp.inputs["Distance"].default_value = 0.018 * size
+        L(height.outputs["Color"], bp.inputs["Height"])
+        if nrm: L(nrm.outputs["Normal"], bp.inputs["Normal"])
+        nrm = bp
     if joints is not None:
         # (the joints, sunk back a centimetre: the light catches each block's arris)
         inv = N.new("ShaderNodeMath"); inv.operation = "SUBTRACT"; inv.inputs[0].default_value = 1.0; L(joints, inv.inputs[1])
         jb = N.new("ShaderNodeBump"); jb.inputs["Strength"].default_value = 0.9; jb.inputs["Distance"].default_value = 0.012
         L(inv.outputs["Value"], jb.inputs["Height"])
-        if nrm: L(nrm.outputs["Normal"], jb.inputs["Normal"])
+        if nrm: L(nrm.outputs["Normal"], bp.inputs["Normal"] if not jb else jb.inputs["Normal"])
         nrm = jb
-    if puddles:
-        # water lying where the ground is low, still and black-glossy
-        pn = N.new("ShaderNodeTexNoise"); pn.inputs["Scale"].default_value = 0.22; pn.inputs["Detail"].default_value = 4; pn.inputs["Roughness"].default_value = 0.6
-        L(tc.outputs["Object"], pn.inputs["Vector"])
-        low = N.new("ShaderNodeMath"); low.operation = "SUBTRACT"
-        L(pn.outputs["Fac"], low.inputs[0])
-        if height:
-            hh = N.new("ShaderNodeMath"); hh.operation = "MULTIPLY"; hh.inputs[1].default_value = 0.25; L(height.outputs["Color"], hh.inputs[0]); L(hh.outputs["Value"], low.inputs[1])
-        pr = N.new("ShaderNodeMapRange"); pr.inputs["From Min"].default_value = 0.5 - puddles * 0.12; pr.inputs["From Max"].default_value = 0.58 - puddles * 0.12
-        L(low.outputs["Value"], pr.inputs["Value"])
-        pc = N.new("ShaderNodeMix"); pc.data_type = "RGBA"; pc.inputs[7].default_value = (0.03, 0.028, 0.026, 1)
-        L(pr.outputs["Result"], pc.inputs["Factor"]); L(col, pc.inputs[6]); col = pc.outputs[2]
-        prr = N.new("ShaderNodeMix"); prr.data_type = "FLOAT"; prr.inputs[3].default_value = 0.025
-        L(pr.outputs["Result"], prr.inputs["Factor"]); L(rough_out, prr.inputs[2]); rough_out = prr.outputs[0]
-        if nrm:
-            # (the water's surface is flat)
-            bs = N.new("ShaderNodeMath"); bs.operation = "SUBTRACT"; bs.inputs[0].default_value = 1; L(pr.outputs["Result"], bs.inputs[1])
-            bk = N.new("ShaderNodeMath"); bk.operation = "MULTIPLY"; bk.inputs[1].default_value = bump; L(bs.outputs["Value"], bk.inputs[0])
-            L(bk.outputs["Value"], nrm.inputs["Strength"])
     L(col, b.inputs["Base Color"]); L(rough_out, b.inputs["Roughness"])
     if nrm: L(nrm.outputs["Normal"], b.inputs["Normal"])
     b.inputs["Specular IOR Level"].default_value = 0.5
+    if "Coat Weight" in b.inputs: b.inputs["Coat Weight"].default_value = 0.0
     return m
 
 # honey-coloured Bath-like stone, coursed: blocks about 0.8 m long in courses
 # of 0.36 m, the joints a centimetre
-STONE = outdoor("ashlar", "sandstone_blocks_08", size=2.9, tint=(0.97, 0.89, 0.74), bright=0.95, sat=0.8, rough=(0.55, 0.85), bump=0.35, wet=0.42, streaks=0.1, moss=0.4, courses=(0.82, 0.36, 0.011), runoff=0.85)
+STONE = outdoor("ashlar", "sandstone_blocks_08", size=2.9, tint=(0.96, 0.88, 0.74), bright=0.92, sat=0.78, rough=(0.55, 0.85), bump=0.45, wet=0.38, streaks=0.12, moss=0.42, courses=(0.82, 0.36, 0.011), runoff=0.85)
 STONE.node_tree.nodes["Image Texture"].projection_blend = 0.25
-DRESSED = outdoor("dressings", "sandstone_blocks_08", size=3.0, tint=(0.98, 0.92, 0.8), bright=1.0, sat=0.72, rough=(0.5, 0.8), bump=0.4, wet=0.38, streaks=0.08, moss=0.25, runoff=0.6)
-ROCKFACE = outdoor("rock-faced", "castle_wall_slates", size=1.2, tint=(0.95, 0.9, 0.8), bright=0.85, rough=(0.55, 0.9), bump=1.0, wet=0.5, moss=0.5, courses=(0.62, 0.42, 0.016))
-RUBBLE = outdoor("rubble", "castle_wall_slates", size=1.6, tint=(0.8, 0.78, 0.72), bright=0.7, rough=(0.55, 0.9), bump=0.8, wet=0.6, moss=0.6)
-SLATE = outdoor("slates", "roof_slates_02", size=2.2, tint=(0.62, 0.66, 0.72), bright=0.62, sat=0.6, rough=(0.35, 0.7), bump=0.9, wet=0.75, streaks=0.2)
-DRIVE = outdoor("drive", "leaf_scattered_gravel", size=1.6, tint=(0.95, 0.88, 0.8), bright=0.85, rough=(0.16, 0.42), bump=0.55, wet=0.85, puddles=0.55)
-LAWN = outdoor("lawn", "forest_leaves_02", size=2.6, tint=(0.75, 0.8, 0.62), bright=0.62, sat=0.85, rough=(0.5, 0.9), bump=0.6, wet=0.6, leaves="dry_decay_leaves", leaf_mix=0.5)
-STEPS = outdoor("steps", "sandstone_blocks_08", size=4.0, tint=(0.8, 0.75, 0.66), bright=0.66, rough=(0.4, 0.7), bump=0.3, wet=0.75, puddles=0.3, moss=0.3)
-IRON = plain("iron", (0.012, 0.012, 0.013), rough=0.32, metal=0.75)
-OAK = plain("oak door", (0.05, 0.026, 0.014), rough=0.42, spec=0.5)
-FRAME = plain("window frames", (0.06, 0.055, 0.05), rough=0.5)
-GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.015, transmission=1.0, ior=1.5)
-POT = plain("chimney pots", (0.22, 0.09, 0.05), rough=0.6)
-HEDGE = plain("hedge", (0.012, 0.025, 0.01), rough=0.75)
-BRASS = plain("brass", (0.4, 0.28, 0.12), rough=0.35, metal=1.0)
-# the hedge's leafage: a crumpled surface, dark, wet
-hn = HEDGE.node_tree.nodes; hv = hn.new("ShaderNodeTexVoronoi"); hv.inputs["Scale"].default_value = 40
-hb = hn.new("ShaderNodeBump"); hb.inputs["Strength"].default_value = 0.9
-HEDGE.node_tree.links.new(hv.outputs["Distance"], hb.inputs["Height"]); HEDGE.node_tree.links.new(hb.outputs["Normal"], hn["Principled BSDF"].inputs["Normal"])
+DRESSED = outdoor("dressings", "old_sandstone_02", size=2.8, tint=(0.98, 0.91, 0.79), bright=0.96, sat=0.72, rough=(0.50, 0.80), bump=0.52, wet=0.35, streaks=0.09, moss=0.26, runoff=0.62)
+ROCKFACE = outdoor("rock-faced", "castle_wall_slates", size=1.2, tint=(0.95, 0.9, 0.8), bright=0.85, rough=(0.55, 0.9), bump=1.0, wet=0.48, moss=0.5, courses=(0.62, 0.42, 0.016))
+RUBBLE = outdoor("rubble", "mossy_stone_wall", size=1.5, tint=(0.82, 0.80, 0.74), bright=0.70, rough=(0.58, 0.88), bump=0.85, wet=0.48, moss=0.6)
+SLATE = outdoor("slates", "roof_slates_02", size=2.1, tint=(0.62, 0.66, 0.72), bright=0.60, sat=0.62, rough=(0.40, 0.72), bump=0.95, wet=0.52, streaks=0.2)
+DRIVE = outdoor("drive", "slate_driveway", size=1.95, tint=(0.94, 0.90, 0.84), bright=0.78, sat=0.72, rough=(0.32, 0.64), bump=1.15, wet=0.48, puddles=0.0, leaves="dry_decay_leaves", leaf_mix=0.18)
+LAWN = outdoor("lawn", "forest_leaves_02", size=2.5, tint=(0.74, 0.79, 0.61), bright=0.58, sat=0.84, rough=(0.55, 0.88), bump=0.65, wet=0.5, leaves="dry_decay_leaves", leaf_mix=0.48)
+STEPS = outdoor("steps", "old_sandstone_02", size=2.8, tint=(0.84, 0.78, 0.69), bright=0.68, rough=(0.46, 0.76), bump=0.55, wet=0.52, puddles=0.0, moss=0.32)
+IRON = aged_metal("iron", (0.032, 0.035, 0.038), (0.018, 0.015, 0.012), rough=(0.38, 0.64), tarnish=0.55, hammer=0.18)
+OAK = outdoor("oak door", "rosewood_veneer1", size=0.9, tint=(0.42, 0.28, 0.16), bright=0.38, sat=0.75, rough=(0.48, 0.74), bump=0.48, wet=0.35)
+FRAME = aged_metal("window frames", (0.048, 0.046, 0.044), (0.02, 0.02, 0.018), rough=(0.44, 0.7), tarnish=0.5)
+GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.018, transmission=1.0, ior=1.5)
+POT = outdoor("chimney pots", "old_sandstone_02", size=0.9, tint=(0.56, 0.25, 0.15), bright=0.52, rough=(0.58, 0.84), bump=0.5, wet=0.35, streaks=0.2)
+HEDGE = outdoor("hedge", "forest_leaves_02", size=1.1, tint=(0.18, 0.26, 0.15), bright=0.32, sat=0.75, rough=(0.58, 0.88), bump=0.85, wet=0.45)
+BRASS = aged_metal("brass", (0.44, 0.30, 0.12), (0.08, 0.06, 0.03), rough=(0.28, 0.52), tarnish=0.45)
+CURTAIN = outdoor("velvet curtain", "velour_velvet", size=0.8, tint=(0.24, 0.08, 0.05), bright=0.42, sat=0.85, rough=(0.78, 0.96), bump=0.35, wet=0.0)
 
-def lit_room(name, warm=(1.0, 0.62, 0.3), strength=3.0, curtain=(0.55, 0.32, 0.16)):
+def lit_room(name, warm=(1.0, 0.62, 0.3), strength=1.1, curtain=(0.48, 0.26, 0.13)):
     """what is seen of a lit room through its window: curtains drawn back in
     folds, the lamplight on them"""
     m = bpy.data.materials.new(name); m.use_nodes = True
     N = m.node_tree.nodes; L = m.node_tree.links.new
     b = N["Principled BSDF"]
     tc = N.new("ShaderNodeTexCoord")
-    wv = N.new("ShaderNodeTexWave"); wv.inputs["Scale"].default_value = 9; wv.inputs["Distortion"].default_value = 3; wv.bands_direction = "X"
+    wv = N.new("ShaderNodeTexWave"); wv.inputs["Scale"].default_value = 8; wv.inputs["Distortion"].default_value = 2.8; wv.bands_direction = "X"
     L(tc.outputs["Object"], wv.inputs["Vector"])
     ramp = N.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].color = (curtain[0] * 0.35, curtain[1] * 0.35, curtain[2] * 0.35, 1); ramp.color_ramp.elements[1].color = (*curtain, 1)
+    ramp.color_ramp.elements[0].color = (curtain[0] * 0.32, curtain[1] * 0.28, curtain[2] * 0.24, 1); ramp.color_ramp.elements[1].color = (*curtain, 1)
     L(wv.outputs["Fac"], ramp.inputs["Fac"])
     gn = N.new("ShaderNodeTexNoise"); gn.inputs["Scale"].default_value = 1.2
     L(tc.outputs["Object"], gn.inputs["Vector"])
@@ -218,8 +205,9 @@ def lit_room(name, warm=(1.0, 0.62, 0.3), strength=3.0, curtain=(0.55, 0.32, 0.1
     L(ramp.outputs["Color"], b.inputs["Base Color"]); L(ramp.outputs["Color"], b.inputs["Emission Color"])
     L(glow.outputs["Value"], b.inputs["Emission Strength"])
     b.inputs["Roughness"].default_value = 0.9
+    if "Coat Weight" in b.inputs: b.inputs["Coat Weight"].default_value = 0.0
     return m
-ROOM_LIT = [lit_room("lit room", strength=1.6), lit_room("lit room deep", strength=1.1, curtain=(0.5, 0.22, 0.1)), lit_room("lit room pale", strength=1.3, curtain=(0.62, 0.48, 0.3))]
+ROOM_LIT = [lit_room("lit room", strength=1.12), lit_room("lit room deep", strength=0.84, curtain=(0.44, 0.20, 0.09)), lit_room("lit room pale", strength=0.98, curtain=(0.54, 0.38, 0.22))]
 # (a room not lit: curtains, just, in what light comes in)
 ROOM_DARK = lit_room("dark room", strength=0.0, curtain=(0.05, 0.04, 0.035))
 
@@ -311,24 +299,34 @@ def window(wall, x, yf, z0, w, h, lights=2, lit=0, arch=False, hood=True, depth=
     head = top if not arch else top - w / 2
     for k in range(1, lights):
         mx = x0 + k * w / lights
-        slab(mx - 0.065, mx + 0.065, gy - 0.12, gy + 0.02, z0, head, DRESSED, 0.012)
-    tz = z0 + h * 0.66 if transom and not arch and h > 1.6 else None
+        slab(mx - 0.065, mx + 0.065, gy - 0.12, gy + 0.02, z0, top if not arch else top - 0.08, DRESSED, 0.012)
+    tz = (head if arch else z0 + h * 0.66) if (transom or arch) and h > 1.6 else None
     if tz: slab(x0, x1, gy - 0.12, gy + 0.02, tz - 0.06, tz + 0.06, DRESSED, 0.012)
-    # glass, leaded in small panes
-    glass = box("glass", x0, x1, gy + 0.01, gy + 0.02, z0, top + (0 if not arch else 0), GLASS)
+    # glass, leaded in small panes all the way to the top of the opening
+    glass = box("glass", x0, x1, gy + 0.01, gy + 0.02, z0, top, GLASS)
     for k in range(lights):
         lx0 = x0 + k * w / lights; lx1 = lx0 + w / lights
-        for j in range(1, int(h / 0.32)):
+        for j in range(1, int(h / 0.32) + 1):
             zz = z0 + j * 0.32
-            if zz < head: box("came", lx0, lx1, gy - 0.004, gy + 0.004, zz - 0.007, zz + 0.007, FRAME)
-        box("came", (lx0 + lx1) / 2 - 0.007, (lx0 + lx1) / 2 + 0.007, gy - 0.004, gy + 0.004, z0, head, FRAME)
+            if zz < top - 0.06: box("came", lx0, lx1, gy - 0.004, gy + 0.004, zz - 0.007, zz + 0.007, FRAME)
+        box("came", (lx0 + lx1) / 2 - 0.007, (lx0 + lx1) / 2 + 0.007, gy - 0.004, gy + 0.004, z0, top - 0.04, FRAME)
+    # parted 3D velvet curtains framing the window interior
+    cw = w * 0.19
+    for side_c, cx0, cx1 in ((-1, x0 - 0.04, x0 + cw), (1, x1 - cw, x1 + 0.04)):
+        for fold in range(3):
+            fx0 = cx0 + fold * (cx1 - cx0) / 3
+            fx1 = fx0 + (cx1 - cx0) / 3 + 0.01
+            fy = gy + 0.12 + (fold % 2) * 0.03
+            slab(fx0, fx1, fy, fy + 0.05, z0 - 0.08, top + 0.05, CURTAIN, 0.012, name="curtain")
     # the room behind
     room = ROOM_LIT[(lit - 1) % len(ROOM_LIT)] if lit else ROOM_DARK
-    box("room", x0 - 0.3, x1 + 0.3, gy + 0.55, gy + 0.6, z0 - 0.3, top + 0.4, room)
+    box("room", x0 - 0.35, x1 + 0.35, gy + 0.54, gy + 0.60, z0 - 0.3, top + 0.4, room)
     if lit:
         # its lamp, lighting the reveal, and out over the wet drive
-        lamp(f"window {x:.1f} {z0:.1f}", "AREA", (x, gy + 0.45, z0 + h * 0.55), aim=(x, gy - 6, z0 - 2.5), energy=34 * w * h * (0.7 + 0.3 * lit),
-             colour=(1.0, 0.6, 0.3), size=w * 0.9, size_y=h * 0.8).data.cycles.max_bounces = 4
+        wl = lamp(f"window {x:.1f} {z0:.1f}", "AREA", (x, gy + 0.42, z0 + h * 0.52), aim=(x, gy - 6, z0 - 2.5), energy=22 * w * h * (0.68 + 0.28 * lit),
+                  colour=(1.0, 0.58, 0.26), size=w * 0.85, size_y=h * 0.75)
+        wl.data.cycles.max_bounces = 4
+        wl.visible_camera = False; wl.visible_transmission = False; wl.visible_glossy = False
         LITS.append(((x, gy, z0 + h / 2), (w, h)))
 
 def arch_ring_xz(name, cx, cz, r_in, r_out, y0, y1, mat, n=40):
@@ -474,9 +472,10 @@ for k in range(5):
 # the lantern hung in the arch
 LANTERN = (0, CF + 0.45, 2.95)
 lant = import_model("Lantern_01", height=0.62, at=(LANTERN[0], LANTERN[1], LANTERN[2] - 0.31))
-cylinder("chain", LANTERN[0], LANTERN[1], LANTERN[2] + 0.3, DSP + 0.9, 0.008, IRON, verts=6)
-lamp("lantern", "POINT", (LANTERN[0], LANTERN[1], LANTERN[2] - 0.05), energy=75, colour=(1.0, 0.58, 0.26), size=0.05)
-lamp("hall", "AREA", (0, DOOR_Y + 0.6, 3.0), aim=(0, CF - 4, 1.0), energy=40, colour=(1.0, 0.6, 0.3), size=1.2)
+lant_chain = cylinder("chain", LANTERN[0], LANTERN[1], LANTERN[2] + 0.3, DSP + 0.9, 0.008, IRON, verts=6)
+lant_lamp = lamp("lantern", "POINT", (LANTERN[0], LANTERN[1], LANTERN[2] - 0.05), energy=75, colour=(1.0, 0.58, 0.26), size=0.05)
+hl = lamp("hall", "AREA", (0, DOOR_Y + 0.6, 3.0), aim=(0, CF - 4, 1.0), energy=40, colour=(1.0, 0.6, 0.3), size=1.2)
+hl.visible_camera = False; hl.visible_transmission = False; hl.visible_glossy = False
 # the balcony over the doorway, balustraded
 BZ = 4.75
 slab(CX0 - 0.15, CX1 + 0.15, CF - 0.75, CF + 0.1, BZ - 0.32, BZ, DRESSED, 0.03)
@@ -671,24 +670,158 @@ def stain_fronts():
         if node: node.image = im
 stain_fronts()
 
-# urns with clipped bay either side of the steps
+# urns with real 3D botanical shrubs either side of the steps
+urn_shrub_proto = import_model("shrub_02", height=1.05, at=(-2.75, CF - 1.6, 1.66), rot=0.4, only=["shrub_02_a"])
 for xs in (-1, 1):
     ux, uy = xs * 2.75, CF - 1.6
     slab(ux - 0.42, ux + 0.42, uy - 0.42, uy + 0.42, 0, 0.9, DRESSED, 0.02)
     lathe("urn", [(0, 0), (0.3, 0), (0.3, 0.08), (0.14, 0.16), (0.12, 0.3), (0.34, 0.5), (0.4, 0.72), (0.36, 0.8), (0.4, 0.84), (0.38, 0.86), (0, 0.86)], DRESSED, at=(ux, uy, 0.9), steps=32)
-    ball = sphere("bay", (ux, uy, 2.1), 0.48, HEDGE)
-    d = ball.modifiers.new("leafage", "DISPLACE"); tx = bpy.data.textures.new("leafage", "CLOUDS"); tx.noise_scale = 0.08; d.texture = tx; d.strength = 0.05
-    ball.modifiers.new("smooth", "SUBSURF").levels = 2
-    ball.modifiers.move(1, 0)
+    if xs > 0:
+        clone(urn_shrub_proto, (ux, uy, 1.66), 2.3, 0.98)
 
-# ── the ground: a wet gravel drive, the lawns, leaves ──────────────────────
+# ── the ground: a 3D wet slate flagstone courtyard with 3D water ripples ───
 ground = box("lawn", -120, 120, -10, 160, -0.3, 0, LAWN)
 drive = [(-4.0, 6), (4.0, 6), (4.6, 18), (12.5, 23), (12.5, CF + 0.4), (-12.5, CF + 0.4), (-12.5, 23), (-4.6, 18)]
-me = bpy.data.meshes.new("drive"); bm = bmesh.new()
-vs = [bm.verts.new((x, y, 0.012)) for x, y in drive]; bm.faces.new(vs)
+
+def inside(x, y, poly):
+    c = False
+    for (x0, y0), (x1, y1) in zip(poly, poly[1:] + poly[:1]):
+        if (y0 > y) != (y1 > y) and x < x0 + (y - y0) * (x1 - x0) / (y1 - y0): c = not c
+    return c
+
+def drive_z(x, y):
+    half_w = 4.2 if y < 18 else min(12.5, 4.2 + (y - 18) * 1.4)
+    crown = max(0.0, 1.0 - (x / half_w) ** 2) * 0.028
+    rut = -0.008 * (math.exp(-((abs(x) - 1.45) / 0.45) ** 2))
+    undul = 0.005 * math.sin(x * 0.7 + y * 0.45) * math.cos(y * 0.32 - x * 0.25)
+    return 0.012 + crown + rut + undul
+
+me = bpy.data.meshes.new("drive"); bm = bmesh.new(); uv_lay = bm.loops.layers.uv.new()
+nx_d, ny_d = 96, 84
+dx0, dx1, dy0, dy1 = -12.6, 12.6, 6.0, CF + 0.4
+grid_v = [[bm.verts.new((dx0 + i * (dx1 - dx0) / nx_d, dy0 + j * (dy1 - dy0) / ny_d, drive_z(dx0 + i * (dx1 - dx0) / nx_d, dy0 + j * (dy1 - dy0) / ny_d))) for j in range(ny_d + 1)] for i in range(nx_d + 1)]
+for i in range(nx_d):
+    for j in range(ny_d):
+        cx = dx0 + (i + 0.5) * (dx1 - dx0) / nx_d
+        cy = dy0 + (j + 0.5) * (dy1 - dy0) / ny_d
+        if inside(cx, cy, drive):
+            f = bm.faces.new((grid_v[i][j], grid_v[i + 1][j], grid_v[i + 1][j + 1], grid_v[i][j + 1]))
+            for loop in f.loops:
+                co = loop.vert.co
+                loop[uv_lay].uv = ((co.x - dx0) / (dx1 - dx0), (co.y - dy0) / (dy1 - dy0))
+bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
 bm.to_mesh(me); bm.free()
+for p in me.polygons: p.use_smooth = True
 dr = link(bpy.data.objects.new("drive", me)); dr.data.materials.append(DRIVE)
-dr.modifiers.new("fine", "SUBSURF").levels = 0
+dr_disp_path = f"{T}/slate_driveway/Displacement.jpg"
+if os.path.exists(dr_disp_path):
+    dr_tex = bpy.data.textures.new("slate_disp", "IMAGE")
+    dr_tex.image = bpy.data.images.load(dr_disp_path, check_existing=True)
+    dr_tex.image.colorspace_settings.name = "Non-Color"
+    dm_dr = dr.modifiers.new("flagstones", "DISPLACE")
+    dm_dr.texture = dr_tex; dm_dr.texture_coords = "GLOBAL"; dm_dr.strength = 0.022; dm_dr.mid_level = 0.5
+
+# 3D Concentric Rain Ripples raytraced directly on the wet slate flagstones:
+import numpy as np
+RIPPLE_W, RIPPLE_H = 1536, 1536
+rx0_rip, rx1_rip, ry0_rip, ry1_rip = -5.4, 5.4, 6.4, 22.4
+ripple_im = bpy.data.images.new("drive_ripples", RIPPLE_W, RIPPLE_H, alpha=False, float_buffer=True)
+ripple_im.colorspace_settings.name = "Non-Color"
+RIPPLE_SPOTS = []
+rng_rip = random.Random(404)
+for i_spot in range(150):
+    # Extra concentration in the foreground/midground courtyard (y = 6.8..15.5) where camera sees ripples best:
+    if i_spot < 85:
+        rx = rng_rip.uniform(-4.4, 4.4)
+        ry = rng_rip.uniform(6.8, 14.8)
+    else:
+        rx = rng_rip.uniform(-4.2, 4.2)
+        ry = rng_rip.uniform(14.0, 21.2)
+    if abs(rx) > 3.7 and ry < 16.5: continue
+    RIPPLE_SPOTS.append((rx, ry, rng_rip.uniform(0.30, 0.62), rng_rip.random()))
+
+def setup_drive_ripples():
+    nt = DRIVE.node_tree; N = nt.nodes; L = nt.links.new
+    b = N["Principled BSDF"]
+    tc = next(n for n in N if n.type == "TEX_COORD")
+    sp = N.new("ShaderNodeSeparateXYZ"); L(tc.outputs["Object"], sp.inputs["Vector"])
+    u = N.new("ShaderNodeMath"); u.operation = "MULTIPLY_ADD"; u.inputs[1].default_value = 1 / (rx1_rip - rx0_rip); u.inputs[2].default_value = -rx0_rip / (rx1_rip - rx0_rip)
+    L(sp.outputs["X"], u.inputs[0])
+    v = N.new("ShaderNodeMath"); v.operation = "MULTIPLY_ADD"; v.inputs[1].default_value = 1 / (ry1_rip - ry0_rip); v.inputs[2].default_value = -ry0_rip / (ry1_rip - ry0_rip)
+    L(sp.outputs["Y"], v.inputs[0])
+    uv = N.new("ShaderNodeCombineXYZ"); L(u.outputs["Value"], uv.inputs["X"]); L(v.outputs["Value"], uv.inputs["Y"])
+    rim_node = N.new("ShaderNodeTexImage"); rim_node.name = "drive_ripples"; rim_node.image = ripple_im; rim_node.extension = "EXTEND"
+    L(uv.outputs["Vector"], rim_node.inputs["Vector"])
+    sep_c = N.new("ShaderNodeSeparateColor")
+    L(rim_node.outputs["Color"], sep_c.inputs["Color"])
+    rb = N.new("ShaderNodeBump"); rb.inputs["Strength"].default_value = 2.35; rb.inputs["Distance"].default_value = 0.026
+    L(sep_c.outputs["Red"], rb.inputs["Height"])
+    if b.inputs["Normal"].is_linked:
+        L(b.inputs["Normal"].links[0].from_socket, rb.inputs["Normal"])
+    L(rb.outputs["Normal"], b.inputs["Normal"])
+    # Wet water film along the active concentric wave rings and their damp haloes:
+    if b.inputs["Roughness"].is_linked:
+        old_r = b.inputs["Roughness"].links[0].from_socket
+        rmix = N.new("ShaderNodeMix"); rmix.data_type = "FLOAT"; rmix.inputs[3].default_value = 0.05
+        L(sep_c.outputs["Green"], rmix.inputs["Factor"]); L(old_r, rmix.inputs[2]); L(rmix.outputs[0], b.inputs["Roughness"])
+    smix = N.new("ShaderNodeMix"); smix.data_type = "FLOAT"; smix.inputs[2].default_value = 0.5; smix.inputs[3].default_value = 0.88
+    L(sep_c.outputs["Green"], smix.inputs["Factor"]); L(smix.outputs[0], b.inputs["Specular IOR Level"])
+    # Curved capillary wave crests catch wide-angle upper sky dome light as well as 3D scene lights:
+    if b.inputs["Base Color"].is_linked:
+        old_col = b.inputs["Base Color"].links[0].from_socket
+        ck = N.new("ShaderNodeMath"); ck.operation = "MULTIPLY"; ck.inputs[1].default_value = 0.42
+        L(sep_c.outputs["Blue"], ck.inputs[0])
+        cmix = N.new("ShaderNodeMix"); cmix.data_type = "RGBA"; cmix.inputs[7].default_value = (0.32, 0.37, 0.45, 1)
+        L(ck.outputs["Value"], cmix.inputs["Factor"]); L(old_col, cmix.inputs[6]); L(cmix.outputs[2], b.inputs["Base Color"])
+setup_drive_ripples()
+
+def update_drive_ripples(phase_norm=0.0):
+    xs = np.linspace(rx0_rip, rx1_rip, RIPPLE_W, dtype=np.float32)[None, :]
+    ys = np.linspace(ry0_rip, ry1_rip, RIPPLE_H, dtype=np.float32)[:, None]
+    h = np.full((RIPPLE_H, RIPPLE_W), 0.5, dtype=np.float32)
+    wet_mask = np.zeros((RIPPLE_H, RIPPLE_W), dtype=np.float32)
+    crest_mask = np.zeros((RIPPLE_H, RIPPLE_W), dtype=np.float32)
+    for rx, ry, max_r, ph0 in RIPPLE_SPOTS:
+        age = (ph0 + phase_norm) % 1.0
+        fade = (1.0 - age) * (1.0 - age * 0.62)
+        if fade < 0.02: continue
+        ix0 = max(2, int((rx - max_r - rx0_rip) / (rx1_rip - rx0_rip) * RIPPLE_W))
+        ix1 = min(RIPPLE_W - 2, int((rx + max_r - rx0_rip) / (rx1_rip - rx0_rip) * RIPPLE_W) + 1)
+        iy0 = max(2, int((ry - max_r - ry0_rip) / (ry1_rip - ry0_rip) * RIPPLE_H))
+        iy1 = min(RIPPLE_H - 2, int((ry + max_r - ry0_rip) / (ry1_rip - ry0_rip) * RIPPLE_H) + 1)
+        if ix0 >= ix1 or iy0 >= iy1: continue
+        d = np.hypot(xs[:, ix0:ix1] - rx, ys[iy0:iy1, :] - ry) / max_r
+        in_disc = (d < 1.0).astype(np.float32)
+        # 3 concentric capillary wave rings (crest + trough pairs) + central impact crown
+        r0 = d - (0.12 + age * 0.82)
+        r1 = d - (0.04 + age * 0.56)
+        r2 = d - (age * 0.30)
+        w0 = np.sin(r0 * 28.0) * np.exp(-(r0 * 11.5) ** 2)
+        w1 = 0.72 * np.sin(r1 * 32.0) * np.exp(-(r1 * 13.5) ** 2) * (age > 0.10)
+        w2 = 0.46 * np.sin(r2 * 36.0) * np.exp(-(r2 * 15.5) ** 2) * (age > 0.22)
+        crown = 1.35 * np.cos(d * 18.0) * np.exp(-(d * 13.0) ** 2) * max(0.0, 1.0 - age / 0.25)
+        wave = (w0 + w1 + w2 + crown) * fade * in_disc
+        h[iy0:iy1, ix0:ix1] += wave * 0.28
+        ring_env = (np.exp(-(r0 * 9.0) ** 2) + 0.78 * np.exp(-(r1 * 11.0) ** 2) * (age > 0.10) + 0.55 * np.exp(-(d * 4.5) ** 2)) * fade * in_disc
+        wet_mask[iy0:iy1, ix0:ix1] = np.maximum(wet_mask[iy0:iy1, ix0:ix1], np.clip(ring_env * 0.95, 0.0, 1.0))
+        crest = (np.maximum(0.0, w0) ** 1.35 + 0.75 * np.maximum(0.0, w1) ** 1.35 * (age > 0.10) + 0.48 * np.maximum(0.0, w2) ** 1.35 * (age > 0.22) + 1.15 * np.maximum(0.0, crown)) * fade * in_disc
+        crest_mask[iy0:iy1, ix0:ix1] = np.maximum(crest_mask[iy0:iy1, ix0:ix1], np.clip(crest, 0.0, 1.0))
+    px_ = np.ones((RIPPLE_H, RIPPLE_W, 4), np.float32)
+    px_[..., 0] = np.clip(h, 0.0, 1.0)
+    px_[..., 1] = np.clip(wet_mask, 0.0, 1.0)
+    px_[..., 2] = np.clip(crest_mask, 0.0, 1.0)
+    new_im = bpy.data.images.new(f"drive_ripples_{phase_norm:.3f}", RIPPLE_W, RIPPLE_H, alpha=False, float_buffer=True)
+    new_im.colorspace_settings.name = "Non-Color"
+    new_im.pixels.foreach_set(px_.ravel())
+    new_im.update()
+    rim_node = DRIVE.node_tree.nodes.get("drive_ripples")
+    if rim_node:
+        old_im = rim_node.image
+        rim_node.image = new_im
+        if old_im and old_im != new_im and old_im.users == 0:
+            bpy.data.images.remove(old_im)
+update_drive_ripples(0.0)
+
 # the lawns' kerbs, a rubble edging along the drive
 for (xa, ya), (xb, yb) in zip(drive, drive[1:] + drive[:1]):
     L_ = math.hypot(xb - xa, yb - ya)
@@ -696,41 +829,36 @@ for (xa, ya), (xb, yb) in zip(drive, drive[1:] + drive[:1]):
     k = box("kerb", -L_ / 2, L_ / 2, -0.09, 0.09, 0, 0.09, RUBBLE)
     k.rotation_euler = (0, 0, math.atan2(yb - ya, xb - xa)); k.location = ((xa + xb) / 2, (ya + yb) / 2, 0)
 
-# leaves come down off the old trees and lie on the wet gravel, drifted
-# against the kerbs and the piers: each a leaf of its own shape, colour and
-# curl, wet and catching the lights
+# Wet autumn leaves drifted along the stone kerbs on the edges of the courtyard
 LEAF = bpy.data.materials.new("fallen leaves"); LEAF.use_nodes = True
 ln_ = LEAF.node_tree.nodes; ll_ = LEAF.node_tree.links.new
 lca = ln_.new("ShaderNodeVertexColor"); lca.layer_name = "leaf"
 ll_(lca.outputs["Color"], ln_["Principled BSDF"].inputs["Base Color"])
-ln_["Principled BSDF"].inputs["Roughness"].default_value = 0.32
+ln_["Principled BSDF"].inputs["Roughness"].default_value = 0.38
+if "Coat Weight" in ln_["Principled BSDF"].inputs: ln_["Principled BSDF"].inputs["Coat Weight"].default_value = 0.0
 lv = ln_.new("ShaderNodeTexWave"); lv.inputs["Scale"].default_value = 60; lv.bands_direction = "Y"
 lb = ln_.new("ShaderNodeBump"); lb.inputs["Strength"].default_value = 0.15
 ll_(lv.outputs["Fac"], lb.inputs["Height"]); ll_(lb.outputs["Normal"], ln_["Principled BSDF"].inputs["Normal"])
-def inside(x, y, poly):
-    c = False
-    for (x0, y0), (x1, y1) in zip(poly, poly[1:] + poly[:1]):
-        if (y0 > y) != (y1 > y) and x < x0 + (y - y0) * (x1 - x0) / (y1 - y0): c = not c
-    return c
-AUTUMN = [(0.32, 0.09, 0.02), (0.42, 0.18, 0.03), (0.25, 0.12, 0.03), (0.5, 0.3, 0.06), (0.18, 0.07, 0.02), (0.36, 0.06, 0.02)]
+AUTUMN = [(0.26, 0.08, 0.02), (0.34, 0.14, 0.03), (0.20, 0.09, 0.02), (0.38, 0.22, 0.04), (0.15, 0.06, 0.02), (0.28, 0.05, 0.02)]
 me = bpy.data.meshes.new("leaves"); bm = bmesh.new()
 cl = bm.loops.layers.color.new("leaf")
 placed = 0
-while placed < 3600:
-    x, y = RNG.uniform(-13, 13), RNG.uniform(10.2, CF - 0.3)
-    near_edge = min(abs(abs(x) - 4.2), abs(abs(x) - 12.4)) < 1.2
-    if not inside(x, y, [(-4.0, 6), (4.0, 6), (4.6, 18), (12.5, 23), (12.5, CF + 0.4), (-12.5, CF + 0.4), (-12.5, 23), (-4.6, 18)]): continue
-    if not near_edge and RNG.random() < 0.55: continue
-    size = RNG.uniform(0.05, 0.11); a = RNG.uniform(0, math.tau); lobes = RNG.choice((0, 3, 5))
+while placed < 420:
+    x, y = RNG.uniform(-12.5, 12.5), RNG.uniform(10.2, CF - 0.3)
+    near_edge = min(abs(abs(x) - 4.1), abs(abs(x) - 12.1)) < 0.85
+    if not inside(x, y, drive): continue
+    if not near_edge and RNG.random() < 0.94: continue
+    size = RNG.uniform(0.045, 0.09); a = RNG.uniform(0, math.tau); lobes = RNG.choice((0, 3, 5))
+    gz = drive_z(x, y)
     ring = []
-    for k in range(14):
-        t = k / 14 * math.tau
+    for k in range(12):
+        t = k / 12 * math.tau
         r = size * (0.55 + 0.45 * math.cos(t) ** 2) * (1 + (0.18 * math.cos(lobes * t) if lobes else 0))
         lx, ly = math.cos(t) * r, math.sin(t) * r * 0.62
-        ring.append((x + lx * math.cos(a) - ly * math.sin(a), y + lx * math.sin(a) + ly * math.cos(a), 0.016 + 0.012 * (lx / size) ** 2 + RNG.uniform(0, 0.004)))
+        ring.append((x + lx * math.cos(a) - ly * math.sin(a), y + lx * math.sin(a) + ly * math.cos(a), gz + 0.002 + 0.005 * (lx / size) ** 2))
     vs = [bm.verts.new(p) for p in ring]
     face = bm.faces.new(vs)
-    c = RNG.choice(AUTUMN); k = RNG.uniform(0.7, 1.15)
+    c = RNG.choice(AUTUMN); k = RNG.uniform(0.65, 1.05)
     for loop in face.loops: loop[cl] = (c[0] * k, c[1] * k, c[2] * k, 1)
     placed += 1
 bm.to_mesh(me); bm.free()
@@ -797,12 +925,25 @@ def autumn(objs, keep=0.45, seed=1):
     rng = random.Random(seed)
     for o in objs:
         for mat in o.data.materials:
-            if not mat or "leaves" not in mat.name or mat.get("autumn"): continue
-            mat["autumn"] = True
+            if not mat or not mat.use_nodes: continue
             b = next((n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
-            if not b or not b.inputs["Base Color"].is_linked: continue
+            if not b: continue
+            if "Coat Weight" in b.inputs: b.inputs["Coat Weight"].default_value = 0.0
+            if "bark" in mat.name.lower() or "trunk" in mat.name.lower():
+                if not mat.get("wet_bark"):
+                    mat["wet_bark"] = True
+                    b.inputs["Roughness"].default_value = 0.52
+                    b.inputs["Specular IOR Level"].default_value = 0.38
+                    for n in mat.node_tree.nodes:
+                        if n.type == "NORMAL_MAP": n.inputs["Strength"].default_value = 1.35
+                continue
+            if "leaves" not in mat.name or mat.get("autumn"): continue
+            mat["autumn"] = True
+            b.inputs["Roughness"].default_value = 0.36
+            b.inputs["Specular IOR Level"].default_value = 0.45
+            if not b.inputs["Base Color"].is_linked: continue
             src = b.inputs["Base Color"].links[0].from_socket
-            h = mat.node_tree.nodes.new("ShaderNodeHueSaturation"); h.inputs["Hue"].default_value = 0.3; h.inputs["Saturation"].default_value = 1.15; h.inputs["Value"].default_value = 0.5
+            h = mat.node_tree.nodes.new("ShaderNodeHueSaturation"); h.inputs["Hue"].default_value = 0.31; h.inputs["Saturation"].default_value = 1.18; h.inputs["Value"].default_value = 0.56
             mat.node_tree.links.new(src, h.inputs["Color"]); mat.node_tree.links.new(h.outputs["Color"], b.inputs["Base Color"])
         # (and thin them: drop whole leaf islands at random)
         idx = [i for i, m in enumerate(o.data.materials) if m and "leaves" in m.name]
@@ -837,22 +978,229 @@ def tree(mid, at, height, rot, keep=0.45, seed=1, only=None):
     autumn(meshes_of(r), keep, seed)
     return r
 
+def clone_unique(root, at, rot=0.0, k=1.0):
+    twin = clone(root, at, rot, k)
+    for o in meshes_of(twin):
+        o.data = o.data.copy()
+    return twin
+
 def bounds_of(objs):
     bpy.context.view_layer.update()
     pts = [o.matrix_world @ Vector(c) for o in objs for c in o.bound_box]
     return (Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts))), Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts))))
 
-# (each kind brought in once; the others are instances of it)
-old = tree("jacaranda_tree", (-9.3, 12.0, 0), 17, float(arg("--treerot", "2.4")), keep=0.16, seed=3)
-clone(old, (10.0, 13.0, 0), float(arg("--treerot", "2.4")) + 3.3, 0.95)
+# (each foreground/midground tree given unique mesh data so 3D wind bends both sides in world wind direction)
+old = tree("jacaranda_tree", (-9.3, 12.0, 0), 17, float(arg("--treerot", "2.4")), keep=0.26, seed=3)
+old_right = clone_unique(old, (10.0, 13.0, 0), float(arg("--treerot", "2.4")) + 3.3, 0.95)
 fir = import_model("fir_tree_01", height=21, at=(-8, 70, 0), rot=1.2, only=["fir_tree_01_a_LOD0"])
 pine = import_model("pine_tree_01", height=19, at=(-30, 55, 0), rot=0.3, only=["pine_tree_01_a_LOD0"])
 for (x, y, k, r, kind) in ((12, 66, 1.0, 2.0, fir), (34, 58, 1.05, 0.7, pine), (-40, 40, 0.9, 2.6, fir), (40, 40, 0.95, 1.4, pine), (0, 85, 1.15, 0.9, fir), (-55, 70, 1.1, 1.9, pine), (55, 75, 1.0, 0.2, fir)):
     clone(kind, (x, y, 0), r, k)
 mid = tree("island_tree_01", (-22, 26, 0), 9, 0.4, keep=0.5, seed=22)
-clone(mid, (23, 24, 0), 2.1, 0.9)
+mid_right = clone_unique(mid, (23, 24, 0), 2.1, 0.9)
 small = tree("tree_small_02", (-9, 19, 0), 4.5, 1.0, keep=0.7, seed=9)
-clone(small, (9.5, 18, 0), 2.2, 0.9)
+small_right = clone_unique(small, (9.5, 18, 0), 2.2, 0.9)
+
+# ── 3D Wind Deformation for Trees + Porch Lantern ─────────────────────────
+bpy.context.view_layer.update()
+TREE_WIND_RECORDS = []
+for root_ob, tx, ty, h_ref, amp_k in (
+    (old, -9.3, 12.0, 13.5, 1.0),
+    (old_right, 10.0, 13.0, 13.5, 0.96),
+    (mid, -22.0, 26.0, 8.0, 0.75),
+    (mid_right, 23.0, 24.0, 8.0, 0.75),
+    (small, -9.0, 19.0, 4.0, 0.65),
+    (small_right, 9.5, 18.0, 4.0, 0.65),
+):
+    for o in meshes_of(root_ob):
+        nv = len(o.data.vertices)
+        if nv == 0: continue
+        co_rest = np.empty(nv * 3, dtype=np.float32)
+        o.data.vertices.foreach_get("co", co_rest)
+        co_rest = co_rest.reshape((nv, 3))
+        mw = np.array(o.matrix_world.to_3x3(), dtype=np.float32)
+        tw = np.array(o.matrix_world.translation, dtype=np.float32)
+        mw_inv = np.array(o.matrix_world.inverted().to_3x3(), dtype=np.float32)
+        w_rest = co_rest @ mw.T + tw
+        h_bough = (np.clip((w_rest[:, 2] - 1.2) / h_ref, 0.0, 1.25) ** 1.35 * amp_k).astype(np.float32)
+        r_branch = (np.clip(np.hypot(w_rest[:, 0] - tx, w_rest[:, 1] - ty) / 5.0, 0.0, 1.3) ** 1.2).astype(np.float32)
+        TREE_WIND_RECORDS.append((o, co_rest, w_rest, mw_inv, h_bough, r_branch))
+
+def update_3d_tree_wind(phase_norm=0.0):
+    phase = phase_norm * math.tau
+    for o, co_rest, w_rest, mw_inv, h_bough, r_branch in TREE_WIND_RECORDS:
+        wx, wy, wz = w_rest[:, 0], w_rest[:, 1], w_rest[:, 2]
+        phi1 = phase - 0.15 * wx - 0.08 * wy + 0.18 * wz
+        phi2 = 2.0 * phase - 0.30 * wx - 0.16 * wy + 0.45 * wz
+        phi3 = 3.0 * phase - 0.58 * wx + 0.42 * wy + 0.92 * wz
+        s1, c1 = np.sin(phi1), np.cos(phi1 - 0.35)
+        s2 = np.sin(phi2)
+        s3, c3 = np.sin(phi3), np.cos(phi3)
+        dx = h_bough * (0.40 * s1 + 0.16 * s2) + h_bough * r_branch * (0.19 * s2 + 0.085 * s3)
+        dy = h_bough * (0.12 * c1 + 0.06 * s2) + h_bough * r_branch * (0.075 * c3)
+        dz = -h_bough * (0.065 * s1) + h_bough * r_branch * (0.055 * s2 + 0.04 * s3)
+        d_world = np.stack([dx, dy, dz], axis=1)
+        co_new = co_rest + d_world @ mw_inv.T
+        o.data.vertices.foreach_set("co", co_new.astype(np.float32).ravel())
+        o.data.update()
+    # Subtle 3D sway of the hanging porch lantern on its iron chain:
+    sway_ang = 0.032 * math.sin(phase + 0.4) + 0.012 * math.sin(2.0 * phase - 0.3)
+    lant.rotation_euler = (0.010 * math.cos(phase), sway_ang, 0.0)
+    lant.location = (LANTERN[0] + math.sin(sway_ang) * 0.31, LANTERN[1], LANTERN[2] - 0.31)
+    lant_lamp.location = (LANTERN[0] + math.sin(sway_ang) * 0.18, LANTERN[1], LANTERN[2] - 0.05)
+
+# ── 3D Rain Streaks & 3D Wind-Blown Autumn Leaves ──────────────────────────
+RAIN_3D = bpy.data.materials.new("rain_3d_streaks"); RAIN_3D.use_nodes = True
+RAIN_3D["clear"] = True
+rn_ = RAIN_3D.node_tree.nodes; rl_ = RAIN_3D.node_tree.links.new
+for n in list(rn_): rn_.remove(n)
+r_out = rn_.new("ShaderNodeOutputMaterial")
+r_tc = rn_.new("ShaderNodeTexCoord"); r_sep = rn_.new("ShaderNodeSeparateXYZ")
+rl_(r_tc.outputs["UV"], r_sep.inputs["Vector"])
+# Smooth vertical & horizontal taper along each 3D rain ribbon: sin(pi * v)^1.4 * sin(pi * u) * droplet head weighting
+r_vpi = rn_.new("ShaderNodeMath"); r_vpi.operation = "MULTIPLY"; r_vpi.inputs[1].default_value = math.pi; rl_(r_sep.outputs["Y"], r_vpi.inputs[0])
+r_vsin = rn_.new("ShaderNodeMath"); r_vsin.operation = "SINE"; rl_(r_vpi.outputs["Value"], r_vsin.inputs[0])
+r_vpow = rn_.new("ShaderNodeMath"); r_vpow.operation = "POWER"; r_vpow.inputs[1].default_value = 1.4; rl_(r_vsin.outputs["Value"], r_vpow.inputs[0])
+r_head = rn_.new("ShaderNodeMath"); r_head.operation = "MULTIPLY_ADD"; r_head.inputs[1].default_value = -0.45; r_head.inputs[2].default_value = 1.22; rl_(r_sep.outputs["Y"], r_head.inputs[0])
+r_vprof = rn_.new("ShaderNodeMath"); r_vprof.operation = "MULTIPLY"; rl_(r_vpow.outputs["Value"], r_vprof.inputs[0]); rl_(r_head.outputs["Value"], r_vprof.inputs[1])
+r_upi = rn_.new("ShaderNodeMath"); r_upi.operation = "MULTIPLY"; r_upi.inputs[1].default_value = math.pi; rl_(r_sep.outputs["X"], r_upi.inputs[0])
+r_usin = rn_.new("ShaderNodeMath"); r_usin.operation = "SINE"; rl_(r_upi.outputs["Value"], r_usin.inputs[0])
+r_env = rn_.new("ShaderNodeMath"); r_env.operation = "MULTIPLY"; rl_(r_vprof.outputs["Value"], r_env.inputs[0]); rl_(r_usin.outputs["Value"], r_env.inputs[1])
+r_fac = rn_.new("ShaderNodeMath"); r_fac.operation = "MULTIPLY"; r_fac.inputs[1].default_value = 0.14; rl_(r_env.outputs["Value"], r_fac.inputs[0])
+# 3D world-space warm light catch near the porch lantern and lit windows vs cool moonlight:
+r_geo = rn_.new("ShaderNodeNewGeometry")
+r_dist = rn_.new("ShaderNodeVectorMath"); r_dist.operation = "DISTANCE"; r_dist.inputs[1].default_value = (0.0, 27.5, 4.0)
+rl_(r_geo.outputs["Position"], r_dist.inputs[0])
+r_warm = rn_.new("ShaderNodeMapRange"); r_warm.inputs["From Min"].default_value = 2.5; r_warm.inputs["From Max"].default_value = 11.5; r_warm.inputs["To Min"].default_value = 1.0; r_warm.inputs["To Max"].default_value = 0.0
+rl_(r_dist.outputs["Value"], r_warm.inputs["Value"])
+r_col = rn_.new("ShaderNodeMix"); r_col.data_type = "RGBA"
+r_col.inputs[6].default_value = (0.56, 0.68, 0.88, 1); r_col.inputs[7].default_value = (1.0, 0.72, 0.38, 1)
+rl_(r_warm.outputs["Result"], r_col.inputs["Factor"])
+r_tr = rn_.new("ShaderNodeBsdfTransparent")
+r_em = rn_.new("ShaderNodeEmission")
+rl_(r_col.outputs[2], r_em.inputs["Color"]); rl_(r_fac.outputs["Value"], r_em.inputs["Strength"])
+# Additive motion-blurred water glint over Transparent BSDF so rain streaks never darken lit windows or sky:
+r_add = rn_.new("ShaderNodeAddShader")
+rl_(r_tr.outputs["BSDF"], r_add.inputs[0]); rl_(r_em.outputs["Emission"], r_add.inputs[1])
+r_lp = rn_.new("ShaderNodeLightPath"); r_sh = rn_.new("ShaderNodeMixShader")
+rl_(r_lp.outputs["Is Camera Ray"], r_sh.inputs["Fac"]); rl_(r_tr.outputs["BSDF"], r_sh.inputs[1]); rl_(r_add.outputs["Shader"], r_sh.inputs[2])
+rl_(r_sh.outputs["Shader"], r_out.inputs["Surface"])
+
+RAIN_DROPS = []
+rng_rain = random.Random(1888)
+for layer_i, (cnt, y_lo, y_hi, x_span, z_hi, w_drop, l_lo, l_hi) in enumerate((
+    (620, 4.4, 11.2, 7.6, 8.2, 0.0022, 0.36, 0.56),
+    (680, 11.2, 20.2, 12.5, 12.2, 0.0032, 0.46, 0.68),
+    (440, 20.2, 27.2, 16.2, 15.2, 0.0042, 0.54, 0.82),
+)):
+    for _ in range(cnt):
+        RAIN_DROPS.append((
+            rng_rain.uniform(-x_span, x_span),
+            rng_rain.uniform(y_lo, y_hi),
+            rng_rain.uniform(0.1, z_hi),
+            x_span, z_hi,
+            w_drop * rng_rain.uniform(0.85, 1.2),
+            rng_rain.uniform(l_lo, l_hi),
+            rng_rain.random(),
+        ))
+
+rain_me = bpy.data.meshes.new("rain_3d"); rain_bm = bmesh.new(); rain_uv = rain_bm.loops.layers.uv.new()
+WIND_DIR = Vector((0.18, 0.02, -1.0)).normalized()
+VS_RIBBON = (0.0, 0.2, 0.5, 0.8, 1.0)
+for idx_d, (rx0, ry0, rz0, x_sp, z_hi, wd, ld, ph_d) in enumerate(RAIN_DROPS):
+    rows_v = []
+    for v_s in VS_RIBBON:
+        w_taper = wd * math.sin(max(0.05, min(0.95, v_s)) * math.pi)
+        p_c = Vector((rx0, ry0, rz0)) + WIND_DIR * ((v_s - 0.5) * ld)
+        v_l = rain_bm.verts.new((p_c.x - w_taper * 0.5, p_c.y, p_c.z))
+        v_r = rain_bm.verts.new((p_c.x + w_taper * 0.5, p_c.y, p_c.z))
+        rows_v.append((v_l, v_r, v_s))
+    for (vl0, vr0, vs0), (vl1, vr1, vs1) in zip(rows_v[:-1], rows_v[1:]):
+        f_r = rain_bm.faces.new((vl0, vr0, vr1, vl1))
+        f_r.loops[0][rain_uv].uv = (0.0, vs0)
+        f_r.loops[1][rain_uv].uv = (1.0, vs0)
+        f_r.loops[2][rain_uv].uv = (1.0, vs1)
+        f_r.loops[3][rain_uv].uv = (0.0, vs1)
+rain_bm.to_mesh(rain_me); rain_bm.free()
+rain_ob = link(bpy.data.objects.new("rain_3d", rain_me)); rain_ob.data.materials.append(RAIN_3D)
+rain_ob.visible_shadow = False; rain_ob.visible_diffuse = False
+
+def update_3d_rain(phase_norm=0.0):
+    nv_r = len(RAIN_DROPS) * 10
+    co_r = np.empty((nv_r, 3), dtype=np.float32)
+    wx_d, wy_d, wz_d = WIND_DIR.x, WIND_DIR.y, WIND_DIR.z
+    for i, (rx0, ry0, rz0, x_sp, z_hi, wd, ld, ph_d) in enumerate(RAIN_DROPS):
+        u_t = (ph_d + phase_norm) % 1.0
+        zc = z_hi - u_t * (z_hi - 0.1)
+        dz_moved = rz0 - zc
+        xc = ((rx0 + x_sp + (u_t * (z_hi - 0.1)) * 0.18) % (2.0 * x_sp)) - x_sp
+        yc = ry0
+        base = i * 10
+        for k_s, v_s in enumerate(VS_RIBBON):
+            w_taper = wd * math.sin(max(0.05, min(0.95, v_s)) * math.pi)
+            off = (v_s - 0.5) * ld
+            px = xc + wx_d * off
+            py = yc + wy_d * off
+            pz = zc + wz_d * off
+            co_r[base + k_s * 2] = (px - w_taper * 0.5, py, pz)
+            co_r[base + k_s * 2 + 1] = (px + w_taper * 0.5, py, pz)
+    rain_me.vertices.foreach_set("co", co_r.ravel())
+    rain_me.update()
+
+# 3D Wind-Blown Autumn Leaves tumbling across the courtyard in 3D space:
+FLY_LEAVES_META = []
+rng_fly = random.Random(1892)
+fly_me = bpy.data.meshes.new("flying_leaves_3d"); fly_bm = bmesh.new()
+fly_cl = fly_bm.loops.layers.color.new("leaf")
+for _ in range(28):
+    sz_f = rng_fly.uniform(0.055, 0.105)
+    lobes_f = rng_fly.choice((0, 3, 5))
+    local_ring = []
+    for k in range(12):
+        t = k / 12 * math.tau
+        r = sz_f * (0.55 + 0.45 * math.cos(t) ** 2) * (1 + (0.18 * math.cos(lobes_f * t) if lobes_f else 0))
+        lx, ly = math.cos(t) * r, math.sin(t) * r * 0.62
+        lz = 0.012 * (lx / sz_f) ** 2 - 0.006 * (ly / sz_f)
+        local_ring.append(Vector((lx, ly, lz)))
+    vs_f = [fly_bm.verts.new(p) for p in local_ring]
+    fc_f = fly_bm.faces.new(vs_f)
+    c_f = rng_fly.choice(AUTUMN); k_f = rng_fly.uniform(0.65, 1.0)
+    for loop in fc_f.loops: loop[fly_cl] = (c_f[0] * k_f, c_f[1] * k_f, c_f[2] * k_f, 1)
+    FLY_LEAVES_META.append((
+        local_ring,
+        rng_fly.uniform(8.2, 18.5),   # y0
+        rng_fly.uniform(1.8, 6.8),    # z0
+        rng_fly.uniform(0.6, 1.6),    # z_drop
+        rng_fly.random(),             # u0
+        rng_fly.uniform(0, math.tau), # rot_phase
+    ))
+fly_bm.to_mesh(fly_me); fly_bm.free()
+fly_ob = link(bpy.data.objects.new("flying_leaves_3d", fly_me)); fly_ob.data.materials.append(LEAF)
+
+def update_3d_wind_leaves(phase_norm=0.0):
+    phase = phase_norm * math.tau
+    co_f = np.empty((len(FLY_LEAVES_META) * 12, 3), dtype=np.float32)
+    for i, (local_ring, y0, z0, z_drop, u0, r_ph) in enumerate(FLY_LEAVES_META):
+        u = (u0 + phase_norm) % 1.0
+        xc = -10.5 + u * 21.0
+        yc = y0 + 0.65 * math.sin(u * math.tau + r_ph)
+        zc = max(0.25, z0 - u * z_drop + 0.38 * math.sin(2.0 * u * math.tau + r_ph))
+        rot_m = Euler((phase + r_ph + u * math.tau, 2.0 * phase + r_ph * 0.7, u * math.tau + r_ph), "XYZ").to_matrix()
+        center = Vector((xc, yc, zc))
+        base = i * 12
+        for k, lp in enumerate(local_ring):
+            wp = center + rot_m @ lp
+            co_f[base + k] = (wp.x, wp.y, wp.z)
+    fly_me.vertices.foreach_set("co", co_f.ravel())
+    fly_me.update()
+
+def set_storm_phase(phase_norm=0.0):
+    update_drive_ripples(phase_norm)
+    update_3d_tree_wind(phase_norm)
+    update_3d_rain(phase_norm)
+    update_3d_wind_leaves(phase_norm)
+
+set_storm_phase(float(arg("--phase", "0.0")))
 
 # ── light: a storm sky made night, a moon behind cloud ────────────────────
 world = bpy.data.worlds.new("night"); scene.world = world; world.use_nodes = True
@@ -870,15 +1218,12 @@ WL(tint.outputs[2], seen.inputs["Color"]); WL(tint.outputs[2], lit_.inputs["Colo
 lp = wn.new("ShaderNodeLightPath"); mix = wn.new("ShaderNodeMixShader")
 WL(lp.outputs["Is Camera Ray"], mix.inputs["Fac"]); WL(lit_.outputs["Background"], mix.inputs[1]); WL(seen.outputs["Background"], mix.inputs[2])
 WL(mix.outputs["Shader"], wn["World Output"].inputs["Surface"])
-# the moon behind the house and to the right, through thin cloud: a cold
-# edge on the roofs, the chimneys, the finials, the piers' urns; the front
-# of the house lit by its own windows and its lantern, and a little sky
-# (it comes almost along the front, so that every course, every arris,
-# every moulding and reveal throws its shadow: the stone is seen)
+# Primary moon aligned with the visible moon in the upper-left sky + right rim moon:
+lamp("moon_left", "SUN", (-52, 14, 32), aim=(0, 28, 4), energy=float(arg("--moonleft", "0.85")), colour=(0.64, 0.74, 0.98), angle=math.radians(3.5))
 lamp("moon", "SUN", (60, 12, 30), aim=(0, 30, 4), energy=float(arg("--moon", "0.55")), colour=(0.6, 0.7, 1.0), angle=math.radians(3))
-lamp("sky glow", "SUN", (-30, -60, 70), aim=(0, 30, 4), energy=float(arg("--front", "0.025")), colour=(0.5, 0.6, 0.85), angle=math.radians(40))
+lamp("sky glow", "SUN", (-30, -60, 70), aim=(0, 30, 4), energy=float(arg("--front", "0.032")), colour=(0.52, 0.62, 0.86), angle=math.radians(40))
 
-# the mist: thick low down, thinning upward, the lamps glowing in it
+# the mist: hugging the wet courtyard low down, thinning rapidly upward so the façade is crisp
 me = bpy.data.meshes.new("mist"); bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
 for v in bm.verts: v.co = Vector((v.co.x * 160, 2 + (v.co.y + 0.5) * 140, (v.co.z + 0.5) * 40 - 0.5))
 bm.to_mesh(me); bm.free()
@@ -888,9 +1233,9 @@ mn = mm.node_tree.nodes; ML = mm.node_tree.links.new
 mn.remove(mn["Principled BSDF"])
 vol = mn.new("ShaderNodeVolumePrincipled"); vol.inputs["Color"].default_value = (0.7, 0.76, 0.86, 1); vol.inputs["Anisotropy"].default_value = 0.55
 geo = mn.new("ShaderNodeNewGeometry"); sep = mn.new("ShaderNodeSeparateXYZ"); ML(geo.outputs["Position"], sep.inputs["Vector"])
-fall = mn.new("ShaderNodeMath"); fall.operation = "MULTIPLY"; fall.inputs[1].default_value = -1 / 3.2; ML(sep.outputs["Z"], fall.inputs[0])
+fall = mn.new("ShaderNodeMath"); fall.operation = "MULTIPLY"; fall.inputs[1].default_value = -1 / 2.5; ML(sep.outputs["Z"], fall.inputs[0])
 ex = mn.new("ShaderNodeMath"); ex.operation = "EXPONENT"; ML(fall.outputs["Value"], ex.inputs[0])
-dens = mn.new("ShaderNodeMath"); dens.operation = "MULTIPLY_ADD"; dens.inputs[1].default_value = float(arg("--mist", "0.028")); dens.inputs[2].default_value = 0.0007
+dens = mn.new("ShaderNodeMath"); dens.operation = "MULTIPLY_ADD"; dens.inputs[1].default_value = float(arg("--mist", "0.016")); dens.inputs[2].default_value = 0.0004
 ML(ex.outputs["Value"], dens.inputs[0]); ML(dens.outputs["Value"], vol.inputs["Density"])
 ML(vol.outputs["Volume"], mn["Material Output"].inputs["Volume"])
 mist.data.materials.append(mm)
@@ -929,7 +1274,111 @@ if DATA:
     with open(DATA, "w") as f: json.dump(data, f, indent=1)
     print("DATA", DATA)
 
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "0.6")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "0.65")))
 scene.cycles.volume_bounces = 1
 scene.cycles.volume_step_rate = 4.0
-render(scene, OUT, BLEND)
+
+FRAMES = int(arg("--frames", "0"))
+ANIM_DIR = arg("--anim-dir", "")
+WIND_OUT = arg("--wind-out", "")
+if FRAMES > 0 and ANIM_DIR:
+    import shutil
+    os.makedirs(ANIM_DIR, exist_ok=True)
+    for f_idx in range(FRAMES):
+        f_out = os.path.join(ANIM_DIR, f"frame_{f_idx:02d}.png")
+        if f_idx == 0 and OUT and os.path.exists(OUT):
+            shutil.copyfile(OUT, f_out)
+            print("REUSED FRAME 0", f_out, flush=True)
+            continue
+        set_storm_phase(f_idx / FRAMES)
+        render(scene, f_out, BLEND if f_idx == 0 else "")
+        if f_idx == 0 and OUT:
+            os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
+            shutil.copyfile(f_out, OUT)
+else:
+    render(scene, OUT, BLEND)
+
+if WIND_OUT:
+    from pathlib import Path
+    w_out = Path(WIND_OUT)
+    w_out.mkdir(parents=True, exist_ok=True)
+    set_storm_phase(0.0)
+    roots = [old, old_right]
+    groups = [[o for o in meshes_of(r) if o.type == "MESH"] for r in roots]
+    foreground = {o for group in groups for o in group}
+    settings = {
+        "source": "Blender / Cycles, art/blender/manor.py",
+        "size": [scene.render.resolution_x, scene.render.resolution_y],
+        "trees": [[o.name for o in group] for group in groups],
+        "swayPixels": 11.5,
+        "frames": FRAMES,
+        "noAiGeneration": True,
+    }
+    (w_out / "wind.json").write_text(json.dumps(settings, indent=2), encoding="utf-8")
+    for obj in foreground: obj.visible_camera = False
+    rain_ob.hide_render = True; fly_ob.hide_render = True
+    scene.render.filepath = str(w_out / "clean.png")
+    print("MANOR_WIND_CLEAN", flush=True)
+    bpy.ops.render.render(write_still=True)
+    for obj in foreground: obj.visible_camera = True
+
+    def matte_material(original, colour):
+        mat = original.copy() if original else bpy.data.materials.new("wind matte")
+        mat.use_nodes = True
+        nodes, links = mat.node_tree.nodes, mat.node_tree.links
+        shader = next((n for n in nodes if n.type == "BSDF_PRINCIPLED"), None)
+        alpha = shader.inputs["Alpha"] if shader else None
+        source = alpha.links[0].from_socket if alpha and alpha.is_linked else None
+        value = alpha.default_value if alpha else 1
+        emission = nodes.new("ShaderNodeEmission")
+        emission.inputs["Color"].default_value = (*colour, 1)
+        emission.inputs["Strength"].default_value = 1
+        out = next((n for n in nodes if n.type == "OUTPUT_MATERIAL"), None) or nodes.new("ShaderNodeOutputMaterial")
+        if source or value < 1:
+            transparent = nodes.new("ShaderNodeBsdfTransparent")
+            mix = nodes.new("ShaderNodeMixShader")
+            mix.inputs[0].default_value = value
+            if source: links.new(source, mix.inputs[0])
+            links.new(transparent.outputs[0], mix.inputs[1])
+            links.new(emission.outputs[0], mix.inputs[2])
+            links.new(mix.outputs[0], out.inputs["Surface"])
+        else:
+            links.new(emission.outputs[0], out.inputs["Surface"])
+        if out.inputs["Volume"].is_linked:
+            for link_ in list(out.inputs["Volume"].links): links.remove(link_)
+        return mat
+
+    mask_cache = {}
+    for obj in scene.objects:
+        if obj.type not in {"MESH", "FONT", "CURVE", "SURFACE", "META"}: continue
+        if obj.name in {"mist", "rain_3d", "flying_leaves_3d"}:
+            obj.hide_render = True
+            continue
+        group = next((i for i, objects in enumerate(groups) if obj in objects), -1)
+        colour = (1, 0, 0) if group == 0 else ((0, 1, 0) if group == 1 else (0, 0, 0))
+        for slot in obj.material_slots:
+            original = slot.material
+            key = (original.name if original else "", group)
+            if key not in mask_cache:
+                mask_cache[key] = matte_material(original, colour)
+            slot.link = "OBJECT"
+            slot.material = mask_cache[key]
+    w_black = bpy.data.worlds.new("wind matte black world")
+    w_black.use_nodes = True
+    w_black.node_tree.nodes.get("Background").inputs["Color"].default_value = (0, 0, 0, 1)
+    scene.world = w_black
+    scene.use_nodes = False
+    scene.view_settings.view_transform = "Raw"
+    scene.view_settings.look = "None"
+    scene.view_settings.exposure = 0
+    scene.view_settings.gamma = 1
+    scene.render.dither_intensity = 0
+    scene.cycles.samples = 48
+    scene.cycles.use_denoising = False
+    scene.cycles.max_bounces = 2
+    scene.cycles.transparent_max_bounces = 16
+    scene.render.image_settings.color_mode = "RGB"
+    scene.render.filepath = str(w_out / "trees-mask.png")
+    print("MANOR_WIND_MASK", flush=True)
+    bpy.ops.render.render(write_still=True)
+    print("MANOR_WIND_DONE", str(w_out), flush=True)

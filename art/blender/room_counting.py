@@ -57,8 +57,8 @@ STOVE = dict(x=-190, d=486)
 FRAMES = 10
 
 # ── materials ──────────────────────────────────────────────────────────────
-PLASTER = scan("lime plaster", "white_plaster_rough_01", size=2.4, tint=(0.95, 0.88, 0.76), bright=1.1, sat=0.45, rough=(0.8, 0.95), bump=0.5)
-FLAGS = scan("stone flags", "worn_tile_floor", size=1.4, tint=(0.9, 0.86, 0.8), bright=0.55, sat=0.5, rough=(0.35, 0.75), bump=0.6, coat=0.1)
+PLASTER = scan("lime plaster", "white_plaster_rough_01", size=2.4, tint=(0.95, 0.88, 0.76), bright=0.8, sat=0.45, rough=(0.8, 0.95), bump=0.5)
+FLAGS = scan("stone flags", "worn_tile_floor", size=1.4, tint=(0.9, 0.86, 0.8), bright=0.8, sat=0.5, rough=(0.35, 0.75), bump=0.6, coat=0.1)
 OAK = scan("oak", "dark_wood", size=1.0, tint=(0.82, 0.62, 0.44), bright=0.5, rough=(0.3, 0.55), bump=0.3, coat=0.35, upright=True)
 OAK_X = scan("oak across", "dark_wood", size=1.0, tint=(0.82, 0.62, 0.44), bright=0.48, rough=(0.3, 0.55), bump=0.3, coat=0.35)
 BEAM = scan("beam", "dark_wood", size=1.4, tint=(0.6, 0.45, 0.35), bright=0.35, rough=(0.5, 0.8), bump=0.6)

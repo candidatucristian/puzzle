@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { CELLAR_MATERIALS_KEY, CELLAR_MATERIALS_URL, layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
-import { loadCellarPhotography } from "./photographicCellar.js";
+import { layoutCellar, paintCellar, releaseCellarArt } from "./cellar.js";
+import { loadNativeCellar } from "./nativeCellar.js";
 import { HOUSE_BACK } from "../../shared/house.js";
 import { CURSORS } from "../../shared/cursors.js";
 
@@ -38,9 +38,8 @@ export default class TapCodeScene extends BasePuzzleScene {
   }
 
   preload() {
-    loadCellarPhotography(this);
+    loadNativeCellar(this);
     this.load.audio("waterdrop", "assets/sounds/global/waterdrop.mp3");
-    if (!this.textures.exists(CELLAR_MATERIALS_KEY)) this.load.image(CELLAR_MATERIALS_KEY, CELLAR_MATERIALS_URL);
   }
 
   init(data) {
@@ -71,12 +70,14 @@ export default class TapCodeScene extends BasePuzzleScene {
       .setOrigin(0.5, 0.95)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(-6);
+    this._glowAlpha = L.nativeRender ? 0.16 : 0.5;
+    const glowSize = c.s * (L.nativeRender ? 74 : 170);
     this._glow = this.add
       .image(c.x, c.y - this._flameH * 0.5, k.glow)
-      .setDisplaySize(c.s * 170, c.s * 170)
+      .setDisplaySize(glowSize, glowSize)
       .setTint(0xffb860)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.55)
+      .setAlpha(this._glowAlpha)
       .setDepth(-6);
 
     this._makeDrip(L, k.glow);
@@ -87,7 +88,8 @@ export default class TapCodeScene extends BasePuzzleScene {
 
   _makeExit(L) {
     // Stay between the rails, just inside the opening above the top rung.
-    const x = L.ladder.x, y = Math.max(32, L.ceilY * 0.65);
+    const x = Phaser.Math.Clamp(L.exit?.x ?? L.ladder.x, 32, L.W - 32);
+    const y = Phaser.Math.Clamp(L.exit?.y ?? L.ceilY * 0.65, 32, L.H - 32);
     const size = Phaser.Math.Clamp(32 * L.u, 28, 38);
     const arrow = this.add.graphics({ x, y }).setDepth(10).setAlpha(0.82);
     const points = [
@@ -152,12 +154,12 @@ export default class TapCodeScene extends BasePuzzleScene {
   _makeFog(L, key) {
     const { W, H, floorY } = L;
     for (let i = 0; i < 3; i++) {
-      const y = floorY + (H - floorY) * (i * 0.3 - 0.05);
+      const y = floorY + (H - floorY) * (0.22 + i * 0.25);
       const fog = this.add
         .image(W * (i % 2 ? 0.25 : 0.7), y, key)
-        .setDisplaySize(W * (0.75 + i * 0.12), H * (0.14 + i * 0.03))
+        .setDisplaySize(W * (0.75 + i * 0.12), H * (0.07 + i * 0.015))
         .setTint(0x8f9aa2)
-        .setAlpha(0.14 + i * 0.04)
+        .setAlpha(0.018 + i * 0.006)
         .setDepth(-4);
       this.ambientTween({
         targets: fog,
@@ -173,13 +175,14 @@ export default class TapCodeScene extends BasePuzzleScene {
   // dust turning in the light that falls through the hatch
   _makeMotes(L, key) {
     const x0 = L.ladder.x;
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 9; i++) {
       const t = Math.random();
-      const x = x0 + (Math.random() - 0.5) * (120 + t * 130) * L.u;
-      const y = L.ceilY + t * (L.floorY - L.ceilY);
+      const x = x0 + (Math.random() - 0.5) * (70 + t * 110) * L.u;
+      const top = Math.max(0, L.ceilY);
+      const y = top + t * (L.floorY - top);
       const m = this.add
         .image(x, y, key)
-        .setDisplaySize(3.5 * L.u, 3.5 * L.u)
+        .setDisplaySize(2.6 * L.u, 2.6 * L.u)
         .setTint(0xc8d8ff)
         .setBlendMode(Phaser.BlendModes.ADD)
         .setAlpha(0)
@@ -189,7 +192,7 @@ export default class TapCodeScene extends BasePuzzleScene {
         targets: m,
         x: x + (Math.random() - 0.5) * 30 * L.u,
         y: y + (Math.random() - 0.3) * 30 * L.u,
-        alpha: { from: 0, to: 0.25 + Math.random() * 0.3 },
+        alpha: { from: 0, to: 0.12 + Math.random() * 0.15 },
         duration: 4000 + Math.random() * 4000,
         delay: Math.random() * 3000,
         yoyo: true,
@@ -205,7 +208,7 @@ export default class TapCodeScene extends BasePuzzleScene {
     const t = time / 1000;
     const f = on * (Math.sin(t * 13) * 0.5 + Math.sin(t * 7.3) * 0.5);
     this._flame.setDisplaySize(this._flameH * (0.45 - f * 0.03), this._flameH * (1 + f * 0.08)).setAngle(f * 3);
-    this._glow.setAlpha(0.5 + f * 0.06);
+    this._glow.setAlpha(this._glowAlpha + f * (this._L.nativeRender ? 0.018 : 0.06));
   }
 
   // ── lifecycle ──────────────────────────────────────────────────────────────

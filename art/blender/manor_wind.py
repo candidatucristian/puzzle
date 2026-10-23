@@ -73,7 +73,7 @@ def export(scene):
     mask_cache={}
     for obj in scene.objects:
         if obj.type not in {'MESH','FONT','CURVE','SURFACE','META'}: continue
-        if obj.name=='mist':
+        if obj.name in {'mist','rain_3d','flying_leaves_3d'}:
             obj.hide_render=True
             continue
         group=next((i for i,objects in enumerate(groups) if obj in objects),-1)

@@ -424,22 +424,26 @@ def probe(px, py):
         o = loc + d * 0.001
 
 EYE = {}
-def eye_fill(energy, size=1.6):
+def eye_fill(energy, size=1.6, ahead=30):
     """The halls' fill: a broad, soft, cool light a little ahead of the eye and
-    above it, shining almost level into the room, the way the eye looks — so
-    that whatever faces the eye (a desk's front, a chair, the floor before
-    it, the wall up to its cornice) is never quite black, as nothing in the
-    halls is. It is lifted half the way to whatever is overhead, at most
-    40 cm, so it stays under the ceiling; it is not seen and puts no shine on
-    anything."""
+    above it, shining halfway between level and the way the eye looks (from a
+    high eye looking down, onto the floor as well as the walls) — so that
+    whatever faces the eye (a desk's front, a chair, the floor before it, the
+    wall up to its cornice) is never quite black, as nothing in the halls is.
+    It is lifted half the way to whatever is overhead, at most 40 cm, so it
+    stays under the ceiling; it is not seen and puts no shine on anything.
+    `ahead` (cm): how far before the eye it hangs — in a long room, a way
+    down it, as the halls' fill is, so the far end has its share."""
     cam = SCENE.camera; bpy.context.view_layer.update()
     eye = cam.matrix_world.translation.copy()
     look = cam.matrix_world.to_3x3() @ Vector((0, 0, -1))
-    ahead = Vector((look.x, look.y, 0)).normalized()
-    hit, loc, *_ = SCENE.ray_cast(bpy.context.evaluated_depsgraph_get(), eye, Vector((0, 0, 1)))
-    up = min(0.4, 0.5 * (loc.z - eye.z)) if hit else 0.4
-    at = eye + ahead * 0.3 + Vector((0, 0, up))
-    o = lamp("fill at the eye", "AREA", tuple(at), aim=tuple(at + ahead * 4 + Vector((0, 0, -0.6))), energy=energy, colour=(0.8, 0.85, 1.0), size=size)
+    level = Vector((look.x, look.y, 0)).normalized()
+    foot = eye + level * M(ahead)
+    hit, loc, *_ = SCENE.ray_cast(bpy.context.evaluated_depsgraph_get(), foot, Vector((0, 0, 1)))
+    up = min(0.4, 0.5 * (loc.z - foot.z)) if hit else 0.4
+    at = foot + Vector((0, 0, up))
+    toward = (look + level).normalized()
+    o = lamp("fill at the eye", "AREA", tuple(at), aim=tuple(at + toward), energy=energy, colour=(0.8, 0.85, 1.0), size=size)
     o.visible_camera = False; o.visible_glossy = False
     EYE["fill"] = o
     return o

@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import (arg, fresh, link, plain, aged_metal, box, bevel, cylinder,
                  sphere, lathe, lamp, cycles, render, boolean_cut, to_picture,
                  import_model, wear)
-from hall_common import scan, clear_glass
+from hall_common import scan, clear_glass, darken_model, finish_hall
 from botany_staircase import mesh, block, bar, arch_volume
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -70,34 +70,34 @@ def mould(name, radius, height, thick, material):
     return ring(name, (0, YC, height), radius, material, thick=thick)
 
 
-oak = scan('waxed, time-darkened walnut', 'dark_wood', .85, bright=.67, sat=.72,
-           rough=(.36, .62), bump=.38, coat=.12, upright=True, vary=.1)
-panel = scan('quarter-sawn oak panels', 'rosewood_veneer1', .72, bright=.5, sat=.6,
-             rough=(.42, .68), bump=.32, upright=True, vary=.12)
+oak = scan('waxed, time-darkened walnut', 'dark_wood', .85, bright=.52, sat=.72,
+           rough=(.52, .78), bump=.42, coat=0.0, upright=True, vary=.08,
+           dirt=.22, grime=.14, edges=.025)
+panel = scan('quarter-sawn oak panels', 'rosewood_veneer1', .72, bright=.48, sat=.65,
+             rough=(.5, .76), bump=.38, coat=0.0, upright=True, vary=.1,
+             dirt=.22, grime=.14)
 stone = scan('smoked, worn limestone', 'old_sandstone_02', .7,
-             tint=(.5,.49,.46), bright=.55, sat=.18, rough=(.65,.87), bump=.55)
+             tint=(.5,.49,.46), bright=.5, sat=.22, rough=(.68,.9), bump=.58,
+             dirt=.28, grime=.18)
 wallmat = scan('dark mineral plaster', 'plastered_wall_04', 1.65,
-               tint=(.18,.23,.23), bright=.65, sat=.1, rough=(.72,.94), bump=.35)
-dome_mat = scan('aged midnight blue dome', 'worn_plaster_wall', 2.4,
-                tint=(.11,.17,.28), bright=.74, sat=.15, rough=(.72,.93), bump=.24)
-brass = aged_metal('aged instrument brass', (.43,.29,.12), (.085,.073,.043),
-                   rough=(.26,.48), tarnish=.46, hammer=.04)
-bronze = aged_metal('old cast bronze', (.22,.14,.065), (.032,.043,.037),
-                    rough=(.4,.67), tarnish=.62)
-iron = aged_metal('blackened iron', (.045,.048,.05), (.015,.017,.018),
-                  rough=(.42,.69), tarnish=.5)
-dark = plain('deep crevices', (.009,.007,.005), .91)
-glass = plain('closed, slightly imperfect window glass', (.93,.96,.98), .018,
+               tint=(.18,.23,.23), bright=.58, sat=.14, rough=(.76,.94), bump=.45,
+               dirt=.24, stains=.18, grime=.14, streaks=.12)
+dome_mat = scan('aged midnight blue dome', 'plastered_wall_04', 1.9,
+                tint=(.13,.19,.29), bright=.58, sat=.22, rough=(.78,.94), bump=.38,
+                dirt=.24, stains=.14, grime=.12)
+brass = aged_metal('aged instrument brass', (.46,.32,.14), (.08,.065,.038),
+                   rough=(.26,.52), tarnish=.52, hammer=.04)
+bronze = aged_metal('old cast bronze', (.24,.15,.07), (.032,.043,.037),
+                    rough=(.36,.64), tarnish=.62)
+iron = aged_metal('blackened iron', (.05,.052,.055), (.015,.017,.018),
+                  rough=(.44,.72), tarnish=.55)
+dark = plain('deep crevices', (.008,.006,.005), .95)
+glass = plain('closed, slightly imperfect window glass', (.93,.96,.98), .022,
               transmission=1, ior=1.46)
-wax = plain('beeswax', (.48,.34,.17), .56, transmission=.05)
-flame = plain('candle flame', (1,.55,.2), .5, emit=(1,.36,.08), strength=12)
+wax = plain('beeswax', (.38,.31,.21), .56, transmission=.02)
+flame = plain('candle flame', (1,.58,.2), .5, emit=(1,.48,.14), strength=14)
 velvet = scan('old ink-blue linen', 'velour_velvet', .65, tint=(.15,.22,.3),
-              bright=.62, sat=.2, rough=(.85,.98), bump=.18)
-nodes=wallmat.node_tree.nodes;links=wallmat.node_tree.links.new
-bsdf=nodes['Principled BSDF'];coordinates=nodes.new('ShaderNodeTexCoord')
-aged=wear(nodes,links,bsdf.inputs['Base Color'].links[0].from_socket,coordinates,
-          stains=.2,grime=.13,streaks=.15)
-links(aged,bsdf.inputs['Base Color'])
+              bright=.54, sat=.24, rough=(.86,.98), bump=.24, dirt=.2)
 
 # A continuous, thick cylinder. Only the window and the two actual openings
 # cut it; there are no holes disguised with black painted shapes.
@@ -179,25 +179,26 @@ for i in range(130):
     sphere('inlaid brass star',c,rnd.uniform(.005,.011),brass)
 
 # Parquet is geometry, including end grain, bevelled edges and dark joints.
-floor_base=cylinder('subfloor',0,YC,-.2,-.026,R+.03,dark,192)
+floor_base=cylinder('subfloor',0,YC,-.2,-.024,R+.03,dark,192)
 boolean_cut(floor_base,cylinder('open spiral well',2.55,3.8,-.3,.1,.85,dark,96))
-floors=[scan('oak parquet variation '+str(i),'wood_floor_worn',.6,
-             bright=.49+i*.035,sat=.62,rough=(.4,.66),bump=.38,coat=.08,
-             rot=(0,0,math.pi/4 if i%2 else -math.pi/4)) for i in range(6)]
+floors=[scan('oak parquet variation '+str(i),'wood_floor_worn',.65,
+             bright=.42+i*.028,sat=.64,rough=(.56,.82),bump=.44,coat=0.0,
+             rot=(0,0,math.pi/4 if i%2 else -math.pi/4),
+             dirt=.24,grime=.15) for i in range(6)]
 for col in range(-11,11):
     x0=col*.39; x1=x0+.39; slope=1 if col%2==0 else -1
     for row in range(-40,45):
         y0=YC+row*.098
-        points=[(x0+.002,y0+slope*.002),(x1-.002,y0+slope*.388),
-                (x1-.002,y0+slope*.388+.094),(x0+.002,y0+slope*.002+.094)]
+        points=[(x0+.0008,y0+slope*.0008),(x1-.0008,y0+slope*.3892),
+                (x1-.0008,y0+slope*.3892+.0964),(x0+.0008,y0+slope*.0008+.0964)]
         cx=sum(p[0] for p in points)/4; cy=sum(p[1] for p in points)/4
         if cx*cx+(cy-YC)**2>(R+.08)**2 or (cx-2.55)**2+(cy-3.8)**2<1.02**2: continue
         v=[(x,y,z) for z in [-.024,0] for x,y in points]
         mesh('individual chevron parquet board',v,[(0,3,2,1),(4,5,6,7),
-             (0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)],rnd.choice(floors),keep=False,edge=.0015)
+             (0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)],rnd.choice(floors),keep=False,edge=.001)
 
 # Window: solid glass, slim timber glazing bars, deep stone sill and real
-# cloth folds. The exterior moon is a shaded sphere, not a glowing lamp card.
+# cloth folds. Deep midnight sky and distant hills outside.
 frame_curve=[(-half_window,7.085,window_sill),(-half_window,7.085,window_spring)]
 frame_curve += [(half_window*math.cos(math.pi-i*math.pi/96),7.085,
                  window_spring+window_rise*math.sin(math.pi-i*math.pi/96)) for i in range(97)]
@@ -234,27 +235,22 @@ for side in [-1,1]:
     bar('curtain brass tie',[(side*(half_window-.07+.07*math.cos(a)),6.92,
         window_sill+.45+.02*math.sin(a)) for a in [i*math.pi/32 for i in range(33)]],.008,bronze,keep=False)
 
-sky=plain('night sky',(.004,.008,.018),1,emit=(.009,.016,.034),strength=.5)
+sky=plain('night sky',(.003,.006,.016),1,emit=(.008,.015,.036),strength=.55)
 sn=sky.node_tree.nodes;sl=sky.node_tree.links
-cloud=sn.new('ShaderNodeTexNoise');cloud.inputs['Scale'].default_value=.28;cloud.inputs['Detail'].default_value=5;cloud.inputs['Roughness'].default_value=.7
+cloud=sn.new('ShaderNodeTexNoise');cloud.inputs['Scale'].default_value=.25;cloud.inputs['Detail'].default_value=6;cloud.inputs['Roughness'].default_value=.68
 coordinates=sn.new('ShaderNodeTexCoord');mapping=sn.new('ShaderNodeMapping');mapping.inputs['Scale'].default_value=(.7,1,2.4)
 sl.new(coordinates.outputs['Object'],mapping.inputs['Vector']);sl.new(mapping.outputs['Vector'],cloud.inputs['Vector'])
-cr=sn.new('ShaderNodeValToRGB');cr.color_ramp.elements[0].position=.32;cr.color_ramp.elements[1].position=.72
-cr.color_ramp.elements[0].color=(.006,.012,.026,1);cr.color_ramp.elements[1].color=(.022,.032,.052,1)
+cr=sn.new('ShaderNodeValToRGB');cr.color_ramp.elements[0].position=.32;cr.color_ramp.elements[1].position=.74
+cr.color_ramp.elements[0].color=(.005,.011,.026,1);cr.color_ramp.elements[1].color=(.018,.032,.064,1)
 sl.new(cloud.outputs['Fac'],cr.inputs['Fac']);sl.new(cr.outputs['Color'],sn['Principled BSDF'].inputs['Emission Color'])
-block('night beyond the window',-40,40,30,30.1,-5,35,sky,keep=False,edge=0)
-moonmat=plain('weathered lunar surface',(.46,.48,.48),.95,emit=(.3,.33,.37),strength=.5)
-mn=moonmat.node_tree.nodes; ml=moonmat.node_tree.links
-noise=mn.new('ShaderNodeTexNoise');noise.inputs['Scale'].default_value=17;noise.inputs['Detail'].default_value=6
-ramp=mn.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].color=(.09,.11,.13,1);ramp.color_ramp.elements[1].color=(.62,.64,.65,1)
-ml.new(noise.outputs['Fac'],ramp.inputs['Fac']);ml.new(ramp.outputs['Color'],mn['Principled BSDF'].inputs['Base Color'])
-ml.new(ramp.outputs['Color'],mn['Principled BSDF'].inputs['Emission Color'])
-moon=sphere('the moon over the valley',(2.8,29,4.3),.42,moonmat)
+sky_box=block('night beyond the window',-40,40,30,30.1,-5,35,sky,keep=False,edge=0)
+sky_box.visible_shadow=False
 # Silhouetted distant hills, outside the glazing rather than on it.
-hillmat=plain('distant wooded ridge',(.004,.009,.012),1)
+hillmat=plain('distant wooded ridge',(.003,.007,.011),1)
 points=[(-30,28,-3),(30,28,-3)]
 points += [(x,28,.22+.12*math.sin(x*.48)+.07*math.sin(x*1.3)) for x in range(30,-31,-1)]
-mesh('distant ridge',points,[tuple(range(len(points)))],hillmat,keep=False)
+ridge_obj=mesh('distant ridge',points,[tuple(range(len(points)))],hillmat,keep=False)
+ridge_obj.visible_shadow=False
 
 # A heavy walnut six-panel door, exact to XI's original hit polygon.
 wall_piece('door XI recessed solid leaf',door_deg,-door_half+.016,door_half-.016,.028,.08,
@@ -314,6 +310,9 @@ def annulus(name,cx,cy,inner,outer,z0,z1,mat,start=0,stop=math.tau,steps=96):
     ff += [(0,n,3*n,2*n),(steps,2*n-1,4*n-1,3*n-1)]
     return mesh(name,vv,ff,mat,keep=False,edge=.004)
 annulus('worn stone stairwell collar',2.55,3.8,.85,1.12,-.04,.018,stone)
+annulus('spiral stairwell masonry shaft',2.55,3.8,.85,1.08,-3.8,-.04,stone,steps=96)
+cylinder('stairwell lower floor',2.55,3.8,-3.85,-3.76,1.08,dark,64)
+lamp('stairwell lower floor glow','POINT',(2.35,3.65,-1.55),energy=11,colour=(1,.55,.22),size=.22)
 cylinder('spiral stair iron centre post',2.55,3.8,-3.75,.76,.075,iron,64)
 for i in range(22):
     a=math.radians(145+i*24); b=a+math.radians(25)
@@ -409,8 +408,12 @@ for x in [-.35,.35]:
         lathe('console turned leg',[(.025,0),(.025,.1),(.017,.2),(.021,.67),(.032,.73)],oak,
               at=localpoint(console_deg,x,d,0,R-.08))
 try:
-    import_model('vintage_microscope',height=.38,at=localpoint(console_deg,.12,-.24,.785,R-.08),rot=.35)
-    import_model('book_encyclopedia_set_01',height=.24,at=localpoint(console_deg,-.24,-.18,.785,R-.08),rot=-.55)
+    mic = import_model('vintage_microscope',height=.38,at=localpoint(console_deg,.12,-.24,.785,R-.08),rot=.35)
+    darken_model(mic, (.58, .54, .48), rough_floor=.42)
+    bks = import_model('book_encyclopedia_set_01',height=.24,at=localpoint(console_deg,-.24,-.18,.785,R-.08),rot=-.55)
+    darken_model(bks, (.52, .48, .42), rough_floor=.62)
+    stl = import_model('wooden_stool_01',height=.56,at=(1.02,5.68,0),rot=.85)
+    darken_model(stl, (.38, .3, .22), rough_floor=.6)
 except Exception as error:
     print('Optional scanned apparatus unavailable:',error)
 
@@ -447,36 +450,44 @@ for zc in [2.16,1.84]:
             localpoint(folio_deg,0,-.044,zc+h,R-.055),localpoint(folio_deg,.21,-.044,zc,R-.055)],.001,ink,keep=False)
 label('I. PARALLEL RAYS',0,1.97,.021)
 label('II. THE PRINCIPAL FOCUS',0,1.65,.021)
-# A physical pendulum demonstration beside XI, fixed out of its doorway.
-pend_deg=62
-wall_piece('pendulum demonstration backboard',pend_deg,-.12,.12,-.04,.0,.8,2.04,oak)
-wall_piece('pendulum pivot bracket',pend_deg,-.08,.08,-.13,-.02,1.98,2.025,bronze)
-bar('pendulum steel wire',[localpoint(pend_deg,0,-.11,1.98),localpoint(pend_deg,.018,-.11,.99)],.0025,iron,keep=False)
-sphere('brass pendulum bob',localpoint(pend_deg,.018,-.11,.99),.055,brass)
+# Victorian mercury wheel barometer & thermometer in carved walnut case beside Door XI
+pend_deg=60
+wall_piece('barometer carved walnut trunk',pend_deg,-.085,.085,-.045,.005,1.18,2.14,oak,edge=.008)
+wall_piece('barometer moulded pediment',pend_deg,-.11,.11,-.062,.008,2.12,2.21,oak,edge=.008)
+wall_piece('barometer cistern box',pend_deg,-.105,.105,-.06,.008,1.06,1.2,oak,edge=.008)
+wall_piece('barometer scale plate',pend_deg,-.052,.052,-.05,-.042,1.58,2.06,paper,edge=.002)
+for sx in [-.068,.068]:
+    wall_piece('barometer glazed stile',pend_deg,sx-.014,sx+.014,-.062,-.04,1.54,2.1,panel,edge=.003)
+sphere('barometer brass dial plate',localpoint(pend_deg,0,-.048,1.38),.072,brass,squash=(1,.18,1))
+sphere('barometer cistern cover',localpoint(pend_deg,0,-.058,1.13),.048,bronze,squash=(1,.32,1))
+bar('barometer mercury tube',[localpoint(pend_deg,0,-.052,1.2),localpoint(pend_deg,0,-.052,2.02)],.004,iron,keep=False)
 
 # Both sconces have sockets, wall plates, brackets and small wax candles.
-for deg in [-23,42.5]:
+for deg in [-23,46.5]:
     p=on(deg,0,R-.14)
     wall_piece('bronze sconce backplate',deg,-.075,.075,-.02,.012,1.63,1.96,bronze)
     bar('curved forged sconce arm',[on(deg,1.69,R-.02),on(deg,1.66,R-.15),on(deg,1.85,R-.14)],.014,bronze,keep=False)
     lathe('candle cup and drip pan',[(.023,1.83),(.024,1.87),(.06,1.89),(.06,1.9),(.026,1.91)],bronze,at=(p.x,p.y,0))
     cylinder('beeswax candle',p.x,p.y,1.9,2.145,.019,wax)
-    sphere('small candle flame',(p.x,p.y,2.17),.012,flame,squash=(.65,.65,1.9))
-    lamp('warm candle, chemistry reference','POINT',(p.x,p.y,2.17),energy=9,colour=(1,.55,.22),size=.045)
+    fl_s=sphere('small candle flame',(p.x,p.y,2.17),.012,flame,squash=(.65,.65,1.9))
+    fl_s.visible_shadow=False
+    cl=lamp('warm candle, chemistry reference','POINT',(p.x,p.y,2.17),energy=9,colour=(1,.55,.22),size=.022)
+    cl.visible_glossy=False
 
 # Match the chemistry hall's cool fill, warm flames and exposure; moonlight
-# is soft and directional, with no bright emissive rectangle in the glass.
-world=bpy.data.worlds.new('night');world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.04,.055,.085,1)
-world.node_tree.nodes['Background'].inputs[1].default_value=.12;scene.world=world
-lamp('cool room fill, chemistry reference','AREA',(0,1.8,3.05),aim=(0,5.1,1.1),energy=60,colour=(.8,.85,1),size=3.4)
-moonlight=lamp('moon window soft light','AREA',(-.25,7.5,3.5),aim=(-.9,2.4,.1),energy=120,colour=(.55,.68,1),size=1.3,size_y=.9)
+# is directional and crisp through the arched window onto the parquet floor.
+world=bpy.data.worlds.new('night');world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.005,.008,.016,1)
+world.node_tree.nodes['Background'].inputs[1].default_value=1.0;scene.world=world
+lamp('moon through observatory window','SUN',(.8,14.0,7.2),aim=(-.2,4.2,.0),energy=1.65,colour=(.55,.68,1),angle=math.radians(3.2))
+lamp('cool room fill, chemistry reference','AREA',(0,1.8,3.05),aim=(0,5.1,1.1),energy=52,colour=(.8,.85,1),size=3.4)
+moonlight=lamp('moon window soft light','AREA',(-.25,7.5,3.5),aim=(-.9,2.4,.1),energy=115,colour=(.55,.68,1),size=1.3,size_y=.9)
 moonlight.visible_camera=False;moonlight.visible_glossy=False;moonlight.visible_transmission=False
-lamp('very low camera fill','AREA',(0,.1,2.0),aim=(0,5.5,1.5),energy=14,colour=(.8,.85,1),size=4)
+lamp('very low camera fill','AREA',(0,.1,2.0),aim=(0,5.5,1.5),energy=12,colour=(.8,.85,1),size=4)
 for light in [o for o in bpy.data.objects if o.type=='LIGHT' and o.data.type=='AREA']:
     light.visible_camera=False;light.visible_glossy=False;light.visible_transmission=False
 air=box('subtle suspended dust',-3.65,3.65,.2,7.0,.03,3.15,dark)
 volume=bpy.data.materials.new('observatory air');volume.use_nodes=True;N=volume.node_tree.nodes
-N.remove(N['Principled BSDF']);v=N.new('ShaderNodeVolumePrincipled');v.inputs['Density'].default_value=.008;v.inputs['Anisotropy'].default_value=.35
+N.remove(N['Principled BSDF']);v=N.new('ShaderNodeVolumePrincipled');v.inputs['Density'].default_value=.005;v.inputs['Anisotropy'].default_value=.4
 volume.node_tree.links.new(v.outputs['Volume'],N['Material Output'].inputs['Volume']);air.data.materials.clear();air.data.materials.append(volume)
 air.visible_shadow=False
 clear_glass()
@@ -489,6 +500,7 @@ cycles(scene,SAMPLES,WIDTH,round(WIDTH*REF_H/REF_W),exposure=1.5)
 scene.render.use_persistent_data=True
 scene.render.image_settings.color_depth='8'
 scene.cycles.transparent_max_bounces=12
+finish_hall(scene, SAMPLES, keep_gloss=('closed, slightly imperfect window glass', 'blue coated objective lens'))
 bpy.context.view_layer.update()
 metadata={'reference':{'width':REF_W,'height':REF_H,'focal':FOCAL,'cx':1400,'cy':760},
           'door':[to_picture(scene,camera,localpoint(door_deg,x,0,z,door_radial),(REF_W,REF_H)) for x,z in [(-door_half,2.14),(door_half,2.14),(door_half,0),(-door_half,0)]],
@@ -520,7 +532,7 @@ if 'motion' in ONLY:
     fixed=[o for o in bpy.data.objects if o.type in ['MESH','CURVE','FONT'] and o not in globe]
     for obj in fixed: obj.is_holdout=True
     air.hide_render=True
-    scene.cycles.samples=min(SAMPLES,192)
+    scene.cycles.samples=min(SAMPLES,96)
     metadata['armillary']={'frames':64,'columns':8,'period':48000,
         'box':{'x':x0/resolution[0]*REF_W,'y':y0/resolution[1]*REF_H,
                'width':(x1-x0)/resolution[0]*REF_W,'height':(y1-y0)/resolution[1]*REF_H}}

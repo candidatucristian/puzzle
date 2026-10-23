@@ -1,4 +1,4 @@
-import data from './passageRender.json';
+import data from './passageRender.json' with { type: 'json' };
 
 const PLATE = 'top_passage_native_v1';
 const BASE = 'assets/images/Attic/';

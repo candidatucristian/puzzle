@@ -13,7 +13,7 @@ from mathutils import Vector, Matrix
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import (arg, fresh, link, plain, aged_metal, box, bevel, cylinder,
                  sphere, lamp, cycles, render, to_picture, import_model, wear)
-from hall_common import scan, clear_glass
+from hall_common import scan, clear_glass, darken_model, finish_hall
 from botany_staircase import mesh, block, bar
 
 ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),'../..'))
@@ -50,25 +50,21 @@ def text(body,at,size,mat,side=0):
     obj.location=at;obj.rotation_euler=(math.pi/2,0,-side*math.pi/2)
     return obj
 
-wood=scan('aged attic oak','dark_wooden_planks',1.0,bright=.55,sat=.62,rough=(.5,.78),bump=.48,upright=True,vary=.13)
-beam=scan('hand-hewn oak beams','dark_wood',.85,bright=.46,sat=.7,rough=(.46,.74),bump=.5,upright=True,vary=.12)
-doorwood=scan('waxed old door oak','rosewood_veneer1',.7,bright=.52,sat=.65,rough=(.4,.65),bump=.38,upright=True,vary=.1)
-floor=scan('worn attic boards','wood_floor_worn',.9,bright=.48,sat=.65,rough=(.43,.76),bump=.45,vary=.13)
-stone=scan('smoked limestone footing','old_sandstone_02',.7,tint=(.5,.49,.46),bright=.55,sat=.15,rough=(.65,.87),bump=.55)
-plaster=scan('old mineral plaster','plastered_wall_04',1.5,tint=(.23,.25,.24),bright=.6,sat=.15,rough=(.7,.92),bump=.45)
-iron=aged_metal('forged iron with brown patina',(.065,.061,.052),(.018,.022,.02),rough=(.38,.65),tarnish=.54,hammer=.13)
-brass=aged_metal('worn bronze hardware',(.35,.23,.105),(.065,.07,.04),rough=(.3,.55),tarnish=.45)
-dark=plain('dark joints',(.008,.007,.006),.93)
-glass=plain('clear closed window glass',(.94,.96,.98),.018,transmission=1,ior=1.46)
-wax=plain('old beeswax',(.5,.36,.19),.55)
-flame=plain('small candle flame',(1,.5,.16),emit=(1,.36,.08),strength=12)
-linen=scan('dusty unbleached linen','crepe_satin',.8,tint=(.49,.44,.35),bright=.63,sat=.1,rough=(.87,.98),bump=.18)
-for material in [wood,beam,doorwood]:
-    nodes=material.node_tree.nodes;links=material.node_tree.links.new
-    bsdf=nodes['Principled BSDF'];coordinates=nodes.new('ShaderNodeTexCoord')
-    aged=wear(nodes,links,bsdf.inputs['Base Color'].links[0].from_socket,coordinates,
-              stains=.18,grime=.12,dust=.025,edges=.035)
-    links(aged,bsdf.inputs['Base Color'])
+wood=scan('aged attic oak','dark_wooden_planks',1.0,bright=.48,sat=.62,rough=(.56,.84),bump=.48,coat=0.0,upright=True,vary=.12,dirt=.24,grime=.15)
+beam=scan('hand-hewn oak beams','dark_wood',.85,bright=.42,sat=.68,rough=(.54,.8),bump=.5,coat=0.0,upright=True,vary=.1,dirt=.24,grime=.15,edges=.025)
+beam_x=scan('hand-hewn oak beams across','dark_wood',.85,bright=.4,sat=.68,rough=(.54,.8),bump=.5,coat=0.0,upright=False,vary=.1,dirt=.24,grime=.15,edges=.025)
+doorwood=scan('waxed old door oak','rosewood_veneer1',.7,bright=.46,sat=.65,rough=(.5,.76),bump=.4,coat=0.0,upright=True,vary=.08,dirt=.22,grime=.14,edges=.03)
+floor=scan('worn attic boards','wood_floor_worn',.9,bright=.44,sat=.64,rough=(.56,.84),bump=.48,coat=0.0,vary=.12,dirt=.26,grime=.16,streaks=.1)
+stone=scan('smoked limestone footing','old_sandstone_02',.7,tint=(.5,.49,.46),bright=.5,sat=.18,rough=(.68,.9),bump=.58,dirt=.28,grime=.18)
+plaster=scan('old mineral plaster','plastered_wall_04',1.5,tint=(.23,.25,.24),bright=.54,sat=.15,rough=(.76,.94),bump=.45,dirt=.26,stains=.18,grime=.14)
+leather=scan('trunk leather','brown_leather',.55,tint=(.58,.38,.24),bright=.42,rough=(.58,.84),bump=.5,coat=0.0,dirt=.26,grime=.16,edges=.035)
+iron=aged_metal('forged iron with brown patina',(.065,.061,.052),(.018,.022,.02),rough=(.42,.7),tarnish=.58,hammer=.13)
+brass=aged_metal('worn bronze hardware',(.38,.25,.115),(.065,.06,.035),rough=(.32,.58),tarnish=.5)
+dark=plain('dark joints',(.008,.007,.006),.95)
+glass=plain('clear closed window glass',(.94,.96,.98),.02,transmission=1,ior=1.46)
+wax=plain('old beeswax',(.38,.31,.21),.55)
+flame=plain('small candle flame',(1,.56,.18),emit=(1,.48,.14),strength=14)
+linen=scan('dusty unbleached linen','velour_velvet',.75,tint=(.48,.43,.35),bright=.52,sat=.16,rough=(.88,.98),bump=.28,dirt=.28,stains=.22,grime=.16)
 
 # Thick wall boards and stone plinth, with actual openings through both.
 for side in [-1,1]:
@@ -109,9 +105,16 @@ for side in [-1,1]:
             vv += [(x,yy,z+.045) for x,yy,z in vv]
             mesh('solid pitched roof boarding',vv,[(0,3,2,1),(4,5,6,7),(0,1,5,4),
                  (1,2,6,5),(2,3,7,6),(3,0,4,7)],wood,keep=False,edge=.0025)
+timber('ridge beam',(0,.1,RIDGE-.03),(0,END+.15,RIDGE-.03),.14,.16,beam_x)
+for side in [-1,1]:
+    timber('roof purlin',(side*HALF*.5,.1,EAVES+(RIDGE-EAVES)*.5),(side*HALF*.5,END+.15,EAVES+(RIDGE-EAVES)*.5),.11,.12,beam_x)
 for y in [1.4,4.8,7.25,9.7,12.15]:
-    timber('pegged truss tie',(-HALF,y,EAVES+.02),(HALF,y,EAVES+.02),.17,.18,beam)
-    timber('king post',(0,y,EAVES+.02),(0,y,RIDGE-.035),.12,.14,beam)
+    block('pegged truss tie',-HALF,HALF,y-.09,y+.09,EAVES-.065,EAVES+.105,beam_x,keep=False,edge=.01)
+    timber('king post',(0,y,EAVES+.02),(0,y,RIDGE-.035),.13,.15,beam)
+    # Mortised oak king-post base collar flush with tie-beam + oak drawbore trunnels
+    block('king post oak collar',-.10,.10,y-.094,y+.094,EAVES-.055,EAVES+.10,beam_x,keep=False,edge=.005)
+    for px in [-.055,0,.055]:
+        segment('king post oak peg',(px,y-.098,EAVES+.02),(px,y+.098,EAVES+.02),.010,doorwood)
     for side in [-1,1]:
         timber('principal roof rafter',(side*HALF,y,EAVES+.02),(0,y,RIDGE+.025),.17,.18,beam)
         timber('wall post',(side*(HALF-.045),y,.36),(side*(HALF-.045),y,EAVES+.03),.14,.16,beam)
@@ -120,7 +123,6 @@ for y in [1.4,4.8,7.25,9.7,12.15]:
         for z in [EAVES-.5,EAVES-.05,EAVES+.04]:
             segment('oak drawbore peg',(side*(HALF-.05),y-.1,z),
                     (side*(HALF-.05),y+.1,z),.012,doorwood)
-        block('forged tie strap',side*.4-.035,side*.4+.035,y-.105,y-.095,EAVES-.08,EAVES+.12,iron,keep=False,edge=.002)
 
 # Back gable and a six-pane window with deep reveals and 4 mm glass.
 for x0,x1,z0,z1 in [(-HALF,-.54,0,EAVES),(.54,HALF,0,EAVES),(-.54,.54,0,1.0),(-.54,.54,2.3,EAVES)]:
@@ -132,12 +134,13 @@ for x in [-.52,0,.52]:block('window mullion',x-.013,x+.013,END+.005,END+.045,1.0
 for z in [1.02,1.44,1.86,2.285]:block('window transom',-.53,.53,END+.005,END+.045,z-.012,z+.012,beam,keep=False,edge=.002)
 block('4 mm closed window glazing',-.525,.525,END+.055,END+.059,1.02,2.285,glass,keep=False,edge=.0003)
 
-sky=plain('overcast night sky',(.008,.016,.032),1,emit=(.014,.023,.042),strength=.55)
+sky=plain('overcast night sky',(.005,.011,.025),1,emit=(.01,.02,.042),strength=.55)
 N=sky.node_tree.nodes;L=sky.node_tree.links
 cloud=N.new('ShaderNodeTexNoise');cloud.inputs['Scale'].default_value=.5;cloud.inputs['Detail'].default_value=5
-r=N.new('ShaderNodeValToRGB');r.color_ramp.elements[0].color=(.008,.015,.03,1);r.color_ramp.elements[1].color=(.03,.043,.065,1)
+r=N.new('ShaderNodeValToRGB');r.color_ramp.elements[0].color=(.006,.012,.028,1);r.color_ramp.elements[1].color=(.022,.038,.068,1)
 L.new(cloud.outputs['Fac'],r.inputs['Fac']);L.new(r.outputs['Color'],N['Principled BSDF'].inputs['Emission Color'])
-block('night beyond the gable',-14,14,22,22.1,-1,14,sky,keep=False,edge=0)
+sky_b=block('night beyond the gable',-14,14,22,22.1,-1,14,sky,keep=False,edge=0)
+sky_b.visible_shadow=False
 for i in range(7):
     x=rnd.uniform(-1.7,1.7);base=Vector((x,19.5,-.3));tip=base+Vector((rnd.uniform(-.2,.2),0,rnd.uniform(2.3,3.4)))
     segment('bare tree beyond the glass',base,tip,.022,iron)
@@ -185,75 +188,109 @@ for side,number in [(-1,12),(1,13)]:
         block('anteroom oak dado',xa,xb,y-.015,y+.015,0,.85,beam,keep=False)
     block('anteroom far wall',side*4.45-.05,side*4.45+.05,Y0-.18,Y0+DOOR_W+.3,0,2.55,plaster,keep=False)
     block('anteroom ceiling',xa,xb,Y0-.18,Y0+DOOR_W+.3,2.5,2.58,beam,keep=False)
-    lamp('anteroom candle','POINT',(side*3.2,Y0+.7,1.65),energy=4,colour=(1,.55,.22),size=.12)
+    ac=lamp('anteroom candle','POINT',(side*3.2,Y0+.7,1.65),energy=4,colour=(1,.55,.22),size=.12)
+    ac.visible_glossy=False
 
 lamps=[]
 for side in [-1,1]:
     p=Vector((side*(HALF-.16),Y0-.28,2.04))
     xwall=side*(HALF-.025)
     block('lantern backplate',xwall-.015,xwall+.015,p.y-.065,p.y+.065,1.86,2.19,iron,keep=False)
-    bar('forged lantern bracket',[(xwall,p.y,2.13),(p.x,p.y,2.20),(p.x,p.y,2.17)],.012,iron,keep=False)
-    for z in [1.87,2.14]:block('lantern frame rail',p.x-.075,p.x+.075,p.y-.07,p.y+.07,z,z+.016,iron,keep=False,edge=.004)
+    br_l=bar('forged lantern bracket',[(xwall,p.y,2.13),(p.x,p.y,2.20),(p.x,p.y,2.17)],.012,iron,keep=False)
+    br_l.visible_shadow=False
+    for z in [1.87,2.14]:
+        fr_l=block('lantern frame rail',p.x-.075,p.x+.075,p.y-.07,p.y+.07,z,z+.016,iron,keep=False,edge=.004)
+        fr_l.visible_shadow=False
     for dx in [-.067,.067]:
-        for dy in [-.062,.062]:segment('lantern corner bar',(p.x+dx,p.y+dy,1.88),(p.x+dx,p.y+dy,2.15),.006,iron)
+        for dy in [-.062,.062]:
+            cb_l=segment('lantern corner bar',(p.x+dx,p.y+dy,1.88),(p.x+dx,p.y+dy,2.15),.006,iron)
+            cb_l.visible_shadow=False
     for axis in [0,1]:
         for sign in [-1,1]:
             if axis==0:block('lantern closed glass',p.x+sign*.065-.001,p.x+sign*.065+.001,p.y-.057,p.y+.057,1.9,2.13,glass,keep=False,edge=0)
             else:block('lantern closed glass',p.x-.059,p.x+.059,p.y+sign*.061-.001,p.y+sign*.061+.001,1.9,2.13,glass,keep=False,edge=0)
-    cylinder('lantern candle',p.x,p.y,1.9,2.02,.018,wax)
-    sphere('lantern flame',p,.011,flame,squash=(.65,.65,1.7))
-    lamp('warm lantern, chemistry reference','POINT',p,energy=9,colour=(1,.55,.22),size=.035)
+    cd_l=cylinder('lantern candle',p.x,p.y,1.9,2.02,.018,wax)
+    cd_l.visible_shadow=False
+    fl_l=sphere('lantern flame',p,.011,flame,squash=(.65,.65,1.7))
+    fl_l.visible_shadow=False
+    ll=lamp('warm lantern, chemistry reference','POINT',p,energy=8.5,colour=(1,.55,.22),size=.11)
+    ll.visible_glossy=False
     lamps.append({'side':side,'at':p})
 
 # Stored belongings sit clear of the door leaves and the central walking line.
 def trunk(x,y,w=.65,h=.45):
-    for j in range(5):
-        block('trunk side board',x-w/2,x+w/2,y-.23,y+.23,j*h/5,j*h/5+h/5-.003,wood,keep=False,edge=.003)
-    block('trunk lid',x-w/2-.014,x+w/2+.014,y-.245,y+.245,h,h+.04,beam,keep=False,edge=.015)
-    for xx in [x-w*.33,x+w*.33]:
-        block('trunk iron lid band',xx-.015,xx+.015,y-.25,y+.25,h+.035,h+.045,iron,keep=False,edge=.002)
-        for yy in [y-.235,y+.235]:block('trunk iron strap',xx-.015,xx+.015,yy-.008,yy+.008,.035,h+.03,iron,keep=False,edge=.002)
-    block('trunk latch',x-.035,x+.035,y-.25,y-.235,h-.1,h+.015,brass,keep=False,edge=.003)
+    # Banded leather & oak-slatted Victorian steamer trunk
+    block('trunk leather body',x-w/2,x+w/2,y-.23,y+.23,0,h,leather,keep=False,edge=.012)
+    block('trunk lid',x-w/2-.012,x+w/2+.012,y-.24,y+.24,h-.04,h+.035,leather,keep=False,edge=.014)
+    for z_slat in [h*.28,h*.65,h+.005]:
+        block('trunk oak slat',x-w/2-.016,x+w/2+.016,y-.245,y+.245,z_slat,z_slat+.028,beam,keep=False,edge=.004)
+    for xx in [x-w*.32,x+w*.32]:
+        block('trunk iron lid band',xx-.018,xx+.018,y-.248,y+.248,0,h+.04,iron,keep=False,edge=.003)
+        block('trunk brass hasp',xx-.022,xx+.022,y-.254,y-.235,h-.08,h+.01,brass,keep=False,edge=.002)
+    block('trunk centre lockplate',x-.038,x+.038,y-.254,y-.235,h-.1,h+.015,brass,keep=False,edge=.003)
+    for cx in [x-w/2,x+w/2]:
+        for cy in [y-.23,y+.23]:
+            block('trunk brass corner',cx-.025,cx+.025,cy-.025,cy+.025,h-.02,h+.038,brass,keep=False,edge=.003)
+
 trunk(-1.15,6.05,.65,.55);trunk(1.1,7.0,.7,.48);trunk(-1.06,11.9,.72,.4)
 try:
-    import_model('wooden_crate_01',width=.56,at=(-1.13,8.0,.0),rot=.13)
-    import_model('wooden_stool_01',height=.52,at=(1.15,10.4,0),rot=.35)
-    import_model('dining_chair_02',height=.94,at=(-1.13,10.0,0),rot=-.35)
+    crt=import_model('wooden_crate_01',width=.56,at=(-1.13,8.0,.0),rot=.13)
+    darken_model(crt,(.46,.4,.34),rough_floor=.62)
+    stl=import_model('wooden_stool_01',height=.52,at=(1.15,10.4,0),rot=.35)
+    darken_model(stl,(.42,.34,.26),rough_floor=.6)
+    chr_m=import_model('dining_chair_02',height=.94,at=(-1.13,10.0,0),rot=-.35)
+    darken_model(chr_m,(.44,.36,.28),rough_floor=.58)
+    bks=import_model('book_encyclopedia_set_01',width=.28,at=(-1.12,5.96,.585),rot=.25)
+    darken_model(bks,(.52,.48,.42),rough_floor=.62)
+    olp=import_model('vintage_oil_lamp',height=.38,at=(-1.22,6.18,.585),rot=-.4)
+    darken_model(olp,(.55,.5,.44),rough_floor=.48)
 except Exception as error:print('Optional stored model unavailable:',error)
+
+canvas_mat=scan('aged canvas backing','plastered_wall_04',.9,tint=(.24,.19,.14),bright=.3,sat=.35,rough=(.86,.98),bump=.35,dirt=.32,stains=.24,grime=.18)
 for x,y in [(-1.13,6.2),(1.15,8.6)]:
-    # Empty frames, leaning naturally rather than painted onto the backdrop.
-    a=Vector((x,y,.5));b=Vector((x*.98,y+.1,1.25))
-    for off in [-.23,.23]:timber('stored picture frame upright',a+Vector((off,0,0)),b+Vector((off,0,0)),.035,.04,beam)
-    timber('stored picture frame sill',a+Vector((-.26,0,0)),a+Vector((.26,0,0)),.035,.04,beam)
-    timber('stored picture frame head',b+Vector((-.26,0,0)),b+Vector((.26,0,0)),.035,.04,beam)
-# A settled linen dust sheet, irregular hem and folds over the right trunk.
+    # Stored framed canvases leaning face-to-wall with wooden stretcher cross-bars exposed
+    a=Vector((x,y,.5));b=Vector((x*.98,y+.1,1.25));mid=(a+b)*.5
+    for off in [-.23,.23]:
+        timber('stored picture frame upright',a+Vector((off,0,0)),b+Vector((off,0,0)),.038,.042,doorwood)
+    timber('stored picture frame sill',a+Vector((-.26,0,0)),a+Vector((.26,0,0)),.038,.042,beam_x)
+    timber('stored picture frame head',b+Vector((-.26,0,0)),b+Vector((.26,0,0)),.038,.042,beam_x)
+    timber('stored stretcher vertical',a+Vector((0,-.006,.02)),b+Vector((0,-.006,-.02)),.028,.024,beam)
+    timber('stored stretcher horizontal',mid+Vector((-.22,-.006,0)),mid+Vector((.22,-.006,0)),.028,.024,beam_x)
+    timber('stored frame backing',a+Vector((0,.008,.02)),b+Vector((0,.008,-.02)),.44,.014,canvas_mat)
+
+# A settled linen dust sheet with natural multi-frequency folds over the right trunk.
 vv=[];ff=[]
-for j in range(27):
-    y=6.68+j*.025
-    for i in range(35):
-        x=.65+i*.027
-        over=max(0,abs(x-1.1)-.35)
-        z=.535-min(.48,over*3.5)+.012*math.sin(i*.65+j*.12)
+for j in range(33):
+    y=6.66+j*.021
+    for i in range(41):
+        x=.64+i*.023
+        over=max(0,abs(x-1.1)-.34)
+        over_y=max(0,abs(y-7.0)-.23)
+        drop=min(.48, math.hypot(over, over_y)*3.2)
+        fold=.011*math.sin(i*.58+j*.18)+.006*math.cos(i*1.15-j*.42)
+        z=max(.015, .525-drop+fold*(.4+1.2*min(1.0,drop/.3)))
         vv.append((x,y,z))
-for j in range(26):
-    for i in range(34):k=j*35+i;ff.append((k,k+1,k+36,k+35))
+for j in range(32):
+    for i in range(40):k=j*41+i;ff.append((k,k+1,k+42,k+41))
 sheet=mesh('folded linen dust cover',vv,ff,linen,keep=False)
-solid=sheet.modifiers.new('woven cloth thickness','SOLIDIFY');solid.thickness=.001
+for p in sheet.data.polygons: p.use_smooth=True
+solid=sheet.modifiers.new('woven cloth thickness','SOLIDIFY');solid.thickness=.0015
 
 world=bpy.data.worlds.new('night');world.use_nodes=True
-world.node_tree.nodes['Background'].inputs[0].default_value=(.006,.009,.018,1)
-world.node_tree.nodes['Background'].inputs[1].default_value=.2;scene.world=world
-fill=lamp('cool chemistry fill','AREA',(0,2.7,3.55),aim=(0,6.2,1),energy=60,colour=(.8,.85,1),size=1.0)
-fill.visible_camera=False;fill.visible_transmission=False
-camera_fill=lamp('low invisible camera fill','AREA',(0,.3,2.0),aim=(0,7,1.3),energy=12,colour=(.8,.85,1),size=2.6)
-window_fill=lamp('soft moon through gable','AREA',(0,END+.35,2.15),aim=(-.3,5.5,.2),energy=85,colour=(.55,.68,1),size=.9,size_y=1.15)
+world.node_tree.nodes['Background'].inputs[0].default_value=(.004,.007,.015,1)
+world.node_tree.nodes['Background'].inputs[1].default_value=1.0;scene.world=world
+# Soft omnidirectional fill + rear camera fill so no AREA plane ever slices the visible walls/roof
+fill=lamp('cool chemistry fill','POINT',(0,4.2,2.15),energy=20,colour=(.76,.83,1),size=1.6)
+fill.visible_camera=False;fill.visible_glossy=False;fill.visible_transmission=False
+camera_fill=lamp('low invisible camera fill','AREA',(0,.35,1.65),aim=(0,8,1.2),energy=22,colour=(.78,.84,1),size=2.2)
+window_fill=lamp('soft moon through gable','AREA',(0,END+.35,2.15),aim=(-.3,5.5,.2),energy=95,colour=(.55,.68,1),size=.9,size_y=1.15)
 for source in [camera_fill,window_fill]:
     source.visible_camera=False;source.visible_glossy=False;source.visible_transmission=False
-lamp('moon through the small window','SUN',(2,20,7),aim=(-.5,0,-1),energy=.7,colour=(.55,.68,1),angle=math.radians(4))
+lamp('moon through the small window','SUN',(1.8,20,6.5),aim=(-.4,4.0,.0),energy=2.2,colour=(.55,.68,1),angle=math.radians(2.5))
 clear_glass()
 air=box('subtle attic air',-1.52,1.52,.3,END-.12,.02,EAVES-.12,dark)
 volume=bpy.data.materials.new('attic air');volume.use_nodes=True;N=volume.node_tree.nodes
-N.remove(N['Principled BSDF']);v=N.new('ShaderNodeVolumePrincipled');v.inputs['Density'].default_value=.006;v.inputs['Anisotropy'].default_value=.35
+N.remove(N['Principled BSDF']);v=N.new('ShaderNodeVolumePrincipled');v.inputs['Density'].default_value=.0045;v.inputs['Anisotropy'].default_value=.4
 volume.node_tree.links.new(v.outputs['Volume'],N['Material Output'].inputs['Volume']);air.data.materials.clear();air.data.materials.append(volume);air.visible_shadow=False
 
 cd=bpy.data.cameras.new('responsive passage camera');cd.lens=F/RW*36;cd.sensor_width=36;cd.sensor_fit='HORIZONTAL'
@@ -261,6 +298,7 @@ cd.shift_y=-(RH/2-760)/RW;cd.clip_start=.04;cd.clip_end=60
 camera=link(bpy.data.objects.new('responsive passage camera',cd));camera.location=(0,0,1.55);camera.rotation_euler=(math.pi/2,0,0);scene.camera=camera
 cycles(scene,SAMPLES,WIDTH,round(WIDTH*RH/RW),exposure=1.5)
 scene.render.use_persistent_data=True
+finish_hall(scene, SAMPLES, keep_gloss=('clear closed window glass',))
 bpy.context.view_layer.update()
 project=lambda point:to_picture(scene,camera,point,(RW,RH))
 metadata={'reference':{'width':RW,'height':RH,'focal':F,'cx':1400,'cy':760},'doors':[],'lamps':[]}
@@ -277,7 +315,7 @@ bpy.ops.wm.save_as_mainfile(filepath=OUT+'/source.blend')
 if 'plate' in ONLY:render(scene,OUT+'/plate.png')
 if 'motion' in ONLY:
     r=scene.render;r.use_border=True;r.use_crop_to_border=True
-    scene.cycles.samples=min(SAMPLES,192)
+    scene.cycles.samples=min(SAMPLES,96)
     for d,m in zip(doors,metadata['doors']):
         scale=WIDTH/RW;bx=m['box']
         x0=math.floor(bx['x']*scale);x1=math.ceil((bx['x']+bx['width'])*scale)
