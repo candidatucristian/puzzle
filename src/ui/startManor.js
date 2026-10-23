@@ -70,6 +70,7 @@ export function mountStartManor(scope, preferences) {
   let wind = null;
   const dropWind = () => {
     wind?.dispose(); wind = null;
+    if (scene) scene.storm3D = false;
     base.style.visibility = '';
   };
   const mountWind = () => {
@@ -77,8 +78,16 @@ export function mountStartManor(scope, preferences) {
     const background = document.createElement('canvas');
     background.width = scene.W; background.height = scene.H;
     paintManorExterior(background.getContext('2d'), scene.W, scene.H, details.wind.background);
-    wind = createManorWind({ source: base, background, mask: details.wind.mask, photo: scene.photo, onFailure: dropWind });
+    const frames = details.wind.frames?.map(frameImage => {
+      const c = document.createElement('canvas');
+      c.width = scene.W; c.height = scene.H;
+      paintManorExterior(c.getContext('2d'), scene.W, scene.H, frameImage);
+      return c;
+    });
+    wind = createManorWind({ source: base, background, mask: details.wind.mask, photo: scene.photo, frames, onFailure: dropWind });
     if (!wind) return;
+    scene.storm3D = Boolean(frames?.length);
+    if (scene.storm3D) dropRain();
     base.after(wind.canvas);
     wind.draw(clock);
     // Exactly one copy receives the shared CSS edge mask and colour grade.
@@ -94,7 +103,7 @@ export function mountStartManor(scope, preferences) {
   };
   const mountRain = () => {
     dropRain();
-    if (!scene?.photographic || stopped || disposed) return;
+    if (!scene?.photographic || scene?.storm3D || stopped || disposed) return;
     rain = createRainFall({ width: scene.W, height: scene.H, source: base, ground: scene.ground, horizon: scene.horizon, pace: 0.6, density: 0.45, seed: 6161 });
     if (!rain) return;
     rain.canvas.className = 'start-painting';

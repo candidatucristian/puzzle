@@ -61,14 +61,14 @@ export function drawManorExteriorLive(ctx, scene, time, frozen) {
   // the fog, coming across the park with the wind; the leaves it tears off
   const air = scene.air ?? { gust: 0.6, lean: 0.6, still: frozen };
   drawFog(ctx, scene, t, air);
-  if (!frozen && !air.still) blowLeaves(ctx, scene, t, air);
+  if (!frozen && !air.still && !scene.storm3D) blowLeaves(ctx, scene, t, air);
   const warmth = 0.024 + (frozen ? 0 : 0.004 * Math.sin(t * 1.7) + 0.002 * Math.sin(t * 5.1));
   soft(ctx, lantern.x, lantern.y, lantern.rx, lantern.ry, '255,189,109', warmth, 'lighter');
   // and the lantern's light caught in the fog round it
   soft(ctx, lantern.x, lantern.y + lantern.ry * 0.6, lantern.rx * 4.5, lantern.ry * 3, '255,189,109', warmth * 0.9, 'lighter');
   for (const window of windows) soft(ctx, window.x, window.y, window.rx, window.ry, '255,194,121', 0.016, 'lighter');
-  // (the rain itself is drawn with WebGL where it can be: startManor.js)
-  if (!scene.rainLive) drawRain(ctx, scene, t, frozen);
+  // (when the 3D Blender storm animation loop is active, rain and ripples are already rendered in 3D)
+  if (!scene.rainLive && !scene.storm3D) drawRain(ctx, scene, t, frozen);
   ctx.restore();
 }
 
