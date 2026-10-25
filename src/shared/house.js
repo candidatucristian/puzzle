@@ -38,11 +38,12 @@ export const PLACES = Object.freeze([
       "Railway tickets, all for the night of the 13th.",
       "Three singles, and one half-fare. Half-fares are for children.",
     ] },
-  // Up the stairs from the hall: the upper hall. Of its four doors — VII to
-  // X, two on each wall — the first opens on the laboratory, the second on
-  // the weighing room, the other two on rooms with nothing in them yet. Its puzzle is not gone into, as a room's are: it `plays` there, in
-  // the hall itself, and is answered there.
-  { key: "Upper", name: "The Chemistry Hall", floor: "The Chemistry", storey: 2, back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: ["Room7", "Room8", "Room9", "Room10"], first: 7,
+  // Up the stairs from the hall: the upper hall. Of its three doors — VII
+  // and VIII on the left, IX on the right — the first opens on the
+  // laboratory, the second on the weighing room, the third on a room with
+  // nothing in it yet. Its puzzle is not gone into, as a room's are: it
+  // `plays` there, in the hall itself, and is answered there.
+  { key: "Upper", name: "The Chemistry Hall", floor: "The Chemistry", storey: 2, back: "Hall", holds: ["lightswitch"], plays: "lightswitch", doors: ["Room7", "Room8", "Room9"], first: 7,
     story: [
       "Silas's floor. A man who measured everything.",
       "One light up here still works, on and off. It is not broken. It is waiting.",
@@ -77,11 +78,6 @@ export const PLACES = Object.freeze([
     story: [
       "An empty room. Dust on the floor, and the fire laid but never lit.",
       "He used every room on this floor. Why not this one?",
-    ] },
-  { key: "Room10", name: "Room X", back: "Upper", holds: [],
-    story: [
-      "Nothing in here at all — only nail holes round the door frame, where boards were once.",
-      "Somebody kept this room shut, and somebody else opened it again.",
     ] },
   { key: "Room11", name: "Room XI", back: "Top", holds: [],
     story: [
@@ -151,8 +147,14 @@ export function aimCameraAt(camera, box, k) {
   const zoom = Math.pow(reach, k);
   // where on the screen the thing is by now
   const sx = x + (W / 2 - x) * k, sy = y + (H / 2 - y) * k;
+  // and where the eye's middle is for that — kept far enough in that it never
+  // looks past the picture's edges (the doors stand right at the sides: the
+  // eye goes toward them as far as the picture goes, and no further)
+  const halfW = W / (2 * zoom), halfH = H / (2 * zoom);
+  const cx = Math.min(W - halfW, Math.max(halfW, x - (sx - W / 2) / zoom));
+  const cy = Math.min(H - halfH, Math.max(halfH, y - (sy - H / 2) / zoom));
   camera.setZoom(zoom);
-  camera.setScroll(x - W / 2 - (sx - W / 2) / zoom, y - H / 2 - (sy - H / 2) / zoom);
+  camera.setScroll(cx - W / 2, cy - H / 2);
 }
 
 /** The scene's eye goes to a thing — a door, a case on a table — as the

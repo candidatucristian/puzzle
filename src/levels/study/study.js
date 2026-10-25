@@ -6,14 +6,14 @@ import STUDY from "../house/rooms/Study.json";
 
 /** The study, the first room off the hall, at night, seen from the corner by
  *  its door, by the light of one candle burning on the writing desk and the
- *  moon. Close at hand a round table, a lamp on it, cold, and beside the lamp
- *  a glass case of earth with something growing in it. Further in, standing
+ *  moon. Close at hand a clear specimen table carries a glass case of earth
+ *  with something growing in it. Further in, standing
  *  free in the floor, the writing desk with its candle and a small gilt
  *  chest; a green armchair pushed back toward the hearth, its fire dead. Over
  *  the mantel a brass cipher wheel on its walnut plaque. In the back wall a
  *  tall window, one leaf swung open on the garden and the moon, a terracotta
- *  pot on its sill with something just come up in it. Books to the cornice
- *  along the rest of that wall.
+ *  pot on its oak sill with something just come up in it. A lower herbarium
+ *  cabinet holds orderly reference books along the rest of that wall.
  *
  *  The case, the window and the wheel open puzzles; the chest is shut until
  *  all three are solved, then opens of itself and gives up a key.

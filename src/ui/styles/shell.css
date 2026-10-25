@@ -752,6 +752,23 @@ button:disabled {
 :root[data-ambient-effects="false"] #film-grain {
   display: none;
 }
+/* the key going into a door's lock, filmed close (levels/hall/keyInsert.js):
+   over the picture, under the grain and everything drawn on it */
+#key-insert {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #050403;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+#key-insert.is-on {
+  opacity: 1;
+}
 :is(#levels-grid, #right-sidebar, .modal-content, #hint-list, .howto-body) {
   scrollbar-width: thin;
   scrollbar-color: #33332f transparent;

@@ -1,5 +1,14 @@
 # Blender artwork
 
+## The Old Tree
+
+`old_tree.py` models and renders the complete root-observation puzzle,
+including its physical root paths, paper letters and engraved brass routes.
+`old_tree_publish.mjs` publishes the Cycles photograph and matching camera
+bounds. Rebuild and photographed CC0 sources are documented in
+[old-tree-sources.md](old-tree-sources.md). The editable packed scene is
+saved to `.artifacts/old-tree-v2/old-tree.blend`.
+
 ## Exterior trees in the wind
 
 The manor's two foreground trees are animated over their original Blender
@@ -203,7 +212,7 @@ them into two grids within 4096 px limits. Runtime uses the exported door,
 lamp and lock landmarks. See [top-passage-sources.md](top-passage-sources.md)
 for sources and render commands.
 
-## The rooms off the halls (I–V, VII–XIII)
+## The rooms off the halls (I–V, VII–IX, XI–XIII)
 
 Every room is its own place, seen from wherever it is best seen: its own
 camera (a corner, down a long gallery, sitting at a table, from a step above,
@@ -227,8 +236,9 @@ covering it (`renderedLayout` in `levels/house/roomRender.js`).
   lanterns, pitched roofs. `room_attic.py`: the rooms under the roof.
 - The rooms: `room_study.py` (I), `room_library.py` (II), `room_cabin.py`
   (III), `room_counting.py` (IV), `room_drawing.py` (V), `room_lab.py` (VII),
-  `room_weighing.py` (VIII), `room_nine.py`, `room_ten.py`, `room_physics.py`
-  (XI), `room_archive.py` (XII), `room_workshop.py` (XIII).
+  `room_weighing.py` (VIII), `room_nine.py` (IX), `room_physics.py` (XI),
+  `room_archive.py` (XII), `room_workshop.py` (XIII). (The chemistry hall has
+  three doors; there is no room X.)
 - Drawn in code: `room_boards.mjs` (wallpaper, prints, cipher wheel, spines,
   rugs, sea chart), `clock_faces.mjs` (the library's clocks, from
   `overtime/puzzle.js`), `counting_boards.mjs` (the cards, the birds),
@@ -255,8 +265,72 @@ node art/blender/weighing_board.mjs; node art/blender/lab_boards.mjs; node art/b
 node art/blender/room_publish.mjs study Room1
 # likewise library Room2, cabin Room3, counting Room4 (--only plates,chest,drawer),
 # drawing Room5, lab Room7 (--only plates,notebook), weighing Room8, nine Room9,
-# ten Room10, physics Room11, archive Room12, workshop Room13
+# physics Room11, archive Room12, workshop Room13
 ```
 
 Use `--samples 64 --width 1100 --only plates` for trials. Room VI has its own
 pipeline (above).
+
+## The basement below Room V
+
+`basement.py` builds the TapCode cellar in Blender; `basement_props.py` builds
+its barrels, bottle crate, chart rolls, rack, candle and tools. The wall's
+six tally pairs are actual engraved geometry and the rack has exactly 25
+openings. [Source notes](basement-sources.md) record the native geometry and
+cached CC0 material scans.
+
+```powershell
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup --python art/blender/basement.py -- --width 3200 --samples 384 --pack
+node art/blender/basement_publish.mjs
+```
+
+The editable scene with packed textures is
+`.artifacts/basement-native/render/source.blend`. The publisher writes
+`cellar-native-v1.webp` and exports camera landmarks into
+`src/levels/tapcode/nativeCellar.json`. Runtime flame, water drops and the
+ladder exit use those same landmarks. The basement does not load the older
+AI background or prop atlases; its missing-file fallback is drawn in code.
+
+## The key in the lock (the botany hall's doors II–VI)
+
+The first time a door is opened with the key its chest gave up, the game goes
+close: a film of the lock stile of one of the hall's walnut doors, the gilt key
+(`shared/keyArt.js`'s design) going into the keyhole, catching on the wards and
+turning until the bolt goes back. `key_unlock.py` renders its 96 frames (30 a
+second) with the hall's materials, and writes the moments the game makes its
+sounds at; `key_unlock_film.py` makes them `public/assets/video/key-unlock.mp4`
+and copies the moments to `src/levels/hall/keyUnlock.json`. The game lays the
+film over the hall (`levels/hall/keyInsert.js`).
+
+```powershell
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/key_unlock.py
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/key_unlock_film.py
+```
+
+Use `--width 960 --samples 64 --still 40` for a trial frame.
+
+## A letter found: opened on the desk
+
+A found letter is opened in a film. `letter_film.py` renders it from straight
+above an old walnut desk in lamplight (its green leather writing-bed tooled in
+gilt, an inkwell and a pen at its edge): the envelope lies there, its flap
+lifts and the red wax (pressed with the house's key) breaks across, and the
+letter, folded in three, is drawn out, laid down and opened out fold by fold.
+The paper is left blank: the game lays the letter's words over it in the last
+frame, so the script writes where the paper lies then, where the envelope lies
+in the first frame, and when each sound falls. It also renders the envelope
+alone for the side panel. Paper, wax and pieces come from `letter_common.py`.
+
+`letter_film_publish.mjs` makes the frames two films with
+`letter_film_encode.py`: `letter-open.mp4`, and backward and twice as fast
+`letter-fold.mp4` (the letter folded up again, to be filed). It also publishes
+the first and last frames and the envelope into
+`public/assets/images/CaseFile/letter/`, and writes `src/ui/letterFilm.json`.
+The game plays the films over the screen (`ui/letterArrival.js`).
+
+```powershell
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/letter_film.py
+node art/blender/letter_film_publish.mjs
+```
+
+Use `--width 960 --samples 40 --still 1,46,95,156` for trial frames.

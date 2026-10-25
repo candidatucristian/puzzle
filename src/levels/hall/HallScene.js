@@ -3,8 +3,8 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { HOUSE_GO, HOUSE_SOLVED, WALK_MS, aimCameraAt, zoomInto, zoomOutFrom } from "../../shared/house.js";
 import { buildMorseSteps } from "../lightswitch/puzzle.js";
-import { addCanvasTexture, chime, noiseBurst } from "../../shared/paint.js";
-import { paintKey } from "../../shared/keyArt.js";
+import { chime, noiseBurst } from "../../shared/paint.js";
+import { playKeyInsert, prepareKeyInsert } from "./keyInsert.js";
 import { cursorFor } from "../../shared/cursors.js";
 import { layoutHall, paintHall, paintDoorSwing, releaseHallArt } from "./hall.js";
 import { doorMotion, DOOR_WALK_START_MS, DOOR_LATCH_MS, DOOR_SWING_MS } from "./doorMotion.js";
@@ -50,6 +50,9 @@ export default class HallScene extends BasePuzzleScene {
     super({ key });
     this.upper = floor === "upper";
     this.wing = floor === "wing";
+    // the upper hall's bulb, once its puzzle is solved: alight, until it is
+    // switched off — and as it was left, coming back out of a room
+    this._bulbOn = true;
   }
 
   preload() {
@@ -71,6 +74,8 @@ export default class HallScene extends BasePuzzleScene {
     this._unlockedDoors = new Set();
     this._letter = 0;
     this._build(this.cameras.main.width, this.cameras.main.height);
+    // a key in hand for one of these doors: its film made ready to play
+    if (!this.upper && !this.wing && this.services.levels.rooms.some((room) => room.withKey)) prepareKeyInsert();
     // come out of one of the rooms: draw back from its door
     const n = this.services.levels.rooms.findIndex((room) => room.key && room.key === data?.from?.place);
     const door = n < 0 ? null : this._L.doors[n];
@@ -388,7 +393,8 @@ export default class HallScene extends BasePuzzleScene {
   // press the next letter, round and round; after each letter the wiring
   // shorts — sparks fly from the switch, it springs back off, the bulb
   // stutters and is dark. The answer is written in the box below.
-  // Solved, the switch stops glinting, and still flashes its word when thrown.
+  // Solved, the wiring holds: the bulb is alight, and the switch puts it out
+  // and on again as any switch does. It no longer glints.
   _light(L, k) {
     const levels = this.services.levels, b = L.bulb, thing = L.thing;
     const index = levels.indexOf(thing.level);
@@ -413,7 +419,13 @@ export default class HallScene extends BasePuzzleScene {
       .setData("interactionLabel", thing.label)
       .setDepth(5);
     zone.on("pointerdown", () => this._press());
-    if (!solved) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => box, enabled: () => !this._busy }));
+    this._solved = solved;
+    if (solved) {
+      this._lever.set(this._bulbOn, false);
+      this._lit(this._bulbOn);
+    } else {
+      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => box, enabled: () => !this._busy }));
+    }
   }
 
   _lit(on, level = 1) {
@@ -425,6 +437,7 @@ export default class HallScene extends BasePuzzleScene {
   }
 
   _press() {
+    if (this._solved) { this._toggle(); return; }
     if (this._busy || !this._answer) return;
     this._busy = true;
     this.services.audio.playSfx("switchsound", 0.6, this);
@@ -437,6 +450,15 @@ export default class HallScene extends BasePuzzleScene {
       this.time.delayedCall(step.dur, next);
     };
     this.time.delayedCall(520, next);
+  }
+
+  // The mended switch: thrown shut, the bulb comes on as the blades meet the
+  // jaws; pulled open, it goes out as they leave them.
+  _toggle() {
+    this._bulbOn = !this._bulbOn;
+    this.services.audio.playSfx("switchsound", 0.6, this);
+    this._lever.set(this._bulbOn);
+    this.time.delayedCall(this._bulbOn && !this.reducedMotion ? 200 : 30, () => this._lit(this._bulbOn));
   }
 
   // The wiring shorts: a crack and a shower of sparks from the switch, which
@@ -455,8 +477,9 @@ export default class HallScene extends BasePuzzleScene {
 
   // A door is opened: the handle, and the leaf swings in on its hinges — the
   // room's light coming out round it and across the hall's boards — and it
-  // stands open. Only another click goes through it. One door stands open at
-  // a time: opening another swings the first shut again, the way it opened.
+  // stands open. Only another click goes through it (with motion reduced, the
+  // one click goes straight in). One door stands open at a time: opening
+  // another swings the first shut again, the way it opened.
   _open(d, room, zone = this._doorZones?.get(d.number)) {
     if (this._opening || !this.input.enabled) return;
     if (this._doorOpening?.number === d.number) return;
@@ -469,11 +492,13 @@ export default class HallScene extends BasePuzzleScene {
     }
     this._doorArt = null;
     this._latch();
+    // (with motion reduced there is no leaf to watch swing: straight on in)
     if (this.reducedMotion) {
       this._go(d.box, { place: room.key });
       return;
     }
-    this._doorOpening = { number: d.number, room, elapsed: 0, walked: 0, entering: true, walking: false };
+    // it swings open and stands open: only another click (_enter) goes through
+    this._doorOpening = { number: d.number, room, elapsed: 0, walked: 0, entering: false, walking: false };
     this._mountDoor();
     zone?.setData("interactionLabel", "Go in");
     this.game.events.emit("puzzle:interaction", { label: "Go in" });
@@ -481,82 +506,48 @@ export default class HallScene extends BasePuzzleScene {
     this.game.canvas.style.cursor = cursorFor("Go in", d.side);
   }
 
-  // The first time a door is opened with its key: the key comes up out of the
-  // pocket to the keyhole, goes in with a scrape, and turns — the lock's bolt
-  // going back with a clack. It is left there; the door then opens as any
-  // other does.
+  // The first time a door is opened with its key: the eye goes a little way
+  // toward the door, and there, close, as near as the hand, the key goes into
+  // its lock — a catch on the wards — and turns, hard, until the bolt goes
+  // back with a clack (a film: keyInsert.js, art/blender/key_unlock.py).
+  // Then back to the hall, and the door opens as any other does.
   _unlock(d, room, zone) {
     if (this._opening || this._keyRun || !this.input.enabled) return;
     this._unlockedDoors.add(d.number);
     this.input.enabled = false;
     this.game.events.emit("puzzle:interaction", { label: "" });
-    const run = (this._keyRun = { d, room, parts: [] });
-    const clack = () => {
-      noiseBurst(this, { dur: 0.05, freq: 1500, q: 1.5, gain: 0.35, env: (k) => (1 - k) ** 3 });
-      chime(this, [[170, 0.07], [115, 0.05], [2300, 0.008]], 0.16);
-    };
-    const done = () => {
+    const run = (this._keyRun = { d, room });
+    const unlocked = () => {
       if (this._keyRun !== run) return;
       this._keyRun = null;
       this.input.enabled = true;
       this.services.levels.unlockDoor(room.key);
       this._open(d, room, zone);
     };
-    if (this.reducedMotion) { clack(); this.time.delayedCall(300, done); return; }
-
-    const { W, H } = this._L;
-    // the keyhole, under the knob, and how long a key is against this door
-    const [tl, tr, br, bl] = d.quad;
-    const at = (a, b) => {
-      const top = { x: tl.x + (tr.x - tl.x) * a, y: tl.y + (tr.y - tl.y) * a };
-      const bot = { x: bl.x + (br.x - bl.x) * a, y: bl.y + (br.y - bl.y) * a };
-      return { x: top.x + (bot.x - top.x) * b, y: top.y + (bot.y - top.y) * b };
+    // its sounds: the key into the hole, scraping; the wards' catch; the
+    // levers' weight as it turns; the bolt going back
+    const sounds = {
+      enter: () => noiseBurst(this, { dur: 0.22, freq: 3200, q: 2, gain: 0.06, env: (k) => Math.sin(k * Math.PI) * (0.6 + 0.4 * Math.random()) }),
+      catch: () => noiseBurst(this, { dur: 0.03, freq: 2400, q: 3, gain: 0.09, env: (k) => (1 - k) ** 2 }),
+      turn: () => noiseBurst(this, { dur: 0.5, freq: 900, q: 3, gain: 0.05, env: (k) => Math.sin(k * Math.PI) * (0.7 + 0.3 * Math.random()) }),
+      clack: () => {
+        noiseBurst(this, { dur: 0.05, freq: 1500, q: 1.5, gain: 0.35, env: (k) => (1 - k) ** 3 });
+        chime(this, [[170, 0.07], [115, 0.05], [2300, 0.008]], 0.16);
+      },
     };
-    const hole = d.keyhole ?? at(0.86, 0.6);
-    const len = Math.max(34, (at(0.86, 1).y - at(0.86, 0).y) * 0.22);
-    const side = d.side > 0 ? 1 : -1;
-    if (!this.textures.exists("hall-key")) addCanvasTexture(this.textures, "hall-key", paintKey());
-    const s = len / 220;
-    // up out of the pocket, near and large, to the door, pointing into it
-    const key = this.add.image(W * 0.5, H + H * 0.1, "hall-key").setOrigin(0.5, 0.9)
-      .setScale((H * 0.3) / 220).setAngle(-side * 18).setAlpha(0).setDepth(6);
-    const glint = this.add.image(hole.x, hole.y, this._art.keys.glow).setTint(0xffe2a0)
-      .setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(len * 1.4, len * 1.4).setAlpha(0).setDepth(6);
-    run.parts.push(key, glint);
-    // the eye goes with it, a little way towards the door, and comes back once it has turned
+    if (this.reducedMotion) { sounds.clack(); this.time.delayedCall(300, unlocked); return; }
     const cam = this.cameras.main, look = { k: 0 };
     const lookTo = (k, duration, then) => this.tweens.add({
       targets: look, k, duration, ease: "Sine.easeInOut",
       onUpdate: () => aimCameraAt(cam, d.box, look.k), onComplete: then,
     });
-    lookTo(0.62, 1000);
-    this.tweens.add({
-      targets: key,
-      x: { value: hole.x - side * len * 0.32, ease: "Quad.easeOut" },
-      y: { value: hole.y, ease: "Cubic.easeOut" },
-      scale: { value: s, ease: "Cubic.easeOut" },
-      angle: { value: -side * 90, ease: "Sine.easeInOut" },
-      alpha: { value: 1, duration: 200 },
-      duration: 720,
-      onComplete: () => {
-        // in, with the scrape of the wards
-        noiseBurst(this, { dur: 0.24, freq: 3200, q: 2, gain: 0.06, env: (k) => Math.sin(k * Math.PI) * (0.6 + 0.4 * Math.random()) });
-        this.tweens.add({
-          targets: key, x: hole.x + side * len * 0.06, duration: 260, ease: "Quad.easeIn",
-          onComplete: () => {
-            // and round: seen along the door, its bow goes edge-on as it turns
-            this.tweens.add({
-              targets: key, scaleX: s * 0.32, delay: 160, duration: 320, ease: "Back.easeIn",
-              onComplete: () => {
-                clack();
-                this.tweens.add({ targets: glint, alpha: { from: 0.75, to: 0 }, duration: 520, ease: "Cubic.easeOut" });
-                this.tweens.add({ targets: key, alpha: 0, delay: 320, duration: 300 });
-                this.time.delayedCall(300, () => lookTo(0, 520, done));
-              },
-            });
-          },
-        });
-      },
+    // toward the door; as the eye comes to it, the film; as the film goes, back
+    lookTo(0.62, 700, () => {
+      if (this._keyRun !== run) return;
+      run.stopFilm = playKeyInsert({
+        cue: (name) => { if (this._keyRun === run) sounds[name]?.(); },
+        done: () => { if (this._keyRun === run) lookTo(0, 520, unlocked); },
+      });
     });
   }
 
@@ -676,6 +667,7 @@ export default class HallScene extends BasePuzzleScene {
     // a key caught turning by a resize has simply turned: the door stands open
     const run = this._keyRun;
     if (run) {
+      run.stopFilm?.();
       this._keyRun = null;
       this.input.enabled = true;
       this.services.levels.unlockDoor(run.room.key);
@@ -695,6 +687,9 @@ export default class HallScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    // left with the key in the lock: the film goes, the door stays as it was
+    this._keyRun?.stopFilm?.();
+    this._keyRun = null;
     this._lever?.destroy();
     this._lever = null;
     this.game.events.off(HOUSE_SOLVED, this._onSolved);

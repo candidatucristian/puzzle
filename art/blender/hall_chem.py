@@ -5,9 +5,9 @@
 # The same passage as the floor below, gone to the laboratory and left: white
 # glazed tiles to the dado under a green band, old lime plaster above, a
 # boarded ceiling, a floor of buff and black tiles; copper gas pipes along
-# both walls under the ceiling. Four doors painted bottle green, frosted glass
-# in their upper halves, their numerals gilt (VII, VIII on the left; IX, X on
-# the right). Nearest on the right the way to the spiral stair going up to
+# both walls under the ceiling. Three doors painted bottle green, frosted
+# glass in their upper halves, their numerals gilt (VII, VIII on the left; IX
+# on the right). Nearest on the right the way to the spiral stair going up to
 # the floor above, the moon coming down it. Between the doors drawers and
 # cabinets of the trade with their glass on them: a still, a balance, reagent
 # bottles, shelves, a bookcase; at the end a blackboard with the chemist's
@@ -34,8 +34,8 @@ ONLY = set(arg("--only", "plate,lit,doors,front,switch").split(","))
 RNG = random.Random(1907)
 
 # ── this floor's places in hall.js ─────────────────────────────────────────
-DOORS = {-1: [1.25, 2.75], 1: [2.5, 3.6]}
-NUMERALS = {-1: ["VII", "VIII"], 1: ["IX", "X"]}
+DOORS = {-1: [1.25, 2.75], 1: [2.5]}
+NUMERALS = {-1: ["VII", "VIII"], 1: ["IX"]}
 SCONCES = {-1: [2.42, 3.95], 1: [3.15, 4.3]}
 STAIR_Y0, STAIR_Y1, STAIR_H = 1.46 * D0, 1.91 * D0, 0.76 * HR * K   # the way up, in the right wall
 SWITCH = Vector((WALL, 2.05 * D0, EYE - 0.06 * HR * K))              # the bulb's switch
@@ -631,7 +631,7 @@ def balance(x, y, z):
 balance(WALL - 0.24, CUP_Y - 0.05, btop)
 slab(WALL - 0.4, WALL - 0.3, CUP_Y + 0.22, CUP_Y + 0.34, btop, btop + 0.05, OAK_X, 0.004, keep=False)
 for i in range(4): cylinder("weight", WALL - 0.37 + (i % 2) * 0.035, CUP_Y + 0.25 + (i // 2) * 0.05, btop + 0.05, btop + 0.065 + i * 0.006, 0.008 + i * 0.002, BRASS, verts=16)
-# right, between doors IX and X: a worn bookcase, books and bottles in it
+# right, past door IX: a worn bookcase, books and bottles in it
 BOOK_Y = 6.52
 import_model("wooden_bookshelf_worn", width=0.86, at=(WALL - 0.19, BOOK_Y, 0), rot=-math.pi / 2)
 for n, z in enumerate(surfaces(WALL - 0.19, BOOK_Y, 1.4, 0.05)):
@@ -641,7 +641,7 @@ for n, z in enumerate(surfaces(WALL - 0.19, BOOK_Y, 1.4, 0.05)):
         y = BOOK_Y - 0.3
         while y < BOOK_Y + 0.3:
             k = RNG.uniform(0.8, 1.1); bottle(WALL - 0.2, y, z, k, cell=RNG.randrange(8) if RNG.random() < 0.7 else None, wide=RNG.random() < 0.4); y += 0.08 * k + RNG.uniform(0, 0.03)
-# right, past door X: a crate of glass in straw; a stool
+# right, by the end wall: a crate of glass in straw; a stool
 import_model("wooden_crate_01", width=0.82, at=(WALL - 0.24, 8.78, 0), rot=-math.pi / 2)
 import_model("wooden_stool_01", height=0.6, at=(1.7, 8.2, 0), rot=0.4)
 

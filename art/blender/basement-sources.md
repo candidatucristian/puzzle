@@ -14,7 +14,7 @@ The limestone tablet has 31 Boolean-cut grooves, in six pairs:
 1/5, 4/4, 1/3, 1/1, 4/1, 1/5. These preserve the existing ESCAPE puzzle.
 The Z beside the rack is also carved geometry.
 
-Cached Poly Haven CC0 material scans: `dark_wood`, `dark_wooden_planks`,
+Cached Poly Haven CC0 material scans: `dark_wood`,
 `old_sandstone_02`, `worn_plaster_wall`, `plastered_wall_04`.
 Stone UVs use the interior of a scanned block: the original scan's mortar
 does not cross the modeled flagstones, clay bricks or inscription tablet.
@@ -24,8 +24,8 @@ photographs, AI prop atlases or generated bitmap artwork enter this scene.
 
 The runtime loads only `assets/images/TapCode/cellar-native-v1.webp` for this
 room. It retains a procedural drawing as its missing-file fallback. The older
-photographic source files remain archived in the repository and are not loaded
-by TapCode. Candle flame, water drops, ripples and subtle ambient movement use
+photographic source files remain under `art/archive/tapcode-ai/`, outside the
+public assets copied into release builds. Candle flame, water drops, ripples and subtle ambient movement use
 landmarks exported from the render camera and the same uniform image scale.
 
 ```powershell

@@ -177,7 +177,7 @@ test('Romanian and Russian stay inside their pages at the largest text size and 
   }
 });
 
-test('an arriving letter keeps its own paper and wax and can still be filed', async ({page}) => {
+test('an arriving letter opens on the desk and can still be filed with reduced motion', async ({page}) => {
   await open(page, {letters: ['invitation']});
   await page.keyboard.press('Escape');
   await page.evaluate(async () => {
@@ -190,9 +190,11 @@ test('an arriving letter keeps its own paper and wax and can still be filed', as
   await expect(page.locator('.arrival')).toHaveAttribute('data-state', 'waiting');
   await page.locator('.env').click();
   await expect(page.locator('.arrival')).toHaveAttribute('data-state', 'reading');
-  await expect(page.locator('.arrival .letter-page')).toHaveAttribute('data-material', 'ready');
-  await expect(page.locator('.arrival .letter-paper')).toHaveCount(1);
-  await expect(page.locator('.arrival .letter-wax')).toHaveCount(1);
+  // the words lie on the paper in the desk's picture: no sheet of their own, no wax on them
+  await expect(page.locator('.arrival .film-last')).toBeVisible();
+  await expect(page.locator('.arrival .letter-paper')).toHaveCount(0);
+  await expect(page.locator('.arrival .letter-wax')).toHaveCount(0);
+  await expect(page.locator('.arrival .letter-words')).not.toBeEmpty();
   await page.locator('.arrival-file').click();
   await expect(page.locator('.arrival')).toHaveCount(0);
   expect(await page.evaluate(() => window.casefileArrival)).toBe('read');

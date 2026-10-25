@@ -10,19 +10,19 @@ import { thingAt } from "./roomKit.js";
 // picture (house/rooms/<Room>.json), and the render is laid over the screen
 // covering it, never stretched.
 const ROOMS = {
-  Study: { folder: "Room1" },
+  Study: { folder: "Room1", version: 2 },
   Room2: { folder: "Room2" },
   Room3: { folder: "Room3" },
   Room4: { folder: "Room4", extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
   Room5: { folder: "Room5" },
   Room7: { folder: "Room7", chest: false, extra: Array.from({ length: 6 }, (_, i) => `notebook-${i}`) },
   Room8: { folder: "Room8", chest: false },
-  ...Object.fromEntries([9, 10, 11, 12, 13].map((n) => [`Room${n}`, { folder: `Room${n}`, chest: false }])),
+  ...Object.fromEntries([9, 11, 12, 13].map((n) => [`Room${n}`, { folder: `Room${n}`, chest: false }])),
 };
-const keyOf = (room, name) => `${room}_render_${name}`;
+const keyOf = (room, name) => `${room}_render_${name}${ROOMS[room].version ? `_v${ROOMS[room].version}` : ""}`;
 const urlOf = (room, name) => {
   const folder = ROOMS[room].folder;
-  return `assets/images/${folder}/${folder.toLowerCase()}-${name}-render-v1.webp`;
+  return `assets/images/${folder}/${folder.toLowerCase()}-${name}-render-v${ROOMS[room].version ?? 1}.webp`;
 };
 const picturesOf = (room) => {
   const chest = ROOMS[room].chest === false ? [] : ["chest-shut", "chest-open"];

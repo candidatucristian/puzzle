@@ -285,7 +285,7 @@ export function paintThings(ctx, L) {
   // each door with its cabinet at its right hand (hall.js UPPER_DOORS): on
   // the left wall just past it, on the right just before it. The furthest
   // first: the tall glazed cabinet of reagents by door VIII, left; the rack of
-  // test tubes on its cabinet by door X, right; then by door VII the still,
+  // test tubes on its cabinet at the far end, right; then by door VII the still,
   // left, and by door IX the balance, right, clear of the lever over it
   labCabinet(ctx, L, -1, 3.31, 3.64, { height: 0.62, rows: 4, cols: 2, glass: true, depth: 0.1, vesselPhotos: L.vesselPhotoSheet });
   on(labCabinet(ctx, L, 1, 3.12, 3.52), () => paintTubeRack(ctx, L.tubeRackPhoto));

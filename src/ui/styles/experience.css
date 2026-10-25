@@ -10,7 +10,6 @@
 :root[data-reduced-motion="true"] #da-overlay .rot { transition: none; }
 #game-viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 #game-viewport #game-container { position: absolute; inset: 0; height: 100%; transform-origin: 0 0; }
-
 .has-open-dialog #interaction-cue, .has-open-dialog #interaction-pulse,
 .has-open-drawer #interaction-cue, .has-open-drawer #interaction-pulse { visibility: hidden; }
 

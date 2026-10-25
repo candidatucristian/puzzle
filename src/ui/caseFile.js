@@ -1,7 +1,7 @@
 import { LETTERS, letterById } from "../shared/story.js";
 import { PLACES } from "../shared/house.js";
 import { renderLetter } from "./letterPage.js";
-import { playArrival } from "./letterArrival.js";
+import { playArrival, letterArt, prepareLetterFilm } from "./letterArrival.js";
 import { paintEnvelope } from "../shared/envelope.js";
 
 // The case file: everything Inspector Wren gathers in Ashcombe House, kept in
@@ -37,6 +37,13 @@ const FILE_PLACES = [...new Set(PLACES.flatMap(place => [
 // the house's envelope (shared/envelope.js — the ROTOR study's), back up, its
 // red wax on the flap: a letter waiting in the side panel
 function envelopeIcon() {
+  const image = document.createElement("img");
+  image.className = "wl-envelope"; image.alt = "";
+  image.src = letterArt("envelope-sealed");
+  image.addEventListener("error", () => image.replaceWith(proceduralEnvelopeIcon()), {once: true});
+  return image;
+}
+function proceduralEnvelopeIcon() {
   const W = 152, H = 104;
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
@@ -279,6 +286,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
       const env = document.createElement("button");
       env.type = "button";
       env.className = "waiting-letter" + (id === fresh ? " is-new" : "");
+      env.dataset.waitingLetter = id;
       env.setAttribute("aria-label", `A letter found: ${letter.title} — open it`);
       env.title = letter.title;
       const mark = document.createElement("span");
@@ -286,19 +294,23 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
       mark.textContent = "!";
       mark.setAttribute("aria-hidden", "true");
       env.append(envelopeIcon(), mark);
-      scope.on(env, "click", () => openWaiting(id));
+      scope.on(env, "click", () => openWaiting(id, env.querySelector(".wl-envelope")));
       return env;
     }));
     shelf.hidden = list.length === 0;
+    // a letter waiting: its film loading meanwhile, so it plays the moment it is opened
+    if (list.length && !reducedMotion()) prepareLetterFilm();
   }
-  async function openWaiting(id) {
+  async function openWaiting(id, origin) {
     if (arriving || dialogs.isOpen || isBusy() || !waits(id)) return;
     arriving = true;
     const letter = i18n?.getLetter(id) || letterById(id);
-    const how = await playArrival(scope, { letter, sounds, target: button, reducedMotion: reducedMotion() });
+    const how = await playArrival(scope, { letter, sounds, target: button, origin, reducedMotion: reducedMotion(), i18n });
     arriving = false;
+    if (scope.closed) return;
     if (how === "read") { markRead(id); current = id; badge(true); }
     renderWaiting();
+    if (how !== "read") shelf?.querySelector(`[data-waiting-letter="${id}"]`)?.focus({ preventScroll: true });
   }
   async function flush() {
     if (!queue.length || arriving) return;
@@ -306,8 +318,9 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     const id = queue.shift();
     arriving = true;
     const letter = i18n?.getLetter(id) || letterById(id);
-    const how = await playArrival(scope, { letter, sounds, target: button, reducedMotion: reducedMotion() });
+    const how = await playArrival(scope, { letter, sounds, target: button, reducedMotion: reducedMotion(), i18n });
     arriving = false;
+    if (scope.closed) return;
     if (how === "read") markRead(id);
     current = id;
     badge(true);

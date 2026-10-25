@@ -10,7 +10,6 @@
 //   node art/blender/room_publish.mjs lab Room7
 //   node art/blender/room_publish.mjs weighing Room8
 //   node art/blender/room_publish.mjs nine Room9
-//   node art/blender/room_publish.mjs ten Room10
 //   node art/blender/room_publish.mjs physics Room11
 //   node art/blender/room_publish.mjs archive Room12
 //   node art/blender/room_publish.mjs workshop Room13

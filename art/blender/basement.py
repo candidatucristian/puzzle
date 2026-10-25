@@ -258,11 +258,11 @@ for row,(left,right) in enumerate(PAIRS):
     mark_centres.append(centres)
 
 # Carved Z sits after the fifth position of the rack's bottom row.
-z_tile=block('rubbed brick face for the last alphabet letter',2.96,3.19,4.69,4.83,.07,.30,bricks[3],keep=False,edge=.006)
+z_tile=block('rubbed limestone face for the last alphabet letter',2.96,3.19,4.69,4.83,.07,.30,stone,keep=False,edge=.006)
 stone_uv(z_tile)
 bpy.context.view_layer.objects.active=z_tile
 for mod in list(z_tile.modifiers):bpy.ops.object.modifier_apply(modifier=mod.name)
-z_path=[(3.015,4.691,.239),(3.135,4.691,.239),(3.015,4.691,.124),(3.135,4.691,.124)]
+z_path=[(2.995,4.691,.275),(3.155,4.691,.275),(2.995,4.691,.105),(3.155,4.691,.105)]
 for a,b in zip(z_path,z_path[1:]):
     cutter=bar('incised Z cutter',[a,b],.010,dark,keep=False)
     bpy.context.view_layer.objects.active=cutter;cutter.select_set(True)
@@ -326,7 +326,7 @@ rp=[project((x,y,z)) for x in [1.822,2.788] for y in [4.26,4.52] for z in [-.006
 metadata['rack']['box']={'x':min(p[0] for p in rp),'y':min(p[1] for p in rp),
                        'width':max(p[0] for p in rp)-min(p[0] for p in rp),
                        'height':max(p[1] for p in rp)-min(p[1] for p in rp)}
-metadata['rack']['z']=project((3.075,4.69,.18))
+metadata['rack']['z']=project((3.075,4.69,.19))
 assert metadata['engravedMarks']==31
 with open(OUT+'/render.json','w',encoding='utf8') as handle:json.dump(metadata,handle,indent=2)
 print('BASEMENT_LANDMARKS',json.dumps(metadata),flush=True)

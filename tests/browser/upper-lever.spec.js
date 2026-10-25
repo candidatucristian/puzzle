@@ -110,6 +110,39 @@ test('resize and leaving mid-signal release the switch without stale callbacks o
   expect(errors).toEqual([]);
 });
 
+test('solved, the bulb stays alight and the switch turns it off and on again', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    localStorage.setItem('puzzleProgress', JSON.stringify({ version: 3, completedLevelIds: ['lightswitch'], unlockedLevelIds: ['lightswitch'], lastPlayedLevelId: 'lightswitch' }));
+  });
+  await upperHall(page);
+  const bulb = () => evaluateApp(page, ({ services }) => {
+    const scene = services.levels.activeScene;
+    return { on: scene._bulbOn, amount: scene._lever.amount, light: scene._bulb[1].alpha, sparks: scene._lever.sparks.length };
+  });
+  expect(await bulb()).toMatchObject({ on: true, amount: 1, light: 1, sparks: 0 });
+  await pull(page);
+  await expect.poll(async () => (await bulb()).light).toBe(0);
+  await expect.poll(async () => (await bulb()).amount).toBe(0);
+  expect((await bulb()).sparks).toBe(0);
+  await pull(page);
+  await expect.poll(async () => (await bulb()).light).toBe(1);
+  await expect.poll(async () => (await bulb()).amount).toBe(1);
+  // switched off, left and come back to: still off
+  await pull(page);
+  await expect.poll(async () => (await bulb()).light).toBe(0);
+  await evaluateApp(page, ({ services }) => services.levels.enterHall());
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Hall');
+  await evaluateApp(page, ({ services }) => services.levels.enterPlace('Upper'));
+  await expect.poll(() => evaluateApp(page, ({ services }) => {
+    const scene = services.levels.activeScene;
+    return scene?.scene.key === 'Upper' && Boolean(scene._lever) && !scene.cameras.main.fadeEffect.isRunning;
+  })).toBe(true);
+  expect(await bulb()).toMatchObject({ on: false, amount: 0, light: 0 });
+  expect(errors).toEqual([]);
+});
+
 test('reduced motion keeps the Morse interaction and opens the switch without flying sparks', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

@@ -80,6 +80,22 @@ export class LightSwitch {
     });
   }
 
+  /** Worked as any switch is, once its puzzle is solved: thrown up into its
+   *  jaws, on; pulled out of them, off — no short, no sparks. */
+  set(on, animate = true) {
+    this._stopMotion();
+    const to = on ? 1 : 0;
+    this.phase = on ? "held" : "rest";
+    if (!animate || this.scene.reducedMotion) {
+      this.amount = to; this._draw();
+      return;
+    }
+    this.motion = this.scene.tweens.add({
+      targets: this, amount: to, duration: 230, ease: "Sine.easeInOut",
+      onUpdate: () => this._draw(), onComplete: () => { this.motion = null; },
+    });
+  }
+
   /** The bulb's light on the shut blades, as much as it is alight. */
   light(level) {
     this.lit?.setAlpha(level);

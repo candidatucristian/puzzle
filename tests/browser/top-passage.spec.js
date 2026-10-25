@@ -33,6 +33,14 @@ async function clickDoor(page, number) {
   await page.mouse.click(p.x, p.y);
 }
 
+// A door's first click opens it; it stands open, the passage staying put,
+// until the next click goes through.
+async function openDoor(page, number) {
+  await clickDoor(page, number);
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?._doorOpening?.elapsed ?? 0), { intervals: [20] }).toBeGreaterThan(1600);
+  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('TopHall');
+}
+
 test('the native XII and XIII doors play rendered latch and hinge poses and return to the passage', async ({ page }) => {
   test.setTimeout(60000);
   const errors = [];
@@ -50,6 +58,7 @@ test('the native XII and XIII doors play rendered latch and hinge poses and retu
       s.events.on('postupdate', sample);
       s.events.once('shutdown', () => s.events.off('postupdate', sample));
     });
+    await openDoor(page, number);
     await clickDoor(page, number);
     await settled(page, `Room${number}`);
     const frames = await evaluateApp(page, ({ game }) => [...new Set(game.registry.get('passageFrames'))]);
@@ -63,7 +72,7 @@ test('the native XII and XIII doors play rendered latch and hinge poses and retu
   expect(errors).toEqual([]);
 });
 
-test('resizing a native opening keeps one navigation and releases the passage scene', async ({ page }) => {
+test('resizing a native opening keeps it open, and the next click makes one navigation', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await passage(page);
@@ -74,6 +83,10 @@ test('resizing a native opening keeps one navigation and releases the passage sc
   await clickDoor(page, 12);
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?._doorOpening?.elapsed ?? 0), { intervals: [20] }).toBeGreaterThan(350);
   await page.setViewportSize({ width: 1320, height: 920 });
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?._doorOpening?.elapsed ?? 0), { intervals: [20] }).toBeGreaterThan(1600);
+  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('TopHall');
+  expect(await evaluateApp(page, ({ game }) => game.registry.get('passageRequests'))).toBe(0);
+  await clickDoor(page, 12);
   await settled(page, 'Room12');
   expect(await evaluateApp(page, ({ game }) => game.registry.get('passageRequests'))).toBe(1);
   await page.locator('#btn-leave').click();

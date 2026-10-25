@@ -7,7 +7,7 @@ const metadata = [
     "id": "binarytree",
     "key": "BinaryTree",
     "name": "The Old Tree",
-    "summary": "An old tree stands over a locked box, with a note left among its roots.",
+    "summary": "A living specimen grows inside Ivy's glazed oak root case, its branching roots marked with paper tags.",
     "code": "CABBAGE",
     "altCode": null,
     "hint": {
@@ -15,10 +15,11 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A pencil-sketch binary tree has a note pinned above it listing seven 3-letter paths: RLR, LRL, LLL, LLL, LRL, LLR, LRR. Eight lettered leaves sit at the bottom, left to right: B G A E D C H F — deliberately not alphabetical. Read each path as binary (L=0, R=1) to get a 3-bit index (0–7) into the leaf row: RLR=101=5→C, LRL=010=2→A, LLL=000=0→B, LLL=000=0→B, LRL=010=2→A, LLR=001=1→G, LRR=011=3→E. That spells C-A-B-B-A-G-E.",
+    "description": "An original Blender/Cycles close-up of Ivy's glazed oak root-observation case on a walnut bench. Real clear glass, tarnished brass hardware, photographed loam detail and original scanned Pelargonium leaves share one physically lit scene. The continuous root forks exactly three times to eight physical paper tags, left to right: B G A E D C H F. Seven brass route plaques read RLR, LRL, LLL, LLL, LRL, LLR, LRR. Follow each route from the stem, choosing the left or right branch at every fork: C, A, B, B, A, G, E. Everything needed is rendered into the scene; the player observes and enters CABBAGE. Camera-derived bounds keep every clue visible when resizing.",
     "references": [
-      "BT_CODES = [\"RLR\",\"LRL\",\"LLL\",\"LLL\",\"LRL\",\"LLR\",\"LRR\"] — the seven written paths",
-      "BT_LEAVES = [\"B\",\"G\",\"A\",\"E\",\"D\",\"C\",\"H\",\"F\"] — leaf letters, index = binary value of the path"
+      "binarytree/puzzle.js BINARY_PATHS / BINARY_LEAVES — the original seven routes and eight tip letters; also read directly by the Blender builder",
+      "art/blender/old_tree.py and old_tree_publish.mjs — complete native specimen, physical clues, packed editable scene and publication",
+      "binarytree/nativeTree.json — protective image bounds projected through the actual render camera"
     ]
   },
   {

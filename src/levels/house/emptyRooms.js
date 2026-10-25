@@ -1,6 +1,5 @@
 import QuietRoomScene from "./quietRoom.js";
 import ROOM9 from "./rooms/Room9.json";
-import ROOM10 from "./rooms/Room10.json";
 import ROOM11 from "./rooms/Room11.json";
 import ROOM12 from "./rooms/Room12.json";
 import ROOM13 from "./rooms/Room13.json";
@@ -10,8 +9,6 @@ import ROOM13 from "./rooms/Room13.json";
 // Blender render of its own (art/blender/room_<name>.py):
 //   IX    off the chemist's hall: empty, the fire laid and never lit, only the
 //         moon on the dusty flags (room_nine.py)
-//   X     off the chemist's hall: bare, the door open on the hall, nail holes
-//         round its frame where boards were (room_ten.py)
 //   XI    Orion's physics study: his workbench of apparatus, the slate, the
 //         tall sash window (room_physics.py)
 //   XII   under the roof: the archive, charts and instrument cases under the
@@ -29,9 +26,8 @@ const room = (key, spec, lights) => class extends QuietRoomScene {
 };
 
 export const Room9Scene = room("Room9", ROOM9);
-export const Room10Scene = room("Room10", ROOM10, { door: 0xffc07a });
 export const Room11Scene = room("Room11", ROOM11, { lamp: 0xffc078 });
 export const Room12Scene = room("Room12", ROOM12, { lantern: WARM });
 export const Room13Scene = room("Room13", ROOM13, { lantern: WARM });
 
-export const EMPTY_ROOMS = [Room9Scene, Room10Scene, Room11Scene, Room12Scene, Room13Scene];
+export const EMPTY_ROOMS = [Room9Scene, Room11Scene, Room12Scene, Room13Scene];

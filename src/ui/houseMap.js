@@ -25,7 +25,7 @@ const PLAN = [
   { title: "The Chemistry", roman: "II", x: 330, hall: { key: "Upper", x: 132, y: 130, w: 56, h: 340 },
     rooms: [
       { key: "Room7", n: 7, x: 40, y: 243, w: 92, h: 227, side: -1 }, { key: "Room8", n: 8, x: 40, y: 130, w: 92, h: 113, side: -1 },
-      { key: "Room9", n: 9, x: 188, y: 243, w: 92, h: 114, side: 1 }, { key: "Room10", n: 10, x: 188, y: 130, w: 92, h: 113, side: 1 },
+      { key: "Room9", n: 9, x: 188, y: 130, w: 92, h: 227, side: 1 },
     ], stairs: { x: 194, y: 363, w: 80, h: 101, dir: "up", well: true }, well: { x: 188, y: 357, w: 92, h: 113 }, landing: { x: 138, y: 136, w: 44, h: 48 } },
   { title: "The Physics", roman: "III", x: 650, round: { key: "Top", cx: 180, cy: 345, r: 78 },
     rooms: [

@@ -1,25 +1,23 @@
 # Room I, the study — Ivy's room — built in three dimensions and rendered with
 # Cycles, seen from the corner by the door, across the room to the window.
 #
-# Green damask over an oak dado, oak boards and a worn rug, a plaster ceiling.
-# Close at hand, a round lamp table: a brass lamp under a pleated shade, and a
-# glass case of earth with a seedling in it, its roots branching down against
-# the glass. Further in, free in the floor and at an angle to the walls, a
-# writing desk with a candle burning in a brass chamberstick, a microscope,
-# letters, the gilt chest; a green armchair pushed back from it. In the back
-# wall a tall round-headed casement, its right leaf swung wide on the wet
-# garden and the moon, a terracotta pot on the sill with something just come
-# up in it. Books from floor to cornice along the rest of the back wall, a
-# ladder against them; on the right-hand wall the brass cipher wheel on its
-# walnut plaque, pressed plants framed, a fern on a stand.
+# Quiet moss walls above oak panelling. A lower herbarium cabinet holds
+# thirty-six orderly reference books and three closed cupboards. A dedicated
+# specimen table presents the terrarium without a lampshade or loose props.
+# The writing desk and chair stand further back, leaving the foreground open.
+# Its sheet, microscope, candle and puzzle chest each have a distinct place.
+# The arched casement is oak throughout: frames, rails, sill and deep curved
+# lining. The clear mantel presents the cipher wheel; two pressed specimens
+# remain beside the window. Warm candlelight, muted stone and no room fog.
 #
-# The lamp burns until the case is solved, the candle until the wheel is: a
-# plate for each way they can stand (lights-<lamp><candle>), the chest apart,
-# and where it all fell in the picture (src/levels/house/rooms/Study.json).
+# One room plate and two chest cutouts share the same camera. Projected
+# interaction coordinates are staged beside the render and published together
+# with the version 2 images by study_publish.mjs.
 #
-#   blender -b --factory-startup -P art/blender/room_study.py -- [--samples 256] [--width 2560] [--only plates,chest]
+#   blender -b -P art/blender/room_study.py -- --samples 384 --width 2560
+#   node art/blender/study_publish.mjs
 
-import bpy, bmesh, math, os, sys, random
+import bpy, bmesh, math, os, sys, random, json
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
@@ -29,7 +27,7 @@ from room_furnish import *
 OUT = os.path.join(ROOT, ".artifacts/room-study")
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")       # room_boards.mjs
-SAMPLES = int(arg("--samples", "700"))
+SAMPLES = int(arg("--samples", "384"))
 WIDTH = int(arg("--width", "2560"))
 ONLY = set(arg("--only", "plates,chest").split(","))
 RNG = random.Random(1888)
@@ -41,17 +39,17 @@ LOOK = (float(arg("--lx", "100")), EYE[1], float(arg("--ld", "460")))
 scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "24")), lift=float(arg("--lift", "-0.1")))
 WIN = dict(x=118, hw=50, sill=92, top=286)      # the window in the back wall
 SPRING = WIN["top"] - WIN["hw"]
-LAMP_TABLE = dict(x=-112, d=262, r=42, h=70)
-DESK = dict(x=58, d=388, turn=math.radians(14), w=128, deep=68, h=76)
+LAMP_TABLE = dict(x=-126, d=292, r=37, h=72)
+DESK = dict(x=48, d=424, turn=math.radians(5), w=116, deep=60, h=76)
 HEARTH = dict(d0=250, d1=420, out=32)           # the chimney breast on the right-hand wall
 WHEEL = dict(d=335, y=190, r=21, plaque=27)    # over the mantel
 
 # ── materials ──────────────────────────────────────────────────────────────
-OAK = scan("oak", "dark_wood", size=1.0, tint=(0.82, 0.62, 0.44), bright=0.55, rough=(0.3, 0.55), bump=0.3, coat=0.35, upright=True)
-OAK_X = scan("oak across", "dark_wood", size=1.0, tint=(0.82, 0.62, 0.44), bright=0.52, rough=(0.3, 0.55), bump=0.3, coat=0.35)
+OAK = scan("oak", "dark_wood", size=1.0, tint=(0.69, 0.55, 0.4), bright=0.48, rough=(0.4, 0.62), bump=0.3, coat=0.16, upright=True)
+OAK_X = scan("oak across", "dark_wood", size=1.0, tint=(0.69, 0.55, 0.4), bright=0.46, rough=(0.4, 0.62), bump=0.3, coat=0.16)
 WALNUT = scan("walnut", "rosewood_veneer1", size=0.6, tint=(0.7, 0.52, 0.4), bright=0.62, sat=0.9, rough=(0.16, 0.34), bump=0.2, coat=0.55)
-BOARDS = scan("floor boards", "wood_floor_worn", size=2.0, tint=(0.72, 0.56, 0.42), bright=0.52, rough=(0.22, 0.5), bump=0.5, coat=0.4)
-PLASTER = scan("ceiling", "plastered_wall_04", size=2.0, tint=(0.82, 0.8, 0.72), bright=0.7, sat=0.3, rough=(0.8, 0.95), bump=0.5)
+BOARDS = scan("floor boards", "wood_floor_worn", size=2.0, tint=(0.64, 0.53, 0.4), bright=0.44, sat=0.62, rough=(0.42, 0.64), bump=0.35, coat=0.12)
+PLASTER = scan("ceiling", "plastered_wall_04", size=2.0, tint=(0.5, 0.48, 0.4), bright=0.55, sat=0.2, rough=(0.8, 0.95), bump=0.25)
 LEATHER = scan("desk leather", "brown_leather", size=0.5, tint=(0.4, 0.5, 0.3), bright=0.55, rough=(0.35, 0.6), bump=0.4)
 BRASS = aged_metal("brass", (0.55, 0.39, 0.17), (0.08, 0.055, 0.025), rough=(0.22, 0.5), scale=30, tarnish=0.55)
 IRON = plain("iron", (0.02, 0.02, 0.02), rough=0.45, metal=0.8)
@@ -61,7 +59,8 @@ _w = WAX.node_tree.nodes["Principled BSDF"]; _w.inputs["Base Color"].default_val
 WICK = plain("wick", (0.01, 0.01, 0.01), rough=0.9)
 TERRACOTTA = plain("terracotta", (0.42, 0.18, 0.09), rough=0.85)
 PAGES = plain("pages", (0.3, 0.26, 0.19), rough=0.9)
-FRAME = plain("window paint", (0.04, 0.035, 0.03), rough=0.45)
+FRAME = scan("window | oiled English oak", "dark_wood", size=0.65, tint=(0.88, 0.58, 0.3), bright=0.76, sat=0.65, rough=(0.38, 0.58), bump=0.28, coat=0.12, upright=True)
+FRAME_X = scan("window | oak rails and sill", "dark_wood", size=0.65, tint=(0.88, 0.58, 0.3), bright=0.76, sat=0.65, rough=(0.38, 0.58), bump=0.28, coat=0.12)
 def wallpaper():
     m = bpy.data.materials.new("green damask"); m.use_nodes = True
     N = m.node_tree.nodes; Lk = m.node_tree.links.new; b = N["Principled BSDF"]
@@ -81,12 +80,20 @@ def wallpaper():
     bw = N.new("ShaderNodeRGBToBW"); bp = N.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = 0.15; bp.inputs["Distance"].default_value = 0.001
     Lk(ti.outputs["Color"], bw.inputs["Color"]); Lk(bw.outputs["Val"], bp.inputs["Height"]); Lk(bp.outputs["Normal"], b.inputs["Normal"])
     return m
-PAPER = wallpaper()
+PAPER = scan("quiet moss walls", "plastered_wall_04", size=2.4, tint=(0.29, 0.36, 0.24), bright=0.5, sat=0.18, rough=(0.76, 0.92), bump=0.18)
 CIPHER = picture("cipher face", os.path.join(DRAWN, "cipher.png"), rough=0.3, coat=0.2, bump=0.4)
 CIPHER.node_tree.nodes["Principled BSDF"].inputs["Metallic"].default_value = 0.85
 PRINT = picture("botanical print", os.path.join(DRAWN, "study-print.png"), rough=0.9)
 spine_mat = bound(picture("spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3))
 COVERS = cover_materials()
+# A small, coordinated reference collection, rather than a wall of bright spines.
+_sp = spine_mat.node_tree.nodes["Principled BSDF"]
+_sp_color = _sp.inputs["Base Color"].links[0].from_socket
+_sp_tone = spine_mat.node_tree.nodes.new("ShaderNodeHueSaturation")
+_sp_tone.inputs["Saturation"].default_value = 0.3
+_sp_tone.inputs["Value"].default_value = 0.72
+spine_mat.node_tree.links.new(_sp_color, _sp_tone.inputs["Color"])
+spine_mat.node_tree.links.new(_sp_tone.outputs["Color"], _sp.inputs["Base Color"])
 VELVET = scan("velvet", "velour_velvet", size=0.5, tint=(0.1, 0.42, 0.22), bright=0.3, sat=1.0, rough=(0.6, 0.85), bump=0.3)
 VELVET.node_tree.nodes["Principled BSDF"].inputs["Sheen Weight"].default_value = 0.35
 LAYOUT = Layout("Study")
@@ -117,16 +124,31 @@ def dado(a, b, along_x, at, facing):
         piece(p0, p1, 18, DADO - 14, 3.2, OAK, 1.2)
     piece(a, b, DADO - 3, DADO + 4, 4.5, OAK_X, 1.0)
     piece(a, b, 0, 16, 3.5, OAK_X, 0.6)
-    piece(a, b, TOP - 14, TOP, 9, PLASTER, 2.0)
+    piece(a, b, TOP - 14, TOP, 9, OAK_X, 2.0)
 dado(-60, D1, False, X1, -1)
 dado(-60, D1, False, X0, 1)
 dado(wx1 + 14, X1, True, D1, -1)
 
 # ── the window: a round-headed casement, its right leaf swung wide ─────────
 REVEAL = 30
-box_cm("reveal", wx0 - 3, wx0, WIN["sill"], SPRING, D1, D1 + REVEAL, PLASTER)
-box_cm("reveal", wx1, wx1 + 3, WIN["sill"], SPRING, D1, D1 + REVEAL, PLASTER)
-box_cm("sill", wx0 - 10, wx1 + 10, WIN["sill"] - 4, WIN["sill"], D1 - 14, D1 + REVEAL - 6, OAK_X, 1.0)
+box_cm("oak reveal left", wx0 - 3, wx0, WIN["sill"], SPRING, D1, D1 + REVEAL, FRAME)
+box_cm("oak reveal right", wx1, wx1 + 3, WIN["sill"], SPRING, D1, D1 + REVEAL, FRAME)
+box_cm("oak sill", wx0 - 10, wx1 + 10, WIN["sill"] - 4, WIN["sill"], D1 - 14, D1 + REVEAL - 6, FRAME_X, 1.0)
+for x0, x1 in ((wx0 - 9, wx0 - 1), (wx1 + 1, wx1 + 9)):
+    box_cm("oak window architrave", x0, x1, WIN["sill"] - 4, SPRING, D1 - 4.5, D1, FRAME, 0.6)
+# The curved lining is wood through the full wall thickness as well.
+verts, faces = [], []
+for i in range(65):
+    a = math.pi * i / 64
+    for radius, depth in ((WIN["hw"] + 9, D1 - 4.5), (WIN["hw"] + 1, D1 - 4.5), (WIN["hw"] + 1, D1 + REVEAL)):
+        verts.append(tuple(P(WIN["x"] + math.cos(a) * radius, SPRING + math.sin(a) * radius, depth)))
+for i in range(64):
+    j = i * 3
+    faces.extend(((j, j + 3, j + 4, j + 1), (j + 1, j + 4, j + 5, j + 2)))
+arch_mesh = bpy.data.meshes.new("oak arch and inner lining"); arch_mesh.from_pydata(verts, [], faces); arch_mesh.update()
+arch_obj = arch(link(bpy.data.objects.new("oak arch and inner lining", arch_mesh)))
+arch_obj.data.materials.append(FRAME_X)
+arch_thickness = arch_obj.modifiers.new("solid oak lining", "SOLIDIFY"); arch_thickness.thickness = M(1.2)
 box_cm("window back", wx0 - 14, wx1 + 14, 0, WIN["sill"] - 4, D1 - 2, D1, OAK)
 GD = D1 + REVEAL - 10
 def leaf(x0, x1, hinge_x, angle):
@@ -137,19 +159,19 @@ def leaf(x0, x1, hinge_x, angle):
         if r: bevel(o, M(r), 1)
         o.parent = root; arch(o); return o
     rel(x0, x0 + 5, y0, y1, GD - 2.5, GD + 2.5, FRAME, 0.5); rel(x1 - 5, x1, y0, y1, GD - 2.5, GD + 2.5, FRAME, 0.5)
-    rel(x0, x1, y0, y0 + 8, GD - 2.5, GD + 2.5, FRAME, 0.5); rel(x0, x1, y1 - 5, y1, GD - 2.5, GD + 2.5, FRAME, 0.5)
+    rel(x0, x1, y0, y0 + 8, GD - 2.5, GD + 2.5, FRAME_X, 0.5); rel(x0, x1, y1 - 5, y1, GD - 2.5, GD + 2.5, FRAME_X, 0.5)
     xm = (x0 + x1) / 2
     rel(xm - 1.2, xm + 1.2, y0 + 8, y1 - 5, GD - 1.6, GD + 1.6, FRAME, 0.3)
     for k in (1, 2):
         y = y0 + 8 + k * (y1 - 5 - y0 - 8) / 3
-        rel(x0 + 5, x1 - 5, y - 1.2, y + 1.2, GD - 1.6, GD + 1.6, FRAME, 0.3)
+        rel(x0 + 5, x1 - 5, y - 1.2, y + 1.2, GD - 1.6, GD + 1.6, FRAME_X, 0.3)
     rel(x0 + 4, x1 - 4, y0 + 7, y1 - 4, GD - 0.3, GD + 0.3, GLASS)
     root.rotation_euler = (0, 0, angle)
     return root
 OPEN = math.radians(float(arg("--open", "62")))
 left_leaf = leaf(wx0, WIN["x"], wx0, 0.0)
 right_leaf = leaf(WIN["x"], wx1, wx1, OPEN)
-box_cm("transom", wx0, wx1, SPRING - 1.5, SPRING + 2.5, GD - 3, GD + 3, FRAME, 0.4)
+box_cm("oak transom", wx0, wx1, SPRING - 1.5, SPRING + 2.5, GD - 3, GD + 3, FRAME_X, 0.4)
 me = bpy.data.meshes.new("fanlight"); bm = bmesh.new(); n = 48
 r_out, r_in = WIN["hw"], WIN["hw"] - 5
 outer = [bm.verts.new(tuple(P(WIN["x"] + math.cos(math.pi * i / n) * r_out, SPRING + math.sin(math.pi * i / n) * r_out, GD - 2.5))) for i in range(n + 1)]
@@ -186,21 +208,37 @@ for a in (0.3, 0.3 + math.pi):
     lf.rotation_euler = (0.2, 0.3, a)
 
 # ── books from floor to cornice along the back wall, a ladder ──────────────
-SHELF_RUN = wx0 - 14 - X0 - 4
+SHELF_RUN = wx0 - 36 - X0 - 18
 def back_bookcase():
-    bookcase(RNG, 0, -1, 0, SHELF_RUN, TOP - 14, OAK, OAK_X, spine_mat, COVERS, PAGES, depth=36,
-             levels=(9, 46, 83, 120, 157, 194, 231, 268), bays=5, glass=GLASS)
+    # Three closed cupboards and two shallow, deliberately sparse shelves.
+    depth, top, lower = 33, 206, 88
+    box_cm("cabinet back", 0, 2, 0, top, 0, SHELF_RUN, OAK)
+    for d in (0, SHELF_RUN / 3, SHELF_RUN * 2 / 3, SHELF_RUN):
+        box_cm("cabinet stile", 0, depth, 0, top, d - 1.5, d + 1.5, OAK, 0.4)
+    for y in (8, lower, 147, top):
+        box_cm("cabinet shelf", 0, depth, y - 2.5, y, 0, SHELF_RUN, OAK_X, 0.5)
+    box_cm("cabinet crown", 0, depth + 2, top, top + 5, -2, SHELF_RUN + 2, OAK_X, 0.8)
+    for bay in range(3):
+        a, b = bay * SHELF_RUN / 3 + 4, (bay + 1) * SHELF_RUN / 3 - 4
+        box_cm("herbarium cupboard door", depth, depth + 2, 12, lower - 4, a, b, OAK, 0.5)
+        box_cm("raised oak panel", depth + 2, depth + 2.8, 21, lower - 13, a + 7, b - 7, OAK, 0.5)
+        sphere("cupboard brass knob", tuple(P(depth + 3.5, 51, b - 6)), M(1.1), BRASS)
+        for shelf_y in (lower, 147):
+            at = a + 3
+            for number in range(6):
+                width = 4.1 + (number % 3) * 0.6
+                book(RNG, 3, at, shelf_y + 0.2, width, 29 + (number % 2) * 2, 22, spine_mat, COVERS, PAGES, side=-1)
+                at += width + 0.45
 # (built against a wall at x 0 running along d, then turned to stand along the
 # back wall with its books toward the room)
-assembled("back bookcase", back_bookcase, at=(X0 + 2, 0, D1), turn=-math.pi / 2)
+assembled("herbarium cabinet", back_bookcase, at=(X0 + 18, 0, D1), turn=-math.pi / 2)
 def ladder():
     for e in (-1, 1):
         box_cm("ladder rail", e * 22 - 2, e * 22 + 2, 0, 250, -2, 2, OAK, 0.6)
     for k in range(9):
         y = 22 + k * 26
         box_cm("rung", -22, 22, y, y + 3, -1.5, 1.5, OAK, 0.5)
-lad = assembled("ladder", ladder, at=(-92, 0, D1 - 98))
-lad.rotation_euler = (math.radians(-14), 0, math.radians(6))
+# No ladder is needed for this lower cabinet.
 
 # ── close at hand: the lamp table, the lamp, the glass case of earth ──────
 LT = LAMP_TABLE
@@ -213,11 +251,7 @@ def lamp_table():
 assembled("lamp table", lamp_table, at=(LT["x"], 0, LT["d"]))
 ty = LT["h"]
 # the lamp, to the right of the case
-lx, ld = LT["x"] + 25, LT["d"] - 6
-lathe("lamp", [(0, 0), (0.075, 0), (0.078, 0.01), (0.06, 0.025), (0.03, 0.04), (0.02, 0.1), (0.032, 0.14), (0.016, 0.17), (0.014, 0.25), (0.02, 0.27), (0.012, 0.29), (0, 0.29)], BRASS, at=tuple(P(lx, ty, ld)), steps=40)
-SHADE = shade_material("lamp shade", (0.5, 0.41, 0.27), glow=(1.0, 0.6, 0.28), strength=float(arg("--shade", "0.5")), through=float(arg("--through", "0.04")))
-pleated_shade(lx, ld, ty + 24, ty + 46, 16.5, 8.5, SHADE)
-lamp_l = lamp("lamp bulb", "POINT", tuple(P(lx, ty + 33, ld)), energy=float(arg("--lamp", "32")), colour=(1.0, 0.68, 0.36), size=0.03)
+# The specimen table carries only the glass case; nothing masks the roots.
 # the glass case: a brass frame round glass, earth halfway up it, a seedling,
 # its roots against the front glass
 cx0, cx1, cd0, cd1 = LT["x"] - 30, LT["x"] + 4, LT["d"] - 24, LT["d"] - 2
@@ -312,8 +346,6 @@ for a in (1.6, 1.6 + math.pi):
     lf = leaf_blade("true leaf", tuple(P(sx_ + math.cos(a) * 2.2, soil + 14.2, sd_ + math.sin(a) * 2.2)), M(2.4), SEEDLING, squash=(1.0, 0.42, 0.1))
     lf.rotation_euler = (0.35, 0, a)
 # a book lying open at the back of the table, a magnifying glass
-o = book(RNG, 0, 0, 0, 3.2, 22, 16, spine_mat, COVERS, PAGES); o.rotation_euler = (math.pi / 2, 0, 0.6); o.location = P(LT["x"] + 8, ty + 1.6, LT["d"] + 22)
-import_model("magnifying_glass_01", height=M(27), at=tuple(P(LT["x"] - 22, ty + 1.4, LT["d"] + 16)), rot=2.4, tilt=(math.pi / 2, 0.0))
 
 # ── further in: the writing desk, the candle, the chest ───────────────────
 DK = DESK
@@ -330,14 +362,11 @@ def writing_desk():
         sphere("drip", tuple(P(cx + math.cos(a) * 1.1, h + 24 - L_ / 2, cd + math.sin(a) * 1.1)), M(0.3), WAX, squash=(1, 1, L_ / 0.6))
     cylinder("wick", M(cx), M(cd), M(h + 23.8), M(h + 24.9), M(0.07), WICK, verts=6)
     letters = paper("letters", (0.64, 0.58, 0.46), 0.3)
-    for (x, d, a) in ((-8, -6, 0.08), (-3, -3, -0.14)):
+    for (x, d, a) in ((-4, -6, 0.02),):
         s_ = card("letter", [P(-10.5, 0, -14.8), P(10.5, 0, -14.8), P(10.5, 0, 14.8), P(-10.5, 0, 14.8)], letters)
         s_.location = P(x, h + 0.15, d); s_.rotation_euler = (0, 0, a)
-    lathe("inkwell", [(0, 0), (0.035, 0), (0.035, 0.035), (0.018, 0.045), (0.012, 0.05), (0, 0.05)], GLASS, at=tuple(P(20, h, 16)), steps=32)
-    cylinder("ink", M(20), M(16), M(h + 0.2), M(h + 2.5), M(3.2), plain("ink", (0.005, 0.005, 0.01), rough=0.1))
     tube("pen", [(0, 0), (0.17, 0.004)], 0.004, plain("pen", (0.02, 0.02, 0.02), rough=0.3), at=tuple(P(10, h + 0.5, 4)), rot=0.5)
-    import_model("round_spectacles", width=M(13), at=tuple(P(6, h + 0.4, -14)), rot=0.3)
-    import_model("vintage_microscope", height=M(30), at=tuple(P(-14, h, 14)), rot=2.6)
+    import_model("vintage_microscope", height=M(28), at=tuple(P(-34, h, 13)), rot=2.6)
 desk_root = assembled("writing desk", writing_desk, at=(DK["x"], 0, DK["d"]), turn=DK["turn"])
 bpy.context.view_layer.update()
 CANDLE_AT = desk_root.matrix_world @ P(CANDLE_LOCAL[0], DK["h"] + 24.9, CANDLE_LOCAL[1])
@@ -348,12 +377,12 @@ def the_chest():
     chest_body, chest_hinge, lid_parts = chest(CHEST)
 assembled("chest", the_chest, at=(DK["x"], 0, DK["d"]), turn=DK["turn"])
 CHEST_PARTS = chest_body + lid_parts
-import_model("GreenChair_01", height=M(104), at=tuple(P(112, 0, 298)), rot=math.pi + float(arg("--chair", "0.75")))
+import_model("GreenChair_01", height=M(100), at=tuple(P(130, 0, 365)), rot=math.pi + float(arg("--chair", "0.48")))
 
 # ── the right-hand wall: the chimney breast, the hearth, the cipher wheel ──
 hb = HEARTH
 WX = X1 - hb["out"]                              # the breast's face
-MARBLE = scan("marble", "marble_01", size=0.8, tint=(0.86, 0.82, 0.74), bright=0.62, sat=0.5, rough=(0.12, 0.3), bump=0.1, coat=0.4)
+MARBLE = scan("honed hearth stone", "marble_01", size=0.8, tint=(0.42, 0.4, 0.34), bright=0.46, sat=0.15, rough=(0.64, 0.82), bump=0.12, coat=0.0)
 SOOT = plain("soot", (0.012, 0.01, 0.009), rough=0.95)
 CAST = aged_metal("cast iron", (0.035, 0.033, 0.03), (0.02, 0.016, 0.012), rough=(0.4, 0.75), scale=40, tarnish=0.3)
 breast = box_cm("chimney breast", WX, X1 + 1, 0, TOP, hb["d0"], hb["d1"], PAPER)
@@ -379,7 +408,7 @@ box_cm("mantel nosing", WX - 14, WX, 120, 122, fb["d0"] - 43, fb["d1"] + 43, MAR
 box_cm("skirting", WX - 3.5, WX, 0, 16, hb["d0"] - 3.5, hb["d1"] + 3.5, OAK_X, 0.6)
 for d0, d1 in ((hb["d0"] - 3.5, hb["d0"]), (hb["d1"], hb["d1"] + 3.5)):
     box_cm("skirting", WX, X1, 0, 16, d0, d1, OAK_X, 0.6)
-box_cm("breast cornice", WX - 9, X1, TOP - 14, TOP, hb["d0"] - 9, hb["d1"] + 9, PLASTER, 2.0)
+box_cm("breast cornice", WX - 9, X1, TOP - 14, TOP, hb["d0"] - 9, hb["d1"] + 9, OAK_X, 2.0)
 # the hearth stone, a brass fender
 box_cm("hearth", WX - 52, WX, 0, 2.5, fb["d0"] - 48, fb["d1"] + 48, MARBLE, 0.8)
 FD = (WX - 46, fb["d0"] - 40, fb["d1"] + 40)
@@ -418,10 +447,7 @@ for (y, a, ln) in ((19, 0.15, 40), (24, -0.25, 36)):
     for e in (-1, 1):
         sphere("charred end", tuple(P(gx - 2 + e * math.sin(a) * ln / 2, y, gd + e * math.cos(a) * ln / 2)), M(5.4), CHAR, squash=(1, 1, 1))
 fire_l = lamp("embers", "POINT", tuple(P(gx - 8, 18, gd)), energy=float(arg("--fire", "6")), colour=(1.0, 0.36, 0.1), size=0.12)
-# on the mantel: a clock, a pair of candlesticks (cold), a small plant
-import_model("mantel_clock_01", height=M(27), at=tuple(P(WX - 7, 123, (fb["d0"] + fb["d1"]) / 2)), rot=-math.pi / 2)
-import_model("brass_candleholders", height=M(24), at=tuple(P(WX - 7, 123, fb["d0"] - 30)), rot=-math.pi / 2)
-import_model("potted_plant_04", height=M(26), at=tuple(P(WX - 7, 123, fb["d1"] + 30)), rot=0.4)
+# The mantel is clear; the cipher wheel is its only focal object.
 # over it, the cipher wheel on its walnut plaque
 wh = WHEEL
 box_cm("plaque", WX - 3, WX, wh["y"] - wh["plaque"], wh["y"] + wh["plaque"], wh["d"] - wh["plaque"], wh["d"] + wh["plaque"], WALNUT, 1.2)
@@ -445,12 +471,9 @@ for k, (d0, d1) in enumerate(((440, 482), (494, 536))):
     for (a, b, c, e) in ((d0 - 3, d1 + 3, y0 - 3, y0), (d0 - 3, d1 + 3, y1, y1 + 3), (d0 - 3, d0, y0, y1), (d1, d1 + 3, y0, y1)):
         box_cm("frame", X1 - 2.5, X1, c, e, a, b, OAK_X if e - c < 10 else OAK, 0.4)
     arch(card("pressed plant", [P(X1 - 1, y0, d1), P(X1 - 1, y0, d0), P(X1 - 1, y1, d0), P(X1 - 1, y1, d1)], PRINT, uv=((0.05, 0.08, 0.38, 0.92), (0.62, 0.08, 0.95, 0.92))[k]))
-# a picture, gilt-framed, on the wall nearer the door
-darken_model(import_model("fancy_picture_frame_01", height=M(60), at=tuple(P(X1 - 3, 136, 212)), rot=-math.pi / 2), (0.42, 0.38, 0.32))
-# a philodendron in a big pot by the end of the bookcase
-import_model("potted_plant_02", height=M(118), at=tuple(P(wx0 - 30, 0, D1 - 52)), rot=0.6)
-# the rug under it all
-rug(-170, 170, 240, 500, rug_material("rug", f"{ASSETS}/textures/persian_rug.jpg", tint=(1.0, 0.5, 0.36), sat=1.1, value=0.42))
+# A plain, low-contrast rug anchors the desk without filling the foreground.
+RUG = scan("plain woven olive rug", "fabric_leather_02", size=0.22, tint=(0.24, 0.27, 0.18), bright=0.28, sat=0.15, rough=(0.88, 1.0), bump=0.22)
+rug(-150, 130, 322, 510, RUG)
 
 # ── light ──────────────────────────────────────────────────────────────────
 world = bpy.data.worlds.new("dark"); scene.world = world; world.use_nodes = True
@@ -467,7 +490,7 @@ shelf_l.visible_camera = False; shelf_l.visible_glossy = False
 side_l = lamp("fill on the right", "AREA", tuple(P(60, 250, 40)), aim=tuple(P(240, 150, 220)), energy=float(arg("--side", "18")), colour=(0.82, 0.86, 1.0), size=1.6)
 side_l.visible_camera = False; side_l.visible_glossy = False
 # (one light: the candle on the desk; the lamp is out, the fire dead)
-ONE = Light("candle", [candle_l]); OUT_LIGHTS = [Light("lamp", [lamp_l], [SHADE]), Light("fire", [fire_l])]
+ONE = Light("candle", [candle_l]); OUT_LIGHTS = [Light("fire", [fire_l])]
 _mul.inputs[1].default_value = 0.0                # (the fire in the grate dead too: only cold ash)
 clear_glass()
 air = room_haze(X0, X1, 0, D1, TOP, float(arg("--haze", "0")))
@@ -478,7 +501,6 @@ LAYOUT.thing("plantpot", "Look out at the garden", [P(wx0, WIN["sill"], GD), P(w
              [P(WIN["x"] + math.cos(math.pi * i / 8) * WIN["hw"], SPRING + math.sin(math.pi * i / 8) * WIN["hw"], GD) for i in range(9)])
 LAYOUT.thing("cryptex", "Look at the cipher wheel", corners(WX - 4, WX, wh["y"] - wh["plaque"], wh["y"] + wh["plaque"], wh["d"] - wh["plaque"], wh["d"] + wh["plaque"]))
 LAYOUT.chest(CHEST, at=(DK["x"], 0, DK["d"]), turn=DK["turn"])
-LAYOUT.glow("lamp", P(lx, ty + 34, ld), 150)
 LAYOUT.flame("candle", CANDLE_AT)
 LAYOUT.glow("candle", CANDLE_AT + Vector((0, 0, 0.02)), 46)
 bpy.context.view_layer.update()
@@ -488,13 +510,18 @@ for leaf_root, x0_, x1_, hinge in ((left_leaf, wx0, WIN["x"], wx0), (right_leaf,
 LAYOUT.pane([P(WIN["x"] + math.cos(math.pi * i / 24) * r_in, SPRING + math.sin(math.pi * i / 24) * r_in, GD) for i in range(25)])
 # (the moonbeam: from the window's opening down to where it lies on the floor)
 LAYOUT.dust([P(wx0, WIN["sill"], GD), P(wx1, SPRING + WIN["hw"], GD), P(51, 0, 459), P(117, 0, 204)])
-LAYOUT.write()
+with open(os.path.join(OUT, "Study.json"), "w", encoding="utf-8") as metadata:
+    json.dump(LAYOUT.data, metadata, indent=2)
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.8")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.7")))
 scene.cycles.volume_bounces = 1
 GLOSSY = ()                # (what keeps its shine: glazes, screens, lamp glass)
 finish(scene, SAMPLES, keep_gloss=GLOSSY)
+ONE.set(True)
+for light in OUT_LIGHTS: light.set(False)
+bpy.ops.file.pack_all()
+bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "study.blend"))
 plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:

@@ -57,6 +57,8 @@ export default class TapCodeScene extends BasePuzzleScene {
   }
 
   _build(W, H) {
+    // Keep navigation clear of the rack's last row and carved Z on short screens.
+    document.getElementById("btn-leave")?.classList.toggle("basement-compact-back", W / H > 2.3);
     const L = layoutCellar(W, H);
     const k = paintCellar(this, L).keys;
     this._L = L;
@@ -222,6 +224,7 @@ export default class TapCodeScene extends BasePuzzleScene {
   }
 
   shutdown() {
+    document.getElementById("btn-leave")?.classList.remove("basement-compact-back");
     this.tweens.killAll();
     this.time.removeAllEvents();
     releaseCellarArt(this.textures);

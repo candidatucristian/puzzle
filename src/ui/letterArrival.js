@@ -1,212 +1,322 @@
 import { Scope } from '../shared/Scope.js';
-import { paintSeal } from '../shared/envelope.js';
 import { renderLetter } from './letterPage.js';
-import { loadArrivalArt, paintDocumentSeal } from './documentArt.js';
-import { paintEnvelopePart, fractureWax } from './arrivalEnvelope.js';
-import { letterFolds } from './letterFolds.js';
+import FILM from './letterFilm.json';
 
-// A physical envelope, attached pieces of wax and a letter with two hinges.
-// Text and filing use the same case-file documents.
-export async function playArrival(scope, { letter, sounds, target, reducedMotion = false }) {
-  const art = await loadArrivalArt();
-  if (scope.closed) return 'later';
-  const still = reducedMotion;
+// A letter found in the house, opened on the desk. A film (art/blender/
+// letter_film.py): from straight above an old walnut desk in lamplight, the
+// envelope lies on the leather; the flap lifts, the wax breaking across; the
+// letter, folded in three, is drawn out of it, laid down and opened out. Its
+// words are then laid over the paper in the film's last frame, coming up as
+// if typed there. Filed, the film runs backward: the letter folds up and goes
+// back into its envelope, and the desk goes dark. The film plays the moves;
+// here are only fades.
+const BASE = import.meta.env.BASE_URL;
+export const letterArt = name => `${BASE}assets/images/CaseFile/letter/${name}.webp`;
+const still = name => `${BASE}assets/images/CaseFile/letter/${name}`;
+const filmOf = name => `${BASE}assets/video/${name}`;
+const W = FILM.width, H = FILM.height;
+
+// where the paper lies in the last frame, and the envelope in the first, in the film's pixels
+const corners = list => list.map(([x, y]) => [x * W, y * H]);
+const PAPER = (() => {
+  const [tl, tr, , bl] = corners(FILM.paper), all = corners(FILM.paper);
+  return {
+    cx: all.reduce((s, p) => s + p[0], 0) / 4, cy: all.reduce((s, p) => s + p[1], 0) / 4,
+    w: Math.hypot(tr[0] - tl[0], tr[1] - tl[1]), h: Math.hypot(bl[0] - tl[0], bl[1] - tl[1]),
+    angle: Math.atan2(tr[1] - tl[1], tr[0] - tl[0]) * 180 / Math.PI,
+  };
+})();
+const ENVELOPE = (() => {
+  const all = corners(FILM.envelope), xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+  return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+})();
+
+const el = (tag, className, text) => {
+  const node = document.createElement(tag);
+  node.className = className;
+  if (text) node.textContent = text;
+  return node;
+};
+const image = (src, className) => {
+  const node = el('img', className);
+  node.alt = ''; node.draggable = false; node.src = src;
+  return node;
+};
+const video = (className) => {
+  const node = el('video', className);
+  node.muted = true; node.playsInline = true; node.preload = 'auto';
+  node.disablePictureInPicture = true; node.setAttribute('aria-hidden', 'true');
+  return node;
+};
+// The films, loading ahead of time while a letter waits in the side panel —
+// the very ones then played, so what has come in is there to play.
+let prepared = null;
+export function prepareLetterFilm() {
+  if (prepared) return;
+  prepared = { opening: video('film-frame film-open'), folding: video('film-frame film-fold') };
+  prepared.opening.src = filmOf(FILM.open.src); prepared.folding.src = filmOf(FILM.fold.src);
+  prepared.opening.load(); prepared.folding.load();
+}
+const films = () => {
+  const ready_ = prepared ?? { opening: video('film-frame film-open'), folding: video('film-frame film-fold') };
+  prepared = null;
+  return ready_;
+};
+
+// there to be shown: decoded, or loaded enough to play — or given up on
+const decoded = (node, ms = 4000) => Promise.race([
+  node.decode().then(() => true, () => false), new Promise(done => setTimeout(() => done(false), ms))]);
+const playable = (node, ms = 6000) => new Promise(done => {
+  if (node.readyState >= 3) { done(true); return; }
+  const ok = () => { off(); done(true); }, bad = () => { off(); done(false); };
+  const timer = setTimeout(bad, ms);
+  const off = () => { clearTimeout(timer); node.removeEventListener('canplay', ok); node.removeEventListener('error', bad); };
+  node.addEventListener('canplay', ok); node.addEventListener('error', bad);
+});
+
+/** Plays it over the page. `origin`: the envelope waiting in the side panel
+ *  that was clicked — it goes into the desk, and the letter is opened at
+ *  once; without one the desk comes up with the envelope on it, waiting to be
+ *  opened. `target`: where it is filed. Resolves "read" once filed, "later"
+ *  if put away unopened. */
+export function playArrival(scope, { letter, sounds, target, origin = null, reducedMotion = false, i18n = null }) {
+  if (scope.closed) return Promise.resolve('later');
+  const still_ = reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const text = (key, fallback) => (i18n ? i18n.t(key) : fallback);
   return new Promise(resolve => {
-    const life = new Scope(), animations = new Set();
+    const life = new Scope(), moves = new Set();
     const previousFocus = document.activeElement;
-    const W = Math.round(Math.min(560, innerWidth * .7, innerHeight * .52 * 1.65));
-    const H = Math.round(W / 1.65), TIP = Math.round(H * .7);
-    const dpr = Math.min(2, devicePixelRatio || 1);
-    const root = el('div', 'arrival');
-    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true');
-    root.setAttribute('aria-label', `A letter found: ${letter.title}`); root.tabIndex = -1;
-    root.dataset.material = art.envelope ? 'ready' : 'fallback';
-    const caption = el('div', 'arrival-caption');
-    caption.append(el('p', 'arrival-eyebrow', 'A letter found'), el('p', 'arrival-title', letter.title));
-    const stage = el('div', 'arrival-stage'), rest = el('div', 'arrival-rest');
-    Object.assign(rest.style, { width: `${W}px`, height: `${H}px` });
-    const shadow = el('div', 'env-contact-shadow'), env = el('div', 'env');
-    Object.assign(env.style, { width: `${W}px`, height: `${H}px` });
-    env.tabIndex = -1; env.setAttribute('role', 'button'); env.setAttribute('aria-label', 'Open the letter');
-    const inside = layer('env-inside', W, H, dpr, g => paintEnvelopePart(g, art, 'inside', W, H, TIP));
-    const sheet = el('div', 'env-letter');
-    Object.assign(sheet.style, { left: `${W * .06}px`, width: `${W * .88}px`, top: `${H * .08}px`, height: `${H * .72}px` });
-    const pocket = layer('env-pocket', W, H, dpr, g => paintEnvelopePart(g, art, 'pocket', W, H, TIP));
-    const flap = el('div', 'env-flap');
-    Object.assign(flap.style, { width: `${W}px`, height: `${TIP + 2}px` });
-    const flapOut = layer('env-flap-out', W, TIP + 2, dpr, g => paintEnvelopePart(g, art, 'flap-out', W, H, TIP));
-    const flapIn = layer('env-flap-in', W, TIP + 2, dpr, g => {
-      g.translate(0, TIP + 2); g.scale(1, -1);
-      paintEnvelopePart(g, art, 'flap-in', W, H, TIP);
-    });
-    flap.append(flapOut, flapIn);
-    const r = W * .071;
-    const seal = layer('env-seal', r * 3, r * 3, dpr, g => {
-      const shape = { x: r * 1.5, y: r * 1.5, rx: r, ry: r };
-      if (!paintDocumentSeal(g, shape)) paintSeal(g, shape, { wax: '#a4251b', shine: true });
-    });
-    Object.assign(seal.style, { left: `${W / 2 - r * 1.5}px`, top: `${TIP - r * 1.6}px` });
-    env.append(inside, sheet, pocket, flap, seal); rest.append(shadow, env); stage.append(rest);
-    const reading = el('div', 'arrival-reading'), page = el('div', 'arrival-page');
-    page.tabIndex = 0; page.setAttribute('aria-label', letter.title);
-    const file = el('button', 'arrival-file', 'File it in the case file'); file.type = 'button'; file.disabled = true;
-    reading.append(page, file);
-    root.append(el('div', 'arrival-veil'), caption, stage, reading); document.body.append(root);
+    const waiting = origin?.closest('.waiting-letter') ?? null;
 
-    let state;
-    const setState = value => { state = value; root.dataset.state = value; };
+    // ── the room it is shown in ──
+    const root = el('div', 'arrival');
+    root.tabIndex = -1;
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', `${text('casefile.letterFound', 'A letter found')}: ${letter.title}`);
+    const veil = el('div', 'arrival-veil');
+    const stage = el('div', 'arrival-stage');
+    Object.assign(stage.style, { width: `${W}px`, height: `${H}px` });
+    const first = image(still(FILM.stills.first), 'film-frame film-first');
+    const last = image(still(FILM.stills.last), 'film-frame film-last');
+    const { opening, folding } = films();
+    const env = el('button', 'env');
+    env.type = 'button';
+    env.setAttribute('aria-label', text('casefile.openLetter', 'Open the letter'));
+    Object.assign(env.style, { left: `${ENVELOPE.x}px`, top: `${ENVELOPE.y}px`, width: `${ENVELOPE.w}px`, height: `${ENVELOPE.h}px` });
+    stage.append(first, opening, last, folding, env);
+    const caption = el('div', 'arrival-caption');
+    caption.append(el('p', 'arrival-eyebrow', text('casefile.letterFound', 'A letter found')), el('p', 'arrival-title', letter.title));
+    const hint = el('p', 'arrival-hint', text('casefile.openLetter', 'Open the letter'));
+    // the words, laid on the paper
+    const sheet = el('div', 'letter-sheet');
+    const page = el('div', 'arrival-page');
+    page.tabIndex = 0; page.setAttribute('aria-label', letter.title);
+    sheet.append(page);
+    const file = el('button', 'arrival-file', text('casefile.fileLetter', 'File it in the case file'));
+    file.type = 'button'; file.disabled = true;
+    root.append(veil, stage, caption, hint, sheet, file);
+    document.body.append(root);
+
+    let state = '', typist = null, plain = false;
+    const stateTo = value => { state = value; root.dataset.state = value; };
     const alive = () => !life.closed;
-    const wait = ms => new Promise(done => life.later(done, still ? 0 : ms));
-    const animate = (node, frames, options) => {
-      if (still || !alive()) { Object.assign(node.style, frames[frames.length - 1]); return null; }
+    const move = (node, frames, options) => {
+      if (still_ || !alive()) { Object.assign(node.style, frames[frames.length - 1]); return Promise.resolve(); }
       const animation = node.animate(frames, { fill: 'forwards', ...options });
-      animations.add(animation); return animation;
+      moves.add(animation);
+      return animation.finished.then(() => {}, () => {});
     };
-    const finished = animation => animation?.finished.catch(() => {}) ?? Promise.resolve();
+    const show = (node, ms = 300) => move(node, [{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing: 'ease-out' });
+    const hide = (node, ms = 300) => move(node, [{ opacity: getComputedStyle(node).opacity }, { opacity: 0 }], { duration: ms, easing: 'ease-in' });
+    const pause = ms => new Promise(done => life.later(done, still_ ? 0 : ms));
     const finish = how => {
       if (!alive()) return;
-      setState('gone');
-      for (const animation of animations) animation.cancel();
-      life.dispose(); root.remove(); scope.cleanups.delete(parentCleanup);
-      (target?.isConnected ? target : previousFocus)?.focus?.({ preventScroll: true });
+      stateTo('gone');
+      typist?.stop(); typist = null;
+      for (const animation of moves) animation.cancel();
+      for (const film of [opening, folding]) { film.pause(); film.removeAttribute('src'); film.load(); }
+      life.dispose(); root.remove();
+      waiting?.classList.remove('is-in-flight');
+      scope.cleanups.delete(parentCleanup);
+      const focus = how === 'read' && target?.isConnected ? target : previousFocus?.isConnected ? previousFocus : target;
+      focus?.focus?.({ preventScroll: true });
       resolve(how);
     };
     const parentCleanup = scope.add(() => finish('later'));
 
-    const unfold = async from => {
-      const article = renderLetter(page, letter);
-      // blank while it unfolds; the words are written on it once it lies open
-      if (!still) article.classList.add('is-unwritten');
-      page.style.visibility = 'hidden'; reading.classList.add('is-shown');
-      // Paint the canvases before making the matching panel copies.
-      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-      if (!alive()) return;
-      if (still) { page.style.visibility = 'visible'; typist = sounds?.typing?.() ?? null; return; }
-      const folds = letterFolds(article, root, true), { rig, box } = folds;
-      const area = page.getBoundingClientRect();
-      const fit = Math.min(1, (area.height - 44) / box.height);
-      const dx = from.left + from.width / 2 - box.left - box.width / 2;
-      const dy = from.top + from.height / 2 - box.top - box.height / 2;
-      const lift = area.top + area.height / 2 - box.top - box.height / 2;
-      const restPose = `translate(0,${lift}px) scale(${fit})`;
-      sheet.style.visibility = 'hidden';
-      await finished(animate(rig, [
-        { transform: `translate(${dx}px,${dy}px) scale(${from.width / box.width}) rotate(-2deg)` },
-        { transform: restPose },
-      ], { duration: 300, easing: 'cubic-bezier(.22,.65,.3,1)' }));
-      if (!alive()) return;
-      setState('unfolding'); sounds?.unfold();
-      const top = animate(folds.top, [{ transform: 'rotateX(-179deg)' }, { transform: 'rotateX(-78deg)', offset: .55 }, { transform: 'rotateX(0deg)' }], { duration: 420, easing: 'cubic-bezier(.25,.55,.25,1)' });
-      await wait(160);
-      if (!alive()) return;
-      const bottom = animate(folds.bottom, [{ transform: 'rotateX(179deg)' }, { transform: 'rotateX(65deg)', offset: .65 }, { transform: 'rotateX(0deg)' }], { duration: 400, easing: 'cubic-bezier(.25,.55,.25,1)' });
-      await Promise.all([finished(top), finished(bottom)]);
-      if (!alive()) return;
-      await finished(animate(rig, [{ transform: restPose }, { transform: 'translate(0,0) scale(1)' }], { duration: 240, easing: 'cubic-bezier(.3,.65,.3,1)' }));
-      page.style.visibility = 'visible'; rig.remove();
-      article.classList.replace('is-unwritten', 'is-writing');
-      typist = sounds?.typing?.() ?? null;
-      life.later(() => article.classList.remove('is-writing'), 2100);
+    // ── the film laid over the screen: its full height shown, centred; the
+    // words on its paper in screen pixels, large enough to read ──
+    let scale = 1;
+    const fit = () => {
+      scale = innerHeight / H;
+      const x = (innerWidth - W * scale) / 2;
+      stage.style.transform = `translate(${x}px, 0px) scale(${scale})`;
+      const w = PAPER.w * scale, h = PAPER.h * scale;
+      Object.assign(sheet.style, {
+        left: `${x + PAPER.cx * scale - w / 2}px`, top: `${PAPER.cy * scale - h / 2}px`,
+        width: `${w}px`, height: `${h}px`, transform: `rotate(${PAPER.angle}deg)`,
+        fontSize: `${Math.max(13, Math.min(18, w / 34))}px`,
+      });
     };
-    // the typewriter's keys, as the letter lies open to be read
-    let typist = null;
+    fit();
+    life.on(window, 'resize', fit);
 
-    const open = async () => {
-      if (state !== 'waiting') return;
-      setState('breaking'); env.tabIndex = -1;
-      root.classList.remove('is-waiting'); root.focus({ preventScroll: true });
-      await finished(animate(flap, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-5deg)' }, { transform: 'rotateX(-2deg)' }], { duration: 120, easing: 'ease-in-out' }));
-      if (!alive()) return;
-      sounds?.crack(); fractureWax(seal, flap, env, animate);
-      caption.classList.add('is-away');
-      await wait(60);
-      if (!alive()) return;
-      setState('opening'); sounds?.open();
-      animate(flapOut, [{ opacity: 1 }, { opacity: .72, offset: .5 }, { opacity: .9 }], { duration: 420 });
-      await finished(animate(flap, [{ transform: 'rotateX(-2deg)' }, { transform: 'rotateX(-100deg)', offset: .62 }, { transform: 'rotateX(-168deg)' }], { duration: 420, easing: 'cubic-bezier(.3,.55,.3,1)' }));
-      if (!alive()) return;
-      flap.style.zIndex = '0'; setState('drawing'); sounds?.open();
-      await finished(animate(sheet, [{ transform: 'translateY(0)' }, { transform: `translateY(${-H * .95}px) rotate(-1deg)` }], { duration: 380, easing: 'cubic-bezier(.3,.2,.2,1)' }));
-      if (!alive()) return;
-      const from = sheet.getBoundingClientRect();
-      animate(env, [{ transform: resting, opacity: 1 }, { transform: 'translate(12px,90px) rotateX(8deg) rotate(2deg)', opacity: 0 }], { duration: 380, easing: 'ease-in' });
-      animate(shadow, [{ opacity: .65 }, { opacity: 0 }], { duration: 380 });
-      await unfold(from);
-      if (!alive()) return;
-      setState('reading'); file.disabled = false;
-      (page.scrollHeight > page.clientHeight ? page : file).focus({ preventScroll: true });
+    // ── its sounds, at the film's moments ──
+    const cueing = (film, cues, voices) => {
+      const pending = Object.entries(cues).sort((a, b) => a[1] - b[1]);
+      let watching = null;
+      const look = () => {
+        watching = null;
+        if (!alive()) return;
+        while (pending.length && film.currentTime >= pending[0][1]) voices[pending.shift()[0]]?.();
+        if (pending.length && !film.ended) watching = requestAnimationFrame(look);
+      };
+      watching = requestAnimationFrame(look);
+      life.add(() => watching !== null && cancelAnimationFrame(watching));
     };
-
-    const away = async how => {
-      if (state !== 'reading') return;
-      setState('filing');
-      file.disabled = true;
-      typist?.stop(); typist = null;
-      sounds?.file();
-      let node = page, from = env.getBoundingClientRect();
-      if (!still) {
-        const folds = letterFolds(page.querySelector('.letter-page'), root);
-        node = folds.rig; from = folds.box; page.style.visibility = 'hidden';
-        const top = animate(folds.top, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(-179deg)' }], { duration: 600, easing: 'ease-in-out' });
-        const bottom = animate(folds.bottom, [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(179deg)' }], { duration: 650, delay: 110, easing: 'ease-in-out' });
-        await Promise.all([finished(top), finished(bottom)]);
-      }
-      if (!alive()) return;
-      const into = target?.getBoundingClientRect();
-      if (into && from.width) {
-        const dx = into.left + into.width / 2 - from.left - from.width / 2;
-        const dy = into.top + into.height / 2 - from.top - from.height / 2;
-        const scale = Math.max(.035, into.height / from.width);
-        await finished(animate(node, [
-          { transform: 'translate(0,0) scale(1)', opacity: 1 },
-          { transform: `translate(${dx * .38}px,${dy * .28}px) scale(.6) rotate(-3deg)`, opacity: 1, offset: .45 },
-          { transform: `translate(${dx}px,${dy}px) scale(${scale}) rotate(-2deg)`, opacity: .15 },
-        ], { duration: 760, easing: 'cubic-bezier(.45,.1,.55,1)' }));
-      }
-      if (!alive()) return;
-      node.style.visibility = 'hidden'; root.classList.remove('is-shown');
-      target?.classList.add('is-receiving'); scope.later(() => target?.classList.remove('is-receiving'), 700);
-      await wait(220); finish(how);
-    };
-
-    // it has to be opened: there is no putting it off (Esc does nothing until it is read)
-    life.on(env, 'click', open); life.on(file, 'click', () => away('read'));
-    life.on(window, 'keydown', event => {
-      if (event.key === 'Escape' && ['waiting', 'reading'].includes(state)) { event.preventDefault(); event.stopPropagation(); if (state === 'reading') away('read'); }
-      else if (['Enter', ' '].includes(event.key) && event.target === env && state === 'waiting') { event.preventDefault(); event.stopPropagation(); open(); }
-      else if (event.key === 'Tab') {
-        const focusable = state === 'waiting' ? [env] : state === 'reading' ? [page, file] : [root];
-        const index = focusable.indexOf(document.activeElement);
-        event.preventDefault(); focusable[(index + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length].focus({ preventScroll: true });
-      }
-    }, true);
-
-    const resting = 'translate(0,0) rotateX(3deg) rotate(-2deg)';
-    setState('arriving'); requestAnimationFrame(() => root.classList.add('is-shown'));
-    sounds?.whoosh();
-    animate(shadow, [{ opacity: 0, transform: 'translate(22px,30px) scale(.82)' }, { opacity: .65, transform: 'translate(0,0) scale(1)' }], { duration: 1050, easing: 'ease-out' });
-    finished(animate(env, [
-      { transform: 'translate(45px,110px) rotateX(22deg) rotate(-7deg)', opacity: 0 },
-      { transform: 'translate(0,-3px) rotateX(2deg) rotate(-2deg)', opacity: 1, offset: .78 },
-      { transform: resting, opacity: 1 },
-    ], { duration: 1050, easing: 'cubic-bezier(.2,.65,.3,1)' })).then(() => {
-      if (!alive() || state !== 'arriving') return;
-      sounds?.land(); setState('waiting'); root.classList.add('is-waiting');
-      env.tabIndex = 0; env.focus({ preventScroll: true });
+    const play = film => new Promise(done => {
+      const ended = () => done(true), failed = () => done(false);
+      film.addEventListener('ended', ended, { once: true });
+      film.addEventListener('error', failed, { once: true });
+      // (shown only once it is playing: it opens on the frame under it, so nothing flickers)
+      film.addEventListener('playing', () => { film.style.opacity = '1'; }, { once: true });
+      film.currentTime = 0;
+      film.play()?.catch(failed);
+      // a film that never gets going does not keep the letter waiting
+      life.later(() => done(false), (film === opening ? FILM.open.duration : FILM.fold.duration) * 1000 + 4000);
     });
-  });
-}
 
-function el(tag, className, text) {
-  const node = document.createElement(tag); node.className = className;
-  if (text) node.textContent = text;
-  return node;
-}
-function layer(className, width, height, dpr, paint) {
-  const canvas = el('canvas', className);
-  canvas.width = Math.ceil(width * dpr); canvas.height = Math.ceil(height * dpr);
-  Object.assign(canvas.style, { width: `${width}px`, height: `${height}px` });
-  canvas.setAttribute('aria-hidden', 'true');
-  const g = canvas.getContext('2d'); g.scale(dpr, dpr); paint(g);
-  return canvas;
+    // ── it comes ──
+    const arrive = async () => {
+      stateTo('arriving');
+      const shown = [show(veil, 420), show(stage, 520),
+        move(caption, [{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 640, delay: 200, easing: 'cubic-bezier(.16,1,.3,1)' })];
+      // from the side panel: the envelope there goes down onto the desk
+      if (origin?.isConnected && !still_) {
+        const from = origin.getBoundingClientRect(), stageBox = stage.getBoundingClientRect();
+        const to = { w: ENVELOPE.w * scale / FILM.icon[0], h: ENVELOPE.h * scale / FILM.icon[1] };
+        to.x = stageBox.left + (ENVELOPE.x + ENVELOPE.w / 2) * scale - to.w / 2;
+        to.y = stageBox.top + (ENVELOPE.y + ENVELOPE.h / 2) * scale - to.h / 2;
+        const flier = image(letterArt('envelope-sealed'), 'arrival-flier');
+        Object.assign(flier.style, { left: `${to.x}px`, top: `${to.y}px`, width: `${to.w}px`, height: `${to.h}px` });
+        root.append(flier);
+        waiting?.classList.add('is-in-flight');
+        sounds?.whoosh?.();
+        const dx = from.left + from.width / 2 - (to.x + to.w / 2), dy = from.top + from.height / 2 - (to.y + to.h / 2);
+        shown.push(move(flier, [{ transform: `translate(${dx}px, ${dy}px) scale(${from.width / to.w})`, opacity: 1 },
+          { transform: 'none', opacity: 1, offset: 0.82 }, { transform: 'none', opacity: 0 }], { duration: 900, easing: 'cubic-bezier(.16,1,.3,1)' })
+          .then(() => flier.remove()));
+      }
+      await Promise.all(shown);
+      if (!alive()) return;
+      if (origin) { await pause(240); if (alive()) void open(); return; }
+      stateTo('waiting');
+      show(hint, 420);
+      env.focus({ preventScroll: true });
+    };
+
+    // ── it is opened ──
+    const open = async () => {
+      if (!alive() || (state !== 'waiting' && state !== 'arriving')) return;
+      stateTo('opening');
+      env.disabled = true;
+      root.focus({ preventScroll: true });
+      if (getComputedStyle(hint).opacity !== '0') hide(hint, 200);
+      if (!still_) {
+        cueing(opening, FILM.open.cues, {
+          crack: () => sounds?.crack?.(), open: () => sounds?.open?.(),
+          // (the title goes as the letter comes out, before the letter is lifted up under it)
+          slide: () => { sounds?.page?.(true); hide(caption, 600); },
+          unfold: () => sounds?.unfold?.(), unfold2: () => sounds?.unfold?.(),
+        });
+        const played = await play(opening);
+        if (!alive()) return;
+        if (!played) last.style.opacity = '1';
+      } else {
+        last.style.opacity = '1';
+      }
+      caption.style.opacity = '0';
+      read();
+    };
+
+    // ── the words come up on the paper, and it is there to be read ──
+    const read = () => {
+      stateTo('reading');
+      env.hidden = true;
+      const article = renderLetter(page, letter, plain ? { seal: false } : { paper: false, seal: false });
+      sheet.style.opacity = '1';
+      if (!still_) {
+        article.classList.add('is-writing');
+        typist = sounds?.typing?.() ?? null;
+        life.later(() => article.classList.remove('is-writing'), 2100);
+      }
+      file.disabled = false;
+      show(file, 360);
+      page.focus({ preventScroll: true });
+    };
+
+    // ── filed: folded up again into its envelope, and the desk goes dark ──
+    const fileIt = async () => {
+      if (!alive() || state !== 'reading') return;
+      stateTo('filing');
+      file.disabled = true;
+      root.focus({ preventScroll: true });
+      typist?.stop(); typist = null;
+      hide(file, 220);
+      await hide(sheet, 280);
+      if (!alive()) return;
+      if (!still_ && !plain && opening.ended) {
+        cueing(folding, FILM.fold.cues, { fold: () => sounds?.unfold?.(), fold2: () => sounds?.unfold?.(), slide: () => sounds?.page?.(true) });
+        await play(folding);
+        if (!alive()) return;
+      }
+      sounds?.file?.();
+      await Promise.all([hide(stage, 460), hide(veil, 520)]);
+      finish('read');
+    };
+
+    // ── put away unopened ──
+    const putAway = async () => {
+      if (!alive() || (state !== 'waiting' && state !== 'arriving')) return;
+      stateTo('filing');
+      await Promise.all([hide(stage, 380), hide(caption, 240), hide(hint, 200), hide(veil, 460)]);
+      finish('later');
+    };
+
+    life.on(env, 'click', () => void open());
+    life.on(file, 'click', () => void fileIt());
+    life.on(root, 'keydown', event => {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (state === 'reading') void fileIt();
+        else if (state === 'waiting' || state === 'arriving') void putAway();
+        // (in the middle of the film: on to its end, the letter open)
+        else if (state === 'opening' && opening.duration) opening.currentTime = opening.duration;
+      } else if (event.key === 'Tab') {
+        event.preventDefault();
+        if (state === 'reading') (document.activeElement === page ? file : page).focus({ preventScroll: true });
+        else if (state === 'waiting') env.focus({ preventScroll: true });
+      }
+    });
+
+    // ready: its first frame drawn and (unless motion is reduced) its films loaded
+    stateTo('preparing');
+    root.focus({ preventScroll: true });
+    void (async () => {
+      if (!still_ && !opening.getAttribute('src')) { opening.src = filmOf(FILM.open.src); folding.src = filmOf(FILM.fold.src); }
+      const [hasFirst, hasLast, hasFilm] = await Promise.all([decoded(first), decoded(last), still_ ? Promise.resolve(true) : playable(opening)]);
+      if (!alive()) return;
+      // (nothing of the desk to be had: the letter on its own paper, there to be read)
+      if (!hasFirst || !hasLast || !hasFilm) {
+        plain = true;
+        root.classList.add('is-plain');
+        stage.hidden = true; hint.hidden = true; caption.style.opacity = '1';
+        await show(veil, 260);
+        if (alive()) read();
+        return;
+      }
+      await arrive();
+    })();
+  });
 }

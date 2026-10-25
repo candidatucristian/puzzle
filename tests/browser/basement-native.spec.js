@@ -41,9 +41,17 @@ test('the Blender basement loads without AI images and keeps its engraved puzzle
     const changed = page.viewportSize().width !== width;
     await page.setViewportSize({ width, height });
     if (changed) await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene._L.W)).not.toBe(oldWidth);
-    const scene = await evaluateApp(page, ({ services }) => {
+    const scene = await evaluateApp(page, ({ services, game }) => {
       const s = services.levels.activeScene, L = s._L, exit = s.children.getByName('basement-exit');
-      return { W: L.W, H: L.H, slab: L.slab, native: L.nativeRender, exit: { x: exit.x, y: exit.y } };
+      const n = L.native, rack = n.rack.box;
+      const canvas = game.canvas.getBoundingClientRect(), back = document.getElementById('btn-leave').getBoundingClientRect();
+      return { W: L.W, H: L.H, slab: L.slab, native: L.nativeRender, exit: { x: exit.x, y: exit.y },
+        rack: { x: n.x + rack.x * n.scale, y: n.y + rack.y * n.scale,
+          w: rack.width * n.scale, h: rack.height * n.scale },
+        z: { x: n.x + (n.rack.z[0] - 24) * n.scale, y: n.y + (n.rack.z[1] - 24) * n.scale,
+          w: 48 * n.scale, h: 48 * n.scale },
+        back: { x: (back.x - canvas.x) * L.W / canvas.width, y: (back.y - canvas.y) * L.H / canvas.height,
+          w: back.width * L.W / canvas.width, h: back.height * L.H / canvas.height } };
     });
     expect(scene.native).toBe(true);
     expect(scene.slab.x0).toBeGreaterThanOrEqual(0);
@@ -54,8 +62,20 @@ test('the Blender basement loads without AI images and keeps its engraved puzzle
     expect(scene.exit.y).toBeGreaterThanOrEqual(32);
     expect(scene.exit.x).toBeLessThanOrEqual(scene.W - 32);
     expect(scene.exit.y).toBeLessThanOrEqual(scene.H - 32);
+    for (const clue of [scene.rack, scene.z]) {
+      expect(clue.x).toBeGreaterThanOrEqual(0);
+      expect(clue.y).toBeGreaterThanOrEqual(0);
+      expect(clue.x + clue.w).toBeLessThanOrEqual(scene.W);
+      expect(clue.y + clue.h).toBeLessThanOrEqual(scene.H);
+    }
+    const { z, back } = scene;
+    expect(z.x < back.x + back.w && z.x + z.w > back.x &&
+      z.y < back.y + back.h && z.y + z.h > back.y).toBe(false);
     await page.locator('#game-viewport').screenshot({ path: `.artifacts/basement-native-review/${label}.png` });
   }
+  await page.locator('#btn-leave').click();
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.place?.key)).toBe('Room5');
+  await expect(page.locator('#btn-leave')).not.toHaveClass(/basement-compact-back/);
   expect([...new Set(requests)]).toEqual(['cellar-native-v1.webp']);
   expect(errors).toEqual([]);
 });

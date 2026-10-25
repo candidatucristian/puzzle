@@ -8,7 +8,7 @@ import { loadDocumentArt, paintDocumentSeal } from "./documentArt.js";
  *  signature, on a sheet the size the words need — sealed in wax, unless it
  *  is a document that never was (`seal: false`). Filed letters can share the
  *  dossier's sheet with `paper: false`, without loading or painting another. */
-export function renderLetter(host, letter, { note = "", seal: sealed = true, paper: textured = true } = {}) {
+export function renderLetter(host, letter, { note = "", seal: sealed = true, paper: textured = true, materials } = {}) {
   host.replaceChildren();
   const page = document.createElement("article");
   page.className = "letter-page";
@@ -61,9 +61,9 @@ export function renderLetter(host, letter, { note = "", seal: sealed = true, pap
       g.clearRect(0, 0, 160, 160);
       if (!paintDocumentSeal(g, seal)) paintSeal(g, seal, { wax: "#a4251b", shine: true });
     }
-    page.dataset.material = art?.paper && art?.wax ? "ready" : "fallback";
+    page.dataset.material = art?.paper && (!sealed || art?.wax) ? "ready" : "fallback";
   };
-  requestAnimationFrame(() => paint());
-  loadDocumentArt().then(art => requestAnimationFrame(() => paint(art)));
+  requestAnimationFrame(() => paint(materials));
+  if (materials === undefined) loadDocumentArt().then(art => requestAnimationFrame(() => paint(art)));
   return page;
 }

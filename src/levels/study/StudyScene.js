@@ -5,8 +5,8 @@ import { loadRoomRender } from "../house/roomRender.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The study: the first room off the hall (see house/RoomScene.js for what
-// every room does). Three puzzles are found in it: a glass case of earth by
-// the lamp, the window on the moonlit garden, a cipher wheel over the mantel.
+// every room does). Three puzzles are found in it: a glass case on its own
+// table, the oak window on the moonlit garden, a cipher wheel over the mantel.
 // The gilt chest is on the desk.
 //
 // The room is a Blender render (study.js; house/roomRender.js), lit by one

@@ -29,7 +29,7 @@ import { passageRender, alignPassageLayout, paintPassageRender, createPassageDoo
  *  (z, 1 at the picture, larger further off).
  *
  *  The floor above has a hall of the same plan (`upper`), far gone and put
- *  to chemistry: four doors, a spiral stair going up to the right where
+ *  to chemistry: three doors, a spiral stair going up to the right where
  *  the sixth would be, tiled walls and floor, copper pipes and laboratory
  *  cupboards. A bare bulb on a flex is worked by a knife switch.
  *
@@ -54,7 +54,7 @@ const SCONCES = [2.01, 2.9];
 // upstairs the doors stand further apart, each with a reagent cabinet at its
 // right hand (chemical.js) — on the left wall that is further in, on the
 // right nearer us; the right wall starts past the stairs and the lever
-const UPPER_DOORS = { [-1]: [1.25, 2.75], [1]: [2.5, 3.6] };
+const UPPER_DOORS = { [-1]: [1.25, 2.75], [1]: [2.5] };
 const UPPER_SCONCES = { [-1]: [2.42, 3.95], [1]: [3.15, 4.3] };
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII"];
 // The stairs at the far end, going up and away to the floor above: how wide
@@ -65,8 +65,8 @@ const STAIR = { half: 0.4, open: 0.5, run: 0.16, rise: 0.085, steps: 15, head: -
 // ── where everything is ─────────────────────────────────────────────────────
 
 /** `upper`: the hall of the floor above — the same passage, gone to seed:
- *  doors VII to X, two on each wall, well apart, each with a cabinet at its right
- *  hand; a window where the stairs are below, one sconce still
+ *  doors VII to IX, two on the left wall and one on the right, well apart,
+ *  each with a cabinet at its right hand; a window where the stairs are below, one sconce still
  *  alight, and in place of the chandelier a bare bulb on a flex, which is
  *  `bulbOn` until its puzzle is solved. */
 /** `wing`: the stone gallery off the top floor, gone to ruin, with doors
