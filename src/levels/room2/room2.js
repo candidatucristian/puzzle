@@ -7,7 +7,7 @@ import ROOM2 from "../house/rooms/Room2.json";
  *  its books and its accounts, seen from its door down the length of the
  *  room, by the light of the green-shaded lamp on the reading table and the
  *  moon. Bookcases down the left-hand wall, a leather armchair turned out
- *  from them by a standard lamp, cold. Two tall sash windows in the right-hand
+ *  from them, a little table at its elbow. Two tall sash windows in the right-hand
  *  wall between red curtains, the moon's light lying across the floor. Down
  *  the middle the long reading table: at its near end an old router, its
  *  lights telling, and the gilt chest. At the far end the clerk's desk with

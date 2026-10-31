@@ -74,7 +74,7 @@ WAX = bpy.data.materials.new("wax"); WAX.use_nodes = True
 _w = WAX.node_tree.nodes["Principled BSDF"]; _w.inputs["Base Color"].default_value = (0.82, 0.74, 0.58, 1); _w.inputs["Subsurface Weight"].default_value = 0.6; _w.inputs["Subsurface Radius"].default_value = (0.02, 0.012, 0.006); _w.inputs["Roughness"].default_value = 0.42
 WICK = plain("wick", (0.01, 0.01, 0.01), rough=0.9)
 CARDS = picture("index cards", os.path.join(DRAWN, "cards.png"), rough=0.85)
-PAINTING = picture("the painting", os.path.join(DRAWN, "painting.png"), rough=0.55, coat=0.35, bump=0.15)
+PAINTING = picture("the painting", os.path.join(DRAWN, "painting.png"), rough=0.8, coat=0.0, bump=0.1)
 def cork():
     m = bpy.data.materials.new("cork"); m.use_nodes = True
     N = m.node_tree.nodes; Lk = m.node_tree.links.new; b = N["Principled BSDF"]

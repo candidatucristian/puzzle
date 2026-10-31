@@ -6,6 +6,8 @@ import {
   releaseStudyArt,
   STUDY_BACKGROUND,
   STUDY_CARD,
+  STUDY_INDEX_CARD,
+  STUDY_STRIP,
 } from "./board.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,6 +52,12 @@ export default class SequenceScene extends BasePuzzleScene {
     }
     if (!this.textures.exists(STUDY_CARD)) {
       this.load.image(STUDY_CARD, "assets/images/Sequence/sticky-note-cutout.webp");
+    }
+    if (!this.textures.exists(STUDY_INDEX_CARD)) {
+      this.load.image(STUDY_INDEX_CARD, "assets/images/Sequence/index-card.webp");
+    }
+    if (!this.textures.exists(STUDY_STRIP)) {
+      this.load.image(STUDY_STRIP, "assets/images/Sequence/ledger-strip.webp");
     }
   }
 

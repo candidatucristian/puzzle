@@ -18,10 +18,9 @@ import { loadPassageRender } from "../top/passageRender.js";
 // The hall: the ground floor of the manor, where the player stands on coming
 // in. Night; three closed doors down either side, the stairs to the floor
 // above at the far end. This is not a level and has no code: it is the way to them.
-// A door with something still to be found behind it glints, and has the
-// light on under it: the first, and any whose key has been found. A room
-// that is finished goes dark and stops glinting, though its door still
-// opens. The rest are dark, locked, with nothing to be done at them yet.
+// A door with something still to be found behind it glints: the first,
+// and any whose key has been found. A finished room stops glinting, though
+// its door still opens. The room's light stays the same throughout.
 //
 // Across the foot of the stairs hangs an iron gate in two leaves. It glints,
 // and a click swings it open; it stays open after that. With it open, the
@@ -36,8 +35,7 @@ import { loadPassageRender } from "../top/passageRender.js";
 // light under the doors, dust in the moonbeams, the glints, a thin mist —
 // and, on the ground floor, the house itself: the clock's pendulum going,
 // the gate's bars shadowed down the runner, a moth at one of the candles, a
-// draught now and then. The chandelier is lit a
-// candle at a time, one for every room that has been finished.
+// draught now and then. The chandelier stays unlit.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // the gate across the stairs is remembered open under this name, with the keys
@@ -115,21 +113,21 @@ export default class HallScene extends BasePuzzleScene {
         .setDepth(-8),
     );
 
-    // the doors: one with something still behind it has the light of its
-    // room breathing under it and a glint on it; one that opens takes a click
+    // Room lighting is fixed; only the interactive glints track progress.
     const rooms = this.services.levels.rooms;
     this._doorZones = new Map();
     L.doors.forEach((d, n) => {
       const room = rooms[n];
       const calling = Boolean(room) && !room.locked && !room.completed;
+      const lit = Boolean(room?.key);
       const glow = this.add
         .image(d.sill.x, d.sill.y, k.glow)
         .setDisplaySize((L.wall * 0.42) / d.z, (H * 0.09) / d.z)
-        .setTint(0xffc078)
+        .setTint(lit ? 0xffc078 : 0x9fb6e8)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha((calling ? 0.3 : 0.06) * ambientLight)
+        .setAlpha((lit ? 0.3 : 0.06) * ambientLight)
         .setDepth(-8);
-      if (calling) {
+      if (lit) {
         this.ambientTween({
           targets: glow,
           alpha: { from: 0.22 * ambientLight, to: 0.5 * ambientLight },
@@ -184,10 +182,9 @@ export default class HallScene extends BasePuzzleScene {
     this._shutting = null;
     this._opening = Boolean(this._doorOpening?.entering);
     this.input.enabled = !this._opening;
-    this._flames = [];
     this._moth = this._bars = null;
     this._gust = { v: 0 };
-    if (L.clock) this._alive(L, k, rooms);
+    if (L.clock) this._alive(L, k);
 
     // dust turning in the moonlight down the middle of the hall
     for (let i = 0; i < 16; i++) {
@@ -272,7 +269,7 @@ export default class HallScene extends BasePuzzleScene {
   }
 
   // What makes the ground floor's hall a place somebody lives in — or did.
-  _alive(L, k, rooms) {
+  _alive(L, k) {
     const { u } = L;
     const levels = this.services.levels;
     // ── the clock: its pendulum, a tick at either end of every swing
@@ -289,13 +286,6 @@ export default class HallScene extends BasePuzzleScene {
           g.lineBetween(a.x + (b.x - a.x) * t0, a.y + (b.y - a.y) * t0, a.x + (b.x - a.x) * t1, a.y + (b.y - a.y) * t1);
         }
       }
-    }
-    // ── the chandelier: a candle alight for every room that has been finished
-    const done = Math.min(L.wicks.length, rooms.filter((room) => room.completed).length);
-    for (const wick of L.wicks.slice(0, done)) {
-      const halo = this.add.image(wick.x, wick.y, k.glow).setDisplaySize(330 * wick.s, 330 * wick.s).setTint(0xffb860).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.42).setDepth(-8);
-      const flame = this.add.image(wick.x, wick.y, k.glow).setDisplaySize(24 * wick.s, 42 * wick.s).setTint(0xfff0c8).setBlendMode(Phaser.BlendModes.ADD).setDepth(-7.9);
-      this._flames.push({ halo, flame, x: wick.x, phase: Math.random() * 6 });
     }
     // ── a moth at the first candle on the left
     const lamp = L.sconces.find((s) => !s.dead);
@@ -572,7 +562,7 @@ export default class HallScene extends BasePuzzleScene {
   _mountDoor() {
     const L = this._L, state = this._doorOpening;
     const d = L.doors.find((door) => door.number === state.number);
-    const lit = !state.room.completed;
+    const lit = true;
     const art = paintDoorSwing(this, L, d, lit);
     const doorway = this.add.image(art.box.x, art.box.y, art.key).setOrigin(0, 0)
       .setDisplaySize(art.box.width, art.box.height).setDepth(-9.7);
@@ -650,12 +640,6 @@ export default class HallScene extends BasePuzzleScene {
     const t = time / 1000;
     const gust = this._gust?.v ?? 0;
     this._candles.forEach((g, i) => g.setAlpha((0.26 + 0.05 * Math.sin(t * 9 + i * 2.1) + Math.random() * 0.04) * (1 - 0.55 * gust) * (this._L.ambientLight ?? 1)));
-    // the chandelier's candles: never still, and leaning with every draught
-    for (const f of this._flames ?? []) {
-      const live = 0.9 + 0.08 * Math.sin(t * 11 + f.phase) + Math.random() * 0.05;
-      f.flame.setAlpha(live * (1 - 0.4 * gust)).setX(f.x + gust * 5 * this._L.u);
-      f.halo.setAlpha(0.42 * live * (1 - 0.5 * gust));
-    }
     // the moth: round and round its candle, never the same way twice
     if (this._moth) {
       const m = this._moth, wob = 1 + 0.35 * Math.sin(t * 3.7) + 0.2 * Math.sin(t * 9.1);

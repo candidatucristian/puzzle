@@ -80,6 +80,12 @@ export const HINT_DETAILS = {
   measures: [
     "Nothing measures 400 ml for you: only the brims of the two bottles are sure. What is left in the larger after it fills the smaller?",
   ],
+  abacus: [
+    "Every block left a clean place where it lay for years. Put them back — then look at what the black leaves white between the rods.",
+  ],
+  rewind: [
+    "Four things, four numbers, four letters. But in this room nothing runs from the beginning to the end — not even the alphabet.",
+  ],
   phials: [
     "Yellow and blue are two halves of one colour. The tag says whose colour it was: think of what she spent her life growing.",
   ],

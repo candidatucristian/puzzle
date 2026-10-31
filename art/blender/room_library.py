@@ -4,24 +4,22 @@
 #
 # A long room panelled in walnut under a coffered ceiling, a herringbone
 # parquet. Down the left-hand wall the bookcases, floor to cornice, and in
-# front of them a leather armchair turned to the room, a standard lamp behind
-# it, a little table at its elbow. In the right-hand wall two tall sash
+# front of them a leather armchair turned to the room, a little table at its
+# elbow. In the right-hand wall two tall sash
 # windows between red velvet curtains, the moon in one of them, its light
 # lying in long panes across the floor and over the table. Down the middle a
 # long reading table on turned legs, standing free: at its near end an old
 # router under a green-shaded banker's lamp, a ledger, the gilt chest; two
 # chairs pulled out from it. At the far end the clerk's desk, turned to the
 # room: an alarm clock, a clock radio, a folding travel clock and a
-# calculator on it under a small lamp, and a red LED clock on the wall over
-# it — every one of them stopped, their faces the puzzle's own
+# calculator on it under a small lamp, and over it on the wall a red LED clock
+# in its black case — every one of them stopped, their faces the puzzle's own
 # (clock_faces.mjs). Beside it the end wall is books, a ladder against them,
 # and on one shelf five books stand a little out, a paper slip in each.
 #
-# Each puzzle has its own light, which burns until it is solved: the standard
-# lamp (the books), the green lamp and the router's light (the router), the
-# clerk's lamp and every clock's face (the clocks). A plate for each way they
-# can stand (lights-<shelf><desk><clock>), the chest apart, and where it all
-# fell in the picture (src/levels/house/rooms/Room2.json).
+# The room's one light is the green lamp on the reading table; the clocks'
+# faces and the router's light stay on. One plate (lights-1), the chest apart,
+# and where it all fell in the picture (src/levels/house/rooms/Room2.json).
 #
 #   blender -b --factory-startup -P art/blender/room_library.py -- [--samples 256] [--width 2560] [--only plates,chest]
 
@@ -49,7 +47,6 @@ WINDOWS = (470, 680)                             # the sashes in the right-hand 
 WIN = dict(hw=52, sill=80, top=284)
 TABLE = dict(x0=-55, x1=55, d0=250, d1=530, h=77)
 CLERK = dict(at=(-125, 0, 690), turn=math.radians(10), w=128, deep=60, h=76)
-STAND = dict(x=-218, d=548, shade=150)
 CASE_X = (-12, X1 - 2)                           # the bookcase across the end wall
 
 # ── materials ──────────────────────────────────────────────────────────────
@@ -62,7 +59,6 @@ LEATHER = scan("desk leather", "brown_leather", size=0.5, tint=(0.35, 0.45, 0.28
 BRASS = aged_metal("brass", (0.55, 0.39, 0.17), (0.08, 0.055, 0.025), rough=(0.22, 0.5), scale=30, tarnish=0.55)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
 BLACK = plain("black plastic", (0.015, 0.015, 0.017), rough=0.35, coat=0.3)
-ALU = aged_metal("aluminium", (0.6, 0.62, 0.64), (0.3, 0.3, 0.3), rough=(0.3, 0.5), scale=20, tarnish=0.2)
 PAGES = plain("pages", (0.3, 0.26, 0.19), rough=0.9)
 FRAME = plain("window paint", (0.05, 0.04, 0.035), rough=0.45)
 PLASTER = scan("ceiling", "plastered_wall_04", size=2.0, tint=(0.75, 0.68, 0.58), bright=0.55, sat=0.3, rough=(0.8, 0.95), bump=0.5)
@@ -196,13 +192,8 @@ lad = assembled("ladder", ladder, at=(185, 0, D1 - 34 - 76))
 lad.rotation_euler = (math.radians(-14), 0, math.radians(-4))
 rod("ladder rail", P(CASE_X[0], 318, D1 - 36), P(CASE_X[1], 318, D1 - 36), M(1.2), BRASS, verts=16)
 
-# ── the reading nook: an armchair, the standard lamp, a little table ──────
+# ── the reading nook: an armchair, a little table ─────────────────────────
 darken_model(import_model("ArmChair_01", height=M(98), at=tuple(P(-172, 0, 468)), rot=float(arg("--armchair", "0.7"))), (0.3, 0.17, 0.1))
-sx, sd = STAND["x"], STAND["d"]
-lathe("standard lamp", [(0, 0), (0.15, 0), (0.15, 0.02), (0.06, 0.05), (0.02, 0.1), (0.014, 0.2), (0.014, M(STAND["shade"] - 5)), (0.02, M(STAND["shade"] - 3)), (0.008, M(STAND["shade"] + 8)), (0, M(STAND["shade"] + 8))], BRASS, at=tuple(P(sx, 0, sd)), steps=40)
-STAND_SHADE = shade_material("standard lamp shade", (0.48, 0.39, 0.26), glow=(1.0, 0.6, 0.28), strength=0.5, through=0.05)
-pleated_shade(sx, sd, STAND["shade"] - 2, STAND["shade"] + 26, 24, 15, STAND_SHADE)
-stand_l = lamp("standard lamp bulb", "POINT", tuple(P(sx, STAND["shade"] + 12, sd)), energy=float(arg("--stand", "70")), colour=(1.0, 0.68, 0.36), size=0.03)
 darken_model(import_model("side_table_01", height=M(58), at=tuple(P(-200, 0, 392)), rot=0.4), (0.34, 0.22, 0.15))
 o = book(RNG, 0, 0, 0, 3.0, 23, 16, spine_mat, COVERS, PAGES); o.rotation_euler = (math.pi / 2, 0, 0.3); o.location = P(-200, 59.6, 392)
 
@@ -227,11 +218,11 @@ R = dict(x0=-26, x1=8, d0=276, d1=298, y0=th, y1=th + 7.5)
 box_cm("router", R["x0"], R["x1"], R["y0"] + 0.6, R["y1"], R["d0"], R["d1"], BLACK, 0.8)
 for e in (0.12, 0.88):
     for dd in (R["d0"] + 3, R["d1"] - 3): cylinder("foot", M(R["x0"] + (R["x1"] - R["x0"]) * e), M(dd), M(R["y0"]), M(R["y0"] + 0.6), M(0.8), BLACK, verts=12)
-LED_ON = plain("led lit", (0.05, 0.3, 0.1), emit=(0.25, 1.0, 0.45), strength=25)
+LED_ON = plain("led lit", (0.05, 0.3, 0.1), emit=(0.25, 1.0, 0.45), strength=10)
 LED_OFF = plain("led", (0.02, 0.06, 0.03), rough=0.2, coat=0.8)
 led_at = lambda i: P(R["x0"] + (R["x1"] - R["x0"]) * (0.14 + i * 0.06), R["y0"] + 2.6, R["d0"] - 0.05)
 for i in range(13):
-    sphere("led", tuple(led_at(i)), M(0.35), LED_ON if i == 0 else LED_OFF, squash=(1, 0.5, 1))
+    sphere("led", tuple(led_at(i)), M(0.24), LED_ON if i == 0 else LED_OFF, squash=(1, 0.5, 1))
 for e in (0.15, 0.85):
     cylinder("aerial", M(R["x0"] + (R["x1"] - R["x0"]) * e), M(R["d1"] - 2), M(R["y1"]), M(R["y1"] + 16), M(0.5), BLACK, verts=12)
 cu = bpy.data.curves.new("router lead", "CURVE"); cu.dimensions = "3D"; cu.bevel_depth = M(0.25); spl = cu.splines.new("BEZIER"); spl.bezier_points.add(3)
@@ -322,13 +313,26 @@ CF = framed(CK["at"], CK["turn"])
 OFFICE_BULB_AT = CF(-CK["w"] / 2 + 23.5, CK["h"] + 21, 8)
 office_l = lamp("office lamp", "SPOT", tuple(OFFICE_BULB_AT), aim=tuple(CF(-CK["w"] / 2 + 48, CK["h"], 0)), energy=float(arg("--office", "35")), colour=(1.0, 0.7, 0.4), size=0.02, spot=math.radians(110))
 import_model("dining_chair_02", height=M(97), at=tuple(P(-48, 0, 636)), rot=math.pi + 1.1)
-# the LED clock on the end wall over it, its lead down the wall
-LED_CLOCK = dict(x=CK["at"][0] + 4, y0=168, y1=190, w=54)
+# the LED clock on the end wall over it, in its black case, its lead down the wall:
+# a case standing well out from the panelling, rounded, a raised bezel round its
+# smoked red glass, the digits behind that, two buttons on its top
+LED_CLOCK = dict(x=CK["at"][0] + 4, y0=158, y1=190, w=70, deep=10)
 ck = LED_CLOCK
-box_cm("wall clock", ck["x"] - ck["w"] / 2, ck["x"] + ck["w"] / 2, ck["y0"], ck["y1"], D1 - 4, D1, ALU, 1.0)
-box_cm("wall clock glass", ck["x"] - ck["w"] / 2 + 2, ck["x"] + ck["w"] / 2 - 2, ck["y0"] + 2, ck["y1"] - 2, D1 - 4.15, D1 - 4.0, plain("red filter", (0.02, 0.004, 0.003), rough=0.06, coat=1.0))
-w_, h_ = ck["w"], ck["y1"] - ck["y0"]
-display(0, front(ck["x"] - w_ * 0.38, ck["x"] + w_ * 0.38, ck["y0"] + h_ * 0.22, ck["y0"] + h_ * 0.78, D1 - 4.2), strength=7)
+kx0, kx1, ky0, ky1, KF = ck["x"] - ck["w"] / 2, ck["x"] + ck["w"] / 2, ck["y0"], ck["y1"], D1 - ck["deep"]
+CLOCK_CASE = plain("clock case", (0.02, 0.02, 0.022), rough=0.32, coat=0.25)
+CLOCK_BEZEL = plain("clock bezel", (0.012, 0.012, 0.014), rough=0.16, coat=0.7)      # (black plastic, glossy: its edges catch what light there is)
+box_cm("wall clock", kx0, kx1, ky0, ky1, KF + 0.8, D1, CLOCK_CASE, 2.4)
+for (a, b, c, e) in ((kx0, kx1, ky0, ky0 + 2.6), (kx0, kx1, ky1 - 2.6, ky1), (kx0, kx0 + 2.6, ky0, ky1), (kx1 - 2.6, kx1, ky0, ky1)):
+    box_cm("clock bezel", a, b, c, e, KF, KF + 1.4, CLOCK_BEZEL, 0.6)
+box_cm("wall clock glass", kx0 + 2.6, kx1 - 2.6, ky0 + 2.6, ky1 - 2.6, KF + 0.6, KF + 0.9, plain("red filter", (0.03, 0.004, 0.003), rough=0.06, coat=1.0))
+w_, h_ = ck["w"], ky1 - ky0
+display(0, front(ck["x"] - w_ * 0.36, ck["x"] + w_ * 0.36, ky0 + h_ * 0.25, ky0 + h_ * 0.75, KF + 0.55), strength=7)
+for bx in (kx1 - 13, kx1 - 8):
+    box_cm("clock button", bx - 1.7, bx + 1.7, ky1 - 0.4, ky1 + 0.9, KF + 2.5, KF + 5.5, plain("clock button", (0.1, 0.1, 0.11), rough=0.4), 0.3)
+# (the digits' red on the case round them, and a little on the panelling under it)
+clock_glow = lamp("clock glow", "AREA", tuple(P(ck["x"], (ky0 + ky1) / 2, KF - 1.5)), aim=tuple(P(ck["x"], (ky0 + ky1) / 2 - 18, KF - 60)),
+                  energy=float(arg("--clockglow", "0.8")), colour=(1.0, 0.06, 0.03), size=0.42, size_y=0.12)
+clock_glow.visible_camera = False; clock_glow.visible_glossy = False
 cu = bpy.data.curves.new("lead", "CURVE"); cu.dimensions = "3D"; cu.bevel_depth = M(0.25); spl = cu.splines.new("BEZIER"); spl.bezier_points.add(2)
 for bp_, v in zip(spl.bezier_points, (P(ck["x"] + 18, ck["y0"], D1 - 1), P(ck["x"] + 20, ck["y0"] - 60, D1 - 4.2), P(ck["x"] + 16, 14, D1 - 4.2))): bp_.co = v; bp_.handle_left_type = bp_.handle_right_type = "AUTO"
 arch(link(bpy.data.objects.new("lead", cu))).data.materials.append(BLACK)
@@ -352,15 +356,15 @@ for c in WINDOWS:
     sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
 fill_l = lamp("fill", "AREA", tuple(P(0, 260, 40)), aim=tuple(P(0, 90, D1)), energy=float(arg("--fill", "55")), colour=(0.8, 0.85, 1.0), size=2.4)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
-eye_fill(float(arg("--eyefill", "15")))                # (the halls' fill: nothing the eye sees falls to black)
+eye_fill(float(arg("--eyefill", "0")))                # (the halls' fill: nothing the eye sees falls to black)
 for d in (300, 640):
     l_ = lamp("bookcase glow", "AREA", tuple(P(X0 + 110, TOP - 40, d)), aim=tuple(P(X0, 120, d)), energy=float(arg("--shelf", "22")), colour=(1.0, 0.72, 0.45), size=0.4, size_y=2.4)
     l_.visible_camera = False; l_.visible_glossy = False
 end_l = lamp("end wall glow", "AREA", tuple(P(110, TOP - 40, D1 - 160)), aim=tuple(P(110, 110, D1)), energy=float(arg("--end", "26")), colour=(1.0, 0.72, 0.45), size=2.4, size_y=0.4)
 end_l.visible_camera = False; end_l.visible_glossy = False
-# (one light: the green lamp on the reading table; the standard lamp and the
-# clerk's lamp are out — the clocks' faces and the router's light stay on)
-ONE = Light("desk", [desk_l], [GREEN_GLASS]); OUT_LIGHTS = [Light("shelf", [stand_l], [STAND_SHADE]), Light("clerk", [office_l], [OFFICE_BULB])]
+# (one light: the green lamp on the reading table; the clerk's lamp is out —
+# the clocks' faces and the router's light stay on)
+ONE = Light("desk", [desk_l], [GREEN_GLASS]); OUT_LIGHTS = [Light("clerk", [office_l], [OFFICE_BULB])]
 clear_glass()
 air = room_haze(X0, X1, 0, D1, TOP, float(arg("--haze", "0")))
 
@@ -370,14 +374,13 @@ EB = framed((CASE_X[0], 0, D1), -math.pi / 2)
 LAYOUT.thing("bookshelf", "Look at the bookshelves", [EB(x, y, d) for x in (0, 36) for y in (87, 204) for d in (0.0, CASE_X[1] - CASE_X[0])])
 LAYOUT.thing("modem", "Look at the router", corners(R["x0"] - 2, R["x1"] + 2, R["y0"], R["y1"] + 17, R["d0"], R["d1"]))
 LAYOUT.thing("overtime", "Look at the clocks", [CF(x, y, d) for x in (-CK["w"] / 2, CK["w"] / 2) for y in (CK["h"] - 4, CK["h"] + 14) for d in (-CK["deep"] / 2, 12)] +
-             [P(x, y, D1 - 4) for x in (ck["x"] - ck["w"] / 2 - 2, ck["x"] + ck["w"] / 2 + 2) for y in (ck["y0"] - 2, ck["y1"] + 2)])
+             [P(x, y, KF) for x in (kx0 - 2, kx1 + 2) for y in (ky0 - 2, ky1 + 2)])
 LAYOUT.chest(CHEST)
-LAYOUT.glow("stand", P(sx, STAND["shade"] + 12, sd), 150)
 LAYOUT.glow("desk", P(gx, th + 22, gd), 90)
 LAYOUT.glow("office", OFFICE_BULB_AT, 90)
 LAYOUT.point("led-0", led_at(8))
 LAYOUT.point("led-1", led_at(9))
-LAYOUT.point("colon", P(ck["x"], (ck["y0"] + ck["y1"]) / 2, D1 - 4.3))
+LAYOUT.point("colon", P(ck["x"], (ky0 + ky1) / 2, KF + 0.5))
 for pane in SASHES: LAYOUT.pane(pane)
 # (the moonbeams: from the windows across the floor)
 LAYOUT.dust([P(X1, WIN["top"], WINDOWS[0] - WIN["hw"]), P(X1, WIN["sill"], WINDOWS[1] + WIN["hw"]), P(13, 0, WINDOWS[0] - WIN["hw"] - 114), P(183, 0, WINDOWS[1])])
@@ -392,7 +395,7 @@ if arg("--top", "") == "1":
 # ── the passes ─────────────────────────────────────────────────────────────
 cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.9")))
 scene.cycles.volume_bounces = 1
-GLOSSY = ("green glass shade", "clock face 0", "clock face 1", "clock face 2", "clock face 3", "smoked glass", "radio glass", "red filter", "led lit", "led")                # (what keeps its shine: glazes, screens, lamp glass)
+GLOSSY = ("green glass shade", "clock face 0", "clock face 1", "clock face 2", "clock face 3", "smoked glass", "radio glass", "red filter", "clock case", "clock bezel", "led lit", "led")                # (what keeps its shine: glazes, screens, lamp glass)
 finish(scene, SAMPLES, keep_gloss=GLOSSY)
 plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)

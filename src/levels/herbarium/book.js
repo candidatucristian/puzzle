@@ -1,30 +1,58 @@
-import { soft, grain, vignette, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
+import { grain, vignette, makeCanvas, addCanvasTexture, lcg } from "../../shared/paint.js";
 import { PAGES } from "./puzzle.js";
+import DESK from "./herbariumDesk.json";
 
-/** Ivy's herbarium, open on the console table under the window in Room VI:
- *  a photographed cloth-bound specimen album, its pages heavy and aged.
- *  On each page two large pressed botanical specimens,
- *  flat and faded, each held down by narrow
- *  strips of gummed paper, its Latin name under it in her hand; and on each
- *  page one of them drawn round in pencil with a figure of straight sides.
+/** Ivy's herbarium, open on the walnut console table under the window in
+ *  Room VI: a cloth-bound album of pressed plants, its pages heavy and aged.
+ *  On each page two pressed specimens, flat and faded, each held down by
+ *  narrow strips of gummed paper, its Latin name under it in her hand; and on
+ *  each page one of them drawn round in pencil with a figure of straight
+ *  sides.
  *
- *  Painted once per screen size: the table with the book's binding on it;
- *  each page apart, to be turned (shared/pageFlip.js turns them); the shading
- *  where the pages curve into the spine. Whole-page photographs retain fine leaf veins,
- *  petal wrinkles, mounting strips and their natural contact shadows. */
+ *  The table and the album, and each page with its plants on its own sheet,
+ *  are Blender renders (art/blender/herbarium_desk.py, herbarium_plants.py):
+ *  the plants built flat as pressed ones are, their veins, their petals thin
+ *  to the light, the strips across their stems. Her hand and her pencil are
+ *  drawn over them here. Painted once per screen size: the table with the
+ *  book on it; each page apart, to be turned (shared/pageFlip.js turns them);
+ *  the shading where the pages curve into the spine. */
 
 export const BOOK = { desk: "hb_desk", light: "hb_light", flip: "hb_flip" };
+// the renders: the table with the album on it, and each page's sheet
+export const HERBARIUM_RENDERS = {
+  desk: { key: `hb_desk_render_v${DESK.version}`, url: `assets/images/Herbarium/desk-v${DESK.version}.webp` },
+  sheets: PAGES.map((_, i) => ({ key: `hb_sheet_${i + 1}_v${DESK.version}`, url: `assets/images/Herbarium/sheet-${i + 1}-v${DESK.version}.webp` })),
+};
+export function loadHerbarium(scene) {
+  for (const { key, url } of [HERBARIUM_RENDERS.desk, ...HERBARIUM_RENDERS.sheets]) if (!scene.textures.exists(key)) scene.load.image(key, url);
+}
+/** The renders, as images: the table, the book's own picture cut out of it,
+ *  and the five sheets. */
+export function herbariumRenders(scene) {
+  const image = (key) => (scene.textures.exists(key) ? scene.textures.get(key).getSourceImage() : null);
+  const desk = image(HERBARIUM_RENDERS.desk.key);
+  let book = null;
+  if (desk) {
+    book = makeCanvas(DESK.book.w, DESK.book.h);
+    book.getContext("2d").drawImage(desk, -DESK.book.x, -DESK.book.y);
+  }
+  return { desk, book, pages: HERBARIUM_RENDERS.sheets.map(({ key }) => image(key)) };
+}
 export const FACES = PAGES.length + 1; // five pages of plants, and the last, inside the back cover
 const R = 2; // the pages are painted at twice their size, for crisp lines
 const HAND = '"Cormorant Garamond", Georgia, "Times New Roman", serif'; // her hand: an old book's italic
 
-// The photographed album's own measure, in its pixels (1536 x 1024): the
-// spine, where the leaves are sewn; how far a leaf can reach from it, and how
-// tall; and on each side the top sheet itself — left, top, right, bottom —
-// just inside its deckled edge, clear of the pages under it.
+// The album's own measure, in the picture of it the render was laid out to
+// (herbarium_desk.py: 1536 x 1024 px, 24 px a centimetre): the spine, where
+// the leaves are sewn; how far a leaf can reach from it, and how tall; and on
+// each side the top sheet itself — left, top, right, bottom (herbariumDesk.json).
+const sheetBox = (pts) => {
+  const xs = pts.map(([x]) => x), ys = pts.map(([, y]) => y);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+};
 const ALBUM = {
-  spine: 767, top: 62, leaf: 668, height: 866,
-  sheet: [[127, 68, 760, 927], [774, 64, 1433, 925]],
+  spine: 768, top: 40, leaf: 680, height: 904,
+  sheet: [sheetBox(DESK.sheets.left), sheetBox(DESK.sheets.right)],
 };
 
 // The book as it lies once it has been brought `near` times nearer than it
@@ -50,7 +78,7 @@ export function layoutBook(W, H, near = 1) {
 // handed to the page turner, which draws them
 export function paintBook(textures, L, photography) {
   const { book: photo, desk, pages } = photography;
-  addCanvasTexture(textures, BOOK.desk, paintDesk(L, photo, desk));
+  addCanvasTexture(textures, BOOK.desk, paintDesk(L, desk));
   addCanvasTexture(textures, BOOK.light, paintLight(L));
   return {
     shade: paintShade(L),
@@ -64,40 +92,19 @@ export function releaseBook(textures) {
 
 // ── the table, the binding, the shading ─────────────────────────────────────
 
+// the table under the window, as Blender rendered it — walnut, the album
+// open on it, her pencil, tweezers, the gummed strip, a leaf of ivy and a
+// petal fallen out — laid so that the book in it lies where the book is
 // (painted as far as the table is seen while the book is still further off,
 // in the screen's own coordinates)
-function paintDesk(L, photo, desk) {
-  const { W, H, u, book: b, view: v } = L;
+function paintDesk(L, desk) {
+  const { book: b, view: v } = L;
   const c = makeCanvas(Math.ceil(v.w), Math.ceil(v.h)), g = c.getContext("2d");
   g.translate(-v.x, -v.y);
-  if (desk) {
-    g.filter = "brightness(.68) saturate(.78)";
-    g.drawImage(desk, v.x, v.y, v.w, v.h); g.filter = "none";
-  } else {
-    const wood = g.createLinearGradient(0, v.y, 0, v.y + v.h);
-    wood.addColorStop(0, "#1c130b"); wood.addColorStop(1, "#0b0704");
-    g.fillStyle = wood; g.fillRect(v.x, v.y, v.w, v.h);
-    const rnd = lcg(907);
-    for (let i = 0; i < 90; i++) {
-      const y = v.y + rnd() * v.h, x0 = v.x, x1 = v.x + v.w;
-      g.strokeStyle = `rgba(${rnd() < 0.5 ? "0,0,0" : "120,80,45"},${(0.05 + rnd() * 0.08).toFixed(2)})`;
-      g.lineWidth = 1;
-      g.beginPath(); g.moveTo(x0, y); g.bezierCurveTo(x0 + v.w * 0.3, y + (rnd() - 0.5) * 8 * u, x0 + v.w * 0.7, y + (rnd() - 0.5) * 8 * u, x1, y + (rnd() - 0.5) * 6 * u); g.stroke();
-    }
-  }
-  // the moon from the window behind, and the warm of the room's lamp
-  soft(g, W * 0.5, -H * 0.1, W * 0.7, H * 0.5, "150,178,232", 0.1, "lighter");
-  soft(g, W * 0.25, H * 0.3, W * 0.6, H * 0.7, "255,190,110", 0.18, "lighter");
-  soft(g, L.cx + 10 * u, L.cy + 16 * u, b.w * 0.56, b.h * 0.58, "0,0,0", 0.75);
+  g.fillStyle = "#0b0705"; g.fillRect(v.x, v.y, v.w, v.h);
+  const k = b.w / DESK.book.w;
   g.imageSmoothingQuality = "high";
-  g.filter = "brightness(.83) saturate(.84)";
-  g.drawImage(photo, b.x, b.y, b.w, b.h); g.filter = "none";
-  // a loose petal or two, fallen out of it onto the table
-  for (const [x, y, a, col] of desk ? [] : [[b.x - 30 * u, b.y + b.h * 0.7, 0.6, "201,138,138"], [b.x + b.w + 24 * u, b.y + b.h * 0.3, -0.4, "226,212,138"]]) {
-    g.save(); g.translate(x, y); g.rotate(a);
-    g.fillStyle = `rgba(${col},0.75)`; g.beginPath(); g.ellipse(0, 0, 9 * u, 5 * u, 0, 0, Math.PI * 2); g.fill();
-    g.restore();
-  }
+  if (desk) g.drawImage(desk, b.x - DESK.book.x * k, b.y - DESK.book.y * k, DESK.width * k, DESK.height * k);
   return c;
 }
 
@@ -116,8 +123,8 @@ function paintShade(L) {
   const c = makeCanvas(w, h), g = c.getContext("2d");
   const s = g.createLinearGradient(0, 0, w, 0);
   s.addColorStop(0, "rgba(0,0,0,0.22)"); s.addColorStop(0.08, "rgba(0,0,0,0)");
-  s.addColorStop(0.36, "rgba(255,250,235,0.05)"); s.addColorStop(0.46, "rgba(0,0,0,0.12)");
-  s.addColorStop(0.5, "rgba(0,0,0,0.42)"); s.addColorStop(0.54, "rgba(0,0,0,0.12)");
+  s.addColorStop(0.36, "rgba(255,250,235,0.04)"); s.addColorStop(0.46, "rgba(0,0,0,0.06)");
+  s.addColorStop(0.5, "rgba(0,0,0,0.22)"); s.addColorStop(0.54, "rgba(0,0,0,0.06)");
   s.addColorStop(0.64, "rgba(255,250,235,0.05)"); s.addColorStop(0.92, "rgba(0,0,0,0)");
   s.addColorStop(1, "rgba(0,0,0,0.25)");
   g.fillStyle = s; g.fillRect(0, 0, w, h);
@@ -136,25 +143,21 @@ function paintShade(L) {
 // ── a page ─────────────────────────────────────────────────────────────────
 
 // A leaf as it is turned: the whole reach of a leaf from the spine, out of
-// the photograph, cut to the top sheet's own shape — so a leaf lifted is one
-// sheet, and the edges of the pages under it stay where they are.
+// the render, its page's own sheet laid on it, cut to the top sheet's own
+// shape — so a leaf lifted is one sheet, and the edges of the pages under it
+// stay where they are.
 function paintPage(L, index, photo, pages) {
   const pw = Math.round(L.pw * R), ph = Math.round(L.ph * R);
   const c = makeCanvas(pw, ph), g = c.getContext("2d");
   const right = index % 2 === 1;
   const k = pw / ALBUM.leaf, x0 = right ? ALBUM.spine : ALBUM.spine - ALBUM.leaf;
   g.imageSmoothingQuality = "high";
-  g.filter = "brightness(.83) saturate(.84)";
-  g.drawImage(photo, x0, ALBUM.top, ALBUM.leaf, ALBUM.height, 0, 0, pw, ph);
-  g.filter = "none";
+  if (photo) g.drawImage(photo, x0, ALBUM.top, ALBUM.leaf, ALBUM.height, 0, 0, pw, ph);
   const [sx0, sy0, sx1, sy1] = ALBUM.sheet[right ? 1 : 0];
   const S = { x: (sx0 - x0) * k, y: (sy0 - ALBUM.top) * k, w: (sx1 - sx0) * k, h: (sy1 - sy0) * k };
   const specimens = PAGES[index], photograph = pages[index];
   if (specimens && photograph) {
-    g.save();
-    g.filter = "brightness(.83) saturate(.8)";
     g.drawImage(photograph, S.x, S.y, S.w, S.h);
-    g.restore();
     const size = Math.round(S.h * .031);
     drawFigure(g, S, specimens[0].sides, lcg(77 + index * 13));
     g.fillStyle = "rgba(45,32,22,.9)"; g.textAlign = "center"; g.textBaseline = "alphabetic";

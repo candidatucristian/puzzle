@@ -1,8 +1,7 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { noiseBurst } from "../../shared/paint.js";
-import { cleanBookPhoto } from "../../shared/bookPhoto.js";
 import { PageFlip, holdBook, bringNear } from "../../shared/pageFlip.js";
-import { BOOK, NOTEBOOK_PHOTO, layoutBook, paintBook, releaseBook } from "./book.js";
+import { BOOK, NOTEBOOK_DESK, NOTEBOOK_DESK_URL, notebookPicture, layoutBook, paintBook, releaseBook } from "./book.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "MOLECULES"  ·  code: SHIP  ·  Silas's notebook
@@ -36,9 +35,7 @@ export default class MoleculesScene extends BasePuzzleScene {
   }
 
   preload() {
-    if (!this.textures.exists(NOTEBOOK_PHOTO)) {
-      this.load.image(NOTEBOOK_PHOTO, "assets/images/Molecules/notebook-open.webp");
-    }
+    if (!this.textures.exists(NOTEBOOK_DESK)) this.load.image(NOTEBOOK_DESK, NOTEBOOK_DESK_URL);
   }
 
   create() {
@@ -64,9 +61,9 @@ export default class MoleculesScene extends BasePuzzleScene {
     // laid out as it will lie once brought near: the camera starts as far off
     // as that, so the book first shows as it lay, and then comes closer
     const L = (this._L = layoutBook(W, H, NEAR));
-    // (its baked-in chequer cleared, shared/bookPhoto.js)
-    const photo = cleanBookPhoto(this.textures.get(NOTEBOOK_PHOTO).getSourceImage());
-    const { faces, shade } = paintBook(this.textures, L, photo);
+    // (the desk is a Blender render; the book's own picture is cut out of it)
+    const desk = this.textures.get(NOTEBOOK_DESK).getSourceImage();
+    const { faces, shade } = paintBook(this.textures, L, notebookPicture(desk), desk);
     this.add.image(L.view.x, L.view.y, BOOK.desk).setOrigin(0, 0).setDepth(-10);
     this.add.image(L.view.x, L.view.y, BOOK.light).setOrigin(0, 0).setDepth(5);
     this._flip = new PageFlip(this, {

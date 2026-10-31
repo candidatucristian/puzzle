@@ -3,7 +3,7 @@
 #
 # Quiet moss walls above oak panelling. A lower herbarium cabinet holds
 # thirty-six orderly reference books and three closed cupboards. A dedicated
-# specimen table presents the terrarium without a lampshade or loose props.
+# specimen table presents the terrarium and its matching moss-green book.
 # The writing desk and chair stand further back, leaving the foreground open.
 # Its sheet, microscope, candle and puzzle chest each have a distinct place.
 # The arched casement is oak throughout: frames, rails, sill and deep curved
@@ -12,7 +12,7 @@
 #
 # One room plate and two chest cutouts share the same camera. Projected
 # interaction coordinates are staged beside the render and published together
-# with the version 2 images by study_publish.mjs.
+# with the version 3 images by study_publish.mjs.
 #
 #   blender -b -P art/blender/room_study.py -- --samples 384 --width 2560
 #   node art/blender/study_publish.mjs
@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 from room_common import *
 from room_furnish import *
+from specimen_book import build_specimen_book
 
 OUT = os.path.join(ROOT, ".artifacts/room-study")
 os.makedirs(OUT, exist_ok=True)
@@ -251,7 +252,7 @@ def lamp_table():
 assembled("lamp table", lamp_table, at=(LT["x"], 0, LT["d"]))
 ty = LT["h"]
 # the lamp, to the right of the case
-# The specimen table carries only the glass case; nothing masks the roots.
+# The specimen table carries the glass case and its matching closed book.
 # the glass case: a brass frame round glass, earth halfway up it, a seedling,
 # its roots against the front glass
 cx0, cx1, cd0, cd1 = LT["x"] - 30, LT["x"] + 4, LT["d"] - 24, LT["d"] - 2
@@ -345,7 +346,16 @@ for a in (0.1, 0.1 + math.pi):
 for a in (1.6, 1.6 + math.pi):
     lf = leaf_blade("true leaf", tuple(P(sx_ + math.cos(a) * 2.2, soil + 14.2, sd_ + math.sin(a) * 2.2)), M(2.4), SEEDLING, squash=(1.0, 0.42, 0.1))
     lf.rotation_euler = (0.35, 0, a)
-# a book lying open at the back of the table, a magnifying glass
+# Reuse the close-up's actual book geometry, linen cover and aged page block.
+# Map the close-up's 94 cm case width onto this 34 cm room-view case, retaining
+# the same gap, orientation and position immediately to the case's right.
+BOOK_SCALE = (cx1 - cx0) / 94
+SPECIMEN_BOOK = build_specimen_book(
+    at=(M((cx0 + cx1) / 2), M(cd0) + .025 * BOOK_SCALE, M(ty) - .803 * BOOK_SCALE),
+    scale=BOOK_SCALE,
+)
+for part in SPECIMEN_BOOK.children:
+    arch(part)
 
 # ── further in: the writing desk, the candle, the chest ───────────────────
 DK = DESK

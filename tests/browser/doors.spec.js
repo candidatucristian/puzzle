@@ -146,7 +146,7 @@ test('coming back out of a room, the hall never shows past its own edges', async
       seen.push({ x0: v.x, y0: v.y, x1: v.x + v.width, y1: v.y + v.height, W: cam.width, H: cam.height, zoom: cam.zoom });
     };
     game.events.on('postrender', watch);
-    services.levels.enterPlace('Hall', 'Study');
+    services.levels.enterPlace('Hall', { place: 'Study' });
   });
   await page.waitForTimeout(450);
   await page.screenshot({ path: '.artifacts/previews/hall-zoom-out.png' });

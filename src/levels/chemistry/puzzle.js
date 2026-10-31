@@ -7,6 +7,19 @@ export const CHEMISTRY_WORD = "FOCUS";
 // the atomic numbers etched beside the five menisci, left to right
 export const BOTTLES = Object.freeze([9, 8, 6, 92, 16]);
 
+// each bottle's printed scale: its capacity (ml), one division, how many
+// divisions make a middling and a long (numbered) one, and how high up the
+// bottle the scale runs (from 8% of its height to `top`). The liquid's front
+// edge stands on the bottle's own number. (art/blender/lab_boards.mjs prints
+// these; room_lab.py fills the bottles to them.)
+export const SCALES = Object.freeze([
+  Object.freeze({ capacity: 10, step: 0.5, mid: 2, major: 4, top: 0.58 }),   // fluorine
+  Object.freeze({ capacity: 10, step: 0.5, mid: 2, major: 4, top: 0.46 }),   // oxygen
+  Object.freeze({ capacity: 10, step: 0.5, mid: 2, major: 4, top: 0.66 }),   // carbon
+  Object.freeze({ capacity: 100, step: 1, mid: 5, major: 10, top: 0.74 }),   // uranium
+  Object.freeze({ capacity: 20, step: 1, mid: 5, major: 5, top: 0.82 }),     // sulfur
+]);
+
 // every element's symbol, by atomic number (index 0 is hydrogen, 1)
 export const ELEMENTS = Object.freeze(
   (

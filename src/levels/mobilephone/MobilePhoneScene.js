@@ -526,6 +526,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
       )
       .on("pointerdown", () => this.revealRealClue());
     this.navContainer.input.cursor = "pointer";
+    this.input?.preUpdate?.();
   }
 
   revealRealClue() {

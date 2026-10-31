@@ -1,7 +1,7 @@
 import { LETTERS, letterById } from "../shared/story.js";
 import { PLACES } from "../shared/house.js";
 import { renderLetter } from "./letterPage.js";
-import { playArrival, letterArt, prepareLetterFilm } from "./letterArrival.js";
+import { playArrival, letterArt, prepareLetterAnimation } from "./letterArrival.js";
 import { paintEnvelope } from "../shared/envelope.js";
 
 // The case file: everything Inspector Wren gathers in Ashcombe House, kept in
@@ -298,8 +298,8 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
       return env;
     }));
     shelf.hidden = list.length === 0;
-    // a letter waiting: its film loading meanwhile, so it plays the moment it is opened
-    if (list.length && !reducedMotion()) prepareLetterFilm();
+    // Preload the Blender model while a found letter waits in the side panel.
+    if (list.length) { prepareLetterAnimation(); void sounds?.prepareLetterOpen?.(); }
   }
   async function openWaiting(id, origin) {
     if (arriving || dialogs.isOpen || isBusy() || !waits(id)) return;

@@ -6,7 +6,8 @@
 // showTime). The travel clock is a liquid-crystal one: dark figures on a pale
 // face that is only lit while the clocks are.
 //
-//   node art/blender/clock_faces.mjs  →  .artifacts/rooms/clock-<n>-lit.png, -dim.png
+//   node art/blender/clock_faces.mjs  →  .artifacts/rooms/clock-<n>-lit.png, -dim.png,
+//   and -lit-colon.png / -lit-nocolon.png (the office of After Hours, overtime_office.py)
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { OVERTIME_CLOCKS } from "../../src/levels/overtime/puzzle.js";
@@ -43,7 +44,7 @@ function digitPaths(x0, digit, width, height, th, slant) {
   }
   return paths;
 }
-function face(f, lit) {
+function face(f, lit, colon = f.colon) {
   const pad = 40, dh = H - pad * 2, dw = W * 0.17, th = dh * 0.12, slant = 0.08;
   const text = f.time.replace(":", "");
   let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="${lit ? (f.lcd ? f.ground : "#000") : "#000"}"/><g transform="translate(0,${pad})">`;
@@ -56,11 +57,14 @@ function face(f, lit) {
     }
   });
   const cx = W * 0.5, r = th * 0.55;
-  if ((lit && f.colon) || (!lit && !f.lcd)) for (const cy of [dh * 0.3, dh * 0.7]) s += `<circle cx="${cx + (dh - cy) * slant}" cy="${cy}" r="${r}" fill="${lit ? f.lit : f.dim}"/>`;
+  if ((lit && colon) || (!lit && !f.lcd)) for (const cy of [dh * 0.3, dh * 0.7]) s += `<circle cx="${cx + (dh - cy) * slant}" cy="${cy}" r="${r}" fill="${lit ? f.lit : f.dim}"/>`;
   return s + `</g></svg>`;
 }
 for (const [i, f] of FACES.entries()) {
   await sharp(Buffer.from(face(f, true))).png().toFile(`${out}clock-${i}-lit.png`);
   await sharp(Buffer.from(face(f, false))).png().toFile(`${out}clock-${i}-dim.png`);
+  // (for After Hours, where every colon goes on and off: each face lit with it, and without)
+  await sharp(Buffer.from(face(f, true, true))).png().toFile(`${out}clock-${i}-lit-colon.png`);
+  await sharp(Buffer.from(face(f, true, false))).png().toFile(`${out}clock-${i}-lit-nocolon.png`);
 }
 console.log("clock faces", OVERTIME_CLOCKS.join(" "));

@@ -1,5 +1,5 @@
 import { CALCULATOR_DIGITS } from './puzzle.js';
-import { glyph } from './office.js';
+import { glyph } from './segments.js';
 import './calculatorView.css';
 
 /** A touch-sized view of the same calculator state and seven-segment display. */

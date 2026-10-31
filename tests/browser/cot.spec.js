@@ -10,7 +10,7 @@ async function point(page,id) {
   },id);
 }
 async function coordinates(page,p) {
-  const b=await page.locator('#game-container canvas').boundingBox();
+  const b=await page.locator('#game-container canvas:not(.live-room)').boundingBox();
   return {x:b.x+p.x/p.W*b.width,y:b.y+p.y/p.H*b.height};
 }
 async function click(page,id) {
@@ -19,6 +19,27 @@ async function click(page,id) {
 const state=page=>evaluateApp(page,({services})=>{
   const s=services.levels.activeScene;
   return {key:s?.scene.key,built:s?._built,positions:s?._positions,state:s?._state};
+});
+
+const alignment=page=>evaluateApp(page,({services})=>{
+  const s=services.levels.activeScene,L=s._L;
+  let error=0;
+  for(const [a,b]of[[0,0],[1,0],[0,1],[1,1],[.5,.5]]) {
+    const p=L.at(a,b),q=s._stage.plane(p.x,p.y);
+    error=Math.max(error,Math.abs(a-q.a),Math.abs(b-q.b));
+  }
+  const plate=s.children.list.find(o=>o.texture?.key==='cot_native_room');
+  const bounds=plate.getBounds();
+  return {error,stretch:Math.abs(plate.scaleX-plate.scaleY),
+    gap:Math.max(0,bounds.left,bounds.top,L.W-bounds.right,L.H-bounds.bottom)};
+});
+
+const cluesInView=page=>evaluateApp(page,({services})=>{
+  const s=services.levels.activeScene;
+  return Object.keys(s._toys).every(id=>{
+    const b=s._stage.bounds(id);
+    return b.x>=0&&b.y>=0&&b.x+b.w<=s.scale.width&&b.y+b.h<=s.scale.height;
+  });
 });
 
 test('His Cot keeps its fifteen decorative belongings fixed and lets only the five clues move and interact',async({page})=>{
@@ -41,7 +62,12 @@ test('His Cot keeps its fifteen decorative belongings fixed and lets only the fi
   const cp=await coordinates(page,cot);await page.mouse.click(cp.x,cp.y);
   await expect.poll(async()=>(await state(page)).key).toBe('Cot');
   await expect.poll(async()=>(await state(page)).built).toBe(true);
-  await expect(page.locator('#game-container canvas')).toHaveCSS('filter','none');
+  const projection=await alignment(page);
+  expect(projection.error,'live toy camera matches all four rendered mattress corners').toBeLessThan(.00001);
+  expect(projection.stretch,'the Cycles photograph retains its proportions').toBe(0);
+  expect(projection.gap,'the photograph fills every edge of the game viewport').toBeLessThan(.01);
+  expect(await cluesInView(page)).toBe(true);
+  await expect(page.locator('#game-container canvas:not(.live-room)')).toHaveCSS('filter','none');
   expect(await evaluateApp(page,({services})=>Object.values(services.levels.activeScene._toys)
     .filter(t=>t.zone.input?.draggable).map(t=>t.id).sort())).toEqual(['book','chaplin','hotel','musicbox','oscar']);
   expect(await evaluateApp(page,({services})=>services.levels.activeScene._L.all.length)).toBe(20);
@@ -89,6 +115,18 @@ test('His Cot keeps its fifteen decorative belongings fixed and lets only the fi
     return evaluateApp(page,({services},b)=>Math.abs(services.levels.activeScene._L.W-b.width),b);
   }).toBeLessThan(3);
   await page.locator('#game-viewport').screenshot({path:'.artifacts/cot-review/compact.png'});
+  const compactProjection=await alignment(page);
+  expect(compactProjection.error).toBeLessThan(.00001);
+  expect(compactProjection.gap,'compact landscape has no side bars').toBeLessThan(.01);
+  expect(await cluesInView(page)).toBe(true);
+  await page.setViewportSize({width:640,height:960});
+  await expect.poll(()=>evaluateApp(page,({services})=>services.levels.activeScene._L.W)).toBeLessThan(640);
+  const portraitProjection=await alignment(page);
+  expect(portraitProjection.stretch).toBe(0);
+  expect(portraitProjection.gap).toBeLessThan(.01);
+  await page.locator('#game-viewport').screenshot({path:'.artifacts/cot-review/portrait.png'});
+  await page.setViewportSize({width:1280,height:820});
+  await expect(page.locator('#rotate-prompt')).toBeHidden();
   await evaluateApp(page,({services})=>services.preferences.set({motion:'reduced'}));
   await page.locator('#btn-replay').click();
   await expect.poll(async()=>Object.keys((await state(page)).positions||{}).length).toBe(0);

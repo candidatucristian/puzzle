@@ -1,8 +1,7 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { noiseBurst } from "../../shared/paint.js";
 import { PageFlip, holdBook, bringNear } from "../../shared/pageFlip.js";
-import { BOOK, layoutBook, paintBook, releaseBook } from "./book.js";
-import { herbariumPhotography, loadHerbariumPhotography } from "./photography.js";
+import { BOOK, herbariumRenders, layoutBook, loadHerbarium, paintBook, releaseBook } from "./book.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "IVY'S HERBARIUM"  ·  code: HEDGE  ·  her book of pressed plants
@@ -19,7 +18,8 @@ import { herbariumPhotography, loadHerbariumPhotography } from "./photography.js
 // lifts toward the hand, it can be taken and drawn over, or a click turns it
 // (shared/pageFlip.js). Once open, the book is brought a little nearer, so
 // the plants can be seen. Nothing on screen says to count anything. The book
-// is painted once per screen size (book.js).
+// is painted once per screen size (book.js), from Blender renders of the
+// table, the album and each page with its plants (art/blender/herbarium_desk.py).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const NEAR = 1.12; // how much nearer the book is brought once it has opened
@@ -34,7 +34,7 @@ export default class HerbariumScene extends BasePuzzleScene {
   }
 
   preload() {
-    loadHerbariumPhotography(this);
+    loadHerbarium(this);
   }
 
   create() {
@@ -58,9 +58,7 @@ export default class HerbariumScene extends BasePuzzleScene {
     // laid out as it will lie once brought near: the camera starts as far off
     // as that, so the book first shows as it lay, and then comes closer
     const L = (this._L = layoutBook(W, H, NEAR));
-    const photography = herbariumPhotography(this);
-    L.photographic = Boolean(photography.book && photography.desk && photography.pages.length === 5 && photography.pages.every(Boolean));
-    const { faces, shade } = paintBook(this.textures, L, photography);
+    const { faces, shade } = paintBook(this.textures, L, herbariumRenders(this));
     this.add.image(L.view.x, L.view.y, BOOK.desk).setOrigin(0, 0).setDepth(-10);
     this.add.image(L.view.x, L.view.y, BOOK.light).setOrigin(0, 0).setDepth(5);
     this._flip = new PageFlip(this, {

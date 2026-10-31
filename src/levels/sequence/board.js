@@ -9,6 +9,8 @@ const SHADOW = "seq_card_shadow";
 const MOTE = "seq_mote";
 export const STUDY_BACKGROUND = "seq_study_background";
 export const STUDY_CARD = "seq_sticky_card_v3";
+export const STUDY_INDEX_CARD = "seq_index_card_v1";
+export const STUDY_STRIP = "seq_ledger_strip_v1";
 const _INK = "rgba(48,35,24,";
 
 export function paintStudy(scene, W, H, L) {
@@ -17,8 +19,11 @@ export function paintStudy(scene, W, H, L) {
   const ctx = canvas.getContext("2d");
   const backdrop = scene.textures.get(STUDY_BACKGROUND).getSourceImage();
   const sticky = scene.textures.get(STUDY_CARD).getSourceImage();
+  const stripImg = scene.textures.exists(STUDY_STRIP)
+    ? scene.textures.get(STUDY_STRIP).getSourceImage()
+    : null;
   ctx.drawImage(backdrop, 0, 0, W, H);
-  paintBoard(ctx, L, S, sticky);
+  paintBoard(ctx, L, S, sticky, stripImg);
   paintNote(ctx, L.note, sticky);
 
   const textures = scene.textures;
@@ -35,7 +40,10 @@ export function paintStudy(scene, W, H, L) {
       ]),
     );
   }
-  return { room: ROOM, card: STUDY_CARD, shadow: SHADOW, mote: MOTE };
+  const activeCardKey = textures.exists(STUDY_INDEX_CARD)
+    ? STUDY_INDEX_CARD
+    : STUDY_CARD;
+  return { room: ROOM, card: activeCardKey, shadow: SHADOW, mote: MOTE };
 }
 
 export function releaseStudyArt(textures) {
@@ -46,7 +54,7 @@ export function releaseStudyArt(textures) {
 
 // Fine pencil marks show where the shuffled cards belong without covering
 // the natural cork texture in the photograph.
-function paintBoard(ctx, L, S, sticky) {
+function paintBoard(ctx, L, S, sticky, stripImg = null) {
   const row = L.slotRow;
   ctx.save();
   ctx.strokeStyle = "rgba(43,31,20,0.27)";
@@ -64,11 +72,18 @@ function paintBoard(ctx, L, S, sticky) {
 
   paintOrderNote(ctx, L.orderNote, sticky);
 
-  // A real-looking paper slip carries the live concatenated answer.
-  const width = row.w * 0.82;
-  const height = Math.max(30, L.slots[0].w * 0.5);
+  // A real 3D Cycles paper slip carries the live concatenated answer.
+  const width = row.w * 0.84;
+  const height = Math.max(36, L.slots[0].w * 0.56);
   const x = row.x + row.w / 2 - width / 2;
   const y = L.fused.y - height / 2;
+  if (stripImg) {
+    ctx.save();
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(stripImg, x, y, width, height);
+    ctx.restore();
+    return;
+  }
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.34)";
   ctx.shadowBlur = S * 0.012;

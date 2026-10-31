@@ -1,9 +1,8 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { noiseBurst, addCanvasTexture } from "../../shared/paint.js";
-import { KEYS, glassBox, layoutSink, paintLitmus, paintSink, releaseSink, waterIn } from "./art.js";
+import { KEYS, RENDER, glassBox, layoutSink, loadSink, paintLitmus, paintSink, releaseSink, waterIn } from "./art.js";
 import { BOTTLES, pour, toTheLine } from "./puzzle.js";
-import { loadMeasuresPhotography, alignMeasuresPhotography } from "./photography.js";
 import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,10 +21,14 @@ import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
 // The water is level in a tilted bottle and keeps its volume (art.js
 // waterIn). Nothing on screen says what to measure.
 //
-// The two bottles are made in three dimensions (stage3d.js, three.js, loaded
-// with this level alone) and drawn where the scene has them; a bottle can be
-// taken up and carried — to the tap, the sink, the other bottle or the
-// flask — and let go there, it does what a click there would.
+// The sink counter is a Blender render — Room VIII's own, seen close
+// (art/blender/room_weighing.py --view measures): the plate, the flask alone
+// in clear glass, its shadow alone on the slate (art.js). The two bottles are
+// made in three dimensions (stage3d.js, three.js, loaded with this level
+// alone), seen by the render's own camera, and drawn where the scene has
+// them; a bottle can be taken up and carried — to the tap, the sink, the
+// other bottle or the flask — and let go there, it does what a click there
+// would.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const WATER = 0x9fc4d4;
@@ -47,7 +50,7 @@ export default class MeasuresScene extends BasePuzzleScene {
   }
 
   preload() {
-    loadMeasuresPhotography(this);
+    loadSink(this);
   }
 
   create() {
@@ -75,7 +78,6 @@ export default class MeasuresScene extends BasePuzzleScene {
 
   _build(W, H) {
     const L = (this._L = layoutSink(W, H));
-    alignMeasuresPhotography(this, L);
     paintSink(this, L);
     this.add.image(0, 0, KEYS.room).setOrigin(0, 0).setDepth(-10);
     const u = L.u;
@@ -92,11 +94,13 @@ export default class MeasuresScene extends BasePuzzleScene {
         litmus = this.add.image(-v.neckW * 0.12, v.top - 3 * u, "__DEFAULT").setOrigin(0.5, 0);
         parts.push(litmus);
       }
-      const glass = this.add.image(0, 0, KEYS.glass(i)).setDisplaySize(box.w, box.h).setOrigin(box.ox / box.w, box.oy / box.h);
+      const glass = this.add.image(0, 0, v.kind === "flask" ? RENDER.flask : KEYS.glass(i)).setDisplaySize(box.w, box.h).setOrigin(box.ox / box.w, box.oy / box.h);
       parts.push(glass);
       const c = this.add.container(v.x, v.y, parts).setDepth(5);
-      const shadow = this.add.image(v.x, L.counter + 3 * u, KEYS.glow).setDepth(1)
-        .setTint(0x000000).setAlpha(.6).setDisplaySize(box.w * 1.25, 16 * u);
+      // its shadow on the slate: the flask's rendered, a bottle's a soft dark
+      const shadow = v.kind === "flask"
+        ? this.add.image(v.x, v.shadow.y, RENDER.shadow).setOrigin(v.shadow.ox, 0).setDisplaySize(v.shadow.w, v.shadow.h).setDepth(1)
+        : this.add.image(v.x, L.counter + 3 * u, KEYS.glow).setDepth(1).setTint(0x000000).setAlpha(.6).setDisplaySize(box.w * 1.25, 16 * u);
       const hit = this.add.zone(v.x, v.y + (v.top + v.bottom) / 2, box.w, v.bottom - v.top + 10 * u).setDepth(9)
         .setName(`measures-vessel-${i}`)
         .setInteractive({ useHandCursor: true }).setData("interactionLabel", v.kind === "flask" ? "Pour into the flask" : "Take up the bottle");
@@ -112,13 +116,13 @@ export default class MeasuresScene extends BasePuzzleScene {
       }
       return vessel;
     });
-    // the bottles drawn in three dimensions, over the photograph: their drawn
+    // the bottles drawn in three dimensions, over the render: their drawn
     // glass and water stood aside
     const stage = this._stage;
     stage.fit(W, H, L, BOTTLES.map((ml) => `${ml} ml`), this.textures.get(KEYS.room).getSourceImage());
     if (this.textures.exists(STAGE)) this.textures.remove(STAGE);
     this._stageTexture = this.textures.addImage(STAGE, stage.canvas);
-    // (the photograph is drawn with them, behind them, to be seen through them)
+    // (the render is drawn with them, behind them, to be seen through them)
     this.add.image(0, 0, STAGE).setOrigin(0, 0).setDepth(4);
     // the rain on the window, over that picture (a bottle is never lifted so high)
     if (L.rain) addRainGlass(this, { ...L.rain, rect: boxOf(L.rain.panes, 2), picture: this.textures.get(KEYS.room).getSourceImage(), depth: 4.5 });
@@ -128,7 +132,7 @@ export default class MeasuresScene extends BasePuzzleScene {
     this._makeBurn();
     // the tap and the sink
     const t = L.tap;
-    this.add.zone((t.x + t.spout.x) / 2, t.spout.y + 40 * u, 100 * u, 160 * u).setName("measures-tap").setDepth(9).setInteractive({ useHandCursor: true })
+    this.add.zone(t.hit.x + t.hit.w / 2, t.hit.y + t.hit.h / 2, Math.max(t.hit.w, 100 * u), t.hit.h).setName("measures-tap").setDepth(9).setInteractive({ useHandCursor: true })
       .setData("interactionLabel", "Fill it at the tap").on("pointerdown", () => this._tap());
     const s = L.sink;
     this.add.zone((s.x0 + s.x1) / 2, s.hitY ?? L.counter + 40 * u, s.x1 - s.x0, s.hitH ?? 80 * u).setName("measures-sink").setDepth(9).setInteractive({ useHandCursor: true })
@@ -471,7 +475,7 @@ export default class MeasuresScene extends BasePuzzleScene {
       b.hit.setPosition(b.c.x, b.c.y + (b.v.top + b.v.bottom) / 2);
       if (b.v.kind === "bottle" && this._stage) continue;
       const lift = Math.max(0, b.home.y - b.c.y);
-      b.shadow.setX(b.c.x).setAlpha(.6 * Math.max(0, 1 - lift / (240 * u)));
+      b.shadow.setX(b.c.x).setAlpha((b.v.kind === "flask" ? 1 : .6) * Math.max(0, 1 - lift / (240 * u)));
       const g = b.water.clear(), w = waterIn(b.v, this._frac(b), b.angle);
       if (!w) continue;
       g.fillStyle(0x668d96, 0.24);

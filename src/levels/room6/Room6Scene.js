@@ -14,7 +14,7 @@ import { loadRoom6Live, room6LiveReady, room6LivePlate, mountRoom6Live } from ".
 // ceiling, bare boards, the tall arched window (see house/RoomScene.js for
 // what every room does). Its puzzle is the trophy wall: against the left-hand
 // wall a tall walnut cabinet, glazed above, his medals hanging inside on
-// their ribbons under a small brass light that burns until it is solved; and
+// their ribbons under a small brass light that stays on; and
 // in the right-hand corner a spiral stair, dark, winding up round its iron
 // post through the ceiling. Under the window her herbarium; and against the
 // back wall by the stair, the boy's cot, his toys still in it (cot/inRoom.js).
@@ -77,13 +77,12 @@ export default class Room6Scene extends PlainRoomScene {
 
   get usesEscape() { return this._portraitViewer?.isOpen || false; }
 
-  layout(W, H, levels) {
+  layout(W, H) {
     const L = super.layout(W, H);
     if (this.textures.exists(ROOM6_PHOTOGRAPH)) alignRoom6Photography(L, this.plan.window);
     L.live = Boolean(L.blender) && !sketching() && room6LiveReady(this);
     const { Q, half: hx } = L;
-    const lit = (id) => !levels.isCompleted(levels.indexOf(id));
-    L.on = { flags: lit("flags") };
+    L.on = { flags: true };
     // the medal cabinet against the left-hand wall: its front stands `deep`
     // off the wall, glazed from `glass.y0` up
     const mc = (L.cabinet = { x0: -hx, x1: -hx + 40, d0: 418, d1: 568, h: 212 });

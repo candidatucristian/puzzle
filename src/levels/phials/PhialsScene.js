@@ -1,7 +1,8 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { noiseBurst } from "../../shared/paint.js";
-import { KEYS, layoutPhials, paintPhials, releasePhials, tubeBox } from "./art.js";
-import { alignPhialsPhotography, loadPhialsPhotography } from "./photography.js";
+import { fitRender } from "../../shared/renderFit.js";
+import { RACK } from "./puzzle.js";
+import PHIALS from "./phialsLevel.json";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "TWO PHIALS"  ·  code: GREEN  ·  at Silas's sinks
@@ -10,15 +11,23 @@ import { alignPhialsPhotography, loadPhialsPhotography } from "./photography.js"
 // little walnut rack, a phial of yellow, an empty tube, a phial of blue; and
 // tied to its post a paper tag, in his hand — "For my sister."
 //
-// A click lifts a tube out of the rack and holds it up to the moon; another
+// A click lifts a tube out of the rack and holds it up to the light; another
 // puts it back. They are never mixed here: the empty tube waits for it.
 //
 //   yellow + blue  →  GREEN — Ivy's colour, the colour of growing things
 //
 // Nothing on screen says what to do with the colours.
+//
+// The counter is a Blender render — Room VII's own scene seen close
+// (art/blender/room_lab.py --view phials): the rack standing empty, and the
+// three tubes (clear glass) and the rack's upper board cut apart, so a tube
+// can come up out of the rack and the board stands in front of those in it.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LIFT = 0.42; // seconds for a tube to come up out of the rack, or go back
+const CLEAR = 0.68; // how far up a tube's foot is clear of the board (of its lift)
+const PLATE = `phials_plate_v${PHIALS.version}`;
+const PIECES = `phials_pieces_v${PHIALS.version}`;
 
 export default class PhialsScene extends BasePuzzleScene {
   constructor() {
@@ -30,11 +39,19 @@ export default class PhialsScene extends BasePuzzleScene {
   }
 
   preload() {
-    loadPhialsPhotography(this);
+    const url = (what) => `assets/images/Phials/phials-${what}-v${PHIALS.version}.webp`;
+    if (!this.textures.exists(PLATE)) this.load.image(PLATE, url("plate"));
+    if (!this.textures.exists(PIECES)) this.load.image(PIECES, url("pieces"));
   }
 
   create() {
     this.beginScene();
+    this.cameras.main.setBackgroundColor("#06070a");
+    if (this.textures.exists(PIECES)) {
+      const atlas = this.textures.get(PIECES);
+      PHIALS.tubes.forEach((t, i) => { if (!atlas.has(`tube-${i}`)) atlas.add(`tube-${i}`, 0, ...t.frame); });
+      if (!atlas.has("board")) atlas.add("board", 0, ...PHIALS.board.frame);
+    }
     // which tubes are held up survives a resize
     this._up = new Set();
     this._build(this.cameras.main.width, this.cameras.main.height);
@@ -43,37 +60,29 @@ export default class PhialsScene extends BasePuzzleScene {
   }
 
   _build(W, H) {
-    const L = (this._L = layoutPhials(W, H));
-    alignPhialsPhotography(this, L);
-    paintPhials(this, L);
-    this.add.image(0, 0, KEYS.room).setOrigin(0, 0).setDepth(-10);
-    const { w: tw, h: th } = tubeBox(L);
-    this._tubes = L.tubes.map((t) => {
-      const img = this.add.image(t.home.x, t.home.y, KEYS.tube(t.i)).setDisplaySize(tw, th).setOrigin(0.5, 1).setDepth(3)
-        .setInteractive({ useHandCursor: true })
-        .setName(`phials-tube-${t.id}`)
-        .setData("interactionLabel", t.liquid ? "Hold it up to the light" : "Look at the empty tube");
-      const tube = { ...t, img, k: this._up.has(t.i) ? 1 : 0 };
+    const f = (this._f = fitRender(W, H, PHIALS));
+    if (this.textures.exists(PLATE)) {
+      this.add.image(f.x, f.y, PLATE).setOrigin(0, 0).setDisplaySize(PHIALS.width * f.s, PHIALS.height * f.s).setDepth(-10);
+    }
+    if (!this.textures.exists(PIECES)) return;
+    this._tubes = PHIALS.tubes.map((t, i) => {
+      const [bx, by, bw, bh] = t.box, [fx, fy] = t.foot;
+      const home = f.at(t.foot);
+      // (held by its foot, as it stands in the rack)
+      const img = this.add.image(home.x, home.y, PIECES, `tube-${i}`).setOrigin((fx - bx) / bw, (fy - by) / bh)
+        .setDisplaySize(bw * f.s, bh * f.s).setDepth(3)
+        .setInteractive({ useHandCursor: true, pixelPerfect: false })
+        .setName(`phials-tube-${RACK[i].id}`)
+        .setData("interactionLabel", RACK[i].liquid ? "Hold it up to the light" : "Look at the empty tube");
+      const tube = { i, img, home, lift: { x: t.lift[0] * f.s, y: t.lift[1] * f.s }, k: this._up.has(i) ? 1 : 0 };
       img.on("pointerdown", () => this._lift(tube));
       return tube;
     });
-    // the rack's upper bar, over the tubes standing in it, so they stand through it
-    if (L.photographic) this._bar = this.add.image(0, 0, KEYS.front).setOrigin(0, 0).setDepth(4);
-    else {
-      this._bar = this.add.graphics().setDepth(4);
-      this._paintBar();
-    }
+    // the rack's upper board, over the tubes standing in it, so they stand through it
+    const b = PHIALS.board.box, at = f.at([b[0], b[1]]);
+    this._bar = this.add.image(at.x, at.y, PIECES, "board").setOrigin(0, 0).setDisplaySize(b[2] * f.s, b[3] * f.s).setDepth(4);
     this._built = true;
     this._place();
-  }
-
-  // the bar the tubes stand through, laid over them where they pass it
-  _paintBar() {
-    const L = this._L, { u } = L, r = L.rack, g = this._bar.clear();
-    const y = L.barY;
-    g.fillStyle(0x4a2c14, 1).fillRect(r.x - r.w / 2 + 4 * u, y + 6 * u, r.w - 8 * u, 14 * u);
-    g.fillStyle(0xffdcaa, 0.12).fillRect(r.x - r.w / 2 + 4 * u, y + 6 * u, r.w - 8 * u, 1.5 * u);
-    g.fillStyle(0x000000, 0.35).fillRect(r.x - r.w / 2 + 4 * u, y + 18 * u, r.w - 8 * u, 2 * u);
   }
 
   // a tube clicked: up out of the rack, or back into it
@@ -101,16 +110,15 @@ export default class PhialsScene extends BasePuzzleScene {
   }
 
   // where each tube is: in the rack, or lifted clear of it and turned a little
-  // to the moon, swaying very slightly as a held thing does
+  // to the light, swaying very slightly as a held thing does
   _place(t = 0) {
-    const L = this._L, { u } = L;
-    for (const tube of this._tubes) {
+    for (const tube of this._tubes ?? []) {
       const k = tube.k ?? 0;
-      const clear = Math.max(0, (k - L.clearAt) / (1 - L.clearAt));
+      const clear = Math.max(0, (k - CLEAR) / (1 - CLEAR));
       const sway = this.reducedMotion ? 0 : Math.sin(t * 1.3 + tube.i * 2) * 0.008 * clear;
-      tube.img.setPosition(tube.home.x + clear * 6 * u, tube.home.y - k * L.lift)
+      tube.img.setPosition(tube.home.x + tube.lift.x * k, tube.home.y + tube.lift.y * k)
         .setRotation(clear * 0.035 * (tube.i - 1 || 1) + sway)
-        .setDepth(k > L.clearAt ? 5 : 3);
+        .setDepth(k > CLEAR ? 5 : 3);
     }
   }
 
@@ -118,12 +126,10 @@ export default class PhialsScene extends BasePuzzleScene {
     this._built = false;
     this.tweens.killAll();
     for (const obj of this.children.list.slice()) obj.destroy();
-    releasePhials(this.textures);
   }
 
   shutdown() {
     this._built = false;
     this.tweens.killAll();
-    releasePhials(this.textures);
   }
 }

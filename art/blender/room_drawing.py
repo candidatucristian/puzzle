@@ -41,7 +41,12 @@ RNG = random.Random(1225)
 X0, X1, D1, TOP = -260, 260, 600, 320
 EYE = (float(arg("--ex", "190")), float(arg("--ey", "158")), float(arg("--ed", "40")))
 LOOK = (float(arg("--lx", "-120")), float(arg("--ly", "105")), float(arg("--ld", "480")))
-scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "24")))
+VIEW = arg("--view", "")                          # "tree": The Lit Tree's own close-up (levels/pi)
+if VIEW == "tree":
+    OUT = os.path.join(ROOT, ".artifacts/tree-level"); os.makedirs(OUT, exist_ok=True)
+    EYE = (float(arg("--ex", "-74")), float(arg("--ey", "122")), float(arg("--ed", "150")))
+    LOOK = (float(arg("--lx", "-66")), float(arg("--ly", "92")), float(arg("--ld", "560")))
+scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "26" if VIEW == "tree" else "24")))
 HEARTH = dict(d0=220, d1=380, out=32)            # the chimney breast in the left-hand wall
 WIN = dict(x=-20, hw=66, sill=90, top=282)       # the tall sash in the back wall
 TRAP = dict(x0=-160, x1=-88, d0=286, d1=358)     # the hole in the floor, before the hearth
@@ -58,6 +63,7 @@ BRASS = aged_metal("brass", (0.58, 0.41, 0.18), (0.08, 0.06, 0.03), rough=(0.2, 
 GILT = aged_metal("gilt", (0.72, 0.53, 0.22), (0.14, 0.09, 0.04), rough=(0.2, 0.45), scale=50, tarnish=0.45)
 IRON = plain("iron", (0.025, 0.025, 0.027), rough=0.5, metal=0.8)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
+if VIEW == "tree": GLASS.node_tree.nodes["Principled BSDF"].inputs["IOR"].default_value = 1.03   # (close to, the night seen through it clear)
 FRAME = plain("window paint", (0.86, 0.84, 0.78), rough=0.5)
 WAX = bpy.data.materials.new("wax"); WAX.use_nodes = True
 _w = WAX.node_tree.nodes["Principled BSDF"]; _w.inputs["Base Color"].default_value = (0.82, 0.74, 0.58, 1); _w.inputs["Subsurface Weight"].default_value = 0.6; _w.inputs["Subsurface Radius"].default_value = (0.02, 0.012, 0.006); _w.inputs["Roughness"].default_value = 0.42
@@ -237,6 +243,10 @@ curtain(RNG, wx0 - 66, wx0 - 2, D1 - 8, 300, VELVET, folds=4, deep=9)
 curtain(RNG, wx1 + 2, wx1 + 66, D1 - 8, 300, VELVET, folds=4, deep=9)
 box_cm("pelmet", wx0 - 76, wx1 + 76, 298, 314, D1 - 16, D1, GILT, 1.5)
 MOON_AT = P(-1070, 430, 3400)
+if VIEW == "tree":
+    # (seen through the window's upper sash, a little right of its middle)
+    _e = P(*EYE); _a = P(WIN["x"] + float(arg("--moonx", "-38")), float(arg("--moony", "236")), D1 + 20)
+    MOON_AT = _e + (_a - _e) * ((34 - _e.y) / (_a.y - _e.y))
 garden(MOON_AT, [("island_tree_01", -1300, 2200, 11.0, 0.3), ("island_tree_02", 900, 2600, 12.0, 1.4), ("tree_small_02", -600, 1400, 5.0, 2.2),
                   ("shrub_02", -200, 900, 1.5, 0.6), ("shrub_02", 260, 950, 1.7, 2.0)],
        (-2500, 2500, D1 + 40, 3300, -40), P(-900, 800, 4200), sky_size=45)
@@ -254,7 +264,8 @@ _sb.inputs["Emission Strength"].default_value = float(arg("--snow", "0.03"))
 tv = TV
 box_cm("television", tv["x0"], tv["x1"], tv["y0"], tv["y1"], D1 - 4, D1 - 1.5, BEZEL, 0.4)
 GLASS_D = D1 - 4.05
-box_cm("screen", tv["x0"] + 1.6, tv["x1"] - 1.6, tv["y0"] + 1.6, tv["y1"] - 1.6, GLASS_D - 0.05, GLASS_D, SNOW)
+_screen = box_cm("screen", tv["x0"] + 1.6, tv["x1"] - 1.6, tv["y0"] + 1.6, tv["y1"] - 1.6, GLASS_D - 0.05, GLASS_D, SNOW)
+if VIEW == "tree": _screen.visible_glossy = False          # (its snow not seen again in the window's glass)
 box_cm("bracket", (tv["x0"] + tv["x1"]) / 2 - 12, (tv["x0"] + tv["x1"]) / 2 + 12, tv["y0"] + 14, tv["y1"] - 14, D1 - 1.5, D1, IRON)
 TV_LAMP = plain("standby lamp", (0.3, 0.02, 0.01), emit=(1.0, 0.05, 0.02), strength=6)
 sphere("standby lamp", tuple(P(tv["x1"] - 3, tv["y0"] + 0.9, D1 - 4.1)), M(0.3), TV_LAMP)
@@ -392,7 +403,7 @@ for i in range(tiers):
     for j in range(n):
         e = 2 * (j + 0.5) / n - 1
         az = FRONT + spread * e
-        r = reach(y, az) * 0.9
+        r = reach(y, az) * (1.02 if VIEW == "tree" else 0.9)   # (close to, every lamp out where it is seen)
         p = P(T["x"] + math.cos(az) * r, y - (1 - e * e) * 3.0 - 2.0, T["d"] + math.sin(az) * r)
         string.append(p); LAMPS.append((p, j in lit))
     cu = bpy.data.curves.new("lamp string", "CURVE"); cu.dimensions = "3D"; cu.bevel_depth = M(0.12); spl = cu.splines.new("BEZIER"); spl.bezier_points.add(len(string) - 1)
@@ -430,7 +441,33 @@ for k, (dx, dd, w_, d_, h_, turn) in enumerate(((52, -30, 26, 20, 14, 0.4), (68,
         box_cm("ribbon", -w_ / 2 - 0.1, w_ / 2 + 0.1, 0, h_ + 0.1, -1, 1, RIBBON, keep=False)
         box_cm("ribbon", -1, 1, 0, h_ + 0.1, -d_ / 2 - 0.1, d_ / 2 + 0.1, RIBBON, keep=False)
     ca, sa = math.cos(FRONT), math.sin(FRONT)
-    assembled("parcel", parcel, at=(T["x"] + dx * ca - dd * sa, 0, T["d"] + dx * sa + dd * ca), turn=turn)
+    _root = assembled("parcel", parcel, at=(T["x"] + dx * ca - dd * sa, 0, T["d"] + dx * sa + dd * ca), turn=turn)
+    if k == 1: GIFT = dict(root=_root, at=(T["x"] + dx * ca - dd * sa, T["d"] + dx * sa + dd * ca), turn=turn, w=w_, d=d_, h=h_, paper=PAPERS[k % 4])
+# (in The Lit Tree the tall green one opens: its lid off and laid by, and out of
+# it a rule, a protractor and a pair of compasses)
+OPEN, TOYS = [], []
+if VIEW == "tree":
+    from drawing_instruments import rule, protractor, compasses
+    gw, gd_, gh = GIFT["w"], GIFT["d"], GIFT["h"]
+    def opened():
+        box_cm("parcel", -gw / 2, gw / 2, 0, 0.4, -gd_ / 2, gd_ / 2, GIFT["paper"], keep=False)
+        for (a, b_, c, e) in ((-gw / 2, gw / 2, -gd_ / 2, -gd_ / 2 + 0.4), (-gw / 2, gw / 2, gd_ / 2 - 0.4, gd_ / 2), (-gw / 2, -gw / 2 + 0.4, -gd_ / 2, gd_ / 2), (gw / 2 - 0.4, gw / 2, -gd_ / 2, gd_ / 2)):
+            box_cm("parcel", a, b_, 0, gh - 1.2, c, e, GIFT["paper"], 0.1, keep=False)
+        box_cm("tissue", -gw / 2 + 0.5, gw / 2 - 0.5, gh - 3.5, gh - 3.2, -gd_ / 2 + 0.5, gd_ / 2 - 0.5, plain("tissue", (0.75, 0.72, 0.66), rough=0.8), 0.2, keep=False)
+    _o = assembled("parcel open", opened, at=(GIFT["at"][0], 0, GIFT["at"][1]), turn=GIFT["turn"])
+    def lid():
+        box_cm("parcel lid", -gw / 2 - 0.4, gw / 2 + 0.4, 0, 1.2, -gd_ / 2 - 0.4, gd_ / 2 + 0.4, GIFT["paper"], 0.2, keep=False)
+        box_cm("ribbon", -gw / 2 - 0.5, gw / 2 + 0.5, 0, 1.3, -1, 1, RIBBON, keep=False)
+        box_cm("ribbon", -1, 1, 0, 1.3, -gd_ / 2 - 0.5, gd_ / 2 + 0.5, RIBBON, keep=False)
+    ca, sa = math.cos(FRONT), math.sin(FRONT)
+    near = lambda f_, s_: (GIFT["at"][0] + f_ * ca - s_ * sa, GIFT["at"][1] + f_ * sa + s_ * ca)
+    _l = assembled("parcel lid", lid, at=(near(4, 30)[0], 0, near(4, 30)[1]), turn=GIFT["turn"] + 0.5)
+    OPEN = [_o, _l]
+    BOXWOOD_RULE = scan("boxwood rule", "dark_wood", size=0.3, tint=(1.0, 0.82, 0.55), bright=1.0, sat=0.5, rough=(0.4, 0.55), bump=0.2)
+    STEEL = plain("steel", (0.55, 0.56, 0.58), rough=0.28, metal=1.0)
+    for (fn, (f_, s_), turn_) in ((lambda: rule(BOXWOOD_RULE), (16, 54), 0.35), (lambda: protractor(BRASS), (-6, 70), -0.3), (lambda: compasses(STEEL, BRASS), (28, 33), 1.1)):
+        x_, d_ = near(f_, s_)
+        TOYS.append(assembled("instrument", fn, at=(x_, 0.05, d_), turn=FRONT + turn_))
 
 # ── by the fire: two armchairs, a little table, the chest ─────────────────
 import_model("GreenChair_01", height=M(104), at=tuple(P(52, 0, 470)), rot=float(arg("--chair1", "-1.95")))
@@ -441,6 +478,11 @@ SIDE_TOP = model_top(st_root)
 CHEST = dict(x0=-37, x1=-16, d0=462, d1=477, y0=SIDE_TOP + 0.6, y1=SIDE_TOP + 11.1, lid=7.7)
 chest_body, chest_hinge, lid_parts = chest(CHEST)
 CHEST_PARTS = chest_body + lid_parts
+if VIEW == "tree":
+    for root_ in [o for o in bpy.data.objects if o.name.split(".")[0] in ("GreenChair_01", "ArmChair_01", "side_table_01")]:
+        for o in [root_] + list(root_.children_recursive): o.hide_render = True
+    for o in CHEST_PARTS: o.hide_render = True
+    for o in [o for o in bpy.data.objects if o.name.startswith("ladder rail")]: o.hide_render = True
 rug(-150, 140, 140, 480, rug_material("rug", f"{ASSETS}/textures/persian_rug.jpg", tint=(0.55, 0.62, 1.0), sat=0.95, value=0.4))
 
 # ── the chandelier, cold, from the ceiling's rose ─────────────────────────
@@ -492,9 +534,13 @@ LAYOUT.glow("embers", P(gx_ + 6, 20, gd_), 46)
 LAYOUT.quad("tv", [P(tv["x0"] + 1.6, tv["y1"] - 1.6, GLASS_D), P(tv["x1"] - 1.6, tv["y1"] - 1.6, GLASS_D), P(tv["x1"] - 1.6, tv["y0"] + 1.6, GLASS_D), P(tv["x0"] + 1.6, tv["y0"] + 1.6, GLASS_D)])
 for pane in SASHES: LAYOUT.pane(pane)
 LAYOUT.dust([P(wx0, WIN["top"], D1), P(wx1, WIN["sill"], D1), P(wx0 + 10, 0, 345), P(wx1, 0, 520)])
-LAYOUT.write()
+if not VIEW: LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
+if VIEW == "tree":
+    import tree_level_passes
+    tree_level_passes.run(globals())
+    raise SystemExit
 cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.6")))
 scene.cycles.volume_bounces = 1
 GLOSSY = ("snow", "standby lamp", "lamp alight", "lamp dark")                # (what keeps its shine: glazes, screens, lamp glass)

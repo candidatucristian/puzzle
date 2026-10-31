@@ -9,14 +9,13 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
  *
  *  Each bottle is made to its drawn vessel's own measure (art.js layoutSink,
  *  in screen pixels), so the scene's pours, streams and places fit it; the
- *  camera is found that sees the bottles' row on the slate at that size and
- *  where the photograph has the counter. The photograph itself is set behind them,
- *  filling the view, so that their glass and their water bend what is behind
- *  them as glass and water do; the whole is drawn onto its own canvas, which
- *  the scene shows in place of the photograph (MeasuresScene.js). */
+ *  camera is the render's own (measuresLevel.json: its field of view, its
+ *  tilt, where it stands from the row), its picture laid on the screen where
+ *  the render lies. The render itself is set behind them, filling the view,
+ *  so that their glass and their water bend what is behind them as glass and
+ *  water do; the whole is drawn onto its own canvas, which the scene shows in
+ *  place of the render (MeasuresScene.js). */
 
-const FOV = 34;
-const PITCH = THREE.MathUtils.degToRad(16); // the eye a little above the slate, looking down to it
 const SLICES = 48; // for finding where the water stands
 
 export class MeasuresStage {
@@ -38,8 +37,8 @@ export class MeasuresStage {
     scene.environment = this.env;
     scene.environmentIntensity = 0.9;
     scene.add(new THREE.HemisphereLight(0xb8c6d8, 0x2a2420, 0.6));
-    // the wall lamp, warm, up on the right; the window's cold behind
-    const lamp = new THREE.DirectionalLight(0xffd2a0, 1.6);
+    // the lamp by the sink, warm, up on the right; the window's cold behind
+    const lamp = (this.lamp = new THREE.DirectionalLight(0xffd2a0, 1.6));
     lamp.position.set(0.9, 1.2, 0.2);
     lamp.castShadow = true;
     lamp.shadow.mapSize.set(1024, 1024);
@@ -55,8 +54,8 @@ export class MeasuresStage {
     this.slate.rotation.x = -Math.PI / 2;
     this.slate.receiveShadow = true;
     scene.add(this.slate);
-    this.camera = new THREE.PerspectiveCamera(FOV, 1, 0.02, 10);
-    // the photograph, filling the view behind everything (carried with the eye)
+    this.camera = new THREE.PerspectiveCamera(30, 1, 0.02, 10);
+    // the render, filling the view behind everything (carried with the eye)
     this.backdrop = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ toneMapped: false }));
     this.camera.add(this.backdrop);
     scene.add(this.camera);
@@ -65,32 +64,34 @@ export class MeasuresStage {
     this.front = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0); // the plane of their row, facing the eye
   }
 
-  /** The camera that sees the slate at `L.counter` and the 500 ml bottle at
-   *  its drawn height; then the bottles, made to the drawn vessels' measure. */
-  fit(W, H, L, labels, photograph) {
+  /** The render's own camera (L.camera: its vertical field of view, its tilt
+   *  down, its height over the slate and distance from the row, in metres),
+   *  its whole picture lying on the screen at `frame`; then the bottles, made
+   *  to the drawn vessels' measure. */
+  fit(W, H, L, labels, render) {
     this.W = W; this.H = H;
     this.renderer.setSize(W, H, false);
-    const cam = this.camera;
-    cam.aspect = W / H; cam.fov = FOV; cam.updateProjectionMatrix();
-    const far = 6, span = 2 * far * Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-    this.backdrop.position.set(0, 0, -far);
-    this.backdrop.scale.set(span * (W / H), span, 1);
+    const cam = this.camera, C = L.camera, frame = C.frame;
+    cam.fov = C.fov; cam.aspect = frame.w / frame.h;
+    // (the screen is a window on the render's picture, which may run past it)
+    cam.setViewOffset(frame.w, frame.h, -frame.x, -frame.y, W, H);
+    cam.updateProjectionMatrix();
+    const far = 6, fullH = 2 * far * Math.tan(THREE.MathUtils.degToRad(C.fov / 2)), fullW = fullH * cam.aspect;
+    this.backdrop.position.set(((W / 2 - frame.x) / frame.w - 0.5) * fullW, -((H / 2 - frame.y) / frame.h - 0.5) * fullH, -far);
+    this.backdrop.scale.set(fullW * (W / frame.w), fullH * (H / frame.h), 1);
     this.backdrop.material.map?.dispose();
-    const picture = new THREE.CanvasTexture(photograph);
+    const picture = new THREE.CanvasTexture(render);
     picture.colorSpace = THREE.SRGBColorSpace;
     this.backdrop.material.map = picture;
     this.backdrop.material.needsUpdate = true;
-    const F = H / 2 / Math.tan(THREE.MathUtils.degToRad(FOV / 2));
     const big = L.vessels[0], tall = 0.2; // the 500 ml bottle stands twenty centimetres
-    const Z = (F * tall) / (big.bottom - big.top);
-    this.mpp = Z / F; // metres to a pixel, at the row
-    // the eye's height over the slate and distance from the row, for the
-    // slate's line to fall where the photograph has it
-    const Yup = (-(L.counter - H / 2) / F) * Z, s = Math.sin(PITCH), c = Math.cos(PITCH);
-    const height = Z * s - Yup * c, distance = Z * c + Yup * s;
-    cam.position.set(0, height, distance);
-    cam.rotation.set(-PITCH, 0, 0);
+    this.mpp = tall / (big.bottom - big.top); // metres to a pixel, at the row
+    // where the render's eye stood: over the slate, back from the row, tilted down
+    cam.position.set(0, C.height, C.distance);
+    cam.rotation.set(-THREE.MathUtils.degToRad(C.pitch), 0, 0);
     cam.updateMatrixWorld();
+    // and the lamp by the sink where the render has it
+    this.lamp.position.set(...C.lamp);
     for (const b of this.bottles) { this.scene.remove(b.group); dispose(b.group); }
     this.bottles = L.vessels.filter((v) => v.kind === "bottle").map((v, i) => this._bottle(v, labels[i]));
   }

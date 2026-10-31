@@ -1,37 +1,40 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { paintParlour, releaseParlourArt, releasePieceArt } from "./parlour.js";
-import { loadChessPhotography } from "./photographicChess.js";
+import { glowCanvas, addCanvasTexture } from "../../shared/paint.js";
+import { paintCandleFlame, addCandleFlame, flickerCandleFlame } from "../../shared/candleFlame.js";
+import { fitRender } from "../../shared/renderFit.js";
+import GAME from "./chessGame.json";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "CHESSBOARD"  ·  code: HEADACHE  ·  expert  ·  TOOL (chess notation)
 //
-// An abandoned game in a quiet parlour, painted like a storybook still life:
-// a board of maple and walnut on a walnut table in a dark room, late light
-// falling across it through sheer curtains. The coordinates are cut
-// into the frame (a–h, 1–8). Eight pieces remain on the board — one on every
-// rank, both kings present, as chess law demands:
+// An abandoned game on the games table in Room III, the captain's cabin,
+// looked down on from white's side by the light of a candle burnt half down
+// at the table's far corner. A board of maple and walnut squares in a walnut
+// frame, the coordinates inlaid round it in boxwood (a–h, 1–8). Eight pieces
+// remain on it — one on every rank, both kings present, as chess law demands
+// — turned boxwood for white, ebony for black:
 //
 //   ♖ h1  ♔ e2  ♙ a3  ♛ d4  ♚ a5  ♞ c6  ♗ h7  ♝ e8
 //
 // Read the FILES in rank order, 1 to 8, and the position itself spells the
 // word:  h·e·a·d·a·c·h·e  →  HEADACHE.
 // Nothing in the scene says so — the coordinates on the frame are the only
-// tool. Pieces can be picked up and set down (they knock softly on the
-// board) but they always settle back on their square: the position is the
-// message, and the message keeps itself.
+// tool. Pieces can be picked up (they lift off their square, their shadow
+// thinning under them) and they knock softly back down on the same square:
+// the position is the message, and the message keeps itself.
 //
-// The pieces are painted, not set in a font, so they look the same on every
-// computer: turned boxwood for white, ebony for black.
-//
-// No halos, no pulsing, no animated lighting — still life, museum-quiet;
-// only a few motes of dust turning in the window's light.
+// The table is a Blender render (art/blender/chess_game.py, the set from
+// chess_set.py, as Room III has it): the plate without its pieces, and each
+// piece and each piece's shadow cut apart, laid back on here so a piece can
+// be lifted. Live over it only the candle's flame.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DENIED_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#171717" fill-opacity=".85" stroke="#e45454" stroke-width="2.5"/><path d="m6 6 12 12" stroke="#e45454" stroke-width="2.5"/></svg>')}") 12 12, not-allowed`;
 
 // the eight survivors — file+rank is the cipher, the pieces are dressing.
 // No pawns on back ranks, kings never adjacent, nobody left in check.
+// (art/blender/chess_game.py renders exactly these.)
 const CHESS_PIECES = [
   { sq: "h1", kind: "R", white: true },
   { sq: "e2", kind: "K", white: true },
@@ -43,13 +46,20 @@ const CHESS_PIECES = [
   { sq: "e8", kind: "B", white: false },
 ];
 
+const PLATE = `chess_plate_v${GAME.version}`;
+const PIECES = `chess_pieces_v${GAME.version}`;
+const GLOW = "chess_glow";
+const LIFT = 2.6; // cm a piece is lifted off its square
+
 export default class ChessboardScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Chessboard" });
   }
 
   preload() {
-    loadChessPhotography(this);
+    const url = (what) => `assets/images/Chessboard/chess-${what}-v${GAME.version}.webp`;
+    if (!this.textures.exists(PLATE)) this.load.image(PLATE, url("plate"));
+    if (!this.textures.exists(PIECES)) this.load.image(PIECES, url("pieces"));
   }
 
   init(data) {
@@ -59,8 +69,17 @@ export default class ChessboardScene extends BasePuzzleScene {
 
   create() {
     this.beginScene();
-
+    this.cameras.main.setBackgroundColor("#040406");
     this.isSolved = false;
+    if (this.textures.exists(PIECES)) {
+      const atlas = this.textures.get(PIECES);
+      GAME.pieces.forEach((p, i) => {
+        if (!atlas.has(`piece-${i}`)) atlas.add(`piece-${i}`, 0, ...p.frame);
+        if (!atlas.has(`shadow-${i}`)) atlas.add(`shadow-${i}`, 0, ...p.shadowFrame);
+      });
+    }
+    paintCandleFlame(this.textures);
+    if (!this.textures.exists(GLOW)) addCanvasTexture(this.textures, GLOW, glowCanvas());
     this._build(this.cameras.main.width, this.cameras.main.height);
 
     this.input.on("pointerup", this._restorePieceCursor, this);
@@ -81,65 +100,69 @@ export default class ChessboardScene extends BasePuzzleScene {
   // ── scene construction ─────────────────────────────────────────────────────
 
   _build(W, H) {
-    this._W = W;
-    this._H = H;
-    const art = paintParlour(this, W, H, CHESS_PIECES);
-    this.add.image(0, 0, art.room).setOrigin(0, 0).setDepth(-10);
-    this._placePieces(art);
-    this._makeMotes(art);
+    const f = (this._f = fitRender(W, H, GAME));
+    if (this.textures.exists(PLATE)) {
+      this.add.image(f.x, f.y, PLATE).setOrigin(0, 0)
+        .setDisplaySize(GAME.width * f.s, GAME.height * f.s).setDepth(0);
+    }
+    if (this.textures.exists(PIECES)) this._placePieces(f);
+    // the candle's flame on its wick, and its light round it
+    const at = f.at([GAME.flame.x, GAME.flame.y]);
+    const s = GAME.flame.s * f.s;
+    this._flame = addCandleFlame(this, { x: at.x, y: at.y, s }, 20);
+    this._glow = this.add.image(at.x, at.y - 1.2 * s, GLOW).setBlendMode(Phaser.BlendModes.ADD)
+      .setTint(0xffb066).setAlpha(0.3).setDepth(19).setDisplaySize(16 * s, 16 * s);
   }
 
-  _placePieces(art) {
+  _placePieces(f) {
     this._pieces = [];
-    for (const p of art.pieces) {
-      // pieces nearer to us stand in front of the ones behind
-      const c = this.add.container(p.x, p.y).setDepth(5 + (8 - p.rank) * 0.01);
-      const shadow = this.add
-        .image(0, 0, p.shadowKey)
-        .setOrigin(p.shadowOrigin.x, p.shadowOrigin.y)
-        .setScale(p.shadowScale)
-        .setAlpha(0.55);
-      const body = this.add
-        .image(0, 0, p.key)
-        .setOrigin(p.originX, p.originY)
-        .setScale(p.scale);
-      c.add([shadow, body]);
+    const placed = (frame, box, depth) => {
+      const at = f.at([box[0], box[1]]);
+      return this.add.image(at.x, at.y, PIECES, frame).setOrigin(0, 0)
+        .setDisplaySize(box[2] * f.s, box[3] * f.s).setDepth(depth);
+    };
+    GAME.pieces.forEach((p, i) => {
+      // shadows under every piece; nearer pieces stand in front of those behind
+      const shadow = placed(`shadow-${i}`, p.shadowBox, 1);
+      const body = placed(`piece-${i}`, p.box, 5 + (8 - p.rank) * 0.01);
+      const rest = { x: body.x, y: body.y };
+      const lift = { x: p.up[0] * LIFT * f.s, y: p.up[1] * LIFT * f.s };
 
       // pieces can be picked up and set down — they always settle back
-      c.setInteractive({
-        hitArea: new Phaser.Geom.Rectangle(
-          -p.sq * 0.46,
-          -p.height,
-          p.sq * 0.92,
-          p.height + p.sq * 0.12,
-        ),
-        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      const outline = p.hit.map((q) => f.at(q));
+      const xs = outline.map((q) => q.x), ys = outline.map((q) => q.y);
+      const x0 = Math.min(...xs), y0 = Math.min(...ys);
+      const zone = this.add.zone(x0, y0, Math.max(...xs) - x0, Math.max(...ys) - y0)
+        .setOrigin(0, 0).setDepth(10 + (8 - p.rank) * 0.01);
+      zone.setInteractive({
+        hitArea: new Phaser.Geom.Polygon(outline.map((q) => ({ x: q.x - x0, y: q.y - y0 }))),
+        hitAreaCallback: Phaser.Geom.Polygon.Contains,
         cursor: "pointer",
       });
-      c.on("pointerdown", () => {
-        if (c._lifted) return;
+      zone.on("pointerdown", () => {
+        if (zone._lifted) return;
         if (this._cursorBeforeHold === undefined) {
           this._cursorBeforeHold = this.input.manager.defaultCursor;
         }
         for (const piece of this._pieces) piece.input.cursor = DENIED_CURSOR;
         this.input.setDefaultCursor(DENIED_CURSOR);
-        c._lifted = true;
-        body.y = -p.lift;
-        shadow.setPosition(p.lift * 0.5, p.lift * 0.18).setAlpha(0.32);
+        zone._lifted = true;
+        body.setPosition(rest.x + lift.x, rest.y + lift.y);
+        shadow.setAlpha(0.45);
         this._knock(340);
       });
       const settle = () => {
-        if (!c._lifted) return;
-        c._lifted = false;
-        body.y = 0;
-        shadow.setPosition(0, 0).setAlpha(0.55);
+        if (!zone._lifted) return;
+        zone._lifted = false;
+        body.setPosition(rest.x, rest.y);
+        shadow.setAlpha(1);
         this._knock(170);
       };
-      c.on("pointerup", settle);
-      c.on("pointerout", settle);
+      zone.on("pointerup", settle);
+      zone.on("pointerout", settle);
 
-      this._pieces.push(c);
-    }
+      this._pieces.push(zone);
+    });
   }
 
   _restorePieceCursor() {
@@ -151,41 +174,11 @@ export default class ChessboardScene extends BasePuzzleScene {
     this._cursorBeforeHold = undefined;
   }
 
-  // a few motes of dust, turning slowly in the window's light
-  _makeMotes(art) {
-    const { A0, A1, B0, B1 } = art.band;
-    const H = this._H;
-    const rnd = this._rng(4242);
-    const inBand = (s, t) => {
-      const l = A0.x + (A1.x - A0.x) * s;
-      const r = B0.x + (B1.x - B0.x) * s;
-      return l + (r - l) * t;
-    };
-    for (let i = 0; i < 12; i++) {
-      const s = 0.1 + rnd() * 0.7;
-      const t = 0.15 + rnd() * 0.7;
-      const x = inBand(s, t);
-      const y = s * H;
-      const size =
-        (1.5 + rnd() * 2.5) * Math.max(1, Math.min(this._W, H) / 700);
-      const dot = this.add
-        .image(x, y, art.mote)
-        .setDisplaySize(size * 3, size * 3)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setAlpha(0)
-        .setDepth(12);
-      const drift = 20 + rnd() * 40;
-      this.ambientObject(dot);
-      this.ambientTween({
-        targets: dot,
-        x: x + drift * 0.45,
-        y: y + drift,
-        duration: 9000 + rnd() * 9000,
-        delay: rnd() * 5000,
-        repeat: -1,
-        onUpdate: (tw) => dot.setAlpha(Math.sin(Math.PI * tw.progress) * 0.35),
-      });
-    }
+  update(time) {
+    if (!this._flame || !this.ambientMotion || this.reducedMotion) return;
+    const t = time / 1000;
+    flickerCandleFlame(this._flame, t);
+    this._glow?.setAlpha(0.3 + 0.04 * Math.sin(t * 9) + Math.random() * 0.03);
   }
 
   // soft wooden knock — a piece lifted (higher) or set down (lower)
@@ -227,12 +220,12 @@ export default class ChessboardScene extends BasePuzzleScene {
   _teardown() {
     this._restorePieceCursor();
     this.tweens.killAll();
-    // destroy rather than just detach: removeAll(true) only took objects off
-    // the display list, and the old pieces went on catching clicks after a
-    // resize
+    // destroy rather than just detach: the old pieces would go on catching
+    // clicks after a resize
     for (const obj of this.children.list.slice()) obj.destroy();
-    releaseParlourArt(this.textures);
     this._pieces = null;
+    this._flame = null;
+    this._glow = null;
   }
 
   shutdown() {
@@ -240,7 +233,8 @@ export default class ChessboardScene extends BasePuzzleScene {
     this._onResize = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
-    releaseParlourArt(this.textures);
-    releasePieceArt(this.textures);
+    this._flame = null;
+    this._glow = null;
   }
 }
+

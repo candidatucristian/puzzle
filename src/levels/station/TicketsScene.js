@@ -1,50 +1,47 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { STATION_ROWS } from "./rows.js";
-import {
-  paintTickets,
-  releaseTicketArt,
-  STATION_DRAWER_PHOTO,
-  STATION_DRAWER_PHOTO_URL,
-  STATION_TICKET_CARD,
-  STATION_TICKET_CARD_URL,
-} from "./tickets.js";
+import { glowCanvas, addCanvasTexture } from "../../shared/paint.js";
+import { fitRender } from "../../shared/renderFit.js";
+import DRAWER from "./ticketDrawer.json";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "STATION"  ·  code: EXIT  ·  observation + ordering
 //
-// The puzzle of the departures board (StationScene.js), as it is found in
-// the house: a drawer pulled open, and in it a row of old card tickets — one
-// for each of the board's trains, in the board's own scrambled order. Each
-// is printed with its destination, its time and its platform, and stamped
-// with what became of its train. Four are stamped BOARDING, and each of
-// those four destinations has one letter that does not belong (see rows.js).
-// Read the wrong letters in order of departure time.
+// Room IV's chest of drawers, its top drawer pulled out and looked down into
+// by candlelight: hundreds of old card tickets standing in rows at the back,
+// and in front, laid out in two rows, eight of them — one for each train of
+// the departures board (rows.js), in the board's own scrambled order. Each is
+// printed with its destination, its time and its platform, and stamped with
+// what became of its train. Four are stamped BOARDING, and in each of those
+// four destinations one letter was struck from a low slug: it sits a little
+// lower than the rest, askew. Read those letters in order of departure time.
 //
-// The drawer photograph and the exact ticket strip are composed once per
-// screen size (tickets.js). Nothing in it moves; candlelight breathes over it.
+// The drawer is a Blender render (art/blender/ticket_drawer.py; the tickets'
+// faces from ticket_faces.mjs, made from rows.js): every word on every
+// ticket is in the picture. Nothing in it moves; the candle's light breathes
+// over it.
 // ─────────────────────────────────────────────────────────────────────────────
+
+const PLATE = `ticket_drawer_v${DRAWER.version}`;
+const GLOW = "ticket_drawer_glow";
 
 export default class TicketsScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Station" });
   }
 
-  preload() {
-    if (!this.textures.exists(STATION_DRAWER_PHOTO)) {
-      this.load.image(STATION_DRAWER_PHOTO, STATION_DRAWER_PHOTO_URL);
-    }
-    if (!this.textures.exists(STATION_TICKET_CARD)) {
-      this.load.image(STATION_TICKET_CARD, STATION_TICKET_CARD_URL);
-    }
+  init(data) {
+    this.skipFadeIn = data?.skipFade ?? true;
   }
 
-  init(data) {
-    this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
+  preload() {
+    if (!this.textures.exists(PLATE)) this.load.image(PLATE, `assets/images/Station/ticket-drawer-v${DRAWER.version}.webp`);
   }
 
   create() {
     this.beginScene();
+    this.cameras.main.setBackgroundColor("#050403");
+    if (!this.textures.exists(GLOW)) addCanvasTexture(this.textures, GLOW, glowCanvas());
     this._build(this.cameras.main.width, this.cameras.main.height);
     this.listenToResize(({ width, height }) => {
       this._teardown();
@@ -54,29 +51,43 @@ export default class TicketsScene extends BasePuzzleScene {
   }
 
   _build(W, H) {
-    const art = paintTickets(this, W, H, STATION_ROWS);
-    this.add.image(0, 0, art.keys.drawer).setOrigin(0, 0).setDepth(-10);
-    // the candle, never quite still
-    const light = this.add
-      .image(art.light.x, art.light.y, art.keys.glow)
-      .setDisplaySize(art.light.r * 2, art.light.r * 2)
-      .setTint(0xffc078)
+    const f = fitRender(W, H, DRAWER);
+    if (this.textures.exists(PLATE)) {
+      this.add.image(f.x, f.y, PLATE).setOrigin(0, 0).setDisplaySize(DRAWER.width * f.s, DRAWER.height * f.s);
+    }
+    // the candle, never quite still: its light swells and sinks a little,
+    // most where it falls brightest, by the drawer's front on the left
+    const at = f.at(DRAWER.candle.at), r = DRAWER.candle.r * f.s;
+    const light = this.add.image(at.x, at.y, GLOW)
+      .setDisplaySize(r * 2, r * 2)
+      .setTint(0xffb066)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.1)
-      .setDepth(-9);
-    this.ambientTween({ targets: light, alpha: { from: 0.07, to: 0.14 }, duration: 2600, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      .setAlpha(0.2);
+    this._flicker(light);
+  }
+
+  _flicker(light) {
+    const next = () => {
+      if (!light.scene) return;
+      this.ambientTween({
+        targets: light,
+        alpha: 0.14 + Math.random() * 0.14,
+        duration: 180 + Math.random() * 620,
+        ease: "Sine.easeInOut",
+        onComplete: next,
+      });
+    };
+    next();
   }
 
   _teardown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
     for (const obj of this.children.list.slice()) obj.destroy();
-    releaseTicketArt(this.textures);
   }
 
   shutdown() {
     this.tweens.killAll();
     this.time.removeAllEvents();
-    releaseTicketArt(this.textures);
   }
 }

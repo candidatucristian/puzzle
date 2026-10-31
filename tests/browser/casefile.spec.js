@@ -190,8 +190,9 @@ test('an arriving letter opens on the desk and can still be filed with reduced m
   await expect(page.locator('.arrival')).toHaveAttribute('data-state', 'waiting');
   await page.locator('.env').click();
   await expect(page.locator('.arrival')).toHaveAttribute('data-state', 'reading');
-  // the words lie on the paper in the desk's picture: no sheet of their own, no wax on them
-  await expect(page.locator('.arrival .film-last')).toBeVisible();
+  // The live Blender model jumps to its final pose, with DOM words on its paper.
+  await expect(page.locator('.arrival .arrival-model')).toBeVisible();
+  await expect(page.locator('.arrival video')).toHaveCount(0);
   await expect(page.locator('.arrival .letter-paper')).toHaveCount(0);
   await expect(page.locator('.arrival .letter-wax')).toHaveCount(0);
   await expect(page.locator('.arrival .letter-words')).not.toBeEmpty();

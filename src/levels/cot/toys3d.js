@@ -124,7 +124,7 @@ function musicBox(materials, photograph) {
     };
     c.strokeStyle = "#5f7a3c"; c.lineWidth = 4; c.beginPath(); c.moveTo(150, 150); c.quadraticCurveTo(256, 120, 360, 150); c.stroke();
     for (const [x, y, a] of [[190, 138, -0.6], [320, 140, 0.6], [256, 128, 0]]) { c.fillStyle = "#6f8a44"; c.beginPath(); c.ellipse(x, y, 18, 8, a, 0, Math.PI * 2); c.fill(); }
-    flower(256, 104, 16, "#c86068"); flower(206, 118, 12, "#e2c27a"); flower(306, 118, 12, "#9fb6d8");
+    flower(256, 104, 16, "#a56d61"); flower(206, 118, 12, "#b39b6c"); flower(306, 118, 12, "#879c9e");
   });
   const decal = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.92, H * 0.86), new THREE.MeshStandardMaterial({ map: front, transparent: true, roughness: 0.5 }));
   decal.position.set(0, H * 0.5, D / 2 + 0.0006);
@@ -388,6 +388,17 @@ function chaplin(materials, photograph) {
   g.add(ball(.0112, new THREE.MeshStandardMaterial({ map: face, roughness: .7 }), { y: .109, sy: 1.17, sz: .89 }, 48));
   g.add(ball(.0023, skin, { y: .1075, z: .0096, sx: .7, sy: 1.15, sz: 1.05 }));
   for (const s of [-1, 1]) g.add(ball(.0022, skin, { x: s * .0106, y: .109, z: -.001, sx: .5, sy: 1.3 }));
+  // The figurine's face is modeled as painted porcelain. Its eyes, brows
+  // and unmistakable little moustache remain readable without a photo decal.
+  if (!photograph) {
+    const ink = mat.paint(0x241c18,.82);
+    for (const s of [-1,1]) {
+      g.add(ball(.0010,ink,{x:s*.0038,y:.1117,z:.0094,sy:.65,sz:.35},16));
+      g.add(limb(.00045,ink,[s*.0021,.114,.0089],[s*.0054,.1146,.0085]));
+      g.add(ball(.0013,ink,{x:s*.0011,y:.1047,z:.0098,sx:1.1,sy:.52,sz:.25},16));
+    }
+    g.add(limb(.0003,mat.paint(0x865143,.82),[-.0015,.1028,.0092],[.0015,.1028,.0092]));
+  }
   const hair = mat.paint(0x29231e, .76);
   for (let i = 0; i < 13; i++) {
     const a = i / 12 * Math.PI * 1.4 + .85;

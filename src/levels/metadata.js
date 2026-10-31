@@ -73,11 +73,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A wax-sealed envelope holds two lines of Caesar-shifted ciphertext: \"WKH DQVZHU\", \"LV URWRU\". Three candles of different heights burn on the desk, each put out by one click; the three of them hint at shift 3. Once the last is out the wheel's luminous letters show and it turns. Turning the brass cipher wheel back 3 letters (Caesar shift −3) decodes it to \"THE ANSWER IS ROTOR\".",
+    "description": "An original Blender/Cycles close-up of the square walnut-mounted brass cipher wheel from Room I: machined concentric rings, a turned thumb grip, patina, physical luminous Roman letters, three hollow dripped beeswax candles and a wax-sealed rag-paper envelope. Eight native photographs preserve each candle's individual illumination and shadows. Each candle goes out with one click; their number hints at shift 3. After the last, the two alphabets become readable and the inner disc turns. The letter has its own native photograph, with actual ink reading WKH DQVZHU / LV URWRU. A Caesar shift of three decodes THE ANSWER IS ROTOR. Sixteen original Blender flame frames animate over camera-projected wicks. The original answer and puzzle mechanics are retained.",
     "references": [
-      "CRYPTEX_CIPHER — the two lines of shift-3 ciphertext",
-      "Candles.blow() (Candle.js) — one click puts out one of the three candles (candleArt.js CANDLES); three candles reveal the shift",
-      "CRYPTEX_ALPHA + the rotating disk — the physical decoder wheel"
+      "cryptex/puzzle.js CRYPTEX_CIPHER / CRYPTEX_ALPHA — shared cipher and alphabet, read by the Blender builder",
+      "Candles.blow() (Candle.js) — one click extinguishes each candle; the existing flame, ember and smoke lifecycle uses the native flame atlas",
+      "art/blender/candlelight_brass.py and candlelight_brass_publish.mjs — original apparatus, eight illumination states, luminous rotor and physically lit letter",
+      "NativeCryptexScene.js / nativeCryptex.json — projected interaction geometry, candle-light mixing and the rotating native rotor"
     ]
   },
   {
@@ -92,11 +93,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "An overhead chessboard with etched algebraic coordinates holds 8 pieces, one per rank: Rook h1, White King e2, Pawn a3, Black Queen d4, Black King a5, Knight c6, White Bishop h7, Black Bishop e8. Reading the FILE letter of each piece in rank order 1→8 gives h-e-a-d-a-c-h-e. Pieces can be picked up but always snap back to their home square, so the message can't be scrambled.",
+    "description": "The games table in Room III (a Blender render, the same set as the room shows): a maple-and-walnut board with the algebraic coordinates inlaid in boxwood round its frame, lit by a candle at the table's corner, holds 8 boxwood and ebony Staunton pieces, one per rank: Rook h1, White King e2, Pawn a3, Black Queen d4, Black King a5, Knight c6, White Bishop h7, Black Bishop e8. Reading the FILE letter of each piece in rank order 1→8 gives h-e-a-d-a-c-h-e. Pieces can be picked up but always snap back to their home square, so the message can't be scrambled.",
     "references": [
       "CHESS_PIECES — exact squares: h1, e2, a3, d4, a5, c6, h7, e8",
       "CHESS_FILES = \"abcdefgh\" — the only coordinate tool the level offers",
-      "_placePieces() — pieces always settle back to their home square"
+      "_placePieces() — pieces always settle back to their home square",
+      "art/blender/chess_set.py (board, pieces from Poly Haven chess_set, CC0), chess_game.py (the level's render), room_cabin.py (the room)"
     ]
   },
   {
@@ -173,8 +175,10 @@ const metadata = [
     "description": "An old router on a desk in a lamplit room at night shows the word HTTPS as ASCII binary, one letter at a time across its seven right-hand LEDs — each letter's 7-bit ASCII code at once (the always-zero leading bit has no LED; a plain space stands between the counters and the letter), an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
     "references": [
       "modem/puzzle.js: MODEM_WORD = \"HTTPS\", planTransmission() — ASCII binary LED schedule",
-      "_startAnimation() — LEDs 5–11 show each letter's 7-bit code (lit = 1), LED[i] turns red per completed letter; room.js withoutSpareLens() covers the photograph's sixth lens",
-      "room.js paintRouter() — the maker's name \"W. LEIBNIZ\" printed on the router's front, the binary-notation flavor clue"
+      "modem/NativeModemScene.js — original transmission drives twelve separately rendered optical/reflection layers",
+      "art/blender/modem_room.py — original Blender room and router; exactly five counter lenses, a gap, seven bit lenses, and the W. LEIBNIZ maker clue",
+      "modem/nativeModem.json — camera-projected LED crops and safe full-screen framing",
+      "art/blender/modem-room-sources.md — photographed CC0 resource provenance and native render pipeline"
     ]
   },
   {
@@ -189,13 +193,13 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "Clicking the sketched telescope carries you up to the very same arched window, now filling the screen with its shutters open and the veranda rail just outside. Among the scattered stars, five groups sit on a perfect 2×3 grid — Braille cells (dot layout 1 4 / 2 5 / 3 6) — and that flawless alignment is the tell. Hovering one lights a faint line through its dots, slowly. Reading them left to right: O=1,3,5 · R=1,2,3,5 · I=2,4 · O=1,3,5 · N=1,3,4,5, spelling O-R-I-O-N.",
+    "description": "An original Blender observatory opens onto a clear night sky above a wooded valley. The oak window, brass telescope, stars and NASA-textured lunar sphere are rendered in Cycles. Entering from the house opens the full-screen sky; standalone play retains the telescope approach. Among the scattered stars, five groups sit on a perfect 2×3 grid — Braille cells (dot layout 1 4 / 2 5 / 3 6). Hovering one slowly lights a faint line through its dots. Reading them left to right: O=1,3,5 · R=1,2,3,5 · I=2,4 · O=1,3,5 · N=1,3,4,5, spelling O-R-I-O-N.",
     "references": [
-      "BRAILLE — letter → dot-number lookup table",
-      "BRAILLE_DOT_POS — dot number → 2×3 grid position; every cell shares one exact grid, with no jitter",
-      "TUNE.CELL_W / CELL_H — the cell grid every letter is laid out on",
-      "TUNE.HOVER_IN (0.95s) / LINE_ALPHA — the slow, faded light-up on hover",
-      "windowFrame.js — curtain geometry for the painted arched-window close-up in window.js"
+      "telescope/puzzle.json — ORION dot numbers, exact 2×3 grid and vertical group order",
+      "art/blender/open_window.py — original Cycles window, sky, Moon and telescope geometry",
+      "telescope/nativeWindow.json — camera-projected stars, window aperture and telescope bounds",
+      "telescope/constellations.js — existing slow constellation guide, aligned with the rendered stars",
+      "art/blender/open-window-sources.md — NASA lunar data and photographic CC0 surface provenance"
     ]
   },
   {
@@ -210,10 +214,10 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "Room IV's framed picture shows the minute before sunrise on a country hill: a photographic farmhouse, its warm porch lantern, and an old man in a rocking chair playing the harmonica. Six real sparrows perch on five overhead wires, read bottom to top as D, F, A, C, E. From left to right their positions spell F, A, C, A, D, E. The small picture on the room wall and its framed close-up use the same exact composition. The picture is still; the optional harmonica recording is atmosphere. Listening or playing an instrument is not required. This picture replaces the former pedestrian-crossing puzzle.",
+    "description": "Room IV's framed picture (a Blender render, hung in the room and seen close in the level) shows the minute before sunrise from a hilltop meadow: an old stone cottage, its porch lantern still burning and an old man in a rocking chair with a harmonica; a telegraph pole with five wires; the valley below under its mist. Six blackbirds perch on the five wires, read bottom to top as D, F, A, C, E. From left to right their positions spell F, A, C, A, D, E. The picture is still; the optional harmonica recording is atmosphere. Listening or playing an instrument is not required. This picture replaces the former pedestrian-crossing puzzle.",
     "references": [
       "wires/puzzle.js WIRE_BIRDS and WIRE_NOTES — six birds, five wire positions, FACADE",
-      "wires/photographicPainting.js — exact native wires and photographed sparrows composed over the farmhouse, shared by the room and framed close-up",
+      "art/blender/dawn_country.py — the picture: the birds put on their wires where WIRE_BIRDS has them across the picture; dawn_frame.py — framed on Room IV's wall for the level",
       "Optional ambience: assets/sounds/Wires/music.mp3"
     ]
   },
@@ -229,11 +233,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "The drawer holds 8 card tickets in a row; only 4 are stamped BOARDING — GENETA 22:41, MOXCOW 22:07, PERIS 21:03, LINDON 22:24 (the rest are stamped cancelled/delayed/no service, and are filler). Each boarding destination has one misspelled letter, printed a little low and askew: P(E)RIS, MO(X)COW, L(I)NDON, GENE(T)A. Sorted by departure time — 21:03 PERIS→E, 22:07 MOXCOW→X, 22:24 LINDON→I, 22:41 GENETA→T — the wrong letters read E-X-I-T.",
+    "description": "Room IV's top drawer, pulled out of its mahogany chest and seen from above by candlelight (a Blender render): hundreds of old card tickets standing in rows at the back, and in front, laid out in two rows of four, eight Edmondson card tickets in the departures board's order. Only 4 are stamped BOARDING — GENETA 22:41, MOXCOW 22:07, PERIS 21:03, LINDON 22:24 (the rest are stamped cancelled/delayed/no service, and are filler). Each boarding destination has one misspelled letter, printed a little low and askew: P(E)RIS, MO(X)COW, L(I)NDON, GENE(T)A. Sorted by departure time — 21:03 PERIS→E, 22:07 MOXCOW→X, 22:24 LINDON→I, 22:41 GENETA→T — the wrong letters read E-X-I-T. Every ticket is dated 13 OC 61; LINDON is the one half-fare (HALF · CHILD), as the room's story says.",
     "references": [
       "STATION_ROWS (station/rows.js) — time, dest, remark, wrongIdx fields",
       "wrongIdx — the anomalous letter index in each destination",
-      "only remark === \"BOARDING\" rows matter; sort key is time"
+      "only remark === \"BOARDING\" rows matter; sort key is time",
+      "art/blender/ticket_faces.mjs prints the faces from rows.js; ticket_drawer.py renders the drawer (ticket-drawer-v1.webp, ticketDrawer.json)"
     ]
   },
   {
@@ -248,11 +253,11 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A Christmas tree stands in the drawing room with a string of lamps along each of its nine tiers. The count of lamps alight per tier, top to bottom, is 3, 1, 4, 1, 5, 9, 2, 6, 5 — the digits of π. Which holders are alight within a tier is spread along the string (seeded) and irrelevant; only the count per tier matters. The lit lamps twinkle but never go out. Hovering the moon in the window draws a line straight across it.",
+    "description": "Room V's corner at night, close to (a Blender render of the room's own scene): a Christmas tree with a string of lamps along each of its nine tiers. The count of lamps alight per tier, top to bottom, is 3, 1, 4, 1, 5, 9, 2, 6, 5 — the digits of π. Which holders are alight within a tier is spread evenly along the string and irrelevant; only the count per tier matters. The lit lamps twinkle but never go out. Hovering the moon in the window draws a line straight across it. The tall green parcel under the tree opens: out of it jump a rule, a protractor and a pair of compasses.",
     "references": [
-      "PI_DIGITS = [3,1,4,1,5,9,2,6,5] (pi/TreeScene.js) — lit-lamp count per tier, top to bottom",
-      "_makeLamps() — lights PI_DIGITS[tier] of each tier's holders",
-      "_move() — relocates a light but never changes the per-tier count"
+      "ALIGHT = [3,1,4,1,5,9,2,6,5] (art/blender/room_drawing.py) — lit-lamp count per tier, top to bottom, rendered so",
+      "room_drawing.py --view tree (tree_level_passes.py) — the level's render; treeLevel.json lists the lamps alight, the moon, the parcel, the instruments",
+      "_makeLamps() — each lamp alight twinkles over the render"
     ]
   },
   {
@@ -305,12 +310,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "In Room VI, Ivy's herbarium lies on the console table under the window. It opens to five photographic pages with two physically mounted pressed specimens per page: one large hedgerow cutting and one smaller supporting specimen. Fine leaf veins, dry petal wrinkles, translucent mounting strips and their contact shadows are captured together on aged cotton paper. Latin names are written below each plant. On each page the large specimen has a pencil figure around it: page I eight sides round the hawthorn, II five round the dog rose, III four round the ivy, IV seven round the blackthorn, V five round the privet. Counting the sides as alphabet positions gives HEDGE. Two pages show at a time; a click or drag turns a leaf. Nothing on screen says to count.",
+    "description": "In Room VI, Ivy's herbarium lies open on the walnut console table under the window, by the moon and the room's warm lamp: a sewn album in faded green book-cloth, its heavy cotton pages gone to cream, her pencil, brass tweezers and a roll of gummed strip beside it, a leaf of ivy and a rose's petal fallen out onto the table. Each of five pages carries two pressed specimens held down by strips of gummed paper — one large hedgerow cutting and one smaller plant — with fine veins, thin translucent petals, flattened stems and thorns; Latin names are written below each plant in her hand. On each page the large specimen has a pencil figure around it: page I eight sides round the hawthorn (with a daisy), II five round the dog rose (with an oak leaf and acorn), III four round the ivy (with ribwort plantain), IV seven round the blackthorn (with beech), V five round the privet (with a primrose). Counting the sides as alphabet positions gives HEDGE. Two pages show at a time; a click or drag turns a leaf. Nothing on screen says to count.",
     "references": [
       "PAGES (herbarium/puzzle.js) — the specimens of each page, the ringed one carrying its figure's sides [8, 5, 4, 7, 5]; herbariumWord() spells HEDGE",
-      "herbarium/photography.js and book.js — a photographed walnut table and sewn green-cloth album; five whole-page macro photographs with ten mounted specimens in total, drawn Latin labels and pencil figures; page-v2 assets replace the small specimen atlases",
+      "art/blender/herbarium_desk.py and herbarium_plants.py (herbarium_publish.mjs) — the table and the open album rendered from straight above in Cycles, and each of the five pages rendered on its own top sheet with its two pressed specimens built procedurally; herbarium/book.js lays her Latin names and pencil figures over them (herbariumDesk.json: where the sheets lie)",
       "HerbariumScene — two pages at a time, turned by clicking the right page (forward) or the left (back)",
-      "room6/photographicRoom.js — the matching photographed green-cloth cover projected onto the closed book on the console table under the window, and the thing that opens it"
+      "room6 (art/blender/room_vi.py) — the album shut in its faded green book-cloth on the console table under the window, and the thing that opens it"
     ]
   },
   {
@@ -325,11 +330,11 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "In Room VI, the boy's dark mahogany cot and its mobile use the same photographic toys as the close-up. Inside, moonlight falls on worn turned wood, an ivory moon-and-star cotton sheet and a teal nursery wall. Twenty objects fill the mattress. Fifteen are fixed decorations: his pillow, knitted bootees, mohair teddy, wooden rattle, knitted rabbit, folded blanket, wooden duck, tin locomotive, rocking horse, building cubes, leather ball, stacking rings, spinning top, fire engine and linen elephant. Only the five clue objects can be moved and clicked; the rest have no interaction or hover effect. Positions and active interactions survive resizing. Initially, left to right, the five are a walnut tango music box with turning porcelain dancers, a gold Oscar replica, a red book inscribed Romeo and Juliet, a Chaplin figurine that raises its felt bowler, and a cream wooden hotel with an entrance canopy, HOTEL sign, reception bell and guest-room windows that light when the bell rings. The room's story mentions the little hotel among his belongings, making its identity explicit. Their radio-alphabet words give TORCH. Clicking activates each toy; dragging moves it without accidentally triggering its action. Reduced motion keeps the toys usable with restrained effects.",
+    "description": "In Room VI, the boy's dark mahogany cot opens into an original Blender/Cycles nursery: turned joinery, brass screws, woven moon-and-star cotton, shallow sheet wrinkles, sewn mattress piping, teal plaster, botanical curtains and a warm pleated bedside lamp. Fifteen belongings are modeled into the render with real shadows: a linen pillow, knitted bootees, mohair bear, rattle, knitted rabbit, folded blanket, pull-along duck, locomotive, rocking horse, alphabet blocks, stitched leather ball, stacking rings, spinning top, fire engine and linen elephant. The five clues and sewn mobile are live 3D meshes using the exact Blender camera and CC0 material scans. Resizing preserves the image's proportions; a separate transparent render of the lowered front rail occludes the toys correctly. Left to right: a walnut tango music box with turning porcelain dancers, a gold Oscar replica, a red Romeo and Juliet, a Chaplin figurine with modeled eyes and moustache that raises its bowler, and a cream hotel with an entrance canopy, HOTEL sign, reception bell and windows that light when it rings. Their radio-alphabet words give TORCH. Only these five objects answer clicks and drags. Positions and active interactions survive resizing; reduced motion keeps the toys usable with restrained effects.",
     "references": [
       "TOYS (cot/puzzle.js) — the five left to right, the radio word each is and where each lies in the cot; cotWord() spells TORCH",
-      "cot/photography.js and art.js — photographic nursery, fifteen fixed belongings, a mahogany mobile hoop and cotton suspension lines",
-      "cot/stage3d.js, toys3d.js and materials3d.js — five true 3D toys with sculpted figures, rounded joinery, photographic wood and textile surfaces, brass hardware, framed hotel windows and live shadows; toy-materials.md records the generated atlas and prompt",
+      "art/blender/his_cot.py and his_cot_publish.mjs — original modeled nursery and fifteen fixed belongings, Cycles room and transparent front rail; his-cot-sources.md records provenance",
+      "cot/nativeArt.js and nativeCot.json — exact Blender camera and aspect-preserving layout; cot/stage3d.js, toys3d.js, mobile3d.js and materials3d.js — five live clues, a sewn mobile, CC0 material scans and live shadows",
       "CotScene — the five answer a click (the tango and its turning dancers, a glint, the book opened, the hat raised, the bell and the lit windows), can be carried within reach, and keep their positions on resize; the mobile turns on its own",
       "cot/inRoom.js and room6/photographicRoom.js — a matching photographic cot and mobile in the room overview, the same five toy photos behind a front-spindle mask, and the calibrated cot interaction area"
     ]
@@ -392,14 +397,15 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Four electronic clocks hang on a wall — 22:03, 14:11, 11:47 and 23:44 — above a desk with a pocket adding calculator (digits, 00, +, = and C). Read each clock as a plain number, the colon ignored, and add them: 2203 + 1411 + 1147 + 2344 = 7105. The calculator's seven-segment display, turned upside down, reads SOIL: read from the last digit to the first, 5 is S, 0 is O, 1 is I and 7 is L. The calculator does not turn over; the player reads the display upside down without any help from the game.",
+    "description": "A desk in Room II at night, a Blender render lit by one green banker's lamp: four electronic clocks — a red LED clock on the walnut panelling (22:03), a clock radio on a shelf (14:11), an amber alarm clock (11:47) and a folding LCD travel clock (23:44) on the desk — and on the desk's leather an adding calculator (digits, 00, +, = and C). Read each clock as a plain number, the colon ignored, and add them: 2203 + 1411 + 1147 + 2344 = 7105. The calculator's seven-segment display, turned upside down, reads SOIL: read from the last digit to the first, 5 is S, 0 is O, 1 is I and 7 is L. The calculator does not turn over; the player reads the display upside down without any help from the game.",
     "references": [
       "OVERTIME_CLOCKS = [\"22:03\", \"14:11\", \"11:47\", \"23:44\"] — the four clocks; the order does not matter, all are added",
       "clockNumber() / overtimeTotal() — 22:03 → 2203; 2203 + 1411 + 1147 + 2344 = 7105",
       "readUpsideDown() — reverses the digits and maps 5→S, 0→O, 1→I, 7→L (also 2→Z, 3→E, 4→H, 6/9→G, 8→B)",
       "SEGMENTS / turnSegments() — the seven-segment digit shapes; turned through 180° they are the letters",
       "createCalculator() / pressKey() — the adding calculator: digits, 00, +, =, C; eight digits, then E until C",
-      "OvertimeScene — draws the wall, the four clocks, the desk, the lamp and the working calculator"
+      "OvertimeScene — lays the render (art/blender/overtime_office.py; officeRender.json) and draws the calculator's display, key presses, blinking colons and steam over it",
+      "segments.js glyph() — the seven-segment shapes the display draws (also the touch keypad's)"
     ]
   },
   {
@@ -425,7 +431,7 @@ const metadata = [
     "id": "compass",
     "key": "Compass",
     "name": "The Captain’s Cabin",
-    "summary": "A lantern swings above the chart table in a creaking ship's cabin.",
+    "summary": "A miniature captain's study glows inside an old glass bottle on its walnut cradle.",
     "code": "LOST",
     "altCode": null,
     "hint": {
@@ -433,12 +439,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A pirate ship at night, the captain’s cabin seen whole: the hull’s ribs, the deck beams, a cannon at its port, barrels and rope, the ship’s colours, a swinging lantern, the timbers creaking, and solid oak planking across the stern wall, with no windows or exterior view. On the chart table stands a brass compass in its box, its card ruled to the degree (0 to 330 numbered, N E S W lettered), and its needle has gone mad: it spins, then stops on one bearing after another. Beside it lies an envelope sealed in red wax; clicked, it opens on a map showing an island with a dotted way to an X and a treasure chest, and four lines of bearings: 180 180 90 / 270 180 180 90 90 0 0 270 / 270 270 180 90 90 180 270 270 / 90 90 270 180 180. North is 0, east 90, south 180, west 270; each bearing is one step that way and each line draws one letter — down, down, right is L — so the four walks write L O S T. The needle points out the same bearings line by line, a spin between letters, a kick off and back where a bearing repeats; a tap on the glass starts it again from the first letter.",
+    "description": "On an old oak desk, a thick-walled, faintly green glass bottle lies in carved walnut saddles, closed with a pitted cork and linen cord. Inside is a hand-built miniature captain's study: individually laid teak boards, walnut panelling and bent roof ribs, a fitted cupboard of leather and cloth books, a little writing desk with turned legs and brass drawer pulls, a chair, globe, coiled linen rope, wall clock and a warm hanging oil lantern. The large gimballed brass compass faces the eye, its original ivory card ruled to the degree, every 30 degrees numbered and the four winds lettered. Its changing needle is rendered in 72 Cycles poses through the same bottle glass, preserving the actual refraction and shadows. A red-wax-sealed envelope on the desk opens to an original chart printed on realistically lit, gently wrinkled cotton paper. Four lines of bearings preserve the puzzle: 180 180 90 / 270 180 180 90 90 0 0 270 / 270 270 180 90 90 180 270 270 / 90 90 270 180 180. North is 0, east 90, south 180, west 270; each bearing is one step and each line draws one letter, spelling L O S T. The needle follows the same bearings, with a spin between lines and a kick at repetitions; tapping the compass restarts the sequence. The photograph fills the game viewport, and the map remains open across resizing.",
     "references": [
       "COMPASS_BEARINGS (compass/puzzle.js) — the four lines of the map, one letter each",
       "walk() / drawBearings() — one unit step per bearing (0 up, 90 right, 180 down, 270 left); drawBearings shows the letter as # marks",
-      "compass/cabin.js paintCard() — the compass card: every degree ruled, every 30 numbered, the four winds lettered; paintCompassBox() lays it in its box on the table",
-      "compass/cabin.js paintSheet() — the unfolded map: the island, the dotted way, the X and the chest",
+      "art/blender/captains_bottle.py — original Cycles bottle, miniature cabin, gimballed compass and matching needle poses; captains_bottle_publish.mjs generates original chart and dial artwork from COMPASS_BEARINGS",
+      "compass/bottleCabin.js and nativeBottle.json — full-viewport render, calibrated glass and map interaction areas, native needle atlas and separately rendered paper chart",
       "CompassScene program() / _dance() — the needle: a spin before each letter, then each bearing held; a kick marks a repeated bearing"
     ]
   },
@@ -458,8 +464,9 @@ const metadata = [
     "references": [
       "BOOKS (bookshelf/puzzle.js) — the five titles and their bookmarks, left to right",
       "readBook() / readShelf() — the bookmark's number is the letter's place in the title, counting from 1",
-      "bookshelf/library.js paintSpecial() — one of the five, pulled out: its spine and title, the bookmark standing out of its pages",
-      "bookshelf/library.js placeBooks() — every book on the shelves; the five stand on the third"
+      "art/blender/library_lamplight.py — original Cycles room, sleeping tabby, gilt spine titles and numbered paper bookmarks; nine physical pull poses per book",
+      "art/blender/library_lamplight_publish.mjs — prepares the five clues from BOOKS, publishes the room and 45-pose atlas with projected interaction bounds",
+      "bookshelf/NativeBookshelfScene.js and nativeLibrary.json — the five books on the third shelf pull out and slide home with their rendered shadows; steam and dust stay alive"
     ]
   },
   {
@@ -474,12 +481,13 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "An old laboratory at night, lit by a Bunsen burner’s blue flame and an oil lamp: stone walls, a shelf of apothecary jars, a faded periodic table pinned to the wall, a test-tube rack and a retort at the back of the bench, a flask boiling on a tripod. Across the bench stand five graduated bottles of coloured liquid, each with a fine printed scale too small to read by eye. A magnifying glass lies on a green cloth at the front: click it and it becomes the pointer, enlarging whatever it is held over (click the cloth, or press Escape, to put it down). Under the lens each liquid’s front edge stands at a division of its scale: 9, 8, 6, 92, 16. They are atomic numbers: fluorine F, oxygen O, carbon C, uranium U, sulfur S — F O C U S. Each liquid has its element’s colour (pale yellow, pale blue, black, a glowing uranium green, sulfur yellow). The poster has every element in its place, faded but readable close up. With the glass put down, a click on a bottle swirls it; a click on the burner turns up the gas.",
+    "description": "Silas’s bench in his laboratory (Room VII), close to, at night: an oil lamp’s light from the left, the blue flame of a Bunsen burner under a flask boiling on its tripod, a rack of test tubes at the back. Across the bench stand five glass vessels of coloured liquid — a conical flask, a round flask, a jar, a measuring cylinder, a beaker — each with a fine white scale printed up its front, too small to read by eye. A magnifying glass lies on a green cloth at the front: click it and it becomes the pointer, enlarging whatever it is held over (click the cloth, or press Escape, to put it down). Under the lens each liquid, read at the bottom of its meniscus, stands at a numbered division of its scale: 9, 8, 6, 92, 16. They are atomic numbers: fluorine F, oxygen O, carbon C, uranium U, sulfur S — F O C U S. Each liquid has its element’s colour (pale yellow, pale blue, black, a glowing uranium green, sulfur yellow). The faded periodic table hangs on the room’s back wall. With the glass put down, a click on a bottle rings it; a click on the burner turns up the gas.",
     "references": [
       "BOTTLES (chemistry/puzzle.js) — the five atomic numbers marked at the menisci, left to right",
       "ELEMENTS / symbolOf() — every element's symbol by atomic number; readBottles() spells FOCUS",
-      "cellOf() / familyOf() — each element's place and family on the poster",
-      "chemistry/lab.js paintBottle() — the glass, its fine printed scale and liquid, painted for the bench and again for the lens; paintLoupe() / paintLens() — the magnifying glass; paintPoster() — the faded periodic table"
+      "cellOf() / familyOf() — each element's place and family on the room's periodic table (lab_boards.mjs)",
+      "art/blender/room_lab.py --view bench (bench_level_passes.py, bench_level_publish.mjs) — Room VII's own bench rendered close in Cycles: the plate, the cloth with the glass taken up, the bottles again at three times the size for the lens (benchLevel.json); lab_boards.mjs prints each bottle's scale from SCALES (chemistry/puzzle.js), and each liquid is filled to its number",
+      "chemistry/ChemistryScene.js — the lens over the render, the burner's live flame, bubbles, steam, the uranium's glow"
     ]
   },
   {
@@ -717,6 +725,7 @@ const metadata = [
     "description": "In Silas's laboratory (Room VII) his notebook stands among the books of the bookcase on the right wall — a click draws it a little way out of the shelf and it opens by itself — and it lies open on a desk under the lamp. Four pages carry graphite chemistry diagrams, each followed by observations about appearance, structure and properties: a puckered ring of eight atoms in a yellow crystalline solid; a small pair in the lightest gas; a larger pair in dark crystals that give a violet vapour; a tetrahedron of four in a white waxy solid. The names, formulas and symbols are not printed: the molecules are S₈, H₂, I₂, P₄. Two pages show at a time; clicking the right page turns forward, the left page back. Recognising each element and reading their symbols in page order spells SHIP.",
     "references": [
       "MOLECULES (molecules/puzzle.js) — the four pages in order; readNotebook() spells SHIP",
+      "art/blender/notebook_desk.py — the desk and the open notebook, a Blender render laid out to book.js NOTEBOOK (notebookDesk.json)",
       "molecules/book.js paintPage() and molecules/sketch.js drawMoleculeSketch() — graphite diagrams with three observations per page; chemistry-notes.md records sources",
       "MoleculesScene — two pages at a time, turned by clicking the right page (forward) or the left (back)"
     ]
@@ -736,7 +745,7 @@ const metadata = [
     "description": "In Silas's laboratory (Room VII), at the end of the counter by the sinks, a little walnut rack holds three tubes: a corked phial of yellow, an empty tube, and a corked phial of blue. A paper tag tied to the rack's post says, in his hand, \"For my sister.\" A click lifts a tube from the rack and holds it up to the light; another puts it back. They are never mixed: the empty tube waits for it. His sister was Ivy, the botanist — the colour of what she grew is the colour yellow and blue make together: GREEN. Nothing on screen says what to do with the colours.",
     "references": [
       "PHIALS_WORD = 'GREEN' (phials/puzzle.js); RACK — yellow, the empty tube, blue; TAG = 'For my sister.'",
-      "phials/photography.js and art.js — a photographic slate worktop, glazed tiles, brass tap, walnut rack and paper tag; separate transparent glass phials with yellow and blue liquid, cork stoppers and an empty centre tube",
+      "art/blender/room_lab.py --view phials (phials_level_passes.py) — Room VII's counter close to, a Blender render: the rack, the tag, and the three tubes (clear glass) cut apart to be lifted; phialsLevel.json",
       "PhialsScene — a click lifts a tube vertically through its rack hole before it tilts toward the light; another puts it back. The rack's photographic front face hides the seated tubes correctly; raised positions survive resizing and respect reduced motion. The tubes are never mixed",
       "room7/Room7Scene.js and art/blender/room_lab.py — the walnut rack rendered at the end of the counter of sinks, its tag tied to the post, and the thing that opens the puzzle"
     ]
@@ -794,12 +803,54 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "By the laboratory sink in Silas's weighing room (Room VIII): photographic glass bottles holding 500 ml and 300 ml, a brass tap over a worn fireclay sink, and a volumetric flask etched 400 ml on its bulb with one ring round its neck and a blue paper strip hung in it. Reagent bottles, a test-tube rack, stirring rods and a mortar surround the slate workbench. A click takes up a bottle; then a click on the tap fills it to the brim, on the sink empties it, on the other bottle pours as much as it can take, and on the flask pours all of it. Exactly 400 ml in one pour brings the flask to its ring and ignites the blue strip like a fuse: a small flame travels down it, revealing ACID in the charred paper behind the flame. The word remains after the fire goes out. Any other amount is shown for a moment and then tipped away into the sink. One way: fill the 500, pour it into the 300 (200 left), empty the 300, pour the 200 into it, fill the 500 again, top up the 300 (400 left), pour the 400 into the flask. Water remains level during tilts and keeps its volume. Resizing preserves measurements and resumes an unfinished burn; reduced motion reveals the finished strip immediately.",
+    "description": "By the laboratory sink in Silas's weighing room (Room VIII), seen close at the bottles' height: a fireclay sink under a brass swan-neck tap, white tiles, the window's lower panes over them with rain on the glass, the lamp by the sink alight off to the right, a mortar and pestle and two brown reagent bottles. On the honed slate two plain glass bottles, etched 500 ml and 300 ml, and a volumetric flask etched 400 ml and 20 °C on its bulb, with one ring round its neck and a blue paper strip hung in it. A click takes up a bottle; then a click on the tap fills it to the brim, on the sink empties it, on the other bottle pours as much as it can take, and on the flask pours all of it. Exactly 400 ml in one pour brings the flask to its ring and ignites the blue strip like a fuse: a small flame travels down it, revealing ACID in the charred paper behind the flame. The word remains after the fire goes out. Any other amount is shown for a moment and then tipped away into the sink. One way: fill the 500, pour it into the 300 (200 left), empty the 300, pour the 200 into it, fill the 500 again, top up the 300 (400 left), pour the 400 into the flask. Water remains level during tilts and keeps its volume. Resizing preserves measurements and resumes an unfinished burn; reduced motion reveals the finished strip immediately.",
     "references": [
       "BOTTLES = [500, 300], FLASK_ML = 400, MEASURES_WORD = \"ACID\" (measures/puzzle.js); pour() and toTheLine(); fewestMoves() — 6 moves from empty to 400 ml",
-      "measures/art.js interior() / waterIn() — each vessel's inside as a polygon; the water clipped under a level surface to its exact area, whatever the tilt",
-      "the flask's bulb holds 380 ml, so its 400 ml ring stands on its neck",
+      "art/blender/room_weighing.py --view measures (measures_level_passes.py, measures_level_publish.mjs, measures_marks.mjs) — Room VIII's own sink counter rendered close in Cycles: the plate, the flask alone in clear glass, its shadow alone on the slate, and the camera that saw them (measuresLevel.json)",
+      "measures/art.js layoutSink() / interior() / waterIn() — where the render puts everything on screen; each vessel's inside as a polygon (the flask's projected from its glass); the water clipped under a level surface to its exact area, whatever the tilt",
+      "measures/stage3d.js — the two bottles in three dimensions, seen through the render's own camera",
+      "the flask's 400 ml ring stands on its neck; its capacity is set so that 400 ml reaches the ring as rendered",
       "MeasuresScene — take up, fill, empty and pour; a wrong amount is tipped away; _turn() and paintLitmus() burn the blue strip and reveal the word progressively"
+    ]
+  },
+  {
+    "id": "abacus",
+    "key": "Abacus",
+    "name": "The Counting Frame",
+    "summary": "An old counting frame lies on Orion's workbench, grey with years of dust.",
+    "code": "5936",
+    "altCode": null,
+    "hint": {
+      "text": "WHERE THEY STOOD.\nThe dust remembers how the frame was left.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "On Orion's oak workbench in Room XI, under the green lamp, lies an old walnut frame round a white enamelled board that looks like an abacus: five ebony rods make four spaces, two brass wires cross them, and in each space two black blocks ride on the wires, one high and one low, each against the left rod, in the middle or against the right. The board is grey with dust except for eight clean places, each the size of a block, where the blocks stood for years; the blocks have been knocked out of place since. Dragging a block, or clicking it, slides it along its wire. Put back on their clean places — high right and low left; high middle and low left; both left; high right and low middle — the blocks become the holes in four blocky figures: the white left between the rods and round the blocks reads 5 9 3 6. Nothing happens when they are set; the player reads the figures in the white and enters 5936.",
+    "references": [
+      "abacus/puzzle.json — marks [[2,0],[1,0],[0,0],[2,1]], where the blocks stood ([high, low] for each space, 0 left, 1 middle, 2 right), and start [[1,2],[0,1],[2,2],[0,2]], where they lie now; the Blender builder reads the same file",
+      "abacus/puzzle.js readSpace() — [high, low] → the figure the white makes: [2,0] 5, [1,0] 9, [0,0] 3, [2,1] 6, [1,1] 8, [0,2] 2; the other three make none",
+      "art/blender/counting_frame.py and counting_frame_publish.mjs — the frame, its dust and clean places; the plate, and every block at each of its places with its own shadow, cut into one atlas; countingFrame.json says where each falls",
+      "AbacusScene — a block is dragged along its wire, or clicked on a place at a time, and settles on the nearest place"
+    ]
+  },
+  {
+    "id": "rewind",
+    "key": "Rewind",
+    "name": "Rewind",
+    "summary": "Four old ways of keeping time stand on Orion's windowsill.",
+    "code": "TIME",
+    "altCode": null,
+    "hint": {
+      "text": "AGAINST THE CLOCK.\nEverything on the sill runs the wrong way.",
+      "sound": false,
+      "tool": false
+    },
+    "description": "On the windowsill of Orion's study (Room XI), the moon and the wet garden behind them, stand four ways of keeping time: a brass drum clock showing 11:40, a tear-off calendar on the 24th, a sand-glass with all its sand below and an ivory scale of minutes beside it, and a candle-clock burned down to its 4th hour, the hours painted up its side. Touched, each runs backwards and stops: the hands wind back to 7 o'clock, six torn pages fly back onto the block to the 18th, the sand climbs up through the neck to the 14 on the scale, and the candle grows back to its 22nd hour. In a room where everything runs the wrong way the alphabet runs backwards too, A = 26 down to Z = 1: 7 18 14 22 reads T I M E. Nothing on screen says so.",
+    "references": [
+      "rewind/puzzle.json — the clock from 11:40 to 7:00, the calendar from 24 to 18, the sand from 0 to 14 minutes, the candle from 4 to 22 hours; the Blender builder and rewind_boards.mjs read the same file",
+      "rewind/puzzle.js backwardsLetter() / rewindWord() — n → the letter 27 − n places along the alphabet: 7 T, 18 I, 14 M, 22 E",
+      "art/blender/rewind_model.py, rewind_sill.py and rewind_publish.mjs — the four things, the sill and the window as Room XI has them; the plate, and the hands, the pages, the risen sand and the grown candle cut into one atlas; rewindSill.json says where each falls",
+      "RewindScene — a touch runs a thing back: the hands turn, the pages fly back on, the risen sand and the grown candle are uncovered over the plate; a second touch runs it back again"
     ]
   }
 ];

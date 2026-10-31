@@ -73,13 +73,14 @@ export const PLACES = Object.freeze([
       "Rain in the roof, and two more doors.",
       "The house goes further than the plans say. So, it seems, does this case.",
     ] },
-  // The remaining upstairs rooms (registered in house/emptyRooms.js).
+  // The remaining upstairs rooms (registered in house/emptyRooms.js; XI, which
+  // has its counting frame, in room11/Room11Scene.js).
   { key: "Room9", name: "Room IX", back: "Upper", holds: [],
     story: [
       "An empty room. Dust on the floor, and the fire laid but never lit.",
       "He used every room on this floor. Why not this one?",
     ] },
-  { key: "Room11", name: "Room XI", back: "Top", holds: [],
+  { key: "Room11", name: "Room XI", back: "Top", holds: ["abacus", "rewind"],
     story: [
       "Orion's physics study. Coils, lenses, and a galvanometer on the workbench.",
       "Waves and a pendulum on the slate. Rain against the tall sash window.",

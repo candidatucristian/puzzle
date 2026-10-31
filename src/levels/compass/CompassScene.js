@@ -1,458 +1,181 @@
-import Phaser from "phaser";
-import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { layoutCabin, paintCabin, releaseCabinArt, addMapMarks, MAP_FONT, MAP_LINES } from "./cabin.js";
-import { letterOverlay } from "../../shared/envelope.js";
-import { COMPASS_BEARINGS } from "./puzzle.js";
-import { loadCabinPhotography, cabinPhotography, alignCabinPhotography } from "./photographicCabin.js";
+import Phaser from 'phaser';
+import BasePuzzleScene from '../../core/BasePuzzleScene.js';
+import {attachMovableSparkles} from '../../shared/movableSparkles.js';
+import {COMPASS_BEARINGS} from './puzzle.js';
+import {BOTTLE_KEYS as K,loadBottleCabin,layoutBottleCabin,bottleGlow} from './bottleCabin.js';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Level — "COMPASS"  ·  code: LOST  ·  compass bearings → a walk → letters
-//
-// A pirate ship at night, the captain's cabin seen from its door, dark and
-// picked out in gold, its timbers creaking. Over the chart table hangs the
-// ship's compass in its gilded gimbal ring, upright, its face to us, and its
-// needle has gone mad: it spins, stops dead on a bearing, jumps to the next,
-// spins again. On the table lies the map, in a sealed envelope; opened, it
-// shows four lines of bearings in the captain's hand:
-//
-//   180 180 90 · 270 180 180 90 90 0 0 270 · 270 270 180 90 90 180 270 270
-//   · 90 90 270 180 180
-//
-// North is 0, east 90, south 180, west 270 — and since the compass hangs
-// facing us, that is up, right, down, left on its card. Each bearing is one
-// step that way, each line one letter: down, down, right is L. The four walks
-// draw L O S T.
-//
-// The needle points out the very same bearings, line by line: a spin between
-// two letters, then one bearing after another, each held — and where a line
-// repeats a bearing, the needle starts away and comes back to it. A tap on
-// the glass starts it again from the first letter.
-// ─────────────────────────────────────────────────────────────────────────────
+// A hand-built captain's study in an antique glass bottle. The complete
+// photograph and all 72 changing compass poses are genuine Cycles renders,
+// including the glass in front of the needle. No ship motion or painted room.
+const SPIN=1400,SPIN_END=3200,HOLD=1400,ARRIVE=700,KICK=380;
 
-const SPIN = 1400; // ms the needle spins wild before a letter
-const SPIN_END = 3200; // ... and after the last one, before the word again
-const HOLD = 1400; // ms on each bearing
-const ARRIVE = 700; // more time on the first bearing after a spin
-const KICK = 380; // °/s a repeated bearing throws the needle off by
+export default class CompassScene extends BasePuzzleScene{
+  constructor(){super({key:'Compass'});}
+  init(data){this.skipFadeIn=data?.skipFade??true;}
+  preload(){loadBottleCabin(this);}
 
-export default class CompassScene extends BasePuzzleScene {
-  constructor() {
-    super({ key: "Compass" });
-  }
-
-  init(data) {
-    this.skipFadeIn =
-      data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
-  }
-
-  preload() {
-    this.load.audio("creakingwood", "assets/sounds/Compass/creakingwood.mp3");
-    loadCabinPhotography(this);
-  }
-
-  create() {
+  create(){
     this.beginScene();
-    this._build(this.cameras.main.width, this.cameras.main.height);
-    this._startCreaking();
-    this._onResize = ({ width, height }) => {
-      this._teardown();
-      this._build(width, height);
+    this.game.canvas.dataset.sceneColour='natural';
+    this._sceneCleanups.add(()=>{delete this.game.canvas.dataset.sceneColour;});
+    this._mapOpen=false;
+    this._steps=program();
+    this._needle={a:0,w:0,step:0,t:0,locked:false,shove:0};
+    this._build(this.cameras.main.width,this.cameras.main.height);
+    this.listenToResize(({width,height})=>{this._teardown();this._build(width,height);});
+    if(!this.skipFadeIn)this.cameras.main.fadeIn(600,0,0,0);
+  }
+
+  _build(W,H){
+    const L=this._L=layoutBottleCabin(W,H);
+    this.add.image(L.x,L.y,K.room).setOrigin(0).setScale(L.s).setDepth(-10);
+    this._needleImg=this.add.image(L.needle.x,L.needle.y,K.needle,0).setOrigin(0)
+      .setDisplaySize(L.needle.size,L.needle.size).setDepth(-9);
+    bottleGlow(this);
+    this._lockGlow=this.add.image(L.compass.x,L.compass.y,K.glow).setDisplaySize(L.compass.r*.23,L.compass.r*.23)
+      .setTint(0xffd09a).setBlendMode(Phaser.BlendModes.ADD).setDepth(-8).setAlpha(0);
+    this._flameGlow=this.add.image(L.lantern.x,L.lantern.y,K.glow).setDisplaySize(29*L.u,33*L.u)
+      .setTint(0xffbd79).setBlendMode(Phaser.BlendModes.ADD).setDepth(-8).setAlpha(.045);
+    const c=L.compass;
+    const glass=this.add.zone(c.x,c.y,c.r*2.25,c.r*2.25).setDepth(5)
+      .setInteractive({hitArea:new Phaser.Geom.Circle(c.r*1.125,c.r*1.125,c.r*1.125),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true})
+      .setData('interactionLabel','Tap the compass glass');
+    glass.on('pointerdown',()=>this._tapGlass());
+    const m=L.map,pad=Math.max(6,L.u*7);
+    const map=this.add.zone(m.x,m.y,m.w+pad*2,m.h+pad*2).setDepth(5).setInteractive({useHandCursor:true})
+      .setData('interactionLabel','Open the captain’s map');
+    map.on('pointerdown',()=>this._letter.open());
+    this._zones=[glass,map];
+    this._sparkle=attachMovableSparkles(this,map,{padding:3,enabled:()=>!this._mapOpen&&!this.isSolved});
+    this._buildMap(W,H);
+    this._showNeedle();
+  }
+
+  _buildMap(W,H){
+    const overlay=this.add.container(0,0).setDepth(60).setVisible(this._mapOpen);
+    const dark=this.add.rectangle(0,0,W,H,0x040505,.87).setOrigin(0).setInteractive();
+    const picture=this.add.image(W/2,H/2-7,K.map);
+    const source=this.textures.get(K.map).getSourceImage();
+    picture.setScale(Math.min(W*.95/source.width,H*.91/source.height));
+    const caption=this.add.text(W/2,H-12,'click anywhere to put it down',{
+      fontFamily:'Georgia, serif',fontStyle:'italic',fontSize:`${Math.max(11,Math.min(14,H/50))}px`,color:'#d2c1a1',
+    }).setOrigin(.5,1);
+    overlay.add([dark,picture,caption]);
+    const scene=this;
+    this._letter={container:overlay,get isOpen(){return scene._mapOpen;},
+      open(){
+        if(scene._mapOpen)return;
+        scene._mapOpen=true;for(const z of scene._zones)z.disableInteractive();
+        scene.services.audio.playClick(scene);overlay.setVisible(true).setAlpha(0);
+        scene.tweens.add({targets:overlay,alpha:1,duration:scene.reducedMotion?0:220});
+      },
+      close(){
+        if(!scene._mapOpen)return;
+        scene._mapOpen=false;
+        scene.tweens.add({targets:overlay,alpha:0,duration:scene.reducedMotion?0:180,onComplete:()=>{
+          overlay.setVisible(false);for(const z of scene._zones)z.setInteractive();
+        }});
+      },
     };
-    this.listenToResize(this._onResize);
-    if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
+    dark.on('pointerdown',()=>this._letter.close());
+    if(this._mapOpen)for(const z of this._zones)z.disableInteractive();
   }
 
-  // ── construction ───────────────────────────────────────────────────────────
-
-  _build(W, H) {
-    this._mapSparkleCleanups = [];
-    const L = layoutCabin(W, H);
-    alignCabinPhotography(L, cabinPhotography(this));
-    const art = paintCabin(this, L);
-    const k = art.keys;
-    const inv = 1 / art.res;
-    this._L = L;
-    this._art = art;
-
-    this.add.image(0, 0, k.room).setOrigin(0, 0).setDepth(-10);
-    // the envelope lies on the table as it does on the study desk
-    this._folded = this.add
-      .image(L.map.x, L.map.y, k.folded)
-      .setScale(inv)
-      .setDepth(-9);
-
-    // the candle's flame and its light
-    const cd = L.candle;
-    this._flame = this.add
-      .image(cd.x, cd.flameY, k.flame)
-      .setOrigin(0.5, 0.95)
-      .setDisplaySize(cd.size * 0.45, cd.size)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(-8);
-    this._candleGlow = this.add
-      .image(cd.x, cd.flameY - cd.size * 0.4, k.glow)
-      .setDisplaySize(cd.size * 4, cd.size * 4)
-      .setTint(0xffb860)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.35)
-      .setDepth(-8);
-    this._flameH = cd.size;
-
-    // the compass, hanging from the beam: everything on it swings together
-    const c = L.compass;
-    const drop = c.y - L.pivot.y;
-    this._compass = this.add.container(L.pivot.x, L.pivot.y).setDepth(-7);
-    // the compass is in the night too: its gold dimmed, the needle still clear
-    const body = this.add
-      .image(0, drop, k.body)
-      .setOrigin(0.5, art.body.oy)
-      .setScale(inv)
-      .setTint(0x8a847c);
-    this._lockGlow = this.add
-      .image(0, drop, k.glow)
-      .setDisplaySize(c.r * 0.32, c.r * 0.32)
-      .setTint(0xffd27a)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0);
-    this._shade = this.add
-      .image(c.r * 0.03, drop + c.r * 0.05, k.shade)
-      .setOrigin(0.5, art.needle.oy)
-      .setScale(inv);
-    this._needleImg = this.add
-      .image(0, drop, k.needle)
-      .setOrigin(0.5, art.needle.oy)
-      .setScale(inv)
-      .setTint(0xd8d4d0);
-    const glass = this.add.image(0, drop, k.glass).setScale(inv).setAlpha(0.7);
-    this._compass.add([
-      body,
-      this._lockGlow,
-      this._shade,
-      this._needleImg,
-      glass,
-    ]);
-    this._drop = drop;
-
-    // the lantern and its light, which swing together
-    const lan = L.lantern;
-    this._lantern = this.add
-      .image(lan.x, lan.y, k.lantern)
-      .setOrigin(0.5, 0)
-      .setScale(inv)
-      .setDepth(-5);
-    this._roomGlow = this.add
-      .image(0, 0, k.glow)
-      .setDisplaySize(W * 0.7, H * 0.85)
-      .setTint(0xffa050)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.025)
-      .setDepth(-6);
-    this._flameGlow = this.add
-      .image(0, 0, k.glow)
-      .setDisplaySize(lan.s * 110, lan.s * 110)
-      .setTint(0xffc070)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.4)
-      .setDepth(-4);
-
-    // a tap on the glass, and the map on the table
-    const glassZone = this.add
-      .zone(c.x, c.y, c.r * 2.2, c.r * 2.2)
-      .setInteractive({
-        hitArea: new Phaser.Geom.Circle(c.r * 1.1, c.r * 1.1, c.r * 1.1),
-        hitAreaCallback: Phaser.Geom.Circle.Contains,
-        useHandCursor: true,
-      })
-      .setData("interactionLabel", "Tap the glass")
-      .setDepth(5)
-      .on("pointerdown", () => this._tapGlass());
-    const m = L.map;
-    const mapZone = this.add
-      .zone(m.x, m.y, m.w * 1.1, m.h * 1.4)
-      .setInteractive({ useHandCursor: true })
-      .setData("interactionLabel", "Open the map")
-      .setDepth(5)
-      .on("pointerdown", () => this._letter.open());
-    this._mapSparkleCleanups.push(attachMovableSparkles(this, mapZone, {
-      enabled: () => !this._letter?.isOpen && !this.isSolved,
-      padding: 5,
-    }));
-    this._zones = [glassZone, mapZone];
-    // the envelope opened: the house's letter, and the map written on it
-    this._letter = letterOverlay(this, L.W, L.H, {
-      key: k.letter,
-      fill: (ov, box) => this._writeMap(ov, box),
-      onOpen: () => { for (const z of this._zones) z.disableInteractive(); },
-      onClose: () => { for (const z of this._zones) z.setInteractive(); },
-    });
-
-
-    this._steps = program();
-    this._needle = this._needle || {
-      a: 0,
-      w: 0,
-      step: 0,
-      t: 0,
-      locked: false,
-      shove: 0,
-    };
+  update(time,delta){
+    if(!this._L)return;
+    this._dance(Math.min(delta||16,50)/1000);
+    const moving=this.ambientMotion&&!this.reducedMotion;
+    const flick=moving?(Math.sin(time*.009)*.5+Math.sin(time*.0137)*.5):0;
+    this._flameGlow.setAlpha(.043+flick*.010);
   }
 
-  // ── the needle ─────────────────────────────────────────────────────────────
-
-  update(time, delta) {
-    if (!this._L) return;
-    const dt = Math.min(delta || 16, 50) / 1000;
-    this._roll(time / 1000);
-    this._dance(dt);
+  _showNeedle(){
+    if(!this._L)return;
+    const {count,step}=this._L.needle;
+    this._needleImg.setFrame(Math.round(this._needle.a/step)%count);
   }
 
-  _dance(dt) {
-    const d = this._needle;
-    const step = this._steps[d.step];
-    const calm = this.reducedMotion;
-    d.t += dt * 1000;
-    if (step.spin) {
-      if (calm) {
-        // one slow, steady turn instead of the madness
-        d.w = 360 / (step.spin / 1000);
-      } else {
-        // thrown about: shoved one way, then the other, never still
-        d.shove -= dt;
-        if (d.shove <= 0) {
-          d.w += (Math.random() < 0.5 ? -1 : 1) * (300 + Math.random() * 700);
-          d.shove = 0.12 + Math.random() * 0.25;
-        }
-        d.w = Phaser.Math.Clamp(d.w * Math.exp(-0.8 * dt), -1100, 1100);
+  _dance(dt){
+    const d=this._needle,step=this._steps[d.step],calm=this.reducedMotion;
+    d.t+=dt*1000;
+    if(step.spin){
+      if(calm)d.w=360/(step.spin/1000);
+      else{
+        d.shove-=dt;
+        if(d.shove<=0){d.w+=(Math.random()<.5?-1:1)*(300+Math.random()*700);d.shove=.12+Math.random()*.25;}
+        d.w=Phaser.Math.Clamp(d.w*Math.exp(-.8*dt),-1100,1100);
       }
-    } else {
-      // drawn to its bearing like a real needle: past it, back, and still
-      const err = wrap(d.a - step.to);
-      d.w += (-60 * err - (calm ? 16 : 9) * d.w) * dt;
-      if (!d.locked && Math.abs(err) < 1.5 && Math.abs(d.w) < 12) {
-        d.locked = true;
-        this._lock(step.to);
-      }
+    }else{
+      const error=wrap(d.a-step.to);
+      d.w+=(-60*error-(calm?16:9)*d.w)*dt;
+      if(!d.locked&&Math.abs(error)<1.5&&Math.abs(d.w)<12){d.locked=true;this._lock(step.to);}
     }
-    d.a = (((d.a + d.w * dt) % 360) + 360) % 360;
-    this._needleImg.setAngle(d.a);
-    this._shade.setAngle(d.a);
-    if (d.t >= (step.spin || step.hold)) {
-      d.step = (d.step + 1) % this._steps.length;
-      d.t = 0;
-      d.locked = false;
-      const next = this._steps[d.step];
-      if (next.kick && !calm) d.w += (Math.random() < 0.5 ? -1 : 1) * KICK;
+    d.a=((d.a+d.w*dt)%360+360)%360;
+    this._showNeedle();
+    if(d.t>=(step.spin||step.hold)){
+      d.step=(d.step+1)%this._steps.length;d.t=0;d.locked=false;
+      if(this._steps[d.step].kick&&!calm)d.w+=(Math.random()<.5?-1:1)*KICK;
     }
   }
 
-  // the needle comes to rest: a click in the bowl, the degree lit on the card
-  _lock(bearing) {
-    const r = this._L.compass.r;
-    const a = ((bearing - 90) * Math.PI) / 180;
+  _lock(bearing){
+    const c=this._L.compass,a=(bearing-90)*Math.PI/180;
     this.tweens.killTweensOf(this._lockGlow);
-    this._lockGlow
-      .setPosition(Math.cos(a) * r * 0.92, this._drop + Math.sin(a) * r * 0.92)
-      .setAlpha(0.8);
-    this.tweens.add({
-      targets: this._lockGlow,
-      alpha: 0,
-      duration: 1100,
-      ease: "Quad.easeIn",
-    });
+    this._lockGlow.setPosition(c.x+Math.cos(a)*c.r*.87,c.y+Math.sin(a)*c.r*.87).setAlpha(.22);
+    this.tweens.add({targets:this._lockGlow,alpha:0,duration:1000,ease:'Quad.easeIn'});
     this._tick();
   }
 
-  _tapGlass() {
-    const d = this._needle;
-    d.step = 0;
-    d.t = 0;
-    d.locked = false;
-    d.w += (Math.random() < 0.5 ? -1 : 1) * 600;
+  _tapGlass(){
+    const d=this._needle;d.step=0;d.t=0;d.locked=false;d.w+=(Math.random()<.5?-1:1)*600;
     this._clink();
   }
 
-  // The compass and lantern sway with the ship; the lantern's light follows.
-  _roll(t) {
-    const L = this._L;
-    const on = this.ambientMotion && !this.reducedMotion ? 1 : 0;
-    const roll = on * (Math.sin(t * 0.9) * 1.8 + Math.sin(t * 0.37 + 1) * 0.8);
-    this._compass.setAngle(-roll * 0.5);
-    const flick = on * (Math.sin(t * 13) * 0.5 + Math.sin(t * 7.3) * 0.5);
-    this._flame
-      .setDisplaySize(
-        this._flameH * (0.45 - flick * 0.03),
-        this._flameH * (1 + flick * 0.08),
-      )
-      .setAngle(flick * 4);
-    this._candleGlow.setAlpha(0.32 + flick * 0.05);
-    const swing =
-      on * (Math.sin(t * 0.9 - 0.4) * 6 + Math.sin(t * 0.37 + 0.6) * 2);
-    this._lantern.setAngle(swing);
-    const a = (swing * Math.PI) / 180;
-    const drop = this._art.lantern.flameDrop;
-    const fx = L.lantern.x - Math.sin(a) * drop;
-    const fy = L.lantern.y + Math.cos(a) * drop;
-    this._flameGlow
-      .setPosition(fx, fy)
-      .setAlpha(0.36 + on * Math.random() * 0.08);
-    this._roomGlow.setPosition(fx + (fx - L.lantern.x) * 6, fy + L.H * 0.18);
+  _ac(){
+    const ac=this.sound?.context,state=this.services?.audio?.state;
+    if(!ac||state?.muted)return null;
+    return {ac,vol:state?.sfxVol??.8};
   }
 
-  // ── the map ────────────────────────────────────────────────────────────────
+  _tick(){
+    const a=this._ac();if(!a)return;
+    const {ac,vol}=a;
+    const buffer=ac.createBuffer(1,Math.max(1,Math.floor(ac.sampleRate*.04)),ac.sampleRate),data=buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/data.length*9);
+    const source=ac.createBufferSource(),filter=ac.createBiquadFilter(),gain=ac.createGain();
+    source.buffer=buffer;filter.type='bandpass';filter.frequency.value=2600;filter.Q.value=3;gain.gain.value=vol*.09;
+    source.connect(filter).connect(gain).connect(this.sound.destination);source.start();
+  }
 
-  // On the letter out of the envelope: the island and its way to the X, and
-  // the bearings, a line for each letter, in the captain's hand
-  _writeMap(ov, box) {
-    const marks = addMapMarks(this.textures, box.w, box.h);
-    ov.add(this.add.image(box.x + box.w / 2, box.y + box.h / 2, marks.key).setScale(1 / marks.res));
-    const lines = COMPASS_BEARINGS.map((line, i) =>
-      this.add
-        .text(
-          box.x + box.w * MAP_LINES.x,
-          box.y + box.h * MAP_LINES.y(i),
-          line.map((b) => `${b}°`).join("  ·  "),
-          {
-            fontFamily: MAP_FONT,
-            fontSize: Math.round(box.w * 0.05) + "px",
-            color: "#3a2210",
-          },
-        )
-        .setOrigin(0, 0.5)
-        .setAngle(i % 2 ? 0.6 : -0.8),
-    );
-    const widest = Math.max(...lines.map((t) => t.width));
-    if (widest > box.w * 0.82) {
-      const size = Math.floor(box.w * 0.05 * ((box.w * 0.82) / widest));
-      for (const t of lines) t.setFontSize(size);
+  _clink(){
+    const a=this._ac();if(!a)return;
+    const {ac,vol}=a,t=ac.currentTime;
+    for(const [frequency,level] of [[2350,.045],[3720,.026]]){
+      const oscillator=ac.createOscillator(),gain=ac.createGain();oscillator.frequency.value=frequency;
+      gain.gain.setValueAtTime(level*vol,t);gain.gain.exponentialRampToValueAtTime(.0005,t+.25);
+      oscillator.connect(gain).connect(this.sound.destination);oscillator.start(t);oscillator.stop(t+.3);
     }
-    ov.add(lines);
   }
 
-  // ── sounds ─────────────────────────────────────────────────────────────────
-
-  _ac() {
-    const ac = this.sound && this.sound.context;
-    const st =
-      this.services && this.services.audio && this.services.audio.state;
-    if (!ac || (st && st.muted)) return null;
-    return { ac, vol: st ? st.sfxVol : 0.8 };
-  }
-
-  // a short burst of filtered noise, shaped by `env(k)` over its length
-  _noise(dur, type, freq, q, gain, env) {
-    const a = this._ac();
-    if (!a) return;
-    try {
-      const { ac, vol } = a;
-      const buf = ac.createBuffer(
-        1,
-        Math.floor(ac.sampleRate * dur),
-        ac.sampleRate,
-      );
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++)
-        d[i] = (Math.random() * 2 - 1) * env(i / d.length);
-      const src = ac.createBufferSource();
-      src.buffer = buf;
-      const f = ac.createBiquadFilter();
-      f.type = type;
-      f.frequency.value = freq;
-      f.Q.value = q;
-      const g = ac.createGain();
-      g.gain.value = vol * gain;
-      src.connect(f);
-      f.connect(g);
-      g.connect(this.sound.destination);
-      src.start();
-    } catch (e) {}
-  }
-
-  // the ship's timbers creaking all the while, quietly
-  _startCreaking() {
-    try {
-      if (!this.cache.audio.exists("creakingwood")) return;
-      this.services.audio
-        .addSceneSound(this, "creakingwood", { loop: true, gain: 0.3 })
-        ?.play();
-    } catch (e) {}
-  }
-
-  // the needle settling on its pivot: a tiny dry click
-  _tick() {
-    this._noise(0.04, "bandpass", 2600, 3, 0.09, (k) => Math.exp(-k * 9));
-  }
-
-  // a fingernail on the compass glass
-  _clink() {
-    const a = this._ac();
-    if (!a) return;
-    try {
-      const { ac, vol } = a;
-      const t = ac.currentTime;
-      for (const [f, g0] of [
-        [2350, 0.06],
-        [3720, 0.03],
-      ]) {
-        const o = ac.createOscillator();
-        const g = ac.createGain();
-        o.frequency.value = f;
-        g.gain.setValueAtTime(g0 * vol, t);
-        g.gain.exponentialRampToValueAtTime(0.0005, t + 0.25);
-        o.connect(g);
-        g.connect(this.sound.destination);
-        o.start(t);
-        o.stop(t + 0.3);
-      }
-    } catch (e) {}
-  }
-
-  // ── lifecycle ──────────────────────────────────────────────────────────────
-
-  _teardown() {
-    this._mapSparkleCleanups?.forEach(cleanup => cleanup());
-    this._mapSparkleCleanups = [];
+  _teardown(){
+    this._sparkle?.();this._sparkle=null;
     this.tweens.killAll();
-    this.time.removeAllEvents();
-    for (const obj of this.children.list.slice()) obj.destroy();
-    releaseCabinArt(this.textures);
-    this._letter = null;
-    this._zones = [];
-    this._L = null;
+    for(const o of this.children.list.slice())o.destroy();
+    this._L=null;this._letter=null;this._zones=[];
   }
 
-  shutdown() {
-    this._onResize = null;
-    this._mapSparkleCleanups?.forEach(cleanup => cleanup());
-    this._mapSparkleCleanups = [];
-    this.tweens.killAll();
-    this.time.removeAllEvents();
-    releaseCabinArt(this.textures);
-    this._L = null;
-    this._needle = null;
+  shutdown(){
+    this._sparkle?.();this._sparkle=null;this.tweens.killAll();
+    this._L=null;this._letter=null;this._zones=[];this._needle=null;
   }
 }
 
-// the needle's whole round: a spin before each letter, then its bearings one
-// by one; a bearing that repeats the one before is marked by a kick
-function program() {
-  const steps = [];
-  COMPASS_BEARINGS.forEach((line) => {
-    steps.push({ spin: SPIN });
-    line.forEach((to, i) =>
-      steps.push({
-        to,
-        hold: HOLD + (i ? 0 : ARRIVE),
-        kick: i > 0 && line[i - 1] === to,
-      }),
-    );
-  });
-  steps.push({ spin: SPIN_END });
-  return steps;
+function program(){
+  const steps=[];
+  for(const line of COMPASS_BEARINGS){
+    steps.push({spin:SPIN});
+    line.forEach((to,i)=>steps.push({to,hold:HOLD+(i?0:ARRIVE),kick:i>0&&line[i-1]===to}));
+  }
+  steps.push({spin:SPIN_END});return steps;
 }
-
-// an angle brought into -180..180
-function wrap(deg) {
-  return ((((deg + 180) % 360) + 360) % 360) - 180;
-}
+function wrap(degrees){return ((degrees+180)%360+360)%360-180;}

@@ -37,6 +37,8 @@ import GenomeScene from "./genome/GenomeScene.js";
 import CurtainScene from "./curtain/CurtainScene.js";
 import TheSillScene from "./thesill/TheSillScene.js";
 import VenetianScene from "./venetian/VenetianScene.js";
+import AbacusScene from "./abacus/AbacusScene.js";
+import RewindScene from "./rewind/RewindScene.js";
 import { LEVEL_METADATA } from "./metadata.js";
 
 const scenes = {
@@ -79,6 +81,8 @@ const scenes = {
   Curtain: CurtainScene,
   TheSill: TheSillScene,
   Venetian: VenetianScene,
+  Abacus: AbacusScene,
+  Rewind: RewindScene,
 };
 
 export const LEVEL_DEFINITIONS = Object.freeze(LEVEL_METADATA.map((level) => Object.freeze({

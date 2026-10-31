@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;background:#080604"><canvas id="letter-canvas" style="display:block;width:100vw;height:100vh"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import {createLetterStage} from '../../../src/ui/letterStage3d.js';
+window.reviewReady=createLetterStage(document.querySelector('canvas')).then(stage=>{
+  window.letterReview=stage;stage.fit(innerWidth,innerHeight);
+  window.letterProbe=frame=>{
+    stage.pose(frame/30);
+    const env=stage.envelope,flap=stage.scene.getObjectByName('top_flap');
+    const papers=[];stage.letter.traverse(o=>{if(o.isMesh)papers.push(o);});
+    const points=o=>{
+      const a=o.geometry.attributes.position,p=[];
+      for(let i=0;i<a.count;i++)p.push(env.worldToLocal(new THREE.Vector3().fromBufferAttribute(a,i).applyMatrix4(o.matrixWorld)));
+      return p;
+    };
+    const openFlap=points(flap),sheet=papers.flatMap(points),external=sheet.filter(p=>p.z<-.61);
+    const top=Math.max(...openFlap.map(p=>p.y));
+    const bottom=external.length?Math.min(...external.map(p=>p.y)):null;
+    const back=points(stage.scene.getObjectByName('envelope_body'));
+    const lip=points(stage.scene.getObjectByName('side_flap'));
+    return {frame,external:external.length,flapHeight:top,paperHeight:bottom,gap:bottom===null?null:bottom-top,
+      pocket:{floor:Math.max(...back.map(p=>p.y)),roof:Math.min(...lip.map(p=>p.y)),
+        bottom:Math.min(...sheet.map(p=>p.y)),top:Math.max(...sheet.map(p=>p.y)),frontEdge:Math.min(...sheet.map(p=>p.z))}};
+  };
+  return true;
+});
+</script></body></html>

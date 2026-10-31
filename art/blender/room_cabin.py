@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 from room_common import *
 from room_furnish import *
+import chess_set as chess
 
 OUT = os.path.join(ROOT, ".artifacts/room-cabin")
 os.makedirs(OUT, exist_ok=True)
@@ -322,7 +323,7 @@ for (sx, sd, sh, turn) in ((-176, 300, 48, 0.4), (-150, 268, 40, 2.1)):
 
 # ── close in front of us: the games table, the game on it, the candle ─────
 G = GAMES
-BOARD_HALF = 24
+CANDLE = (G["s"] / 2 - 4.5, G["s"] / 2 - 4.5)        # (clear of the board's corner)
 def games_table():
     s, h = G["s"], G["h"]
     box_cm("games top", -s / 2, s / 2, h - 4, h, -s / 2, s / 2, MAHOGANY, 0.8)
@@ -330,50 +331,13 @@ def games_table():
     lathe("pedestal", [(0, 0), (0.05, 0), (0.07, 0.06), (0.045, 0.12), (0.04, 0.3), (0.055, 0.4), (0.04, 0.5), (0.05, M(h - 12)), (0, M(h - 12))], MAHOGANY, steps=32)
     for k in range(4):
         tube("foot", [(0.03, 0.08), (0.14, 0.05), (0.24, 0.015)], 0.016, MAHOGANY, rot=k / 4 * math.tau + math.pi / 4)
-    by = h + 1.2
-    hb = BOARD_HALF
-    box_cm("board frame", -hb - 3, hb + 3, h, by, -hb - 3, hb + 3, scan("board walnut", "rosewood_veneer1", size=0.4, bright=0.35, rough=(0.15, 0.3), coat=0.6), 0.5)
-    maple = scan("maple", "dark_wood", size=0.5, tint=(1.0, 0.85, 0.6), bright=0.95, sat=0.6, rough=(0.15, 0.3), coat=0.6)
-    darksq = scan("walnut square", "dark_wood", size=0.5, tint=(0.6, 0.4, 0.28), bright=0.4, rough=(0.15, 0.3), coat=0.6)
-    sq = 2 * hb / 8
-    for r in range(8):
-        for f in range(8):
-            box_cm("square", -hb + f * sq, -hb + (f + 1) * sq, by - 0.2, by, -hb + r * sq, -hb + (r + 1) * sq, maple if (f + r) % 2 else darksq, keep=False)
-    ivory = plain("boxwood", (0.75, 0.62, 0.42), rough=0.3, coat=0.5)
-    ebony = plain("ebony", (0.015, 0.012, 0.01), rough=0.25, coat=0.5)
-    def piece(kind, x, d, white):
-        """a Staunton piece, turned, weighted, felted"""
-        mat = ivory if white else ebony
-        base = [(0, 0), (1.6, 0), (1.7, 0.3), (1.5, 0.6), (1.6, 0.9), (1.15, 1.3)]
-        if kind == "P": prof = base + [(0.75, 2.4), (0.6, 3.2), (1.0, 3.4), (0.55, 3.6), (0.95, 4.1), (0.8, 4.6), (0.4, 4.8), (0, 4.85)]
-        elif kind == "R": prof = base + [(1.0, 2.0), (0.95, 4.2), (1.25, 4.5), (1.3, 5.6), (0, 5.6)]
-        elif kind == "B": prof = base + [(0.75, 2.6), (0.6, 4.5), (1.0, 4.7), (0.6, 4.9), (0.9, 5.6), (0.75, 6.6), (0.3, 7.2), (0.35, 7.4), (0, 7.6)]
-        elif kind == "Q": prof = base + [(0.8, 2.8), (0.6, 5.6), (1.15, 5.9), (0.7, 6.2), (1.1, 7.6), (1.0, 8.0), (0.4, 8.2), (0.4, 8.5), (0, 8.8)]
-        elif kind == "K": prof = base + [(0.85, 2.8), (0.65, 6.0), (1.2, 6.3), (0.75, 6.6), (1.1, 8.0), (0.5, 8.3), (0, 8.4)]
-        else: prof = base + [(1.0, 1.6), (0, 1.7)]
-        lathe(f"piece {kind}", [(M(r), M(hh)) for r, hh in prof], mat, at=tuple(P(x, by, d)), steps=40)
-        if kind == "K":
-            box_cm("cross", x - 0.18, x + 0.18, by + 8.3, by + 9.9, d - 0.18, d + 0.18, mat, keep=False)
-            box_cm("cross", x - 0.55, x + 0.55, by + 9.0, by + 9.35, d - 0.18, d + 0.18, mat, keep=False)
-        if kind == "B":
-            sphere("mitre", tuple(P(x, by + 6.5, d)), M(0.8), mat, squash=(1, 1, 1.35))
-        if kind == "N":
-            me = bpy.data.meshes.new("knight head"); bm = bmesh.new()
-            outline_ = [(-0.9, 1.7), (1.0, 1.7), (1.2, 3.0), (0.9, 4.2), (1.9, 4.9), (2.0, 5.6), (1.0, 6.2), (0.4, 6.8), (-0.3, 6.6), (-0.9, 5.8), (-1.2, 4.2), (-1.1, 2.6)]
-            toward = -1 if white else 1
-            fr = [bm.verts.new(tuple(P(x - 0.55, by + hh, d + toward * u))) for u, hh in outline_]
-            bk = [bm.verts.new(tuple(P(x + 0.55, by + hh, d + toward * u))) for u, hh in outline_]
-            bm.faces.new(fr); bm.faces.new(list(reversed(bk)))
-            for i in range(len(outline_)):
-                j = (i + 1) % len(outline_); bm.faces.new((fr[i], fr[j], bk[j], bk[i]))
-            bm.to_mesh(me); bm.free()
-            hd = link(bpy.data.objects.new("knight head", me)); hd.data.materials.append(mat); bevel(hd, M(0.25), 2)
-    for (f, r, white, kind) in GAME:
-        piece(kind, -hb + (f + 0.5) * sq, -hb + (r + 0.5) * sq, white)
-    # the candle at the table's far right corner, in a brass stick
-    cx, cd = s / 2 - 7, s / 2 - 8
+    # the board and the game on it: the set the level has (chess_set.py)
+    chess.board(h + chess.THICK)
+    chess.game(GAME, h + chess.THICK)
+    # the candle at the table's far right corner, in a brass stick, burnt half down
+    cx, cd = CANDLE
     lathe("candlestick", [(0, 0), (0.045, 0), (0.047, 0.006), (0.02, 0.012), (0.012, 0.05), (0.018, 0.06), (0.012, 0.065), (0.014, 0.075), (0, 0.075)], BRASS, at=tuple(P(cx, h, cd)), steps=40)
-    top = h + 19.5
+    top = h + 13.0
     cylinder("candle", M(cx), M(cd), M(h + 7), M(top), M(1.0), WAX, verts=32)
     for k in range(2):
         a = 0.8 + k * 2.3; L_ = 2.5 + k
@@ -381,7 +345,7 @@ def games_table():
     cylinder("wick", M(cx), M(cd), M(top - 0.2), M(top + 0.8), M(0.07), WICK, verts=6)
 assembled("games table", games_table, at=(G["x"], 0, G["d"]), turn=G["turn"])
 GF = framed((G["x"], 0, G["d"]), G["turn"])
-CANDLE_AT = GF(G["s"] / 2 - 7, G["h"] + 20.3, G["s"] / 2 - 8)
+CANDLE_AT = GF(CANDLE[0], G["h"] + 13.8, CANDLE[1])
 candle_l = lamp("candle", "POINT", tuple(CANDLE_AT + Vector((0, 0, 0.02))), energy=float(arg("--candle", "6")), colour=(1.0, 0.55, 0.22), size=0.012)
 import_model("gallinera_chair", height=M(103), at=tuple(P(-82, 0, 214)), rot=math.pi / 2 + 0.45)
 rug(-150, 130, 110, 330, rug_material("rug", f"{ASSETS}/textures/persian_rug.jpg", tint=(0.35, 0.45, 0.9), sat=0.9, value=0.4))
@@ -452,7 +416,7 @@ air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0")))
 # ── what the game is told ──────────────────────────────────────────────────
 x0b, x1b = -B["body"] / 2, B["body"] / 2 + B["neck"] + 4
 LAYOUT.thing("compass", "Look into the bottle", [BF(x, y, d) for x in (x0b - 2, x1b) for y in (0, 5 + 2 * B["r"] + 3) for d in (-B["r"], B["r"])])
-hb = BOARD_HALF
+hb = chess.OUTER - 1
 LAYOUT.thing("chessboard", "Look at the chessboard", [GF(x, y, d) for x in (-hb - 1, hb + 1) for y in (G["h"] + 1.2, G["h"] + 11) for d in (-hb - 1, hb + 1)])
 LAYOUT.thing("mobilephone", "Pick up the telephone", [DF(x, y, d) for x in (PHONE["x"] - PHONE["w"] / 2 - 2, PHONE["x"] + PHONE["w"] / 2 + 2) for y in (DK["h"], DK["h"] + PHONE["h"] + 5) for d in (PHONE["d"] - 3, PHONE["d"] + 3)])
 LAYOUT.chest(CHEST, at=DK["at"], turn=DK["turn"])

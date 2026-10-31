@@ -39,7 +39,18 @@ RNG = random.Random(1871)
 X0, X1, D1, TOP = -250, 250, 620, 300
 EYE = (float(arg("--ex", "-128")), float(arg("--ey", "152")), float(arg("--ed", "70")))
 LOOK = (float(arg("--lx", "70")), float(arg("--ly", "108")), float(arg("--ld", "540")))
-scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "24")))
+VIEW = arg("--view", "")                          # "phials" / "bench": Two Phials' and The Apothecary's Bench's own close-ups
+if VIEW == "phials":
+    OUT = os.path.join(ROOT, ".artifacts/phials-level"); os.makedirs(OUT, exist_ok=True)
+    EYE = (float(arg("--ex", "204")), float(arg("--ey", "114")), float(arg("--ed", "522")))
+    LOOK = (float(arg("--lx", "228")), float(arg("--ly", "103")), float(arg("--ld", "580")))
+if VIEW == "bench":
+    OUT = os.path.join(ROOT, ".artifacts/bench-level"); os.makedirs(OUT, exist_ok=True)
+    # (seated at it, the eye little above the bottles: their liquids are read
+    # nearly level, as they should be)
+    EYE = (float(arg("--ex", "40")), float(arg("--ey", "130")), float(arg("--ed", "176")))
+    LOOK = (float(arg("--lx", "40")), float(arg("--ly", "104")), float(arg("--ld", "340")))
+scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", {"phials": "35", "bench": "40"}.get(VIEW, "24"))))
 WIN = dict(x=132, hw=62, sill=126, top=258)
 BENCH = dict(x0=-118, x1=128, d0=296, d1=376, h=92)
 SINKS = dict(x0=40, x1=X1, d0=D1 - 62, h=90)
@@ -52,7 +63,7 @@ BOTTLES = [
     ("conical", 22, 13, (214, 230, 120), 0.55),
     ("round", 25, 12, (140, 196, 250), 0.4),
     ("jar", 18, 12, (34, 32, 36), 0.45),
-    ("tall", 32, 7, (120, 255, 110), 0.7),
+    ("tall", 32, 5, (120, 255, 110), 0.7),
     ("beaker", 17, 11, (250, 214, 40), 0.62),
 ]
 FRAMES = 6
@@ -72,17 +83,21 @@ IRON = aged_metal("iron", (0.05, 0.05, 0.05), (0.04, 0.025, 0.018), rough=(0.45,
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
 FIRECLAY = plain("fireclay", (0.78, 0.76, 0.7), rough=0.18, coat=0.6)
 FRAME = plain("window paint", (0.8, 0.79, 0.74), rough=0.5)
-CLOTH = scan("green cloth", "velour_velvet", size=0.3, tint=(0.1, 0.36, 0.16), bright=0.35, sat=1.0, rough=(0.75, 0.95), bump=0.3)
+CLOTH = scan("green cloth", "velour_velvet", size=0.3, tint=(0.08, 0.23, 0.11), bright=0.55, sat=0.0, rough=(0.75, 0.95), bump=0.3)
+_cb = CLOTH.node_tree.nodes["Principled BSDF"]          # (its nap catching the light where it is seen aslant)
+_cb.inputs["Sheen Weight"].default_value = 0.25; _cb.inputs["Sheen Roughness"].default_value = 0.45; _cb.inputs["Sheen Tint"].default_value = (0.55, 0.8, 0.6, 1)
 PERIODIC = picture("periodic table", os.path.join(DRAWN, "lab-periodic.png"), rough=0.9)
 TAG = picture("phials' tag", os.path.join(DRAWN, "lab-tag.png"), rough=0.9)
 spine_mat = bound(picture("spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3))
 COVERS = cover_materials()
 PAGES = plain("pages", (0.3, 0.26, 0.19), rough=0.9)
-def liquid(name, rgb, glow=0.0):
-    m = plain(name, tuple(c / 255 for c in rgb), rough=0.04, transmission=0.65, ior=1.34)
+def liquid(name, rgb, glow=0.0, murk=0.0):
+    m = plain(name, tuple(c / 255 * (1 - 0.8 * murk) for c in rgb), rough=0.04, transmission=0.65 * (1 - murk), ior=1.34)
     if glow:
         b = m.node_tree.nodes["Principled BSDF"]; b.inputs["Emission Color"].default_value = (*[c / 255 for c in rgb], 1); b.inputs["Emission Strength"].default_value = glow
     return m
+BENCH_TOP = honed_slate("bench slate")
+THIN = plain("thin glass", (0.95, 0.96, 0.95), rough=0.03, transmission=1.0, ior=1.12)   # (glass blown thin, not a solid lump)
 LAYOUT = Layout("Room7")
 
 # ── the shell: stone, boards, beams ───────────────────────────────────────
@@ -125,7 +140,9 @@ for i in range(n_):
     a = sk["x0"] + 6 + i * cw_
     box_cm("cupboard door", a, a + cw_ - 3, 12, 78, sk["d0"] + 2, sk["d0"] + 3, OAK, 0.5)
     box_cm("door panel", a + 4, a + cw_ - 7, 18, 72, sk["d0"] + 1.4, sk["d0"] + 2, OAK, 0.8)
-top_ = box_cm("counter slate", sk["x0"], sk["x1"], sk["h"] - 4, sk["h"], sk["d0"], D1, SLATE, 0.5)
+HONED = scan("honed slate", "castle_wall_slates", size=2.4, tint=(0.3, 0.32, 0.34), bright=0.32, sat=0.3, rough=(0.35, 0.55), bump=0.05) if VIEW else SLATE
+if VIEW: HONED["detailed"] = True                 # (no scan relief added to it)
+top_ = box_cm("counter slate", sk["x0"], sk["x1"], sk["h"] - 4, sk["h"], sk["d0"], D1, HONED, 0.5)
 for (sx0, sx1) in ((sk["x0"] + 22, sk["x0"] + 78), (sk["x0"] + 92, sk["x0"] + 148)):
     boolean_cut(top_, box("cut", M(sx0), M(sx1), M(sk["d0"] + 6), M(D1 - 8), M(sk["h"] - 10), M(sk["h"] + 5), IRON))
     s_ = box_cm("sink", sx0, sx1, sk["h"] - 24, sk["h"] + 0.6, sk["d0"] + 6, D1 - 8, FIRECLAY, 1.2)
@@ -134,19 +151,20 @@ for (sx0, sx1) in ((sk["x0"] + 22, sk["x0"] + 78), (sk["x0"] + 92, sk["x0"] + 14
     tube("swan neck", [(0, 0), (0, 0.2), (0.04, 0.27), (0.12, 0.27), (0.16, 0.2)], 0.009, BRASS, at=tuple(P(tx, sk["h"], D1 - 4)), rot=-math.pi / 2)
 # the phials' rack at the counter's end: walnut, three tubes, a tag on its post
 rx, rd = sk["x1"] - 22, sk["d0"] + 22
+PHIALS, RACK_BOARD = [], []                       # (each tube's parts; the board they stand through)
 def rack():
     box_cm("rack base", -9, 9, 0, 1.6, -3.5, 3.5, WALNUT, 0.4, keep=False)
-    box_cm("rack board", -9, 9, 7, 8.4, -3.5, 3.5, WALNUT, 0.4, keep=False)
+    RACK_BOARD.append(box_cm("rack board", -9, 9, 7, 8.4, -3.5, 3.5, WALNUT, 0.4, keep=False))
     for e in (-1, 1): box_cm("rack post", e * 8 - 0.8, e * 8 + 0.8, 1.6, 12, -0.8, 0.8, WALNUT, 0.3, keep=False)
     for k, colour in enumerate(((0.85, 0.72, 0.05), None, (0.08, 0.22, 0.75))):
         x = -5 + k * 5
-        lathe("tube", [(0, 0), (0.008, 0), (0.008, 0.14), (0.0095, 0.145), (0, 0.145)], GLASS, at=tuple(P(x, 1.6, 0)), steps=20)
+        parts = [lathe("tube", [(0, 0), (0.008, 0), (0.008, 0.14), (0.0095, 0.145), (0, 0.145)], GLASS, at=tuple(P(x, 1.6, 0)), steps=20)]
         if colour:
-            cylinder("phial liquid", M(x), 0, M(2.0), M(9.5), M(0.72), plain(f"phial {k}", colour, rough=0.05, transmission=0.55, ior=1.34), verts=16)
-            cylinder("phial cork", M(x), 0, M(14.2), M(16), M(0.85), plain("cork", (0.32, 0.2, 0.1), rough=0.9), verts=12)
-    tag = card("tag", [P(9.2, 7.5, -2.2), P(9.2, 7.5, 2.2), P(9.2, 9.7, 2.2), P(9.2, 9.7, -2.2)], TAG)
-    tag.rotation_euler = (0, 0, 0)
-    rod("tag string", P(8.6, 11, 0), P(9.2, 9.6, 0), M(0.05), plain("string", (0.6, 0.55, 0.42), rough=0.9), verts=4)
+            parts.append(cylinder("phial liquid", M(x), 0, M(2.0), M(9.5), M(0.72), plain(f"phial {k}", colour, rough=0.05, transmission=0.55, ior=1.34), verts=16))
+            parts.append(cylinder("phial cork", M(x), 0, M(14.2), M(16), M(0.85), plain("cork", (0.32, 0.2, 0.1), rough=0.9), verts=12))
+        PHIALS.append(parts)
+    tag = card("tag", [P(7.4, 2.4, -1.3), P(14.4, 2.4, -1.3), P(14.4, 5.9, -1.3), P(7.4, 5.9, -1.3)], TAG)
+    rod("tag string", P(8.0, 11.6, -0.9), P(8.3, 4.15, -1.3), M(0.04), plain("string", (0.6, 0.55, 0.42), rough=0.9), verts=4)
 assembled("phials' rack", rack, at=(rx, sk["h"], rd), turn=math.radians(-20))
 RF = framed((rx, sk["h"], rd), math.radians(-20))
 
@@ -229,7 +247,7 @@ for k in range(4):
     box_cm("bench door", a, a + w_, 12, 64, b["d0"] + 2, b["d0"] + 3, OAK, 0.5)
     box_cm("bench drawer", a, a + w_, 67, b["h"] - 8, b["d0"] + 2, b["d0"] + 3, OAK, 0.5)
     lathe("knob", [(0, 0), (0.008, 0), (0.011, 0.01), (0.007, 0.015), (0, 0.016)], BRASS, at=tuple(P(a + w_ / 2, 79, b["d0"] + 2)), steps=16).rotation_euler = (math.pi / 2, 0, 0)
-box_cm("bench top", b["x0"], b["x1"], b["h"] - 5, b["h"], b["d0"], b["d1"], SLATE, 0.6)
+box_cm("bench top", b["x0"], b["x1"], b["h"] - 5, b["h"], b["d0"], b["d1"], BENCH_TOP, 0.6)
 h = b["h"]
 # the oil lamp at the left end: a brass font, its glass chimney
 lx, ld = b["x0"] + 16, b["d0"] + 46
@@ -243,8 +261,8 @@ rtx, rtd = b["x0"] + 54, b["d1"] - 16
 cylinder("stand rod", M(rtx - 8), M(rtd), M(h), M(h + 48), M(0.6), IRON, verts=12)
 box_cm("stand foot", rtx - 16, rtx + 2, h, h + 1.5, rtd - 6, rtd + 6, IRON, 0.4)
 rod("clamp arm", P(rtx - 8, h + 30, rtd), P(rtx, h + 30, rtd), M(0.5), IRON, verts=8)
-sphere("retort bulb", tuple(P(rtx, h + 30, rtd)), M(7), GLASS)
-cone = cylinder("retort neck", 0, 0, 0, M(30), M(2.2), GLASS, verts=24, r2=M(0.6)); cone.location = P(rtx + 4, h + 34, rtd); cone.rotation_euler = (0, math.radians(104), 0)
+sphere("retort bulb", tuple(P(rtx, h + 30, rtd)), M(7), THIN)
+cone = cylinder("retort neck", 0, 0, 0, M(30), M(2.2), THIN, verts=24, r2=M(0.6)); cone.location = P(rtx + 4, h + 34, rtd); cone.rotation_euler = (0, math.radians(104), 0)
 cylinder("retort liquid", M(rtx), M(rtd), M(h + 23.5), M(h + 27), M(5.2), liquid("retort liquid", (120, 60, 30)), verts=24)
 def tube_rack():
     box_cm("tube rack", -14, 14, 0, 1.6, -4, 4, OAK_X, 0.4, keep=False)
@@ -252,36 +270,69 @@ def tube_rack():
     for e in (-1, 1): box_cm("rack end", e * 13.5 - 0.8, e * 13.5 + 0.8, 0, 10, -4, 4, OAK_X, 0.3, keep=False)
     for k in range(6):
         x = -10.5 + k * 4.2
-        lathe("test tube", [(0, 0), (0.008, 0), (0.008, 0.15), (0.0095, 0.155), (0, 0.155)], GLASS, at=tuple(P(x, 1.6, 0)), steps=16)
+        vessel("test tube", [(0, 0), (0.008, 0), (0.008, 0.15), (0.0095, 0.155)], GLASS, tuple(P(x, 1.6, 0)), t=0.0008, steps=16)
         if k % 2 == 0:
-            cylinder("tube liquid", M(x), 0, M(2.0), M(2.0 + RNG.uniform(3, 8)), M(0.72), liquid(f"tube {k}", RNG.choice(((200, 90, 40), (90, 160, 220), (160, 210, 90)))), verts=12)
+            cylinder("tube liquid", M(x), 0, M(1.66), M(2.0 + RNG.uniform(3, 8)), M(0.73), liquid(f"tube {k}", RNG.choice(((200, 90, 40), (90, 160, 220), (160, 210, 90)))), verts=12)
 assembled("test tube rack", tube_rack, at=(b["x0"] + 92, h, b["d1"] - 14), turn=0.05)
-# the five bottles across the bench, left to right as the puzzle has them
-BOTTLE_AT = []
+# the five bottles across the bench, left to right as the puzzle has them, each
+# filled to its own number on its own printed scale (lab_boards.mjs: lab-scales.json)
+import json as _json
+SCALES = _json.load(open(os.path.join(DRAWN, "lab-scales.json")))
+def enamel(i):
+    m = bpy.data.materials.new(f"scale print {i}"); m.use_nodes = True
+    N = m.node_tree.nodes; L_ = m.node_tree.links.new; out_ = N["Material Output"]; b_ = N["Principled BSDF"]
+    t = N.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(os.path.join(DRAWN, SCALES[i]["file"]), check_existing=True); t.interpolation = "Cubic"
+    L_(t.outputs["Color"], b_.inputs["Base Color"]); b_.inputs["Roughness"].default_value = 0.35
+    tr = N.new("ShaderNodeBsdfTransparent"); mx = N.new("ShaderNodeMixShader")
+    L_(t.outputs["Alpha"], mx.inputs["Fac"]); L_(tr.outputs["BSDF"], mx.inputs[1]); L_(b_.outputs["BSDF"], mx.inputs[2]); L_(mx.outputs["Shader"], out_.inputs["Surface"])
+    m["clear"] = True
+    return m
+def decal(i, x, d, prof, z0, z1, width_cm):
+    """the scale printed round the bottle's front: a strip lying on its glass
+    from z0 to z1 (m), width_cm across, facing the bench's front"""
+    def radius(z):
+        for (r0, a), (r1, b_) in zip(prof[1:], prof[2:]):
+            if a <= z <= b_ and b_ > a: return r0 + (r1 - r0) * (z - a) / (b_ - a)
+        return prof[1][0]
+    me = bpy.data.meshes.new(f"scale {i}"); bm = bmesh.new(); uv = bm.loops.layers.uv.new()
+    rows, cols = 40, 8
+    rmid = radius((z0 + z1) / 2) + 0.0003
+    half = M(width_cm) / 2 / rmid
+    grid = []
+    for j in range(rows + 1):
+        z = z0 + (z1 - z0) * j / rows; r = radius(z) + 0.0003
+        grid.append([(bm.verts.new((M(x) + r * math.sin(a), M(d) - r * math.cos(a), M(h) + z)), k / cols, j / rows)
+                     for k, a in ((k, -half + 2 * half * k / cols) for k in range(cols + 1))])
+    for j in range(rows):
+        for k in range(cols):
+            q = [grid[j][k], grid[j][k + 1], grid[j + 1][k + 1], grid[j + 1][k]]
+            fc = bm.faces.new([v for v, _, _ in q])
+            for lp, (_, u, v) in zip(fc.loops, q): lp[uv].uv = (u, v)
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(f"scale {i}", me)); o.data.materials.append(enamel(i))
+    for p in o.data.polygons: p.use_smooth = True
+    return o
+BOTTLE_AT, BOTTLE_LIQUID = [], []
 for i, (shape, bh, bw, rgb, full) in enumerate(BOTTLES):
+    sc = SCALES[i]
+    full = (bh * 0.08 + sc["span"] / 10 * sc["level"]) / bh      # (its front edge on its own number)
     x = b["x0"] + 112 + i * 21; d = b["d0"] + 34
     r = bw / 2
     if shape == "conical": prof = [(0, 0), (M(r), 0), (M(r), M(1.5)), (M(r * 0.3), M(bh * 0.8)), (M(r * 0.3), M(bh)), (0, M(bh))]
-    elif shape == "round": prof = [(0, 0), (M(r * 0.5), 0)] + [(M(r * math.sin(math.pi * t / 8) * 0.98 + 0.001), M(r * (1 - math.cos(math.pi * t / 8)))) for t in range(1, 8)] + [(M(r * 0.28), M(bh * 0.75)), (M(r * 0.28), M(bh)), (0, M(bh))]
+    elif shape == "round": prof = [(0, 0), (M(r * 0.5), 0)] + [(M(r * math.sin(math.pi * t / 24) * 0.98 + 0.001), M(r * (1 - math.cos(math.pi * t / 24)))) for t in range(3, 22)] + [(M(r * 0.28), M(bh * 0.75)), (M(r * 0.28), M(bh)), (0, M(bh))]
     elif shape == "jar": prof = [(0, 0), (M(r), 0), (M(r), M(bh * 0.85)), (M(r * 0.8), M(bh * 0.92)), (M(r * 0.8), M(bh)), (0, M(bh))]
     elif shape == "tall": prof = [(0, 0), (M(r * 1.6), 0), (M(r * 1.6), M(1.2)), (M(r), M(1.4)), (M(r), M(bh)), (M(r * 1.2), M(bh + 0.5)), (0, M(bh + 0.3))]
     else: prof = [(0, 0), (M(r), 0), (M(r), M(bh)), (M(r * 1.1), M(bh + 0.4)), (0, M(bh + 0.2))]
-    lathe(f"bottle {i}", prof, GLASS, at=tuple(P(x, h, d)), steps=48)
-    # (its liquid: filled to `full`, inside the glass)
+    # (thin glass, open at its mouth — the cylinder on a solid foot — its
+    # liquid filled to `full` inside it, read at the bottom of its meniscus)
+    _, inside = vessel(f"bottle {i}", prof[:-1], (THIN if shape == "tall" else GLASS), tuple(P(x, h, d)), floor=M(1.6) if shape == "tall" else None, steps=256)
     level = M(bh * full)
-    def radius_at(z):
-        """the glass's inside at height z: its profile, a little within"""
-        for (r0, z0), (r1, z1) in zip(prof[1:], prof[2:]):
-            if z0 <= z <= z1 and z1 > z0: return max(0.0005, r0 + (r1 - r0) * (z - z0) / (z1 - z0) - 0.003)
-        return max(0.0005, prof[1][0] - 0.003)
-    inner = [(0, M(0.3))] + [(radius_at(M(0.3) + (level - M(0.3)) * k / 10), M(0.3) + (level - M(0.3)) * k / 10) for k in range(11)] + [(0, level)]
-    lathe(f"liquid {i}", inner, liquid(f"liquid {i}", rgb, glow=0.35 if i == 3 else 0.0), at=tuple(P(x, h, d)), steps=48)
-    # a fine printed scale up its front
-    for k in range(9):
-        y = h + bh * (0.15 + k * 0.08)
-        rr = r if shape in ("jar", "beaker") else (r if shape == "tall" else r * 0.6)
-        box_cm("graduation", x - (1.2 if k % 2 == 0 else 0.6), x + (1.2 if k % 2 == 0 else 0.6), y, y + 0.12, d - rr - 0.08, d - rr - 0.02, plain("scale print", (0.85, 0.85, 0.82), rough=0.6))
+    fill(f"liquid {i}", inside, level, liquid(f"liquid {i}", rgb, glow=0.0, murk={2: 0.85, 3: 0.6}.get(i, 0.0)), tuple(P(x, h, d)), steps=256)
+    # its fine printed scale up its front, in white enamel
+    z0 = M(bh * 0.08 - sc["zero"] / 10); z1 = z0 + M(sc["h"] / 10)
+    decal(i, x, d, prof, z0, z1, sc["w"] / 10)
     BOTTLE_AT.append((x, d, bh, r))
+    BOTTLE_LIQUID.append((x, d, bh, r, level))
 # the flask on its tripod over the Bunsen burner, at the right end
 fx, fd = b["x1"] - 22, b["d0"] + 46
 for k in range(3):
@@ -289,17 +340,41 @@ for k in range(3):
     rod("tripod leg", P(fx + math.cos(a) * 9, h, fd + math.sin(a) * 9), P(fx + math.cos(a) * 6, h + 20, fd + math.sin(a) * 6), M(0.45), IRON, verts=8)
 bpy.ops.mesh.primitive_torus_add(major_radius=M(6.2), minor_radius=M(0.45), location=tuple(P(fx, h + 20, fd)))
 bpy.context.active_object.data.materials.append(IRON)
-box_cm("gauze", fx - 6.5, fx + 6.5, h + 20.3, h + 20.5, fd - 6.5, fd + 6.5, plain("gauze", (0.2, 0.2, 0.2), rough=0.6, metal=0.6))
-lathe("flask", [(0, 0), (0.05, 0), (0.06, 0.02), (0.062, 0.05), (0.04, 0.085), (0.014, 0.1), (0.013, 0.16), (0.016, 0.165), (0, 0.165)], GLASS, at=tuple(P(fx, h + 20.5, fd)), steps=48)
-lathe("flask liquid", [(0, M(0.3)), (0.047, M(0.5)), (0.055, M(2.0)), (0.05, M(4.5)), (0, M(4.5))], liquid("boiling liquid", (200, 120, 60)), at=tuple(P(fx, h + 20.5, fd)), steps=40)
+box_cm("gauze", fx - 6.5, fx + 6.5, h + 20.3, h + 20.5, fd - 6.5, fd + 6.5, plain("gauze", (0.07, 0.07, 0.07), rough=0.6, metal=0.8))
+cylinder("gauze centre", M(fx), M(fd), M(h + 20.5), M(h + 20.56), M(4.2), plain("ceramic fibre", (0.6, 0.58, 0.53), rough=0.95), verts=32)
+_, inside = vessel("flask", [(0, 0), (0.05, 0), (0.06, 0.02), (0.062, 0.05), (0.04, 0.085), (0.014, 0.1), (0.013, 0.16), (0.016, 0.165)], GLASS, tuple(P(fx, h + 20.5, fd)))
+fill("flask liquid", inside, M(4.5), liquid("boiling liquid", (200, 120, 60)), tuple(P(fx, h + 20.5, fd)), steps=40, meniscus=False)
 lathe("burner", [(0, 0), (0.035, 0), (0.035, 0.01), (0.012, 0.018), (0.008, 0.02), (0.008, 0.12), (0.01, 0.125), (0, 0.125)], BRASS, at=tuple(P(fx, h, fd)), steps=32)
-BURNER = plain("burner flame", (0.2, 0.35, 1.0), emit=(0.25, 0.45, 1.0), strength=18, transmission=0.6)
+lathe("burner collar", [(0.0098, 0.03), (0.011, 0.031), (0.011, 0.046), (0.0098, 0.047)], BRASS, at=tuple(P(fx, h, fd)), steps=32)
+BURNER = plain("burner flame", (0.2, 0.35, 1.0), emit=(0.25, 0.45, 1.0), strength=1.6 if VIEW == "bench" else 18, transmission=0.6)
 lathe("burner flame", [(0.0, 0), (0.006, 0), (0.009, 0.02), (0.006, 0.045), (0.0, 0.06)], BURNER, at=tuple(P(fx, h + 12.5, fd)), steps=20)
 burner_l = lamp("burner", "POINT", tuple(P(fx, h + 15, fd)), energy=float(arg("--burner", "5")), colour=(0.45, 0.6, 1.0), size=0.01)
+burner_l.visible_camera = False; burner_l.visible_transmission = False
 rod("gas hose", P(fx + 1, h + 1, fd), P(b["x1"] - 2, h + 1, fd + 10), M(0.5), plain("rubber", (0.3, 0.08, 0.04), rough=0.6), verts=10)
 # the magnifying glass on its green cloth at the front
-card("green cloth", [P(b["x0"] + 154, h + 0.05, b["d0"] + 6), P(b["x0"] + 186, h + 0.05, b["d0"] + 4), P(b["x0"] + 188, h + 0.05, b["d0"] + 22), P(b["x0"] + 156, h + 0.05, b["d0"] + 24)], CLOTH)
-import_model("magnifying_glass_01", height=M(26), at=tuple(P(b["x0"] + 171, h + 1.3, b["d0"] + 14)), rot=0.4, tilt=(math.pi / 2, 0.0))
+def felt(name, corners_, thick, mat):
+    """a square of felt lying flat, its top at its corners, `thick` (cm) deep,
+    its edges soft"""
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    top = [bm.verts.new(c) for c in corners_]; bot = [bm.verts.new((c[0], c[1], c[2] - M(thick))) for c in corners_]
+    bm.faces.new(top); bm.faces.new(bot[::-1])
+    for k in range(4): bm.faces.new([bot[k], bot[(k + 1) % 4], top[(k + 1) % 4], top[k]])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); o.data.materials.append(mat)
+    bv = o.modifiers.new("soft edges", "BEVEL"); bv.width = M(thick * 0.45); bv.segments = 3
+    return o
+def lay(root, x, d, y):
+    """a model set down: the middle of all of it over (x, d), its underside at y (cm)"""
+    bpy.context.view_layer.update()
+    pts = [o.matrix_world @ Vector(c) for o in root.children_recursive if o.type == "MESH" for c in o.bound_box]
+    lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts))); hi = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    to = P(x, y, d)
+    root.location += Vector((to.x - (lo.x + hi.x) / 2, to.y - (lo.y + hi.y) / 2, to.z - lo.z))
+    bpy.context.view_layer.update()
+    return root
+CLOTH_Y = h + 0.3
+felt("green cloth", [P(b["x0"] + 151, CLOTH_Y, b["d0"] + 6), P(b["x0"] + 190, CLOTH_Y, b["d0"] + 4.5), P(b["x0"] + 191.5, CLOTH_Y, b["d0"] + 25), P(b["x0"] + 152.5, CLOTH_Y, b["d0"] + 26.5)], 0.3, CLOTH)
+lay(import_model("magnifying_glass_01", height=M(26), rot=1.25, tilt=(math.pi / 2, 0.0)), b["x0"] + 171, b["d0"] + 15.5, CLOTH_Y)
 import_model("wooden_stool_01", height=M(66), at=tuple(P(b["x0"] + 70, 0, b["d0"] - 34)), rot=0.4)
 
 # ── light ──────────────────────────────────────────────────────────────────
@@ -334,9 +409,17 @@ NOTEBOOK_BOX = box_of(NOTE_PTS(0) + NOTE_PTS(NOTE["pull"] + 0.5), pad=6)
 LAYOUT.data["extra"]["notebook"] = NOTEBOOK_BOX
 for pane in SASHES: LAYOUT.pane(pane)
 LAYOUT.dust([P(wx0, WIN["top"], D1), P(wx1, WIN["sill"], D1), P(0, 0, 420), P(140, 0, 560)])
-LAYOUT.write()
+if not VIEW: LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
+if VIEW == "phials":
+    import phials_level_passes
+    phials_level_passes.run(globals())
+    raise SystemExit
+if VIEW == "bench":
+    import bench_level_passes
+    bench_level_passes.run(globals())
+    raise SystemExit
 cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "0.15")))
 scene.cycles.volume_bounces = 1
 GLOSSY = ("white tiles", "fireclay", "burner flame", "lamp flame", "liquid 3")

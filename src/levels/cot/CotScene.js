@@ -1,17 +1,15 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { chime, noiseBurst } from "../../shared/paint.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { KEYS, MOBILE, layoutCot, paintCot, releaseCot } from "./art.js";
-import { COT_PHOTOS, cotPhotograph, loadCotPhotography } from "./photography.js";
+import { KEYS, layoutCot, paintCot, releaseCot, loadCotArt } from "./nativeArt.js";
 import { TOYS } from "./puzzle.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level — "HIS COT"  ·  code: TORCH  ·  the boy's cot, in Room VI
 //
-// The photographed cot, his mobile turning over it, his belongings on the
-// sheet — and among them the five that answer a hand, made in three
-// dimensions (stage3d.js, toys3d.js: three.js, loaded with this level only)
-// and set on the photographed mattress in its own perspective and light:
+// An original Blender/Cycles nursery, with fifteen modeled belongings on
+// woven cotton. The five clues and sewn mobile are live three.js meshes,
+// using the render's exact physical camera and native material scans:
 //
 //   a music box, a couple dancing the tango on it      Tango
 //   a little gold Oscar on its base                     Oscar
@@ -57,7 +55,7 @@ export default class CotScene extends BasePuzzleScene {
   constructor() { super({key:"Cot"}); }
   init(data) { this.skipFadeIn=data?.skipFade??true; }
   preload() {
-    loadCotPhotography(this);
+    loadCotArt(this);
     if(!this.cache.audio.exists(MUSIC_BOX.key))this.load.audio(MUSIC_BOX.key,MUSIC_BOX.url);
   }
   create() {
@@ -73,7 +71,7 @@ export default class CotScene extends BasePuzzleScene {
     import("./stage3d.js").then(({CotStage})=>{
       if(!this.sys.isActive())return;
       this._stage=new CotStage(TOYS.map(t=>t.id),{
-        atlas:cotPhotograph(this,COT_PHOTOS.materials),photograph:cotPhotograph(this,COT_PHOTOS.objects),
+        atlas:this.textures.get(KEYS.materials).getSourceImage(),
       });
       this._sceneCleanups.add(()=>{this._stage?.dispose();this._stage=null;});
       this._build(this.cameras.main.width,this.cameras.main.height);
@@ -85,13 +83,12 @@ export default class CotScene extends BasePuzzleScene {
   _build(W,H) {
     const L=this._L=layoutCot(W,H,this), stage=this._stage;
     paintCot(this,L);
-    this.add.image(0,0,KEYS.room).setOrigin(0).setDepth(-10);
     // the five: drawn by the stage in the mattress's own perspective, onto a
     // picture laid over the photograph (under the mobile, the night and the rail)
     stage.fit(W,H,L);
     if(this.textures.exists(STAGE))this.textures.remove(STAGE);
     this._stageTexture=this.textures.addImage(STAGE,stage.canvas);
-    this.add.image(0,0,STAGE).setOrigin(0).setDepth(3);
+    this.add.image(0,0,STAGE).setOrigin(0).setDisplaySize(W,H).setDepth(3);
     this._toys={};
     for(const definition of L.toys) {
       // where it was put down (`home`), and where it is now: a hand can shift
@@ -129,18 +126,6 @@ export default class CotScene extends BasePuzzleScene {
     // the five glint, as the things that answer a hand do everywhere in the
     // house — the rest of his belongings do not (they are in the photograph)
     this._sparkles=Object.values(this._toys).map(t=>attachMovableSparkles(this,t.zone,{padding:3,enabled:()=>!t.dragging}));
-    this._threads=this.add.graphics().setDepth(4.4);
-    this._hoop=this.add.image(L.mobile.x,L.mobile.y,KEYS.hoop).setDepth(4.45)
-      .setDisplaySize(L.mobile.R*2,L.mobile.ry*2);
-    this._felt=MOBILE.map((_,i)=>{
-      const image=this.add.image(0,0,KEYS.mobile(i)).setDepth(4.5);
-      const source=this.textures.get(KEYS.mobile(i)).getSourceImage();
-      const h=L.mobile.size*(MOBILE[i]==="cloud"?.9:1.18);
-      image.setDisplaySize(h*source.width/source.height,h);
-      return {image,sx:image.scaleX,sy:image.scaleY,h};
-    });
-    this.add.image(0,0,KEYS.light).setOrigin(0).setDepth(9);
-    this.add.image(0,0,KEYS.front).setOrigin(0).setDepth(10);
     this._built=true;this._dirty=true;this._pose();
   }
 
@@ -301,6 +286,8 @@ export default class CotScene extends BasePuzzleScene {
     if(!this._built)return;
     const s=this._state,L=this._L,u=L.u,now=this._now,still=this.reducedMotion,stage=this._stage;
     const phase=(event,length)=>event?Math.min(1,(now-event.from)/length):1;
+    const look=this._look??{x:0,y:0};
+    if(stage.poseMobile(s.turn,now,!still&&this.ambientMotion,look))this._dirty=true;
     if(this._dirty) {
       for(const t of Object.values(this._toys)) stage.place(t.id,{a:t.a,b:t.b,lift:Math.max(0,t.lift),tilt:t.tilt});
       const parts=id=>stage.toys[id].parts;
@@ -335,30 +322,6 @@ export default class CotScene extends BasePuzzleScene {
       }
       this._dirty=false;
     }
-    const look=this._look??{x:0,y:0}, mx=m0=>m0-look.x*12*u, my=m0=>m0-look.y*4*u;
-    const m={...L.mobile,x:mx(L.mobile.x),y:my(L.mobile.y)}, th=this._threads.clear();
-    const moving=!still&&this.ambientMotion, bank=moving?Math.sin(now*.48)*.009+look.x*.009:0;
-    const orbit=a=>{
-      const x=Math.sin(a)*m.R, y=Math.cos(a)*m.ry*.78;
-      return {x:m.x+x*Math.cos(bank)-y*Math.sin(bank),y:m.y+x*Math.sin(bank)+y*Math.cos(bank)};
-    };
-    const thread=(x0,y0,x1,y1,alpha=.65)=>{
-      th.lineStyle(Math.max(.9,1.5*u),0x211710,alpha*.6).lineBetween(x0+.5*u,y0,x1+.5*u,y1);
-      th.lineStyle(Math.max(.55,.72*u),0xc7b79d,alpha).lineBetween(x0,y0,x1,y1);
-    };
-    this._hoop.setPosition(m.x,m.y).setRotation(bank);
-    for(const a of [-Math.PI/2,Math.PI/6,Math.PI*5/6]) {
-      const p=orbit(a); thread(L.mobile.x,L.H*.037,p.x,p.y,.7);
-    }
-    MOBILE.forEach((_,i)=>{
-      const a=s.turn+i/MOBILE.length*Math.PI*2,c=Math.cos(a),p=orbit(a),felt=this._felt[i];
-      const sway=moving?Math.sin(now*.9+i*1.4)*2.5*u:0;
-      const x=p.x+sway,y=p.y+m.drop[i]+(moving?Math.sin(now*.8+i)*1.2*u:0);
-      thread(p.x,p.y,x,y-felt.h*.45,.62);
-      const depthScale=1+c*.035;
-      felt.image.setPosition(x,y).setScale(felt.sx*depthScale,felt.sy*depthScale)
-        .setRotation(moving?Math.sin(now*.9+i*1.4)*.045:0).setDepth(4.5+c*.02).setAlpha(.94+.06*c);
-    });
   }
 
   _teardown() {

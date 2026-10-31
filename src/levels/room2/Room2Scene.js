@@ -42,13 +42,13 @@ export default class Room2Scene extends RoomScene {
     const lamp = glow(L.glows.desk, 0.16);
     this.ambientTween({ targets: lamp, alpha: { from: 0.14, to: 0.19 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     // the router: two of its lights flashing, one after the other
-    this._leds = L.leds.map((p) => this.add.image(p.x, p.y, k.glow).setDisplaySize(9 * p.s, 9 * p.s).setTint(0x28ff6c).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-7));
+    this._leds = L.leds.map((p) => this.add.image(p.x, p.y, k.glow).setDisplaySize(3.4 * p.s, 3.4 * p.s).setTint(0x28ff6c).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-7));
     // the clock's colon, going on and off with the seconds
     this._colon = this.add.image(L.colon.x, L.colon.y, k.glow).setDisplaySize(16 * L.colon.s, 22 * L.colon.s).setTint(0xff3018).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5).setDepth(-7);
   }
 
   tick(t) {
-    this._leds.forEach((led, i) => led.setAlpha(Math.floor(t * 2.6 + i * 1.3) % 3 === 0 ? 0.9 : 0.12));
+    this._leds.forEach((led, i) => led.setAlpha(Math.floor(t * 2.6 + i * 1.3) % 3 === 0 ? 0.75 : 0.1));
     this._colon.setAlpha(Math.floor(t) % 2 ? 0.55 : 0.12);
   }
 

@@ -1,0 +1,7 @@
+{
+  "word": "TIME",
+  "clock": { "from": [11, 40], "to": [7, 0] },
+  "calendar": { "from": 24, "to": 18 },
+  "glass": { "from": 0, "to": 14, "minutes": 15 },
+  "candle": { "from": 4, "to": 22, "length": 26, "hours": 24 }
+}

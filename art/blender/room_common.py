@@ -474,3 +474,97 @@ def one_light(lit, out=()):
         for m in light.glows: m.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 0.0
     lit.set(True)
     return sweep(lit, {"lights-1": (lambda: lit.set(True), lambda: lit.set(True))})
+
+# ── glassware and a bench's slate, as the laboratories have them ─────────
+
+def honed_slate(name):
+    """a slab of slate honed flat, as a laboratory bench is topped: dark
+    charcoal-grey, faintly clouded, streaked a little along its grain, its
+    finish dulled unevenly where glass and hands have worn it"""
+    m = bpy.data.materials.new(name); m.use_nodes = True
+    N = m.node_tree.nodes; L_ = m.node_tree.links.new; b_ = N["Principled BSDF"]
+    tc = N.new("ShaderNodeTexCoord")
+    def noise(scale, detail, stretch=(1, 1, 1), rough=0.55):
+        mp = N.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = stretch
+        L_(tc.outputs["Object"], mp.inputs["Vector"])
+        n = N.new("ShaderNodeTexNoise"); n.inputs["Scale"].default_value = scale; n.inputs["Detail"].default_value = detail; n.inputs["Roughness"].default_value = rough
+        L_(mp.outputs["Vector"], n.inputs["Vector"])
+        return n.outputs["Fac"]
+    def blend(a, b2, k):
+        mx = N.new("ShaderNodeMix"); mx.data_type = "FLOAT"; mx.inputs[0].default_value = k
+        L_(a, mx.inputs[2]); L_(b2, mx.inputs[3]); return mx.outputs[0]
+    def band(v, lo, hi, a=0.0, b2=1.0):
+        mr = N.new("ShaderNodeMapRange"); mr.inputs["From Min"].default_value = lo; mr.inputs["From Max"].default_value = hi
+        mr.inputs["To Min"].default_value = a; mr.inputs["To Max"].default_value = b2; L_(v, mr.inputs["Value"]); return mr.outputs["Result"]
+    def math_(op, a, b2):
+        mt = N.new("ShaderNodeMath"); mt.operation = op
+        for k, v in enumerate((a, b2)):
+            if isinstance(v, (int, float)): mt.inputs[k].default_value = v
+            else: L_(v, mt.inputs[k])
+        return mt.outputs[0]
+    stone = blend(blend(noise(1.6, 6), noise(2.5, 8, (0.3, 8.0, 8.0)), 0.35), noise(14.0, 10, rough=0.7), 0.3)
+    # (rings, faint, where bottles have stood wet; scuffs where things were slid)
+    vor = N.new("ShaderNodeTexVoronoi"); vor.inputs["Scale"].default_value = 4.0; L_(tc.outputs["Object"], vor.inputs["Vector"])
+    ring = math_("MULTIPLY", band(math_("ABSOLUTE", math_("SUBTRACT", vor.outputs["Distance"], 0.3), 0), 0.004, 0.016, 1.0, 0.0), band(noise(3.0, 2), 0.5, 0.58))
+    scuff = band(noise(30.0, 6, (0.25, 6.0, 6.0)), 0.62, 0.72)
+    mark = math_("MINIMUM", math_("ADD", math_("MULTIPLY", ring, 0.7), math_("MULTIPLY", scuff, 0.5)), 1.0)
+    ramp = N.new("ShaderNodeValToRGB"); cr = ramp.color_ramp
+    cr.elements[0].position, cr.elements[1].position = 0.32, 0.7
+    cr.elements[0].color = (0.013, 0.0135, 0.014, 1); cr.elements[1].color = (0.05, 0.05, 0.051, 1)
+    L_(stone, ramp.inputs["Fac"])
+    dull = N.new("ShaderNodeMix"); dull.data_type = "RGBA"; dull.blend_type = "SCREEN"; L_(mark, dull.inputs[0])
+    L_(ramp.outputs["Color"], dull.inputs[6]); dull.inputs[7].default_value = (0.07, 0.07, 0.068, 1)
+    L_(dull.outputs[2], b_.inputs["Base Color"])
+    L_(math_("ADD", band(noise(5.0, 4), 0.3, 0.7, 0.45, 0.62), math_("MULTIPLY", mark, 0.2)), b_.inputs["Roughness"])
+    bump = N.new("ShaderNodeBump"); bump.inputs["Strength"].default_value = 0.04; bump.inputs["Distance"].default_value = 0.001
+    L_(noise(90.0, 3), bump.inputs["Height"]); L_(bump.outputs["Normal"], b_.inputs["Normal"])
+    b_.inputs["Specular IOR Level"].default_value = 0.4
+    m["detailed"] = True
+    return m
+GLASS_WALL = 0.0022                               # (a bottle's glass, 2.2 mm)
+def walls(prof, t):
+    """the inside of a vessel turned from its outside `prof` [(r, z)], from its
+    foot on the axis up to its rim: every point moved t in, square to the glass"""
+    def normal(a, b_):
+        dr, dz = b_[0] - a[0], b_[1] - a[1]; n = math.hypot(dr, dz) or 1.0
+        return (-dz / n, dr / n)
+    inner = []
+    for k, p in enumerate(prof):
+        ns = ([normal(prof[k - 1], p)] if k else []) + ([normal(p, prof[k + 1])] if k + 1 < len(prof) else [])
+        nr, nz = sum(n[0] for n in ns), sum(n[1] for n in ns); L = math.hypot(nr, nz) or 1.0
+        nr, nz = nr / L, nz / L
+        cos = max(0.35, nr * ns[0][0] + nz * ns[0][1])
+        inner.append((max(0.0, p[0] + nr * t / cos), p[1] + nz * t / cos))
+    return inner
+def vessel(name, prof, mat, at, floor=None, t=GLASS_WALL, steps=48):
+    """a glass vessel, its walls t thick, open at its mouth: `prof` its outside,
+    from its foot on the axis up to its rim; `floor` (m) where its inside
+    begins, when the glass of its foot is thicker than its walls. Returns the
+    vessel and its inside, from its floor up."""
+    inner = walls(prof, t)
+    if floor is not None:
+        up = [p for p in inner if p[1] > floor + 0.0005]
+        inner = [(0.0, floor), (up[0][0], floor)] + up
+    return lathe(name, prof + inner[::-1], mat, at=at, steps=steps), inner
+def fill(name, inner, level, mat, at, steps=48, meniscus=True):
+    """a vessel's liquid, from its floor up to `level` (m), just into its glass;
+    its surface drawn up a little at the walls, standing at `level` in the
+    middle, where it is read"""
+    def radius(z):
+        for (r0, z0), (r1, z1) in zip(inner, inner[1:]):
+            if z0 <= z <= z1 and z1 > z0: return r0 + (r1 - r0) * (z - z0) / (z1 - z0)
+        return inner[-1][0]
+    floor = inner[0][1]
+    prof = [(0.0, floor - 0.0002)] + [(radius(z) + 0.00015, z) for z in (floor + (level - floor) * k / 14 for k in range(15))]
+    if meniscus: prof = prof[:-1] + [(radius(level + 0.0012) - 0.00006, level + 0.0012), (radius(level) * 0.82, level + 0.0003), (0.0, level)]
+    else: prof.append((0.0, level))
+    o = lathe(name, prof, mat, at=at, steps=steps)
+    # (its surface shaded flat where it lies level, so that what is seen through
+    # it is not broken into facets)
+    bm = bmesh.new(); bm.from_mesh(o.data); rl = radius(level) * (0.82 if meniscus else 1.0) + 1e-6
+    for fc in bm.faces:
+        c = fc.calc_center_median(); fc.smooth = not (fc.normal.z > 0.5 and math.hypot(c.x, c.y) < rl)
+    for e in bm.edges:
+        if len(e.link_faces) == 2 and e.link_faces[0].smooth != e.link_faces[1].smooth: e.smooth = False
+    bm.to_mesh(o.data); bm.free()
+    return o

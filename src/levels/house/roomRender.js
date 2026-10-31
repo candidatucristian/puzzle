@@ -2,22 +2,25 @@ import { makeCanvas } from "../../shared/paint.js";
 import { thingAt } from "./roomKit.js";
 
 // The rooms off the halls, rendered in Blender (art/blender/room_common.py,
-// room_<name>.py, room_publish.mjs): each room by its one light, as the halls
-// are — one plate, `lights-1`, the same whatever has been solved in it — the
+// room_<name>.py, room_publish.mjs): fixed lighting for every room — one
+// plate, `lights-1`, the same whatever has been solved in it — the
 // room's gilt chest, shut and open, and any frames of its own (a drawer
 // sliding out). Each room is seen from where it is
 // best seen; Blender says where everything the scene keeps alive fell in the
 // picture (house/rooms/<Room>.json), and the render is laid over the screen
 // covering it, never stretched.
 const ROOMS = {
-  Study: { folder: "Room1", version: 2 },
+  Study: { folder: "Room1", version: 6 },
   Room2: { folder: "Room2" },
-  Room3: { folder: "Room3" },
-  Room4: { folder: "Room4", extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
+  Room3: { folder: "Room3", version: 2 },
+  Room4: { folder: "Room4", version: 2, extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
   Room5: { folder: "Room5" },
-  Room7: { folder: "Room7", chest: false, extra: Array.from({ length: 6 }, (_, i) => `notebook-${i}`) },
-  Room8: { folder: "Room8", chest: false },
-  ...Object.fromEntries([9, 11, 12, 13].map((n) => [`Room${n}`, { folder: `Room${n}`, chest: false }])),
+  Room7: { folder: "Room7", chest: false, version: 3, extra: Array.from({ length: 6 }, (_, i) => `notebook-${i}`) },
+  Room8: { folder: "Room8", chest: false, version: 2 },
+  ...Object.fromEntries([9, 12, 13].map((n) => [`Room${n}`, { folder: `Room${n}`, chest: false }])),
+  // (rendered again with Orion's counting frame on his bench and his ways of
+  // keeping time on the sill)
+  Room11: { folder: "Room11", chest: false, version: 3 },
 };
 const keyOf = (room, name) => `${room}_render_${name}${ROOMS[room].version ? `_v${ROOMS[room].version}` : ""}`;
 const urlOf = (room, name) => {

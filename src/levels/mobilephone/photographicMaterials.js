@@ -1,10 +1,8 @@
 import { canvasTexture, radial } from "./materials.js";
-import { paintProjectedMaterial } from "../house/drawingRoomMaterials.js";
 
 const HANDSET = "mp_handset_photograph_v1";
 export const DESK_PHOTOGRAPH = "mp_frontal_desk_photograph_v2";
 export const PHONE_CRADLE = "mp_charging_cradle_photograph_v1";
-const DESK_SURFACE = "mp_frontal_desk_with_note_v2";
 const capKey = frame => `mp_photographic_cap_${frame}_v1`;
 
 export function loadPhonePhotography(scene) {
@@ -32,10 +30,13 @@ export function preparePhotographicHandset(scene, art) {
   }
   art.softKeys.x.forEach((x, i) => caps.push({ frame: `soft-${i}`, x, y: art.softKeys.y, w: art.softKeys.width, h: art.softKeys.height }));
   caps.push({ frame: "rocker", x: art.rocker.x, y: art.rocker.y, w: art.rocker.width, h: art.rocker.height });
-  // Each physical rubber key is lifted from its own place in the photograph.
+  // Each physical rubber key is lifted from its own rounded-pill recess in the 3D render.
   // The exact live labels and hit areas stay attached to the moving cap.
   for (const cap of caps) {
     canvasTexture(scene, capKey(cap.frame), cap.w, cap.h, ctx => {
+      ctx.beginPath();
+      ctx.roundRect(2, 2, cap.w - 4, cap.h - 4, cap.h * (cap.frame === "rocker" ? 0.46 : 0.3));
+      ctx.clip();
       ctx.drawImage(photograph, cap.x - cap.w / 2, cap.y - cap.h / 2, cap.w, cap.h, 0, 0, cap.w, cap.h);
     });
   }
@@ -68,26 +69,10 @@ export function preparePhotographicHandset(scene, art) {
 
 export function addPhotographicDesk(scene, W, H, add) {
   const image = scene.textures.get(DESK_PHOTOGRAPH).getSourceImage();
-  canvasTexture(scene, DESK_SURFACE, image.width, image.height, ctx => {
-    ctx.drawImage(image, 0, 0);
-    // Print the original message onto the actual foreshortened paper surface.
-    const note = document.createElement("canvas");
-    note.width = 600; note.height = 210;
-    const text = note.getContext("2d");
-    text.fillStyle = "#493425"; text.textAlign = "center"; text.textBaseline = "middle";
-    text.font = '42px "Special Elite", "Courier New", monospace';
-    ["don't answer if", "you don't know", "who's calling."].forEach((line, i) => text.fillText(line, 300, 41 + i * 62));
-    const corners = [{ x: 1188, y: 611 }, { x: 1435, y: 624 }, { x: 1440, y: 688 }, { x: 1167, y: 674 }];
-    const [a, b, c, d] = corners;
-    paintProjectedMaterial(ctx, note, (u, v) => ({
-      x: a.x * (1 - u) * (1 - v) + b.x * u * (1 - v) + c.x * u * v + d.x * (1 - u) * v,
-      y: a.y * (1 - u) * (1 - v) + b.y * u * (1 - v) + c.y * u * v + d.y * (1 - u) * v,
-    }), 0.92, 8, 4);
-  });
   const scale = Math.max(W / image.width, H / image.height);
   const left = (W - image.width * scale) / 2, top = (H - image.height * scale) / 2;
-  add(scene.add.image(W / 2, H / 2, DESK_SURFACE).setScale(scale).setDepth(-10));
-  return { cx: left + 173 * scale, cy: top + 551 * scale, rx: 70 * scale, ry: 10 * scale };
+  add(scene.add.image(W / 2, H / 2, DESK_PHOTOGRAPH).setScale(scale).setDepth(-10));
+  return { cx: left + 342.9 * scale, cy: top + 655.1 * scale, rx: 49.4 * scale, ry: 18.0 * scale };
 }
 
 export function addPhotographicCradle(scene, layout, add) {

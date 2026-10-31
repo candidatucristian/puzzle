@@ -1,0 +1,2 @@
+export const CRYPTEX_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+export const CRYPTEX_CIPHER = Object.freeze(["WKH DQVZHU", "LV URWRU"]);

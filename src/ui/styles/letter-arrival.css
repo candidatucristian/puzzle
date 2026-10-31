@@ -1,76 +1,35 @@
-/* A letter found, opened on the desk (ui/letterArrival.js): a film laid over
-   the screen at its full height (art/blender/letter_film.py), the letter's
-   words on its paper, and the way to file it under that. Only pictures move,
-   by opacity and transform; nothing is blurred or shadowed live. */
-
-/* the envelope waiting in the side panel: the film's own envelope, with room
-   round it for its shadow — wider, to stay as large, its mark on its corner */
+/* Native Blender meshes and hinge animation over the page, with accessible
+   live words on the actual 3D paper. There are no video layers. */
 .waiting-letter img.wl-envelope { width: 128px; height: auto; aspect-ratio: auto; object-fit: contain; }
 .waiting-letter:has(img.wl-envelope) .wl-alert { right: 8px; top: 8px; }
 .waiting-letter.is-in-flight { visibility: hidden; }
-
 .arrival { isolation: isolate; overflow: hidden; outline: none; }
 .arrival[data-state="preparing"] > * { opacity: 0; }
 .arrival .arrival-veil { backdrop-filter: none; -webkit-backdrop-filter: none; transition: none; background: #050403; }
-
-/* the film: its frames one over another, the playing one shown */
-.arrival-stage {
-  position: absolute; left: 0; top: 0; transform-origin: 0 0; z-index: 1;
-  translate: none; perspective: none; display: block; gap: 0;
-  will-change: opacity;
-  /* (its sides fade into the dark, where the screen is wider than it) */
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
-}
+.arrival .arrival-stage { position: absolute; inset: 0; width: 100%; height: 100%; left: 0; top: 0;
+  transform: none; translate: none; perspective: none; display: block; opacity: 0; z-index: 1; pointer-events: none; }
 .arrival-stage[hidden] { display: none; }
-.arrival .film-frame { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: fill; pointer-events: none; user-select: none; }
-.arrival .film-open, .arrival .film-last, .arrival .film-fold { opacity: 0; }
-
-/* the envelope in the film, to be clicked while it waits */
-.arrival .env {
-  position: absolute; z-index: 2; padding: 0; border: 0; background: none; outline: none;
-  cursor: var(--cursor-hand, pointer); filter: none; animation: none; border-radius: 6px;
-}
-.arrival .env:disabled { cursor: default; }
+.arrival-model { display: block; width: 100%; height: 100%; pointer-events: none; }
+.arrival .env { position: absolute; z-index: 2; border: 0; padding: 0; background: none; outline: none;
+  cursor: var(--cursor-hand,pointer); filter: none; animation: none; border-radius: 6px; }
+.arrival .env:disabled { cursor: default; pointer-events: none; }
 .arrival .env[hidden] { display: none; }
-.arrival .env:focus-visible { box-shadow: 0 0 0 2px #e8c98a55, 0 0 40px #e8c98a40; }
-
-.arrival .arrival-caption { top: clamp(22px, 6vh, 64px); z-index: 3; transition: none; }
-.arrival .arrival-eyebrow { color: #d9c9a6; font: 400 11px 'Special Elite', monospace; letter-spacing: .34em; text-shadow: 0 1px 6px #000; }
-.arrival .arrival-hint {
-  position: absolute; left: 0; right: 0; bottom: clamp(26px, 7vh, 80px); z-index: 3; margin: 0;
-  text-align: center; opacity: 0; pointer-events: none; text-shadow: 0 1px 6px #000;
-  color: #e3d4b2; font: 400 12px 'Special Elite', monospace; letter-spacing: .3em; text-transform: uppercase;
-}
-.arrival .arrival-flier { position: absolute; z-index: 4; pointer-events: none; user-select: none; will-change: transform, opacity; }
-
-/* the words, on the paper in the film: printed there (multiplied into it),
-   scrolling within it if the letter is long */
-.arrival .letter-sheet {
-  position: absolute; z-index: 2; box-sizing: border-box; padding: 9% 10% 7%;
-  opacity: 0; mix-blend-mode: multiply; transform-origin: 50% 50%;
-  /* (not in the way of the envelope under it until there are words to scroll) */
-  pointer-events: none;
-}
+.arrival .env:focus-visible { box-shadow: 0 0 0 2px #e8c98a55, 0 0 32px #e8c98a35; }
+.arrival .arrival-caption { top: clamp(22px,6vh,64px); z-index: 3; transition: none; }
+.arrival .arrival-eyebrow { color: #d9c9a6; font-size: 11px; letter-spacing: .34em; text-shadow: 0 1px 6px #000; }
+.arrival .arrival-hint { position: absolute; left: 0; right: 0; bottom: clamp(26px,7vh,80px); z-index: 3;
+  margin: 0; text-align: center; opacity: 0; pointer-events: none; color: #e3d4b2; font-size: 12px;
+  letter-spacing: .3em; text-transform: uppercase; text-shadow: 0 1px 6px #000; }
+.arrival .letter-sheet { position: absolute; z-index: 2; box-sizing: border-box; opacity: 0; mix-blend-mode: multiply;
+  transform-origin: 50% 50%; pointer-events: none; }
 .arrival[data-state="reading"] .letter-sheet { pointer-events: auto; }
-.arrival .letter-sheet .arrival-page {
-  width: 100%; height: 100%; max-height: none; padding: 0; overflow-x: hidden; overflow-y: auto;
-  scrollbar-width: none; overscroll-behavior: contain; outline: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
-}
-.arrival .letter-sheet .arrival-page::-webkit-scrollbar { display: none; }
-.arrival .letter-sheet .letter-page {
-  width: 100%; padding: 0 0 18px; background: none; box-shadow: none;
-  font-size: inherit; line-height: 1.7; color: #2a1d12;
-}
+.arrival .letter-sheet .arrival-page { width: 100%; height: 100%; max-height: none; padding: 0; overflow-x: hidden;
+  overflow-y: auto; scrollbar-width: thin; scrollbar-color: #6b594733 transparent; overscroll-behavior: contain; outline: none; }
+.arrival .letter-sheet .letter-page { width: 100%; padding: 0 0 18px; background: none; box-shadow: none;
+  font-size: inherit; line-height: 1.7; color: #2a1d12; }
 .arrival .letter-sheet .letter-words p { margin-bottom: .95em; }
-
-/* without its desk: the letter on its own paper, on the dark */
 .arrival.is-plain .letter-sheet { mix-blend-mode: normal; padding: 0; }
-.arrival.is-plain .letter-sheet .letter-page { padding: 7% 9% 6%; }
-
-.arrival .arrival-file {
-  position: absolute; left: 50%; bottom: clamp(12px, 2.4vh, 26px); translate: -50% 0; z-index: 3; opacity: 0;
-}
+.arrival.is-plain .letter-sheet .letter-page { padding: 7% 9% 6%; min-height: 100%; background: #d9caab; }
+.arrival .arrival-file { position: absolute; left: 50%; bottom: clamp(12px,2.4vh,26px); translate: -50% 0;
+  z-index: 3; opacity: 0; }
 .arrival .arrival-file:focus-visible { outline: 1px solid #d8bd8e; outline-offset: 5px; }

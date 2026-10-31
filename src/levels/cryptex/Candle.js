@@ -28,10 +28,11 @@ const TEX_W = 34; // the flame's width, in a frame, at rest
 const TEX_H = 124; // ...and its height
 
 export default class Candles {
-  constructor(scene, { isBlocked, onExtinguished }) {
+  constructor(scene, { isBlocked, onExtinguished, flameTexture = FLAME }) {
     this.scene = scene;
     this.isBlocked = isBlocked;
     this.onExtinguished = onExtinguished;
+    this.flameTexture = flameTexture;
     this.out = [false, false, false];
     // the room's light: the flames' together, 1 with all three burning
     this.lightState = { level: 1 };
@@ -56,7 +57,7 @@ export default class Candles {
   build(arts) {
     this.removeDom();
     this.reducedMotion = !this.scene.ambientMotion;
-    makeTextures(this.scene.textures);
+    makeTextures(this.scene.textures, this.flameTexture);
     arts.forEach((art, i) => this.flames[i].build(art, this.out[i]));
     this.lightState.level = this._level(0);
     this.update(this.scene.time.now);
@@ -134,7 +135,7 @@ class Flame {
       : null;
     this.halo = add.image(wick.x, wick.y, HALO).setBlendMode(ADD).setDepth(7.9);
     this.flame = add
-      .image(wick.x, wick.y, FLAME, 0)
+      .image(wick.x, wick.y, this.candles.flameTexture, 0)
       .setOrigin(0.5, BASE / FH)
       .setDepth(8);
     this.core = add.image(wick.x, wick.y, CORE).setBlendMode(ADD).setDepth(8.05);
@@ -298,9 +299,9 @@ class Flame {
 
 // ── the painted flame ───────────────────────────────────────────────────────
 
-function makeTextures(textures) {
-  if (!textures.exists(FLAME)) {
-    const t = textures.addCanvas(FLAME, paintFlames());
+function makeTextures(textures, flameKey = FLAME) {
+  if (!textures.exists(flameKey)) {
+    const t = textures.addCanvas(flameKey, paintFlames());
     for (let f = 0; f < FRAMES; f++)
       t.add(f, 0, (f % COLS) * FW, Math.floor(f / COLS) * FH, FW, FH);
   }

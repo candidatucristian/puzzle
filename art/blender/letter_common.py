@@ -1,4 +1,4 @@
-# What a found letter is made of (letter_film.py): old cream laid paper,
+# What a found letter is made of (letter_animation.py): old cream laid paper,
 # mottled, its edges darker where it was held, with the folds it was sent in;
 # flat pieces of it cut to shape; and the red wax on the flap, pressed with the
 # house's key (shared/keyArt.js: a trefoil bow, a shank, a bit).

@@ -31,6 +31,8 @@ Sources: [Poly Haven textures](https://polyhaven.com/textures),
 [CC0 licence](https://polyhaven.com/license).
 Only the leaf blades are taken from the botanical scan. The new shoot,
 petioles, exact clue roots and complete display case are authored geometry.
+`specimen_book.py` supplies the same closed green book to this close-up and
+`room_study.py`, retaining its relative position beside the room-view case.
 Georgia Italic and Courier New Bold use the installed Windows typefaces.
 
 ## Rebuild

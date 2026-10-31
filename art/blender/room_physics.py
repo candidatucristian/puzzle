@@ -5,9 +5,14 @@
 # middle of the room, standing free and turned to the window, his long
 # workbench: an induction coil on its mahogany base, a galvanometer, two
 # lenses on their stands, a row of Leyden jars, a pendulum on its brass frame,
-# copper wire run between them, a green-shaded lamp at its end. On the slate
+# copper wire run between them, a green-shaded lamp at its end, and lying at
+# its near corner his counting frame, grey with dust (counting_frame_model.py;
+# the level's own close-up is counting_frame.py). On the slate
 # on the left-hand wall a wave drawn twice and a pendulum swung out, in chalk;
-# books down the right; at the far end the tall sash window, the rain on it.
+# books down the right; at the far end the tall sash window, the rain on it,
+# and on its sill his four ways of keeping time — a brass clock, a tear-off
+# calendar, a sand-glass, a candle-clock alight (rewind_model.py; the level's
+# own close-up is rewind_sill.py).
 #
 # One plate (lights-1: the lamp lit) and where it all fell in the picture
 # (src/levels/house/rooms/Room11.json).
@@ -20,6 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 from room_common import *
 from room_furnish import *
+from counting_frame_model import Frame, BOARD, RIM, BASE, D
+from rewind_model import Sill, SILL_AT, SPOTS, REWIND, turns_toward
 
 OUT = os.path.join(ROOT, ".artifacts/room-physics")
 os.makedirs(OUT, exist_ok=True)
@@ -95,25 +102,30 @@ for (x0, x1) in ((X0 - 25, X0), (X1, X1 + 25)):
 box_cm("door wall", X0 - 25, X1 + 25, 0, TOP, -65, -40, PLASTER)
 back = box_cm("back wall", X0 - 25, X1 + 25, 0, TOP, D1, D1 + 30, PLASTER)
 DADO = 96
-def dado(along_x, at, facing, a, b):
+def dado(along_x, at, facing, a, b, top=DADO, cornice=True):
     def piece(p0, p1, y0, y1, proud, mat, r=0.0):
         q0, q1 = sorted((at, at + facing * proud))
         if along_x: box_cm("dado", p0, p1, y0, y1, q0, q1, mat, r)
         else: box_cm("dado", q0, q1, y0, y1, p0, p1, mat, r)
-    piece(a, b, 0, DADO, 2.0, WALNUT)
+    piece(a, b, 0, top, 2.0, WALNUT)
     n = max(1, round((b - a) / 54))
     for k in range(n):
         p0 = a + k * (b - a) / n + 6; p1 = a + (k + 1) * (b - a) / n - 6
-        piece(p0, p1, 18, DADO - 14, 3.2, WALNUT, 1.2)
-    piece(a, b, DADO - 3, DADO + 4, 4.5, WALNUT_X, 1.0)
+        piece(p0, p1, 18, top - 14, 3.2, WALNUT, 1.2)
+    piece(a, b, top - 3, top + 4, 4.5, WALNUT_X, 1.0)
     piece(a, b, 0, 16, 3.5, WALNUT_X, 0.6)
-    piece(a, b, TOP - 16, TOP, 9, CEILING, 2.0)
+    if cornice: piece(a, b, TOP - 16, TOP, 9, CEILING, 2.0)
 dado(False, X0, 1, -40, D1)
 dado(False, X1, -1, -40, D1)
-dado(True, D1, -1, X0, X1)
+# (on the back wall the panelling stops at the window, and runs on lower under its sill)
+WX0, WX1 = WIN["x"] - WIN["hw"] - 3, WIN["x"] + WIN["hw"] + 3
+dado(True, D1, -1, X0, WX0)
+dado(True, D1, -1, WX1, X1)
+dado(True, D1, -1, WX0, WX1, top=WIN["sill"] - 8)
 SASHES = sash_window_back(back, WIN["x"], WIN["hw"], WIN["sill"], WIN["top"], D1, 26, FRAME, GLASS, PLASTER, WALNUT_X, bars=(1 / 3, 2 / 3))
 curtain(RNG, WIN["x"] - WIN["hw"] - 60, WIN["x"] - WIN["hw"] - 2, D1 - 8, 300, scan("curtain", "velour_velvet", size=0.5, tint=(0.2, 0.32, 0.4), bright=0.32, sat=0.9, rough=(0.75, 0.92), bump=0.2), folds=4, deep=8)
 curtain(RNG, WIN["x"] + WIN["hw"] + 2, WIN["x"] + WIN["hw"] + 60, D1 - 8, 300, bpy.data.materials["curtain"], folds=4, deep=8)
+SILL = Sill(SILL_AT, turns_toward())               # (as the close-up has them, turned toward where it looks from)
 garden(P(-700, 800, 3600), [("island_tree_01", -900, 1900, 11.0, 0.3), ("island_tree_02", 900, 2600, 12.0, 1.4), ("tree_small_02", 300, 1300, 5.0, 2.2)],
        (-2500, 2500, D1 + 40, 3300, -40), P(-200, 800, 4200), sky_size=45)
 
@@ -190,10 +202,12 @@ def workbench():
     sphere("pendulum bob", tuple(bob), M(2.4), BRASS)
     # copper wire run from the coil to the galvanometer, and on to the jars
     for (pts) in (((cx + 19, h + 4, cd + 6), (cx + 30, h + 0.6, cd + 14), (gx - 6, h + 0.6, gd + 6), (gx - 6, h + 3.5, gd - 5)),
-                  ((gx + 6, h + 3.5, gd - 5), (gx + 20, h + 0.6, gd - 14), (74, h + 0.6, -24), (74, h + 25, -18))):
+                  ((gx + 6, h + 3.5, gd - 5), (gx + 16, h + 0.6, gd + 2), (70, h + 0.6, -4), (74, h + 25, -18))):
         cu = bpy.data.curves.new("wire", "CURVE"); cu.dimensions = "3D"; cu.bevel_depth = M(0.22); spl = cu.splines.new("BEZIER"); spl.bezier_points.add(len(pts) - 1)
         for bp_, v in zip(spl.bezier_points, pts): bp_.co = P(*v); bp_.handle_left_type = bp_.handle_right_type = "AUTO"
         link(bpy.data.objects.new("wire", cu)).data.materials.append(COPPER)
+    # his counting frame, lying at the bench's near corner as he left it
+    assembled("counting frame", Frame, at=(45, h, -25.8))
     # his notebook open, a pencil
     page = paper("his notes", (0.66, 0.6, 0.48), 0.3)
     card("notes", [P(-90, h + 0.4, 6), P(-58, h + 0.4, 2), P(-56, h + 0.4, 24), P(-88, h + 0.4, 28)], page)
@@ -229,12 +243,17 @@ eye_fill(float(arg("--eyefill", "19")))                # (the halls' fill: nothi
 for (at_, aim) in ((P(-120, 220, 360), P(X0, 150, 360)), (P(0, 220, 480), P(0, 140, D1)), (P(120, 220, 360), P(X1, 140, 380))):
     wash = lamp("on the walls", "AREA", tuple(at_), aim=tuple(aim), energy=float(arg("--wash", "12")), colour=(0.82, 0.86, 1.0), size=1.0)
     wash.visible_camera = False; wash.visible_glossy = False
+candle_l = lamp("candle flame", "POINT", tuple(SILL.wick_tip(REWIND["candle"]["from"]) + Vector((0, 0, M(1.4)))), energy=float(arg("--candle", "0.4")), colour=(1.0, 0.68, 0.34), size=0.006)
 LIGHTS = [Light("lamp", [lamp_l], [GREEN_GLASS])]
 clear_glass()
 air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0")))
 
 # ── what the game is told ──────────────────────────────────────────────────
 for pane in SASHES: LAYOUT.pane(pane)
+frame_ = bpy.data.objects["counting frame"]; bpy.context.view_layer.update()
+LAYOUT.thing("abacus", "Look at the counting frame", [frame_.matrix_world @ P(x, y, D(v)) for x in (BOARD["x0"] - RIM, BOARD["x1"] + RIM) for v in (BOARD["v0"] - RIM, BOARD["v1"] + RIM) for y in (0, BASE + 2.2)])
+LAYOUT.thing("rewind", "Look at the windowsill", [c for k in SPOTS for o in SILL.objects(k) for c in object_corners(o)])
+LAYOUT.flame("candle", SILL.wick_tip(REWIND["candle"]["from"]))
 LAYOUT.glow("lamp", WF(-84 + 5, B["h"] + 22, -22 + 2), 90)
 LAYOUT.dust([P(WIN["x"] - WIN["hw"], WIN["top"], D1), P(WIN["x"] + WIN["hw"], WIN["sill"], D1), P(-40, 0, 300), P(120, 0, 520)])
 LAYOUT.write()

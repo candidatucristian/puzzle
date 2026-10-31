@@ -4,21 +4,23 @@ import { paintCandleFlame, releaseCandleFlame } from "../../shared/candleFlame.j
 import { renderedLayout, paintRoomRender, roomRenderChest, hasRoomRender } from "../house/roomRender.js";
 import STUDY from "../house/rooms/Study.json";
 
-/** The study, the first room off the hall, at night, seen from the corner by
- *  its door, by the light of one candle burning on the writing desk and the
- *  moon. Close at hand a clear specimen table carries a glass case of earth
- *  with something growing in it. Further in, standing
- *  free in the floor, the writing desk with its candle and a small gilt
- *  chest; a green armchair pushed back toward the hearth, its fire dead. Over
- *  the mantel a brass cipher wheel on its walnut plaque. In the back wall a
- *  tall window, one leaf swung open on the garden and the moon, a terracotta
- *  pot on its oak sill with something just come up in it. A lower herbarium
- *  cabinet holds orderly reference books along the rest of that wall.
+/** The study, the first room off the hall, at night, seen from low by its
+ *  door straight across to the back wall: sage walls over dark oak, the
+ *  white stone fireplace on the left, its fire laid and cold, two candles on
+ *  the mantel and the brass cipher wheel on its walnut plaque over it; the
+ *  tall round-headed window in the middle, rain on the garden beyond, a
+ *  terracotta pot on its sill with something just come up in it; books from
+ *  floor to cornice on the right and along the right-hand wall, a ladder.
+ *  In the middle of the room the writing desk, facing us, its brass lamp
+ *  unlit, two lit candles, letters, and the small gilt chest. Close at hand,
+ *  left, the old leather armchair before the hearth; right, on a round
+ *  table, the glass case of earth, roots against its glass, the green
+ *  specimen book of The Old Tree close-up beside it.
  *
  *  The case, the window and the wheel open puzzles; the chest is shut until
  *  all three are solved, then opens of itself and gives up a key.
  *
- *  The room is a Blender render (art/blender/room_study.py), the chest apart.
+ *  The room is a Blender render (art/blender/room_study_v4.py), the chest apart.
  *  Blender wrote down where everything fell in the picture
  *  (house/rooms/Study.json). */
 

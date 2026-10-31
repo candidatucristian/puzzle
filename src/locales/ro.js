@@ -279,7 +279,7 @@ export const ro = {
       },
       {
         title: "Ce sclipește",
-        caption: "sclipește: folosește-l · rezolvat, se stinge",
+        caption: "sclipește: folosește-l · rezolvat, nu mai sclipește",
         text: [
           "Ce sclipește se poate folosi: dă click pe el sau ține apăsat ca să-l ridici, să-l duci și să-i dai drumul unde îi e locul.",
           "Când puzzle-ul lui e rezolvat, nu mai sclipește.",
@@ -424,7 +424,7 @@ export const ro = {
         'Ceilalți au renunțat într-un an. Dumneavoastră nu ați renunțat niciodată. V-ați întors la poarta noastră pe ploaie mai des decât ați recunoaște vreodată, iar o dată ați stat la fereastra sufrageriei aproape o oră. Așadar, dumneavoastră sunteți cel pe care l-am ales.',
         'Nu am plecat pentru că ne era frică. Am plecat pentru a ne ține o promisiune, iar conacul a păstrat-o pentru noi de atunci. Fiecare cameră ascunde ceva ce nu puteam rosti cu voce tare. Fiecare ușă se deschide cu o cheie din camera de dinainte. Nimic de acolo nu se va explica de la sine: a fost construit pentru cineva răbdător.',
         'Lămpile sunt încă la locurile lor, ceasurile s-au oprit acolo unde le-am lăsat, iar praful s-a așternut în voie. Iertați frigul.',
-        'Scoateți-vă dosarul încă o dată înainte de a veni și priviți ce au scris agenții despre masa noastră. Apoi veniți. Poarta este descuiată. Începeți din hol și stingeți luminile, una câte una.',
+        'Scoateți-vă dosarul încă o dată înainte de a veni și priviți ce au scris agenții despre masa noastră. Apoi veniți. Poarta este descuiată. Începeți din hol și urmați ce am lăsat pentru dumneavoastră, cameră cu cameră.',
         'Ne-a părut rău să aflăm despre tatăl dumneavoastră. A fost un om mai bun decât a știut oricine.',
         'Veniți singur și veniți curând. Unii dintre noi suntem mai bătrâni decât conacul acum.',
       ],
@@ -470,14 +470,14 @@ export const ro = {
       body: [
         'Noaptea în care am plecat a fost senină, iar de aici de sus am putut vedea fiecare stea pe care am numit-o vreodată.',
         'Am mai numit una, pentru el. Nu este în niciun catalog; nu am spus niciodată Societății. Este doar în această cameră, și doar pentru cineva care privește destul de mult.',
-        'Dacă citești asta sub cupola mea, ai urcat mult și ai stins foarte multe lumini. Nu te opri acum. Ultimul lucru pe care l-am păstrat este cel mai simplu dintre toate.',
+        'Dacă citești asta sub cupola mea, ai urcat mult și ai descoperit foarte multe secrete. Nu te opri acum. Ultimul lucru pe care l-am păstrat este cel mai simplu dintre toate.',
       ],
       signature: '— O. A.',
       margin: 'O stea numită după un băiat. Cine era el pentru ei?',
     },
     last: {
       id: 'last',
-      found: 'când s-a stins ultima lumină din conac',
+      found: 'când a fost rezolvat ultimul puzzle din conac',
       title: 'Ultima scrisoare',
       dateline: 'Conacul Ashcombe',
       salutation: 'Arthur,',
@@ -488,7 +488,7 @@ export const ro = {
         'În dimineața următoare a fost primul polițist la ușa noastră. A scris el însuși raportul și ne-a păstrat secretul pentru tot restul vieții. Al patrulea loc la masă era al tău.',
         'Te-am privit crescând de la o oarecare distanță. Silas a venit la fiecare festivitate școlară a ta și a stat în spate. Orion ți-a trimis telescopul primit la aniversarea de zece ani și nu a semnat niciodată felicitarea.',
         'Cuvintele pe care le-ai adunat nu au fost niciodată răspunsul. Ele au fost povestea. Răspunsul este acesta: conacul este al tău. A fost întotdeauna.',
-        'Aprinde-l din nou.',
+        'Vino acasă.',
       ],
       signature: '— Ivy, Silas și Orion Ashcombe',
       postscript: 'P.S. Sunt la poartă, Arthur. Am așteptat patruzeci de ani; pot aștepta până îți termini ceaiul. — Ivy',
@@ -712,6 +712,14 @@ export const ro = {
     measures: [
       'ENIGMA MĂSURĂRII APEI.\nFolosește cele două vase pentru a măsura exact 400 ml.',
       'Nu ai un recipient gradat la 400 ml, dar știi capacitățile exacte ale celor două sticle. Ce rămâne în vasul mare după ce îl umpli pe cel mic?',
+    ],
+    abacus: [
+      'UNDE AU STAT.\nPraful își amintește cum a fost lăsată rama.',
+      'Fiecare bloc a lăsat un loc curat acolo unde a stat ani de zile. Pune-le la loc — apoi privește ce lasă negrul alb între tije.',
+    ],
+    rewind: [
+      'ÎMPOTRIVA CEASULUI.\nTot ce e pe pervaz merge pe dos.',
+      'Patru obiecte, patru numere, patru litere. Dar în camera asta nimic nu merge de la început spre sfârșit — nici măcar alfabetul.',
     ],
     phials: [
       'AMESTEC DE CULORI PRIMARE.\nGalbenul și albastrul formează împreună verdele.',

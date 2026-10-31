@@ -279,7 +279,7 @@ export const en = {
       },
       {
         title: "What glints",
-        caption: "it glints: use it · solved, it stops",
+        caption: "it glints: use it · solved, it stops glinting",
         text: [
           "Whatever glints can be used: click it, or press and hold to take it up, carry it, and let it go where it belongs.",
           "When its puzzle is solved, it stops glinting.",
@@ -424,7 +424,7 @@ export const en = {
         'The others gave up within the year. You never did. You came back to our gate in the rain more often than you would ever admit, and once you stood at the dining-room window for the best part of an hour. So you are the one we chose.',
         'We did not leave because we were afraid. We left to keep a promise, and the house has kept it for us ever since. Every room holds something we could not say out loud. Every door opens with a key from the room before it. Nothing in there will explain itself: it was built for someone patient.',
         'The lamps are still in their places, the clocks have stopped where we left them, and the dust has been allowed to settle as it pleased. Forgive the cold.',
-        'Take your file out once more before you come, and look at what the constables wrote about our table. Then come. The gate is unlocked. Start in the hall, and put the lights out, one by one.',
+        'Take your file out once more before you come, and look at what the constables wrote about our table. Then come. The gate is unlocked. Start in the hall, and follow what we left for you, room by room.',
         'We were sorry to hear about your father. He was a better man than anybody knew.',
         'Come alone, and come soon. Some of us are older than the house now.',
       ],
@@ -470,14 +470,14 @@ export const en = {
       body: [
         'The night we left was clear, and from up here I could see every star I have ever named.',
         'I named one more, for him. It is in no catalogue; I never told the Society. It is only in this room, and only for someone who looks long enough.',
-        'If you are reading this under my dome, you have come a long way up, and you have put out a great many lights. Do not stop now. The last thing we kept is the simplest of all.',
+        'If you are reading this under my dome, you have come a long way up, and you have uncovered a great many secrets. Do not stop now. The last thing we kept is the simplest of all.',
       ],
       signature: '— O. A.',
       margin: 'A star named for a boy. Who was he to them?',
     },
     last: {
       id: 'last',
-      found: 'when the last light in the house went out',
+      found: 'when the last puzzle in the house was solved',
       title: 'The last letter',
       dateline: 'Ashcombe House',
       salutation: 'Arthur,',
@@ -488,7 +488,7 @@ export const en = {
         'The next morning he was the first constable at our door. He wrote the report himself, and he kept our secret for the rest of his life. The fourth place at the table was yours.',
         'We watched you grow up from a little way off. Silas came to every one of your school prize-givings and sat at the back. Orion sent the telescope you had for your tenth birthday, and never signed the card.',
         'The words you gathered were never the answer. They were the story. The answer is this: the house is yours. It always was.',
-        'Light it again.',
+        'Come home.',
       ],
       signature: '— Ivy, Silas and Orion Ashcombe',
       postscript: 'P.S. I am at the gate, Arthur. I have waited forty years; I can wait while you finish your tea. — Ivy',
@@ -712,6 +712,14 @@ export const en = {
     measures: [
       'WATER POURING PUZZLE.\nUse the brim capacities to measure 400 ml.',
       'Nothing measures 400 ml for you: only the brims of the two bottles are sure. What is left in the larger after it fills the smaller?',
+    ],
+    abacus: [
+      'WHERE THEY STOOD.\nThe dust remembers how the frame was left.',
+      'Every block left a clean place where it lay for years. Put them back — then look at what the black leaves white between the rods.',
+    ],
+    rewind: [
+      'AGAINST THE CLOCK.\nEverything on the sill runs the wrong way.',
+      'Four things, four numbers, four letters. But in this room nothing runs from the beginning to the end — not even the alphabet.',
     ],
     phials: [
       'MIXING PRIMARY COLOURS.\nYellow and blue unite into green.',

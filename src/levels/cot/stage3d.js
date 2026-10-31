@@ -2,63 +2,62 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { buildToy } from "./toys3d.js";
 import { toyMaterials } from "./materials3d.js";
+import { buildMobile } from "./mobile3d.js";
+import native from "./nativeCot.json";
 
-/** The five, in three dimensions, set on the photographed mattress. A
- *  camera is found that sees the mattress as the photograph does — its back
- *  and front edges where the photograph has them, as wide — so that a thing
- *  set at (a, b) on it (a across, b from the back rail to the front) stands
- *  on the sheet in the picture. Lit as the picture is: the night-light warm
- *  from beyond the cot on the right, casting their shadows onto the sheet;
- *  the moon cool from the window on the left; the room's dark round them.
- *  Drawn onto its own canvas, which the scene shows as a picture among its
- *  own (CotScene.js). */
+/** Five live clues and the sewn mobile share the original Cycles plate's
+ * physical camera. Warm bedside light and cool window light cast shadows
+ * onto the sheet; world coordinates preserve perspective during dragging. */
 
 const WIDTH = 1.2; // the mattress, across, in metres
 const FOV = 38; // the camera's height of view, in degrees
 
 export class CotStage {
-  constructor(ids, { atlas, photograph }) {
+  constructor(ids, { atlas, photograph = null }) {
     this.canvas = document.createElement("canvas");
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, premultipliedAlpha: true }));
-    r.setPixelRatio(1);
+    r.setPixelRatio(Math.min(2,Math.max(1.25,window.devicePixelRatio||1)));
     r.setClearColor(0x000000, 0);
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.toneMapping = THREE.ACESFilmicToneMapping;
-    r.toneMappingExposure = 0.76;
+    r.toneMappingExposure = .74;
     r.shadowMap.enabled = true;
-    r.shadowMap.type = THREE.PCFSoftShadowMap;
+    r.shadowMap.type = THREE.PCFShadowMap;
     const scene = (this.scene = new THREE.Scene());
     // what the metal and the glaze reflect: a dim room
     const pmrem = new THREE.PMREMGenerator(r);
     this.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
     scene.environment = this.env;
-    scene.environmentIntensity = 0.3;
-    scene.add(new THREE.HemisphereLight(0x9db0d2, 0x3a2b20, 0.45));
+    scene.environmentIntensity = .34;
+    scene.add(new THREE.HemisphereLight(0xb6c9df, 0x4f4030, .48));
     // the night-light: warm, beyond the cot on the right, a little behind it
-    const lamp = (this.lamp = new THREE.DirectionalLight(0xffc48c, 2.1));
-    lamp.position.set(0.8, 1.7, -0.5);
+    const lamp = (this.lamp = new THREE.DirectionalLight(0xffd3a0, 1.65));
+    lamp.position.set(.82, .88, -.12);
     lamp.castShadow = true;
     lamp.shadow.mapSize.set(2048, 2048);
     Object.assign(lamp.shadow.camera, { left: -0.8, right: 0.8, top: 0.8, bottom: -0.8, near: 0.1, far: 4 });
-    lamp.shadow.radius = 6;
+    lamp.shadow.radius = 4;
     lamp.shadow.bias = -0.0004;
-    lamp.shadow.normalBias = 0.002;
+    lamp.shadow.normalBias = .0006;
     scene.add(lamp, lamp.target);
     // the moon, from the window on the left
-    const moon = new THREE.DirectionalLight(0xa4b8e2, 0.7);
-    moon.position.set(-1.2, 1.3, 0.4);
+    const moon = new THREE.DirectionalLight(0xb7d1ff, .90);
+    moon.position.set(-1.02, .80, .12);
     scene.add(moon);
     // a glint, carried down the gold man when he is touched
     this.glint = new THREE.PointLight(0xfff0c8, 0, 0.35, 2);
     scene.add(this.glint);
     // the sheet: it takes their shadows, and shows nothing else
-    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.4), new THREE.ShadowMaterial({ opacity: 0.32, color: 0x140c06 }));
+    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1.22, .756), new THREE.ShadowMaterial({ opacity: .29, color: 0x1a1510 }));
     sheet.rotation.x = -Math.PI / 2;
     sheet.receiveShadow = true;
     scene.add(sheet);
     // the dark close under each, where it presses into the mattress
     const blobTexture = new THREE.CanvasTexture(radial()), materials = toyMaterials(atlas);
+    this.mobile = buildMobile(materials,native.mobile);
+    scene.add(this.mobile.group);
+    this._mobilePose = "";
     this.camera = new THREE.PerspectiveCamera(FOV, 1, 0.05, 10);
     this.toys = {};
     for (const id of ids) {
@@ -85,22 +84,13 @@ export class CotStage {
     this.W = W; this.H = H;
     this.renderer.setSize(W, H, false);
     const cam = this.camera;
-    cam.aspect = W / H; cam.fov = FOV; cam.updateProjectionMatrix();
-    const F = H / 2 / Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-    const edge = (b) => ({ y: L.at(0.5, b).y - H / 2, w: L.at(1, b).x - L.at(0, b).x });
-    const back = edge(0), front = edge(1);
-    // each edge's distance along the view, and how far below its middle it lies
-    const Zb = (F * WIDTH) / back.w, Zf = (F * WIDTH) / front.w;
-    const Yb = (back.y * Zb) / F, Yf = (front.y * Zf) / F;
-    // the one tilt of the camera that puts both edges on the same floor, its
-    // height over that floor, and how far ahead of it each edge lies
-    const pitch = Math.atan2(Yf - Yb, Zb - Zf);
-    const height = Zb * Math.sin(pitch) + Yb * Math.cos(pitch);
-    const tb = Zb * Math.cos(pitch) - Yb * Math.sin(pitch), tf = Zf * Math.cos(pitch) - Yf * Math.sin(pitch);
-    this.depth = tb - tf;
-    cam.position.set(0, height, this.depth / 2 + tf);
-    cam.rotation.set(-pitch, 0, 0);
-    cam.updateMatrixWorld();
+    const spec = L.native;
+    cam.aspect = W / H;
+    cam.fov = THREE.MathUtils.radToDeg(2 * Math.atan(H / (spec.height * L.s) * Math.tan(THREE.MathUtils.degToRad(spec.fov / 2))));
+    cam.position.set(0, spec.camera.height, spec.camera.distance);
+    cam.rotation.set(-spec.camera.pitch, 0, 0);
+    cam.updateProjectionMatrix();cam.updateMatrixWorld();
+    this.depth = spec.sheetDepth;
   }
 
   /** where (a, b) on the mattress is, in the world */
@@ -144,10 +134,18 @@ export class CotStage {
     this.renderer.render(this.scene, this.camera);
   }
 
+  poseMobile(turn, now, moving, look) {
+    const signature = [turn, moving ? now : 0, look.x, look.y].map(n => n.toFixed(4)).join(":");
+    if (signature === this._mobilePose) return false;
+    this._mobilePose = signature;
+    this.mobile.pose(turn, now, moving, look);
+    return true;
+  }
+
   dispose() {
     const geometries = new Set(), materials = new Set(), textures = new Set();
     this.scene.traverse((o) => {
-      if (!o.isMesh) return;
+      if (!o.isMesh && !o.isLine) return;
       geometries.add(o.geometry);
       for (const m of [].concat(o.material)) {
         materials.add(m);

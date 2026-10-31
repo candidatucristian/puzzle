@@ -74,8 +74,7 @@ export default class TopScene extends BasePuzzleScene {
         .setDepth(-8),
     );
 
-    // the doors: one with something still behind it has the light of its
-    // room breathing under it and a glint on it; one that opens takes a click
+    // Door light stays steady through progress; unfinished rooms glint.
     const rooms = this.services.levels.rooms;
     L.doors.forEach((d, n) => {
       const room = rooms[n];
@@ -89,7 +88,6 @@ export default class TopScene extends BasePuzzleScene {
           .setData("interactionLabel", room.completed ? "Open the door — completed" : "Open the door");
         zone.on("pointerdown", () => this._go(d.box, { place: room.key }));
       }
-      if (!calling) return;
       const sill = { x: (d.quad[2].x + d.quad[3].x) / 2, y: (d.quad[2].y + d.quad[3].y) / 2 };
       const glow = this.add
         .image(sill.x, sill.y, k.glow)
@@ -98,7 +96,7 @@ export default class TopScene extends BasePuzzleScene {
         .setBlendMode(Phaser.BlendModes.ADD)
         .setDepth(-8);
       this.ambientTween({ targets: glow, alpha: { from: L.rendered ? 0.12 : 0.22, to: L.rendered ? 0.25 : 0.5 }, duration: 2200 + n * 260, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-      this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => d.box }));
+      if (calling) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 2, bounds: () => d.box }));
     });
 
     this._passage(L);

@@ -16,6 +16,15 @@
 //            carriage thrown back; returns { stop() }
 
 export function mountPaperSounds({ game, audio }) {
+  // This optional MP4 container is consumed by an Audio element only. The
+  // letter's picture and motion always come from the Blender mesh rig.
+  const recordingURL=`${import.meta.env.BASE_URL}assets/sounds/letter-open.mp4`;
+  let recordingProbe=null;
+  const prepareLetterOpen=()=>{
+    recordingProbe??=fetch(recordingURL,{method:'HEAD',cache:'no-store'}).then(r=>r.ok).catch(()=>false)
+      .then(found=>{if(!found)recordingProbe=null;return found;});
+    return recordingProbe;
+  };
   const ctx = () => {
     const ac = game.sound?.context, state = audio?.state;
     if (!ac || ac.state !== "running" || !game.sound.destination) return null;
@@ -56,6 +65,30 @@ export function mountPaperSounds({ game, audio }) {
     }
   }
   const swell = (k) => Math.sin(Math.PI * k) ** 1.5;
+  function letterOpen() {
+    let media=null,source=null,gain=null,unsubscribe=null,stopped=false;
+    const playback={
+      get present(){return media!==null;},
+      stop(){
+        stopped=true;unsubscribe?.();unsubscribe=null;
+        if(media){media.pause();media.removeAttribute('src');media.load();}
+        source?.disconnect();gain?.disconnect();
+      },
+    };
+    void prepareLetterOpen().then(found=>{
+      if(!found||stopped)return;
+      const c=ctx();if(!c)return;
+      media=new Audio(recordingURL);media.preload='auto';
+      source=c.ac.createMediaElementSource(media);gain=c.ac.createGain();
+      source.connect(gain).connect(c.out);
+      const volume=()=>{const s=audio?.state;gain.gain.value=s?.muted?0:s?.sfxVol??.8;};
+      volume();unsubscribe=audio?.subscribe(volume);
+      media.addEventListener('ended',()=>playback.stop(),{once:true});
+      media.addEventListener('error',()=>playback.stop(),{once:true});
+      void media.play().catch(()=>playback.stop());
+    });
+    return playback;
+  }
   // a typewriter: each key the type-bar striking the platen — a dry click —
   // and the thump of the carriage stepping on, a space now and then a little
   // heavier and longer; at the end of the line its bell, and the carriage
@@ -103,6 +136,7 @@ export function mountPaperSounds({ game, audio }) {
     };
   }
   return {
+    prepareLetterOpen,letterOpen,
     whoosh() { noise({ dur: 0.55, freq: 2600, to: 500, q: 0.8, gain: 0.32, env: swell }); },
     land() {
       noise({ dur: 0.12, type: "lowpass", freq: 420, gain: 0.55, env: (k) => (1 - k) ** 3 });

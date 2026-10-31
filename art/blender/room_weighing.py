@@ -20,6 +20,9 @@
 # stand (lights-<balance><equations><measures>), and where it all fell in the
 # picture (src/levels/house/rooms/Room8.json). No chest is kept here.
 #
+# Run with `--view measures` it renders To the Line's own close-up instead
+# (measures_level_passes.py): the sink counter seen at the bottles' height.
+#
 #   blender -b --factory-startup -P art/blender/room_weighing.py -- [--samples 256] [--width 2560] [--only plates]
 
 import bpy, bmesh, math, os, sys, random
@@ -41,7 +44,14 @@ RNG = random.Random(1869)
 X0, X1, D1, TOP = -160, 160, 700, 300
 EYE = (float(arg("--ex", "-52")), float(arg("--ey", "160")), float(arg("--ed", "18")))
 LOOK = (float(arg("--lx", "30")), float(arg("--ly", "118")), float(arg("--ld", "700")))
-scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "22")))
+VIEW = arg("--view", "")                          # "measures": To the Line's own close-up (levels/measures)
+if VIEW == "measures":
+    # (at the counter, the eye a little above the bottles' shoulders, looking
+    # down 8° at their row; the window's lower panes over them)
+    OUT = os.path.join(ROOT, ".artifacts/measures-level"); os.makedirs(OUT, exist_ok=True)
+    EYE = (float(arg("--ex", "-28")), float(arg("--ey", "122.5")), float(arg("--ed", "570")))
+    LOOK = (EYE[0], EYE[1] - (676 - EYE[2]) * math.tan(math.radians(8)), 676)
+scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "26.3" if VIEW == "measures" else "22")))
 WIN = dict(x=20, hw=58, sill=124, top=262)
 ISLAND = dict(x0=-38, x1=58, d0=300, d1=470, h=92)
 BOARD = dict(at=(-96, 0, 520), turn=math.radians(34), w=126, h=92, y0=96)
@@ -103,7 +113,7 @@ MOON_AT = P(500, 900, 3600)
 garden(MOON_AT, [("island_tree_01", -900, 1900, 10.0, 0.3), ("island_tree_02", 1100, 2600, 12.0, 1.4), ("tree_small_02", 240, 1300, 5.0, 2.2)],
        (-2500, 2500, D1 + 40, 3300, -40), P(200, 800, 4200), sky_size=45)
 ct = COUNTER
-box_cm("counter", ct["x0"] + 2, ct["x1"] - 2, 8, ct["h"] - 4, ct["d0"] + 3, D1, OAK)
+counter_body = box_cm("counter", ct["x0"] + 2, ct["x1"] - 2, 8, ct["h"] - 4, ct["d0"] + 3, D1, OAK)
 box_cm("counter plinth", ct["x0"] + 4, ct["x1"] - 2, 0, 8, ct["d0"] + 6, D1, plain("plinth", (0.02, 0.015, 0.01), rough=0.8))
 n_ = 4; cw = (ct["x1"] - ct["x0"] - 12) / n_
 for i in range(n_):
@@ -111,26 +121,89 @@ for i in range(n_):
     box_cm("cupboard door", a, a + cw - 3, 12, 78, ct["d0"] + 2, ct["d0"] + 3, OAK, 0.5)
     box_cm("door panel", a + 4, a + cw - 7, 18, 72, ct["d0"] + 1.4, ct["d0"] + 2, OAK, 0.8)
     lathe("knob", [(0, 0), (0.008, 0), (0.011, 0.01), (0.007, 0.015), (0, 0.016)], BRASS, at=tuple(P(a + (5 if i % 2 else cw - 8), 62, ct["d0"] + 1.4)), steps=16).rotation_euler = (math.pi / 2, 0, 0)
-top = box_cm("counter slate", ct["x0"], ct["x1"], ct["h"] - 4, ct["h"], ct["d0"], D1, SLATE, 0.5)
-SINK = dict(x0=ct["x0"] + 16, x1=ct["x0"] + 74, d0=ct["d0"] + 6, d1=D1 - 8)
+top = box_cm("counter slate", ct["x0"], ct["x1"], ct["h"] - 4, ct["h"], ct["d0"], D1, honed_slate("honed slate"), 0.5)
+SINK = dict(x0=ct["x0"] + 30, x1=ct["x0"] + 74, d0=ct["d0"] + 6, d1=D1 - 8)
 boolean_cut(top, box("cut", M(SINK["x0"]), M(SINK["x1"]), M(SINK["d0"]), M(SINK["d1"]), M(ct["h"] - 10), M(ct["h"] + 5), IRON))
+boolean_cut(counter_body, box("cut", M(SINK["x0"] - 0.5), M(SINK["x1"] + 0.5), M(SINK["d0"] - 0.5), M(SINK["d1"] + 0.5), M(ct["h"] - 26), M(ct["h"]), IRON))   # (the sink let down into the cupboard)
 sink = box_cm("sink", SINK["x0"], SINK["x1"], ct["h"] - 24, ct["h"] + 0.6, SINK["d0"], SINK["d1"], FIRECLAY, 1.2)
 boolean_cut(sink, box("cut", M(SINK["x0"] + 3.5), M(SINK["x1"] - 3.5), M(SINK["d0"] + 3.5), M(SINK["d1"] - 3.5), M(ct["h"] - 20), M(ct["h"] + 5), IRON))
 tx = (SINK["x0"] + SINK["x1"]) / 2
-tube("swan neck", [(0, 0), (0, 0.2), (0.04, 0.27), (0.12, 0.27), (0.16, 0.2)], 0.009, BRASS, at=tuple(P(tx, ct["h"], D1 - 4)), rot=-math.pi / 2)
+TAP = tube("swan neck", [(0, 0), (0, 0.28), (0.04, 0.35), (0.12, 0.35), (0.16, 0.28)], 0.009, BRASS, at=tuple(P(tx, ct["h"], D1 - 4)), rot=-math.pi / 2)
+SPOUT = P(tx, ct["h"] + 28, D1 - 20)              # (its mouth, over the middle of the sink)
+TAP_PARTS = [TAP]
 for e in (-1, 1):
-    lathe("tap handle", [(0, 0), (0.012, 0), (0.012, 0.03), (0.02, 0.035), (0, 0.04)], BRASS, at=tuple(P(tx + e * 12, ct["h"], D1 - 6)), steps=16)
-# the two bottles and the flask on the slate, right of the sink
-FLUID = plain("water", (0.9, 0.95, 0.95), rough=0.02, transmission=1.0, ior=1.33)
-VESSELS = []
-for (vx, cap) in ((60, 500), (82, 300)):
-    r = 4.4 if cap == 500 else 3.7; hh = 20 if cap == 500 else 16
-    o = lathe(f"bottle {cap}", [(0, 0), (M(r), 0), (M(r), M(hh * 0.72)), (M(r * 0.45), M(hh * 0.86)), (M(r * 0.38), M(hh)), (0, M(hh))], GLASS, at=tuple(P(vx, ct["h"], D1 - 24)), steps=40)
-    paper_label = box_cm("label", vx - r * 0.7, vx + r * 0.7, ct["h"] + hh * 0.3, ct["h"] + hh * 0.5, D1 - 24 - r - 0.05, D1 - 24 - r + 0.02, plain(f"label {cap}", (0.75, 0.7, 0.58), rough=0.85))
-    VESSELS.append((vx, hh, r))
-fx = 104
-lathe("volumetric flask", [(0, 0), (0.05, 0), (0.06, 0.02), (0.062, 0.05), (0.04, 0.085), (0.012, 0.1), (0.011, 0.25), (0.014, 0.26), (0, 0.26)], GLASS, at=tuple(P(fx, ct["h"], D1 - 26)), steps=48)
-cylinder("flask mark", M(fx), M(D1 - 26), M(ct["h"] + 19), M(ct["h"] + 19.2), M(1.15), plain("etched mark", (0.6, 0.6, 0.6), rough=0.6), verts=24)
+    TAP_PARTS.append(lathe("tap handle", [(0, 0), (0.012, 0), (0.012, 0.03), (0.02, 0.035), (0, 0.04)], BRASS, at=tuple(P(tx + e * 12, ct["h"], D1 - 6)), steps=16))
+# the two bottles and the flask on the slate, beside the sink, in a row — as
+# To the Line has them (its bottles are drawn live in three dimensions, to the
+# same measure: levels/measures/stage3d.js)
+ROW = D1 - 24                                     # (the row they stand in)
+def bottle_profile(R, body, neckR, neckH):
+    """a plain bottle's outside (m), from its foot on the axis to its lip"""
+    sh = R * 0.75; top = body + neckH
+    return [(0, 0), (R * 0.9, 0), (R * 0.98, 0.002), (R, 0.008), (R, body - sh), (R * 0.93, body - sh * 0.35), (neckR * 1.5, body - 0.004),
+            (neckR * 1.08, body + 0.002), (neckR, body + 0.008), (neckR, top - 0.004), (neckR * 1.14, top - 0.002), (neckR * 1.14, top)]
+VESSELS, BOTTLE_PARTS = [], []
+for (vx, cap, R, body, neckR, neckH) in ((-38, 500, 0.047, 0.172, 0.0198, 0.028), (-18, 300, 0.0387, 0.138, 0.017, 0.0245)):
+    o, _ = vessel(f"bottle {cap}", bottle_profile(R, body, neckR, neckH), GLASS, tuple(P(vx, ct["h"], ROW)), floor=0.008, steps=64)
+    BOTTLE_PARTS.append(o); VESSELS.append((vx, (body + neckH) * 100, R * 100))
+# the volumetric flask: a round bulb on a flat foot, a long neck, one ring
+# round it; its measure etched on the bulb (measures_marks.mjs)
+fx = 6
+FL = dict(r=0.0547, base=0.02, neck=0.0151, neckH=0.134, ring=0.018)
+FL["c"] = math.sqrt(FL["r"] ** 2 - FL["base"] ** 2)          # (the bulb's middle, over the foot)
+FL["shoulder"] = FL["c"] + math.sqrt(FL["r"] ** 2 - FL["neck"] ** 2)
+FL["top"] = FL["shoulder"] + FL["neckH"]
+a0, a1 = math.atan2(-FL["c"], FL["base"]), math.atan2(FL["shoulder"] - FL["c"], FL["neck"])
+FLASK_PROF = [(0, 0), (FL["base"], 0)] + [(FL["r"] * math.cos(a0 + (a1 - a0) * k / 40), FL["c"] + FL["r"] * math.sin(a0 + (a1 - a0) * k / 40)) for k in range(1, 40)] \
+    + [(FL["neck"], FL["shoulder"]), (FL["neck"], FL["top"] - 0.003), (FL["neck"] * 1.12, FL["top"])]
+FLASK_AT = P(fx, ct["h"], ROW)
+FLASK, FLASK_IN = vessel("volumetric flask", FLASK_PROF, GLASS, tuple(FLASK_AT), t=0.0016, steps=96)
+ETCH = plain("etching", (0.92, 0.94, 0.94), rough=0.65)
+FL["ring_z"] = FL["shoulder"] + FL["ring"]
+ring = lathe("flask ring", [(FL["neck"] + 0.00012, FL["ring_z"] - 0.0004), (FL["neck"] + 0.00012, FL["ring_z"] + 0.0004)], ETCH, at=tuple(FLASK_AT), steps=96)
+def etched_patch(name, image, centre, radius, facing, width, lat0, lat1):
+    """an image etched round a sphere's front: `width` (rad) of longitude about
+    the direction `facing` (rad, from the room's -d), from latitude lat0 to lat1"""
+    m = bpy.data.materials.new(name); m.use_nodes = True
+    N = m.node_tree.nodes; L_ = m.node_tree.links.new; out_ = N["Material Output"]; b_ = N["Principled BSDF"]
+    t = N.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(image, check_existing=True); t.interpolation = "Cubic"
+    L_(t.outputs["Color"], b_.inputs["Base Color"]); b_.inputs["Roughness"].default_value = 0.65
+    tr = N.new("ShaderNodeBsdfTransparent"); mx = N.new("ShaderNodeMixShader")
+    L_(t.outputs["Alpha"], mx.inputs["Fac"]); L_(tr.outputs["BSDF"], mx.inputs[1]); L_(b_.outputs["BSDF"], mx.inputs[2]); L_(mx.outputs["Shader"], out_.inputs["Surface"])
+    m["clear"] = True
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); uv = bm.loops.layers.uv.new()
+    rows, cols = 16, 32; grid = []
+    for j in range(rows + 1):
+        lat = lat0 + (lat1 - lat0) * j / rows; row = []
+        for k in range(cols + 1):
+            lon = facing - width / 2 + width * k / cols
+            row.append((bm.verts.new(Vector(centre) + radius * Vector((math.cos(lat) * math.sin(lon), -math.cos(lat) * math.cos(lon), math.sin(lat)))), k / cols, j / rows))
+        grid.append(row)
+    for j in range(rows):
+        for k in range(cols):
+            q = [grid[j][k], grid[j][k + 1], grid[j + 1][k + 1], grid[j + 1][k]]
+            fc = bm.faces.new([v for v, _, _ in q])
+            for lp, (_, u, v) in zip(fc.loops, q): lp[uv].uv = (u, v)
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); o.data.materials.append(m)
+    for p in o.data.polygons: p.use_smooth = True
+    return o
+_face = math.atan2(M(EYE[0] - fx), -M(EYE[2] - ROW))          # (turned to the eye)
+etch = etched_patch("flask etching", os.path.join(DRAWN, "measures-flask.png"), FLASK_AT + Vector((0, 0, FL["c"])), FL["r"] + 0.00025, _face, 1.04, math.radians(-38), math.radians(-6))
+FLASK_PARTS = [FLASK, ring, etch]
+# beside them, what a chemist's sink has: a mortar and its pestle, two brown
+# reagent bottles stoppered against the tiles, a glass rod laid down
+PORCELAIN = plain("porcelain", (0.86, 0.85, 0.8), rough=0.35)
+lathe("mortar", [(0, 0), (0.03, 0), (0.042, 0.008), (0.05, 0.03), (0.052, 0.05), (0.047, 0.052), (0.044, 0.03), (0.032, 0.014), (0, 0.012)], PORCELAIN, at=tuple(P(34, ct["h"], ROW - 8)), steps=48)
+rod("pestle", P(30, ct["h"] + 2.0, ROW - 9), P(41, ct["h"] + 11, ROW - 5), M(0.9), PORCELAIN, verts=16)
+sphere("pestle head", tuple(P(30, ct["h"] + 2.0, ROW - 9)), M(1.4), PORCELAIN)
+AMBER = plain("amber glass", (0.35, 0.16, 0.05), rough=0.04, transmission=1.0, ior=1.5)
+for (bx, br, bh) in ((46, 2.6, 13), (54, 2.2, 11)):
+    prof = [(0, 0), (M(br), 0), (M(br), M(bh * 0.72)), (M(br * 0.5), M(bh * 0.86)), (M(br * 0.42), M(bh * 0.86)), (M(br * 0.42), M(bh))]
+    _, inside = vessel("reagent bottle", prof, AMBER, tuple(P(bx, ct["h"], D1 - 7)), t=0.002, steps=48)
+    fill("reagent", inside, M(bh * 0.45), plain("reagent", (0.3, 0.12, 0.04), rough=0.05, transmission=0.6, ior=1.34), tuple(P(bx, ct["h"], D1 - 7)), meniscus=False)
+    lathe("ground stopper", [(0, 0), (M(br * 0.38), 0), (M(br * 0.42), M(1.6)), (M(br * 0.7), M(1.8)), (M(br * 0.7), M(2.4)), (0, M(2.6))], AMBER, at=tuple(P(bx, ct["h"] + bh - 1.4, D1 - 7)), steps=32)
+rod("glass rod", P(17, ct["h"] + 0.35, ROW - 14), P(33, ct["h"] + 0.35, ROW - 19), M(0.35), GLASS, verts=12)
 # the lamp on the wall beside them
 WALL_BULB = plain("wall lamp glass", (1, 0.92, 0.78), emit=(1.0, 0.8, 0.52), strength=7)
 wlx, wly = 132, 196
@@ -319,9 +392,13 @@ LAYOUT.glow("equations", BOARD_BULB_AT, 120)
 LAYOUT.glow("measures", P(wlx, wly - 4, D1 - 11), 60)
 for pane in SASHES: LAYOUT.pane(pane)
 LAYOUT.dust([P(wx0, WIN["top"], D1), P(wx1, WIN["sill"], D1), P(-40, 0, 420), P(80, 0, 560)])
-LAYOUT.write()
+if not VIEW: LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
+if VIEW == "measures":
+    import measures_level_passes
+    measures_level_passes.run(globals())
+    raise SystemExit
 cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "-0.55")))
 scene.cycles.volume_bounces = 1
 GLOSSY = ("blackboard", "white tiles", "tile cap", "tile cap back", "fireclay", "green enamel", "enamel inside", "hung bulb", "wall lamp glass", "board lamp bulb")                # (what keeps its shine: glazes, screens, lamp glass)

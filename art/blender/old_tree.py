@@ -17,6 +17,7 @@ sys.path.insert(0, str(HERE))
 from kit import arg, fresh, link, box, bevel, cylinder, sphere, lathe, plain, aged_metal, lamp, cycles
 from hall_common import scan, clear_glass
 from fibonacci_geranium import scanned_leaves, leaf_material
+from specimen_book import build_specimen_book
 
 ROOT = HERE.parents[1]
 ART_VERSION = 2
@@ -150,14 +151,8 @@ slab('Study | rounded oak dado cap', -3,3,.75,.85,1.01,1.045,OAK_X,.006)
 for x in [-2+i*.4 for i in range(11)]:
     slab('Study | panel stile',x-.012,x+.012,.756,.785,.16,1.0,PANEL,.002)
 
-# Small closed reference book: naturally worn corners, no competing clues.
-CLOTH = organic_material('Book | old moss-green linen', ((.035,.052,.023),(.10,.13,.065)), 900, .00013, .92)
-PAGES = plain('Book | aged page block',(.37,.31,.21),rough=.94)
-book = slab('Book | cut page edges', .53,.77,-.04,.25,.812,.851,PAGES,.003)
-for z in (.805,.852): slab('Book | cloth covered board', .522,.778,-.047,.257,z,z+.006,CLOTH,.004)
-slab('Book | closed cloth spine',.52,.533,-.047,.257,.808,.858,CLOTH,.006)
-for z in [.818+i*.003 for i in range(10)]:
-    curve('Book | individual page edge',[(.538,-.040,z),(.764,-.040,z+.0003)],.00014,INK)
+# The same physical green book is also on the specimen table in Room I.
+build_specimen_book()
 
 # A shallow rhizobox, glazed above the damp root panel, with a ridged roof.
 X0,X1 = -.47,.47
