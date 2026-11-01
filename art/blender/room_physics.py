@@ -55,7 +55,7 @@ COPPER = aged_metal("copper wire", (0.62, 0.3, 0.16), (0.12, 0.08, 0.05), rough=
 EBONITE = plain("ebonite", (0.015, 0.013, 0.012), rough=0.35)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
 FOIL = aged_metal("tin foil", (0.7, 0.7, 0.68), (0.3, 0.3, 0.28), rough=(0.3, 0.55), scale=80, tarnish=0.3)
-FRAME = plain("window paint", (0.8, 0.79, 0.74), rough=0.55)
+FRAME = scan("window oak", "dark_wood", size=0.6, tint=(0.55, 0.38, 0.25), bright=0.42, sat=0.8, rough=(0.45, 0.7), bump=0.3, edges=0.3)   # (oak, never painted: no white frames in the house)
 SLATE_MAT = picture("slate", os.path.join(DRAWN, "physics-slate.png"), rough=0.88, bump=0.12)
 DIAL = picture("galvanometer dial", os.path.join(DRAWN, "galvanometer.png"), rough=0.4, coat=0.5)
 spine_mat = bound(picture("spines", os.path.join(DRAWN, "spines.png"), rough=0.5, coat=0.15, bump=0.3))

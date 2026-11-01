@@ -12,9 +12,13 @@ const HANG = { ribbon: "fl_ribbon_", disc: "fl_disc_", sheen: "fl_sheen_" }; // 
 export const TROPHY_BACKGROUND = "fl_trophy_background";
 export const TROPHY_BACKGROUND_URL = "assets/images/Flags/trophy-wall-render-v1.webp";
 export const TROPHY_MEDAL_FACES = "fl_trophy_medal_faces";
-export const TROPHY_MEDAL_FACES_URL = "assets/images/Flags/trophy-medal-faces-render-v1.webp";
+export const TROPHY_MEDAL_FACES_URL = "assets/images/Flags/trophy-medal-faces-render-v2.webp";
 export const TROPHY_BRAZIL_MEDAL = "fl_trophy_brazil_medal";
-export const TROPHY_BRAZIL_MEDAL_URL = "assets/images/Flags/trophy-brazil-medal-render-v1.webp";
+export const TROPHY_BRAZIL_MEDAL_URL = "assets/images/Flags/trophy-brazil-medal-render-v2.webp";
+// each ribbon as silk, rendered in the box its medal hangs it in
+// (art/blender/medal_ribbons.py): its key, and where it is
+export const TROPHY_RIBBON = (code) => `fl_trophy_ribbon_${code}_v2`;
+export const TROPHY_RIBBON_URL = (code) => `assets/images/Flags/trophy-ribbon-${code}-render-v2.webp`;
 
 // what is won, across a polished curve: the dark edge, the shadow, the body,
 // the light, the body, the room reflected, a lighter band, the far edge
@@ -158,6 +162,10 @@ export function paintTrophies(scene, W, H, codes) {
   addCanvasTexture(t, K.room, c);
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.glint, paintGlint());
+  for (const m of L.medals) {
+    const key = TROPHY_RIBBON(m.code);
+    m.ribbonImage = t.exists(key) ? t.get(key).getSourceImage() : null;
+  }
   const medals = L.medals.map((m, i) => paintHanging(t, L, m, medalFaces, brazilMedal, i));
   return { L, keys: K, medals };
 }
@@ -193,7 +201,7 @@ function paintHanging(t, L, m, faces, brazil, i) {
     const band = g.createLinearGradient(x - r, my - r, x + r, my + r);
     band.addColorStop(0, "rgba(255,244,214,0)");
     band.addColorStop(0.3, "rgba(255,244,214,0.05)");
-    band.addColorStop(0.42, "rgba(255,248,226,0.75)");
+    band.addColorStop(0.42, "rgba(255,248,226,0.45)");
     band.addColorStop(0.5, "rgba(255,244,214,0.12)");
     band.addColorStop(0.62, "rgba(190,214,236,0.3)");
     band.addColorStop(0.72, "rgba(190,214,236,0)");
@@ -562,7 +570,12 @@ export function paintMedal(g, L, m, medalFaces, brazilMedal, part = "all") {
   if (part === "shadow") return;
   // the ribbon: over the edge, then straight down, narrowing a little to the ring
   const foot = y + len;
-  if (part !== "disc") paintRibbon();
+  if (part !== "disc") {
+    // the ribbon rendered as silk, in its box: 3 spare each side, 16 over its top, 3 below
+    const silk = m.ribbonImage;
+    if (silk) g.drawImage(silk, x - w / 2 - 3 * u, y - 16 * u, w + 6 * u, len + 19 * u);
+    else paintRibbon();
+  }
   if (part === "ribbon") return;
   function paintRibbon() {
   const ribbon = () => {
@@ -624,13 +637,7 @@ export function paintMedal(g, L, m, medalFaces, brazilMedal, part = "all") {
       const cell = medalFaces.height;
       g.drawImage(medalFaces, m.index * cell, 0, cell, cell, x - r, my - r, r * 2, r * 2);
     }
-    // The suspension eyelet sits over the face where the ribbon meets it.
-    g.lineWidth = Math.max(1.2, r * 0.055);
-    g.strokeStyle = "rgba(31,23,14,0.9)";
-    g.beginPath(); g.ellipse(x, foot + r * 0.02, r * 0.14, r * 0.12, 0, 0, Math.PI * 2); g.stroke();
-    g.lineWidth = Math.max(0.7, r * 0.024);
-    g.strokeStyle = "rgba(239,213,160,0.78)";
-    g.beginPath(); g.ellipse(x - r * 0.025, foot + r * 0.005, r * 0.11, r * 0.09, 0, Math.PI * 1.05, Math.PI * 1.85); g.stroke();
+    // (the ring it hangs by is in the render, struck with it)
     return;
   }
   g.save(); g.translate(0, 2.3 * u); outline(r * 0.98);

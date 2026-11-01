@@ -1,4 +1,5 @@
 import { makeCanvas } from "../../shared/paint.js";
+import PASS_BY from "./hallPassBy.json";
 
 // The halls rendered in Blender, through the same eye as layoutHall
 // (art/blender/hall_ground.py, hall_chem.py and their publish scripts). On
@@ -23,15 +24,32 @@ const RENDERS = {
   },
 };
 
+// For each door that something stands before: the hall without those things,
+// only where they stand (hall_ground_publish.mjs), and where that lies in the
+// reference picture. Not needed for the hall to stand: without them, what
+// stands before a door is simply walked up to.
+const PASS_BY_FILES = { ground: (n) => `assets/images/Botany/hall-ground-passby-${n}-render-v1.webp` };
+const passByKey = (floor, n) => `hall_${floor}_passby_${n}_render_v1`;
+
 export function loadHallRender(scene, floor) {
   for (const { key, url } of Object.values(RENDERS[floor])) if (!scene.textures.exists(key)) scene.load.image(key, url);
+  for (const n of Object.keys(PASS_BY[floor] ?? {})) {
+    const key = passByKey(floor, n);
+    if (!scene.textures.exists(key)) scene.load.image(key, PASS_BY_FILES[floor](n));
+  }
 }
 
-/** A floor's rendered pictures, or null if they did not all come. */
+/** A floor's rendered pictures, or null if they did not all come; with them,
+ *  `passBy`: for each door number, the picture of the hall without what
+ *  stands before it ({ key, box }), for those that came. */
 export function hallRender(scene, floor) {
   const render = RENDERS[floor];
   if (!render || !Object.values(render).every(({ key }) => scene.textures.exists(key))) return null;
-  return Object.fromEntries(Object.entries(render).map(([name, { key }]) => [name, scene.textures.get(key).getSourceImage()]));
+  const pictures = Object.fromEntries(Object.entries(render).map(([name, { key }]) => [name, scene.textures.get(key).getSourceImage()]));
+  pictures.passBy = Object.fromEntries(Object.entries(PASS_BY[floor] ?? {})
+    .filter(([n]) => scene.textures.exists(passByKey(floor, n)))
+    .map(([n, box]) => [n, { key: passByKey(floor, n), box }]));
+  return pictures;
 }
 
 // Where the render lies on the screen. It was made at the layout's measure

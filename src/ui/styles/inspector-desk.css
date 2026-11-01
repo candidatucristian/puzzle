@@ -1,0 +1,307 @@
+/* ── The Inspector's Desk ─────────────────────────────────────────────────
+   Inspector Wren's things, 1961, photographed from above on his old oak desk
+   under its lamp (art/blender/inspector_scene.py): the case file and the
+   settings fill the screen; the notebook fades in on the right, the book
+   alone with its pencil, the pages saved from it paper slips out from under
+   its cover. The words and controls are typed, written, laid on their
+   paper — at its centre, its size, its turn (inspector-desk-geometry.css) —
+   and taken into it as ink is (multiply). */
+
+/* ── the header's tools, drawn by hand (index.html #sk-*): the game's thin
+   pencil, in its three passes — shadow, white line, a faint highlight ── */
+.sketch-icon { width: 22px; height: 22px; overflow: visible; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.sketch-icon .ink-dark { stroke: #0b0b0c; stroke-width: 2.3; stroke-opacity: .78; }
+.sketch-icon .ink-white { stroke: #d9d3c4; stroke-width: 1.1; transition: stroke .2s ease; }
+.sketch-icon .ink-over { stroke: #fff; stroke-width: .45; stroke-opacity: .4; transform: translate(.55px, -.4px); }
+:is(.header-button, #vol-icon-ui, #compact-fullscreen):is(:hover, :focus-visible) .sketch-icon .ink-white { stroke: #fff; }
+/* muted: the waves go, a cross in their place (the old slash is not drawn) */
+#vol-icon-ui[data-muted="true"] .sketch-icon { --sk-waves: none; --sk-mute: inline; }
+#vol-icon-ui[data-muted="true"]:has(.sketch-icon)::after { content: none; }
+
+/* closing any of them: a pencilled cross in a dark ring, at the screen's corner */
+:is(#btn-close-casefile, #btn-close-options) { width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  background: #0000005c; color: #efe7d6; box-shadow: none; }
+:is(#btn-close-casefile, #btn-close-options):hover { background: #00000088; color: #fff; }
+:is(#btn-close-casefile, #btn-close-options) .ui-icon { width: 26px; height: 26px; stroke-width: 1.4; filter: drop-shadow(0 1px 1px #000c); }
+
+/* ══ the case file: the whole desk, the file open on it ══ */
+.casefile-modal { padding: 0; overflow: hidden; background: #0d0907; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.dossier {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  /* the photograph covering the screen, as it was taken (16:9) */
+  width: max(100vw, calc(100dvh * 2880 / 1620)); height: max(100dvh, calc(100vw * 1620 / 2880));
+  display: block; container-type: size; padding: 0; border: 0; filter: none; isolation: isolate;
+  background: var(--file-art) center / 100% 100% no-repeat;
+  --dossier-ink: #221e19; --dossier-muted: #6a5e4e;
+}
+.dossier-material, .dossier-spine { display: none; }
+.dossier-pages { position: absolute; inset: 0; display: block; }
+.dossier-page::before, .dossier-page::after { content: none !important; }
+.dossier-page {
+  position: absolute; box-sizing: border-box; margin: 0; color: var(--dossier-ink);
+  transform: translate(-50%, -50%) rotate(var(--turn)); mix-blend-mode: multiply;
+}
+/* the minute sheet: the index, under its printed head, clear of the stamp */
+.dossier-page.is-left { left: var(--file-index-x); top: var(--file-index-y); width: var(--file-index-w); height: var(--file-index-h);
+  --turn: var(--file-index-turn); padding: 6.9cqh 2.3cqw 15cqh 2.4cqw; }
+/* the letter on top of the pile: what is read, clear of the fastener and clip */
+.dossier-page.is-right { left: var(--file-reader-x); top: var(--file-reader-y); width: var(--file-reader-w); height: var(--file-reader-h);
+  --turn: var(--file-reader-turn); padding: 8.6cqh 2.2cqw 3cqh 2.9cqw; }
+.dossier-head { gap: .9cqh; padding: 0 0 1.4cqh; }
+.dossier-ref { font-size: calc(.52cqw * var(--reading-scale, 1)); letter-spacing: .09em; color: #5b5144; }
+#casefile-modal .dossier-title { font: 400 calc(1.32cqw * var(--reading-scale, 1))/1.2 "Special Elite", "Courier New", monospace !important; color: #221e19; letter-spacing: .01em; }
+.dossier-tabs { gap: 1.6cqw; }
+.dossier-tabs button { min-height: 0; padding: .6cqh 0; font-size: calc(.72cqw * var(--reading-scale, 1)); color: #6a5e4e; }
+.dossier-tabs button[aria-selected="true"] { color: #7a2418; font-weight: 400; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .45cqh; }
+.dossier-index { padding: 1.6cqh 0 0; }
+.dossier .page-head { margin: 0 0 1.6cqh; font-size: calc(.58cqw * var(--reading-scale, 1)); color: #6a5e4e; }
+.dossier-slips { gap: .6cqh; }
+.dossier-slip { grid-template-columns: 2cqw minmax(0, 1fr); gap: .4cqw; padding: .55cqh 0; color: #221e19; }
+.slip-no { font-size: calc(.58cqw * var(--reading-scale, 1)); color: #7d705d; }
+.slip-title { font-size: calc(.8cqw * var(--reading-scale, 1)); }
+button.dossier-slip:hover, button.dossier-slip.is-current { color: #7a2418; }
+button.dossier-slip.is-current .slip-title { font-weight: 400; }
+button.dossier-slip.is-current .slip-title::after { content: "  \2190"; }
+.dossier-slip.is-unread .slip-title::after { content: "  \2022"; color: #a3271c; }
+li.dossier-slip.is-missing { color: #8d8170; }
+.dossier-slip.is-missing .slip-title { font-size: calc(.66cqw * var(--reading-scale, 1)); }
+.dossier-room { padding: .55cqh 0; color: #221e19; }
+.room-name { font-size: calc(.74cqw * var(--reading-scale, 1)); }
+.room-count { font-size: calc(.56cqw * var(--reading-scale, 1)); color: #7d705d; }
+.dossier-room:hover, .dossier-room[aria-current="true"] { color: #7a2418; }
+/* (CONFIDENTIAL is stamped on the sheet itself, 61 / 1013 typed on the tab) */
+.dossier-index-foot, .dossier-stamp, .dossier-file-number { display: none; }
+.dossier-document-head { margin: 0; padding: 0 0 1.3cqh; border-bottom: 1px solid #221e1926; }
+.dossier-document-title { font-size: calc(.82cqw * var(--reading-scale, 1)); color: #221e19; }
+.dossier-document-origin { margin-top: .5cqh; font-size: calc(.58cqw * var(--reading-scale, 1)); color: #6a5e4e; }
+.dossier-document-number { font-size: calc(.6cqw * var(--reading-scale, 1)); color: #6a5e4e; }
+.dossier-reader { padding: 2.2cqh 0 2cqh; }
+.dossier-reader .letter-page { width: 100%; font: 400 calc(.74cqw * var(--reading-scale, 1))/1.62 "Special Elite", "Courier New", monospace; color: #221e19; }
+.dossier-reader .letter-words { mix-blend-mode: normal; }
+.dossier-reader .letter-words p { margin: 0 0 1.25cqh; }
+.dossier-reader .letter-dateline { font-size: .82em; color: #5b5144; }
+/* his own note on it, in pencil */
+.dossier-reader .letter-page .letter-margin { margin-top: 2.6cqh !important; font: 400 calc(.86cqw * var(--reading-scale, 1))/1.45 "Architects Daughter", cursive; color: #4a4a4c; transform: rotate(-1.6deg); transform-origin: left; }
+.evidence-tags { padding: 2.2cqh 0 2cqh; column-gap: 1.6cqw; row-gap: .8cqh; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11cqw), 1fr)); }
+.evidence-tag { grid-template-columns: 1.4cqw minmax(0, 1fr); padding: .6cqh 0 1cqh; }
+.tag-number { font-size: calc(.5cqw * var(--reading-scale, 1)); }
+.tag-word { font-size: calc(.95cqw * var(--reading-scale, 1)); color: #221e19; }
+.tag-where { font-size: calc(.56cqw * var(--reading-scale, 1)); color: #6a5e4e; }
+.tag-status { font-size: calc(.5cqw * var(--reading-scale, 1)); color: #7a2418; }
+.dossier :is(.dossier-index, .dossier-reading, .evidence-tags) { scrollbar-width: thin; scrollbar-color: #6a5e4e66 transparent; }
+/* (the close in the corner of the screen, where the desk is cut by it) */
+.dossier-close { position: absolute; z-index: 4; top: calc((100% - 100dvh) / 2 + 22px); right: calc((100% - 100vw) / 2 + 26px); }
+
+/* ══ the notebook: his pocket book in its leather cover, the pencil beside
+   it, on the right over the game — the book alone, its own shadow
+   on what is under it. The pages saved from it are paper slips out from
+   under its cover on the left; the page itself is the notes
+   for the puzzle he is in, and a sheet to draw on across its width ══ */
+#notebook-modal {
+  top: 10px; right: 8px; bottom: auto; left: auto;
+  height: min(calc(100% - 20px), 860px); width: auto; max-width: none;
+  aspect-ratio: var(--book-ratio); container: notebook / size; overflow: visible;
+  background: none; border: 0; filter: none; box-shadow: none;
+  clip-path: none; transform: none; opacity: 1; transition: opacity .18s ease;
+}
+/* the book itself, over the tabs, under what is written on it */
+#notebook-modal::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: var(--book-art) center / 100% 100% no-repeat; }
+/* (put away: it fades where it lies, slips and all — it does not move) */
+#notebook-modal.hidden { clip-path: none; transform: none; opacity: 0;
+  transition: opacity .15s ease, visibility 0s linear .15s; }
+#notebook-modal .notebook-content {
+  position: absolute; z-index: 2; box-sizing: border-box; padding: 0; margin: 0;
+  left: var(--book-leaf-x); top: var(--book-leaf-y); width: var(--book-leaf-w); height: var(--book-leaf-h);
+  transform: translate(-50%, -50%) rotate(var(--book-leaf-turn)); mix-blend-mode: multiply;
+  container-type: inline-size; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #6f665866 transparent;
+}
+#notebook-modal .notebook-leaf {
+  min-height: 100%; gap: 5px; color: #2f2b25; background: none;
+  /* (the leaf has no margin rule: written on edge to edge) */
+  padding: 6px 12px 10px 12px;
+}
+#notebook-modal .notebook-leaf::before { content: none; }
+/* (its name is plain from the book itself: kept for those who listen to the page) */
+#notebook-modal .options-heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; }
+#notebook-modal h2 { margin: 0; color: #26231f; font: 400 calc(22px * var(--reading-scale, 1))/1.15 "Architects Daughter", "Segoe Print", cursive !important; }
+#notebook-modal .notebook-body { gap: 0; }
+#notebook-modal .notebook-page { gap: 6px; }
+#notebook-modal :is(.tool-note, .page-name, .note-meta) { color: #5b544a; }
+#notebook-modal .tool-note { font-size: calc(10.5px * var(--reading-scale, 1)); line-height: 1.35; }
+#notebook-modal .page-name { color: #3a352e; font-size: calc(16px * var(--reading-scale, 1)); }
+#notebook-modal .page-back { color: #6c3326; }
+#notebook-modal #notebook-text { height: 13cqh; min-height: 64px; background: transparent; color: #2a2722; caret-color: #2a2722; }
+#notebook-modal #notebook-text::placeholder, #notebook-modal #notebook-note-title::placeholder { color: #8a8174; }
+/* the sheet to draw on: across the whole leaf */
+#notebook-modal .notebook-sketch-wrap { margin-left: 0; background: transparent; border: 1px dashed #55504566; border-radius: 0; box-shadow: none; }
+#notebook-sketch { mix-blend-mode: multiply; }
+#notebook-modal .notebook-pens { gap: 8px; }
+#notebook-modal .pen-size, #notebook-modal .pen-colour { width: 28px; height: 28px; border-color: #8a8174; }
+#notebook-modal .pen-colour span { width: 17px; height: 17px; }
+#notebook-modal .pen-size span { background: #3b362f; }
+#notebook-modal .pen-size[aria-pressed="true"], #notebook-modal .pen-colour[aria-pressed="true"] { border-color: #2f2b25; background: #2f2b2512; box-shadow: 0 0 0 1px #2f2b25; }
+#notebook-modal .notebook-tools { gap: 14px; }
+#notebook-modal .notebook-tools .menu-btn { min-height: 0; padding: 2px 0; }
+#notebook-modal :is(.notebook-tools .menu-btn, .notebook-save .menu-btn) { color: #3a342c; }
+#notebook-modal .notebook-tools .menu-btn { color: #1f1b16; font-size: calc(15px * var(--reading-scale, 1)); letter-spacing: .01em; -webkit-text-stroke: .35px currentColor; }
+#notebook-modal .notebook-tools .menu-btn:hover { color: #000; background: transparent; }
+#notebook-modal .notebook-tools .menu-btn[aria-pressed="true"] { color: #6c3326; text-decoration: underline; text-underline-offset: 5px; }
+/* putting it away: its name and the button, on one line */
+#notebook-modal .notebook-save { flex-wrap: nowrap; align-items: baseline; padding-top: 2px; gap: 10px; border-top: 1px dashed #55504555; }
+#notebook-modal #notebook-note-title { flex: 1 1 auto; flex-basis: auto; min-width: 0; padding: 4px 0; }
+#notebook-modal .notebook-save .menu-btn { min-height: 0; padding: 4px 0; white-space: nowrap; }
+#notebook-modal .notebook-save .notebook-save-btn { color: #6c3326; }
+#notebook-modal .notebook-status { min-height: 0; margin: 0; }
+/* closing it: by the pencil's end */
+#notebook-modal #btn-close-notebook { z-index: 3; top: 0; right: 0; width: 40px; height: 40px; padding: 0; border-radius: 50%; color: #efe7d6; background: #0000004d; }
+#notebook-modal #btn-close-notebook .ui-icon { width: 24px; height: 24px; stroke-width: 1.4; filter: drop-shadow(0 1px 1px #000c); }
+#notebook-modal #btn-close-notebook:hover { color: #fff; background: #00000080; }
+
+/* the pages saved: little manila tags out from under the cover on the left,
+   newest at the top, each its end cut to a point, a hole punched in it, its
+   name written on it; the one open cream, pulled out furthest. Over them a
+   dashed one to start a new page */
+#notebook-modal .notebook-shelf {
+  position: absolute; z-index: 0; top: 15%; right: calc(100% - 3.5% - 20px); width: 214px; max-height: 80%;
+  display: flex; flex-direction: column; align-items: stretch; gap: 3px;
+  padding: 0 20px 6px 8px; margin: 0; border: 0; border-radius: 0; background: none; box-shadow: none;
+  /* (many saved: the column runs on under its own scroll. The right
+     padding, under the cover, holds the slips pushed in under it, so nothing
+     sticks out sideways for the column to scroll to) */
+  overflow-x: hidden; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain;
+}
+#notebook-modal .notebook-shelf .shelf-head { padding: 0 26px 4px 6px; justify-content: space-between; }
+#notebook-modal .notebook-shelf :is(.shelf-label, .shelf-count) { color: #ece4d2; font-size: calc(12px * var(--reading-scale, 1)); letter-spacing: .06em; text-shadow: 0 1px 3px #000; }
+/* (the list itself does not scroll — the column does: a list scrolling on its
+   own would slide sideways to the slip clicked, and cut its words) */
+#notebook-notes { max-height: none; overflow: visible; display: grid; gap: 3px; padding: 0; }
+/* (its shadow on the li: it follows the tag's cut shape) */
+#notebook-notes > li { filter: drop-shadow(-2px 2px 1.5px #0009); }
+#notebook-modal .shelf-note, #notebook-modal .shelf-note:hover, #notebook-modal .shelf-note.open {
+  position: relative; display: block; width: 180px; min-height: 0; margin-left: auto; padding: 4px 40px 4px 27px;
+  border: 0; border-radius: 0; text-align: left; box-shadow: inset 0 1px 0 #fff4, inset 0 -1px 0 #0003;
+  background: url('/assets/images/InspectorDesk/v2/tab-manila.webp') center / 220px, #cdb27a;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+  transform: translateX(16px); transition: transform .18s ease;
+}
+/* the hole, a ring of card round it */
+#notebook-modal .shelf-note::before { content: ""; position: absolute; left: 12px; top: 50%; width: 6px; height: 6px; margin-top: -3px;
+  border-radius: 50%; background: #1b1612; box-shadow: 0 0 0 1.5px #f3e9cf99, inset 0 1px 1px #000; }
+#notebook-modal .shelf-note:hover { transform: translateX(8px); }
+#notebook-modal .shelf-note.open, #notebook-modal .shelf-note.open:hover { transform: translateX(-4px);
+  background: url('/assets/images/InspectorDesk/v2/tab-cream.webp') center / 220px, #eadfc6; }
+#notebook-modal .note-name { display: block; color: #2c2620; font-size: calc(13px * var(--reading-scale, 1)); line-height: 1.35; }
+#notebook-modal .shelf-note.open .note-name { color: #6c3326; font-weight: 700; }
+#notebook-modal .shelf-note.just-kept { animation: tag-kept .35s ease-out; }
+/* (moved by translate, which adds to where the tag stands, open or not) */
+@keyframes tag-kept { from { opacity: 0; translate: 32px 0; } to { opacity: 1; translate: 0 0; } }
+[data-reduced-motion="true"] #notebook-modal .shelf-note.just-kept { animation: none; }
+/* a new page: a dashed tag, nothing on it yet */
+#notebook-modal .shelf-add, #notebook-modal .shelf-add:hover {
+  align-self: flex-end; width: 180px; min-height: 0; margin: 0 0 5px; padding: 4px 40px 4px 14px; text-align: left;
+  border: 1px dashed #ece4d2aa; border-right: 0; border-radius: 6px 0 0 6px; box-shadow: none;
+  color: #ece4d2; background: #0000004d; font-size: calc(13px * var(--reading-scale, 1)); text-shadow: 0 1px 2px #000;
+  transform: translateX(16px); transition: transform .18s ease, background .18s ease;
+}
+#notebook-modal .shelf-add:hover { transform: translateX(8px); background: #00000080; }
+#notebook-modal .shelf-empty { padding: 2px 26px 2px 6px; color: #ece4d2cc; font-size: calc(12px * var(--reading-scale, 1)); text-shadow: 0 1px 2px #000; text-align: right; }
+/* a smaller book (a lower screen): the hint goes (its words are on each tool
+   as it is pointed at), the pencil's buttons smaller — so the page still holds it all */
+:root:is([data-text-scale="1.15"], [data-text-scale="1.3"]) #notebook-modal .tool-note { display: none; }
+@container notebook (max-height: 760px) {
+  #notebook-modal .tool-note { display: none; }
+  #notebook-modal .notebook-page { gap: 4px; }
+  #notebook-modal :is(.pen-size, .pen-colour) { width: 24px; height: 24px; }
+  #notebook-modal .pen-colour span { width: 14px; height: 14px; }
+  #notebook-modal .notebook-tools .menu-btn { font-size: calc(14px * var(--reading-scale, 1)); }
+}
+#notebook-modal .notebook-shelf, #notebook-modal .notebook-shelf * { font-family: "Architects Daughter", "Segoe Print", cursive !important; }
+
+/* ══ settings: the whole desk, his preferences typed on a form on his
+   clipboard — the three parts of it along its head, the one he is at
+   ringed in pencil ══ */
+#options-modal { padding: 0; overflow: hidden; background: #0d0907; backdrop-filter: none; -webkit-backdrop-filter: none; }
+#options-modal .modal-content.settings-panel {
+  --st-ink: #221e19; --st-muted: #6a5e4e; --st-rule: #221e1926; --st-accent: #7a2418;
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: max(100vw, calc(100dvh * 2880 / 1620)); height: max(100dvh, calc(100vw * 1620 / 2880)); max-height: none;
+  display: block; container-type: size; overflow: visible; padding: 0; border: 0; border-radius: 0; filter: none; box-shadow: none;
+  background: var(--set-art) center / 100% 100% no-repeat;
+}
+#options-modal #btn-close-options { position: absolute; z-index: 4; margin: 0; top: calc((100% - 100dvh) / 2 + 22px); right: calc((100% - 100vw) / 2 + 26px); }
+#options-modal .settings-panel .st-sheet {
+  position: absolute; box-sizing: border-box; min-height: 0; margin: 0; background: none;
+  left: var(--set-form-x); top: var(--set-form-y); width: var(--set-form-w); height: var(--set-form-h);
+  transform: translate(-50%, -50%) rotate(var(--set-form-turn)); mix-blend-mode: multiply;
+  display: flex; flex-direction: column; padding: 2.4cqh 1.7cqw 2.6cqh;
+}
+#options-modal .settings-panel .st-head { margin: 0 0 1.4cqh; padding: 0; }
+#options-modal .settings-panel h2#settings-title { font: 400 calc(1.25cqw * var(--reading-scale, 1))/1.1 "Special Elite", "Courier New", monospace !important; color: var(--st-ink); letter-spacing: .02em; }
+/* its three parts, typed along its head; the one open ringed in pencil */
+#options-modal .settings-panel .st-tabs { display: flex; gap: 1.2cqw; margin: 0 0 1.8cqh; padding: 0 0 1.2cqh; border: 0; border-bottom: 1px solid var(--st-rule); background: none; }
+#options-modal .settings-panel .st-tabs [role="tab"] {
+  position: relative; min-height: 0; height: auto; padding: .5cqh .5cqw; margin: 0; border: 0; border-radius: 0; background: none;
+  font: 400 calc(.72cqw * var(--reading-scale, 1))/1.2 "Special Elite", "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--st-muted);
+}
+#options-modal .settings-panel .st-tabs [role="tab"][aria-selected="true"] { color: var(--st-ink); background: none; border: 0; }
+#options-modal .settings-panel .st-tabs [role="tab"][aria-selected="true"]::after {
+  content: ""; position: absolute; inset: -.5cqh -.4cqw; border: 1.4px solid #3b3a3ccc; border-radius: 50%; transform: rotate(-3deg); pointer-events: none;
+}
+#options-modal .settings-panel .st-tabs [role="tab"]:hover { color: var(--st-ink); }
+#options-modal .settings-panel .st-tab-icon { display: none; }
+#options-modal .settings-panel .st-panel { flex: 1; min-height: 0; padding: 0 .3cqw 0 0; gap: 1.8cqh; overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: #6a5e4e66 transparent; }
+#options-modal .settings-panel .st-card { gap: 1.2cqh; }
+#options-modal .settings-panel .st-card + .st-card { border-top: 1px dashed var(--st-rule); padding-top: 1.6cqh; }
+#options-modal .settings-panel .st-card-head h3 { font: 400 calc(.6cqw * var(--reading-scale, 1))/1.5 "Special Elite", "Courier New", monospace; letter-spacing: .14em; color: var(--st-muted); }
+#options-modal .settings-panel :is(.st-row > label, .st-label, .st-fader-top label, .st-switch-title) { font: 400 calc(.74cqw * var(--reading-scale, 1))/1.4 "Special Elite", "Courier New", monospace; color: var(--st-ink); }
+#options-modal .settings-panel :is(.st-field-desc, .st-switch .st-label small, .st-note) { font: italic 400 calc(.6cqw * var(--reading-scale, 1))/1.45 Georgia, serif; color: var(--st-muted); }
+#options-modal .settings-panel .st-row { min-height: 0; gap: .9cqw; }
+#options-modal .settings-panel .st-seg { gap: .6cqw; }
+#options-modal .settings-panel .st-seg button { min-height: 0; padding: .9cqh .4cqw; gap: .3cqh; background: transparent; border: 1px solid var(--st-rule); border-radius: 2px; color: var(--st-muted); }
+#options-modal .settings-panel .st-seg button[aria-checked="true"] { border-color: var(--st-ink); color: var(--st-ink); background: #221e190d; box-shadow: none; }
+#options-modal .settings-panel .st-seg-aa { font-family: Georgia, serif; font-size: calc(1.1cqw * var(--reading-scale, 1)); }
+#options-modal .settings-panel .st-aa-md { font-size: calc(1.3cqw * var(--reading-scale, 1)); }
+#options-modal .settings-panel .st-aa-lg { font-size: calc(1.5cqw * var(--reading-scale, 1)); }
+#options-modal .settings-panel .st-seg-name { font: 400 calc(.58cqw * var(--reading-scale, 1)) "Special Elite", "Courier New", monospace; }
+#options-modal .settings-panel .st-choice-lang { grid-template-columns: minmax(0, 1fr) 9cqw; gap: 1cqw; }
+#options-modal .settings-panel .st-select-box { min-height: 0; background: transparent; border: 0; border-bottom: 1px solid var(--st-ink); border-radius: 0; }
+#options-modal .settings-panel .st-select-box:is(:hover, :focus-within) { background: #221e190a; border: 0; border-bottom: 1px solid var(--st-ink); }
+#options-modal .settings-panel .st-select { height: auto; padding: .6cqh 0; color: var(--st-ink); font: 400 calc(.7cqw * var(--reading-scale, 1)) "Special Elite", "Courier New", monospace; }
+#options-modal .settings-panel .st-lang-menu { background: #efe6d0; border: 1px solid #8a7a62; border-radius: 2px; }
+#options-modal .settings-panel .st-actions { gap: .6cqw; }
+#options-modal .settings-panel :is(#btn-howto, #btn-new, #btn-mute) { min-height: 0; padding: .8cqh .6cqw; font: 400 calc(.66cqw * var(--reading-scale, 1))/1.3 "Special Elite", "Courier New", monospace;
+  border: 1px solid var(--st-ink); border-radius: 2px; background: transparent; color: var(--st-ink); }
+#options-modal .settings-panel #btn-new { color: #7a2418; border-color: #7a2418; }
+#options-modal .settings-panel #btn-new.armed { background: #7a2418; color: #f6ecd8; }
+#options-modal .settings-panel #btn-mute[aria-pressed="true"] { background: var(--st-ink); color: #f1e7d2; }
+#options-modal .settings-panel .st-action-icon { width: .8cqw; height: .8cqw; }
+#options-modal .settings-panel .st-row output { color: var(--st-ink); font: 400 calc(.62cqw * var(--reading-scale, 1)) "Special Elite", "Courier New", monospace; }
+#options-modal .settings-panel .st-scale-ticks { font: 400 calc(.48cqw * var(--reading-scale, 1)) Georgia, serif; color: var(--st-muted); }
+#options-modal .settings-panel .st-channel-row { grid-template-columns: 6cqw minmax(0, 1fr) 2.6cqw; min-height: 0; gap: .9cqw; }
+/* a slider: a ruled line, a brass slide on it */
+#options-modal .settings-panel input[type="range"] { height: 2.4cqh; }
+#options-modal .settings-panel input[type="range"]::-webkit-slider-runnable-track { height: 2px; border-radius: 0; background: linear-gradient(90deg, #221e19 var(--fill, 0%), #221e194d var(--fill, 0%)); }
+#options-modal .settings-panel input[type="range"]::-moz-range-track { height: 2px; background: #221e194d; }
+#options-modal .settings-panel input[type="range"]::-moz-range-progress { height: 2px; background: #221e19; }
+#options-modal .settings-panel input[type="range"]::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -7px; border-radius: 50%; border: 0;
+  background: radial-gradient(circle at 36% 32%, #f5e0a8 0 14%, #c99a4d 42%, #7d5622 78%, #5a3b16 100%); box-shadow: 0 1px 2px #2b140d99; }
+#options-modal .settings-panel input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; border: 0;
+  background: radial-gradient(circle at 36% 32%, #f5e0a8 0 14%, #c99a4d 42%, #7d5622 78%, #5a3b16 100%); box-shadow: 0 1px 2px #2b140d99; }
+/* a switch: a box to tick, in ink */
+#options-modal .settings-panel .st-switch { grid-template-columns: minmax(0, 1fr) 1.4cqw; gap: 1cqw; padding: .4cqh 0; }
+#options-modal .settings-panel .st-knob { width: 1.2cqw; height: 1.2cqw; border-radius: 1px; border: 1.4px solid var(--st-ink); background: transparent; box-shadow: none; }
+#options-modal .settings-panel .st-knob::after { content: ""; inset: auto; left: 18%; top: -18%; width: 40%; height: 75%; border-radius: 0; background: none;
+  border-right: 2px solid #1f2a44; border-bottom: 2px solid #1f2a44; transform: rotate(40deg) scale(0); box-shadow: none; transition: transform .15s ease; }
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob { background: transparent; border-color: var(--st-ink); }
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob::after { transform: rotate(40deg) scale(1); }
+#options-modal .settings-panel :is(button, select, input[type="range"]):focus-visible { outline: 1px dashed var(--st-ink); outline-offset: 3px; }
+
+/* (the game sets its interface font on everything, firmly: on these papers
+   the type is the typewriter's, his notes his own hand) */
+#options-modal .settings-panel .st-sheet, #options-modal .settings-panel .st-sheet * { font-family: "Special Elite", "Courier New", monospace !important; }
+#options-modal .settings-panel .st-sheet :is(.st-field-desc, .st-switch .st-label small, .st-note, .st-seg-aa, .st-scale-ticks) { font-family: Georgia, "Times New Roman", serif !important; }
+#notebook-modal .notebook-content, #notebook-modal .notebook-content * { font-family: "Architects Daughter", "Segoe Print", cursive !important; }
+#options-modal #btn-close-options { width: 46px; height: 46px; color: #efe7d6; background: #0000005c; }
+#options-modal #btn-close-options:hover { color: #fff; background: #00000088; }

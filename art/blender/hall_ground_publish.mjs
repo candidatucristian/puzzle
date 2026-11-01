@@ -4,6 +4,15 @@
 //                                clock's pendulum
 //   hall-ground-doors-render-v1  the same with nothing stood in it (their
 //                                shadows kept), for a door to swing open with
+//   hall-ground-passby-<n>-render-v1  for each door that something stands
+//                                before: the hall without those things (the
+//                                bare pass), only where they stand and where
+//                                their shadows lay, whole — each table, plant and
+//                                stand that lies over any of the door, told
+//                                apart by the ids pass — so as one walks in
+//                                at the door they are passed by, not walked
+//                                into; where each lies, in the reference
+//                                picture, in src/levels/hall/hallPassBy.json
 //   hall-ground-front-render-v1  what stands in it, alone: the hall's own
 //                                pixels where the front pass has something,
 //                                so a swinging door slides under them unchanged
@@ -39,6 +48,76 @@ const alpha = await sharp(IN("front")).extractChannel(3).raw().toBuffer({ resolv
 // (sharp takes an alpha off last of all, so the colour is taken off first)
 const colour = await sharp(IN("plate")).removeAlpha().raw().toBuffer({ resolveWithObject: true });
 await sharp(colour.data, { raw: colour.info }).joinChannel(alpha.data, { raw: alpha.info }).webp({ quality: 90, alphaQuality: 100 }).toFile(OUT("hall-ground-front-render-v1"));
+// ── what stands before each door, to be passed by on the way in ───────────
+if (existsSync(IN("ids")) && existsSync(IN("bare"))) {
+  const raw = (name) => sharp(IN(name)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const ids = await raw("ids"), front = await raw("front"), bare = await raw("bare");
+  const W = ids.info.width, H = ids.info.height;
+  // (each thing in the ids pass is a flat red, 8 × its number)
+  const idAt = (i) => (ids.data[i * 4 + 3] > 200 ? Math.round(ids.data[i * 4] / 8) : 0);
+  const inside = (q, x, y) => {
+    let c = false;
+    for (let i = 0, j = 3; i < 4; j = i++) {
+      const [xi, yi] = q[i], [xj, yj] = q[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  };
+  // (a mask grown by r pixels every way)
+  const dilate = (m, r) => {
+    const wide = new Uint8Array(W * H), out = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (m[y * W + x]) wide.fill(1, y * W + Math.max(0, x - r), y * W + Math.min(W - 1, x + r) + 1);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (wide[y * W + x]) for (let yy = Math.max(0, y - r); yy <= Math.min(H - 1, y + r); yy++) out[yy * W + x] = 1;
+    return out;
+  };
+  // where the hall differs for what stands in it (softened, so that only
+  // shadows and kept-off light count, not the renders' grain)
+  const plate = await raw("plate"), diff = Buffer.alloc(W * H);
+  for (let at = 0; at < W * H; at++) {
+    let d = 0;
+    for (let c = 0; c < 3; c++) d = Math.max(d, Math.abs(plate.data[at * 4 + c] - bare.data[at * 4 + c]));
+    diff[at] = Math.min(255, d * 4);
+  }
+  const changed = await sharp(diff, { raw: { width: W, height: H, channels: 1 } }).blur(2).extractChannel(0).raw().toBuffer();
+  const boxes = {}, GROW = 3, NEAR = 40;
+  for (const [side, first] of [[-1, 1], [1, 4]]) for (const [i, z0] of [1.32, 2.2, 3.1].entries()) {
+    const n = first + i, X = side * wall, z1 = z0 + 0.5;
+    const q = [P(X, HR * -0.3, z0), P(X, HR * -0.3, z1), P(X, floor, z1), P(X, floor, z0)].map((p) => [p.x * s, p.y * s]);
+    const xs = q.map((p) => p[0]), ys = q.map((p) => p[1]);
+    // the things over the door
+    const over = new Set();
+    for (let y = Math.max(0, Math.floor(Math.min(...ys))); y < Math.min(H, Math.ceil(Math.max(...ys))); y++)
+      for (let x = Math.max(0, Math.floor(Math.min(...xs))); x < Math.min(W, Math.ceil(Math.max(...xs))); x++) {
+        const at = y * W + x;
+        if (front.data[at * 4 + 3] > 20 && inside(q, x, y) && idAt(at)) over.add(idAt(at));
+      }
+    if (!over.size) continue;
+    // all of each, and what its standing there did to the hall close round it
+    // (its shadow on the boards, the light it kept off the panelling): grown
+    // a little so their soft edges go with them
+    const hit = new Uint8Array(W * H);
+    for (let at = 0; at < W * H; at++) if (over.has(idAt(at))) hit[at] = 1;
+    const near = dilate(hit, NEAR), keep = new Uint8Array(W * H);
+    for (let at = 0; at < W * H; at++) if (hit[at] || (near[at] && changed[at] > 12)) keep[at] = 1;
+    const grown = dilate(keep, GROW);
+    let x0 = W, y0 = H, x1 = -1, y1 = -1;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (grown[y * W + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    x0 = Math.max(0, x0 - 6); y0 = Math.max(0, y0 - 6); x1 = Math.min(W - 1, x1 + 6); y1 = Math.min(H - 1, y1 + 6);
+    const cw = x1 - x0 + 1, chh = y1 - y0 + 1, rgb = Buffer.alloc(cw * chh * 3), mask = Buffer.alloc(cw * chh);
+    for (let y = 0; y < chh; y++) for (let x = 0; x < cw; x++) {
+      const at = (y + y0) * W + x + x0, o = y * cw + x;
+      rgb[o * 3] = bare.data[at * 4]; rgb[o * 3 + 1] = bare.data[at * 4 + 1]; rgb[o * 3 + 2] = bare.data[at * 4 + 2];
+      mask[o] = grown[at] ? 255 : 0;
+    }
+    const soft = await sharp(mask, { raw: { width: cw, height: chh, channels: 1 } }).blur(2).extractChannel(0).raw().toBuffer();
+    await sharp(rgb, { raw: { width: cw, height: chh, channels: 3 } }).joinChannel(soft, { raw: { width: cw, height: chh, channels: 1 } })
+      .webp({ quality: 90, alphaQuality: 100 }).toFile(OUT(`hall-ground-passby-${n}-render-v1`));
+    boxes[n] = [x0 / s, y0 / s, cw / s, chh / s].map((v) => Math.round(v * 100) / 100);
+    console.log(`door ${n}: things ${[...over].join(", ")} passed by in ${cw} × ${chh}`);
+  }
+  writeFileSync(path("src/levels/hall/hallPassBy.json"), JSON.stringify({ ground: boxes }, null, 1) + "\n");
+}
+
 // the gate's leaves
 const ox = wall * 0.5, a = P(-ox, HR * -0.52, END), b = P(ox, floor, END);
 await sharp(IN("gate")).extract(box(a.x, a.y, vp.x, b.y)).webp({ quality: 92, alphaQuality: 100 }).toFile(OUT("hall-gate-left-render-v1"));

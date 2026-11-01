@@ -1,6 +1,7 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { paintStage, releaseStageArt, groundLight, CAR_LANES } from "./stage.js";
-import { paintCarsSteps, releaseCarArt, relativeYaw, frameAt, FRAME_COUNT } from "./cars.js";
+import { paintStage, stageEffects, releaseStageArt, groundLight, CAR_LANES } from "./stage.js";
+import { paintCarsSteps, addCarGlare, releaseCarArt, relativeYaw, frameAt, FRAME_COUNT } from "./cars.js";
+import { REF, RK, loadRallyRender, hasRallyRender, rallyCarArt, rallyPeople, rallyLettering } from "./rallyRender.js";
 import { paintPeople, releasePeopleArt, FLAG_FRAMES } from "./people.js";
 import { drawPodium, releasePodiumArt } from "./podium.js";
 import { paintTvFrame, releaseTvFrame } from "./tvSet.js";
@@ -45,6 +46,13 @@ import {
 // And it is a tape: an old VHS recording of the broadcast, played back — the
 // scanlines, the grain, the tracking noise, the recorder's PLAY in its corner
 // and the broadcaster's caption for the race across the top (vhs.js).
+//
+// All that is seen is rendered in Blender (rallyRender.js): the stage under
+// its floodlights and without them, the cars at every view (the same model,
+// the same views, the same projection as the painting above), the people,
+// the board, the tape's lettering, the television. It is drawn for one
+// picture, 1880 × 1000, which the camera fits to the screen; the painted
+// stage is what is shown only if the renders do not come.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEG = Math.PI / 180;
@@ -64,6 +72,7 @@ export default class RallyScene extends BasePuzzleScene {
   preload() {
     // optional: the level is silent (and still solvable) until this file exists
     this.load.audio("wroom", "assets/sounds/Rally/wroom.mp3");
+    loadRallyRender(this);
   }
 
   create() {
@@ -94,6 +103,10 @@ export default class RallyScene extends BasePuzzleScene {
   // ── construction ───────────────────────────────────────────────────────────
 
   _build(W, H) {
+    // rendered for one picture: laid out at its size, the camera fitting it to the screen
+    const screen = { W, H };
+    const rendered = (this._rendered = hasRallyRender(this));
+    if (rendered) ({ W, H } = REF);
     this._W = W;
     this._H = H;
     this._lights = []; // everything that goes dark when the stage ends
@@ -105,12 +118,13 @@ export default class RallyScene extends BasePuzzleScene {
     this._lamp = 1; // how much of the floodlight is still on
     this._carArt = null;
 
-    const art = (this._art = paintStage(this, W, H));
+    const art = (this._art = rendered ? stageEffects(this, W, H) : paintStage(this, W, H));
     const L = (this._L = art.L);
     const K = art.keys;
     this._finishX = L.finishX;
     this._carLen = L.carLenPx;
 
+    if (rendered) return this._buildRendered(W, H, screen);
     // (the smooth layers are painted small; they are stretched to the screen)
     this.add.image(0, 0, K.sky).setOrigin(0, 0).setDisplaySize(W, H).setDepth(-30);
     this.add.image(art.moon.x, art.moon.y, K.moon).setDepth(-29.8);
@@ -166,6 +180,29 @@ export default class RallyScene extends BasePuzzleScene {
     this.time.delayedCall(RALLY_START_DELAY_MS, () => this._runRace());
   }
 
+  // The stage as Blender rendered it: under its floodlights over the same
+  // stage without them (the lit one fades when they go out); the people; what
+  // stands in front of the cars; the set round it all when it is on one; the
+  // tape's look over the picture.
+  _buildRendered(W, H, screen) {
+    this.add.image(0, 0, RK.dark).setOrigin(0, 0).setDisplaySize(W, H).setDepth(-21);
+    this._light(this.add.image(0, 0, RK.lit).setOrigin(0, 0).setDisplaySize(W, H).setDepth(-20));
+    this._makePeople();
+    this.add.image(0, 0, RK.frontDark).setOrigin(0, 0).setDisplaySize(W, H).setDepth(4.9);
+    this._light(this.add.image(0, 0, RK.frontLit).setOrigin(0, 0).setDisplaySize(W, H).setDepth(5));
+    if (this._onTv) this.add.image(W / 2, H / 2, RK.tv).setDisplaySize(W / TV_ZOOM, H / TV_ZOOM).setDepth(1000);
+    const zoom = Math.max(screen.W / W, screen.H / H) * (this._onTv ? TV_ZOOM : 1);
+    this.cameras.main.setZoom(zoom).centerOn(W / 2, H / 2);
+    this._vhs = addVhs(this, W, H, rallyLettering(this));
+    if (this._finished) {
+      this._showFinal();
+      return;
+    }
+    this._carJob = null;
+    this._makeCars(rallyCarArt(this, addCarGlare(this.textures)));
+    this.time.delayedCall(RALLY_START_DELAY_MS, () => this._runRace());
+  }
+
   _light(obj) {
     this._lights.push(obj);
     return obj;
@@ -204,7 +241,7 @@ export default class RallyScene extends BasePuzzleScene {
 
   _makePeople() {
     const L = this._L;
-    const P = (this._people = paintPeople(this.textures, L, (x, z) => groundLight(L, x, z)));
+    const P = (this._people = this._rendered ? rallyPeople(this) : paintPeople(this.textures, L, (x, z) => groundLight(L, x, z)));
     const rnd = this._rng(4545);
     for (const c of P.crowd) {
       const img = this.add

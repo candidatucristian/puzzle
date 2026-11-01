@@ -1,0 +1,923 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ASHCOMBE MANOR (1961) — INSPECTOR'S FIELD APPARATUS & CALIBRATION CABINET
+   Authentic 3D Blender Cycles Mahogany, Oxblood Morocco Leather & Aged Brass
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#options-modal {
+  background:
+    radial-gradient(ellipse 68% 62% at 50% 46%, rgba(22, 16, 11, 0.76), rgba(4, 4, 5, 0.92));
+  backdrop-filter: blur(11px) saturate(0.84);
+  -webkit-backdrop-filter: blur(11px) saturate(0.84);
+  padding: 20px;
+}
+
+#options-modal .modal-content.settings-panel {
+  position: relative;
+  isolation: isolate;
+  width: min(560px, calc(100vw - 28px));
+  height: auto;
+  max-height: calc(100dvh - 36px);
+  padding: 38px 44px 32px;
+  gap: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 0;
+  border-radius: 10px;
+  background:
+    url('/assets/images/Interface/settings-cabinet-board-3d.webp') center / 100% 100% no-repeat;
+  box-shadow:
+    0 36px 95px rgba(0, 0, 0, 0.88),
+    0 8px 28px rgba(0, 0, 0, 0.65);
+  color: #ede5d4;
+}
+
+/* Subtle warm lamp glow inside the recessed ebonite instrument well */
+#options-modal .modal-content.settings-panel::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 24px 28px;
+  border-radius: 4px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 55% at 28% 12%, rgba(218, 176, 102, 0.08), transparent 68%),
+    radial-gradient(ellipse 70% 60% at 80% 90%, rgba(142, 42, 32, 0.06), transparent 65%);
+}
+
+/* ── 1. HEADER PLAQUE & 3D CALIBRATION MEDALLION ─────────────────────────── */
+#options-modal .settings-panel .st-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 14px;
+  padding: 0 2px 13px;
+  border-bottom: 1px solid rgba(204, 169, 104, 0.24);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
+}
+
+#options-modal .settings-panel .st-head-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+#options-modal .settings-panel .st-crest-img {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  user-select: none;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.75));
+}
+
+#options-modal .settings-panel .st-head-titles {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+#options-modal .settings-panel .st-eyebrow {
+  margin: 0;
+  font: 500 calc(9.5px * var(--reading-scale, 1))/1.3 var(--ui-mono, "IBM Plex Mono", monospace);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #cba767;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#options-modal .settings-panel h2#settings-title {
+  margin: 0;
+  font: 400 calc(24px * var(--reading-scale, 1))/1.12 "DM Serif Display", Georgia, serif;
+  letter-spacing: 0.01em;
+  color: #f6efe0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+}
+
+#options-modal .settings-panel .st-subtitle {
+  margin: 1px 0 0;
+  font: 400 calc(11.5px * var(--reading-scale, 1))/1.35 var(--ui-font);
+  color: #9e9483;
+}
+
+#options-modal #btn-close-options {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  margin: 2px 0 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(204, 169, 104, 0.32);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(36, 30, 24, 0.92), rgba(20, 17, 13, 0.96));
+  color: #d6c8ae;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 204, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.6);
+  transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease, transform 0.14s ease;
+}
+
+#options-modal #btn-close-options .ui-icon {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.6;
+}
+
+#options-modal #btn-close-options:hover,
+#options-modal #btn-close-options:focus-visible {
+  border-color: #dfbe7d;
+  background: linear-gradient(180deg, #352b20, #221b14);
+  color: #fff8ea;
+  outline: none;
+}
+
+#options-modal #btn-close-options:active {
+  transform: translateY(1px);
+}
+
+/* ── 2. 3-TAB BRASS & EBONITE INDEX BAR ──────────────────────────────────── */
+#options-modal .settings-panel .st-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  padding: 4px;
+  margin: 0 0 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 163, 98, 0.26);
+  background: linear-gradient(180deg, #100d0a, #17130f);
+  box-shadow:
+    inset 0 2px 7px rgba(0, 0, 0, 0.88),
+    0 1px 0 rgba(255, 235, 190, 0.07);
+}
+
+#options-modal .settings-panel .st-tabs [role="tab"] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  font: 500 calc(12.5px * var(--reading-scale, 1))/1.2 var(--ui-font);
+  letter-spacing: 0.03em;
+  color: #9e9482;
+  cursor: var(--cursor-hand, pointer);
+  transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+#options-modal .settings-panel .st-tab-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.82;
+  transition: opacity 0.16s ease, stroke 0.16s ease;
+}
+
+#options-modal .settings-panel .st-tabs [role="tab"]:hover {
+  color: #efe5d2;
+  background: rgba(212, 175, 105, 0.07);
+}
+
+#options-modal .settings-panel .st-tabs [role="tab"][aria-selected="true"] {
+  color: #fff8e8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  border-color: rgba(232, 198, 128, 0.45);
+  background:
+    url('/assets/images/Interface/settings-tab-plate-3d.webp') center / 100% 100% no-repeat;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.65);
+}
+
+#options-modal .settings-panel .st-tabs [role="tab"][aria-selected="true"] .st-tab-icon {
+  stroke: #fae0a4;
+  opacity: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+}
+
+#options-modal .settings-panel .st-tabs [role="tab"]:focus-visible {
+  outline: 1px solid #e5c481;
+  outline-offset: -2px;
+}
+
+/* ── 3. PANEL DECK & INSTRUMENT CARDS ────────────────────────────────────── */
+#options-modal .settings-panel .st-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-height: 292px;
+  padding: 0;
+}
+
+#options-modal .settings-panel .st-panel[hidden] {
+  display: none !important;
+}
+
+#options-modal .settings-panel .st-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px 15px;
+  border-radius: 7px;
+  border: 1px solid rgba(198, 163, 98, 0.22);
+  background:
+    linear-gradient(180deg, rgba(25, 21, 17, 0.92), rgba(16, 13, 11, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 200, 0.06),
+    0 6px 16px rgba(0, 0, 0, 0.42);
+}
+
+#options-modal .settings-panel .st-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(198, 163, 98, 0.15);
+}
+
+#options-modal .settings-panel .st-sound-head {
+  justify-content: space-between;
+}
+
+#options-modal .settings-panel .st-card-head-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#options-modal .settings-panel .st-card-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 3px;
+  border: 1px solid rgba(206, 170, 102, 0.42);
+  background: rgba(186, 146, 76, 0.14);
+  font: 600 9.5px/1 "DM Serif Display", Georgia, serif;
+  letter-spacing: 0.06em;
+  color: #dfc082;
+}
+
+#options-modal .settings-panel .st-card-head h3 {
+  margin: 0;
+  font: 500 calc(10.5px * var(--reading-scale, 1))/1.2 var(--ui-mono, "IBM Plex Mono", monospace);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #cbb07d;
+}
+
+#options-modal .settings-panel .st-console-spec {
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(198, 163, 98, 0.24);
+  background: rgba(12, 10, 8, 0.75);
+  font: 500 9.5px/1.2 var(--ui-mono, "IBM Plex Mono", monospace);
+  letter-spacing: 0.1em;
+  color: #a69577;
+}
+
+#options-modal .settings-panel .st-divider {
+  height: 1px;
+  margin: 1px 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(198, 163, 98, 0.22) 12%,
+    rgba(198, 163, 98, 0.22) 88%,
+    transparent
+  );
+}
+
+#options-modal .settings-panel .st-field-meta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+#options-modal .settings-panel .st-field-desc {
+  display: block;
+  font: 400 calc(11px * var(--reading-scale, 1))/1.38 var(--ui-font);
+  color: #938978;
+}
+
+/* ── 4. OPTIONS TAB: TYPOGRAPHY SPECIMEN KEYS & DISPATCH LANGUAGE ───────── */
+#options-modal .settings-panel .st-choice-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+}
+
+#options-modal .settings-panel #st-panel-options .st-choice + .st-choice {
+  margin-top: 0;
+}
+
+#options-modal .settings-panel .st-seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  padding: 4px;
+  border-radius: 7px;
+  border: 1px solid rgba(198, 163, 98, 0.22);
+  background: #0f0d0a;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+#options-modal .settings-panel .st-seg button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 54px;
+  padding: 7px 6px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  background: linear-gradient(180deg, #1b1713, #14110e);
+  color: #a69c8a;
+  cursor: var(--cursor-hand, pointer);
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+#options-modal .settings-panel .st-seg-aa {
+  font-family: "DM Serif Display", Georgia, serif;
+  line-height: 1;
+  color: #cfc3ad;
+  transition: color 0.16s ease;
+}
+#options-modal .settings-panel .st-aa-sm { font-size: 14px; }
+#options-modal .settings-panel .st-aa-md { font-size: 17px; }
+#options-modal .settings-panel .st-aa-lg { font-size: 20px; }
+
+#options-modal .settings-panel .st-seg-name {
+  font: 500 calc(11.5px * var(--reading-scale, 1))/1.2 var(--ui-font);
+  color: inherit;
+}
+
+#options-modal .settings-panel .st-seg-pct {
+  font: 400 9.5px/1 var(--ui-mono, "IBM Plex Mono", monospace);
+  letter-spacing: 0.06em;
+  color: #7d7363;
+}
+
+#options-modal .settings-panel .st-seg button:hover {
+  border-color: rgba(212, 175, 105, 0.38);
+  color: #f0e7d5;
+  background: linear-gradient(180deg, #241e18, #191511);
+}
+
+#options-modal .settings-panel .st-seg button[aria-checked="true"] {
+  border-color: #d6b16a;
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 15%, rgba(218, 176, 100, 0.24), transparent 70%),
+    linear-gradient(180deg, #33281b, #211a12);
+  color: #fff8e8;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 200, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.65);
+}
+
+#options-modal .settings-panel .st-seg button[aria-checked="true"] .st-seg-aa {
+  color: #f6d794;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+#options-modal .settings-panel .st-seg button[aria-checked="true"] .st-seg-pct {
+  color: #cfa963;
+}
+
+/* Language row & custom menu */
+#options-modal .settings-panel .st-choice-lang {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 186px;
+  align-items: center;
+  gap: 14px;
+}
+
+#options-modal .settings-panel .st-select-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(180deg, #1b1713, #13100d);
+  border: 1px solid rgba(204, 169, 104, 0.32);
+  border-radius: 6px;
+  padding-left: 11px;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.75),
+    0 1px 0 rgba(255, 236, 195, 0.06);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+#options-modal .settings-panel .st-select-box:hover,
+#options-modal .settings-panel .st-select-box:focus-within {
+  background: linear-gradient(180deg, #251f19, #181410);
+  border-color: #d8b46c;
+}
+
+#options-modal .settings-panel .st-select {
+  height: 36px;
+  min-height: 36px;
+  font: 500 calc(12.5px * var(--reading-scale, 1)) var(--ui-font);
+  color: #f2ead9;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23cba767' d='M1.4 1 6 5.6 10.6 1 12 2.4l-6 6-6-6z'/%3E%3C/svg%3E")
+    no-repeat right 11px center;
+}
+
+#options-modal .settings-panel .st-lang-menu {
+  background: #181410;
+  border: 1px solid rgba(212, 175, 105, 0.42);
+  border-radius: 7px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.85);
+  padding: 5px;
+}
+
+#options-modal .settings-panel .st-lang-item {
+  color: #e9dfd0;
+  border-radius: 5px;
+}
+
+#options-modal .settings-panel .st-lang-item:hover,
+#options-modal .settings-panel .st-lang-item:focus-visible {
+  background: rgba(212, 175, 105, 0.14);
+  color: #fff8ea;
+}
+
+#options-modal .settings-panel .st-lang-item.is-active,
+#options-modal .settings-panel .st-lang-item[aria-selected="true"] {
+  background: linear-gradient(90deg, rgba(204, 164, 92, 0.28), rgba(204, 164, 92, 0.14));
+  color: #fff9eb;
+  border-left: 2px solid #dfbe7d;
+}
+
+/* Field Manual & Case Reset Actions */
+#options-modal .settings-panel .st-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#options-modal .settings-panel #btn-howto,
+#options-modal .settings-panel #btn-new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font: 500 calc(12.5px * var(--reading-scale, 1))/1.2 var(--ui-font);
+  letter-spacing: 0.02em;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+#options-modal .settings-panel .st-action-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#options-modal .settings-panel #btn-howto {
+  border: 1px solid rgba(204, 169, 104, 0.34);
+  background: linear-gradient(180deg, #272019, #1b1611);
+  color: #eadfc9;
+  box-shadow: inset 0 1px 0 rgba(255, 238, 200, 0.1);
+}
+
+#options-modal .settings-panel #btn-howto:hover,
+#options-modal .settings-panel #btn-howto:focus-visible {
+  border-color: #dfbe7d;
+  background: linear-gradient(180deg, #342a20, #231c15);
+  color: #fff9eb;
+}
+
+#options-modal .settings-panel #btn-new {
+  border: 1px solid rgba(188, 92, 78, 0.38);
+  background: linear-gradient(180deg, #291816, #1c1110);
+  color: #e6b8b0;
+  box-shadow: inset 0 1px 0 rgba(255, 190, 180, 0.08);
+}
+
+#options-modal .settings-panel #btn-new:hover,
+#options-modal .settings-panel #btn-new:focus-visible {
+  border-color: #d67667;
+  background: linear-gradient(180deg, #3a1f1c, #271513);
+  color: #ffe3de;
+}
+
+#options-modal .settings-panel #btn-new.armed {
+  border-color: #f0a090;
+  background: linear-gradient(180deg, #8e2c22, #631b14);
+  color: #fff6f2;
+  box-shadow:
+    0 0 18px rgba(196, 62, 46, 0.45),
+    inset 0 1px 0 rgba(255, 220, 210, 0.25);
+}
+
+#options-modal .settings-panel .st-note {
+  margin: 2px 0 0;
+  font: italic 400 calc(11px * var(--reading-scale, 1))/1.45 var(--ui-font);
+  color: #8c8272;
+}
+
+/* ── 5. 3D KNURLED BRASS SLIDERS & MECHANICAL SWITCHES ──────────────────── */
+#options-modal .settings-panel input[type="range"] {
+  --fill: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: var(--cursor-hand, pointer);
+}
+
+#options-modal .settings-panel input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 99px;
+  border: 1px solid rgba(198, 163, 98, 0.28);
+  background:
+    linear-gradient(
+      90deg,
+      #c69c52 0%,
+      #e5c37c var(--fill),
+      #14110e var(--fill),
+      #1b1713 100%
+    );
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+#options-modal .settings-panel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border: 0;
+  border-radius: 50%;
+  background:
+    url('/assets/images/Interface/settings-brass-knob-3d.webp') center / contain no-repeat;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+#options-modal .settings-panel input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 99px;
+  border: 1px solid rgba(198, 163, 98, 0.28);
+  background: #14110e;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+#options-modal .settings-panel input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #c69c52, #e5c37c);
+}
+
+#options-modal .settings-panel input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background:
+    url('/assets/images/Interface/settings-brass-knob-3d.webp') center / contain no-repeat;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+#options-modal .settings-panel input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.12);
+  filter: brightness(1.08);
+}
+
+#options-modal .settings-panel input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.12);
+  filter: brightness(1.08);
+}
+
+#options-modal .settings-panel input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px #14110e, 0 0 0 4px #dfbe7d;
+}
+
+/* Video panel Film Grain block */
+#options-modal .settings-panel .st-grain-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#options-modal .settings-panel .st-fader-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#options-modal .settings-panel .st-fader-top label {
+  font: 500 calc(13px * var(--reading-scale, 1))/1.3 var(--ui-font);
+  color: #ede4d2;
+}
+
+#options-modal .settings-panel .st-fader-track-wrap {
+  display: grid;
+  gap: 3px;
+}
+
+#options-modal .settings-panel .st-scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font: 400 9.5px/1 var(--ui-mono, "IBM Plex Mono", monospace);
+  color: #7c7262;
+}
+
+/* Output readout badges */
+#options-modal .settings-panel .st-row output {
+  display: inline-block;
+  min-width: 48px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(198, 163, 98, 0.26);
+  background: #0f0d0a;
+  font: 500 calc(11px * var(--reading-scale, 1))/1.2 var(--ui-mono, "IBM Plex Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: #e4c483;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Mechanical Brass Toggle Switches (.st-switch) */
+#options-modal .settings-panel .st-switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 0;
+  cursor: var(--cursor-hand, pointer);
+}
+
+#options-modal .settings-panel .st-switch .st-switch-title {
+  display: block;
+  font: 500 calc(13px * var(--reading-scale, 1))/1.3 var(--ui-font);
+  color: #ede4d2;
+}
+
+#options-modal .settings-panel .st-switch .st-label small {
+  display: block;
+  margin-top: 2px;
+  font: 400 calc(11px * var(--reading-scale, 1))/1.4 var(--ui-font);
+  color: #938978;
+}
+
+#options-modal .settings-panel .st-switch .st-knob {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  border-radius: 99px;
+  border: 1px solid rgba(198, 163, 98, 0.34);
+  background: linear-gradient(180deg, #100d0a, #1a1612);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.88);
+  transition: background 0.22s ease, border-color 0.22s ease;
+}
+
+#options-modal .settings-panel .st-switch .st-knob::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background:
+    url('/assets/images/Interface/settings-brass-knob-3d.webp') center / contain no-repeat;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+  transition: transform 0.22s cubic-bezier(0.3, 0.75, 0.3, 1);
+}
+
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob {
+  border-color: #e2be78;
+  background: linear-gradient(90deg, #6e5227, #b88c44);
+}
+
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob::after {
+  transform: translateX(22px) rotate(45deg);
+  background:
+    url('/assets/images/Interface/settings-brass-knob-3d.webp') center / contain no-repeat;
+}
+
+/* ── 6. SOUNDS TAB: 5-CHANNEL ACOUSTIC MIXING CONSOLE ───────────────────── */
+#options-modal .settings-panel .st-sound-card {
+  gap: 8px;
+}
+
+#options-modal .settings-panel .st-channel-row {
+  display: grid;
+  grid-template-columns: 24px 98px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  transition: opacity 0.18s ease, background 0.16s ease;
+}
+
+#options-modal .settings-panel .st-channel-row::before {
+  content: attr(data-ch);
+  grid-column: 1;
+  grid-row: 1;
+  display: inline-grid;
+  place-items: center;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(198, 163, 98, 0.22);
+  background: rgba(12, 10, 8, 0.65);
+  font: 500 9.5px/1 var(--ui-mono, "IBM Plex Mono", monospace);
+  color: #9e8d6f;
+}
+
+#options-modal .settings-panel .st-channel-master {
+  background: rgba(208, 170, 98, 0.07);
+  border: 1px solid rgba(208, 170, 98, 0.16);
+  padding: 4px 6px;
+}
+
+#options-modal .settings-panel .st-channel-master::before {
+  border-color: rgba(224, 188, 116, 0.48);
+  background: rgba(204, 164, 92, 0.2);
+  color: #f0d290;
+}
+
+#options-modal .settings-panel .st-channel-row label {
+  grid-column: 2;
+  grid-row: 1;
+  font: 500 calc(12.5px * var(--reading-scale, 1))/1.2 var(--ui-font);
+  color: #ebe2d0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#options-modal .settings-panel .st-channel-row .st-slider-slot {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+#options-modal .settings-panel .st-channel-row output {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+/* Master Silence Row */
+#options-modal .settings-panel .st-mute-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 9px 6px 2px;
+  border-top: 1px solid rgba(198, 163, 98, 0.2);
+}
+
+#options-modal .settings-panel #btn-mute {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 5px 14px;
+  border: 1px solid rgba(204, 169, 104, 0.36);
+  border-radius: 99px;
+  background: linear-gradient(180deg, #241e18, #17130f);
+  font: 500 calc(11.5px * var(--reading-scale, 1))/1.2 var(--ui-font);
+  letter-spacing: 0.03em;
+  color: #e6dcc8;
+  box-shadow: inset 0 1px 0 rgba(255, 238, 200, 0.1);
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+#options-modal .settings-panel .st-mute-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8ec07c;
+  box-shadow: 0 0 6px rgba(142, 192, 124, 0.75);
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+#options-modal .settings-panel #btn-mute:hover,
+#options-modal .settings-panel #btn-mute:focus-visible {
+  border-color: #e2be78;
+  color: #fff8ea;
+}
+
+#options-modal .settings-panel #btn-mute[aria-pressed="true"] {
+  border-color: #d97868;
+  background: linear-gradient(180deg, #5c221b, #3d1510);
+  color: #fff2ee;
+}
+
+#options-modal .settings-panel #btn-mute[aria-pressed="true"] .st-mute-led {
+  background: #ef6452;
+  box-shadow: 0 0 8px rgba(239, 100, 82, 0.9);
+}
+
+/* ── 7. ENGRAVED BRASS SERIAL FOOTER ────────────────────────────────────── */
+#options-modal .settings-panel .st-cabinet-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 13px;
+  padding: 9px 4px 0;
+  border-top: 1px solid rgba(198, 163, 98, 0.18);
+  font: 400 9.5px/1.3 var(--ui-mono, "IBM Plex Mono", monospace);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7c7160;
+}
+
+#options-modal .settings-panel .st-foot-serial {
+  color: #9c8867;
+}
+
+/* ── 8. RESPONSIVE & COMPACT VIEWPORT ADAPTATION ────────────────────────── */
+@media (max-width: 560px) {
+  #options-modal .modal-content.settings-panel {
+    padding: 28px 24px 24px;
+  }
+  #options-modal .settings-panel .st-crest-img {
+    width: 38px;
+    height: 38px;
+  }
+  #options-modal .settings-panel .st-choice-lang {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  #options-modal .settings-panel .st-actions {
+    grid-template-columns: 1fr;
+  }
+  #options-modal .settings-panel .st-channel-row {
+    grid-template-columns: 22px 80px minmax(0, 1fr) 46px;
+    gap: 8px;
+  }
+  #options-modal .settings-panel .st-cabinet-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+@media (max-height: 680px) {
+  #options-modal .modal-content.settings-panel {
+    padding: 24px 32px 20px;
+  }
+  #options-modal .settings-panel .st-head {
+    margin-bottom: 10px;
+    padding-bottom: 9px;
+  }
+  #options-modal .settings-panel .st-subtitle {
+    display: none;
+  }
+  #options-modal .settings-panel .st-tabs {
+    margin-bottom: 10px;
+  }
+  #options-modal .settings-panel .st-panel {
+    min-height: 250px;
+    gap: 8px;
+  }
+  #options-modal .settings-panel .st-card {
+    padding: 10px 12px;
+    gap: 7px;
+  }
+  #options-modal .settings-panel .st-seg button {
+    min-height: 44px;
+  }
+}
+

@@ -41,7 +41,16 @@ export default class NativeBookshelfScene extends BasePuzzleScene {
     }
     if (!this.textures.exists(key("dust"))) addCanvasTexture(this.textures, key("dust"), glowCanvas());
     if (!this.textures.exists(key("steam"))) addCanvasTexture(this.textures, key("steam"), steamCanvas());
-    this._build(this.cameras.main.width, this.cameras.main.height);
+    // The page can finish resizing while the photographs load. Build against
+    // the current host immediately, before the shared debounced resize runs.
+    const host = this.game.canvas.parentElement;
+    const width = Math.round(host?.clientWidth || this.scale.width);
+    const height = Math.round(host?.clientHeight || this.scale.height);
+    if (width !== this.scale.width || height !== this.scale.height) this.scale.resize(width, height);
+    this.game.canvas.style.width = `${width}px`;
+    this.game.canvas.style.height = `${height}px`;
+    this.cameras.main.setSize(width, height);
+    this._build(width, height);
     this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
@@ -56,7 +65,8 @@ export default class NativeBookshelfScene extends BasePuzzleScene {
       const [x, y, w, h] = LIBRARY.safe, s = W * .96 / w;
       const ox = W / 2 - (x + w / 2) * s, oy = H / 2 - (y + h / 2) * s;
       const back = Math.max(W / LIBRARY.width, H / LIBRARY.height);
-      this.add.image(W / 2, H / 2, key("library")).setScale(back).setTint(0x292626).setDepth(-12);
+      this.add.image(W / 2, H / 2, key("library"))
+        .setDisplaySize(LIBRARY.width * back, LIBRARY.height * back).setTint(0x292626).setDepth(-12);
       this._fit = { s, x: ox, y: oy, at: ([px, py]) => ({ x: ox + px * s, y: oy + py * s }) };
     }
     const f = this._fit;

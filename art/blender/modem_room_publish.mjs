@@ -1,9 +1,11 @@
 import sharp from 'sharp';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
-const source = '.artifacts/modem-native';
-const target = 'public/assets/images/Modem/native-v1';
+const source = process.argv[2] ?? '.artifacts/modem-native';
+const version = Number(process.argv[3] ?? 1);
+const target = `public/assets/images/Modem/native-v${version}`;
 const layout = JSON.parse(await readFile(`${source}/nativeModem.json`, 'utf8'));
+layout.version = version;
 await mkdir(target, { recursive: true });
 await sharp(`${source}/room.png`).webp({ quality: 98, effort: 6 }).toFile(`${target}/room.webp`);
 const { data: base, info } = await sharp(`${source}/room.png`).removeAlpha().toColourspace('srgb').raw().toBuffer({ resolveWithObject: true });

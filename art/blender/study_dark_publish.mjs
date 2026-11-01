@@ -10,8 +10,8 @@ for (const name of ['lights-1', 'chest-shut', 'chest-open']) {
   const alpha = name.startsWith('chest');
   await sharp(`${source}/${name}.png`)
     .webp(alpha ? { quality: 95, alphaQuality: 100, effort: 6 } : { quality: 92, effort: 6 })
-    .toFile(`${target}/room1-${name}-render-v6.webp`);
-  console.log(`room1-${name}-render-v6.webp`);
+    .toFile(`${target}/room1-${name}-render-v7.webp`);
+  console.log(`room1-${name}-render-v7.webp`);
 }
 await copyFile(`${source}/Study.json`, 'src/levels/house/rooms/Study.json');
 console.log('Study.json');

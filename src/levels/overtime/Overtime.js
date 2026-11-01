@@ -34,7 +34,7 @@ import OFFICE from "./officeRender.json";
 // state survives a resize and starts fresh on replay.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LCD_INK = 0x1f2a1a; // the calculator's dark digits
+const LCD_INK = 0x0b1009; // the calculator's dark digits
 const PLATE = `ot_office_v${OFFICE.version}`;
 const COLONS = `ot_colons_v${OFFICE.version}`;
 const PUFF = "ot_puff";
@@ -227,8 +227,9 @@ export default class OvertimeScene extends BasePuzzleScene {
     g.clear();
     const cell = (L.u1 - L.u0) / CALCULATOR_DIGITS;
     const dh = L.v1 - L.v0;
-    const dw = Math.min(cell * 0.72, dh * 0.52);
-    const t = dh * 0.12;
+    // (large, heavy figures: read from the chair)
+    const dw = Math.min(cell * 0.8, dh * 0.58);
+    const t = dh * 0.16;
     const text = this.calc.display.padStart(CALCULATOR_DIGITS, " ");
     const onGlass = (poly, du = 0, dv = 0) =>
       poly.map(([u, v]) => L.map(u + du, v + dv));
@@ -248,7 +249,7 @@ export default class OvertimeScene extends BasePuzzleScene {
       // lit segments cast a faint shadow on the glass behind them
       g.fillStyle(LCD_INK, 0.16);
       for (const p of on) g.fillPoints(onGlass(p, 0.06, -0.08), true);
-      g.fillStyle(LCD_INK, 0.9);
+      g.fillStyle(LCD_INK, 1);
       for (const p of on) g.fillPoints(onGlass(p), true);
     }
   }

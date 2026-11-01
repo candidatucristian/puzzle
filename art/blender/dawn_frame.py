@@ -27,7 +27,8 @@ CY = 150.0                                        # the picture's middle, up the
 EYE = (0.0, CY + float(arg("--ey", "8")), -float(arg("--dist", "232")))
 scene, HEIGHT = stage(WIDTH, eye=EYE, look=(0.0, CY + 6, 0.0), lens=float(arg("--lens", "50")))
 
-PLASTER = scan("lime plaster", "white_plaster_rough_01", size=1.6, tint=(0.95, 0.88, 0.76), bright=0.8, sat=0.45, rough=(0.8, 0.95), bump=0.6)
+# (Room IV's wall: a deep green distemper, as room_counting.py has it)
+PLASTER = scan("green distemper", "plastered_wall_04", size=2.4, tint=(0.2, 0.31, 0.28), bright=0.62, sat=0.55, rough=(0.82, 0.95), bump=0.25)
 GILT = aged_metal("frame gilt", (0.66, 0.5, 0.24), (0.16, 0.07, 0.035), rough=(0.25, 0.5), scale=60, tarnish=0.55)
 BRASS = aged_metal("brass", (0.58, 0.41, 0.18), (0.08, 0.06, 0.03), rough=(0.22, 0.5), scale=30, tarnish=0.5)
 box_cm("wall", -200, 200, 0, 320, 0, 20, PLASTER)
@@ -86,7 +87,7 @@ light.visible_camera = False
 # the room's own dark round it: the green lamp far off, the moon's grey
 world = bpy.data.worlds.new("dark"); scene.world = world; world.use_nodes = True
 world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.004, 0.005, 0.01, 1)
-fill = lamp("fill", "AREA", tuple(P(60, 170, -240)), aim=tuple(P(0, CY, 0)), energy=float(arg("--fill", "30")), colour=(0.8, 0.85, 1.0), size=1.8)
+fill = lamp("fill", "AREA", tuple(P(60, 170, -240)), aim=tuple(P(0, CY, 0)), energy=float(arg("--fill", "30")), colour=(1.0, 0.76, 0.52), size=1.8)
 fill.visible_camera = False; fill.visible_glossy = False
 desk = lamp("the green lamp", "POINT", tuple(P(-180, 115, -260)), energy=float(arg("--desk", "30")), colour=(1.0, 0.8, 0.52), size=0.05)
 

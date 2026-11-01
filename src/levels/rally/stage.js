@@ -1607,3 +1607,15 @@ export function lcg(seed) {
   if (s <= 0) s += 2147483646;
   return () => (s = (s * 16807) % 2147483647) / 2147483647;
 }
+
+/** With the stage rendered in Blender (rallyRender.js), only its layout and
+ *  the small pictures the live effects use: a car's lamp glow, its dust, a
+ *  star. */
+export function stageEffects(scene, W, H) {
+  const L = layoutStage(W, H);
+  const t = scene.textures;
+  addCanvas(t, K.star, radial(16, "236,240,255", [[0, 1], [0.3, 0.4], [1, 0]]));
+  addCanvas(t, K.glow, radial(128, "255,214,160", [[0, 0.9], [0.15, 0.5], [0.45, 0.12], [1, 0]]));
+  addCanvas(t, K.dust, paintDust());
+  return { L, keys: K };
+}

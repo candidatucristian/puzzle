@@ -11,12 +11,12 @@
 # green rug, the writing desk, facing us: the brass lamp unlit under its
 # white glass, two candles, letters and an open notebook, the small gilt
 # chest; the chair behind it. Close at hand, left, the old leather armchair;
-# right, on a round table, the glass case of earth, roots against its glass,
+# right, on a round table, the glass case of earth, a seedling in it,
 # the green specimen book beside it. Old rugs on the boards.
 #
 # The plate, the chest apart, and where everything fell in the picture
 # (house/rooms/Study.json), as the other rooms are; study_dark_publish.mjs
-# publishes the room with its lamp off and candles lit as version 6.
+# publishes the room with its lamp off and candles lit as version 7.
 # Lighting never follows puzzle progress.
 #
 #   blender -b --factory-startup -P art/blender/room_study_v4.py -- [--samples 512] [--width 2560] [--only plates,chest]
@@ -29,7 +29,7 @@ from room_common import *
 from room_furnish import *
 from specimen_book import build_specimen_book
 
-OUT = os.path.join(ROOT, ".artifacts/room-study-candlelight")
+OUT = arg('--out', os.path.join(ROOT, ".artifacts/room-study-candlelight"))
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")       # room_boards.mjs
 SAMPLES = int(arg("--samples", "512"))
@@ -275,7 +275,13 @@ for k in range(n):
         co = lp.vert.co
         lp[uvl].uv = (0.5 + (co.x - M(wh["x"])) / M(2 * wh["r"]) * 0.98, 0.5 + (co.z - M(wh["y"])) / M(2 * wh["r"]) * 0.98)
 bm.to_mesh(face); bm.free()
-arch(link(bpy.data.objects.new("cipher face", face))).data.materials.append(CIPHER)
+arch(link(bpy.data.objects.new("cipher face", face))).data.materials.append(BRASS)
+# The inscription is hidden here, as in the candle puzzle's initial view.
+hub = lathe('cipher spindle', [(0,0),(.028,0),(.029,.008),(.022,.026),(0,.029)], BRASS, steps=64)
+hub.rotation_euler=(math.pi/2,0,0); hub.location=P(wh['x'],wh['y'],BF-4.9)
+for radius in (wh['r']-1.2,wh['r']-3.2):
+    bpy.ops.mesh.primitive_torus_add(major_radius=M(radius),minor_radius=M(.25),location=tuple(P(wh['x'],wh['y'],BF-4.92)),rotation=(math.pi/2,0,0))
+    arch(bpy.context.object).data.materials.append(BRASS)
 # a log basket beside the hearth
 bucket = import_model("wooden_bucket_01", height=M(40), at=tuple(P(BREAST1 + 22, 0, D1 - 30)), rot=0.4)
 for k, (dx, a) in enumerate(((-4, 0.2), (3, -0.3), (0, 0.05))):
@@ -452,8 +458,8 @@ def roots(x, y, depth, spread, level, r):
             root_curve([P(hx, hy, g), P(hx + math.cos(a) * ln, hy + math.sin(a) * ln, g)], r * 0.35, r * 0.2, HAIR)
         roots(ex, ey, depth * 0.7, spread * 0.58, level + 1, max(0.04, r * 0.7))
 sx_, sd_ = (cx0 + cx1) / 2, (cd0 + cd1) / 2
-root_curve([P(sx_, soil + 0.5, cd0 + 0.6), P(sx_ + 0.3, soil - 1.5, cd0 + 0.6), P(sx_, soil - 3, cd0 + 0.6)], 0.26, 0.2, ROOT_MAT)
-roots(sx_, soil - 3, 3.8, 6.0, 1, 0.18)
+# (its roots are not drawn here: from across the room they read as white
+# scratches on the glass; they are seen in the case itself, The Old Tree)
 SEEDLING = plain("seedling green", (0.11, 0.26, 0.05), rough=0.4, sheen=0.3)
 _sb = SEEDLING.node_tree.nodes["Principled BSDF"]; _sb.inputs["Subsurface Weight"].default_value = 0.5; _sb.inputs["Subsurface Radius"].default_value = (0.004, 0.008, 0.002)
 tube("stem", [(0, 0), (0.004, 0.05), (0.002, 0.1), (0.0, 0.13)], 0.003, SEEDLING, at=tuple(P(sx_, soil, sd_)))

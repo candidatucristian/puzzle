@@ -1,0 +1,25 @@
+{
+  "renderer": "Blender 4.5 Cycles",
+  "source": "art/blender/archive_black.py",
+  "samples": 384,
+  "materials": [
+    "Black dyed calfskin from CC0 Poly Haven brown_leather scan",
+    "Procedural oxidised, foxed cotton paper",
+    "Dark linen, tarnished nickel, blackened corners"
+  ],
+  "slicing": {
+    "referenceWidth": 1480,
+    "left": [
+      0,
+      340
+    ],
+    "hinge": [
+      340,
+      412
+    ],
+    "right": [
+      412,
+      1480
+    ]
+  }
+}

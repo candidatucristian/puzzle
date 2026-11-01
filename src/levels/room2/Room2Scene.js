@@ -39,8 +39,8 @@ export default class Room2Scene extends RoomScene {
 
   live(L, k, glow) {
     // the green lamp, breathing very slightly
-    const lamp = glow(L.glows.desk, 0.16);
-    this.ambientTween({ targets: lamp, alpha: { from: 0.14, to: 0.19 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    const lamp = glow(L.glows.desk, 0.055);
+    this.ambientTween({ targets: lamp, alpha: { from: 0.045, to: 0.065 }, duration: 3200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     // the router: two of its lights flashing, one after the other
     this._leds = L.leds.map((p) => this.add.image(p.x, p.y, k.glow).setDisplaySize(3.4 * p.s, 3.4 * p.s).setTint(0x28ff6c).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(-7));
     // the clock's colon, going on and off with the seconds

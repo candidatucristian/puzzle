@@ -1,0 +1,30 @@
+{
+  "renderer": "Blender 4.5 Cycles",
+  "source": "art/blender/archive_tools.py",
+  "dimensions": {
+    "casefile": [
+      2960,
+      1840
+    ]
+  },
+  "slicing": {
+    "referenceWidth": 1480,
+    "left": [
+      0,
+      340
+    ],
+    "hinge": [
+      340,
+      412
+    ],
+    "right": [
+      412,
+      1480
+    ]
+  },
+  "materials": [
+    "Poly Haven brown_leather (CC0)",
+    "Poly Haven crepe_satin (CC0)",
+    "Procedural cotton paper, linen thread and aged metal"
+  ]
+}

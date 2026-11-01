@@ -1,0 +1,101 @@
+/* A single material family, photographed in Cycles. No colour filters. */
+#btn-notebook::before { background-image: url('/assets/images/ArchiveTools/native-v2/notebook-icon.webp'); }
+#btn-casefile::before { background-image: url('/assets/images/ArchiveTools/native-v2/casefile-icon.webp'); }
+.casefile-modal { background: #070706e8; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.dossier { --dossier-ink: #2a261d; --dossier-muted: #5f523c; filter: drop-shadow(0 18px 30px #000c); }
+.dossier-cover.is-front { background-image: url('/assets/images/ArchiveTools/native-v2/casefile-left.webp'); }
+.dossier-cover.is-back { background-image: url('/assets/images/ArchiveTools/native-v2/casefile-right.webp'); }
+.dossier-cover-hinge { background-image: url('/assets/images/ArchiveTools/native-v2/casefile-hinge.webp'); }
+#casefile-modal .dossier-title { font: 500 calc(31px * var(--reading-scale, 1))/1.05 'Cormorant Garamond', Georgia, serif !important; color: #29251e; }
+.dossier :is(.dossier-ref, .dossier-file-number, .slip-no, .room-count, .dossier-document-title, .dossier-document-origin, .dossier-document-number) { color: #5a4d38; }
+.dossier :is(.slip-title, .dossier-room, .tag-word) { color: #332b21; }
+.dossier :is(.dossier-slip.is-missing, .tag-where, .dossier-empty) { color: #68583e; }
+.dossier .dossier-reader .letter-page { color: #29251e; }
+.dossier .dossier-reader .letter-dateline, .dossier .dossier-reader .letter-page .letter-margin { color: #574b38; }
+.dossier .dossier-tabs button { color: #584933; }
+.dossier .dossier-tabs button[aria-selected="true"] { color: #512f25; text-decoration: underline; text-underline-offset: 7px; }
+.dossier button.dossier-slip.is-current .slip-title { color: #4d2b21; }
+#notebook-modal { width: min(530px, 44vw); filter: drop-shadow(-10px 10px 26px #000d); }
+#notebook-modal .notebook-leaf { padding: 76px 48px 74px 82px; gap: 22px; color: #30281e; }
+#notebook-modal .notebook-leaf::before {
+  background: none; border: solid transparent;
+  border-image: url('/assets/images/ArchiveTools/native-v2/notebook.webp') 108 102 130 144 fill / 54px 44px 64px 64px / 0 stretch;
+}
+#notebook-modal h2 { font: 500 calc(31px * var(--reading-scale, 1))/1.1 'Cormorant Garamond', Georgia, serif !important; color: #29251e; }
+#notebook-modal :is(.tool-note, .shelf-label, .page-name, .note-meta, .folder-count) { color: #5e503a; }
+#notebook-modal :is(.note-name, .folder-name, .shelf-add, .notebook-tools .menu-btn, .notebook-save .menu-btn) { color: #3c3021; }
+#notebook-modal #notebook-text { color: #30291f; caret-color: #30291f; background-image: repeating-linear-gradient(180deg, transparent 0 27px, #4e443423 27px 28px); }
+#notebook-modal #notebook-text::placeholder, #notebook-modal #notebook-note-title::placeholder { color: #6c5b41; }
+#notebook-modal #notebook-note-title { color: #30291f; }
+#notebook-modal .notebook-save .notebook-delete-btn { color: #713d2d; }
+#notebook-modal .notebook-tools .menu-btn[aria-pressed="true"] { color: #4e2e23; text-decoration: underline; text-underline-offset: 5px; }
+#notebook-modal .pen-size, #notebook-modal .pen-colour { border-color: #756244; }
+#notebook-modal .pen-size[aria-pressed="true"], #notebook-modal .pen-colour[aria-pressed="true"] { border-color: #403321; box-shadow: 0 0 0 1px #403321; }
+
+/* The preferences folio has its navigation on black leather and the live
+   controls on an aged leaf. The whole object scrolls as one piece. */
+#options-modal { padding: 24px; background: #070706e8; }
+#options-modal .modal-content.settings-panel {
+  --st-ink: #30291f; --st-muted: #605039; --st-rule: #66543c55; --st-accent: #513426;
+  width: min(940px, calc(100vw - 48px)); max-height: calc(100dvh - 48px);
+  filter: drop-shadow(0 18px 30px #000d);
+}
+#options-modal .settings-panel .st-sheet {
+  display: grid; grid-template-columns: 150px minmax(0, 1fr); column-gap: 48px; row-gap: 30px;
+  min-height: 650px; padding: 36px 48px 50px 36px;
+  background-image: url('/assets/images/ArchiveTools/native-v2/settings.webp');
+}
+#options-modal .settings-panel .st-head { grid-column: 1 / -1; margin: 0; }
+#options-modal .settings-panel h2#settings-title { color: #d0c7b3; font-size: calc(36px * var(--reading-scale, 1)); }
+#options-modal #btn-close-options { color: #c2b9a6; }
+#options-modal #btn-close-options:hover { color: #eee5cf; background: #d1c3a310; }
+#options-modal .settings-panel .st-tabs {
+  grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-self: start;
+  gap: 8px; padding: 12px 0 0; margin: 0; border: 0;
+}
+#options-modal .settings-panel .st-tabs [role="tab"] {
+  justify-content: flex-start; gap: 10px; min-height: 48px; padding: 12px 14px;
+  margin: 0; border: 0; border-left: 2px solid transparent; color: #a49b89;
+}
+#options-modal .settings-panel .st-tabs [role="tab"][aria-selected="true"] { border-left-color: #cabd9f; background: #c8b2860a; color: #d7ccb5; }
+#options-modal .settings-panel .st-tabs [role="tab"]:hover { color: #e1d7c1; }
+#options-modal .settings-panel .st-panel { grid-column: 2; grid-row: 2; padding: 16px 14px 0 12px; min-height: 430px; }
+#options-modal .settings-panel .st-seg button { background: #392b1703; border-color: #6b573e65; }
+#options-modal .settings-panel .st-seg button[aria-checked="true"] { background: #4630190b; border-color: #543824; }
+#options-modal .settings-panel .st-select-box { background: #44321b06; }
+#options-modal .settings-panel .st-select-box:is(:hover, :focus-within) { background: #d7c49c22; }
+#options-modal .settings-panel .st-select option { color: #30291f; background: #c9b184; }
+#options-modal .settings-panel .st-lang-menu { background: #c9b184; border-color: #776043; }
+#options-modal .settings-panel .st-lang-item:is(:hover, :focus-visible, .is-active, [aria-selected="true"]) { background: #48331c15; }
+#options-modal .settings-panel :is(#btn-howto, #btn-new, #btn-mute) { border-color: #705b3e70; }
+#options-modal .settings-panel .st-knob { background: #9c8968; border-color: #756044; }
+#options-modal .settings-panel .st-knob::after { background: #cfc0a1; }
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob { background: #55412e; border-color: #55412e; }
+#options-modal .settings-panel .st-switch input:checked ~ .st-knob::after { background: #d1c2a3; }
+#options-modal .settings-panel input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(90deg, #5c4530 var(--fill, 0%), #928063 var(--fill, 0%)); }
+#options-modal .settings-panel input[type="range"]::-moz-range-track { background: #928063; }
+#options-modal .settings-panel input[type="range"]::-moz-range-progress { background: #5c4530; }
+#options-modal .settings-panel .st-tabs [role="tab"]:focus-visible { outline-color: #d1c2a3; }
+@media (max-width: 1100px) {
+  #notebook-modal { width: min(500px, 49vw); }
+  #notebook-modal .notebook-leaf { padding: 72px 46px 72px 76px; }
+}
+@media (max-height: 740px) {
+  #notebook-modal .notebook-leaf { padding-top: 68px; gap: 18px; }
+  #options-modal .settings-panel .st-sheet { padding-top: 30px; padding-bottom: 48px; }
+}
+@media (max-width: 900px) {
+  #options-modal { padding: 12px; }
+  #options-modal .modal-content.settings-panel { width: min(660px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+  #options-modal .settings-panel .st-sheet {
+    display: flex; flex-direction: column; gap: 24px; padding: 64px 11% 72px 16%;
+    background-image: url('/assets/images/ArchiveTools/native-v2/notebook.webp');
+  }
+  #options-modal .settings-panel h2#settings-title { color: #30291f; }
+  #options-modal #btn-close-options { color: #605039; }
+  #options-modal .settings-panel .st-tabs { align-self: stretch; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; border-bottom: 1px solid var(--st-rule); }
+  #options-modal .settings-panel .st-tabs [role="tab"] { justify-content: center; padding: 10px 2px; border: 0; border-bottom: 2px solid transparent; color: #605039; }
+  #options-modal .settings-panel .st-tabs [role="tab"][aria-selected="true"] { border-left: 0; border-bottom-color: #513426; color: #513426; background: transparent; }
+  #options-modal .settings-panel .st-tabs [role="tab"]:hover { color: #30291f; }
+  #options-modal .settings-panel .st-panel { padding: 0; min-width: 0; }
+}

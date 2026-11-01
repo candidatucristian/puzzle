@@ -49,7 +49,7 @@ STEEL = aged_metal("steel", (0.32, 0.32, 0.33), (0.1, 0.06, 0.03), rough=(0.3, 0
 BRASS = aged_metal("brass", (0.58, 0.41, 0.18), (0.08, 0.06, 0.03), rough=(0.25, 0.5), scale=30, tarnish=0.6)
 TIN = aged_metal("lantern tin", (0.06, 0.12, 0.08), (0.03, 0.04, 0.03), rough=(0.35, 0.6), scale=20, tarnish=0.5)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
-FRAME = plain("window paint", (0.78, 0.77, 0.72), rough=0.55)
+FRAME = scan("window oak", "dark_wood", size=0.6, tint=(0.55, 0.38, 0.25), bright=0.42, sat=0.8, rough=(0.45, 0.7), bump=0.3, edges=0.3)   # (oak, never painted: no white frames in the house)
 LAYOUT = Layout("Room13")
 
 far = attic_shell(X0, X1, D1, EAVES, RIDGE, FLOOR, BOARDS, ROOF, RAFTER)

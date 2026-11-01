@@ -39,7 +39,7 @@ BOARDS = scan("panelling", "distressed_painted_planks", size=1.2, tint=(0.62, 0.
 STONE = scan("fireplace stone", "old_sandstone_02", size=0.9, tint=(0.8, 0.74, 0.66), bright=0.6, sat=0.6, rough=(0.7, 0.95), bump=0.8)
 IRON = aged_metal("iron", (0.05, 0.05, 0.05), (0.04, 0.025, 0.018), rough=(0.45, 0.8), scale=18, tarnish=0.5)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
-FRAME = plain("window paint", (0.8, 0.79, 0.74), rough=0.55)
+FRAME = scan("window oak", "dark_wood", size=0.6, tint=(0.55, 0.38, 0.25), bright=0.42, sat=0.8, rough=(0.45, 0.7), bump=0.3, edges=0.3)   # (oak, never painted: no white frames in the house)
 def flags():
     """stone flags, and the dust of years on them: thickest along the walls"""
     m = scan("dusty flags", "worn_tile_floor", size=1.4, tint=(0.86, 0.82, 0.76), bright=0.42, sat=0.5, rough=(0.5, 0.85), bump=0.6)

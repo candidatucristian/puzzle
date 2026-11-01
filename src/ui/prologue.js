@@ -107,7 +107,8 @@ function playDesk(
   camera.append(dossier, nameplate, envelope);
   // what is to be opened now is drawn round in the game's thin pencil, on its
   // own shape in the photograph: the letter first, then the file
-  camera.append(outlines());
+  const outline = outlines(camera);
+  camera.append(outline.svg);
   // the glint the house's door has, on whichever is to be opened now: the
   // letter first, then — once it is put down — the file
   const sparkle = (thing, step) => {
@@ -210,6 +211,9 @@ function playDesk(
   };
   placeSceneDetails();
   scope.on(window, "resize", placeSceneDetails);
+  // (each line drawn whole within what of the photograph the screen shows)
+  outline.fit();
+  scope.on(window, "resize", outline.fit);
 
   // the letter, then the file it sends him to — each ticked once it is put
   // down — then the house
@@ -302,10 +306,12 @@ function playDesk(
 }
 
 // The letter and the file as they lie in the photograph (its own pixels,
-// 1672 x 941), each drawn round a little outside its edges by hand — a line
-// that wavers slightly and does not quite close, in the three passes of the
-// game's pencil. Laid over the photograph exactly as it is shown (`slice`
-// is the photograph's cover); a line shows only on the step it belongs to.
+// 1672 x 941), each drawn round a little outside its edges by hand — one
+// line that wavers slightly and comes back exactly to where it began, in the
+// three passes of the game's pencil. Laid over the photograph
+// exactly as it is shown (`slice` is the photograph's cover); a line shows
+// only on the step it belongs to. Where the photograph runs off the screen
+// (the file lies off its left edge) the line is kept inside what is seen.
 const OUTLINES = {
   letter: [
     [790, 697],
@@ -324,40 +330,51 @@ const OUTLINES = {
     [0, 700],
   ],
 };
-function outlines() {
+function outlines(frame) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("class", "prologue-outlines");
   svg.setAttribute("viewBox", `0 0 ${DESK_WIDTH} ${DESK_HEIGHT}`);
   svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
   svg.setAttribute("aria-hidden", "true");
-  // a hand's line round the points: each side bowed a touch, the end run
-  // a little past the start
+  // a hand's line round the points: each side bowed a touch, and closed
+  // exactly where it began — once round, nothing drawn over itself
   const hand = (points, seed) => {
     let wobble = seed;
     const jitter = () => {
       wobble = (wobble * 9301 + 49297) % 233280;
       return (wobble / 233280 - 0.5) * 5;
     };
-    const loop = [...points, points[0], points[1]];
-    let d = `M${loop[0][0] + jitter()} ${loop[0][1] + jitter()}`;
+    const loop = [...points, points[0]];
+    let d = `M${loop[0][0]} ${loop[0][1]}`;
     for (let i = 1; i < loop.length; i++) {
       const [x0, y0] = loop[i - 1],
         [x1, y1] = loop[i];
-      const last = i === loop.length - 1;
-      const [ex, ey] = last
-        ? [x0 + (x1 - x0) * 0.12, y0 + (y1 - y0) * 0.12]
-        : [x1, y1];
-      d += ` Q${(x0 + ex) / 2 + jitter()} ${(y0 + ey) / 2 + jitter()} ${ex + jitter() * 0.4} ${ey + jitter() * 0.4}`;
+      const end = i === loop.length - 1;
+      d += ` Q${(x0 + x1) / 2 + jitter()} ${(y0 + y1) / 2 + jitter()} ${end ? x1 : x1 + jitter() * 0.4} ${end ? y1 : y1 + jitter() * 0.4}`;
     }
-    return d;
+    return `${d} Z`;
   };
-  svg.innerHTML = Object.entries(OUTLINES)
-    .map(
-      ([step, points], i) =>
-        `<g class="prologue-outline" data-for="${step}">${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" pathLength="1" d="${hand(points, 7 + i * 13)}" />`).join("")}</g>`,
-    )
-    .join("");
-  return svg;
+  // how large the photograph is shown (as `slice` covers it), and the part
+  // of it the screen shows, in its own pixels, a little in from the edges
+  const seen = () => {
+    const w = frame?.clientWidth || DESK_WIDTH, h = frame?.clientHeight || DESK_HEIGHT;
+    const k = Math.max(w / DESK_WIDTH, h / DESK_HEIGHT), vw = w / k, vh = h / k, m = 10;
+    const x0 = (DESK_WIDTH - vw) / 2, y0 = (DESK_HEIGHT - vh) / 2;
+    return { k, inside: ([x, y]) => [Math.min(x0 + vw - m, Math.max(x0 + m, x)), Math.min(y0 + vh - m, Math.max(y0 + m, y))] };
+  };
+  const fit = () => {
+    const { k, inside } = seen();
+    // one screen pixel, in the photograph's pixels: the pencil's width (house-tools.css)
+    svg.style.setProperty("--u", `${1 / k}px`);
+    svg.innerHTML = Object.entries(OUTLINES)
+      .map(
+        ([step, points], i) =>
+          `<g class="prologue-outline" data-for="${step}">${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" pathLength="1" d="${hand(points.map(inside), 7 + i * 13)}" />`).join("")}</g>`,
+      )
+      .join("");
+  };
+  fit();
+  return { svg, fit };
 }
 
 // the sheet laid open over the desk, with its one button under it: a letter

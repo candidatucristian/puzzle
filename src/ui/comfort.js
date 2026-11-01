@@ -24,6 +24,7 @@ export function mountComfort(scope, preferences, i18n = null) {
     const state = preferences.state;
     root.style.setProperty('--grain-opacity', String(state.grain / 1000));
     root.style.setProperty('--reading-scale', String(state.textScale));
+    root.dataset.textScale = String(state.textScale);   // (for what must make room for larger words: the notebook)
     root.dataset.reducedMotion = String(preferences.reducedMotion);
     root.dataset.ambientEffects = String(state.ambientEffects);
     root.dataset.ambientMotion = String(preferences.ambientMotion);

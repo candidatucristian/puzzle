@@ -89,7 +89,7 @@ def run(g):
     sink_open = [P(x, h + 0.6, d) for x in (S["x0"] + 3.5, S["x1"] - 3.5) for d in (S["d0"] + 3.5, S["d1"] - 3.5)]
     lower = g["SASHES"][0]
     layout = {
-        "version": 1, "width": RW, "height": RH,
+        "version": 2, "width": RW, "height": RH,
         "camera": camera,
         "counter": project(P(EYE[0], h, ROW))[1],
         "scale": scale_at(P(EYE[0], h, ROW)),

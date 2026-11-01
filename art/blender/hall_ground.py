@@ -6,7 +6,7 @@
 # the Chemistry hall's lighting balance.
 #
 #   node art/blender/clock_dial.mjs
-#   blender -b --factory-startup -P art/blender/hall_ground.py -- [--samples 384] [--width 2560] [--only plate,doors,front,gate,pendulum,gate-motion]
+#   blender -b --factory-startup -P art/blender/hall_ground.py -- [--samples 384] [--width 2560] [--only plate,doors,bare,front,ids,gate,pendulum,gate-motion]
 
 import bpy, bmesh, math, os, sys, random, json
 from mathutils import Vector, Matrix, Quaternion
@@ -20,7 +20,7 @@ DRAWN = os.path.join(ROOT, ".artifacts/hall")
 os.makedirs(OUT, exist_ok=True)
 SAMPLES = int(arg("--samples", "384"))
 WIDTH = int(arg("--width", "2560"))
-ONLY = set(arg("--only", "plate,doors,front,gate,pendulum,gate-motion").split(","))
+ONLY = set(arg("--only", "plate,doors,bare,front,ids,gate,pendulum,gate-motion").split(","))
 RNG = random.Random(1912)
 
 # ── Hall layout constants (synchronised with src/levels/hall/hall.js) ────────
@@ -573,16 +573,30 @@ def terracotta_pot(x, y, w=0.34, h=0.3, plant=None, only=None, ph=0.68, rot=0.0,
         darken_model(mdl, dark, rough_floor=0.6)
 
 
+# what each numbered thing below is made of (object names), one set each:
+# render_prop_ids colours each as one, whole
+PROP_BLOCKS = []
+def _cut():
+    """close the thing built since the last cut"""
+    done = set().union(_before_names, *PROP_BLOCKS)
+    PROP_BLOCKS.append({o.name for o in bpy.data.objects if o.name not in done})
+
+
 def build_furniture_and_props():
     # 1. Left foreground: philodendron in aged clay pot
     p_fg = import_model("potted_plant_02", height=1.12, at=(-WALL + 0.45, 2.15, 0), rot=0.6)
     darken_model(p_fg, (0.52, 0.5, 0.44), rough_floor=0.58)
 
+    _cut()
+
     # 2. Right foreground: turned walnut plant stand with fern
     lathe("plant stand", [(0, 0), (0.18, 0), (0.18, 0.03), (0.055, 0.065), (0.042, 0.6),
                           (0.062, 0.64), (0.165, 0.66), (0.165, 0.7), (0, 0.7)],
-          M["WALNUT"], at=(WALL - 0.42, 2.2, 0))
-    terracotta_pot(WALL - 0.42, 2.2, 0.32, 0.26, "fern_02", "fern_02_b", 0.68, 1.1, z=0.7)
+          M["WALNUT"], at=(WALL - 0.36, 2.2, 0))
+    # (a smaller fern, by Door IV: a big one hid half the door)
+    terracotta_pot(WALL - 0.36, 2.2, 0.27, 0.22, "fern_02", "fern_02_b", 0.44, 1.1, z=0.7)
+
+    _cut()
 
     # 3. Left between Doors I and II: darkened walnut side table, fern & specimen bell-jar
     mid1 = (DOORS[0] * D0 + DOOR_LEN + DOORS[1] * D0) / 2 + 0.18
@@ -596,7 +610,10 @@ def build_furniture_and_props():
     lathe("cloche base", [(0, 0), (0.095, 0), (0.1, 0.012), (0.088, 0.024), (0, 0.024)], M["WALNUT"], at=(bx, by, 0.72), steps=36)
     lathe("cloche dome", [(0.082, 0), (0.084, 0.15), (0.072, 0.19), (0.04, 0.215), (0.012, 0.222), (0.016, 0.235), (0, 0.24)],
           M["GLASS"], at=(bx, by, 0.744), steps=36)
-    terracotta_pot(bx, by, 0.11, 0.09, "celandine_01", None, 0.16, 0.8, z=0.744)
+    # (one plant of the model: its others stood about in the air)
+    terracotta_pot(bx, by, 0.11, 0.09, "celandine_01", "celandine_01_a_LOD0", 0.16, 0.8, z=0.744)
+
+    _cut()
 
     # 4. Right between Doors IV and V: weathered carved stone plinth & Medici urn (replaces white box!)
     ux, uy = WALL - 0.31, mid1
@@ -612,13 +629,16 @@ def build_furniture_and_props():
                                (0.165, 0.38), (0.15, 0.22), (0, 0.22)],
           M["STONE"], at=(ux, uy, 0.63), steps=48)
     cylinder("urn soil", ux, uy, 0.94, 0.98, 0.155, M["SOIL"])
-    anth = import_model("anthurium_botany_01", height=0.46, at=(ux, uy, 0.96), rot=2.2)
+    # (one plant of the model: its others hung in the air about the hall, one over Door IV)
+    anth = import_model("anthurium_botany_01", height=0.46, only="anthurium_botany_01_a", at=(ux, uy, 0.96), rot=2.2)
     darken_model(anth, (0.52, 0.5, 0.44), rough_floor=0.58)
     for k in range(4):
         pw = import_model("periwinkle_plant", height=0.28,
                           only=["periwinkle_plant_01_LOD0", "periwinkle_plant_02_LOD0"][k % 2],
                           at=(ux + math.cos(k * 1.57) * 0.075, uy + math.sin(k * 1.57) * 0.075, 0.95), rot=k * 1.4)
         darken_model(pw, (0.5, 0.48, 0.42), rough_floor=0.62)
+
+    _cut()
 
     # 5. Left between Doors II and III: walnut & bronze hall stand with walking sticks
     mid2 = (DOORS[1] * D0 + DOOR_LEN + DOORS[2] * D0) / 2 + 0.15
@@ -634,6 +654,8 @@ def build_furniture_and_props():
         st = cylinder("cane", 0, 0, 0, 0.88, 0.01, M["WALNUT"], verts=12)
         st.location = (sx + dx, sy + dy, 0.02); st.rotation_euler = (lean, 0.08, 0)
         sphere("cane pommel", (sx + dx, sy + dy - math.sin(lean) * 0.89, 0.02 + math.cos(lean) * 0.89), 0.018, M["BRASS"])
+
+    _cut()
 
     # 6. Right between Doors V and VI: banded leather & oak steamer trunk + plants & books
     tx, ty = WALL - 0.32, mid2
@@ -651,6 +673,8 @@ def build_furniture_and_props():
     bks = import_model("book_encyclopedia_set_01", width=0.28, at=(tx + 0.02, ty - 0.18, 0.48), rot=-math.pi / 2 + 0.15)
     darken_model(bks, (0.55, 0.5, 0.44), rough_floor=0.62)
 
+    _cut()
+
     # 7. Right of the stone staircase: oak water bucket, clay planters & antique copper watering can
     bkt = import_model("wooden_bucket_01", height=0.42, at=(OPEN + 0.62, END - 0.42, 0), rot=0.6)
     darken_model(bkt, (0.48, 0.42, 0.36), rough_floor=0.62)
@@ -662,6 +686,8 @@ def build_furniture_and_props():
           at=(wx + math.cos(math.pi * 0.8) * 0.29, wy + math.sin(math.pi * 0.8) * 0.29, 0.27), steps=24)
     tube("can handle", [(-0.095, 0.27), (-0.02, 0.39), (0.09, 0.37), (0.125, 0.24)], 0.009, M["COPPER"], at=(wx, wy, 0), rot=math.pi * 0.8)
     terracotta_pot(wx + 0.28, wy + 0.18, 0.21, 0.18, "potted_plant_04", None, 0.34, 1.3, z=0.0)
+
+    _cut()
 
     # 8. Two wrought-iron wirework hanging conservatory baskets with moss & ferns
     for (bx, by) in ((-1.85, 4.95), (1.85, 6.55)):
@@ -683,6 +709,7 @@ def build_furniture_and_props():
         for k, f_part in enumerate(("fern_02_a", "fern_02_b")):
             fn = import_model("fern_02", height=0.48, only=f_part, at=(bx, by, bz - 0.03), rot=bx + k * 1.9)
             darken_model(fn, (0.5, 0.48, 0.42), rough_floor=0.6)
+    _cut()
 
 
 # ── 7. Lighting (Chemistry Hall Reference: crisp moonlight + warm sconces) ──
@@ -726,7 +753,10 @@ build_doors()
 build_ceiling_and_chandelier()
 clock_glass = build_end_and_clock()
 build_sconces_and_herbarium()
+_before = set(bpy.data.objects)
+_before_names = {o.name for o in _before}
 build_furniture_and_props()
+PROPS = [o for o in bpy.data.objects if o not in _before and o.type in ("MESH", "CURVE", "FONT")]
 build_lighting()
 
 clear_glass()
@@ -743,7 +773,57 @@ if arg("--blend", ""):
 moving = {"pendulum": PENDULUM}
 if arg("--preview-gates", "0") != "1":
     moving["gate"] = GATE
-passes(scene, OUT, ONLY, air, apart=moving, unseen={"pendulum": [clock_glass]})
+passes(scene, OUT, ONLY, air, apart=moving, unseen={"pendulum": [clock_glass]}, bare=PROPS)
 if "gate-motion" in ONLY:
     render_gate_motion(scene, GATE, air, OUT, OPEN, HEAD)
+
+
+def render_prop_ids(scene, props, out):
+    """Each thing that stands in the hall — a plant with its pot and stand, a
+    table with what is on it — in a flat colour of its own (red = 8 × its
+    number), all else held out: so hall_ground_publish.mjs can tell which
+    things lie over which door, whole, to be passed by on the way in. Last of
+    the passes: it leaves the scene changed."""
+    # each numbered thing as built (PROP_BLOCKS), anything else on its own
+    block = {name: b + 1 for b, names in enumerate(PROP_BLOCKS) for name in names}
+    extra = {}
+    def find(i):
+        name = props[i].name
+        return block.get(name) or extra.setdefault(name, len(PROP_BLOCKS) + 1 + len(extra))
+    print("PROP_GROUPS", len(PROP_BLOCKS), "and", sum(1 for o in props if o.name not in block), "loose")
+    group = {g: g for g in {find(i) for i in range(len(props))}}
+    mats = {}
+    def flat(gid):
+        if gid not in mats:
+            m = bpy.data.materials.new(f"prop id {gid}"); m.use_nodes = True
+            nt = m.node_tree; nt.nodes.clear()
+            em = nt.nodes.new("ShaderNodeEmission"); em.inputs["Color"].default_value = (gid * 8 / 255, 0, 0, 1); em.inputs["Strength"].default_value = 1
+            nt.links.new(em.outputs[0], nt.nodes.new("ShaderNodeOutputMaterial").inputs["Surface"])
+            mats[gid] = m
+        return mats[gid]
+    names = {o.name for o in props}
+    for i, o in enumerate(props):
+        m = flat(group[find(i)])
+        if not o.material_slots: o.data.materials.append(m)
+        for s in o.material_slots:
+            s.link = "OBJECT"; s.material = m
+        o.is_holdout = False; o.visible_camera = True; o.hide_render = False
+    for o in bpy.data.objects:
+        if o.type in ("MESH", "CURVE", "FONT") and o.name not in names: o.is_holdout = True
+        if o.type == "VOLUME" or o.name == "air": o.hide_render = True
+    c = scene.cycles
+    c.samples = 1; c.use_adaptive_sampling = False; c.use_denoising = False
+    c.pixel_filter_type = "BOX"; c.filter_width = 0.01
+    if scene.camera and scene.camera.data.dof: scene.camera.data.dof.use_dof = False
+    scene.render.use_motion_blur = False; scene.render.use_compositing = False
+    scene.view_settings.view_transform = "Raw"; scene.view_settings.look = "None"
+    scene.view_settings.exposure = 0; scene.view_settings.gamma = 1
+    scene.render.film_transparent = True; scene.render.image_settings.color_mode = "RGBA"
+    scene.render.image_settings.color_depth = "8"
+    render(scene, os.path.join(out, "ids.png"))
+
+
+if "ids" in ONLY:
+    air.hide_render = True
+    render_prop_ids(scene, PROPS, OUT)
 print("HALL_DONE")

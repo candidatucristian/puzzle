@@ -59,7 +59,7 @@ def run(g):
     zoom_crop = px_box(zoom_pts, 4, K * ZOOM, WIDTH * ZOOM, HEIGHT * ZOOM)
     loupe_crop = px_box(corners_of(loupe) + object_corners(cloth), 8)
     layout = {
-        "version": 1, "width": RW, "height": RH,
+        "version": 2, "width": RW, "height": RH,
         "safe": box_of(zoom_pts + corners_of(loupe) + [mouth, flask_top], pad=20),
         "bottles": bottles,
         "burner": {"mouth": list(project(mouth)), "s": scale_at(mouth)},

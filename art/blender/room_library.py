@@ -30,7 +30,7 @@ from kit import *
 from room_common import *
 from room_furnish import *
 
-OUT = os.path.join(ROOT, ".artifacts/room-library")
+OUT = arg('--out', os.path.join(ROOT, ".artifacts/room-library"))
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")        # room_boards.mjs, clock_faces.mjs
 SAMPLES = int(arg("--samples", "700"))
@@ -212,7 +212,7 @@ sh = cylinder("green shade", 0, 0, M(-13), M(13), M(6.5), GREEN_GLASS, verts=48)
 sh.rotation_euler = (0, math.pi / 2, 0); sh.location = P(gx, th + 38, gd - 6)
 boolean_cut(sh, box("cut", M(gx - 20), M(gx + 20), M(gd - 20), M(gd + 8), M(th + 30), M(th + 38), GLASS))
 so = sh.modifiers.new("thick", "SOLIDIFY"); so.thickness = M(0.35)
-desk_l = lamp("green lamp", "POINT", tuple(P(gx, th + 36.5, gd - 10)), energy=float(arg("--green", "14")), colour=(1.0, 0.8, 0.52), size=0.012)
+desk_l = lamp("green lamp", "POINT", tuple(P(gx, th + 36.5, gd - 10)), energy=float(arg("--green", "3.5")), colour=(1.0, 0.8, 0.52), size=0.025)
 # the router, toward us: a black box, a row of little lights along its front, two aerials
 R = dict(x0=-26, x1=8, d0=276, d1=298, y0=th, y1=th + 7.5)
 box_cm("router", R["x0"], R["x1"], R["y0"] + 0.6, R["y1"], R["d0"], R["d1"], BLACK, 0.8)
@@ -393,11 +393,14 @@ if arg("--top", "") == "1":
     cam = scene.camera; cam.data.type = "ORTHO"; cam.data.ortho_scale = 11; cam.data.shift_y = 0
     cam.location = P(0, 1500, 420); cam.rotation_euler = (0, 0, 0)
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.9")))
+from ground_floor_light import soften_lamp_metal
+soften_lamp_metal(scene)
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.9")), glare=False)
 scene.cycles.volume_bounces = 1
 GLOSSY = ("green glass shade", "clock face 0", "clock face 1", "clock face 2", "clock face 3", "smoked glass", "radio glass", "red filter", "clock case", "clock bezel", "led lit", "led")                # (what keeps its shine: glazes, screens, lamp glass)
 finish(scene, SAMPLES, keep_gloss=GLOSSY)
-plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
+lighting = one_light(ONE, OUT_LIGHTS)
+plates = lighting if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

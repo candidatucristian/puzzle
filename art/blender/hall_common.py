@@ -236,11 +236,13 @@ def haze(density, beyond=4.0):
     return air
 
 # ── the passes ─────────────────────────────────────────────────────────────
-def passes(scene, out, only, air, apart=None, unseen=None, variants=None):
+def passes(scene, out, only, air, apart=None, unseen=None, variants=None, bare=None):
     """Render what the game lays together:
       plate   the hall, without what moves
       doors   the same with nothing stood in it (what stands there still
               throws its shadow), for a door to swing open with
+      bare    the hall without `bare` (its plants and furniture) at all,
+              nor their shadows: what is left as one walks past them
       front   what stands in it, alone
       and each part in `apart` alone, `unseen[name]` hidden while it is;
       and each of `variants` — name: (switch on, switch off) — as a plate."""
@@ -267,6 +269,11 @@ def passes(scene, out, only, air, apart=None, unseen=None, variants=None):
         for o in furniture: o.visible_camera = False
         render(scene, os.path.join(out, "doors.png"))
         for o in furniture: o.visible_camera = True
+    if "bare" in only and bare:
+        opaque()
+        for o in bare: o.hide_render = True
+        render(scene, os.path.join(out, "bare.png"))
+        for o in bare: o.hide_render = False
     if "front" in only:
         alone(); held(ARCH, True); air.hide_render = True
         render(scene, os.path.join(out, "front.png"))

@@ -70,7 +70,7 @@ BRASS = aged_metal("brass", (0.6, 0.43, 0.19), (0.08, 0.06, 0.03), rough=(0.18, 
 IRON = plain("iron", (0.025, 0.025, 0.027), rough=0.5, metal=0.8)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
 FIRECLAY = plain("fireclay", (0.78, 0.76, 0.7), rough=0.18, coat=0.6)
-FRAME = plain("window paint", (0.86, 0.85, 0.8), rough=0.5)
+FRAME = scan("window oak", "dark_wood", size=0.6, tint=(0.55, 0.38, 0.25), bright=0.42, sat=0.8, rough=(0.45, 0.7), bump=0.3, edges=0.3)   # (oak, never painted: no white frames in the house)
 ENAMEL = plain("green enamel", (0.03, 0.16, 0.07), rough=0.25, coat=0.8)
 ENAMEL_IN = plain("enamel inside", (0.9, 0.9, 0.86), rough=0.3, emit=(1.0, 0.85, 0.6), strength=0.6)
 LAYOUT = Layout("Room8")

@@ -1,7 +1,7 @@
 """Candlelight and Brass: original Blender/Cycles apparatus and photographs.
 
-Eight real candle-light combinations, a luminous brass rotor, rag-paper
-letter and sixteen native flame frames. No generated bitmap assets.
+Eight real candle-light combinations, a luminous brass rotor and sixteen
+native flame frames (the opened letter: cipher_letter.py). No generated bitmap assets.
 blender -b -P art/blender/candlelight_brass.py -- --width 2560 --samples 256 --pack
 node art/blender/candlelight_brass_publish.mjs
 """
@@ -208,32 +208,7 @@ for ob in visible:
 scene.render.film_transparent=True;scene.render.image_settings.color_mode='RGBA'
 render('rotor')
 
-# A dedicated photograph of the unfolded letter: curved paper, real creases
-# and the unchanged encrypted text, all physically lit in Blender.
-for ob in list(scene.objects):ob.hide_render=True
-scene.render.film_transparent=False;scene.render.image_settings.color_mode='RGB'
-desk=slab('Reading | walnut surface',-.6,.6,-.5,.5,-.024,0,WOOD,.003)
-verts=[];faces=[]
-for j in range(61):
-    y=-.148+.296*j/60
-    for i in range(49):
-        x=-.108+.216*i/48
-        z=.003+.0015*math.sin(x*21+y*18)+.001*math.sin(y*49)
-        z+=.0018*math.exp(-((y+.045)/.003)**2)+.0015*math.exp(-((y-.050)/.003)**2)
-        z+=.0016*(abs(x)/.108)**7*(abs(y)/.148)**6
-        verts.append((x,y,z))
-for j in range(60):
-    for i in range(48):a=j*49+i;faces.append((a,a+1,a+50,a+49))
-sheet=mesh('Reading | folded rag-paper sheet',verts,faces,PAPER,True)
-sol=sheet.modifiers.new('Paper thickness','SOLIDIFY');sol.thickness=.00018
-for y in (-.045,.05):wire('Reading | soft visible paper fold',[(-.105,y,.005),(.105,y,.005)],.00010,PAPER)
-for body,y,size,font in [('13 October 1961',.115,.0075,HAND),(CIPHER[0],.028,.022,TYPE),(CIPHER[1],-.009,.022,TYPE),('— I. A.',-.112,.008,HAND)]:
-    ob=writing('Reading | actual ink '+body,body,(0,y,.0065),size,INK,font);ob.rotation_euler=(0,0,0)
-reading_light=lamp('Reading | warm broad candle bounce','AREA',(-.25,-.22,.43),energy=7,colour=(1,.77,.50),size=.42,aim=(0,0,0))
-reading_fill=lamp('Reading | cool quiet fill','AREA',(.24,.20,.5),energy=2,colour=(.72,.80,.94),size=.5,aim=(0,0,0))
-cam.hide_render=False;cam.location=(0,-.08,.64);cam.rotation_euler=(Vector((0,0,0))-cam.location).to_track_quat('-Z','Y').to_euler();camera.lens=58
-scene.render.resolution_x=1400;scene.render.resolution_y=1600;scene.cycles.samples=min(SAMPLES,128)
-render('letter')
+# (The opened letter is rendered on its own by cipher_letter.py.)
 
 # Sixteen original flame meshes in one atlas, matching Candle.js's frame
 # and wick coordinates exactly. No synthetic photo or Javascript painting.

@@ -9,6 +9,8 @@ import {
   TROPHY_MEDAL_FACES_URL,
   TROPHY_BRAZIL_MEDAL,
   TROPHY_BRAZIL_MEDAL_URL,
+  TROPHY_RIBBON,
+  TROPHY_RIBBON_URL,
 } from "./trophies.js";
 import { FLAG_CODES } from "./flagDesigns.js";
 import { chime } from "../../shared/paint.js";
@@ -62,6 +64,9 @@ export default class FlagsScene extends BasePuzzleScene {
     }
     if (!this.textures.exists(TROPHY_BRAZIL_MEDAL)) {
       this.load.image(TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL);
+    }
+    for (const code of FLAG_CODES) {
+      if (!this.textures.exists(TROPHY_RIBBON(code))) this.load.image(TROPHY_RIBBON(code), TROPHY_RIBBON_URL(code));
     }
   }
 

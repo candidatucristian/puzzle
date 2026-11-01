@@ -44,6 +44,11 @@ const ASSETS = [
   { name: "btn-map-3d", dest: interfaceDir, quality: 94, trim: true },
   { name: "btn-notebook-3d", dest: interfaceDir, quality: 94, trim: true },
   { name: "btn-casefile-3d", dest: interfaceDir, quality: 94, trim: true },
+  // 3D Settings Cabinet & Hardware
+  { name: "settings-cabinet-board-3d", dest: interfaceDir, quality: 93, trim: true },
+  { name: "settings-brass-knob-3d", dest: interfaceDir, quality: 95, trim: true },
+  { name: "settings-crest-3d", dest: interfaceDir, quality: 95, trim: true },
+  { name: "settings-tab-plate-3d", dest: interfaceDir, quality: 94, trim: true },
 ];
 
 for (const item of ASSETS) {

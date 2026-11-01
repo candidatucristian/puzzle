@@ -10,8 +10,8 @@ import { loadRoomRender } from "../house/roomRender.js";
 // bottle, and aboard — the chess game left on the games table, the old mobile
 // telephone on the desk. The gilt chest is on the desk too.
 //
-// The room is a Blender render (room3.js; house/roomRender.js), lit by the
-// storm lantern hung over the bottle and the moon through the ports. Live
+// The room is a Blender render (room3.js; house/roomRender.js), with its
+// lantern, candle and green lamp consistently lit. Live
 // over it: the lantern, never still; the telephone's screen coming and going,
 // as a telephone's does when it is ringing; dust in the moonlight.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,14 +40,14 @@ export default class Room3Scene extends RoomScene {
 
   live(L, k, glow) {
     const g = L.glows;
-    this._lantern = glow(g.lantern, 0.32);
+    this._lantern = glow(g.lantern, 0.035);
     // the telephone's screen, lighting and dimming as it rings
-    this._screen = this.add.image(g.screen.x, g.screen.y, k.glow).setDisplaySize(g.screen.r * 2, g.screen.r * 2).setTint(0x78ff78).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setDepth(-7);
+    this._screen = this.add.image(g.screen.x, g.screen.y, k.glow).setDisplaySize(g.screen.r * 2, g.screen.r * 2).setTint(0x78ff78).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.08).setDepth(-7);
   }
 
   tick(t) {
-    this._lantern.setAlpha(0.3 + 0.05 * Math.sin(t * 9) + Math.random() * 0.05);
-    this._screen.setAlpha(t % 3 < 1.6 ? 0.25 + 0.3 * Math.abs(Math.sin(t * 6)) : 0.12);
+    this._lantern.setAlpha(0.028 + 0.012 * Math.sin(t * 9) + Math.random() * 0.008);
+    this._screen.setAlpha(t % 3 < 1.6 ? 0.07 + 0.07 * Math.abs(Math.sin(t * 6)) : 0.035);
   }
 
   dustIn(L) {

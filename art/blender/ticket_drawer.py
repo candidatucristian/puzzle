@@ -7,12 +7,14 @@
 #
 # Its back two-thirds are what the room shows of it: old card tickets by the
 # hundred, standing on their edges in rows between low oak dividers, leaning
-# as they settled. In front of them, laid out in two rows on the drawer's
-# bottom, the eight of the puzzle (src/levels/station/rows.js), each with its
-# own face (ticket_faces.mjs): card a little curled, the type pressed into it,
-# the stamp across its foot. Beside them what a clerk keeps in such a drawer:
-# a tin ink pad open, the rubber stamp, a pencil worn short, an old rubber
-# band, two pennies.
+# as they settled. In front of them, lying on the drawer's bottom, the eight
+# of the puzzle (src/levels/station/rows.js) as they came off the roll: one
+# strip of paper tickets still joined at their perforations, each with its
+# own face (ticket_faces.mjs), the type pressed into it, the stamp across its
+# foot; folded once between two of them, so that those two stand up in a
+# little ridge, and the last one's corner turned up. Beside them what a clerk
+# keeps in such a drawer: a tin ink pad open, the rubber stamp, a pencil worn
+# short, an old rubber band, two pennies.
 #
 # Rendered: the plate; and where it all fell in the picture
 # (ticketDrawer.json: what must stay on screen, the candle's light).
@@ -49,9 +51,9 @@ ROW, DIV = 6.3, 0.6                              # each row of them, each divide
 G = (-5.5, 0.0, 11.5)                            # the middle of the eight
 # (from a little left of them: the drawer's left side comes into the picture,
 # its front along the foot of it)
-EYE = (float(arg("--ex", "-9.5")), float(arg("--ey", "52")), float(arg("--ed", "-4")))
+EYE = (float(arg("--ex", "-7.5")), float(arg("--ey", "52")), float(arg("--ed", "-4")))
 LOOK = (EYE[0], 0.0, float(arg("--ld", str(G[2] + 1.2))))
-scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "48")))
+scene, HEIGHT = stage(WIDTH, eye=EYE, look=LOOK, lens=float(arg("--lens", "54")))
 
 # ── materials ──────────────────────────────────────────────────────────────
 MAHOGANY = scan("mahogany", "rosewood_veneer1", size=0.5, tint=(0.75, 0.48, 0.34), bright=0.5, sat=0.9, rough=(0.3, 0.5), bump=0.2, coat=0.2, upright=True, edges=0.25)
@@ -60,8 +62,9 @@ MAHOGANY_X = scan("mahogany across", "rosewood_veneer1", size=0.5, tint=(0.75, 0
 OAK_SIDE = scan("drawer oak", "dark_wood", size=0.55, tint=(0.9, 0.75, 0.58), bright=0.74, sat=0.5, rough=(0.55, 0.8), bump=0.35, edges=0.3, dust=0.25)
 OAK_BOTTOM = scan("drawer bottom", "dark_wood", size=0.55, tint=(0.9, 0.76, 0.6), bright=0.78, sat=0.42, rough=(0.6, 0.85), bump=0.3, stains=0.25, dust=0.3, rot=(0, 0, math.pi / 2))
 OAK_DIV = scan("divider oak", "dark_wood", size=0.4, tint=(0.8, 0.64, 0.48), bright=0.55, sat=0.6, rough=(0.5, 0.75), bump=0.3, edges=0.35)
-FLOOR = scan("stone flags", "worn_tile_floor", size=1.4, tint=(0.9, 0.86, 0.8), bright=0.6, sat=0.5, rough=(0.4, 0.8), bump=0.6)
-PLASTER = scan("lime plaster", "white_plaster_rough_01", size=2.4, tint=(0.95, 0.88, 0.76), bright=0.7, sat=0.45, rough=(0.8, 0.95), bump=0.5)
+# (Room IV's own floor and wall, as room_counting.py has them)
+FLOOR = scan("oak boards", "wood_floor_worn", size=2.0, tint=(0.7, 0.54, 0.4), bright=0.52, sat=0.62, rough=(0.5, 0.75), bump=0.4)
+PLASTER = scan("green distemper", "plastered_wall_04", size=2.4, tint=(0.2, 0.31, 0.28), bright=0.62, sat=0.55, rough=(0.82, 0.95), bump=0.25)
 BRASS = aged_metal("brass", (0.58, 0.41, 0.18), (0.08, 0.06, 0.03), rough=(0.28, 0.55), scale=30, tarnish=0.55)
 BRONZE = aged_metal("penny bronze", (0.5, 0.27, 0.15), (0.12, 0.06, 0.035), rough=(0.35, 0.65), scale=60, tarnish=0.7)
 TIN = aged_metal("japanned tin", (0.32, 0.3, 0.27), (0.025, 0.022, 0.02), rough=(0.3, 0.6), scale=40, tarnish=0.85)
@@ -99,6 +102,11 @@ def card_material(name, image, press=None, ink_rough=0.5):
         L(fb.outputs["Normal"], b.inputs["Normal"]); b.inputs["Roughness"].default_value = 0.85
     return m
 FACES = card_material("ticket faces", os.path.join(DRAWN, "tickets-faces.png"), os.path.join(DRAWN, "tickets-press.png"))
+# (the strip's perforations: punched through, the drawer's bottom seen in them)
+_fn = FACES.node_tree.nodes; _fl = FACES.node_tree.links.new
+_holes = _fn.new("ShaderNodeTexImage"); _holes.image = bpy.data.images.load(os.path.join(DRAWN, "tickets-holes.png"), check_existing=True)
+_holes.image.colorspace_settings.name = "Non-Color"; _holes.interpolation = "Closest"
+_fl(_fn["Texture Coordinate"].outputs["UV"], _holes.inputs["Vector"]); _fl(_holes.outputs["Color"], _fn["Principled BSDF"].inputs["Alpha"])
 BACKS = card_material("ticket backs", os.path.join(DRAWN, "tickets-backs.png"))
 
 # ── the chest it comes out of, the floor and the wall ──────────────────────
@@ -180,45 +188,50 @@ def standing():
     return o
 standing()
 
-# ── the eight, laid out in two rows in front of them ───────────────────────
-def lying(i, cx, cd, turn, curl, twist, fold=None):
-    """ticket i of the puzzle, face up at (cx, cd), turned `turn` about the
-    upright: its length bowed up `curl` cm at the ends, `twist` across; and
-    `fold` ((corner s, t), size cm, steepness): a corner dog-eared up"""
-    c, r = INFO["tickets"][i]["cell"]; cols, nrows = INFO["cols"], INFO["rows"]
-    u0, u1, v0, v1 = c / cols, (c + 1) / cols, 1 - (r + 1) / nrows, 1 - r / nrows
-    nx, ny = 40, 20
-    me = bpy.data.meshes.new(f"ticket {i}"); bm = bmesh.new(); uvl = bm.loops.layers.uv.new()
-    grid = []
-    for j in range(ny + 1):
-        line = []
-        for k in range(nx + 1):
-            s, t = k / nx, j / ny
-            lift = curl * ((s - 0.5) * 2) ** 2 + twist * ((s - 0.5) * (t - 0.5) * 4 + 1)
-            if fold:
-                (fs, ft), size, steep = fold
-                lift += max(0.0, size - abs(s - fs) * TW - abs(t - ft) * TH) * steep
-            line.append((bm.verts.new((M((s - 0.5) * TW), M((t - 0.5) * TH), M(lift))), s, t))
-        grid.append(line)
-    for j in range(ny):
-        for k in range(nx):
-            q = [grid[j][k], grid[j][k + 1], grid[j + 1][k + 1], grid[j + 1][k]]
-            fc = bm.faces.new([v for v, _, _ in q])
-            for lp, (_, s, t) in zip(fc.loops, q): lp[uvl].uv = (u0 + s * (u1 - u0), v0 + t * (v1 - v0))
+# ── the eight: one strip of them, still joined, lying in front ────────────
+SW_, SH_ = INFO["strip"][0] / 10, INFO["strip"][1] / 10   # a ticket of it, cm (30 × 57 mm)
+PAPER = 0.02                                               # its thickness
+# (across the strip, each ticket a leaf at its own slope, hinged at the
+# perforations; folded once, so the fifth and sixth stand up in a ridge)
+SLOPES = [0.0, 0.025, -0.02, 0.01, 0.42, -0.42, 0.02, -0.015]
+def strip():
+    """the eight as one strip of paper: their faces in the board's order, a
+    soft curl in each, a crease at each join; and where each fell (its four
+    corners, in the drawer's own cm)"""
+    cols = INFO["cols"]
+    nx, ny = 10, 30
+    me = bpy.data.meshes.new("ticket strip"); bm = bmesh.new(); uvl = bm.loops.layers.uv.new()
+    x, z = 0.0, 0.0; starts = []
+    for a in SLOPES:
+        starts.append((x, z)); x += SW_ * math.cos(a); z += SW_ * math.sin(a)
+    length = x; quads = []
+    for i, a in enumerate(SLOPES):
+        x0, z0 = starts[i]; grid = []
+        for j in range(ny + 1):
+            line = []
+            t = j / ny
+            for k in range(nx + 1):
+                s = k / nx
+                px = x0 + SW_ * s * math.cos(a) - length / 2
+                pz = z0 + SW_ * s * math.sin(a)
+                # (a little bowed across, curled toward its ends, the last one's corner turned up)
+                pz += 0.06 * math.sin(math.pi * s) * (1 - abs(a) * 2) + 0.05 * ((t - 0.5) * 2) ** 4
+                if i == len(SLOPES) - 1: pz += max(0.0, 1.0 - (1 - s) * SW_ - (1 - t) * SH_) * 0.5
+                line.append(bm.verts.new((M(px), M((t - 0.5) * SH_), M(pz + PAPER))))
+            grid.append(line)
+        for j in range(ny):
+            for k in range(nx):
+                fc = bm.faces.new((grid[j][k], grid[j][k + 1], grid[j + 1][k + 1], grid[j + 1][k]))
+                for lp, (kk, jj) in zip(fc.loops, ((k, j), (k + 1, j), (k + 1, j + 1), (k, j + 1))):
+                    lp[uvl].uv = ((i + kk / nx) / cols, jj / ny)
+        quads.append([grid[0][0].co.copy(), grid[0][nx].co.copy(), grid[ny][nx].co.copy(), grid[ny][0].co.copy()])
     bm.to_mesh(me); bm.free()
-    o = link(bpy.data.objects.new(f"ticket {i}", me)); o.data.materials.append(FACES)
+    o = link(bpy.data.objects.new("ticket strip", me)); o.data.materials.append(FACES)
     for p in o.data.polygons: p.use_smooth = True
-    sol = o.modifiers.new("card", "SOLIDIFY"); sol.thickness = M(CARD); sol.offset = -1.0; sol.use_even_offset = True
-    o.location = P(cx, CARD, cd); o.rotation_euler = (0, 0, turn)
-    return o
-PITCH_X, PITCH_D = TW + 0.6, TH + 1.0
-FOLDS = {1: ((1, 0), 1.2, 0.55), 7: ((0, 1), 0.85, 0.45)}   # (two that were dog-eared in a pocket)
-EIGHT = []
-for i in range(len(INFO["tickets"])):
-    col, row = i % 4, i // 4                     # the first four in the far row, as the board had them
-    cx = G[0] + (col - 1.5) * PITCH_X + RNG.uniform(-0.25, 0.25)
-    cd = G[2] + (0.5 - row) * PITCH_D + RNG.uniform(-0.2, 0.2)
-    EIGHT.append(lying(i, cx, cd, math.radians(RNG.uniform(-2.5, 2.5)), RNG.uniform(0.03, 0.1), RNG.uniform(-0.02, 0.03), FOLDS.get(i)))
+    sol = o.modifiers.new("paper", "SOLIDIFY"); sol.thickness = M(PAPER); sol.offset = -1.0; sol.use_even_offset = True
+    o.location = P(G[0], 0, G[2]); o.rotation_euler = (0, 0, math.radians(-2.0))
+    return o, quads
+STRIP, STRIP_QUADS = strip()
 
 # ── what else is kept in the drawer ────────────────────────────────────────
 # the ink pad: a black tin, the felt in it gone nearly black with ink; its lid
@@ -326,13 +339,16 @@ def penny(x, d, turn, r=PENNY_R, at_y=0.0):
     lathe("penny", [(0, 0), (M(r), 0), (M(r), M(0.17)), (M(r - 0.05), M(0.18)), (0, M(0.18))], PENNY, at=tuple(P(x, at_y, d)), steps=96).rotation_euler = (0, 0, turn)
 penny(-24.0, 4.1, 0.25, at_y=PAD["t"] + 0.01); penny(-20.9, 5.5, -0.9, at_y=PAD["t"] + 0.01)   # (in the lid)
 
-# ── light: a candle held over the left shoulder; the moon, high in the
-# window over the chest, on everything a little ──────────────────────────
+# ── light: the room's lamp, warm and broad, over the left shoulder; its
+# light back off the walls; the moon, high in the window, on it a little ──
 world = bpy.data.worlds.new("dark"); scene.world = world; world.use_nodes = True
-world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.003, 0.004, 0.008, 1)
-CANDLE_AT = (float(arg("--cx", "-22")), float(arg("--cy", "62")), float(arg("--cd", "-8")))
-candle = lamp("candle", "POINT", tuple(P(*CANDLE_AT)), energy=float(arg("--candle", "6")), colour=(1.0, 0.56, 0.24), size=0.012)
-moon = lamp("the moon", "AREA", tuple(P(10, 170, 70)), aim=tuple(P(0, 0, 10)), energy=float(arg("--moon", "9")), colour=(0.55, 0.68, 1.0), size=0.6)
+world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.012, 0.009, 0.006, 1)
+CANDLE_AT = (float(arg("--cx", "-30")), float(arg("--cy", "78")), float(arg("--cd", "-14")))
+candle = lamp("the lamp", "AREA", tuple(P(*CANDLE_AT)), aim=tuple(P(*G)), energy=float(arg("--lamp", "16")), colour=(1.0, 0.74, 0.48), size=0.5)
+candle.visible_camera = False
+bounce = lamp("off the room", "AREA", tuple(P(40, 70, -50)), aim=tuple(P(*G)), energy=float(arg("--bounce", "7")), colour=(1.0, 0.8, 0.6), size=1.0)
+bounce.visible_camera = False; bounce.visible_glossy = False
+moon = lamp("the moon", "AREA", tuple(P(10, 170, 70)), aim=tuple(P(0, 0, 10)), energy=float(arg("--moon", "4")), colour=(0.55, 0.68, 1.0), size=0.6)
 moon.visible_camera = False; moon.visible_glossy = False
 
 # the lens: focused on the eight, stopped down so all of them are sharp
@@ -343,11 +359,12 @@ cam.data.dof.aperture_fstop = float(arg("--fstop", "8"))
 
 # ── where it all fell in the picture ───────────────────────────────────────
 bpy.context.view_layer.update()
-eight = [c for o in EIGHT for c in object_corners(o)]
+_mw = STRIP.matrix_world
+eight = [_mw @ c for q in STRIP_QUADS for c in q]
 layout = {
-    "version": 1, "width": RW, "height": RH,
+    "version": 2, "width": RW, "height": RH,
     "safe": box_of(eight, pad=14),
-    "tickets": [[list(q) for q in outline(object_corners(o))] for o in EIGHT],
+    "tickets": [[list(project(_mw @ c)) for c in q] for q in STRIP_QUADS],
     # (where the candle's light falls brightest: under it, by the drawer's front)
     "candle": {"at": list(project(P(CANDLE_AT[0], 0, 0))), "r": round(scale_at(P(*G)) * 52, 1)},
 }

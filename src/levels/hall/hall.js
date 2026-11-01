@@ -6,7 +6,7 @@ import * as botanic from "./botanic.js";
 import * as chemical from "./chemical.js";
 import { paintHallSconcePhoto } from "./chemicalMaterials.js";
 import { botanicHallMaterials, paintBotanicFloor, paintBotanicGrass } from "./botanicMaterials.js";
-import { hallRender, paintHallRender, hallRenderPart } from "./hallRender.js";
+import { hallRender, paintHallRender, hallRenderPart, renderBox } from "./hallRender.js";
 import { atticMaterials } from "../top/atticMaterials.js";
 import { paintAtticForeground, paintAtticShade } from "../top/attic.js";
 import { paintAtticDoorHandle } from "../top/atticDoor.js";
@@ -342,11 +342,13 @@ export function paintDoorSwing(scene, L, d, lit) {
   // above is CPU-painted once, but readback here would stall the animation.
   const key = `${SWING}_${d.number}`;
   const texture = addCanvasTexture(t, key, canvas);
-  let lastAngle = -1, lastHandle = -1, hidden = false;
-  const draw = (angle, handle = 0) => {
+  // (`fore`: how much of what stands before the door is still there — less
+  // of it as one walks in past it, passByArt)
+  let lastAngle = -1, lastHandle = -1, lastFore = -1, hidden = false;
+  const draw = (angle, handle = 0, fore = 1) => {
     const shape = projectDoor(L, d, angle);
-    if ((angle === lastAngle && handle === lastHandle) || (hidden && shape.visible === 0)) return shape;
-    lastAngle = angle; lastHandle = handle;
+    if (fore === lastFore && ((angle === lastAngle && handle === lastHandle) || (hidden && shape.visible === 0))) return shape;
+    lastAngle = angle; lastHandle = handle; lastFore = fore;
     hidden = shape.visible === 0;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(room, 0, 0);
@@ -372,12 +374,60 @@ export function paintDoorSwing(scene, L, d, lit) {
       ctx.beginPath(); ctx.moveTo(quad[1].x, quad[1].y); ctx.lineTo(quad[2].x, quad[2].y); ctx.stroke();
     }
     ctx.restore();
-    ctx.drawImage(foreground, 0, 0);
+    if (fore > 0) {
+      ctx.globalAlpha = fore;
+      ctx.drawImage(foreground, 0, 0);
+      ctx.globalAlpha = 1;
+    }
     if (t.exists(key) && texture?.source?.[0]) texture.refresh();
     return shape;
   };
   draw(0);
   return { box, key, draw, resolution };
+}
+
+/** What stands in the hall before a door (a plant on its stand, a pot on the
+ *  boards) stays in front of the light on the floor at its sill — the glow of
+ *  a room with a key, and what an open room spills: the render of those
+ *  things alone, over as much of the floor as that light can reach
+ *  (HallScene._spill, at its widest). Null where the hall is not rendered. */
+export function paintFrontCover(scene, L, d) {
+  if (!L.render) return null;
+  const w = (L.wall * 1.1) / d.z, h = (L.H * 0.3) / d.z;
+  const x = Math.max(0, Math.floor(d.sill.x - w / 2)), y = Math.max(0, Math.floor(d.sill.y - h / 2));
+  const width = Math.min(L.W, Math.ceil(d.sill.x + w / 2)) - x, height = Math.min(L.H, Math.ceil(d.sill.y + h / 2)) - y;
+  if (width <= 0 || height <= 0) return null;
+  const c = makeCanvas(width, height), ctx = c.getContext("2d");
+  ctx.translate(-x, -y);
+  paintHallRender(ctx, L, "front");
+  const key = `${SWING}_front_${d.number}`;
+  addCanvasTexture(scene.textures, key, c);
+  return { key, x, y, width, height };
+}
+
+/** Walking in at a door: the hall without the things that stand before it
+ *  (each whole: a plant with its pot and stand, a table with what is on it),
+ *  only where they stand, laid where that lies — to be faded in under the
+ *  doorway as one walks, so those things are passed by on the way in, not
+ *  walked into (hall_ground_publish.mjs). Null if nothing stands there, or the
+ *  picture did not come. */
+export function passByArt(L, d) {
+  const art = L.render?.passBy?.[d.number];
+  return art ? { key: art.key, box: renderBox(L, art.box) } : null;
+}
+
+/** A cover (paintFrontCover) with the things `pass` takes away cut out of
+ *  it: the rest stays in front of the light at the sill while those go. One
+ *  for each door (`number`): a cover lies by two doors, and the door swinging
+ *  shut still shows its own while the next one opens. */
+export function paintCoverWithout(scene, cover, pass, number) {
+  const c = makeCanvas(cover.width, cover.height), ctx = c.getContext("2d");
+  ctx.drawImage(scene.textures.get(cover.key).getSourceImage(), 0, 0);
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.drawImage(scene.textures.get(pass.key).getSourceImage(), pass.box.x - cover.x, pass.box.y - cover.y, pass.box.width, pass.box.height);
+  const key = `${cover.key}_without_${number}`;
+  addCanvasTexture(scene.textures, key, c);
+  return key;
 }
 
 // The projection is linear vertically and projective across the leaf.

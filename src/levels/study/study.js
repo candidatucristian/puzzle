@@ -44,7 +44,7 @@ export function paintStudy(scene, L) {
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, rendered ? roomRenderChest(scene, "Study", false) : makeCanvas(1, 1));
   addCanvasTexture(t, K.open, rendered ? roomRenderChest(scene, "Study", true) : makeCanvas(1, 1));
-  addCanvasTexture(t, K.key, paintKey());
+  addCanvasTexture(t, K.key, paintKey(scene));
   paintCandleFlame(t);
   return { keys: K };
 }

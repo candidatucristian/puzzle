@@ -82,10 +82,10 @@ export default class TreeScene extends BasePuzzleScene {
     const rnd = this._rng(31415);
     for (const lampAt of TREE.lamps) {
       const at = f.at([lampAt.x, lampAt.y]);
-      const size = lampAt.s * f.s * 7;
+      const size = lampAt.s * f.s * 11;
       const glow = this.add.image(at.x, at.y, GLOW).setDisplaySize(size, size)
         .setTint(0xffb860).setBlendMode(Phaser.BlendModes.ADD).setDepth(-8);
-      const level = 0.42 + rnd() * 0.1;
+      const level = 0.55 + rnd() * 0.1;
       glow.setAlpha(level);
       this.ambientTween({
         targets: glow, alpha: { from: level, to: level * (0.15 + rnd() * 0.2) },

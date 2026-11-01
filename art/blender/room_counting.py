@@ -2,7 +2,8 @@
 # Cycles, seen from the step inside its door, from above, as a clerk coming
 # down into it would see it.
 #
-# Plaster walls, stone flags underfoot, heavy beams overhead. In the middle of
+# Deep green walls over oak panelling, oak boards underfoot, heavy beams
+# overhead, warm light from the table's lamp everywhere. In the middle of
 # the floor, standing free and turned a little, the counting table: a green-
 # shaded lamp, a ledger open, brass scales, the gilt chest. Down the left-hand
 # wall a long cork board in an oak frame, six index cards pinned along it,
@@ -57,8 +58,11 @@ STOVE = dict(x=-190, d=486)
 FRAMES = 10
 
 # ── materials ──────────────────────────────────────────────────────────────
-PLASTER = scan("lime plaster", "white_plaster_rough_01", size=2.4, tint=(0.95, 0.88, 0.76), bright=0.8, sat=0.45, rough=(0.8, 0.95), bump=0.5)
-FLAGS = scan("stone flags", "worn_tile_floor", size=1.4, tint=(0.9, 0.86, 0.8), bright=0.8, sat=0.5, rough=(0.35, 0.75), bump=0.6, coat=0.1)
+# (a warm room, as the study under the desk is: walls a deep green distemper
+# over oak panelling, wide oak boards underfoot, the ceiling a warm lime)
+PLASTER = scan("lime plaster", "white_plaster_rough_01", size=2.4, tint=(0.92, 0.82, 0.66), bright=0.66, sat=0.5, rough=(0.8, 0.95), bump=0.4)
+WALL_PAINT = scan("green distemper", "plastered_wall_04", size=2.4, tint=(0.2, 0.31, 0.28), bright=0.62, sat=0.55, rough=(0.82, 0.95), bump=0.25)
+FLAGS = scan("oak boards", "wood_floor_worn", size=2.0, tint=(0.7, 0.54, 0.4), bright=0.52, sat=0.62, rough=(0.5, 0.75), bump=0.4)
 OAK = scan("oak", "dark_wood", size=1.0, tint=(0.82, 0.62, 0.44), bright=0.5, rough=(0.3, 0.55), bump=0.3, coat=0.35, upright=True)
 OAK_X = scan("oak across", "dark_wood", size=1.0, tint=(0.82, 0.62, 0.44), bright=0.48, rough=(0.3, 0.55), bump=0.3, coat=0.35)
 BEAM = scan("beam", "dark_wood", size=1.4, tint=(0.6, 0.45, 0.35), bright=0.35, rough=(0.5, 0.8), bump=0.6)
@@ -97,14 +101,32 @@ for d in range(40, D1, 72):
 box_cm("wall plate", X0, X1, TOP - 16, TOP, D1 - 14, D1, BEAM, 1.5)
 box_cm("wall plate", X0, X0 + 14, TOP - 16, TOP, -40, D1, BEAM, 1.5)
 for (x0, x1) in ((X0 - 25, X0), (X1, X1 + 25)):
-    box_cm("wall", x0, x1, 0, TOP, -40, D1 + 20, PLASTER)
+    box_cm("wall", x0, x1, 0, TOP, -40, D1 + 20, WALL_PAINT)
 box_cm("skirting", X0, X0 + 2.5, 0, 14, -40, D1, OAK_X, 0.5)
 box_cm("skirting", X1 - 2.5, X1, 0, 14, -40, D1, OAK_X, 0.5)
-box_cm("door wall", X0 - 25, X1 + 25, 0, TOP, -65, -40, PLASTER)
-back = box_cm("back wall", X0 - 25, X1 + 25, 0, TOP, D1, D1 + 30, PLASTER)
+box_cm("door wall", X0 - 25, X1 + 25, 0, TOP, -65, -40, WALL_PAINT)
+back = box_cm("back wall", X0 - 25, X1 + 25, 0, TOP, D1, D1 + 30, WALL_PAINT)
 wx0, wx1 = WIN["x"] - WIN["hw"], WIN["x"] + WIN["hw"]
 boolean_cut(back, box("cut", M(wx0), M(wx1), M(D1 - 10), M(D1 + 60), M(WIN["sill"]), M(WIN["top"]), IRON))
 box_cm("skirting", X0, X1, 0, 14, D1 - 2.5, D1, OAK_X, 0.5)
+# the oak panelling, a metre up every wall: boards, a rail on them, stiles
+DADO = 100
+def panelling(a, b, along_x, at, facing):
+    """oak panelling along a wall from a to b (cm), its face toward facing"""
+    def slab(p0, p1, y0, y1, t0, t1, mat, r=0.3):
+        q0, q1 = sorted((at + facing * t0, at + facing * t1))
+        if along_x: box_cm("panelling", p0, p1, y0, y1, q0, q1, mat, r)
+        else: box_cm("panelling", q0, q1, y0, y1, p0, p1, mat, r)
+    slab(a, b, 14, DADO, 0, 1.2, OAK, 0)
+    slab(a, b, DADO - 6, DADO + 2, 0, 3.2, OAK_X, 0.8)
+    slab(a, b, 14, 22, 0, 2.2, OAK_X, 0.4)
+    n = max(1, round((b - a) / 62))
+    for k in range(n + 1):
+        p = a + (b - a) * k / n
+        slab(p - 4, p + 4, 22, DADO - 6, 0, 2.2, OAK, 0.4)
+panelling(-40, D1, False, X0, 1)
+panelling(-40, D1, False, X1, -1)
+panelling(X0, X1, True, D1, -1)
 
 # ── the window: small, leaded, set high and deep ──────────────────────────
 for (a, b, c, e) in ((wx0 - 1, wx0, WIN["sill"], WIN["top"]), (wx1, wx1 + 1, WIN["sill"], WIN["top"])):
@@ -323,6 +345,10 @@ def counting_table():
 assembled("counting table", counting_table, at=TB["at"], turn=TB["turn"])
 TF = framed(TB["at"], TB["turn"])
 desk_l = lamp("green lamp", "POINT", tuple(TF(GL[0] + 8, TB["h"] + 36.5, GL[1] - 9)), energy=float(arg("--green", "14")), colour=(1.0, 0.8, 0.52), size=0.012)
+# (the warm pool it throws on the table and round it, as the study's lamp
+# does: a broad soft light under the shade)
+desk_pool = lamp("green lamp's pool", "AREA", tuple(TF(GL[0] + 8, TB["h"] + 35.5, GL[1] - 9)), aim=tuple(TF(GL[0] + 30, TB["h"], GL[1] - 30)), energy=float(arg("--pool", "26")), colour=(1.0, 0.76, 0.47), size=0.22, size_y=0.07)
+desk_pool.visible_camera = False
 CHEST = dict(x0=36, x1=57, d0=-26, d1=-11, y0=TB["h"] + 1, y1=TB["h"] + 11.5, lid=7.7)
 def the_chest():
     global chest_body, chest_hinge, lid_parts
@@ -339,15 +365,21 @@ world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.004, 0.00
 lamp("the moon", "SUN", tuple(P(300, 2000, 2700)), aim=tuple(P(90, 0, 330)), energy=float(arg("--moon", "3.5")), colour=(0.55, 0.68, 1.0), angle=math.radians(1.5))
 sky_l = lamp("sky through the window", "AREA", tuple(P(WIN["x"], 225, D1 + 30)), aim=tuple(P(40, 20, 400)), energy=float(arg("--sky", "12")), colour=(0.5, 0.62, 0.95), size=0.5, size_y=0.7)
 sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
-fill_l = lamp("fill", "AREA", tuple(P(120, 240, 20)), aim=tuple(P(-60, 60, D1)), energy=float(arg("--fill", "38")), colour=(0.8, 0.85, 1.0), size=2.2)
+# (the lamp's light, come back off the walls and the ceiling: warm and broad,
+# so the whole room is lit by it and not the table alone)
+WARM = (1.0, 0.76, 0.52)
+fill_l = lamp("fill", "AREA", tuple(P(120, 240, 20)), aim=tuple(P(-60, 60, D1)), energy=float(arg("--fill", "34")), colour=WARM, size=2.2)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
-eye_fill(float(arg("--eyefill", "65")))                # (the halls' fill: nothing the eye sees falls to black)
+ef = eye_fill(float(arg("--eyefill", "70")))           # (the halls' fill: nothing the eye sees falls to black)
+ef.data.color = WARM
 for (at, aim) in ((P(-20, 200, 360), P(-20, 140, D1)), (P(-100, 200, 330), P(X0, 130, 350)), (P(150, 200, 380), P(150, 130, D1))):
-    wash = lamp("on the walls", "AREA", tuple(at), aim=tuple(aim), energy=float(arg("--wash", "15")), colour=(0.82, 0.86, 1.0), size=1.0)
+    wash = lamp("on the walls", "AREA", tuple(at), aim=tuple(aim), energy=float(arg("--wash", "20")), colour=WARM, size=1.0)
     wash.visible_camera = False; wash.visible_glossy = False
+bounce = lamp("off the ceiling", "AREA", tuple(P(-60, TOP - 30, 250)), aim=tuple(P(-60, 0, 250)), energy=float(arg("--bounce", "55")), colour=WARM, size=2.4)
+bounce.visible_camera = False; bounce.visible_glossy = False
 # (one light: the green lamp on the counting table; the picture lights and
 # the candle are out, the stove cold)
-ONE = Light("lamp", [desk_l], [GREEN_GLASS])
+ONE = Light("lamp", [desk_l, desk_pool], [GREEN_GLASS])
 OUT_LIGHTS = [Light("board", [board_l], [BOARD_BULB]), Light("painting", [paint_l], [PAINT_BULB]), Light("candle", [candle_l], [CANDLE_FLAME]), Light("stove", [stove_l], [FIRE])]
 FIRE.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.02, 0.018, 0.016, 1)
 clear_glass()
@@ -382,11 +414,12 @@ if arg("--probe", "") == "1":
     raise SystemExit
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "-0.2")))
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "0.3")))
 scene.cycles.volume_bounces = 1
 GLOSSY = ("green glass shade",)                # (what keeps its shine: glazes, screens, lamp glass)
 finish(scene, SAMPLES, keep_gloss=GLOSSY)
-plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
+lighting = one_light(ONE, OUT_LIGHTS)
+plates = lighting if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

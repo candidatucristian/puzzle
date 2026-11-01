@@ -1,0 +1,70 @@
+/* Registered photographs of complete Blender Cycles objects.
+   The dossier's three slices share one camera, lighting and paper geometry. */
+#btn-notebook .ui-icon, #btn-casefile .ui-icon { display: none; }
+#btn-notebook::before, #btn-casefile::before {
+  content: ''; display: block; flex: 0 0 32px; width: 32px; height: 32px;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 2px 2px #0008);
+}
+#btn-notebook::before { background-image: url('/assets/images/ArchiveTools/native-v1/notebook-icon.webp'); }
+#btn-casefile::before { background-image: url('/assets/images/ArchiveTools/native-v1/casefile-icon.webp'); }
+
+.dossier { filter: drop-shadow(0 12px 20px #0009); }
+.dossier-cover {
+  border-radius: 0; filter: none; box-shadow: none;
+  background: center / 100% 100% no-repeat;
+}
+.dossier-cover.is-front {
+  margin-right: 0;
+  background-image: url('/assets/images/ArchiveTools/native-v1/casefile-left.webp');
+}
+.dossier-cover.is-back {
+  margin-left: 0;
+  background-image: url('/assets/images/ArchiveTools/native-v1/casefile-right.webp');
+}
+.dossier-cover-hinge {
+  margin-block: calc(-1 * var(--dossier-pad-top)) calc(-1 * var(--dossier-pad-bottom));
+  border-radius: 0; box-shadow: none;
+  background: url('/assets/images/ArchiveTools/native-v1/casefile-hinge.webp') center / 100% 100% no-repeat;
+}
+.dossier-cover-hinge::before, .dossier-cover-hinge::after,
+.dossier-page::before, .dossier-page::after, .dossier-spine::before { content: none; }
+.dossier-mechanism { display: none; }
+.dossier-page.is-left { padding-left: 26px; padding-right: 30px; }
+.dossier-page.is-right { padding-bottom: 18px; }
+.dossier-ref, .dossier-file-number, .slip-no, .room-count { color: #68543b; }
+.dossier-slip.is-missing, li.dossier-slip.is-missing { color: #78664c; }
+.dossier-slip.is-unread .slip-title::after { content: ' ·'; }
+
+/* Keep the physical cover and paper together while the working page scrolls.
+   All editable text, saved notes and the transparent drawing canvas stay live. */
+#notebook-modal {
+  width: min(510px, 43vw); background: transparent; border: 0; box-shadow: none;
+  filter: drop-shadow(-8px 8px 18px #0009);
+}
+#notebook-modal .notebook-content { padding: 0 5px 8px 0; }
+#notebook-modal .notebook-leaf {
+  padding: 42px 38px 52px 66px; min-height: 100%; gap: 22px;
+}
+#notebook-modal .notebook-leaf::before {
+  inset: 0; filter: none;
+  background: url('/assets/images/ArchiveTools/native-v1/notebook.webp') center / 100% 100% no-repeat;
+}
+#notebook-modal .notebook-sketch-wrap {
+  border: 0; border-radius: 0; box-shadow: none; background: transparent;
+}
+#notebook-sketch { mix-blend-mode: multiply; }
+#notebook-modal .notebook-shelf { padding-top: 16px; border-top: 1px solid #806e4c30; }
+#notebook-modal .tool-note, #notebook-modal .shelf-label,
+#notebook-modal .page-name, #notebook-modal .note-meta { color: #74634c; }
+#notebook-modal .folder-tab { min-height: 36px; }
+#notebook-modal button:focus-visible, .dossier button:focus-visible {
+  outline: 1px solid #775735; outline-offset: 3px;
+}
+@media (max-width: 1100px) {
+  #notebook-modal { width: min(480px, 48vw); }
+  #notebook-modal .notebook-leaf { padding: 34px 30px 46px 58px; }
+}
+@media (max-height: 740px) {
+  #notebook-modal .notebook-leaf { padding-top: 32px; gap: 16px; }
+}

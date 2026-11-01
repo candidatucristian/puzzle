@@ -17,6 +17,7 @@ export default class BasePuzzleScene extends Phaser.Scene {
     this._ambientObjects = new Set();
     this.events.once("shutdown", this._releaseScene, this);
     this.services.audio.enterScene(this);
+    this._approach();
     this._sceneCleanups.add(attachSceneFeedback(this));
     if (this.services.preferences) {
       this._sceneCleanups.add(this.services.preferences.subscribe(() => {
@@ -55,6 +56,28 @@ export default class BasePuzzleScene extends Phaser.Scene {
     this.events.on("canvas_resized", callback);
     this._sceneCleanups.add(() => this.events.off("canvas_resized", callback));
     return callback;
+  }
+
+  // A puzzle come to: the picture a moment as it was, then brought gently
+  // nearer, drifting a little to one side and back as it settles, as a
+  // person steps up to a thing and looks at it (house-tools.css
+  // .approaching) — the way Ivy's herbarium is brought near. The picture and
+  // whatever the level lays over it in the page move as one. Not over the
+  // house's own places, not with motion reduced or the room's small motions
+  // turned off, not for a scene that brings its own picture near
+  // (`ownApproach`).
+  _approach() {
+    const levels = this.services.levels;
+    const puzzle = levels?.definitions?.some((level) => level.scene && this instanceof level.scene);
+    if (!puzzle || this.ownApproach || !this.ambientMotion) return;
+    const container = document.getElementById("game-container");
+    if (!container) return;
+    container.classList.remove("approaching");
+    void container.offsetWidth;                     // (so it starts again, puzzle after puzzle)
+    container.classList.add("approaching");
+    const done = () => container.classList.remove("approaching");
+    const timer = setTimeout(done, 3000);       // (house-tools.css: .2 s + 2.6 s)
+    this._sceneCleanups.add(() => { clearTimeout(timer); done(); });
   }
 
   ownDom(element) {

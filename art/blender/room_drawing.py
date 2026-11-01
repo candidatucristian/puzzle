@@ -62,9 +62,11 @@ PLASTER = scan("ceiling", "plastered_wall_04", size=2.0, tint=(0.86, 0.82, 0.74)
 BRASS = aged_metal("brass", (0.58, 0.41, 0.18), (0.08, 0.06, 0.03), rough=(0.2, 0.46), scale=30, tarnish=0.45)
 GILT = aged_metal("gilt", (0.72, 0.53, 0.22), (0.14, 0.09, 0.04), rough=(0.2, 0.45), scale=50, tarnish=0.45)
 IRON = plain("iron", (0.025, 0.025, 0.027), rough=0.5, metal=0.8)
-GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
-if VIEW == "tree": GLASS.node_tree.nodes["Principled BSDF"].inputs["IOR"].default_value = 1.03   # (close to, the night seen through it clear)
-FRAME = plain("window paint", (0.86, 0.84, 0.78), rough=0.5)
+# (old window glass, thin: the night seen through it clear, the room not
+# mirrored back in it)
+GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.03)
+# (the sash: oak, never painted, dark with age)
+FRAME = scan("window oak", "dark_wood", size=0.6, tint=(0.55, 0.38, 0.25), bright=0.42, sat=0.8, rough=(0.45, 0.7), bump=0.3, edges=0.3)
 WAX = bpy.data.materials.new("wax"); WAX.use_nodes = True
 _w = WAX.node_tree.nodes["Principled BSDF"]; _w.inputs["Base Color"].default_value = (0.82, 0.74, 0.58, 1); _w.inputs["Subsurface Weight"].default_value = 0.6; _w.inputs["Subsurface Radius"].default_value = (0.02, 0.012, 0.006); _w.inputs["Roughness"].default_value = 0.42
 WICK = plain("wick", (0.01, 0.01, 0.01), rough=0.9)
@@ -107,13 +109,19 @@ def parquet(x0, x1, d0, d1, L=35.0, W=7.0):
                 pts = [world(ax + gap, ay + gap), world(bx - gap, ay + gap), world(bx - gap, by - gap), world(ax + gap, by - gap)]
                 mx, md = sum(p[0] for p in pts) / 4, sum(p[1] for p in pts) / 4
                 if not (x0 - 10 < mx < x1 + 10 and d0 - 10 < md < d1 + 10): continue
-                # (none where the trap is cut)
-                if TRAP["x0"] - 3 < mx < TRAP["x1"] + 3 and TRAP["d0"] - 3 < md < TRAP["d1"] + 3: continue
                 f = bm.faces.new([bm.verts.new(tuple(P(px, 0.0, pd))) for px, pd in pts])
                 ou, ov = RNG.uniform(0, 3), RNG.uniform(0, 3)
                 for lp, (cu, cv) in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
                     lu, lv = (cu * L, cv * W) if along else (cv * L, cu * W)
                     lp[uv].uv = (ou + M(lu), ov + M(lv))
+    # (the trap cut out of it cleanly: the blocks sawn along its edges, a
+    # little in under its frame, and what lay over the hole taken away)
+    tx0, tx1, td0, td1 = TRAP["x0"] - 2, TRAP["x1"] + 2, TRAP["d0"] - 2, TRAP["d1"] + 2
+    for (co, no) in ((P(tx0, 0, 0), (1, 0, 0)), (P(tx1, 0, 0), (1, 0, 0)), (P(0, 0, td0), (0, 1, 0)), (P(0, 0, td1), (0, 1, 0))):
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=co, plane_no=no)
+    lo, hi = P(tx0, 0, td0), P(tx1, 0, td1)
+    over = [f for f in bm.faces if lo.x < f.calc_center_median().x < hi.x and lo.y < f.calc_center_median().y < hi.y]
+    bmesh.ops.delete(bm, geom=over, context="FACES")
     bm.to_mesh(me); bm.free()
     o = link(bpy.data.objects.new("parquet", me))
     m = scan("parquet", "dark_wood", size=1.0, tint=(0.85, 0.6, 0.4), bright=0.55, rough=(0.2, 0.45), bump=0.3, coat=0.45, uvs=True)
@@ -159,7 +167,7 @@ dado(X0, X1, True, D1, -1, skip=((wx0 - 4, wx1 + 4),))
 # ── the hearth in the left-hand wall: the embers, a gilt glass over it ─────
 hb = HEARTH
 WX = X0 + hb["out"]                              # the breast's face
-MARBLE = scan("black marble", "marble_01", size=0.8, tint=(0.3, 0.3, 0.32), bright=0.35, sat=0.4, rough=(0.08, 0.25), bump=0.1, coat=0.6)
+MARBLE = scan("black marble", "marble_01", size=0.8, tint=(0.22, 0.21, 0.22), bright=0.26, sat=0.4, rough=(0.25, 0.45), bump=0.1, coat=0.15)
 SOOT = plain("soot", (0.012, 0.01, 0.009), rough=0.95)
 CAST = aged_metal("cast iron", (0.035, 0.033, 0.03), (0.02, 0.016, 0.012), rough=(0.4, 0.75), scale=40, tarnish=0.3)
 breast = box_cm("chimney breast", X0 - 1, WX, 0, TOP, hb["d0"], hb["d1"], PAPER)
@@ -261,6 +269,7 @@ _sr = _sn.new("ShaderNodeValToRGB"); _sr.color_ramp.elements[0].color = (0.05, 0
 _sl(_snz.outputs["Value"], _sr.inputs["Fac"]); _sl(_sr.outputs["Color"], _sb.inputs["Emission Color"])
 _sb.inputs["Base Color"].default_value = (0.01, 0.01, 0.012, 1); _sb.inputs["Roughness"].default_value = 0.08; _sb.inputs["Coat Weight"].default_value = 0.8
 _sb.inputs["Emission Strength"].default_value = float(arg("--snow", "0.03"))
+if VIEW == "tree": _sb.inputs["Emission Strength"].default_value = 0.0    # (close to the tree, no light but its lamps')
 tv = TV
 box_cm("television", tv["x0"], tv["x1"], tv["y0"], tv["y1"], D1 - 4, D1 - 1.5, BEZEL, 0.4)
 GLASS_D = D1 - 4.05
@@ -301,7 +310,10 @@ for x in (tp["x0"] + 6, tp["x1"] - 6):
 lad_d = tp["d1"] - 10
 for e in (-1, 1):
     x = (tp["x0"] + tp["x1"]) / 2 + e * 20
-    tube("ladder rail", [(0, -2.4), (0, 0.42), (0.06, 0.62), (0.16, 0.6), (0.2, 0.42), (0.2, 0.2)], 0.012, IRON, at=tuple(P(x, 0, lad_d)), rot=-math.pi / 2)
+    # (each hoop bends back over the hole's far edge and comes down to the
+    # boards beyond it — the way a trap ladder's grab rails do — not out
+    # over the hole, where its end hung in the air to one side)
+    tube("ladder rail", [(0, -2.4), (0, 0.42), (0.06, 0.62), (0.16, 0.6), (0.2, 0.42), (0.2, 0.01)], 0.012, IRON, at=tuple(P(x, 0, lad_d)), rot=math.pi / 2)
 for k in range(9):
     y = 20 - k * 28
     rod("rung", P((tp["x0"] + tp["x1"]) / 2 - 20, y, lad_d), P((tp["x0"] + tp["x1"]) / 2 + 20, y, lad_d), M(0.9), IRON, verts=10)
@@ -390,8 +402,8 @@ def reach(y, az):
 FRONT = math.atan2(EYE[2] - T["d"], EYE[0] - T["x"])    # toward us (in Blender's x, y: the room's x, d)
 TOP_Y = YT
 tiers = len(ALIGHT)
-BULB_LIT = plain("lamp alight", (1.0, 0.85, 0.6), emit=(1.0, 0.72, 0.38), strength=float(arg("--bulbs", "28")))
-BULB_DARK = plain("lamp dark", (0.12, 0.1, 0.07), rough=0.15, coat=0.8)
+BULB_LIT = plain("lamp alight", (1.0, 0.8, 0.5), emit=(1.0, 0.62, 0.26), strength=float(arg("--bulbs", "45")))
+BULB_DARK = plain("lamp dark", (0.05, 0.045, 0.04), rough=0.6)     # (cold glass: matte, so it never shines like a lamp)
 WIRE = plain("lamp wire", (0.01, 0.025, 0.012), rough=0.5)
 LAMPS = []                                       # (where, alight?) for every holder
 for i in range(tiers):
@@ -409,21 +421,13 @@ for i in range(tiers):
     cu = bpy.data.curves.new("lamp string", "CURVE"); cu.dimensions = "3D"; cu.bevel_depth = M(0.12); spl = cu.splines.new("BEZIER"); spl.bezier_points.add(len(string) - 1)
     for bp_, v in zip(spl.bezier_points, string): bp_.co = v; bp_.handle_left_type = bp_.handle_right_type = "AUTO"
     link(bpy.data.objects.new("lamp string", cu)).data.materials.append(WIRE)
+# (the lamps alight bright and warm; those out dark and dull, smaller — and
+# nothing else hung on the tree, so the lamps alight are counted plainly)
 for (p, on) in LAMPS:
-    leaf_blade("lamp", p + Vector((0, 0, M(0.6))), M(0.75), BULB_LIT if on else BULB_DARK, squash=(1, 1, 1.6))
+    if on: leaf_blade("lamp", p + Vector((0, 0, M(0.8))), M(1.1), BULB_LIT, squash=(1, 1, 1.5))
+    else: leaf_blade("lamp out", p + Vector((0, 0, M(0.6))), M(0.75), BULB_DARK, squash=(1, 1, 1.5))
     cylinder("lamp holder", 0, 0, 0, M(0.9), M(0.5), WIRE, verts=8).location = p - Vector((0, 0, M(0.4)))
-# glass balls hung from the tips of branches toward us
-BALLS = [plain(f"glass ball {k}", c, rough=0.05, metal=0.9, coat=1.0) for k, c in enumerate(((0.5, 0.03, 0.03), (0.75, 0.55, 0.2), (0.6, 0.62, 0.66), (0.05, 0.18, 0.4)))]
-front_tips = [b for b in BRANCH_TIPS if abs((b[1] - FRONT + math.pi) % math.tau - math.pi) < 1.2 and b[0] < YT - 30]
-for (y, az, Lb) in RNG.sample(front_tips, min(16, len(front_tips))):
-    rr = RNG.uniform(2.6, 3.6)
-    r = 3 + Lb * 0.78
-    hy = y - math.sin(0.2) * Lb * 0.78 - 1.5
-    top = P(T["x"] + math.cos(az) * r, hy, T["d"] + math.sin(az) * r)
-    p = top - Vector((0, 0, M(rr + 2.5)))
-    sphere("glass ball", tuple(p), M(rr), RNG.choice(BALLS))
-    cylinder("ball cap", M(p.x * 100), M(p.y * 100), M(p.z * 100 + rr - 0.3), M(p.z * 100 + rr + 0.6), M(0.6), BRASS, verts=10)
-    rod("ball thread", p + Vector((0, 0, M(rr + 0.6))), top, M(0.05), BRASS, verts=4)
+# (no glass balls on it: only its lamps, so the ones alight are counted plainly)
 # the brass star on its top, turned to us
 me = bpy.data.meshes.new("star"); bm = bmesh.new()
 pts_ = [(math.cos(math.pi / 2 + k * math.pi / 5) * (8 if k % 2 == 0 else 3.4), math.sin(math.pi / 2 + k * math.pi / 5) * (8 if k % 2 == 0 else 3.4)) for k in range(10)]
@@ -483,7 +487,8 @@ if VIEW == "tree":
         for o in [root_] + list(root_.children_recursive): o.hide_render = True
     for o in CHEST_PARTS: o.hide_render = True
     for o in [o for o in bpy.data.objects if o.name.startswith("ladder rail")]: o.hide_render = True
-rug(-150, 140, 140, 480, rug_material("rug", f"{ASSETS}/textures/persian_rug.jpg", tint=(0.55, 0.62, 1.0), sat=0.95, value=0.4))
+# (the rug laid clear of the trap: its hole open to see)
+rug(-72, 150, 140, 480, rug_material("rug", f"{ASSETS}/textures/persian_rug.jpg", tint=(0.55, 0.62, 1.0), sat=0.95, value=0.4))
 
 # ── the chandelier, cold, from the ceiling's rose ─────────────────────────
 ch_x, ch_d, ch_y = 0, 340, 236
@@ -545,7 +550,8 @@ cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.6")))
 scene.cycles.volume_bounces = 1
 GLOSSY = ("snow", "standby lamp", "lamp alight", "lamp dark")                # (what keeps its shine: glazes, screens, lamp glass)
 finish(scene, SAMPLES, keep_gloss=GLOSSY)
-plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
+lighting = one_light(ONE, OUT_LIGHTS)
+plates = lighting if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

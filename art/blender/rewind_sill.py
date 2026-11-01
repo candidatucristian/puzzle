@@ -42,7 +42,7 @@ WALNUT = scan("walnut", "rosewood_veneer1", size=0.7, tint=(0.6, 0.4, 0.3), brig
 WALNUT_X = scan("walnut across", "rosewood_veneer1", size=0.7, tint=(0.6, 0.4, 0.3), bright=0.46, sat=0.9, rough=(0.25, 0.45), bump=0.2, coat=0.2)
 PLASTER = scan("plaster", "white_plaster_rough_01", size=2.4, tint=(0.86, 0.84, 0.76), bright=1.0, sat=0.35, rough=(0.8, 0.95), bump=0.4)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
-FRAME = plain("window paint", (0.8, 0.79, 0.74), rough=0.55)
+FRAME = scan("window oak", "dark_wood", size=0.6, tint=(0.55, 0.38, 0.25), bright=0.42, sat=0.8, rough=(0.45, 0.7), bump=0.3, edges=0.3)   # (oak, never painted: no white frames in the house)
 back = box_cm("back wall", X0 - 25, X1 + 25, 0, TOP, D1, D1 + 30, PLASTER)
 def dado_back(a, b, top):
     def piece(p0, p1, y0, y1, proud, mat, r=0.0): box_cm("dado", p0, p1, y0, y1, D1 - proud, D1, mat, r)
@@ -106,7 +106,7 @@ tall = REWIND["candle"]["to"]
 crops["candle"] = px_box([CF(sx * (CANDLE_R + 0.6), y, sd * (CANDLE_R + 0.6)) for sx in (-1, 1) for sd in (-1, 1) for y in (CANDLE_FOOT + 1.2, ring_y(tall) + 1.2)], 4)
 GF = SILL.frames["glass"]
 layout = {
-    "version": 1, "width": RW, "height": RH,
+    "version": 2, "width": RW, "height": RH,
     "safe": box_of(corners_of([o for k in SPOTS for o in SILL.objects(k)]), pad=8),
     "hit": hit,
     "clock": {"pivot": pt(SILL.dial_centre()), "radius": round(DIAL_R * scale_at(SILL.dial_centre()), 2)},

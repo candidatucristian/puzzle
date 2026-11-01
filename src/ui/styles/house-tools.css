@@ -123,45 +123,15 @@
 .notebook-content .options-heading { flex-wrap: nowrap; padding-bottom: 12px; border-bottom: 1px solid #3a3a36; }
 .notebook-content h2 { margin: 0; color: var(--ui-text); font: 500 calc(19px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: .02em; }
 .notebook-content .tool-note { margin: 0; color: var(--ui-muted); font: 400 calc(11px * var(--reading-scale, 1))/1.55 var(--ui-font); }
-/* the page first, the shelf of folders under it */
+/* the page first, the saved pages under it */
 .notebook-body { display: flex; flex-direction: column; gap: 16px; }
 .notebook-page { order: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .notebook-shelf { order: 1; display: grid; gap: 8px; padding: 12px 12px 14px; border: 1px solid #3a3a36; border-radius: 4px; background: var(--ui-panel); }
 .shelf-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
 .shelf-label { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .16em; text-transform: uppercase; color: var(--ui-muted); }
 .shelf-count { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: var(--ui-muted); }
-.shelf-folders, #notebook-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
-/* a folder: a manila one, its tab on top, the open one standing out and lighter */
-.shelf-folder { position: relative; display: flex; align-items: stretch; }
-.folder-tab { position: relative; flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 8px 30px 7px 36px; border: 0; border-radius: 2px 5px 5px 5px; text-align: left;
-  font: 400 calc(14px * var(--reading-scale, 1))/1.2 "Architects Daughter", cursive; color: #3a2a12;
-  background: linear-gradient(180deg, #d4b072, #c19a58); box-shadow: 0 1px 0 #6a4a1a66, inset 0 1px 0 #fff3d044;
-  transition: transform .15s, background .15s; }
-.folder-tab::before { content: ""; position: absolute; left: 11px; top: 50%; width: 17px; height: 13px; margin-top: -6.5px;
-  background: linear-gradient(180deg, #8a6430, #6a4a20); clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 100%, 0 100%); }
-.folder-tab:hover { background: linear-gradient(180deg, #dcba7c, #c9a260); transform: translateX(2px); }
-.folder-tab:focus-visible { outline: 2px solid #d8d3c6; outline-offset: 1px; }
-.shelf-folder.open .folder-tab { background: linear-gradient(180deg, #f0dfb4, #e2cc94); transform: translateX(4px); box-shadow: 0 1px 0 #6a4a1a66, inset 3px 0 0 #8e2a20; }
-.shelf-folder.open .folder-tab::before { clip-path: polygon(0 0, 42% 0, 52% 20%, 100% 20%, 100% 38%, 18% 38%, 0 100%); }
-.folder-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.folder-count { flex: none; min-width: 20px; padding: 1px 6px; border-radius: 9px; text-align: center;
-  font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: #f2e6c8; background: #3a2a12b0; }
-.folder-bin { position: absolute; right: 4px; top: 50%; translate: 0 -50%; z-index: 1; height: 22px; min-width: 22px; padding: 0 5px;
-  border: 0; border-radius: 11px; font: 400 14px/1 var(--ui-font); color: #5a1a12; background: transparent; opacity: 0; transition: opacity .15s, background .15s; }
-.shelf-folder.open .folder-bin { right: -2px; }
-.shelf-folder:hover .folder-bin, .folder-bin:focus-visible, .folder-bin[data-armed="true"] { opacity: 1; }
-.folder-bin:hover { background: #8e2a2022; }
-.folder-bin[data-armed="true"] { font-size: 11px; color: #f2e6c8; background: #8e2a20; }
-.folder-input { width: 100%; padding: 8px 12px; border: 1px dashed #8a8a84; border-radius: 3px; outline: none;
-  font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; background: #efe6cc; }
-.shelf-add { justify-self: start; padding: 6px 10px; border: 1px dashed #5a5a55; border-radius: 3px;
-  font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); background: transparent; }
-.shelf-add:hover:not(:disabled) { background: #ffffff0d; border-style: solid; }
-.shelf-add:disabled { cursor: default; opacity: .55; }
-/* the notes in the open folder: index cards, a red rule down their margin */
-.shelf-notes { display: grid; gap: 6px; margin-top: 6px; padding-top: 10px; border-top: 1px solid #ffffff14; }
-.shelf-notes[hidden] { display: none; }
+#notebook-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+/* the saved pages: index cards, a red rule down their margin */
 #notebook-notes { max-height: 220px; overflow-y: auto; padding: 2px 4px 4px 2px; }
 .shelf-note { width: 100%; display: grid; gap: 2px; padding: 7px 10px 7px 14px; border: 0; border-radius: 2px; text-align: left;
   background: repeating-linear-gradient(180deg, #0000 0 15px, #5a6e9a26 15px 16px) 0 6px, #f3ecd6;
@@ -495,17 +465,18 @@ body.in-house #game-container canvas { scale: 1.028; }
   text-shadow: 0 1px #f1dfa5b8, 0 -1px 1px #392916a8; }
 .prologue-envelope { position: absolute; z-index: 3; border: 0; padding: 0; border-radius: 2px; background: transparent;
   cursor: var(--cursor-hand, pointer); transition: box-shadow .35s ease, background .35s ease; }
-.prologue-envelope:hover { box-shadow: inset 0 0 0 1px #e0c18679, 0 0 28px #ebba6a20; background: #eacb8510; }
+.prologue-envelope:hover { box-shadow: 0 0 28px #ebba6a20; background: #eacb8510; }
 .prologue-envelope:focus-visible { outline: 1px solid #e4c58dce; outline-offset: 3px; background: #eacb8510; }
 .prologue-envelope:disabled { cursor: default; }
 .prologue-envelope:disabled:hover { box-shadow: none; background: transparent; }
-/* once the letter is read, the file beside it draws the eye — a slow warm breath on its leather */
+/* once the letter is read, the file beside it draws the eye — a slow warm breath on its leather
+   (no line of its own: its one border is the pencil line drawn round it, below) */
 .prologue-dossier { border-radius: 6px; }
 .prologue-envelope:not(.prologue-dossier) { clip-path: polygon(16% 0, 98% 12%, 100% 100%, 0 87%); }
 .prologue-dossier { clip-path: polygon(0 36%, 65% 0, 100% 28%, 74% 100%, 0 80%); }
 #prologue[data-step="file"] .prologue-dossier { animation: dossier-call 2.8s ease-in-out infinite; }
 #prologue[data-step="file"] .prologue-dossier:hover, #prologue[data-step="file"] .prologue-dossier:focus-visible { animation: none; }
-@keyframes dossier-call { 50% { box-shadow: inset 0 0 0 1px #e0c18640, 0 0 36px #ebba6a1c; background: #eacb850a; } }
+@keyframes dossier-call { 50% { box-shadow: 0 0 36px #ebba6a1c; background: #eacb850a; } }
 [data-reduced-motion="true"] #prologue .prologue-dossier { animation: none; }
 .prologue-prompt { position: absolute; z-index: 4; left: 0; right: 0; bottom: clamp(27px, 5vh, 52px); margin: 0; display: grid; justify-items: center; gap: 10px;
   color: #e4d6bb; font: 400 clamp(13px, 1.25vw, 16px) "Cormorant Garamond", Georgia, serif; letter-spacing: .12em;
@@ -534,6 +505,7 @@ body.in-house #game-container canvas { scale: 1.028; }
 }
 @media (prefers-reduced-motion: reduce) {
   #prologue, #prologue *, .prologue-camera { animation: none !important; transition: none !important; }
+  #prologue .prologue-outline path { stroke-dasharray: none; stroke-dashoffset: 0; }
 }
 
 /* ── the story's moments between the puzzles (cinema.js) ── */
@@ -1040,15 +1012,20 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
    the pointer; gone once it is done, and while a page is being read */
 #prologue .prologue-outlines { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 #prologue .prologue-outline { opacity: 0; transition: opacity .5s ease; }
-#prologue .prologue-outline path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.3s cubic-bezier(.45, .05, .3, 1); }
-#prologue .prologue-outline .ink-dark { stroke: #000; stroke-opacity: .7; stroke-width: 2.4; }
-#prologue .prologue-outline .ink-white { stroke: #ece7db; stroke-width: 1.05; }
-#prologue .prologue-outline .ink-over { stroke: #fff; stroke-opacity: .45; stroke-width: .45; transform: translate(.6px, -.45px); }
+/* (the line is drawn in the photograph's own measure, so the dash that draws
+   it in runs the whole way round, whatever the screen; --u, one screen pixel
+   in that measure (prologue.js outlines), keeps the pencil as thin as ever) */
+#prologue .prologue-outline path { fill: none; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s linear; }
+#prologue .prologue-outline .ink-dark { stroke: #000; stroke-opacity: .7; stroke-width: calc(2.4 * var(--u, 1px)); }
+#prologue .prologue-outline .ink-white { stroke: #ece7db; stroke-width: calc(1.05 * var(--u, 1px)); }
+#prologue .prologue-outline .ink-over { stroke: #fff; stroke-opacity: .45; stroke-width: calc(.45 * var(--u, 1px));
+  transform: translate(calc(.6 * var(--u, 1px)), calc(-.45 * var(--u, 1px))); }
 #prologue:not([data-phase="opening"])[data-step="letter"] .prologue-outline[data-for="letter"],
-#prologue:not([data-phase="opening"])[data-step="file"] .prologue-outline[data-for="file"] { opacity: .72; animation: outline-breathe 2.6s ease-in-out 1.4s infinite; }
+#prologue:not([data-phase="opening"])[data-step="file"] .prologue-outline[data-for="file"] { opacity: .72; animation: outline-breathe 2.6s ease-in-out 1.6s infinite; }
 #prologue:not([data-phase="opening"])[data-step="letter"] .prologue-outline[data-for="letter"] path,
 #prologue:not([data-phase="opening"])[data-step="file"] .prologue-outline[data-for="file"] path { stroke-dashoffset: 0; }
+[data-reduced-motion="true"] #prologue .prologue-outline path { stroke-dasharray: none; stroke-dashoffset: 0; }
 #prologue[data-step="letter"]:has(.prologue-envelope:not(.prologue-dossier):hover) .prologue-outline[data-for="letter"],
 #prologue[data-step="file"]:has(.prologue-dossier:hover) .prologue-outline[data-for="file"] { opacity: 1; animation: none; }
 #prologue:has(.prologue-reading.is-shown) .prologue-outline { opacity: 0 !important; animation: none; }
@@ -1170,3 +1147,25 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, body *::-webkit-scrollbar { di
 .outside-tasks { display: grid; gap: 8px; }
 .outside-tasks .outside-label { margin-left: 2px; }
 
+
+/* ── a puzzle come to (BasePuzzleScene._approach): brought slowly, barely
+   nearer, and while it comes the eye drifts a hair to one side and back — as
+   a person steps up to a thing and looks at it; the herbarium's own way of
+   coming near (shared/pageFlip.js bringNear), for every puzzle. Two motions
+   at once, ending together: the nearing (transform) and the drift
+   (translate), each easing in and out, so nothing is left to happen after.
+   The picture and what the level lays over it in the page move as one. ── */
+#game-container.approaching > * { transform-origin: 50% 52%;
+  animation: puzzle-near 2.6s cubic-bezier(.37, 0, .25, 1) .2s both, puzzle-drift 2.6s ease-in-out .2s both; }
+@keyframes puzzle-near {
+  from { transform: scale(.978); }
+  to { transform: none; }
+}
+@keyframes puzzle-drift {
+  0% { translate: -.32% .12%; }
+  48% { translate: .18% .04%; }
+  100% { translate: 0 0; }
+}
+[data-reduced-motion="true"] #game-container.approaching > * { animation: none; }
+@media (prefers-reduced-motion: reduce) { #game-container.approaching > * { animation: none; } }
+[data-ambient-motion="false"] #game-container.approaching > * { animation: none; }

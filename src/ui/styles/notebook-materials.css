@@ -87,21 +87,6 @@
 #notebook-modal .shelf-label { min-width: 0; overflow-wrap: anywhere; color: #8d7d64; font-size: calc(10px * var(--reading-scale,1)); }
 #notebook-modal .shelf-count { flex-shrink: 0; color: #94836a; }
 #notebook-modal .shelf-empty { padding-left: 0; color: #94836a; }
-#notebook-modal .shelf-notes { border: 0; margin-top: 10px; padding-top: 0; }
-#notebook-modal .folder-tab, #notebook-modal .folder-tab:hover, #notebook-modal .shelf-folder.open .folder-tab {
-  padding: 8px 28px 8px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; transform: none; color: #695a43;
-}
-#notebook-modal .shelf-folder.open .folder-name { color: #67412f; font-weight: 700; }
-#notebook-modal .folder-tab::before { content: none; }
-#notebook-modal .folder-count { padding: 0; color: #99876c; background: transparent; border-radius: 0; }
-#notebook-modal .folder-bin { color: #9c624d; }
-#notebook-modal .folder-bin:hover { background: transparent; color: #6d3827; }
-#notebook-modal .folder-bin[data-armed="true"] { color: #883526; background: transparent; }
-#notebook-modal .folder-input {
-  padding: 8px 0; border: 0; border-radius: 0; background: transparent; color: #5c4d37; outline: none;
-}
-#notebook-modal .shelf-add { padding: 6px 0; border: 0; color: #77513a; background: transparent; }
-#notebook-modal .shelf-add:hover:not(:disabled) { border: 0; color: #483021; background: transparent; }
 #notebook-modal .shelf-note, #notebook-modal .shelf-note:hover, #notebook-modal .shelf-note.open {
   padding: 8px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; transform: none;
 }

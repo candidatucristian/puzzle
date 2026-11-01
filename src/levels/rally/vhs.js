@@ -23,7 +23,9 @@ export const RACE_CAPTION = Object.freeze({
   line: "FINAL STAGE  ·  THE CHAMPIONSHIP IS DECIDED TONIGHT",
 });
 
-export function addVhs(scene, W, H) {
+/** `lettering` (rallyRender.js), when the tape's lettering was rendered in
+ *  Blender: PLAY, SP and the caption are those pictures. */
+export function addVhs(scene, W, H, lettering = null) {
   const t = scene.textures;
   if (!t.exists(SCAN)) addCanvasTexture(t, SCAN, scanTile());
   if (!t.exists(NOISE)) addCanvasTexture(t, NOISE, noiseTile());
@@ -48,18 +50,29 @@ export function addVhs(scene, W, H) {
   // ── the recorder's PLAY, its colours slipped apart ──
   const os = Math.max(16, Math.round(H * 0.042));
   const ox = W * 0.055, oy = H * 0.07;
-  const osd = (dx, color, alpha) =>
-    keep(add.text(ox + dx, oy, "PLAY ▶", { fontFamily: OSD_FONT, fontStyle: "bold", fontSize: os + "px", color })
+  const L = lettering;
+  const osd = (dx, color, alpha) => L
+    ? keep(add.image(ox + dx, oy - L.osd.size * 0.12, L.key, "osd-play").setOrigin(0, 0).setDisplaySize(L.osd.play[0], L.osd.play[1])
+      .setTint(Phaser.Display.Color.HexStringToColor(color).color).setDepth(DEPTH + 1).setAlpha(alpha))
+    : keep(add.text(ox + dx, oy, "PLAY ▶", { fontFamily: OSD_FONT, fontStyle: "bold", fontSize: os + "px", color })
       .setDepth(DEPTH + 1).setAlpha(alpha).setShadow(0, 0, "rgba(255,255,255,0.35)", os * 0.3, false, true));
   const ghosts = [osd(-2, "#ff3050", 0.55), osd(2, "#30e0ff", 0.55)];
   ghosts.forEach((g) => g.setBlendMode(Phaser.BlendModes.ADD));
   const play = osd(0, "#f4f4f0", 0.95);
-  const sp = keep(add.text(ox, oy + os * 1.25, "SP", { fontFamily: OSD_FONT, fontStyle: "bold", fontSize: Math.round(os * 0.7) + "px", color: "#f4f4f0" })
-    .setDepth(DEPTH + 1).setAlpha(0.85));
+  const sp = L
+    ? keep(add.image(ox, oy + os * 1.25 - L.osd.size * 0.1, L.key, "osd-sp").setOrigin(0, 0).setDisplaySize(L.osd.sp[0], L.osd.sp[1]).setDepth(DEPTH + 1).setAlpha(0.85))
+    : keep(add.text(ox, oy + os * 1.25, "SP", { fontFamily: OSD_FONT, fontStyle: "bold", fontSize: Math.round(os * 0.7) + "px", color: "#f4f4f0" })
+      .setDepth(DEPTH + 1).setAlpha(0.85));
 
   // ── the broadcaster's caption, across the top right ──
   const cs = Math.max(13, Math.round(H * 0.03));
   const right = W * 0.95, top = H * 0.065;
+  let caption;
+  if (L) {
+    // (the caption as rendered: its LIVE tag over the box's top left)
+    caption = keep(add.image(right - L.caption.w, top - L.caption.tagH, L.key, "caption").setOrigin(0, 0)
+      .setDisplaySize(L.caption.w, L.caption.h).setDepth(DEPTH + 0.9).setAlpha(0.92));
+  } else {
   const title = add.text(0, 0, RACE_CAPTION.title, { fontFamily: CAPTION_FONT, fontStyle: "bold", fontSize: Math.round(cs * 1.25) + "px", color: "#ffffff" }).setOrigin(1, 0);
   const line = add.text(0, 0, RACE_CAPTION.line, { fontFamily: CAPTION_FONT, fontStyle: "bold", fontSize: Math.round(cs * 0.62) + "px", color: "#ffd84a" }).setOrigin(1, 0);
   line.setLetterSpacing?.(1);
@@ -76,7 +89,8 @@ export function addVhs(scene, W, H) {
   live.setPosition(bx + tagW / 2, by - tagH / 2);
   title.setPosition(right - pad * 1.2, by + pad * 0.6);
   line.setPosition(right - pad * 1.2, by + pad * 0.7 + title.height);
-  const caption = keep(add.container(0, 0, [box, title, line, live]).setDepth(DEPTH + 0.9).setAlpha(0.92));
+  caption = keep(add.container(0, 0, [box, title, line, live]).setDepth(DEPTH + 0.9).setAlpha(0.92));
+  }
 
   const rnd = lcg(4013);
   let nextRoll = 3500 + rnd() * 6000;

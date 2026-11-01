@@ -16,7 +16,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
   init(data) { this.skipFadeIn = data?.skipFade ?? true; }
 
   preload() {
-    for (const name of [...Array.from({ length: 8 }, (_, i) => `candles-${i}`), "outer-lume", "rotor", "letter"]) {
+    for (const name of [...Array.from({ length: 8 }, (_, i) => `candles-${i}`), "outer-lume", "rotor", "letter-open"]) {
       if (!this.textures.exists(key(name))) this.load.image(key(name), `${PATH}/${name}.webp`);
     }
     if (!this.textures.exists(key("flames"))) {
@@ -114,45 +114,67 @@ export default class NativeCryptexScene extends BasePuzzleScene {
       hitAreaCallback: Phaser.Geom.Polygon.Contains, cursor: "pointer",
     }).setData("interactionLabel", "Open the sealed letter");
     zone.on("pointerdown", () => this._openLetter());
+    this._envelope = { x: (x0 + Math.max(...xs)) / 2, y: (y0 + Math.max(...ys)) / 2, width: Math.max(...xs) - x0 };
     this._buildLetter(W, H);
     if (this.candle.allOut) this._lettersShown = true;
     if (this._lettersShown) this._reveal.value = 1;
     this._refreshLight();
   }
 
+  // The letter, opened: the render of it alone (art/blender/cipher_letter.py),
+  // its own soft shadow under it. It comes up out of the envelope on the
+  // ledge to be read, the room going dark behind it, and goes back the same
+  // way: only its place, size and opacity change.
   _buildLetter(W, H) {
     this._letter = this.add.container(0, 0).setDepth(60).setVisible(false);
-    const backdrop = this.add.rectangle(0, 0, W, H, 0x050609, .87).setOrigin(0).setInteractive();
-    const image = this.add.image(W / 2, H / 2 - 8, key("letter"));
-    const source = this.textures.get(key("letter")).getSourceImage();
-    const fit = Math.min(W * .88 / source.width, H * .88 / source.height);
-    image.setScale(fit);
+    const backdrop = this.add.rectangle(0, 0, W, H, 0x030304, 1).setOrigin(0).setInteractive();
+    const image = this.add.image(W / 2, H / 2 - 8, key("letter-open"));
+    const source = this.textures.get(key("letter-open")).getSourceImage();
+    const fit = Math.min(W * .9 / source.width, (H - 40) * .96 / source.height);
     const caption = this.add.text(W / 2, H - 15, "click anywhere to put it down", {
       fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: "italic", fontSize: "13px", color: "#d0c7b6",
     }).setOrigin(.5, 1);
     this._letter.add([backdrop, image, caption]);
     backdrop.on("pointerdown", () => this._closeLetter());
+    // (the sheet fills about 0.79 of its picture's width)
+    const env = this._envelope;
+    this._letterParts = { backdrop, image, caption };
+    this._letterPoses = {
+      read: { x: W / 2, y: (H - 40) / 2 + 6, scale: fit, angle: 0, alpha: 1 },
+      away: { x: env.x, y: env.y, scale: Math.max(.04, env.width * .62 / (source.width * .79)), angle: -5, alpha: 0 },
+    };
+  }
+
+  _letterTo(pose, backdrop, duration, ease, done) {
+    const { image, caption } = this._letterParts;
+    this.tweens.killTweensOf([image, caption, this._letterParts.backdrop]);
+    this.tweens.add({ targets: image, ...this._letterPoses[pose], duration, ease, onComplete: done });
+    this.tweens.add({ targets: this._letterParts.backdrop, alpha: backdrop, duration: duration * .85, ease: "Sine.easeInOut" });
+    this.tweens.add({ targets: caption, alpha: pose === "read" ? 1 : 0, duration: pose === "read" ? 260 : 120, delay: pose === "read" ? duration * .7 : 0 });
   }
 
   _openLetter() {
     if (this._overlayOpen) return;
     this._overlayOpen = true;
     this._draggingWheel = false;
-    this._letter.setVisible(true).setAlpha(0);
+    const { image, caption, backdrop } = this._letterParts;
+    image.setPosition(this._letterPoses.away.x, this._letterPoses.away.y).setScale(this._letterPoses.away.scale)
+      .setAngle(this._letterPoses.away.angle).setAlpha(0);
+    caption.setAlpha(0); backdrop.setAlpha(0);
+    this._letter.setVisible(true).setAlpha(1);
     this._letterButtons(false);
     this.services.audio.playClick(this);
-    this.tweens.add({ targets: this._letter, alpha: 1, duration: 220 });
+    this._letterTo("read", .84, this.reducedMotion ? 1 : 560, "Cubic.easeOut");
   }
 
   _closeLetter() {
-    if (!this._overlayOpen) return;
-    this.tweens.add({
-      targets: this._letter, alpha: 0, duration: 180,
-      onComplete: () => {
-        this._letter?.setVisible(false);
-        this._overlayOpen = false;
-        this._letterButtons(true);
-      },
+    if (!this._overlayOpen || this._letterClosing) return;
+    this._letterClosing = true;
+    this._letterTo("away", 0, this.reducedMotion ? 1 : 380, "Cubic.easeIn", () => {
+      this._letterClosing = false;
+      this._letter?.setVisible(false);
+      this._overlayOpen = false;
+      this._letterButtons(true);
     });
   }
 
@@ -213,6 +235,8 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this._wheel = null;
     this._disk = null;
     this._letter = null;
+    this._letterParts = null;
+    this._letterClosing = false;
     this._overlayOpen = false;
     this._draggingWheel = false;
   }
@@ -221,7 +245,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this._plates = null;
     this.candle?.destroy();
     this.tweens.killAll();
-    for (const name of [...Array.from({ length: 8 }, (_, i) => `candles-${i}`), "outer-lume", "rotor", "letter", "flames"]) {
+    for (const name of [...Array.from({ length: 8 }, (_, i) => `candles-${i}`), "outer-lume", "rotor", "letter-open", "flames"]) {
       if (this.textures.exists(key(name))) this.textures.remove(key(name));
     }
   }

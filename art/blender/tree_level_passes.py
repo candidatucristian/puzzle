@@ -64,7 +64,7 @@ def run(g):
         instruments.append({"crop": crop, "box": ref(crop), "at": list(project(mid))})
     tree_pts = [P_(T["x"] + dx, y, T["d"] + dd) for dx in (-70, 70) for dd in (-70, 70) for y in (0, g["TOP_Y"] + 16)]
     layout = {
-        "version": 1, "width": RW, "height": RH,
+        "version": 3, "width": RW, "height": RH,
         "safe": box_of(tree_pts + [g["MOON_AT"]], pad=10),
         "lamps": lamps,
         "moon": {"x": moon[0], "y": moon[1], "r": round(scale_at(g["MOON_AT"]) * 55, 2)},

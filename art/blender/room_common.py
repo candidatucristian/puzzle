@@ -113,48 +113,10 @@ def rod(name, a, b, r, mat, verts=12):
     return o
 
 # ── the gilt chest ─────────────────────────────────────────────────────────
-GOLD = None
 def chest(c):
-    """A small coffer of gilt brass with a barrel lid: its body standing on
-    four little ball feet, banded, a lock plate on its front; its lid on a
-    hinge along the back, to be swung open. `c`: x0, x1, d0, d1, y0, y1, lid
-    (cm; its front toward d0). Returns the body's parts, the lid's hinge and
-    the lid's parts."""
-    global GOLD
-    GOLD = GOLD or aged_metal("chest gilt", (0.88, 0.64, 0.26), (0.2, 0.13, 0.045), rough=(0.15, 0.36), scale=60, tarnish=0.3)
-    body = []
-    x0, x1, d0, d1, y0, y1, lid = c["x0"], c["x1"], c["d0"], c["d1"], c["y0"], c["y1"], c["lid"]
-    body.append(box_cm("coffer", x0, x1, y0 + 0.6, y1, d0, d1, GOLD, r=0.25, keep=False))
-    for x in (x0 + 0.8, x1 - 0.8):
-        for d in (d0 + 0.8, d1 - 0.8):
-            body.append(sphere("foot", tuple(P(x, y0 + 0.45, d)), M(0.55), GOLD))
-    for x in (x0 + (x1 - x0) * 0.22, x1 - (x1 - x0) * 0.22):
-        body.append(box_cm("band", x - 0.45, x + 0.45, y0 + 0.5, y1 + 0.05, d0 - 0.12, d1 + 0.12, GOLD, r=0.1, keep=False))
-    body.append(box_cm("lock plate", (x0 + x1) / 2 - 1.3, (x0 + x1) / 2 + 1.3, y1 - 3.2, y1 - 0.3, d0 - 0.25, d0, GOLD, r=0.15, keep=False))
-    hole = plain("keyhole", (0.01, 0.008, 0.005), rough=0.6)
-    body.append(box_cm("keyhole", (x0 + x1) / 2 - 0.22, (x0 + x1) / 2 + 0.22, y1 - 2.4, y1 - 1.2, d0 - 0.3, d0 - 0.2, hole, keep=False))
-    hinge = bpy.data.objects.new("chest hinge", None); link(hinge); hinge.location = P((x0 + x1) / 2, y1, d1)
-    r = (d1 - d0) / 2
-    me = bpy.data.meshes.new("lid"); bm = bmesh.new(); n = 16; w = (x1 - x0) / 2
-    ring = lambda x: [bm.verts.new((M(x), M(-r - r * math.cos(math.pi * i / n)), M(lid * math.sin(math.pi * i / n)))) for i in range(n + 1)]
-    left, right = ring(-w), ring(w)
-    for i in range(n): bm.faces.new((left[i], left[i + 1], right[i + 1], right[i]))
-    bm.faces.new(left); bm.faces.new(list(reversed(right)))
-    bm.to_mesh(me); bm.free()
-    lid_o = link(bpy.data.objects.new("lid", me)); lid_o.data.materials.append(GOLD); lid_o.parent = hinge
-    for p in lid_o.data.polygons: p.use_smooth = True
-    bevel(lid_o, M(0.15), 1)
-    parts = [lid_o]
-    for x in (-w * 0.56, w * 0.56):
-        bd = bpy.data.meshes.new("lid band"); bm = bmesh.new()
-        a = [bm.verts.new((M(x - 0.45), M(-r - (r + 0.12) * math.cos(math.pi * i / n)), M((lid + 0.12) * math.sin(math.pi * i / n)))) for i in range(n + 1)]
-        b_ = [bm.verts.new((M(x + 0.45), M(-r - (r + 0.12) * math.cos(math.pi * i / n)), M((lid + 0.12) * math.sin(math.pi * i / n)))) for i in range(n + 1)]
-        for i in range(n): bm.faces.new((a[i], a[i + 1], b_[i + 1], b_[i]))
-        bm.to_mesh(bd); bm.free()
-        o = link(bpy.data.objects.new("lid band", bd)); o.data.materials.append(GOLD); o.parent = hinge; parts.append(o)
-    hasp = box("hasp", M(-0.9), M(0.9), M(-2 * r - 0.3), M(-2 * r + 0.1), M(-2.6), M(0.6), GOLD); hasp.parent = hinge; parts.append(hasp)
-    body.append(box_cm("velvet", x0 + 0.3, x1 - 0.3, y1 - 0.4, y1 - 0.3, d0 + 0.3, d1 - 0.3, plain("velvet", (0.12, 0.01, 0.015), rough=0.9, sheen=0.8), keep=False))
-    return body, hinge, parts
+    """The house's detailed hollow coffer, shared with its native asset pipeline."""
+    from gold_coffer_model import coffer
+    return coffer(c)
 
 def chest_layout(c, turn=0.0, at=(0, 0, 0)):
     """where the chest falls in the picture: the box it is drawn in (room for
@@ -172,7 +134,7 @@ def chest_layout(c, turn=0.0, at=(0, 0, 0)):
     return {"box": box_, "mouth": [*project(mouth), scale_at(mouth)], "hit": [min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)],
             "glints": [list(project(g)) for g in glints]}
 
-def chest_sprites(scene, out, box_, body, hinge, lid_parts, kicker=7.0):
+def chest_sprites(scene, out, box_, body, hinge, lid_parts):
     """The chest shut and open, alone, each in the box the game draws it in:
     everything else held out, so the room shows through round it."""
     r = scene.render
@@ -184,16 +146,7 @@ def chest_sprites(scene, out, box_, body, hinge, lid_parts, kicker=7.0):
     r.border_min_y, r.border_max_y = 1 - (by + bh) * k / H_, 1 - by * k / H_
     r.film_transparent = True; r.image_settings.color_mode = "RGBA"
     mine = set(o.name for o in body + lid_parts)
-    # (gilt in a dark room gives back only the dark: a soft light from our
-    # side, falling on the chest alone, for its gold to be seen by)
-    gilt = bpy.data.collections.new("the chest"); scene.collection.children.link(gilt)
-    for o in body + lid_parts: gilt.objects.link(o)
-    bpy.context.view_layer.update()
-    centre = sum((o.matrix_world.translation for o in body), Vector()) / len(body)
-    toward = (scene.camera.matrix_world.translation - centre).normalized()
-    kick = lamp("on the chest", "AREA", tuple(centre + toward * 0.7 + Vector((0, 0, 0.45))), aim=tuple(centre), energy=kicker, colour=(1.0, 0.8, 0.55), size=0.6)
-    kick.light_linking.receiver_collection = gilt
-    kick.visible_camera = False
+    # Use the room's light directly; never add a reflector for the metal.
     for o in bpy.data.objects:
         if o.type in ("MESH", "CURVE", "FONT"):
             o.is_holdout = o.name not in mine
@@ -202,7 +155,6 @@ def chest_sprites(scene, out, box_, body, hinge, lid_parts, kicker=7.0):
         hinge.rotation_euler = (angle, 0, 0)
         render(scene, os.path.join(out, f"{name}.png"))
     hinge.rotation_euler = (0, 0, 0)
-    bpy.data.objects.remove(kick, do_unlink=True)
     for o in bpy.data.objects: o.is_holdout = False
     r.use_border = False; r.film_transparent = False; r.image_settings.color_mode = "RGB"
 

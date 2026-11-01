@@ -8,9 +8,10 @@ import DRAWER from "./ticketDrawer.json";
 // Level — "STATION"  ·  code: EXIT  ·  observation + ordering
 //
 // Room IV's chest of drawers, its top drawer pulled out and looked down into
-// by candlelight: hundreds of old card tickets standing in rows at the back,
-// and in front, laid out in two rows, eight of them — one for each train of
-// the departures board (rows.js), in the board's own scrambled order. Each is
+// under the room's warm lamp: hundreds of old card tickets standing in rows at
+// the back, and in front, one strip of eight paper tickets still joined at
+// their perforations, folded once — one for each train of the departures
+// board (rows.js), in the board's own scrambled order. Each is
 // printed with its destination, its time and its platform, and stamped with
 // what became of its train. Four are stamped BOARDING, and in each of those
 // four destinations one letter was struck from a low slug: it sits a little
@@ -18,8 +19,8 @@ import DRAWER from "./ticketDrawer.json";
 //
 // The drawer is a Blender render (art/blender/ticket_drawer.py; the tickets'
 // faces from ticket_faces.mjs, made from rows.js): every word on every
-// ticket is in the picture. Nothing in it moves; the candle's light breathes
-// over it.
+// ticket is in the picture. Nothing in it moves; the lamp's warmth breathes a
+// little over it.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PLATE = `ticket_drawer_v${DRAWER.version}`;
@@ -55,29 +56,15 @@ export default class TicketsScene extends BasePuzzleScene {
     if (this.textures.exists(PLATE)) {
       this.add.image(f.x, f.y, PLATE).setOrigin(0, 0).setDisplaySize(DRAWER.width * f.s, DRAWER.height * f.s);
     }
-    // the candle, never quite still: its light swells and sinks a little,
-    // most where it falls brightest, by the drawer's front on the left
+    // the lamp over the left shoulder: its warmth swells and sinks a very
+    // little, slowly, most where it falls brightest
     const at = f.at(DRAWER.candle.at), r = DRAWER.candle.r * f.s;
     const light = this.add.image(at.x, at.y, GLOW)
       .setDisplaySize(r * 2, r * 2)
       .setTint(0xffb066)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.2);
-    this._flicker(light);
-  }
-
-  _flicker(light) {
-    const next = () => {
-      if (!light.scene) return;
-      this.ambientTween({
-        targets: light,
-        alpha: 0.14 + Math.random() * 0.14,
-        duration: 180 + Math.random() * 620,
-        ease: "Sine.easeInOut",
-        onComplete: next,
-      });
-    };
-    next();
+      .setAlpha(0.05);
+    this.ambientTween({ targets: light, alpha: { from: 0.04, to: 0.08 }, duration: 3400, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   }
 
   _teardown() {

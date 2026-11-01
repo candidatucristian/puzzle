@@ -6,10 +6,11 @@ import FRAME from "./dawnFrame.json";
 // Level — "WIRES"  ·  code: FACADE  ·  Room IV's picture
 //
 // The picture on Room IV's back wall, close to, under its brass light: the
-// last minute before sunrise over English country — the old stone cottage, its
-// porch lantern still burning and an old man in a rocking chair with his
-// harmonica; a telegraph pole on the hilltop meadow, five wires on it, and on
-// the wires six blackbirds; the valley under its mist below.
+// last minute before sunrise over the country — the old wooden farmhouse
+// under its tin roof, its porch lantern still burning, the flag hung out from
+// the porch post and a man in his rocking chair singing to his guitar; a
+// telegraph pole on the hilltop meadow, five wires on it, and on the wires six
+// swallows; the valley under its mist below.
 //
 // The five wires are a stave, bottom to top D F A C E; the birds, left to
 // right, sit on F A C A D E (puzzle.js WIRE_BIRDS). The game never says so.

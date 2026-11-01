@@ -47,7 +47,7 @@ def run(g):
     board_crop = px_box(object_corners(board), 4)
     tube_objs = [o for parts in tubes for o in parts]
     lifted = [p + Vector((0, 0, LIFT / 100)) for p in corners_of(tube_objs)]
-    layout = {"version": 1, "width": RW, "height": RH, "safe": box_of(corners_of(tube_objs) + object_corners(board) + lifted, pad=24),
+    layout = {"version": 2, "width": RW, "height": RH, "safe": box_of(corners_of(tube_objs) + object_corners(board) + lifted, pad=24),
               "tubes": items, "board": {"crop": board_crop, "box": ref(board_crop)}}
     with open(os.path.join(OUT, "phialsLevel.json"), "w") as fh: json.dump(layout, fh, indent=1)
 

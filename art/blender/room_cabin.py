@@ -16,11 +16,9 @@
 # far wall, the sea chart framed beside it, a sea chest, a coil of rope, sacks
 # of seed.
 #
-# Each puzzle has its own light, which burns until it is solved: the lantern
-# (the bottle), the candle (the board), the green lamp and the telephone's
-# screen (the telephone). A plate for each way they can stand
-# (lights-<ship><chess><phone>), the chest apart, and where it all fell in the
-# picture (src/levels/house/rooms/Room3.json).
+# The lantern, candle and green lamp stay lit, matching their close-ups.
+# Lighting never follows puzzle progress. The plate and the coffer are
+# rendered separately, with the same lights and camera registration.
 #
 #   blender -b --factory-startup -P art/blender/room_cabin.py -- [--samples 256] [--width 2560] [--only plates,chest]
 
@@ -32,7 +30,7 @@ from room_common import *
 from room_furnish import *
 import chess_set as chess
 
-OUT = os.path.join(ROOT, ".artifacts/room-cabin")
+OUT = arg('--out', os.path.join(ROOT, ".artifacts/room-cabin"))
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")
 SAMPLES = int(arg("--samples", "700"))
@@ -115,7 +113,7 @@ def side_box(name, u0, u1, y0, y1, d0, d1, mat, r=0.0):
     if r: bevel(o, M(r), 2)
     o.parent = side_root; arch(o); return o
 H_SIDE = (TOP + 20) / math.cos(LEAN)
-hull = side_box("ship's side", -22, 0, -10, H_SIDE, -40, D1 + 20, HULL_PLANKS)
+hull = side_box("ship's side", -5, 0, -10, H_SIDE, -40, D1 + 20, HULL_PLANKS)
 bpy.context.view_layer.update()
 for c in PORTS:
     cut = cylinder("cut", 0, 0, -0.5, 0.5, M(PORT_R), IRON, verts=64)
@@ -128,6 +126,7 @@ side_box("shelf-clamp", 0, 7, (TOP - 26) / math.cos(LEAN), (TOP - 12) / math.cos
 side_box("waterway", 0, 10, 0, 14, -40, D1, OAK_X, 0.8)
 # the ports: a brass ring bolted round glass, set square through the leaning side
 PORT_GLASS = []
+PORT_WINDOW = plain('flat port window',(.97,.98,.98),rough=.035,transmission=1,ior=1.5)
 for c in PORTS:
     centre = on_side(0, PORT_Y / math.cos(LEAN), c)
     tilt = Matrix.Rotation(LEAN, 4, "Y") @ Matrix.Rotation(math.pi / 2, 4, "Y")
@@ -137,11 +136,13 @@ for c in PORTS:
         a = k / 10 * math.tau
         p = Matrix.Translation(centre) @ tilt @ Vector((M(math.cos(a) * (PORT_R + 5)), M(math.sin(a) * (PORT_R + 5)), 0.03))
         arch(sphere("bolt", tuple(p), M(0.9), BRASS, squash=(1, 1, 1)))
-    sleeve = cylinder("port sleeve", 0, 0, -M(22), 0, M(PORT_R), plain("port sleeve", (0.03, 0.03, 0.035), rough=0.7, metal=0.3), verts=96, open_ends=True)
+    sleeve = cylinder("port sleeve", 0, 0, -M(5), 0, M(PORT_R), plain("port sleeve", (0.03, 0.03, 0.035), rough=0.7, metal=0.3), verts=96, open_ends=True)
     sleeve.matrix_world = Matrix.Translation(centre) @ tilt; arch(sleeve)
-    disc = cylinder("port glass", 0, 0, -0.003, 0.003, M(PORT_R - 0.5), BOTTLE_GLASS, verts=96)
-    disc.matrix_world = Matrix.Translation(centre) @ tilt @ Matrix.Translation((0, 0, -M(14))); arch(disc)
-    PORT_GLASS.append([Matrix.Translation(centre) @ tilt @ Vector((M(math.cos(i / 40 * math.tau) * (PORT_R - 0.5)), M(math.sin(i / 40 * math.tau) * (PORT_R - 0.5)), -M(14))) for i in range(40)])
+    disc = cylinder("port glass", 0, 0, -0.003, 0.003, M(PORT_R - 0.5), PORT_WINDOW, verts=96)
+    # Smooth n-gon normals incorrectly turn a flat pane into a lens.
+    for polygon in disc.data.polygons: polygon.use_smooth=len(polygon.vertices)==4
+    disc.matrix_world = Matrix.Translation(centre) @ tilt @ Matrix.Translation((0, 0, -M(2))); arch(disc)
+    PORT_GLASS.append([Matrix.Translation(centre) @ tilt @ Vector((M(math.cos(i / 40 * math.tau) * (PORT_R - 0.5)), M(math.sin(i / 40 * math.tau) * (PORT_R - 0.5)), -M(2))) for i in range(40)])
 MOON_AT = P(-1700, 330, 2600)                   # (low, in the far port)
 garden(MOON_AT, [("island_tree_01", -900, 300, 10.0, 0.3), ("island_tree_02", -1500, 1400, 12.0, 1.4), ("tree_small_02", -700, 900, 5.0, 2.2),
                   ("shrub_02", -420, 200, 1.5, 0.6), ("shrub_02", -460, 650, 1.7, 2.0), ("island_tree_01", -2600, 3400, 11.0, 2.9)],
@@ -286,7 +287,7 @@ BF = framed((BT["x"] + 4, BT["h"], BT["d"]), BOTTLE_TURN)
 RED_TIN = aged_metal("red tin", (0.38, 0.05, 0.03), (0.08, 0.03, 0.02), rough=(0.35, 0.6), scale=20, tarnish=0.45)
 lx, ld, ly = BT["x"] - 22, 412, 150
 lathe("lantern tank", [(0, 0), (0.065, 0), (0.07, 0.01), (0.07, 0.04), (0.045, 0.06), (0.03, 0.065), (0, 0.065)], RED_TIN, at=tuple(P(lx, ly, ld)), steps=40)
-lathe("lantern globe", [(0.0, 0.0), (0.028, 0.0), (0.05, 0.03), (0.056, 0.07), (0.05, 0.11), (0.032, 0.135), (0.031, 0.14), (0.0, 0.14)], plain("lantern glass", (0.95, 0.9, 0.85), rough=0.03, transmission=1.0, ior=1.5), at=tuple(P(lx, ly + 6.5, ld)), steps=40)
+lathe("lantern globe", [(.028,0),(.05,.03),(.056,.07),(.05,.11),(.032,.135),(.031,.14),(.0295,.14),(.0305,.135),(.0485,.11),(.0545,.07),(.0485,.03),(.0265,0),(.028,0)], plain("lantern glass", (.97,.96,.93), rough=.045, transmission=1.0, ior=1.5), at=tuple(P(lx, ly + 6.5, ld)), steps=64)
 lathe("lantern cap", [(0, 0), (0.042, 0), (0.05, 0.015), (0.035, 0.04), (0.02, 0.06), (0.025, 0.07), (0, 0.075)], RED_TIN, at=tuple(P(lx, ly + 20, ld)), steps=40)
 for k in range(4):
     a = k / 4 * math.tau + 0.4
@@ -296,9 +297,9 @@ for k in range(int((TOP - 20 - (ly + 31)) / 3.2)):
     y = ly + 31 + k * 3.2
     bpy.ops.mesh.primitive_torus_add(major_radius=M(1.0), minor_radius=M(0.22), location=tuple(P(lx, y + 1.6, ld)), rotation=(math.pi / 2, 0, k * math.pi / 2))
     bpy.context.active_object.data.materials.append(IRON)
-FLAME_GLOW = plain("lantern flame", (1.0, 0.6, 0.2), emit=(1.0, 0.55, 0.18), strength=40)
+FLAME_GLOW = plain("lantern flame", (1.0, 0.6, 0.2), emit=(1.0, 0.55, 0.18), strength=4)
 sphere("lantern flame", tuple(P(lx, ly + 11.5, ld)), M(0.9), FLAME_GLOW, squash=(0.6, 0.6, 1.8))
-lantern_l = lamp("lantern", "POINT", tuple(P(lx, ly + 12, ld)), energy=float(arg("--lantern", "16")), colour=(1.0, 0.5, 0.2), size=0.02)
+lantern_l = lamp("lantern", "POINT", tuple(P(lx, ly + 12, ld)), energy=float(arg("--lantern", "9")), colour=(1.0, 0.5, 0.2), size=0.028)
 # sacks of seed by the table
 SACK = bpy.data.materials.new("sacking"); SACK.use_nodes = True
 _kn = SACK.node_tree.nodes; _kl = SACK.node_tree.links.new; _kb = _kn["Principled BSDF"]
@@ -347,6 +348,8 @@ assembled("games table", games_table, at=(G["x"], 0, G["d"]), turn=G["turn"])
 GF = framed((G["x"], 0, G["d"]), G["turn"])
 CANDLE_AT = GF(CANDLE[0], G["h"] + 13.8, CANDLE[1])
 candle_l = lamp("candle", "POINT", tuple(CANDLE_AT + Vector((0, 0, 0.02))), energy=float(arg("--candle", "6")), colour=(1.0, 0.55, 0.22), size=0.012)
+CANDLE_FLAME=plain('games table flame',(.9,.55,.16),emit=(1,.6,.22),strength=3.5)
+sphere('games table flame',tuple(CANDLE_AT+Vector((0,0,.008))),.0037,CANDLE_FLAME,squash=(.65,.65,2.7))
 import_model("gallinera_chair", height=M(103), at=tuple(P(-82, 0, 214)), rot=math.pi / 2 + 0.45)
 rug(-150, 130, 110, 330, rug_material("rug", f"{ASSETS}/textures/persian_rug.jpg", tint=(0.35, 0.45, 0.9), sat=0.9, value=0.4))
 
@@ -357,7 +360,7 @@ GREEN_GLASS = bpy.data.materials.new("green glass shade"); GREEN_GLASS.use_nodes
 _g = GREEN_GLASS.node_tree.nodes["Principled BSDF"]; _g.inputs["Base Color"].default_value = (0.008, 0.09, 0.03, 1); _g.inputs["Roughness"].default_value = 0.08; _g.inputs["Coat Weight"].default_value = 1.0
 _g.inputs["Emission Color"].default_value = (0.05, 0.7, 0.2, 1); _g.inputs["Emission Strength"].default_value = 0.22
 PHONE_GREY = plain("phone body", (0.05, 0.052, 0.055), rough=0.45, coat=0.2)
-SCREEN = plain("phone screen", (0.04, 0.08, 0.04), rough=0.2, coat=0.6, emit=(0.4, 1.0, 0.35), strength=4.0)
+SCREEN = plain("phone screen", (0.04, 0.08, 0.04), rough=0.3, coat=0, emit=(0.4, 1.0, 0.35), strength=.7)
 KEY = plain("phone key", (0.18, 0.19, 0.2), rough=0.4)
 GL = (-DK["w"] / 2 + 15, 12)                     # the green lamp, in the desk's frame
 def desk():
@@ -393,7 +396,7 @@ def the_chest():
     chest_body, chest_hinge, lid_parts = chest(CHEST)
 assembled("chest", the_chest, at=DK["at"], turn=DK["turn"])
 CHEST_PARTS = chest_body + lid_parts
-desk_l = lamp("green lamp", "POINT", tuple(DF(GL[0] + 8, DK["h"] + 36.5, GL[1] - 9)), energy=float(arg("--green", "14")), colour=(1.0, 0.8, 0.52), size=0.012)
+desk_l = lamp("green lamp", "POINT", tuple(DF(GL[0] + 8, DK["h"] + 36.5, GL[1] - 9)), energy=float(arg("--green", "3.5")), colour=(1.0, 0.8, 0.52), size=0.025)
 import_model("dining_chair_02", height=M(97), at=tuple(DF(DK["w"] / 2 + 16, 0, -14)), rot=DK["turn"] - math.pi / 2 + 0.5)
 
 # ── light ──────────────────────────────────────────────────────────────────
@@ -407,9 +410,8 @@ for c in PORTS:
 fill_l = lamp("fill", "AREA", tuple(P(40, 150, -20)), aim=tuple(P(-40, 70, D1)), energy=float(arg("--fill", "38")), colour=(0.8, 0.85, 1.0), size=1.6)
 fill_l.visible_camera = False; fill_l.visible_glossy = False
 eye_fill(float(arg("--eyefill", "19")))                # (the halls' fill: nothing the eye sees falls to black)
-# (one light: the storm lantern; the candle and the green lamp are out — the
-# telephone's screen stays alight)
-ONE = Light("ship", [lantern_l], [FLAME_GLOW]); OUT_LIGHTS = [Light("chess", [candle_l]), Light("phone", [desk_l, chart_l], [GREEN_GLASS])]
+# Fixed lighting, matching the chess and telephone close-ups at all stages.
+ONE = Light("room", [lantern_l,candle_l,desk_l,chart_l], [FLAME_GLOW,CANDLE_FLAME,GREEN_GLASS]); OUT_LIGHTS = []
 clear_glass()
 air = room_haze(X0, X1, -30, D1, TOP, float(arg("--haze", "0")))
 
@@ -430,11 +432,14 @@ LAYOUT.dust([on_side(0, PORT_Y / math.cos(LEAN) + PORT_R, PORTS[0] - PORT_R), on
 LAYOUT.write()
 
 # ── the passes ─────────────────────────────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.55")))
+from ground_floor_light import soften_lamp_metal
+soften_lamp_metal(scene)
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.55")), glare=False)
 scene.cycles.volume_bounces = 1
 GLOSSY = ("green glass shade", "phone screen", "putty sea", "hull", "gilt line")                # (what keeps its shine: glazes, screens, lamp glass)
 finish(scene, SAMPLES, keep_gloss=GLOSSY)
-plates = one_light(ONE, OUT_LIGHTS) if "plates" in ONLY else {}
+lighting = one_light(ONE, OUT_LIGHTS)
+plates = lighting if "plates" in ONLY else {}
 passes(scene, OUT, set(plates), air, apart={"chest": CHEST_PARTS}, variants=plates)
 if "chest" in ONLY:
     air.hide_render = True

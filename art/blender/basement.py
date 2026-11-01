@@ -184,20 +184,26 @@ block('hatch lining above ceiling',-2.8,-2.7,3.6,4.8,3,4.3,mortar,keep=False)
 block('hatch lining above ceiling',-1.8,-1.7,3.6,4.8,3,4.3,mortar,keep=False)
 block('room above rear wall',-2.8,-1.7,4.78,4.95,2.96,4.3,mortar,keep=False)
 
-# A complete iron ladder: both stringers enter the opening, rungs reach
-# both rails, and stand-off brackets are fixed into the masonry.
-for x in [-2.47,-2.03]:
-    rail = bar('forged ladder stringer',[(x,4.02,.02),(x,4.54,2.92),(x,4.54,3.48)],.021,iron,keep=False)
-    for z in [.30,1.35,2.40]:
-        y = 4.02+.52*z/2.92
-        rod('ladder masonry stand-off',(x,y,z),(x,4.735,z),.015,iron)
-        block('ladder anchor plate',x-.055,x+.055,4.70,4.735,z-.062,z+.062,iron,keep=False,edge=.004)
-        for zz in [z-.036,z+.036]:
-            rod('ladder anchor bolt',(x,4.69,zz),(x,4.725,zz),.012,iron,6)
+# The ladder up to the room: oak, as the stair under the trap is — two
+# squared stringers leaning on the wall and on up through the opening, flat
+# oak treads between them worn pale in their middles; an iron hook at the
+# top holding it to the trimmer.
+def timber(name, a, b, w, t, material):
+    """a squared timber from a to b, w across x, t thick the other way"""
+    a, b = Vector(a), Vector(b); d = (b - a).normalized()
+    sx = Vector((1, 0, 0)); n = d.cross(sx).normalized(); sx = n.cross(d).normalized()
+    vs = [p + sx * i * w / 2 + n * j * t / 2 for p in (a, b) for (i, j) in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+    return mesh(name, [tuple(v) for v in vs], [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)], material, keep=False, edge=.004)
+ladder_oak = scan('cellar | ladder oak, handled warm', 'dark_wood', .45, bright=.62, sat=.62, tint=(.66,.5,.34),
+                   rough=(.5, .8), bump=.45, vary=.1, grime=.12)
+for x in [-2.49,-2.01]:
+    timber('oak ladder stringer',(x,4.02,.02),(x,4.54,2.92),.042,.11,ladder_oak)
+    timber('oak ladder stringer',(x,4.54,2.92),(x,4.54,3.48),.042,.11,ladder_oak)
+    rod('ladder hook',(x,4.6,3.05),(x,4.7,3.05),.008,iron,8)
 for i in range(12):
     z = .14 + i*.272
     y = 4.02+.52*min(z,2.92)/2.92
-    rod('worn iron ladder rung',(-2.48,y,z),(-2.02,y,z),.017,iron)
+    block('worn oak ladder tread',-2.47,-2.03,y-.055,y+.075,z-.018,z+.018,ladder_oak,keep=False,edge=.005)
 
 # An old iron service main with swept elbow, actual unions and wall clips.
 pipe_y, pipe_z = 4.53, 2.49

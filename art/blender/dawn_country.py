@@ -1,10 +1,11 @@
 # Before Sunrise (levels/wires): the picture on Room IV's back wall — the
 # last minute before sunrise over English country, made in three dimensions
-# and rendered with Cycles. From a hilltop meadow: on the left an old stone
-# cottage, its porch lantern still burning, and on the porch an old man in a
-# rocking chair with a harmonica; a split-rail fence and a dry-stone wall in
-# the wet grass; in the middle a weathered telegraph pole, five wires on it,
-# and on the wires six sparrows — where the puzzle has them (puzzle.js
+# and rendered with Cycles. From a hilltop meadow: on the left an old wooden
+# farmhouse under a tin roof, its porch lantern still burning, the flag hung
+# out from its porch post, and on the porch a man in his rocking chair with
+# his guitar, singing to the morning; a split-rail fence and a dry-stone wall
+# in the wet grass; in the middle a weathered telegraph pole, five wires on
+# it, and on the wires six swallows — where the puzzle has them (puzzle.js
 # WIRE_BIRDS: which wire, how far across the picture); beyond, the valley
 # under its mist, hedgerows and trees, far hills, and the sky going from slate
 # to apricot where the sun will come up.
@@ -21,6 +22,7 @@ from mathutils import Vector, Matrix, noise
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 from hall_common import ROOT, scan
+import dawn_folk as folk
 
 OUT = os.path.join(ROOT, ".artifacts/dawn-country")
 os.makedirs(OUT, exist_ok=True)
@@ -198,109 +200,154 @@ for _ in range(25 if FAST else 60):               # trees standing alone, and co
 for (x, y, h) in ((-17, 30, 11), (-25, 40, 13), (26, 44, 9), (44, 120, 12), (-46, 140, 13), (70, 180, 12)):
     tree(x, y, h)                                 # (the nearer ones, down the slope)
 
-# ── the cottage on the left, its porch, the old man ────────────────────────
-STONE = scan("cottage stone", "old_sandstone_02", size=1.6, tint=(0.95, 0.88, 0.75), bright=0.85, sat=0.7, rough=(0.6, 0.9), bump=0.9, edges=0.2)
-SLATE = scan("roof slates", "roof_slates_02", size=2.2, tint=(0.75, 0.75, 0.78), bright=0.7, sat=0.5, rough=(0.5, 0.85), bump=0.8)
+# ── the farmhouse on the left, its porch, the man singing on it ────────────
+STONE = scan("foundation stone", "old_sandstone_02", size=1.6, tint=(0.95, 0.88, 0.75), bright=0.85, sat=0.7, rough=(0.6, 0.9), bump=0.9, edges=0.2)
+SIDING = scan("weathered siding", "dark_wooden_planks", size=1.3, tint=(0.66, 0.56, 0.45), bright=0.55, sat=0.35, rough=(0.7, 0.92), bump=0.7, edges=0.35)
+GABLE = scan("weathered gable boards", "dark_wooden_planks", size=1.3, tint=(0.62, 0.53, 0.43), bright=0.5, sat=0.35, rough=(0.7, 0.92), bump=0.7, upright=True)
 TIMBER = scan("old timber", "dark_wood", size=1.2, tint=(0.6, 0.5, 0.42), bright=0.45, sat=0.4, rough=(0.6, 0.85), bump=0.5, edges=0.3)
 GREY_WOOD = scan("weathered wood", "dark_wood", size=1.0, tint=(0.62, 0.58, 0.52), bright=0.5, sat=0.15, rough=(0.65, 0.9), bump=0.6, edges=0.4)
+PORCH_BOARDS = scan("porch boards", "wood_floor_worn", size=1.4, tint=(0.62, 0.54, 0.46), bright=0.5, sat=0.3, rough=(0.7, 0.92), bump=0.6)
 WALLSTONE = scan("dry stone", "mossy_stone_wall", size=1.2, tint=(0.9, 0.9, 0.85), bright=0.75, sat=0.7, rough=(0.6, 0.9), bump=1.0)
+TIN = aged_metal("old tin roof", (0.34, 0.34, 0.35), (0.2, 0.085, 0.035), rough=(0.45, 0.82), scale=5, tarnish=0.72)
 WINDOW_GLOW = plain("lit window", (1.0, 0.75, 0.45), emit=(1.0, 0.62, 0.3), strength=float(arg("--window", "6")))
 DARK_GLASS = plain("dark glass", (0.02, 0.025, 0.03), rough=0.08)
 C = dict(at=(float(arg("--hx", "-10.0")), float(arg("--hy", "19"))), turn=math.radians(float(arg("--hturn", "45"))), L=8.0, D=5.0, H=2.9)
-cottage = bpy.data.objects.new("cottage", None); link(cottage)
+cottage = bpy.data.objects.new("farmhouse", None); link(cottage)
 def part(o): o.parent = cottage; return o
 def cbox(name, x0, x1, y0, y1, z0, z1, mat, r=0.0):
     o = box(name, x0, x1, y0, y1, z0, z1, mat)
     if r: bevel(o, r, 2)
     return part(o)
+def mesh_of(name, verts, faces, mat, smooth=False):
+    me = bpy.data.meshes.new(name); me.from_pydata([tuple(v) for v in verts], [], faces); me.update()
+    o = part(link(bpy.data.objects.new(name, me))); me.materials.append(mat)
+    for p in me.polygons: p.use_smooth = smooth
+    return o
 L_, D_, H_ = C["L"], C["D"], C["H"]
-# (the cottage's own frame: x across its front, y back from it, z up; the front faces local -y)
-cbox("walls", -L_ / 2, L_ / 2, 0, D_, -0.6, H_, STONE, 0.04)
-RISE = D_ / 2 * math.tan(math.radians(42))
-for gx in (-L_ / 2, L_ / 2 - 0.0001):
+SILL_Z = 0.3                                      # (the boards start over a stone footing)
+# (the house's own frame: x across its front, y back from it, z up; the front faces local -y)
+cbox("footing", -L_ / 2 - 0.05, L_ / 2 + 0.05, -0.05, D_ + 0.05, -0.6, SILL_Z, STONE, 0.03)
+cbox("walls", -L_ / 2, L_ / 2, 0, D_, SILL_Z - 0.02, H_, SIDING)
+# its clapboards: lapped boards 17 cm to the weather, each a thin wedge, the
+# openings left clear (in front: two windows and the door)
+WINDOWS = ((-2.4, True), (0.6, False))
+OPENINGS = [(wx - 0.52, wx + 0.52, 0.98, 2.12) for (wx, _) in WINDOWS] + [(1.97, 2.98, -1.0, 2.08)]
+def clapboards(length, openings, place):
+    z = SILL_Z
+    while z < H_ - 0.02:
+        z1 = min(H_, z + 0.19)
+        cuts = sorted((a, b) for (a, b, c, d) in openings if c < z1 and d > z)
+        x = -length / 2 - 0.03; spans = []
+        for (a, b) in cuts:
+            if a > x: spans.append((x, a))
+            x = max(x, b)
+        if x < length / 2 + 0.03: spans.append((x, length / 2 + 0.03))
+        for (x0, x1) in spans:
+            if x1 - x0 < 0.02: continue
+            # (a wedge: thick at its foot, thin where the next board laps it)
+            vs = [(x0, -0.032, z), (x1, -0.032, z), (x1, -0.006, z1), (x0, -0.006, z1),
+                  (x0, 0.0, z), (x1, 0.0, z), (x1, 0.0, z1), (x0, 0.0, z1)]
+            fs = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (3, 2, 6, 7), (0, 3, 7, 4), (1, 5, 6, 2)]
+            mesh_of("clapboard", [place(Vector(v)) for v in vs], fs, SIDING)
+        z += 0.17
+for (length, openings, place) in (
+        (L_, OPENINGS, lambda v: v),                                                 # front
+        (L_, [], lambda v: Vector((-v.x, D_ - v.y, v.z))),                           # back
+        (D_, [], lambda v: Vector((-L_ / 2 + v.y, D_ / 2 + v.x, v.z))),              # left end
+        (D_, [], lambda v: Vector((L_ / 2 - v.y, D_ / 2 - v.x, v.z)))):             # right end
+    clapboards(length, openings, place)
+for (cx, cy) in ((-L_ / 2, 0), (L_ / 2, 0), (-L_ / 2, D_), (L_ / 2, D_)):         # (corner boards)
+    cbox("corner board", cx - 0.07, cx + 0.07, cy - 0.07, cy + 0.07, SILL_Z, H_, TIMBER, 0.01)
+RISE = D_ / 2 * math.tan(math.radians(36))
+for gx in (-L_ / 2 - 0.03, L_ / 2 + 0.03):
     me = bpy.data.meshes.new("gable"); bm = bmesh.new()
     vs = [bm.verts.new(v) for v in ((gx, 0, H_), (gx, D_, H_), (gx, D_ / 2, H_ + RISE))]
     bm.faces.new(vs); bm.to_mesh(me); bm.free()
-    g = link(bpy.data.objects.new("gable", me)); g.data.materials.append(STONE)
-    g.modifiers.new("thick", "SOLIDIFY").thickness = 0.45
-    part(g)
-SLOPE = math.hypot(D_ / 2, RISE)
-OVER = 0.32
-for (ye, sgn) in ((-OVER, 1), (D_ + OVER, -1)):
-    me = bpy.data.meshes.new("roof"); bm = bmesh.new()
-    ze = H_ - OVER * math.tan(math.radians(42)) + 0.06; zr = H_ + RISE + 0.08
-    vs = [bm.verts.new(v) for v in ((-L_ / 2 - 0.35, ye, ze), (L_ / 2 + 0.35, ye, ze), (L_ / 2 + 0.35, D_ / 2, zr), (-L_ / 2 - 0.35, D_ / 2, zr))]
-    bm.faces.new(vs if sgn > 0 else vs[::-1]); bm.to_mesh(me); bm.free()
-    r = part(link(bpy.data.objects.new("roof", me))); r.data.materials.append(SLATE)
-    sol = r.modifiers.new("thick", "SOLIDIFY"); sol.thickness = 0.12; sol.offset = 1.0
-cbox("ridge", -L_ / 2 - 0.35, L_ / 2 + 0.35, D_ / 2 - 0.1, D_ / 2 + 0.1, H_ + RISE + 0.02, H_ + RISE + 0.16, STONE)
-cbox("chimney", -L_ / 2 + 0.2, -L_ / 2 + 0.95, D_ / 2 - 0.45, D_ / 2 + 0.45, H_, H_ + RISE + 1.1, STONE, 0.03)
-for k in (-0.17, 0.17):
-    cyl = cylinder("chimney pot", -L_ / 2 + 0.575, D_ / 2 + k, H_ + RISE + 1.1, H_ + RISE + 1.5, 0.11, plain("terracotta", (0.32, 0.13, 0.07), rough=0.8), verts=16, r2=0.09)
-    part(cyl)
-# windows: one lit, one dark; the door under the porch
-for (wx, lit) in ((-2.4, True), (0.6, False)):
-    cbox("window recess", wx - 0.5, wx + 0.5, -0.02, 0.12, 1.0, 2.1, TIMBER)
+    g = part(link(bpy.data.objects.new("gable", me))); g.data.materials.append(GABLE)
+    g.modifiers.new("thick", "SOLIDIFY").thickness = 0.06
+# the roof: corrugated tin on both slopes, gone to rust in streaks
+def corrugated(name, x0, x1, eave, ridge, mat, period=0.076, amp=0.011):
+    eave, ridge = Vector(eave), Vector(ridge); s = (ridge - eave).normalized()
+    n = Vector((0, -s.z, s.y)); n = n if n.z > 0 else -n
+    k = int((x1 - x0) / period * 8); rows = 3
+    vs = [eave.lerp(ridge, j / (rows - 1)) + Vector((x0 + (x1 - x0) * i / k, 0, 0)) + n * amp * math.sin(math.tau * (x1 - x0) * i / k / period)
+          for j in range(rows) for i in range(k + 1)]
+    fs = [(j * (k + 1) + i, j * (k + 1) + i + 1, (j + 1) * (k + 1) + i + 1, (j + 1) * (k + 1) + i) for j in range(rows - 1) for i in range(k)]
+    o = mesh_of(name, vs, fs, mat, smooth=True)
+    o.modifiers.new("thick", "SOLIDIFY").thickness = 0.003
+    return o
+OVER = 0.35
+TAN = math.tan(math.radians(36))
+corrugated("tin roof", -L_ / 2 - 0.3, L_ / 2 + 0.3, (0, -OVER, H_ - OVER * TAN), (0, D_ / 2 + 0.02, H_ + RISE + 0.02), TIN)
+corrugated("tin roof", -L_ / 2 - 0.3, L_ / 2 + 0.3, (0, D_ + OVER, H_ - OVER * TAN), (0, D_ / 2 - 0.02, H_ + RISE + 0.02), TIN)
+cap = mesh_of("ridge cap", [(-L_ / 2 - 0.3, D_ / 2 - 0.16, H_ + RISE - 0.08), (L_ / 2 + 0.3, D_ / 2 - 0.16, H_ + RISE - 0.08),
+                            (L_ / 2 + 0.3, D_ / 2, H_ + RISE + 0.06), (-L_ / 2 - 0.3, D_ / 2, H_ + RISE + 0.06),
+                            (L_ / 2 + 0.3, D_ / 2 + 0.16, H_ + RISE - 0.08), (-L_ / 2 - 0.3, D_ / 2 + 0.16, H_ + RISE - 0.08)],
+              [(0, 1, 2, 3), (3, 2, 4, 5)], TIN)
+cap.modifiers.new("thick", "SOLIDIFY").thickness = 0.004
+for fy in (-OVER, D_ + OVER):                                                    # (the fascia boards under the eaves)
+    cbox("fascia", -L_ / 2 - 0.32, L_ / 2 + 0.32, fy - 0.03, fy + 0.03, H_ - OVER * TAN - 0.2, H_ - OVER * TAN + 0.01, TIMBER, 0.01)
+cbox("chimney", -L_ / 2 + 0.3, -L_ / 2 + 1.0, D_ / 2 - 0.4, D_ / 2 + 0.4, H_, H_ + RISE + 1.0, STONE, 0.03)
+cbox("chimney cap", -L_ / 2 + 0.25, -L_ / 2 + 1.05, D_ / 2 - 0.45, D_ / 2 + 0.45, H_ + RISE + 1.0, H_ + RISE + 1.08, STONE, 0.02)
+# windows: one lit, one dark, in plain wooden frames; the door under the porch
+for (wx, lit) in WINDOWS:
+    cbox("window lining", wx - 0.5, wx + 0.5, -0.02, 0.14, 1.0, 2.1, TIMBER)
     cbox("window", wx - 0.42, wx + 0.42, -0.04, 0.02, 1.07, 2.03, WINDOW_GLOW if lit else DARK_GLASS)
-    for (a, b_) in ((wx - 0.03, wx + 0.03),):
-        cbox("glazing bar", a, b_, -0.07, -0.03, 1.07, 2.03, TIMBER)
+    cbox("glazing bar", wx - 0.03, wx + 0.03, -0.07, -0.03, 1.07, 2.03, TIMBER)
     cbox("glazing bar", wx - 0.42, wx + 0.42, -0.07, -0.03, 1.53, 1.58, TIMBER)
-    cbox("sill", wx - 0.6, wx + 0.6, -0.16, 0.05, 0.92, 1.0, STONE, 0.02)
-cbox("door", 2.0, 2.95, -0.05, 0.05, -0.05, 2.05, TIMBER, 0.02)
-# the porch: a stone floor, two timber posts, a lean-to roof of slate
-PZ = 0.32
-cbox("porch floor", 0.9, L_ / 2 + 0.3, -2.4, 0.0, -0.6, PZ, WALLSTONE, 0.05)
+    for (a, b) in ((wx - 0.6, wx - 0.5), (wx + 0.5, wx + 0.6)):
+        cbox("window casing", a, b, -0.06, 0.0, 0.96, 2.16, TIMBER, 0.01)
+    cbox("window head", wx - 0.62, wx + 0.62, -0.08, 0.0, 2.12, 2.22, TIMBER, 0.01)
+    cbox("sill", wx - 0.62, wx + 0.62, -0.16, 0.02, 0.92, 0.99, TIMBER, 0.015)
+for k in range(5):
+    cbox("door plank", 2.0 + k * 0.19, 2.0 + (k + 1) * 0.19 - 0.006, -0.05, 0.05, SILL_Z, 2.05, TIMBER, 0.006)
+cbox("door ledge", 2.03, 2.92, -0.075, -0.05, 0.6, 0.72, TIMBER, 0.006); cbox("door ledge", 2.03, 2.92, -0.075, -0.05, 1.6, 1.72, TIMBER, 0.006)
+for (a, b) in ((1.9, 2.0), (2.95, 3.05)):
+    cbox("door casing", a, b, -0.07, 0.0, SILL_Z, 2.15, TIMBER, 0.01)
+# the porch: boards on joists, two steps, posts, a beam, a lean-to of tin
+PZ = 0.42
+cbox("porch joists", 0.9, L_ / 2 + 0.3, -2.4, 0.0, -0.6, PZ - 0.04, TIMBER)
+for k in range(int(2.4 / 0.14)):
+    y0 = -2.4 + k * 0.14
+    cbox("porch board", 0.88, L_ / 2 + 0.32, y0 + 0.004, y0 + 0.136, PZ - 0.04, PZ, PORCH_BOARDS, 0.004)
 for st in range(2):
-    cbox("step", 1.6, 2.6, -2.4 - 0.35 * (st + 1), -2.4 - 0.35 * st, -0.6, PZ - 0.16 * (st + 1), WALLSTONE, 0.04)
-for px_ in (1.0, L_ / 2 + 0.15):
-    cbox("porch post", px_ - 0.08, px_ + 0.08, -2.35, -2.19, PZ, 2.45, TIMBER, 0.02)
-cbox("porch beam", 0.9, L_ / 2 + 0.3, -2.4, -2.14, 2.45, 2.6, TIMBER, 0.02)
-pr = cbox("porch roof", 0.75, L_ / 2 + 0.45, -2.75, 0.2, 0, 0.08, SLATE)
-pr.rotation_euler = (math.radians(14), 0, 0); pr.location = (0, 0, 2.62)
+    cbox("step", 1.6, 2.6, -2.4 - 0.32 * (st + 1), -2.4 - 0.32 * st, PZ - 0.2 * (st + 1) - 0.04, PZ - 0.2 * (st + 1), PORCH_BOARDS, 0.006)
+    cbox("step riser", 1.6, 2.6, -2.4 - 0.32 * (st + 1), -2.4 - 0.32 * (st + 1) + 0.03, -0.6, PZ - 0.2 * (st + 1) - 0.04, TIMBER)
+POSTS = (1.0, L_ / 2 + 0.15)
+for px_ in POSTS:
+    cbox("porch post", px_ - 0.07, px_ + 0.07, -2.34, -2.2, PZ, 2.45, TIMBER, 0.015)
+cbox("porch beam", 0.9, L_ / 2 + 0.3, -2.4, -2.16, 2.45, 2.6, TIMBER, 0.02)
+cbox("porch rail", POSTS[1] - 0.04, POSTS[1] + 0.04, -2.2, -0.05, PZ + 0.86, PZ + 0.92, GREY_WOOD, 0.01)
+for k in range(9):
+    yb = -2.15 + k * 0.24
+    cbox("baluster", POSTS[1] - 0.025, POSTS[1] + 0.025, yb - 0.025, yb + 0.025, PZ, PZ + 0.86, GREY_WOOD, 0.006)
+corrugated("porch tin", 0.75, L_ / 2 + 0.45, (0, -2.7, 2.58), (0, 0.15, 2.58 + 2.85 * math.tan(math.radians(14))), TIN)
 # the lantern on the wall by the door, still burning
 lantern = import_model("Lantern_01", height=0.32, at=(0, 0, 0))
-lantern.parent = cottage; lantern.location = (1.75, -0.16, 1.85)
+lantern.parent = cottage; lantern.location = (1.72, -0.16, 1.85)
 FLAME = plain("lantern flame", (1.0, 0.7, 0.3), emit=(1.0, 0.6, 0.25), strength=60)
-fl = sphere("flame", (1.75, -0.2, 1.97), 0.018, FLAME, squash=(0.6, 0.6, 1.6)); part(fl)
-lantern_l = lamp("lantern", "POINT", (0, 0, 0), energy=float(arg("--lantern", "45")), colour=(1.0, 0.55, 0.22), size=0.03)
-part(lantern_l); lantern_l.location = (1.75, -0.24, 1.98)
+fl = sphere("flame", (1.72, -0.2, 1.97), 0.018, FLAME, squash=(0.6, 0.6, 1.6)); part(fl)
+lantern_l = lamp("lantern", "POINT", (0, 0, 0), energy=float(arg("--lantern", "55")), colour=(1.0, 0.55, 0.22), size=0.03)
+part(lantern_l); lantern_l.location = (1.72, -0.24, 1.98)
 win_l = lamp("lit window", "AREA", (0, 0, 0), energy=float(arg("--winlight", "25")), colour=(1.0, 0.62, 0.32), size=0.9)
 part(win_l); win_l.location = (-2.4, -0.3, 1.55); win_l.rotation_euler = (math.radians(90), 0, 0)
-# the rocking chair, the old man in it, facing out over the valley
+# the rocking chair, the man in it singing to his guitar, turned toward the
+# valley and the morning (dawn_folk.py)
+MAN_TURN = math.radians(float(arg("--manturn", "-176")))
 chair = import_model("Rockingchair_01", height=1.0, at=(0, 0, 0))
-chair.parent = cottage; chair.location = (2.95, -1.25, PZ); chair.rotation_euler = (0, 0, math.radians(float(arg("--chairturn", "-162"))))
-def old_man():
-    """an old man sitting, in a flat cap and a tweed coat, a harmonica held
-    up to his mouth in both hands: made of rounded parts, as he is only a
-    little figure in the picture. In his own frame, facing +y, z up from the
-    seat"""
-    root = bpy.data.objects.new("old man", None); link(root)
-    tweed = scan("tweed", "dirty_carpet", size=0.2, tint=(0.45, 0.4, 0.33), bright=0.5, sat=0.4, rough=(0.8, 0.95), bump=0.4)
-    cloth = plain("trousers", (0.07, 0.07, 0.075), rough=0.85); shoe = plain("shoes", (0.03, 0.02, 0.015), rough=0.5)
-    skin = plain("skin", (0.45, 0.3, 0.22), rough=0.55); cap = scan("cap tweed", "dirty_carpet", size=0.15, tint=(0.38, 0.34, 0.28), bright=0.45, sat=0.3, rough=(0.8, 0.95))
-    def p(o): o.parent = root; return o
-    def limb(a, b, r, mat):
-        a, b = Vector(a), Vector(b); o = cylinder("limb", 0, 0, 0, (b - a).length, r, mat, verts=16)
-        o.location = a; o.rotation_euler = (b - a).to_track_quat("Z", "Y").to_euler(); p(o)
-        p(sphere("joint", tuple(a), r, mat)); p(sphere("joint", tuple(b), r, mat))
-    t = p(sphere("torso", (0, -0.02, 0.33), 0.2, tweed, squash=(0.85, 0.62, 1.38))); t.rotation_euler = (math.radians(-10), 0, 0)
-    for s_ in (-1, 1):
-        limb((s_ * 0.16, -0.02, 0.5), (s_ * 0.15, 0.11, 0.36), 0.052, tweed)
-        limb((s_ * 0.15, 0.11, 0.36), (s_ * 0.045, 0.17, 0.575), 0.045, tweed)
-        p(sphere("hand", (s_ * 0.03, 0.18, 0.59), 0.034, skin))
-        limb((s_ * 0.09, -0.02, 0.06), (s_ * 0.09, 0.38, 0.05), 0.066, cloth)
-        limb((s_ * 0.09, 0.39, 0.05), (s_ * 0.09, 0.44, -0.37), 0.055, cloth)
-        p(sphere("shoe", (s_ * 0.09, 0.5, -0.41), 0.06, shoe, squash=(0.8, 1.6, 0.55)))
-    p(sphere("head", (0, 0.05, 0.68), 0.1, skin, squash=(0.9, 1.0, 1.1)))
-    p(sphere("cap", (0, 0.06, 0.755), 0.11, cap, squash=(1.0, 1.05, 0.42)))
-    p(sphere("peak", (0, 0.14, 0.738), 0.07, cap, squash=(1.1, 0.8, 0.25)))
-    p(box("harmonica", -0.05, 0.05, 0.175, 0.2, 0.588, 0.612, plain("harmonica", (0.5, 0.5, 0.52), rough=0.3, metal=0.9)))
-    return root
-MAN_TURN = math.radians(float(arg("--manturn", "-162")))
-man = old_man(); man.parent = cottage; man.location = (2.95, -1.15, PZ + 0.47); man.rotation_euler = (0, 0, MAN_TURN)
-for (x_, y_, s_) in ((1.25, -2.0, 0.55), (4.15, -0.5, 0.7)):
+chair.parent = cottage; chair.location = (3.0, -1.2, PZ); chair.rotation_euler = (0, 0, MAN_TURN + math.pi)
+man = folk.singer("singer"); man.parent = cottage; man.location = (3.0, -1.12, PZ + 0.45); man.rotation_euler = (0, 0, MAN_TURN)
+porch_glow = lamp("porch, round the singer", "POINT", (0, 0, 0), energy=float(arg("--singerlight", "8")), colour=(1.0, 0.6, 0.3), size=0.2)
+part(porch_glow); porch_glow.location = (2.4, -1.9, 2.1)
+for (x_, y_, s_) in ((1.25, -2.0, 0.55), (4.1, -0.4, 0.7)):
     pot = import_model("planter_pot_clay", height=0.32 * s_, at=(0, 0, 0)); pot.parent = cottage; pot.location = (x_, y_, PZ)
 cottage.location = (*C["at"], height(*C["at"])); cottage.rotation_euler = (0, 0, C["turn"])
+bpy.context.view_layer.update()
+# the flag on the outer porch post, its pole out over the steps (its cloth let
+# fall where it hangs, in the world's own frame)
+FLAG_AT = cottage.matrix_world @ Vector((POSTS[1] - 0.09, -2.34, 2.0))
+FLAG_DIR = cottage.matrix_world.to_3x3() @ Vector((float(arg("--flagx", "0.5")), float(arg("--flagy", "-0.7")), float(arg("--flagz", "0.52"))))
+flag_root, flag_cloth = folk.porch_flag("flag", os.path.join(DRAWN, "us-flag.png"), tuple(FLAG_AT), tuple(FLAG_DIR))
 # ivy and shrubs at its foot
 bpy.context.view_layer.update()
 SHRUBS = kit_of(["shrub_01", "shrub_02", "shrub_03", "shrub_04"], "shrub kit")
@@ -368,31 +415,12 @@ for w, z in enumerate(WIRE_Z):
     for p_, v in zip(sp.points, pts): p_.co = (*v, 1)
     o = link(bpy.data.objects.new(f"wire {w}", cu)); o.data.materials.append(WIRE)
     WIRES.append((left, right))
-SPARROW = plain("blackbird", (0.012, 0.011, 0.01), rough=0.55, sheen=0.5)
-SPARROW_DARK = plain("blackbird wing", (0.008, 0.007, 0.007), rough=0.5, sheen=0.5)
-BELLY = plain("blackbird breast", (0.02, 0.017, 0.015), rough=0.6, sheen=0.5)
-BEAK = plain("bill", (0.55, 0.32, 0.04), rough=0.4)
-LEGS = plain("legs", (0.05, 0.04, 0.03), rough=0.6)
-def sparrow(at, facing, lean=0.2):
-    """a house sparrow perched, its feet at `at`, facing `facing` (radians
-    about the upright)"""
-    root = bpy.data.objects.new("sparrow", None); link(root)
-    def p(o): o.parent = root; return o
-    p(sphere("body", (0, 0, 0.052), 0.033, SPARROW, squash=(1.5, 0.8, 0.86))).rotation_euler = (0, -lean - 0.45, 0)
-    p(sphere("breast", (0.012, 0, 0.055), 0.026, BELLY, squash=(1.0, 0.82, 1.05)))
-    for s in (-1, 1):
-        wg = p(sphere("wing", (-0.012, s * 0.022, 0.058), 0.03, SPARROW_DARK, squash=(1.45, 0.28, 0.62))); wg.rotation_euler = (0, -lean - 0.6, 0)
-    p(sphere("head", (0.03, 0, 0.098), 0.019, SPARROW, squash=(1.12, 0.92, 1.0)))
-    bk = p(cylinder("beak", 0, 0, 0, 0.017, 0.0055, BEAK, verts=8, r2=0.0006)); bk.rotation_euler = (0, math.radians(97), 0); bk.location = (0.046, 0, 0.096)
-    tl = p(box("tail", -0.09, 0.0, -0.013, 0.013, -0.003, 0.003, SPARROW_DARK)); tl.location = (-0.03, 0, 0.038); tl.rotation_euler = (0, -(lean + 0.6), 0)
-    bevel(tl, 0.002, 1)
-    for s in (-1, 1):
-        lg = p(cylinder("leg", 0, 0, 0, 0.026, 0.002, LEGS, verts=6)); lg.location = (0.004, s * 0.009, 0.0)
-    root.location = at; root.rotation_euler = (0, 0, facing); root.scale = (BIRD_K,) * 3
-    return root
-BIRD_K = float(arg("--bird", "1.85"))            # (a blackbird, 25 cm, against a sparrow's 15)
+BIRD_K = float(arg("--bird", "2.0"))             # (a swallow, 17 cm with its streamers, made larger to be read on its wire)
+# (each turned from its wire's line — some showing their backs, some their
+# breasts — and its head turned a little its own way)
+POSES = [(0.75, 0.0), (math.pi - 0.6, 0.3), (-0.7, -0.25), (math.pi + 0.7, 0.0), (0.6, 0.35), (math.pi - 0.8, -0.3)]
 BIRDS = []
-for (w, xf) in WIRE_BIRDS:
+for i, (w, xf) in enumerate(WIRE_BIRDS):
     left, right = WIRES[w]
     pts = left if xf < POLE_X else right
     best = min(range(len(pts) - 1), key=lambda k: abs(frac(pts[k])[0] - xf))
@@ -401,8 +429,8 @@ for (w, xf) in WIRE_BIRDS:
     t = 0.0 if abs(fb - fa) < 1e-9 else max(0.0, min(1.0, (xf - fa) / (fb - fa)))
     foot = a.lerp(b, t) + Vector((0, 0, 0.006))
     along = math.atan2((b - a).y, (b - a).x)
-    facing = along + math.pi / 2 * RNG.choice([1, -1]) + RNG.choice([1, -1]) * RNG.uniform(0.6, 1.1)
-    BIRDS.append((w, xf, sparrow(foot, facing, RNG.uniform(0.1, 0.35)), foot))
+    turn, head = POSES[i]
+    BIRDS.append((w, xf, folk.swallow(f"swallow{i}", foot, along + turn, k=BIRD_K, head_turn=head), foot))
 
 # ── the sky before sunrise, and its light ──────────────────────────────────
 world = bpy.data.worlds.new("dawn"); scene.world = world; world.use_nodes = True
@@ -451,6 +479,7 @@ data = {"width": WIDTH, "height": HEIGHT, "pole": list(frac(POLE + Vector((0, 0,
 with open(os.path.join(OUT, "dawnCountry.json"), "w") as fh: json.dump(data, fh, indent=1)
 
 # ── render ─────────────────────────────────────────────────────────────────
+folk.settle_cloth(scene, 48)                      # (the flag let fall to rest)
 cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "1.35")), glare=False)
 scene.cycles.volume_step_rate = 4.0; scene.cycles.volume_bounces = 1
 scene.cycles.use_denoising = True; scene.cycles.denoiser = "OPENIMAGEDENOISE"

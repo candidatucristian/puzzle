@@ -39,7 +39,7 @@ export const LETTERS = Object.freeze([
   },
   {
     id: "ivy",
-    found: "in Ivy's study, among the seed packets",
+    found: "in the Botany Hall, among Ivy's seed packets",
     title: "Ivy's garden book",
     dateline: "Ivy Ashcombe · 12th October 1961",
     salutation: "",

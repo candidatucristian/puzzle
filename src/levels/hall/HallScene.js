@@ -6,7 +6,7 @@ import { buildMorseSteps } from "../lightswitch/puzzle.js";
 import { chime, noiseBurst } from "../../shared/paint.js";
 import { playKeyInsert, prepareKeyInsert } from "./keyInsert.js";
 import { cursorFor } from "../../shared/cursors.js";
-import { layoutHall, paintHall, paintDoorSwing, releaseHallArt } from "./hall.js";
+import { layoutHall, paintHall, paintDoorSwing, paintFrontCover, passByArt, paintCoverWithout, releaseHallArt } from "./hall.js";
 import { doorMotion, DOOR_WALK_START_MS, DOOR_LATCH_MS, DOOR_SWING_MS } from "./doorMotion.js";
 import { LightSwitch, loadLightSwitch } from "./lightSwitch.js";
 import { loadHallRender } from "./hallRender.js";
@@ -116,6 +116,7 @@ export default class HallScene extends BasePuzzleScene {
     // Room lighting is fixed; only the interactive glints track progress.
     const rooms = this.services.levels.rooms;
     this._doorZones = new Map();
+    this._covers = [];
     L.doors.forEach((d, n) => {
       const room = rooms[n];
       const calling = Boolean(room) && !room.locked && !room.completed;
@@ -127,6 +128,9 @@ export default class HallScene extends BasePuzzleScene {
         .setBlendMode(Phaser.BlendModes.ADD)
         .setAlpha((lit ? 0.3 : 0.06) * ambientLight)
         .setDepth(-8);
+      // what stands in front of the door stays in front of the light at its sill
+      const cover = paintFrontCover(this, L, d);
+      if (cover) this._covers.push({ ...cover, image: this.add.image(cover.x, cover.y, cover.key).setOrigin(0, 0).setDepth(-7.95) });
       if (lit) {
         this.ambientTween({
           targets: glow,
@@ -572,7 +576,19 @@ export default class HallScene extends BasePuzzleScene {
       .setTint(lit ? 0xffc078 : 0x9fb6e8)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(-9.4);
-    this._doorArt = { ...art, d, spill, lit, parts: [doorway, spill] };
+    // For walking in past what stands before the door (passByArt): the hall
+    // without those things, under the doorway, unseen until one walks; and
+    // each cover that keeps them in front of the light at a sill, to fade over
+    // a copy without them that stays.
+    const pass = passByArt(L, d), b = pass?.box;
+    const passBy = pass && this.add.image(b.x, b.y, pass.key).setOrigin(0, 0).setDisplaySize(b.width, b.height).setDepth(-9.75).setAlpha(0);
+    const covers = [], keeps = [];
+    for (const c of pass ? this._covers ?? [] : []) {
+      if (c.x >= b.x + b.width || b.x >= c.x + c.width || c.y >= b.y + b.height || b.y >= c.y + c.height) continue;
+      covers.push(c.image);
+      keeps.push(this.add.image(c.x, c.y, paintCoverWithout(this, c, pass, d.number)).setOrigin(0, 0).setDepth(-7.96));
+    }
+    this._doorArt = { ...art, d, spill, lit, passBy, covers, parts: [doorway, spill, passBy, ...keeps].filter(Boolean) };
     this._updateDoor(0);
   }
 
@@ -595,6 +611,7 @@ export default class HallScene extends BasePuzzleScene {
   }
 
   _shutDone() {
+    this._shutting?.art.covers?.forEach((cover) => cover.setAlpha(1));
     this._shutting?.art.parts.forEach((part) => part.destroy());
     this._shutting = null;
   }
@@ -605,20 +622,29 @@ export default class HallScene extends BasePuzzleScene {
     if (!state || !art) return;
     state.elapsed += delta;
     const pose = doorMotion(state.elapsed);
-    this._spill(art, art.draw(pose.angle, pose.handle).aperture);
     const { d } = art;
     // Through it, once asked: the normal walk's easing, on its own clock from
     // the second click — begun no sooner than the leaf is well on its way. A
     // redraw cannot cancel or restart the movement toward the doorway.
+    let near = 0;
     if (state.entering && !this.reducedMotion && state.elapsed >= DOOR_WALK_START_MS) {
       state.walked += delta;
       const k = Math.min(1, state.walked / WALK_MS);
-      aimCameraAt(this.cameras.main, d.box, (1 - Math.cos(k * Math.PI)) / 2);
+      near = (1 - Math.cos(k * Math.PI)) / 2;
+      aimCameraAt(this.cameras.main, d.box, near);
       if (!state.walking) {
         state.walking = true;
         this.game.events.emit(HOUSE_GO, { place: state.room.key });
       }
     }
+    // what stands before the door is passed by on the way in: it goes from
+    // round the doorway as the eye comes up to it, never left hanging in it
+    const t = art.passBy ? Math.min(1, Math.max(0, (near - 0.12) / 0.58)) : 0, past = t * t * (3 - 2 * t);
+    if (art.passBy) {
+      art.passBy.setAlpha(past);
+      for (const cover of art.covers) cover.setAlpha(1 - past);
+    }
+    this._spill(art, art.draw(pose.angle, pose.handle, 1 - past).aperture);
   }
 
   // the sound of it: the handle, recorded (assets/sounds/global/doorhandle.mp3)

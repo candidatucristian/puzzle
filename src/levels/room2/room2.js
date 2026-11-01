@@ -45,7 +45,7 @@ export function paintRoom2(scene, L) {
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, rendered ? roomRenderChest(scene, "Room2", false) : makeCanvas(1, 1));
   addCanvasTexture(t, K.open, rendered ? roomRenderChest(scene, "Room2", true) : makeCanvas(1, 1));
-  addCanvasTexture(t, K.key, paintKey());
+  addCanvasTexture(t, K.key, paintKey(scene));
   return { keys: K };
 }
 

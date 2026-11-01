@@ -47,7 +47,7 @@ export function paintRoom4(scene, L) {
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, rendered ? roomRenderChest(scene, "Room4", false) : makeCanvas(1, 1));
   addCanvasTexture(t, K.open, rendered ? roomRenderChest(scene, "Room4", true) : makeCanvas(1, 1));
-  addCanvasTexture(t, K.key, paintKey());
+  addCanvasTexture(t, K.key, paintKey(scene));
   // the top drawer coming out, frame by frame, laid over the room where it is
   if (rendered) {
     const b = L.drawerBox;

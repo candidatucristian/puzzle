@@ -10,19 +10,19 @@ OUT=os.path.join(ROOT,'.artifacts/gold-coffer-v2'); os.makedirs(OUT,exist_ok=Tru
 scene=fresh(); WIDTH=int(arg('--width','2000')); SAMPLES=int(arg('--samples','384'))
 PREVIEW=arg('--preview','')
 body,hinge,lid=coffer(dict(x0=-15,x1=15,d0=-10,d1=10,y0=0,y1=13,lid=7.2))
-key=key_model(); key.location=(0,-.16,.003); key.rotation_euler=(math.pi/2,0,.12)
+key=key_model(); key.location=(0,-.16,.0026); key.rotation_euler=(math.pi/2,0,.12)
 wood=scan('walnut display surface','dark_wood',size=.55,tint=(.52,.39,.28),bright=.6,rough=(.55,.77),bump=.24,coat=0)
-table=box('walnut surface',-3,3,-3,3,-.025,-.001,wood)
+table=box('walnut surface',-3,3,-3,3,-.025,.00072,wood)
 world=bpy.data.worlds.new('soft photographic room'); scene.world=world; world.use_nodes=True
 world.node_tree.nodes['Background'].inputs['Color'].default_value=(.11,.13,.17,1)
 world.node_tree.nodes['Background'].inputs['Strength'].default_value=.22
 lamp('broad window','AREA',(-.4,-.45,.65),aim=(0,0,.08),energy=24,colour=(1,.9,.76),size=.65,size_y=.8)
 lamp('soft blue bounce','AREA',(.50,.15,.40),aim=(0,0,.12),energy=12,colour=(.72,.82,1),size=.55)
 lamp('long window reflection','AREA',(-.3,.38,.5),aim=(0,0,.10),energy=16,colour=(1,.94,.83),size=.50,size_y=.10)
-cd=bpy.data.cameras.new('coffer portrait'); cd.type='ORTHO'; cd.ortho_scale=.58
-cam=link(bpy.data.objects.new('coffer portrait',cd)); cam.location=(.39,-.60,.36)
-cam.rotation_euler=(Vector((0,0,.10))-cam.location).to_track_quat('-Z','Y').to_euler(); scene.camera=cam
-cycles(scene,SAMPLES,WIDTH,round(WIDTH*.75),exposure=-.4,glare=False)
+cd=bpy.data.cameras.new('coffer portrait'); cd.type='ORTHO'; cd.ortho_scale=.64
+cam=link(bpy.data.objects.new('coffer portrait',cd)); cam.location=(.44,-.69,.43)
+cam.rotation_euler=(Vector((0,0,.145))-cam.location).to_track_quat('-Z','Y').to_euler(); scene.camera=cam
+cycles(scene,SAMPLES,WIDTH,round(WIDTH*.75),exposure=-.85,glare=False)
 scene.render.use_persistent_data=True; scene.cycles.adaptive_threshold=.008
 if PREVIEW: scene.cycles.adaptive_min_samples=16
 else:

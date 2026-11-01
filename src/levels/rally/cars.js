@@ -1565,3 +1565,14 @@ function makeCanvas(w, h) {
   c.getContext("2d", { willReadFrequently: true });
   return c;
 }
+
+// (for the Blender render of the same car, art/blender/rally_car_export.mjs:
+// its mesh, what each part of its body is, its liveries, its lamps)
+export const CAR_INTERNALS = { carMesh, bodyKind, liveryAt, dirtAt, PART, K, LAMPS, TAB, tab, XR, XF, AXLE_F, AXLE_R, WHEEL_R, WHEEL_Z, STAGE_LIGHTS, viewBasis, toCar };
+
+/** The glare a lamp seen head-on makes, for cars rendered elsewhere (rallyRender.js). */
+export function addCarGlare(textures) {
+  if (textures.exists(GLARE)) textures.remove(GLARE);
+  textures.addCanvas(GLARE, paintGlare());
+  return GLARE;
+}

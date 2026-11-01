@@ -1,5 +1,14 @@
 # Blender artwork
 
+## Gold coffer and trefoil key
+
+`gold_coffer_model.py` supplies the detailed hollow coffer to every room.
+`gold_coffer.py` saves the editable packed scene and photographs its materials;
+`gold_coffer_rooms.py` renders its opening and key in each room's real light,
+with contact shadows and without an extra reflector. `gold_coffer_publish.mjs`
+publishes the native poses and keys. See [gold-coffer-sources.md](gold-coffer-sources.md)
+for geometry, the lighting correction and rendering commands.
+
 ## Lamplight in the Library
 
 `library_lamplight.py` models the full library puzzle, sleeping tabby and
@@ -625,3 +634,86 @@ node art/blender/modem_room_publish.mjs
 The packed scene is `.artifacts/modem-native/router-room.blend`. Runtime
 art is in `public/assets/images/Modem/native-v1/`, with camera coordinates
 in `src/levels/modem/nativeModem.json`.
+
+## 2026-10-31: the letter, the medals, Before Sunrise's people, The Night Circuit
+
+- **Candlelight and Brass, the letter opened** — `cipher_letter.py` renders
+  the tri-folded rag-paper letter alone (its own shadow in its alpha); the
+  game brings it up out of the envelope over the darkened room.
+  `candlelight_brass_publish.mjs --letter` publishes only it.
+- **Before Sunrise** — `dawn_folk.py` holds the barn swallows (metaball
+  bodies, folded wings, forked tails), the man singing to his guitar in his
+  rocking chair and the porch flag (Blender cloth, `us_flag.mjs` draws its
+  cotton). `dawn_country.py` puts them on the wires and the farmhouse porch.
+- **The Trophy Wall** — `medals_real.py` strikes the five medals again
+  (polished fields, frosted relief, toned recesses, their rings);
+  `medal_ribbons.mjs` + `medal_ribbons.py` weave the ribbons in silk;
+  `medals_publish.mjs` writes the v2 pictures.
+- **The Night Circuit** — `rally_export.mjs` writes what the game reckons
+  (the track's projection, the car's own mesh and liveries, its views);
+  `rally_cars.py` renders the six cars at the same views,
+  `rally_stage.py` (+ `rally_people.py`) the stage lit and dark, what stands
+  in front of the cars and every person, `rally_board.py` the podium board,
+  the tape's lettering and the television; `rally_publish.mjs` packs them
+  into `public/assets/images/Rally/v1` and `src/levels/rally/rallyRender.json`.
+
+```powershell
+node art/blender/rally_export.mjs
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/rally_cars.py -- --samples 96
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/rally_stage.py -- --samples 256
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/rally_board.py -- --samples 96
+node art/blender/rally_publish.mjs
+```
+
+## Notebook (N) and Case file (C): native archive tools
+
+`archive_tools.py` builds the two menu objects as complete Cycles scenes:
+sewn leather, separate paper leaves, punched holes, a nickel mechanism and
+woven binding. `archive_tools_publish.mjs` publishes the plates, registered
+dossier slices and the two closed-object icons. Editable packed scenes and
+photographic portraits are in `.artifacts/archive-tools-v1`.
+
+See [archive-tools-sources.md](archive-tools-sources.md) for materials,
+render commands and registration. `archive_tools_review.mjs` captures the
+actual menu markup and styles through the local preview browser without
+running a test suite or changing game progress.
+
+## The Inspector's Desk: case file, notebook, settings (2026-10-31)
+
+These replace the archive tools above, whose stylesheets are no longer loaded.
+Each is a photograph from straight above of Inspector Wren's old oak desk
+under its lamp. The scans and models are CC0: Poly Haven `wood_table_worn`,
+`brown_leather`, a tea set, a pocket watch, a camera and a clipboard;
+ambientCG `Paper001/002/004/006` and `Leather037`. The game types and writes on the paper.
+
+- **casefile**: fills the screen. A ribbed manila folder with its red string
+  tie undone. On the left, the minute sheet (the index), with CONFIDENTIAL
+  stamped and a police photograph of the hall under it. On the right, the
+  letters under a brass fastener and a clip. Around it: tea, a pocket watch,
+  a pen, a pencil, a camera, a second photograph and an index card.
+- **notebook**: the pocket book alone, with no desk behind it, fading in over
+  the game (1600 px wide). It has a plain cover of pebbled leather (ambientCG
+  `Leather037` for its grain, coloured in the shader: `--cover black|green|oxblood`,
+  black by default). The cover has rounded corners, rolled rims rubbed paler,
+  and its head folded back in one roll. There is no stitching and no elastic.
+  The leaf is squared with no margin rule, and there is a grosgrain ribbon.
+  The pencil is modelled whole: six lacquered faces with rounded corners, the
+  maker's name in gold leaf, and a cone of cedar cut by the knife with the
+  paint scalloped where it meets each face. The lead glints, the brass ferrule
+  is ribbed twice, and the rubber is worn to a dome. The saved pages are
+  manila tags out from under the cover on the left (CSS, not rendered).
+  `--name` writes the picture under another name, for trying covers side by side.
+- **settings**: fills the screen. A form on a clipboard with three parts along
+  its head; the open one is ringed in pencil. Around it are other things.
+
+```powershell
+node art/blender/inspector_prints.mjs           # what is printed, typed, stamped on them
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/inspector_scene.py -- --only casefile,notebook,settings --samples 384
+node art/blender/inspector_desk_publish.mjs 2   # WebP + src/ui/styles/inspector-desk-geometry.css
+```
+
+`inspector_scene.py` writes, beside each picture, where each page's sheet
+lies in it (`<name>.json`: centre, size, turn). The publish script turns that
+into `inspector-desk-geometry.css`, so the pages follow the paper when it is
+rendered again. `--samples 32 --scale 0.4` gives a quick preview. The scans
+and models live in the render asset library (`C:/Users/crist/Tools/render/assets`).

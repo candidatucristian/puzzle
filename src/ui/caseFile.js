@@ -23,8 +23,9 @@ const KEPT = "caseFile:letters"; // the letters found, in order
 const READ = "caseFile:read"; // the letters read
 const SEEN = "caseFile:seen"; // the evidence looked at: the puzzles whose words have been seen here
 
-// where each Ashcombe left a page for him: the first time he stands there
-const PAGES = { Study: "ivy", Upper: "silas", Top: "orion" };
+// where each Ashcombe left a page for him: the first time he stands there —
+// each floor's own hall (Ivy's as soon as he comes into the house)
+const PAGES = { Hall: "ivy", Upper: "silas", Top: "orion" };
 const WAITS = Object.values(PAGES); // these wait in the side panel until opened
 
 // File each hall's numbered rooms together, including rooms whose definitions

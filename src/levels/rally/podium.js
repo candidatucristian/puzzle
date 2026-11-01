@@ -1,3 +1,4 @@
+import { RK, rallyBoard } from "./rallyRender.js";
 /** The top three of the stage, on a board that comes up over the dark
  *  finish when the lights go out: third place first, then second, then the
  *  winner, each with a cup in its own metal. The board and the cups are
@@ -225,7 +226,52 @@ function paintSpark() {
 
 /** The board, as a container at depth 25. animate = false builds it already
  *  complete (a rebuild after the race). */
+// The board as Blender rendered it (rallyRender.js): the board with its
+// title and lines, each cup, each name — laid out and brought up as below.
+function drawRenderedPodium(scene, W, H, animate) {
+  const R = rallyBoard(scene);
+  const b = R.board, s = b.s;
+  const left = W / 2 - b.pw / 2, top = H * 0.47 - b.ph / 2;
+  const t = scene.textures;
+  add(t, SPARK, paintSpark());
+  const frame = scene.add.image(left - b.pad, top - b.pad, RK.board, "board").setOrigin(0, 0).setDisplaySize(b.w, b.h);
+  const metals = ["gold", "silver", "bronze"];
+  const rows = RY_WINNERS.map((w, i) => {
+    const y = top + b.head + b.rowH * (i + 0.5);
+    const row = scene.add.container(0, y);
+    const c = R.cups[metals[i]], n = R.names[i];
+    const cup = scene.add.image(left + 84 * s, c.h * 0.5, RK.board, `cup-${metals[i]}`).setOrigin(0.5, 1).setDisplaySize(c.w, c.h);
+    const name = scene.add.image(left + 150 * s, 0, RK.board, `name-${w.place}`).setOrigin(0, 0.5).setDisplaySize(n.w, n.h);
+    row.add([cup, name]);
+    row._cup = cup;
+    row._cupScale = cup.scaleX;
+    if (i === 0) {
+      for (const [dx, dy, r] of [[0.24, -0.9, 16], [-0.3, -0.62, 12], [0.05, -0.35, 9]]) {
+        const sp = scene.add.image(left + 84 * s + dx * c.h, c.h * 0.5 + dy * c.h, SPARK).setBlendMode("ADD").setDisplaySize(r * s, r * s).setAlpha(0.1);
+        row.add(sp);
+        scene.ambientTween({ targets: sp, alpha: 0.95, duration: 700 + r * 60, delay: r * 45, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      }
+    }
+    return row;
+  });
+  const podium = scene.add.container(0, 0, [frame, ...rows]).setDepth(25);
+  if (!animate) return podium;
+  frame.setAlpha(0);
+  rows.forEach((row) => row.setAlpha(0));
+  scene.tweens.add({ targets: frame, alpha: 1, duration: 700, ease: "Sine.easeOut" });
+  [2, 1, 0].forEach((idx, k) => {
+    const row = rows[idx];
+    const ty = row.y;
+    const delay = 800 + k * 750;
+    row.y = ty + 14 * s;
+    scene.tweens.add({ targets: row, alpha: 1, y: ty, duration: 520, delay, ease: "Cubic.easeOut" });
+    scene.tweens.add({ targets: row._cup, scale: { from: row._cupScale * 0.55, to: row._cupScale }, duration: 520, delay, ease: "Back.easeOut" });
+  });
+  return podium;
+}
+
 export function drawPodium(scene, W, H, animate) {
+  if (scene.textures.exists(RK.board)) return drawRenderedPodium(scene, W, H, animate);
   const s = Math.max(0.6, Math.min(W / 1100, H / 720, 1.1));
   const pw = 520 * s;
   const rowH = 76 * s;

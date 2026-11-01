@@ -1,5 +1,6 @@
 import { makeCanvas } from "../../shared/paint.js";
 import { thingAt } from "./roomKit.js";
+import COFFER from './nativeCoffer.json';
 
 // The rooms off the halls, rendered in Blender (art/blender/room_common.py,
 // room_<name>.py, room_publish.mjs): fixed lighting for every room — one
@@ -9,21 +10,25 @@ import { thingAt } from "./roomKit.js";
 // best seen; Blender says where everything the scene keeps alive fell in the
 // picture (house/rooms/<Room>.json), and the render is laid over the screen
 // covering it, never stretched.
+// The coffer's states come from its own light-calibrated Cycles renders.
 const ROOMS = {
-  Study: { folder: "Room1", version: 6 },
-  Room2: { folder: "Room2" },
-  Room3: { folder: "Room3", version: 2 },
-  Room4: { folder: "Room4", version: 2, extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
-  Room5: { folder: "Room5" },
-  Room7: { folder: "Room7", chest: false, version: 3, extra: Array.from({ length: 6 }, (_, i) => `notebook-${i}`) },
-  Room8: { folder: "Room8", chest: false, version: 2 },
-  ...Object.fromEntries([9, 12, 13].map((n) => [`Room${n}`, { folder: `Room${n}`, chest: false }])),
+  Study: { folder: "Room1", version: 8 },
+  Room2: { folder: "Room2", version: 2 },
+  Room3: { folder: "Room3", version: 3 },
+  Room4: { folder: "Room4", version: 3, extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
+  Room5: { folder: "Room5", version: 5 },
+  Room7: { folder: "Room7", chest: false, version: 4, extra: Array.from({ length: 6 }, (_, i) => `notebook-${i}`) },
+  Room8: { folder: "Room8", chest: false, version: 3 },
+  // (IX and XIII rendered again with oak window frames)
+  ...Object.fromEntries([[9, 2], [12, undefined], [13, 2]].map(([n, version]) => [`Room${n}`, { folder: `Room${n}`, chest: false, ...(version ? { version } : {}) }])),
   // (rendered again with Orion's counting frame on his bench and his ways of
   // keeping time on the sill)
-  Room11: { folder: "Room11", chest: false, version: 3 },
+  Room11: { folder: "Room11", chest: false, version: 4 },
 };
-const keyOf = (room, name) => `${room}_render_${name}${ROOMS[room].version ? `_v${ROOMS[room].version}` : ""}`;
+const chestVersion = room => COFFER.rooms[room]?.artVersion ?? COFFER.version;
+const keyOf = (room, name) => `${room}_render_${name}${name.startsWith("chest-") ? `_coffer_v${chestVersion(room)}` : ROOMS[room].version ? `_v${ROOMS[room].version}` : ""}`;
 const urlOf = (room, name) => {
+  if (name.startsWith("chest-")) return `assets/images/Chest/native-v${chestVersion(room)}/${room.toLowerCase()}-${name}.webp`;
   const folder = ROOMS[room].folder;
   return `assets/images/${folder}/${folder.toLowerCase()}-${name}-render-v${ROOMS[room].version ?? 1}.webp`;
 };

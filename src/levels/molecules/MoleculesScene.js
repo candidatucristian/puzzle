@@ -28,6 +28,7 @@ const NEAR = 1.12; // how much nearer the book is brought once it has opened
 export default class MoleculesScene extends BasePuzzleScene {
   constructor() {
     super({ key: "Molecules" });
+    this.ownApproach = true;   // (it brings its own picture near: shared/pageFlip.js bringNear)
   }
 
   init(data) {

@@ -16,8 +16,7 @@ import ROOM3 from "../house/rooms/Room3.json";
  *  a sea chart on the far wall.
  *
  *  Three puzzles are found here — the bottle, the board, the telephone. The
- *  room is lit by the storm lantern and the moon; the candle and the green
- *  lamp are cold.
+ *  room's lantern, candle and green lamp stay lit, as in the close-ups.
  *
  *  The room is a Blender render (art/blender/room_cabin.py), the chest apart,
  *  the game on the board the puzzle's own. Blender wrote down where
@@ -43,7 +42,7 @@ export function paintRoom3(scene, L) {
   addCanvasTexture(t, K.glow, glowCanvas());
   addCanvasTexture(t, K.shut, rendered ? roomRenderChest(scene, "Room3", false) : makeCanvas(1, 1));
   addCanvasTexture(t, K.open, rendered ? roomRenderChest(scene, "Room3", true) : makeCanvas(1, 1));
-  addCanvasTexture(t, K.key, paintKey());
+  addCanvasTexture(t, K.key, paintKey(scene));
   return { keys: K };
 }
 

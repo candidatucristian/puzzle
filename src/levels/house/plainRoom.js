@@ -93,7 +93,7 @@ function paintPlain(scene, L, K) {
   if (L.chest) {
     addCanvasTexture(t, K.shut, paintChest(L, false));
     addCanvasTexture(t, K.open, paintChest(L, true));
-    addCanvasTexture(t, K.key, paintKey());
+    addCanvasTexture(t, K.key, paintKey(scene));
   }
   return K;
 }

@@ -12,7 +12,7 @@ _MATERIALS = None
 def materials():
     global _MATERIALS
     if _MATERIALS and _MATERIALS['gold'].name in bpy.data.materials: return _MATERIALS
-    gold = aged_metal('Coffer | rubbed gold over brass', (.78,.51,.16), (.13,.085,.032), rough=(.30,.49), scale=230, tarnish=.34)
+    gold = aged_metal('Coffer | rubbed gold over brass', (.70,.45,.14), (.13,.085,.032), rough=(.40,.57), scale=230, tarnish=.34)
     n=gold.node_tree.nodes; lk=gold.node_tree.links.new; bs=n['Principled BSDF']
     bs.inputs['Coat Weight'].default_value=0
     # Fine directional tool marks, below the visible repoussé and worn edges.
@@ -22,8 +22,8 @@ def materials():
     if bs.inputs['Normal'].is_linked: lk(bs.inputs['Normal'].links[0].from_socket,bump.inputs['Normal'])
     lk(scratch.outputs['Fac'],bump.inputs['Height']); lk(bump.outputs[0],bs.inputs['Normal'])
     bronze=aged_metal('Coffer | recessed antique bronze',(.26,.16,.061),(.042,.031,.018),rough=(.40,.63),scale=190,tarnish=.55)
-    edge=aged_metal('Coffer | handled gilt edges',(.73,.48,.15),(.20,.12,.035),rough=(.28,.43),scale=420,tarnish=.18)
-    velvet=plain('Coffer | deep oxblood velvet',(.052,.005,.008),rough=.97,sheen=.5)
+    edge=aged_metal('Coffer | handled gilt edges',(.73,.48,.15),(.20,.12,.035),rough=(.34,.48),scale=420,tarnish=.18)
+    velvet=plain('Coffer | deep oxblood velvet',(.035,.003,.004),rough=1,sheen=.20)
     vn=velvet.node_tree.nodes; vl=velvet.node_tree.links.new; noise=vn.new('ShaderNodeTexNoise'); noise.inputs['Scale'].default_value=2100
     vb=vn.new('ShaderNodeBump'); vb.inputs['Strength'].default_value=.24; vb.inputs['Distance'].default_value=.00010
     vl(noise.outputs['Fac'],vb.inputs['Height']); vl(vb.outputs[0],vn['Principled BSDF'].inputs['Normal'])
@@ -39,7 +39,8 @@ def block(name,lo,hi,mat,r=.0005):
 def curve(name,points,r,mat,cyclic=False):
     cu=bpy.data.curves.new(name,'CURVE'); cu.dimensions='3D'; cu.bevel_depth=r; cu.bevel_resolution=3; cu.resolution_u=8
     sp=cu.splines.new('BEZIER'); sp.bezier_points.add(len(points)-1); sp.use_cyclic_u=cyclic
-    for p,co in zip(sp.bezier_points,points): p.co=co; p.handle_left_type=p.handle_right_type='AUTO'
+    for p,co in zip(sp.bezier_points,points):
+        p.co=co; p.handle_left_type=p.handle_right_type='VECTOR' if cyclic and len(points)==4 else 'AUTO'
     o=link(bpy.data.objects.new(name,cu)); o.data.materials.append(mat); return o
 
 def coffer(c):

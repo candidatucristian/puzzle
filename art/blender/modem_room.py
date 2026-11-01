@@ -164,7 +164,7 @@ for side in (-1,1):
     rod('Lamp | rolled lower lip',(lx-.174,ly+side*.098,shade_z),(lx+.174,ly+side*.098,shade_z),.0018,BRASS)
 BULB=plain('Lamp | warm glowing tube',(.7,.49,.24),emit=(1,.69,.34),strength=3,rough=.28)
 rod('Lamp | actual tubular bulb',(lx-.075,ly,shade_z+.013),(lx+.075,ly,shade_z+.013),.008,BULB)
-lamp('Lamp | warm pool on walnut','AREA',(lx,ly,shade_z-.006),aim=(lx+.10,ly-.10,DESK),energy=11,colour=(1,.77,.48),size=.19,size_y=.055)
+lamp('Lamp | warm pool on walnut','AREA',(lx,ly,shade_z-.006),aim=(lx+.10,ly-.10,DESK),energy=4,colour=(1,.77,.48),size=.19,size_y=.09)
 lamp('Lamp | tiny reflected light inside green shade','POINT',(lx,ly,shade_z+.032),energy=.35,colour=(1,.79,.57),size=.018)
 chain=[(lx+.145,ly-.065,shade_z-.005-i*.0045) for i in range(21)]
 for pt in chain:sphere('Lamp | individual pull-chain bead',pt,.0016,BRASS)
@@ -230,6 +230,8 @@ lamp('Room | restrained warm bounce behind camera','AREA',(-.2,-1.25,1.55),aim=(
 
 cam_data=bpy.data.cameras.new('Camera | observer at the desk');cam_data.lens=42;cam_data.sensor_width=36;cam_data.sensor_fit='HORIZONTAL';cam_data.clip_end=30
 cam=link(bpy.data.objects.new('Camera',cam_data));cam.location=(0,-1.80,1.11);cam.rotation_euler=(Vector((.015,.15,1.025))-cam.location).to_track_quat('-Z','Y').to_euler();scene.camera=cam
+from ground_floor_light import soften_lamp_metal
+soften_lamp_metal(scene)
 cycles(scene,SAMPLES,W,H,exposure=.15,glare=False)
 scene.cycles.max_bounces=10;scene.cycles.adaptive_threshold=.006;scene.cycles.seed=1121961
 scene.render.use_persistent_data=True;scene.render.image_settings.color_depth='16'

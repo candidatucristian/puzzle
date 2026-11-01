@@ -10,9 +10,10 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 const require = createRequire(new URL("../../package.json", import.meta.url));
 const sharp = require("sharp");
 const path = (rel) => decodeURIComponent(new URL(`../../${rel}`, import.meta.url).pathname).replace(/^\/(\w:)/, "$1");
-const source = path(".artifacts/overtime-office"), target = path("public/assets/images/Overtime");
+const source = path(process.argv[2] ?? ".artifacts/overtime-office"), target = path("public/assets/images/Overtime");
 mkdirSync(target, { recursive: true });
 const office = JSON.parse(readFileSync(`${source}/officeRender.json`, "utf8"));
+if (process.argv[3]) office.version = Number(process.argv[3]);
 const v = office.version;
 
 const plate = await sharp(`${source}/plate.png`).metadata();

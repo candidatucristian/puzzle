@@ -31,7 +31,7 @@ from kit import *
 from room_common import *
 from room_furnish import *
 
-OUT = os.path.join(ROOT, ".artifacts/overtime-office")
+OUT = arg('--out', os.path.join(ROOT, ".artifacts/overtime-office"))
 os.makedirs(OUT, exist_ok=True)
 DRAWN = os.path.join(ROOT, ".artifacts/rooms")        # room_boards.mjs, clock_faces.mjs
 SAMPLES = int(arg("--samples", "384"))
@@ -51,8 +51,10 @@ DESK_WOOD = scan("desk mahogany", "dark_wood", size=1.1, tint=(0.66, 0.46, 0.34)
 DESK_LEATHER = scan("desk leather", "brown_leather", size=0.45, tint=(0.13, 0.24, 0.15), bright=0.3, sat=1.0, rough=(0.5, 0.75), bump=0.45, stains=0.25)
 BRASS = aged_metal("brass", (0.55, 0.39, 0.17), (0.08, 0.055, 0.025), rough=(0.22, 0.5), scale=40, tarnish=0.5)
 BLACK = plain("black plastic", (0.015, 0.015, 0.017), rough=0.35, coat=0.2)
-CLOCK_CASE = plain("clock case", (0.02, 0.02, 0.022), rough=0.32, coat=0.25)
-CLOCK_BEZEL = plain("clock bezel", (0.012, 0.012, 0.014), rough=0.16, coat=0.7)
+# (the wall clock's case brushed aluminium, its bezel bright chrome: on the
+# dark walnut its frame is seen, catching the lamp)
+CLOCK_CASE = plain("clock case", (0.5, 0.51, 0.53), rough=0.38, metal=0.9)
+CLOCK_BEZEL = plain("clock bezel", (0.72, 0.72, 0.74), rough=0.22, metal=1.0)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
 CERAMIC = plain("ceramic", (0.5, 0.45, 0.36), rough=0.32, coat=0.2)
 COFFEE = plain("coffee", (0.03, 0.015, 0.008), rough=0.08, coat=0.6)
@@ -228,7 +230,7 @@ OFFICE_BULB = plain("office bulb", (1, 0.9, 0.7), emit=(1.0, 0.8, 0.5), strength
 bulb = cylinder("bulb", 0, 0, M(-9), M(9), M(1.3), OFFICE_BULB, verts=24)
 bulb.rotation_euler = (0, math.pi / 2, 0); bulb.location = P(gx, SHADE_Y + 1.5, SHADE_D)
 LAMP_AT = P(gx, SHADE_Y + 0.5, SHADE_D - 1.5)
-lamp_l = lamp("the lamp", "AREA", tuple(LAMP_AT), aim=tuple(LAMP_AT - Vector((0, 0, 1))), energy=float(arg("--lamp", "11")), colour=(1.0, 0.8, 0.58), size=0.22, size_y=0.05)
+lamp_l = lamp("the lamp", "AREA", tuple(LAMP_AT), aim=tuple(LAMP_AT - Vector((0, 0, 1))), energy=float(arg("--lamp", "4")), colour=(1.0, 0.8, 0.58), size=0.22, size_y=0.09)
 rod("pull chain", P(gx + 9, SHADE_Y - 1, SHADE_D - 3), P(gx + 9, SHADE_Y - 10, SHADE_D - 3), M(0.1), BRASS, verts=6)
 sphere("pull", tuple(P(gx + 9, SHADE_Y - 10.6, SHADE_D - 3)), M(0.5), BRASS)
 
@@ -284,12 +286,13 @@ def on_top(x, d, lift=0.0):
     return CF(x, slope(d) + lift, d)
 CALC_BODY = plain("calculator body", (0.045, 0.047, 0.052), rough=0.42, coat=0.15)
 PANEL = plain("calculator panel", (0.42, 0.42, 0.43), rough=0.38, metal=0.85)
-KEY_DARK = plain("key", (0.06, 0.062, 0.068), rough=0.34, coat=0.3)
-KEY_RED = plain("key red", (0.4, 0.055, 0.04), rough=0.34, coat=0.3)
-KEY_GREY = plain("key grey", (0.24, 0.245, 0.26), rough=0.34, coat=0.3)
-LABEL = plain("key label", (0.82, 0.82, 0.78), rough=0.5)
-LABEL_DARK = plain("key label dark", (0.03, 0.03, 0.035), rough=0.5)
-LCD_GLASS = plain("lcd glass", (0.4, 0.44, 0.36), rough=0.3, coat=0.3)
+# (matte keys, dark, their figures large and white: read from the chair)
+KEY_DARK = plain("key", (0.03, 0.031, 0.035), rough=0.55)
+KEY_RED = plain("key red", (0.36, 0.04, 0.03), rough=0.55)
+KEY_GREY = plain("key grey", (0.11, 0.112, 0.12), rough=0.55)
+LABEL = plain("key label", (0.92, 0.92, 0.88), rough=0.6)
+LABEL_DARK = LABEL
+LCD_GLASS = plain("lcd glass", (0.56, 0.61, 0.5), rough=0.35)
 calc_root = bpy.data.objects.new("calculator", None); link(calc_root)
 calc_root.location = P(CX, DESK_Y, CD); calc_root.rotation_euler = (0, 0, YAW)
 def held(o):
@@ -310,7 +313,7 @@ def wedge(name, x0, x1, d0, d1, lift, thick, mat, r=0.2, sloped=True):
 wedge("calculator body", -CW / 2, CW / 2, 0, CL, 0, 0, CALC_BODY, 0.6, sloped=False)
 # the panel round the display: brushed metal, the display in its black
 # bezel under the window, a strip of solar cells
-LCD = dict(u0=1.6, u1=CW - 1.6, d0=CL - 6.4, d1=CL - 2.9)
+LCD = dict(u0=1.2, u1=CW - 1.2, d0=CL - 7.6, d1=CL - 2.8)
 wedge("calculator panel", 0.5 - CW / 2, CW / 2 - 0.5, LCD["d0"] - 1.2, CL - 0.5, 0.0, 0.25, PANEL, 0.25)
 wedge("display bezel", LCD["u0"] - 0.4 - CW / 2, LCD["u1"] + 0.4 - CW / 2, LCD["d0"] - 0.4, LCD["d1"] + 0.4, 0.25, 0.05, plain("display bezel", (0.02, 0.02, 0.022), rough=0.4), 0)
 wedge("display glass", LCD["u0"] - CW / 2, LCD["u1"] - CW / 2, LCD["d0"], LCD["d1"], 0.3, 0.04, LCD_GLASS, 0)
@@ -331,7 +334,7 @@ for key, c, r, cs, rs in KEYPAD:
     wedge(f"key {key}", x0, x1, d0, d1, 0.0, CAP_H, KEY_RED if key == "C" else KEY_GREY if grey else KEY_DARK, 0.24)
     KEY_CAPS[key] = (x0, x1, d0, d1)
     # its figure, printed on the cap
-    t = bpy.data.curves.new(f"label {key}", "FONT"); t.body = key; t.size = M(1.0 if len(key) == 1 else 0.8)
+    t = bpy.data.curves.new(f"label {key}", "FONT"); t.body = key; t.size = M(1.85 if len(key) == 1 else 1.4); t.extrude = M(0.02)
     if KEY_FONT: t.font = KEY_FONT
     t.align_x = "CENTER"; t.align_y = "CENTER"
     lab = held(link(bpy.data.objects.new(f"label {key}", t))); lab.data.materials.append(LABEL_DARK if grey else LABEL)
@@ -390,7 +393,7 @@ for o, i, cs in COLONS:
 # (what must stay on screen: the four clocks and the calculator)
 SAFE = [c for o, _, _ in COLONS for c in object_corners(o)] + [CF(x, y, d) for x in (-CW / 2, CW / 2) for d in (0, CL) for y in (0, slope(d))]
 data = {
-    "version": 1, "width": RW, "height": RH, "safe": box_of(SAFE, pad=16),
+    "version": 2, "width": RW, "height": RH, "safe": box_of(SAFE, pad=16),
     "keys": keys,
     "lcd": {"corners": [list(project(p)) for p in band], "w": round(BAND["u1"] - BAND["u0"], 3), "h": round((BAND["d1"] - BAND["d0"]) / math.cos(TILT), 3)},
     "colons": colons,
@@ -405,7 +408,9 @@ if arg("--probe", ""):
     raise SystemExit
 
 # ── render: the colons out, then lit ───────────────────────────────────────
-cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "0.35")))
+from ground_floor_light import soften_lamp_metal
+soften_lamp_metal(scene)
+cycles(scene, SAMPLES, WIDTH, HEIGHT, exposure=float(arg("--exposure", "0.35")), glare=False)
 finish(scene, SAMPLES, keep_gloss=("green glass shade", "glass", "print glass", "clock bezel", "clock case", "red filter", "radio glass", "smoked glass",
                                    "lcd glass", "ceramic", "coffee", "key", "key red", "key grey", "calculator panel", "solar cell") + GLOSSY_FACES)
 def colons_lit(on):
