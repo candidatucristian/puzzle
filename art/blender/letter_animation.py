@@ -153,9 +153,9 @@ key(high, 1, rotation_euler=(D(180), 0, 0)); key(high, HEAD0, rotation_euler=(D(
 key(high, HEAD1 - 6, rotation_euler=(D(8), 0, 0)); key(high, HEAD1, rotation_euler=(D(3), 0, 0)); key(high, REST1, rotation_euler=(0, 0, 0))
 key(low, 1, rotation_euler=(D(-180), 0, 0)); key(low, FOOT0, rotation_euler=(D(-180), 0, 0))
 key(low, FOOT1 - 6, rotation_euler=(D(-8), 0, 0)); key(low, FOOT1, rotation_euler=(D(-3), 0, 0)); key(low, REST1, rotation_euler=(0, 0, 0))
-# the envelope, pushed aside to the corner of the bed
+# the envelope, set down beside the open page
 key(ENVELOPE, 1, location=Vector((0, 0, 0)), rotation_euler=(0, 0, 0)); key(ENVELOPE, AWAY0, location=Vector((0, 0, 0)), rotation_euler=(0, 0, 0))
-key(ENVELOPE, AWAY1, location=Vector((-2.65, -1.62, 0)), rotation_euler=(0, 0, D(-11)))
+key(ENVELOPE, AWAY1, location=Vector((-2.3, -0.3, 0)), rotation_euler=(0, 0, 0))
 # every move eased, nothing mechanical
 for o in (cam, flap, LETTER, high, low, ENVELOPE, ARRIVAL):
     for fc in o.animation_data.action.fcurves:

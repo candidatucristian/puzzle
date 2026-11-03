@@ -22,10 +22,18 @@ class LetterStage {
   constructor(canvas,gltf) {
     this.canvas=canvas;
     this.scene=gltf.scene;
-    this.camera=gltf.cameras[0];
+    this.camera=this.scene.getObjectByProperty('isCamera',true)??gltf.cameras[0];
     this.baseFov=this.camera.fov;
     this.envelope=this.scene.getObjectByName('envelope');
     this.letter=this.scene.getObjectByName('letter');
+    const envelopeTrack=gltf.animations.flatMap(clip=>clip.tracks).find(track=>track.name===`${this.envelope.name}.position`);
+    this.envelopeEnd=new THREE.Vector3();
+    if(envelopeTrack)this.envelopeEnd.fromArray(envelopeTrack.values,envelopeTrack.values.length-3);
+    this.envelopeRest=new THREE.Vector3(-2.3,0,.3);
+    this.restRotation=new THREE.Quaternion();
+    this.frameBox=new THREE.Box3();this.framePoint=new THREE.Vector3();
+    this.envelopeLayout=new THREE.Group();
+    this.envelope.parent.add(this.envelopeLayout);this.envelopeLayout.add(this.envelope);
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     const r=this.renderer;
     r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
@@ -61,8 +69,11 @@ class LetterStage {
   }
 
   fit(width,height) {
-    this.width=width;this.height=height;
-    this.renderer.setSize(width,height,false);
+    this.width=Math.max(1,width);this.height=Math.max(1,height);
+    const ratio=Math.min(2,window.devicePixelRatio||1);
+    if(this.renderer.getPixelRatio()!==ratio)this.renderer.setPixelRatio(ratio);
+    // CSS owns the full dialog surface; only resize the drawing buffer here.
+    this.renderer.setSize(this.width,this.height,false);
     this.pose(this.time);
   }
 
@@ -70,14 +81,56 @@ class LetterStage {
     this.time=Math.max(0,Math.min(animation.duration,time));
     for(const a of this.actions)a.reset().play();
     this.mixer.setTime(this.time);
+    // Keep the spent envelope on the desk beside the sheet. The exported
+    // push-aside path ended outside the camera and left a clipped corner.
+    const travel=this.envelopeEnd.lengthSq();
+    if(travel){
+      const aside=THREE.MathUtils.clamp(this.envelope.position.dot(this.envelopeEnd)/travel,0,1);
+      // Offset a separate parent: changing a mixer-bound transform would
+      // accumulate corrections whenever the same frame is rendered again.
+      this.envelopeLayout.quaternion.copy(this.envelope.quaternion).invert().slerp(this.restRotation,1-aside);
+      const animated=this.framePoint.copy(this.envelope.position).applyQuaternion(this.envelopeLayout.quaternion);
+      this.envelopeLayout.position.copy(this.envelopeRest).multiplyScalar(aside).sub(animated);
+    }
     const aspect=this.width/this.height,progress=this.time/animation.duration;
     // The envelope and open page keep their full width on narrow screens.
     const expansion=THREE.MathUtils.lerp(Math.max(1,.99/aspect),Math.max(1,.66/aspect),progress);
     this.camera.aspect=aspect;
     this.camera.fov=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(this.baseFov/2))*expansion));
-    this.camera.updateProjectionMatrix();this.scene.updateMatrixWorld(true);
+    this.camera.clearViewOffset();this.scene.updateMatrixWorld(true);
+    this.camera.updateWorldMatrix(true,false);
+    if(this.time>=animation.arrival)this.frameSubjects();
+    this.camera.updateProjectionMatrix();
+    this.renderer.setRenderTarget(null);this.renderer.setScissorTest(false);
+    this.renderer.setViewport(0,0,this.width,this.height);
     this.renderer.render(this.scene,this.camera);
     this.canvas.dataset.frame=String(Math.round(this.time*animation.fps));
+  }
+
+  // Frame the moving meshes, including the raised flap, rather than only
+  // the closed envelope's original rectangle. Shift the lens only as far
+  // as needed; widen it only when the subjects cannot fit at the authored FOV.
+  frameSubjects() {
+    let left=Infinity,right=-Infinity,bottom=Infinity,top=-Infinity;
+    for(const subject of [this.envelope,this.letter]){
+      const box=this.frameBox.setFromObject(subject);
+      for(let i=0;i<8;i++){
+        const p=this.framePoint.set(i&1?box.max.x:box.min.x,i&2?box.max.y:box.min.y,i&4?box.max.z:box.min.z)
+          .applyMatrix4(this.camera.matrixWorldInverse);
+        const depth=Math.max(.01,-p.z),x=p.x/depth,y=p.y/depth;
+        left=Math.min(left,x);right=Math.max(right,x);bottom=Math.min(bottom,y);top=Math.max(top,y);
+      }
+    }
+    const padding=Math.min(32,this.width*.04,this.height*.04);
+    const safeX=1-2*padding/this.width,safeY=1-2*padding/this.height,aspect=this.width/this.height;
+    const tangent=Math.max(Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2)),
+      (right-left)/(2*aspect*safeX),(top-bottom)/(2*safeY));
+    const halfX=tangent*aspect,halfY=tangent;
+    const centreX=THREE.MathUtils.clamp(0,right-halfX*safeX,left+halfX*safeX);
+    const centreY=THREE.MathUtils.clamp(0,top-halfY*safeY,bottom+halfY*safeY);
+    this.camera.fov=THREE.MathUtils.radToDeg(2*Math.atan(tangent));
+    this.camera.setViewOffset(this.width,this.height,
+      centreX*this.width/(2*halfX),-centreY*this.height/(2*halfY),this.width,this.height);
   }
 
   project(points) {

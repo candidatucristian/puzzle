@@ -1,6 +1,7 @@
 import {Scope} from '../shared/Scope.js';
 import {renderLetter} from './letterPage.js';
 import animation from './letterAnimation.json';
+import './styles/letter-arrival.css';
 
 // Actual Blender meshes, hinge keyframes and camera movement, played live.
 // The readable words remain DOM text on the physical paper, in every language.
@@ -27,8 +28,10 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
     const root=el('div','arrival');root.tabIndex=-1;
     root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');
     root.setAttribute('aria-label',`${text('casefile.letterFound','A letter found')}: ${letter.title}`);
-    const veil=el('div','arrival-veil'),stage=el('div','arrival-stage');
-    const canvas=el('canvas','arrival-model');canvas.setAttribute('aria-hidden','true');stage.append(canvas);
+    // Render directly into the dialog. The old centred CSS envelope stage
+    // must never position or crop the native scene.
+    const veil=el('div','arrival-veil'),canvas=el('canvas','arrival-model');
+    canvas.setAttribute('aria-hidden','true');
     const env=el('button','env');env.type='button';env.disabled=true;
     env.setAttribute('aria-label',text('casefile.openLetter','Open the letter'));
     const caption=el('div','arrival-caption');
@@ -38,7 +41,7 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
     page.tabIndex=0;page.setAttribute('aria-label',letter.title);sheet.append(page);
     const file=el('button','arrival-file',text('casefile.fileLetter','File it in the case file'));
     file.type='button';file.disabled=true;
-    root.append(veil,stage,env,caption,hint,sheet,file);document.body.append(root);
+    root.append(veil,canvas,env,caption,hint,sheet,file);document.body.append(root);
     let state='',native=null,plain=false,typist=null,recording=null,sealSound=null,completeMotion=null;
     const alive=()=>!life.closed;
     const stateTo=value=>{state=value;root.dataset.state=value;};
@@ -51,20 +54,24 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
     const hide=(node,ms=300)=>move(node,[{opacity:getComputedStyle(node).opacity},{opacity:0}],{duration:ms,easing:'ease-in'});
 
     const fit=()=>{
+      const bounds=root.getBoundingClientRect();
+      const width=Math.max(1,bounds.width),height=Math.max(1,bounds.height);
       if(native){
-        native.fit(innerWidth,innerHeight);
+        native.fit(width,height);
         const e=native.envelopeBounds(),p=native.paperBounds();
         Object.assign(env.style,{left:`${e.x}px`,top:`${e.y}px`,width:`${e.w}px`,height:`${e.h}px`});
         Object.assign(sheet.style,{left:`${p.x-p.w/2}px`,top:`${p.y-p.h/2}px`,width:`${p.w}px`,height:`${p.h}px`,
           padding:`${p.w*.09}px ${p.w*.085}px ${p.w*.07}px`,transform:`rotate(${p.angle}deg)`,
           fontSize:`${Math.max(13,Math.min(18,p.w/34))}px`});
       }else{
-        const w=Math.min(560,innerWidth*.88),h=innerHeight*.78;
-        Object.assign(sheet.style,{left:`${(innerWidth-w)/2}px`,top:`${(innerHeight-h)/2-12}px`,width:`${w}px`,height:`${h}px`,
+        const w=Math.min(560,width*.88),h=height*.78;
+        Object.assign(sheet.style,{left:`${(width-w)/2}px`,top:`${(height-h)/2-12}px`,width:`${w}px`,height:`${h}px`,
           padding:'0',transform:'none',fontSize:`${Math.max(13,Math.min(18,w/34))}px`});
       }
     };
     life.on(window,'resize',fit);
+    const resize=new ResizeObserver(()=>{if(alive())fit();});
+    resize.observe(root);life.add(()=>resize.disconnect());
     const finish=how=>{
       if(!alive())return;
       stateTo('gone');typist?.stop();recording?.stop();sealSound?.stop();
@@ -135,12 +142,12 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       void hide(file,180);await hide(sheet,200);if(!alive())return;
       if(native)await pose(animation.duration,0,1900);
       if(!alive())return;
-      sounds?.file?.();await Promise.all([hide(stage,300),hide(veil,420)]);finish('read');
+      sounds?.file?.();await Promise.all([hide(canvas,300),hide(veil,420)]);finish('read');
     };
     const putAway=async()=>{
       if(!alive()||!['waiting','arriving'].includes(state))return;
       stateTo('filing');completeMotion?.();
-      await Promise.all([hide(stage,300),hide(caption,200),hide(hint,160),hide(veil,350)]);finish('later');
+      await Promise.all([hide(canvas,300),hide(caption,200),hide(hint,160),hide(veil,350)]);finish('later');
     };
     life.on(env,'click',()=>void open());life.on(file,'click',()=>void fileIt());
     life.on(root,'keydown',event=>{
@@ -162,11 +169,11 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       try{const m=await stageModule();native=await m.createLetterStage(canvas);}catch{native=null;}
       if(!alive()){native?.dispose();native=null;return;}
       if(!native){
-        plain=true;root.classList.add('is-plain');stage.hidden=true;env.hidden=true;hint.hidden=true;
+        plain=true;root.classList.add('is-plain');canvas.hidden=true;env.hidden=true;hint.hidden=true;
         fit();await show(veil,200);if(alive())read();return;
       }
       stateTo('arriving');fit();waiting?.classList.add('is-in-flight');sounds?.whoosh?.();
-      await Promise.all([show(veil,350),show(stage,400),show(caption,450),pose(0,animation.arrival,650)]);
+      await Promise.all([show(veil,350),show(canvas,400),show(caption,450),pose(0,animation.arrival,650)]);
       if(!alive()||state!=='arriving')return;
       sounds?.land?.();stateTo('waiting');fit();env.disabled=false;
       if(origin)void open();else{void show(hint,250);env.focus({preventScroll:true});}

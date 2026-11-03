@@ -3,13 +3,13 @@
 .waiting-letter img.wl-envelope { width: 128px; height: auto; aspect-ratio: auto; object-fit: contain; }
 .waiting-letter:has(img.wl-envelope) .wl-alert { right: 8px; top: 8px; }
 .waiting-letter.is-in-flight { visibility: hidden; }
-.arrival { isolation: isolate; overflow: hidden; outline: none; }
+.arrival { position: fixed; inset: 0; z-index: 575; isolation: isolate; overflow: hidden; outline: none; }
 .arrival[data-state="preparing"] > * { opacity: 0; }
 .arrival .arrival-veil { backdrop-filter: none; -webkit-backdrop-filter: none; transition: none; background: #050403; }
-.arrival .arrival-stage { position: absolute; inset: 0; width: 100%; height: 100%; left: 0; top: 0;
-  transform: none; translate: none; perspective: none; display: block; opacity: 0; z-index: 1; pointer-events: none; }
-.arrival-stage[hidden] { display: none; }
-.arrival-model { display: block; width: 100%; height: 100%; pointer-events: none; }
+.arrival > .arrival-model { position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+  max-width: none; max-height: none; margin: 0; padding: 0; border: 0; transform: none; translate: none;
+  opacity: 0; z-index: 1; pointer-events: none; }
+.arrival > .arrival-model[hidden] { display: none; }
 .arrival .env { position: absolute; z-index: 2; border: 0; padding: 0; background: none; outline: none;
   cursor: var(--cursor-hand,pointer); filter: none; animation: none; border-radius: 6px; }
 .arrival .env:disabled { cursor: default; pointer-events: none; }
