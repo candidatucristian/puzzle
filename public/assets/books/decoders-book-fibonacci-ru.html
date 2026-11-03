@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Decoder&#39;s Book — Fibonacci</title><meta name="description" content="За распознавание последовательности Фибоначчи в росте растения и расшифровку идеи, спрятанной в саду."><style>/* Self-hosted interface fonts, SIL Open Font License 1.1.
+   Notices and provenance: public/assets/fonts/ui/README.md.
+   Preload only the normal Latin DM Serif Display and Plex Sans files;
+   other subsets/styles load on demand. Scene font declarations stay separate. */
+
+@font-face {
+    font-family: 'DM Serif Display';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/ui/dm-serif-display-latin-ext-400.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/ui/dm-serif-display-latin-400.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Cormorant Garamond';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('../fonts/ui/cormorant-garamond-latin-ext-variable.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Cormorant Garamond';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('../fonts/ui/cormorant-garamond-latin-variable.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Cormorant Garamond';
+    font-style: italic;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('../fonts/ui/cormorant-garamond-latin-ext-italic-variable.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Cormorant Garamond';
+    font-style: italic;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('../fonts/ui/cormorant-garamond-latin-italic-variable.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    font-style: normal;
+    font-weight: 100 700;
+    font-display: swap;
+    src: url('../fonts/ui/ibm-plex-sans-latin-ext-variable.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    font-style: normal;
+    font-weight: 100 700;
+    font-display: swap;
+    src: url('../fonts/ui/ibm-plex-sans-latin-variable.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/ui/ibm-plex-mono-latin-ext-400.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/ui/ibm-plex-mono-latin-400.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body{margin:0;background:#d9d4c8;}
+/* A typographic document, shared by the in-game reader and the printed PDF. */
+.db-document { --db-ink:#29352d; --db-muted:#746d5b; --db-gold:#a18551; --db-paper:#f5f1e7; color:var(--db-ink); font-family:"Cormorant Garamond",Georgia,serif; font-size:18px; line-height:1.4; }
+.db-document *, .db-document *::before, .db-document *::after { box-sizing:border-box; }
+.db-page { position:relative; display:flex; flex-direction:column; width:210mm; max-width:100%; min-height:297mm; margin:0 auto 28px; padding:53px 62px 35px; background:var(--db-paper); box-shadow:0 12px 48px #0005; }
+.db-page::before { content:""; position:absolute; inset:17px; border:1px solid #a1855140; pointer-events:none; }
+.db-document p { margin:0 0 15px; }
+.db-document h2, .db-document h3 { font-family:inherit; color:var(--db-ink); font-weight:500; letter-spacing:-.02em; }
+.db-document h3 { font-size:23px; line-height:1.12; margin:0 0 9px; }
+.db-eyebrow, .db-small-label, .db-page-footer, .db-cover-subtitle, .db-skills, .db-count-table thead, .db-certificate-record span { font-family:"IBM Plex Sans",Arial,sans-serif; font-size:10px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; line-height:1.55; }
+.db-document .db-eyebrow { color:var(--db-muted); margin-bottom:13px; }
+.db-section-header { border-bottom:1px solid #a1855159; padding-bottom:20px; margin-bottom:22px; }
+.db-section-header h2 { font-size:47px; line-height:.99; margin:0; max-width:590px; }
+.db-document .db-intro { font-size:21px; line-height:1.35; margin-bottom:21px; }
+.db-page-footer { display:flex; justify-content:space-between; gap:12px; color:var(--db-muted); border-top:1px solid #a1855159; padding-top:12px; margin-top:auto; }
+.db-certificate { text-align:center; }
+.db-cover-heading { padding:8px 0 17px; border-bottom:1px solid #a1855159; }
+.db-document .db-book-name { font-size:50px; line-height:1; margin:0 0 12px; letter-spacing:-.035em; }
+.db-document .db-cover-subtitle { color:var(--db-muted); margin:0; }
+.db-cover-centre { padding-top:36px; }
+.db-edition { display:grid; place-items:center; width:59px; height:59px; margin:0 auto 21px; border:1px solid var(--db-gold); border-radius:50%; color:var(--db-gold); font-size:29px; }
+.db-document .db-award-name { font-size:25px; font-style:italic; color:#776342; margin-bottom:0; }
+.db-document .db-fibonacci-title { font-size:104px; font-weight:500; letter-spacing:-.055em; line-height:1; margin:2px 0 5px; }
+.db-document .db-cover-theme { font-size:24px; margin:0 0 18px; color:var(--db-muted); }
+.db-spiral { display:block; width:100%; overflow:visible; }
+.db-spiral rect { stroke:#9a855e; stroke-width:.65; vector-effect:non-scaling-stroke; fill:#ded6bf2b; }
+.db-spiral .db-square-1,.db-spiral .db-square-3,.db-spiral .db-square-5 { fill:#7a8b7712; }
+.db-spiral path { stroke:#8d6c35; stroke-width:1.7; vector-effect:non-scaling-stroke; fill:none; }
+.db-spiral text { fill:#606c56; font-family:"Cormorant Garamond",Georgia,serif; text-anchor:middle; }
+.db-spiral-cover { width:290px; max-width:80%; margin:0 auto 22px; }
+.db-document .db-certificate-statement { max-width:470px; margin:0 auto 19px; font-size:21px; line-height:1.35; }
+.db-skills { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:15px; color:var(--db-muted); }
+.db-skills i { font-style:normal; color:var(--db-gold); }
+.db-certificate-record { display:grid; grid-template-columns:1fr 1fr; gap:25px; border-top:1px solid #a1855159; margin-top:33px; padding-top:17px; }
+.db-certificate-record div { display:flex; flex-direction:column; gap:5px; }
+.db-certificate-record span { color:var(--db-muted); }
+.db-certificate-record strong { font-size:19px; font-weight:500; }
+.db-document .db-cover-note { color:var(--db-muted); font-style:italic; font-size:17px; max-width:440px; margin:24px auto; }
+.db-observed-sequence { display:grid; grid-template-columns:repeat(5,1fr); margin:4px 0 20px; padding:13px 0 16px; border-top:1px solid #a1855140; border-bottom:1px solid #a1855140; }
+.db-observed-sequence div { text-align:center; border-right:1px solid #a1855138; }
+.db-observed-sequence div:last-child { border:0; }
+.db-observed-sequence span { display:block; color:var(--db-muted); font:10px "IBM Plex Mono",monospace; }
+.db-observed-sequence strong { font-size:51px; font-weight:500; line-height:1.1; }
+.db-count-table { width:100%; border-collapse:collapse; font-size:18px; margin:0 0 23px; }
+.db-count-table th,.db-count-table td { text-align:center; padding:5px 9px; border-bottom:1px solid #a185512b; }
+.db-count-table tbody th { color:var(--db-muted); font-weight:400; }
+.db-count-table td:nth-child(2) { font-weight:600; color:#53664e; }
+.db-count-table thead th { font-weight:500; color:var(--db-muted); padding:0 6px 8px; }
+.db-solve-steps { list-style:none; display:grid; gap:13px; padding:0; margin:0 0 22px; }
+.db-solve-steps li { display:grid; grid-template-columns:30px 1fr; gap:10px; }
+.db-step-number { font:11px "IBM Plex Mono",monospace; color:var(--db-gold); padding-top:4px; }
+.db-solve-steps h3 { font-size:21px; margin-bottom:2px; }
+.db-solve-steps p { margin:0; font-size:17px; }
+.db-note { border-left:2px solid #a1855180; padding:5px 0 5px 16px; margin:0 0 19px; }
+.db-note h3 { font-size:22px; margin-bottom:5px; }
+.db-note p { font-size:17px; margin:0; }
+.db-document .db-takeaway { font-size:20px; font-style:italic; color:#5f6b55; }
+.db-equation { font-size:45px; line-height:1.15; text-align:center; padding:19px 0; margin-bottom:19px; color:#53664e; border-block:1px solid #a1855140; }
+.db-document .db-small-label { color:var(--db-muted); margin:22px 0 6px; }
+.db-document .db-number-line { font-size:23px; margin:0 0 18px; word-spacing:3px; }
+.db-additions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding-bottom:23px; margin-bottom:23px; border-bottom:1px solid #a1855140; font-size:21px; }
+.db-additions b { color:#53664e; font-weight:600; }
+.db-two-columns { display:grid; grid-template-columns:1fr 1fr; gap:27px; margin:0 0 21px; }
+.db-two-columns p { font-size:17px; margin-bottom:12px; }
+.db-document pre { white-space:pre-wrap; overflow-wrap:anywhere; border-block:1px solid #a1855140; padding:14px 0; margin:15px 0 10px; color:#53664e; font:12px/1.7 "IBM Plex Mono",monospace; }
+.db-document .db-caption, .db-document figcaption { color:var(--db-muted); font-size:14px; line-height:1.38; }
+.db-pattern { margin:0 0 13px; }
+.db-pattern .db-spiral { width:390px; max-width:100%; margin:0 auto 9px; height:205px; }
+.db-pattern figcaption { text-align:center; }
+.db-visual-page .db-two-columns { margin-top:19px; margin-bottom:13px; }
+.db-document .db-ratios { font:12px/1.6 "IBM Plex Mono",monospace; color:#53664e; }
+.db-practice { border-top:1px solid #a1855140; padding-top:14px; margin-bottom:14px; }
+.db-practice h3 { font-size:23px; }
+.db-practice p { font-size:16px; margin:0 0 8px; }
+.db-practice strong { font-weight:600; }
+.db-sources { margin:0 0 18px; }
+.db-sources h3 { font-size:18px; margin-bottom:5px; }
+.db-sources ol { margin:0; padding-left:16px; }
+.db-sources li { font:10px/1.7 "IBM Plex Sans",Arial,sans-serif; }
+.db-document a { color:#716039; text-decoration-thickness:1px; text-underline-offset:2px; }
+.db-reference { font:9px "IBM Plex Sans",Arial,sans-serif; vertical-align:super; white-space:nowrap; }
+.db-document :focus-visible { outline:2px solid #8d6c35; outline-offset:3px; }
+@page { size:A4; margin:0; }
+@media print {
+  html,body { margin:0; padding:0; background:white; }
+  .db-document { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .db-page { width:210mm; max-width:none; height:297mm; min-height:0; margin:0; box-shadow:none; break-after:page; }
+  .db-page:last-child { break-after:auto; }
+}
+</style></head><body><article class="db-document" lang="ru">
+    <section class="db-page db-certificate" data-db-page="0" aria-label="Аттестат">
+      <div class="db-cover-heading"><p class="db-eyebrow">ASHCOMBE MANOR · Глава 01</p><h2 class="db-book-name">Decoder's Book</h2><p class="db-cover-subtitle">Аттестат расшифровки</p></div>
+      <div class="db-cover-centre"><div class="db-edition">01</div><p class="db-award-name">Хранитель закономерностей</p><h3 class="db-fibonacci-title">Fibonacci</h3><p class="db-cover-theme">Скрытый порядок роста</p>
+      <svg class="db-spiral db-spiral-cover" viewBox="-3.3 -2.3 13.6 8.6" role="img" aria-label="Квадраты со сторонами 1, 1, 2, 3, 5 и 8, расположенные рядом.">
+    <rect x="0" y="0" width="1" height="1" class="db-square db-square-0"/><rect x="1" y="0" width="1" height="1" class="db-square db-square-1"/><rect x="0" y="-2" width="2" height="2" class="db-square db-square-2"/><rect x="-3" y="-2" width="3" height="3" class="db-square db-square-3"/><rect x="-3" y="1" width="5" height="5" class="db-square db-square-4"/><rect x="2" y="-2" width="8" height="8" class="db-square db-square-5"/>
+    <path d="M 0 0 A 1 1 0 0 0 1 1 A 1 1 0 0 0 2 0 A 2 2 0 0 0 0 -2 A 3 3 0 0 0 -3 1 A 5 5 0 0 0 2 6 A 8 8 0 0 0 10 -2"/>
+  </svg>
+      <p class="db-certificate-statement">За распознавание последовательности Фибоначчи в росте растения и расшифровку идеи, спрятанной в саду.</p>
+      <div class="db-skills"><span>Наблюдение</span><i aria-hidden="true">·</i><span>Подсчёт</span><i aria-hidden="true">·</i><span>Рассуждение</span></div></div>
+      <div class="db-certificate-record"><div><span>Головоломка решена</span><strong>Лунный сад</strong></div><div><span>Принятый ответ</span><strong>FIBO / FIBONACCI</strong></div></div>
+      <p class="db-cover-note">Глава, полученная за решение головоломки. Идея, которую можно взять с собой.</p><footer class="db-page-footer"><span>Decoder's Book · Fibonacci</span><span>01 / 01</span></footer>
+    </section>
+    <section class="db-page" data-db-page="1" aria-label="Ваше решение">
+      <header class="db-section-header"><p class="db-eyebrow">От наблюдения к ответу</p><h2>Что скрывало растение</h2></header>
+      <p class="db-intro">Каждый полив добавляет ветку и новую группу листьев. Подсказка — число листьев, появившихся при этом поливе, а не общее число листьев растения.</p>
+      <div class="db-observed-sequence" aria-label="1, 1, 2, 3, 5"><div><span>01</span><strong>1</strong></div><div><span>02</span><strong>1</strong></div><div><span>03</span><strong>2</strong></div><div><span>04</span><strong>3</strong></div><div><span>05</span><strong>5</strong></div></div>
+      <table class="db-count-table"><thead><tr><th scope="col">Полив</th><th scope="col">Новые листья</th><th scope="col">Всего листьев</th></tr></thead><tbody><tr><th scope="row">1</th><td>1</td><td>1</td></tr><tr><th scope="row">2</th><td>1</td><td>2</td></tr><tr><th scope="row">3</th><td>2</td><td>4</td></tr><tr><th scope="row">4</th><td>3</td><td>7</td></tr><tr><th scope="row">5</th><td>5</td><td>12</td></tr></tbody></table>
+      <ol class="db-solve-steps"><li><span class="db-step-number">01</span><div><h3>Наблюдайте</h3><p>Полейте растение пять раз и следите за каждой новой группой листьев.</p></div></li><li><span class="db-step-number">02</span><div><h3>Считайте</h3><p>Запишите число новых листьев по порядку: 1, 1, 2, 3, 5.</p></div></li><li><span class="db-step-number">03</span><div><h3>Свяжите</h3><p>Начиная с третьего числа, каждое равно сумме двух предыдущих.</p></div></li><li><span class="db-step-number">04</span><div><h3>Расшифруйте</h3><p>Узнайте название закономерности и введите FIBO или FIBONACCI.</p></div></li></ol>
+      <aside class="db-note"><h3>Важное различие</h3><p>После пяти поливов всего 12 листьев: 1 + 1 + 2 + 3 + 5. Двенадцать — итог, а не следующий член последовательности. В следующей группе было бы 8 листьев.</p></aside>
+      <p class="db-takeaway">Вы превратили зрительное наблюдение в числовое правило, а затем правило — в название.</p><footer class="db-page-footer"><span>Decoder's Book · Fibonacci</span><span>01 / 02</span></footer>
+    </section>
+    <section class="db-page" data-db-page="2" aria-label="Правило и история">
+      <header class="db-section-header"><p class="db-eyebrow">Идея за головоломкой</p><h2>Из двух чисел рождается следующее</h2></header>
+      <p class="db-intro">Начните с двух значений и складывайте последние два.</p>
+      <div class="db-equation" aria-label="F n equals F n minus one plus F n minus two">Fₙ = Fₙ₋₁ + Fₙ₋₂</div>
+      <p>Обычное определение начинается с F₀ = 0 и F₁ = 1. При n ≥ 2: Fₙ = Fₙ₋₁ + Fₙ₋₂. В головоломке используются положительные члены, начиная с 1 и 1. <a class="db-reference" href="https://mathworld.wolfram.com/FibonacciNumber.html" target="_blank" rel="noopener noreferrer">[2]</a></p>
+      <p class="db-small-label">Первые члены</p><p class="db-number-line">0 · 1 · 1 · 2 · 3 · 5 · 8 · 13 · 21 · 34 · 55</p>
+      <div class="db-additions"><span>1 + 1 = <b>2</b></span><span>1 + 2 = <b>3</b></span><span>2 + 3 = <b>5</b></span><span>3 + 5 = <b>8</b></span></div>
+      <div class="db-two-columns"><div><h3>Кем был Фибоначчи?</h3><p>Леонардо Пизанский, известный как Фибоначчи, — средневековый математик, родившийся около 1170 года. В книге Liber abaci, завершённой в 1202 году, он объяснил вычисления с индо-арабскими цифрами. В ней есть идеализированная задача о размножении кроликов, связанная сегодня с последовательностью его имени. До него эту закономерность изучали и индийские математики. <a class="db-reference" href="https://library.ethz.ch/en/sammlungen-und-archive/platforms/virtual-exhibitions/fibonacci-un-ponte-sul-mediterraneo/biography-of-leonardo-of-pisa.html" target="_blank" rel="noopener noreferrer">[1]</a> <a class="db-reference" href="https://mathworld.wolfram.com/FibonacciNumber.html" target="_blank" rel="noopener noreferrer">[2]</a></p></div><div><h3>Как получить числа самостоятельно</h3><p>Помните только два числа. Запишите первое, затем замените пару вторым числом и их суммой. Повторяйте.</p><pre>a = 0, b = 1
+повторять:
+    записать a
+    a, b = b, a + b</pre><p class="db-caption">В последней строке оба значения обновляются с помощью старой пары.</p></div></div>
+      <aside class="db-note"><p>Два начальных значения — часть определения, поэтому в начале две единицы. Правило сложения действует после них.</p></aside><footer class="db-page-footer"><span>Decoder's Book · Fibonacci</span><span>01 / 03</span></footer>
+    </section>
+    <section class="db-page db-visual-page" data-db-page="3" aria-label="Как выглядит закономерность">
+      <header class="db-section-header"><p class="db-eyebrow">От чисел к форме</p><h2>Закономерность можно нарисовать</h2></header>
+      <figure class="db-pattern"><svg class="db-spiral " viewBox="-3.3 -2.3 13.6 8.6" role="img" aria-label="Квадраты со сторонами 1, 1, 2, 3, 5 и 8, расположенные рядом.">
+    <rect x="0" y="0" width="1" height="1" class="db-square db-square-0"/><text x="0.52" y="0.63" font-size="0.27">1</text><rect x="1" y="0" width="1" height="1" class="db-square db-square-1"/><text x="1.52" y="0.63" font-size="0.27">1</text><rect x="0" y="-2" width="2" height="2" class="db-square db-square-2"/><text x="1.04" y="-0.74" font-size="0.4">2</text><rect x="-3" y="-2" width="3" height="3" class="db-square db-square-3"/><text x="-1.44" y="-0.10999999999999988" font-size="0.6000000000000001">3</text><rect x="-3" y="1" width="5" height="5" class="db-square db-square-4"/><text x="-0.3999999999999999" y="4.15" font-size="1">5</text><rect x="2" y="-2" width="8" height="8" class="db-square db-square-5"/><text x="6.16" y="3.04" font-size="1.6">8</text>
+    <path d="M 0 0 A 1 1 0 0 0 1 1 A 1 1 0 0 0 2 0 A 2 2 0 0 0 0 -2 A 3 3 0 0 0 -3 1 A 5 5 0 0 0 2 6 A 8 8 0 0 0 10 -2"/>
+  </svg><figcaption>Квадраты со сторонами 1, 1, 2, 3, 5 и 8, расположенные рядом.</figcaption></figure>
+      <p class="db-caption">Дуги — четверти окружностей, по одной в каждом квадрате. Это приближённая спираль Фибоначчи; точная золотая спираль — логарифмическая кривая, а не цепочка круговых дуг. <a class="db-reference" href="https://mathworld.wolfram.com/GoldenSpiral.html" target="_blank" rel="noopener noreferrer">[3]</a></p>
+      <div class="db-two-columns"><div><h3>Связь с золотым сечением</h3><p>Отношения соседних членов стремятся к φ = (1 + √5) / 2 ≈ 1,618034. Первые отношения колеблются около него; не все они равны φ. <a class="db-reference" href="https://mathworld.wolfram.com/FibonacciNumber.html" target="_blank" rel="noopener noreferrer">[2]</a></p><p class="db-ratios">5/3 → 8/5 → 13/8 → 21/13</p></div><div><h3>Модель, а не правило для любого растения</h3><p>В головоломке группы листьев намеренно заданы как 1, 1, 2, 3, 5. Узнавание закономерности не доказывает, что любое растение растёт так или любая природная спираль является золотой.</p></div></div>
+      <section class="db-practice"><h3>Проверьте понимание</h3><p><strong>Что следует после 1, 1, 2, 3, 5?</strong><br>8, 13, 21. Каждый раз складывайте два последних значения.</p><p><strong>Если бы головоломка продолжилась шестым поливом?</strong><br>Появилось бы 8 новых листьев, а всего их стало бы 20.</p></section>
+      <div class="db-sources"><h3>Для дальнейшего чтения</h3><ol><li><a href="https://library.ethz.ch/en/sammlungen-und-archive/platforms/virtual-exhibitions/fibonacci-un-ponte-sul-mediterraneo/biography-of-leonardo-of-pisa.html" target="_blank" rel="noopener noreferrer">ETH Library · Leonardo of Pisa</a></li><li><a href="https://mathworld.wolfram.com/FibonacciNumber.html" target="_blank" rel="noopener noreferrer">Wolfram MathWorld · Fibonacci Number</a></li><li><a href="https://mathworld.wolfram.com/GoldenSpiral.html" target="_blank" rel="noopener noreferrer">Wolfram MathWorld · Golden Spiral</a></li></ol></div><footer class="db-page-footer"><span>Decoder's Book · Fibonacci</span><span>01 / 04</span></footer>
+    </section>
+  </article></body></html>

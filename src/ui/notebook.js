@@ -1,15 +1,19 @@
-// The player's notebook. A working page for each puzzle (and each place of the
-// house), written on and drawn on in pencil and kept by itself from one visit
-// to the next; and beside it the pages saved from it, newest first, each a
-// little paper tag with its name. Save keeps a copy of the page there; New
-// page starts an empty one there (and, left empty, it is not kept); a saved
-// page taken out is written on in place, and kept as it is written. Opened
-// with the Notebook button or N: it fades in on the right. Nothing is ever
-// written in it but what the player puts there.
+// The player's notebook, a spiral notebook open flat: a working page for each
+// puzzle (and each place of the house), its notes written on the left leaf
+// and its sketch drawn on the right, kept by itself from one visit to the
+// next; and the pages saved from it, index tabs out from its right edge —
+// first this puzzle's own page, then the saved ones newest first, then one to
+// start a new page. Save keeps a copy of the page there; New page starts an
+// empty one there (and, left empty, it is not kept); a saved page taken out
+// is written on in place, and kept as it is written. Its tools on a plaque
+// over its head: write, sketch, rub out, and a ruler for straight lines.
+// Opened with the Notebook button or N: it fades in in the middle of the
+// game. Nothing is ever written in it but what the player puts there.
 
 import { mountNotebookPencil } from "./notebookPencil.js";
+import { mountDrawingSound } from './drawingSound.js';
 
-const PAGE = { w: 640, h: 300 }; // the sketch's own size, in its pixels
+const PAGE = { w: 560, h: 720 }; // the sketch's own size, in its pixels (the right leaf, upright)
 // the pencil's three widths (and the rubber's, with each), its three colours
 const SIZES = [2, 4, 8], RUBBERS = [10, 18, 32];
 const COLOURS = ["rgba(36,33,28,0.92)", "rgba(30,78,170,0.92)", "rgba(178,38,30,0.92)"];
@@ -24,8 +28,8 @@ const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(
 // what the notebook says, in the player's language (English without one)
 const ENGLISH = {
   noRoom: "The browser has no more room — this is kept until the page is closed.",
-  emptySaved: "Nothing saved yet.",
   pageNumbered: "Page {n}",
+  workingTip: "This puzzle’s own page",
   noteName: "The note’s name",
   noteNameFor: "A name for this note ({page})",
   deleteNote: "Delete this note",
@@ -35,7 +39,7 @@ const ENGLISH = {
   noteThrown: "“{name}” was thrown away.",
 };
 
-export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) {
+export function mountNotebook(scope, { game, audio, levels, dialogs, storage, i18n = null }) {
   const $ = (id) => document.getElementById(id);
   const say_ = (key, params = {}) => i18n
     ? i18n.t(`notebook.${key}`, params)
@@ -47,11 +51,13 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
   const shelf = modal?.querySelector(".notebook-shelf"), noteList = $("notebook-notes"), savedCount = $("notebook-saved-count");
   const newPage = $("notebook-new-page");
   const back = $("notebook-back"), noteTitle = $("notebook-note-title"), saveButton = $("notebook-save");
+  const write = $("notebook-write");
   const deleteNote = $("notebook-delete-note"), status = $("notebook-status");
   if (!modal || !text || !sketch || !noteList) return { open() {}, get isOpen() { return false; } };
   sketch.width = PAGE.w;
   sketch.height = PAGE.h;
   const ctx = sketch.getContext("2d");
+  const drawingSound = mountDrawingSound(scope, { game, audio });
   // on an empty drawing sheet, a pencil that scribbles across it and is gone
   const pencil = mountNotebookPencil(sketch.parentElement);
   let pencilAt = null;
@@ -121,6 +127,8 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
   // A new page left as it was made (nothing written, nothing drawn, its name
   // as it was given) is not kept: leaving it takes it away again.
   function leave() {
+    lift();
+    drawingSound.stop(true);
     save();
     const n = note();
     if (!n || !page.fresh || n.text.trim() || n.sketch || n.title !== page.fresh) return;
@@ -148,6 +156,8 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
 
   // ── the page ──
   function paint(content) {
+    lift();
+    drawingSound.stop(true);
     text.value = content?.text ?? "";
     ctx.clearRect(0, 0, PAGE.w, PAGE.h);
     page.drawn = false;
@@ -155,7 +165,9 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
       const img = new Image(), shown = page;
       img.onload = () => {
         if (page !== shown) return;
-        ctx.drawImage(img, 0, 0);
+        // (drawn on an older, wider sheet: laid at its head, as large as fits)
+        const k = Math.min(1, PAGE.w / img.width, PAGE.h / img.height);
+        ctx.drawImage(img, 0, 0, img.width * k, img.height * k);
         page.drawn = true;
       };
       img.src = content.sketch;
@@ -186,14 +198,9 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
 
   // ── the saved pages ──
   function render() {
-    // newest first, each a tag with its name on it
-    const items = [...saved].sort((a, b) => b.at - a.at).map(slip);
-    if (!items.length) {
-      const li = document.createElement("li");
-      li.className = "shelf-empty";
-      li.textContent = say_("emptySaved");
-      items.push(li);
-    }
+    // the tabs: this puzzle's own page, then the saved ones newest first,
+    // each with its name on it
+    const items = [workingTab(), ...[...saved].sort((a, b) => b.at - a.at).map(slip)];
     noteList.replaceChildren(...items);
     savedCount.textContent = saved.length ? String(saved.length) : "";
     // the page's own bar and the way to put it away
@@ -221,6 +228,23 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
     li.append(b);
     return li;
   }
+  function workingTab() {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "shelf-note is-working";
+    b.classList.toggle("open", page?.kind !== "note");
+    b.dataset.tip = say_("workingTip");
+    const name = document.createElement("span");
+    name.className = "note-name";
+    name.textContent = working().name;
+    b.append(name);
+    b.addEventListener("click", () => { if (page?.kind === "note") openWorking(); });
+    li.append(b);
+    return li;
+  }
+  // (the tab just made: the newest saved, after this puzzle's own)
+  const newest = () => noteList.querySelector(".shelf-note:not(.is-working)");
 
   // a button pressed twice to be sure
   function armed(button, ask) {
@@ -252,7 +276,7 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
     render();
     if (kept) say(say_("kept"));
     if (shelf) shelf.scrollTop = 0;
-    noteList.querySelector(".shelf-note")?.classList.add("just-kept");
+    newest()?.classList.add("just-kept");
   });
   scope.on(newPage, "click", () => {
     leave(); // (first, so a new page left empty before does not count in its number)
@@ -262,7 +286,7 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
     openNote(n);
     page.fresh = n.title; // (its name as given: left so, and empty, it goes)
     if (shelf) shelf.scrollTop = 0;
-    noteList.querySelector(".shelf-note")?.classList.add("just-kept");
+    newest()?.classList.add("just-kept");
   });
   scope.on(deleteNote, "click", () => {
     const n = note();
@@ -295,18 +319,12 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
     const box = sketch.getBoundingClientRect();
     return { x: ((e.clientX - box.left) / box.width) * PAGE.w, y: ((e.clientY - box.top) / box.height) * PAGE.h };
   };
-  scope.on(sketch, "pointerdown", (e) => {
-    quiet();
-    sketch.setPointerCapture(e.pointerId);
-    drawing = pos(e);
-  });
-  scope.on(sketch, "pointermove", (e) => {
-    if (!drawing) return;
-    const p = pos(e);
+  // a stroke of the pencil (or the rubber) from a to b
+  const stroke = (a, b, rubber) => {
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    if (tool === "eraser") {
+    if (rubber) {
       ctx.globalCompositeOperation = "destination-out";
       ctx.lineWidth = RUBBERS[pen.size];
     } else {
@@ -314,27 +332,75 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
       ctx.lineWidth = SIZES[pen.size];
     }
     ctx.beginPath();
-    ctx.moveTo(drawing.x, drawing.y);
-    ctx.lineTo(p.x, p.y);
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
     ctx.stroke();
     ctx.restore();
+  };
+  // (the ruler: the sheet as it was when it was laid down, the line drawn
+  //  fresh along it each move, from where it was laid to where it is now)
+  let ruled = null, drawingPointer = null;
+  scope.on(sketch, "pointerdown", (e) => {
+    if (e.button !== 0 || e.isPrimary === false || drawingPointer !== null) return;
+    quiet();
+    drawingSound.begin();
+    sketch.setPointerCapture(e.pointerId);
+    drawingPointer = e.pointerId;
+    drawing = pos(e);
+    ruled = tool === "ruler" ? { from: drawing, sheet: ctx.getImageData(0, 0, PAGE.w, PAGE.h) } : null;
+  });
+  scope.on(sketch, "pointermove", (e) => {
+    if (!drawing || e.pointerId !== drawingPointer) return;
+    if (e.pointerType === 'mouse' && !(e.buttons & 1)) { lift(); return; }
+    const p = pos(e);
+    // Pressure/hover events at the same coordinates are not a pencil stroke.
+    if (p.x === drawing.x && p.y === drawing.y) return;
+    if (ruled) {
+      ctx.putImageData(ruled.sheet, 0, 0);
+      stroke(ruled.from, p, false);
+    } else {
+      stroke(drawing, p, tool === "eraser");
+    }
     drawing = p;
     page.drawn = true;
+    if (tool !== 'eraser' && p.x >= 0 && p.x <= PAGE.w && p.y >= 0 && p.y <= PAGE.h) drawingSound.move();
+    else drawingSound.stop();
   });
-  const lift = () => {
+  function lift() {
+    drawingSound.end();
+    ruled = null;
     if (drawing) {
       drawing = null;
       saveSoon();
     }
-  };
-  scope.on(sketch, "pointerup", lift);
-  scope.on(sketch, "pointercancel", lift);
+    const pointer = drawingPointer; drawingPointer = null;
+    if (pointer !== null && sketch.hasPointerCapture(pointer)) sketch.releasePointerCapture(pointer);
+  }
+  const liftPointer = event => { if (event.pointerId === drawingPointer) lift(); };
+  scope.on(sketch, "pointerup", liftPointer);
+  scope.on(sketch, "pointercancel", liftPointer);
+  scope.on(sketch, "lostpointercapture", liftPointer);
+  scope.on(window, "pointerup", liftPointer);
+  scope.on(window, "blur", () => { lift(); drawingSound.stop(true); });
+  scope.on(document, "visibilitychange", () => { if (document.hidden) { lift(); drawingSound.stop(true); } });
+  const visibility = new MutationObserver(() => {
+    if (modal.classList.contains('hidden') || modal.hidden) { lift(); drawingSound.stop(true); }
+  });
+  visibility.observe(modal, { attributes: true, attributeFilter: ['class', 'hidden'] });
+  scope.add(() => { visibility.disconnect(); lift(); drawingSound.stop(true); });
   const useTool = (name) => {
+    lift();
+    drawingSound.stop(true);
     tool = name;
     sketch.dataset.tool = tool;
     for (const b of tools) b.setAttribute("aria-pressed", String(b.dataset.notebookTool === name));
   };
   for (const button of tools) scope.on(button, "click", () => useTool(button.dataset.notebookTool));
+  // write: the pen to the left leaf, at the end of what is written there
+  if (write) scope.on(write, "click", () => {
+    text.focus();
+    text.setSelectionRange(text.value.length, text.value.length);
+  });
   // a width, or a colour: kept for next time; a colour takes the pencil up again
   const showPen = () => {
     sizes.forEach((b, i) => b.setAttribute("aria-pressed", String(i === pen.size)));
@@ -351,6 +417,8 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
   colours.forEach((b, i) => scope.on(b, "click", () => choose({ colour: i }, true)));
   showPen();
   scope.on($("notebook-clear"), "click", () => {
+    lift();
+    drawingSound.stop(true);
     ctx.clearRect(0, 0, PAGE.w, PAGE.h);
     page.drawn = false;
     saveSoon();
@@ -365,6 +433,7 @@ export function mountNotebook(scope, { levels, dialogs, storage, i18n = null }) 
   return {
     get isOpen() { return !modal.classList.contains("hidden"); },
     open(trigger) {
+      void drawingSound.prepare();
       leave(); // (put away by Esc last time, maybe, a new page and empty)
       page = null;
       status.classList.remove("shown");

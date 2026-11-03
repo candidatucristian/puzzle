@@ -5,6 +5,7 @@ import { AudioManager } from './core/AudioManager.js';
 import { LevelManager } from './core/LevelManager.js';
 import { ComfortPreferences } from './core/ComfortPreferences.js';
 import { HintStore } from './core/HintStore.js';
+import { AchievementStore } from './core/AchievementStore.js';
 import { I18n } from './core/i18n.js';
 import { LEVEL_DEFINITIONS } from './levels/registry.js';
 import { LEGACY_LEVEL_IDS } from './levels/metadata.js';
@@ -12,6 +13,7 @@ import { gameConfig } from './core/config.js';
 import { mountUI } from './ui/controls.js';
 
 export let game, ui, services;
+let stopAchievementAwards;
 export function start(loading) {
   if (game) return game;
   const storage = new SafeStorage();
@@ -19,14 +21,17 @@ export function start(loading) {
   const progress = new ProgressStore(storage, LEVEL_DEFINITIONS, {legacyLevelIds:LEGACY_LEVEL_IDS});
   const audio = new AudioManager(storage);
   const levels = new LevelManager(LEVEL_DEFINITIONS, progress);
+  const achievements = new AchievementStore(storage);
+  stopAchievementAwards = levels.onSolved(id => achievements.award(id));
   const preferences = new ComfortPreferences(storage, matchMedia('(prefers-reduced-motion: reduce)').matches);
   const hints = new HintStore(storage, LEVEL_DEFINITIONS);
-  services = { storage, i18n, progress, audio, levels, loading, preferences, hints };
+  services = { storage, i18n, progress, audio, levels, loading, preferences, hints, achievements };
   game = new Phaser.Game(gameConfig(services, LEVEL_DEFINITIONS));
   ui = mountUI(game, services);
   return game;
 }
 export function dispose() {
+  stopAchievementAwards?.(); stopAchievementAwards = null;
   ui?.dispose(); game?.destroy(true); services?.audio.destroy(); services?.loading.dispose();
   game = null; ui = null; services = null;
 }

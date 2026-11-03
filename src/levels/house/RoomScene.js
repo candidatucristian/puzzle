@@ -125,7 +125,7 @@ export default class RoomScene extends BasePuzzleScene {
         }
         go();
       });
-      if (!solved) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => now().box }));
+      if (!solved) this._sparkles.push(this.attachInteractionCue(zone, now));
     }
 
     if (L.chest) this._setChest(L, k);
@@ -155,6 +155,12 @@ export default class RoomScene extends BasePuzzleScene {
         ease: "Sine.easeInOut",
       });
     }
+  }
+
+  attachInteractionCue(zone, current) {
+    return attachMovableSparkles(this, zone, {
+      padding: 3, bounds: () => current().box, ...this.interactionCue?.(),
+    });
   }
 
   _setChest(L, k) {

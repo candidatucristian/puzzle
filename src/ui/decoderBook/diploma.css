@@ -1,0 +1,21 @@
+.decoder-diploma { position:relative; width:100%; aspect-ratio:760/538; isolation:isolate; }
+.decoder-stock { position:absolute; width:100%; height:100%; inset:0; object-fit:fill; pointer-events:none; user-select:none; filter:drop-shadow(0 14px 25px #0008); }
+.decoder-ink-mount { position:absolute; inset:0 auto auto 0; width:760px; height:538px; transform-origin:0 0; pointer-events:none; mix-blend-mode:multiply; }
+.decoder-ink { position:relative; width:760px; height:538px; color:#342b22; text-align:center; font-family:"Cormorant Garamond",Georgia,serif; }
+.decoder-ink p,.decoder-ink h3 { position:absolute; margin:0; left:60px; right:60px; font-weight:400; }
+.decoder-ink .di-brand { top:43px; font-size:25px; letter-spacing:-.6px; }
+.decoder-ink .di-archive { top:78px; font:8px/1.4 "IBM Plex Sans",Arial,sans-serif; letter-spacing:2.7px; color:#6b5234; }
+.decoder-ink .di-certificate { top:111px; font-size:17px; font-style:italic; }
+.decoder-ink .di-title { top:131px; font:500 67px/1 "Cormorant Garamond",Georgia,serif; letter-spacing:-2px; color:#33271c; }
+.decoder-ink .di-award { top:205px; font-size:22px; }
+.decoder-ink .di-presented { top:251px; font:9px/1.4 "IBM Plex Sans",Arial,sans-serif; letter-spacing:1.7px; text-transform:uppercase; color:#77614a; }
+.decoder-ink .di-name { top:273px; left:72px; right:72px; line-height:1.2; white-space:nowrap; }
+.decoder-ink .di-placeholder { opacity:.45; font-style:italic; }
+.decoder-ink .di-recognition { top:332px; left:135px; right:135px; font-size:17px; line-height:1.35; }
+.decoder-ink .di-qualities { top:391px; left:55px; right:55px; font:7px/1.5 "IBM Plex Sans",Arial,sans-serif; letter-spacing:1.1px; color:#6b5234; }
+.di-date,.di-reference { position:absolute; left:65px; max-width:500px; text-align:left; }
+.di-date { top:437px; }
+.di-reference { top:475px; }
+.di-date span,.di-reference span { display:block; font:7px/1.5 "IBM Plex Sans",Arial,sans-serif; letter-spacing:1.1px; text-transform:uppercase; color:#77614a; }
+.di-date strong { display:block; margin-top:2px; font:13px/1.3 "Cormorant Garamond",Georgia,serif; }
+.di-reference strong { display:block; margin-top:3px; font:8px/1.3 "IBM Plex Mono",monospace; letter-spacing:1px; }

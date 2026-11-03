@@ -48,7 +48,9 @@ export function mountAudioControls(audio, scope, i18n = null) {
     scope.on(icon, 'keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); icon.click(); } });
   }
   const click = e => {
-    if (e.target.closest('#game-container')) return;
+    // Keep the notebook quiet, including tabs replaced by their click handler.
+    const inNotebook = e.composedPath().some(node => node.id === 'notebook-modal' || node.id === 'btn-notebook');
+    if (inNotebook || e.target.closest('#game-container')) return;
     if (e.target.closest('#btn-options, #options-modal, #btn-submit')) audio.playUIClick();
     else audio.playClick();
   };

@@ -13,7 +13,7 @@ import COFFER from './nativeCoffer.json';
 // The coffer's states come from its own light-calibrated Cycles renders.
 const ROOMS = {
   Study: { folder: "Room1", version: 8 },
-  Room2: { folder: "Room2", version: 2 },
+  Room2: { folder: "Room2", version: 5 },
   Room3: { folder: "Room3", version: 3 },
   Room4: { folder: "Room4", version: 3, extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
   Room5: { folder: "Room5", version: 5 },

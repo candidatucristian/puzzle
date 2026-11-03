@@ -38,6 +38,13 @@ uses an HTMLAudioElement connected to the game's audio output. The MP4
 extension is a container name only: no video is shown or used for motion.
 Mute, master volume, SFX volume and scene cleanup apply to this sound.
 
+The hall wax fracture now uses the supplied `public/assets/sounds/sigilbreak.mp3`.
+It is decoded before opening; leading silence/encoder padding is skipped, and
+the `crack` cue from the same Blender animation clock triggers the buffer.
+It plays at the game's SFX/master settings and stops when the presentation is
+disposed. The optional full-opening recording above does not suppress this
+dedicated fracture cue.
+
 Rebuild:
 
 ```powershell

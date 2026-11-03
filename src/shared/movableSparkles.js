@@ -16,6 +16,9 @@ export function attachMovableSparkles(scene, target, {
   bounds = () => target.getBounds(),
   enabled = () => true,
   padding = 4,
+  strength = 1,
+  drifting = true,
+  anchorCount = 3,
 } = {}) {
   const graphics = scene.add.graphics()
     .setDepth(1000)
@@ -46,12 +49,12 @@ export function attachMovableSparkles(scene, target, {
       [box.x + box.width + padding, box.y + box.height * 0.42],
       [box.x + box.width * 0.72, box.y - padding],
     ];
-    anchors.forEach(([x, y], index) => {
+    anchors.slice(0, anchorCount).forEach(([x, y], index) => {
       const pulse = reducedMotion ? 0.18 : 0.18 + 0.38 * Math.max(0, Math.sin(time / 380 + index * 2.1));
-      star(graphics, x, y, 2.2 + pulse * 2.1, pulse);
+      star(graphics, x, y, 2.2 + pulse * 2.1, pulse * strength);
     });
 
-    if (reducedMotion) {
+    if (reducedMotion || !drifting) {
       for (const particle of particles) particle.age = particle.life;
       return;
     }
@@ -75,7 +78,7 @@ export function attachMovableSparkles(scene, target, {
       const progress = particle.age / particle.life;
       const alpha = Math.sin(progress * Math.PI) * 0.78;
       star(graphics, particle.x + particle.dx * progress, particle.y - particle.rise * progress,
-        particle.size * (1 - progress * 0.35), alpha);
+        particle.size * (1 - progress * 0.35), alpha * strength);
     }
   }
 

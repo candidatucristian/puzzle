@@ -4,12 +4,15 @@
    not edit. */
 :root {
   --file-art: url('/assets/images/InspectorDesk/v2/casefile.webp');
-  --file-ratio: 2880 / 1620;
-  --file-index-x: 30.972%; --file-index-y: 50.605%; --file-index-w: 25.502%; --file-index-h: 63.105%; --file-index-turn: 1.802deg;
-  --file-reader-x: 60.719%; --file-reader-y: 51.401%; --file-reader-w: 25.749%; --file-reader-h: 64.447%; --file-reader-turn: 1.252deg;
+  --file-ratio: 2400 / 1754;
+  --file-index-x: 25.696%; --file-index-y: 55.764%; --file-index-w: 39.229%; --file-index-h: 74.737%; --file-index-turn: 1.199deg;
+  --file-reader-x: 74.271%; --file-reader-y: 56.471%; --file-reader-w: 39.615%; --file-reader-h: 76.299%; --file-reader-turn: 0.645deg;
   --book-art: url('/assets/images/InspectorDesk/v2/notebook.webp');
-  --book-ratio: 1600 / 2065;
-  --book-leaf-x: 46.850%; --book-leaf-y: 54.504%; --book-leaf-w: 81.389%; --book-leaf-h: 66.670%; --book-leaf-turn: -0.801deg;
+  --book-ratio: 2000 / 1407;
+  --book-left-x: 28.150%; --book-left-y: 54.662%; --book-left-w: 33.730%; --book-left-h: 70.505%; --book-left-turn: 0deg;
+  --book-right-x: 71.850%; --book-right-y: 54.662%; --book-right-w: 33.730%; --book-right-h: 70.505%; --book-right-turn: 0deg;
+  --book-bar-x: 50.000%; --book-bar-y: 7.285%; --book-bar-w: 30.920%; --book-bar-h: 7.761%; --book-bar-turn: 0deg;
+  --book-tabs-x: 95.800%; --book-tabs-y: 54.662%; --book-tabs-w: 6.300%; --book-tabs-h: 71.997%; --book-tabs-turn: 0deg;
   --set-art: url('/assets/images/InspectorDesk/v2/settings.webp');
   --set-ratio: 2880 / 1620;
   --set-form-x: 44.427%; --set-form-y: 54.444%; --set-form-w: 25.624%; --set-form-h: 51.554%; --set-form-turn: -1.196deg;

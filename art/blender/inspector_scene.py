@@ -1,20 +1,22 @@
-# The Inspector's Desk, photographed from straight above under his lamp: a
-# whole desk, edge to edge of the screen, for each of the things the player
-# opens (inspector_desk_publish.mjs takes them into the game; the words and
-# controls are laid over their paper by ui/styles/inspector-desk.css).
+# The Inspector's things, photographed from straight above under his lamp
+# (inspector_desk_publish.mjs takes them in; the words and controls are laid
+# over their paper by ui/styles/inspector-desk.css). The case file and the
+# notebook alone, their own shadows kept on a transparent ground, to be laid
+# over the game, bound in the same leather (--cover black|green|oxblood, black
+# by default); the settings his whole desk, edge to edge of the screen.
 #
-#   casefile  the Ashcombe file, opened flat on the old oak desk: a ribbed
-#             manila folder, its red string tie undone; on its left the
-#             minute sheet (the index), a police photograph of the hall out
-#             from under it; on its right the letters under a brass fastener
-#             and a clip. About it his things: tea gone cold in its cup, his
-#             pocket watch, his lighter and cigarette case, his camera, his
-#             spectacles, his magnifying glass, a second photograph.
+#   casefile  the Ashcombe file, open: on its left board the minute sheet
+#             (the index), a police photograph of the hall out from under it;
+#             on its right the letters under a brass fastener and a clip, the
+#             file's number on a card in a brass frame over them.
+#   notebook  his spiral notebook open flat, notes on the left, sketches on the
+#             right, a brass-framed plaque over its head for its tools.
+#   settings  his form on his clipboard, on the old oak desk, his things about it.
 #
 # Beside each picture, <name>.json: for each sheet the page is laid on, its
 # centre, its size (fractions of the picture) and its turn.
 #
-#   blender -b --factory-startup -P art/blender/inspector_scene.py -- [--only casefile] [--samples 384] [--scale 1]
+#   blender -b --factory-startup -P art/blender/inspector_scene.py -- [--only casefile,notebook,settings] [--samples 384] [--name <file>]
 import bpy, bmesh, math, os, sys, json, random
 from mathutils import Vector, Matrix, Euler
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -60,117 +62,45 @@ def prop(mid, at, rot=0.0, width=None, height=None, only=None, tilt=(0.0, 0.0)):
 def child(o, parent):
     o.parent = parent; return o
 
-# ── the case file ──────────────────────────────────────────────────────────
-def build_casefile():
-    scene = fresh(); desk()
-    FW, FH = 0.234, 0.302
-    file = link(bpy.data.objects.new("the file", None)); file.location = (-0.034, -0.002, 0); file.rotation_euler = (0, 0, math.radians(-1.1))
-    manila = scanned("manila", "Paper004", size=0.21, tint=(0.96, 0.92, 0.7), bright=0.98, sat=0.68, rough=(0.72, 0.95), bump=0.45)
-    lip = 0.0012
-    # its two halves, each rising a hair from the fold, a little cockled
-    for side in (-1, 1):
-        o = sheet(f"folder {side}", FW, FH, manila, nx=36, ny=44, thick=0.0007,
-                  lift=lambda u, v, s=side: (u if s > 0 else 1 - u) * FW * 0.018 + 0.0007 * math.sin(v * 6.3 + s) * math.sin(u * 3.1))
-        child(o, file); o.location = (side * FW / 2, 0, 0.0007)
-    z_front = lambda x: 0.0007 + (-x) * 0.018 + lip      # the front half rises to its left
-    z_back = lambda x: 0.0007 + x * 0.018 + lip
-    # the tab on the back half, its typed label
-    tab = child(sheet("folder tab", 0.106, 0.022, manila, thick=0.0007), file); tab.location = (0.142, FH / 2 + 0.0105, z_back(0.142) - lip)
-    lab = child(sheet("tab label", 0.072, 0.0178, leaf("label paper", (0.8, 0.77, 0.68), image=PRINT("file-label")), thick=0.0001), file)
-    lab.location = (0.142, FH / 2 + 0.011, tab.location.z + 0.0006)
-    # the red string tie, undone: its washer on the back half, the string out over the desk
-    card = scanned("washer card", "Paper006", size=0.05, tint=(0.75, 0.6, 0.45), bright=0.9, rough=(0.7, 0.9))
-    bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.0105, depth=0.0008, location=(FW - 0.014, 0.0, z_back(FW - 0.014) + 0.0004))
-    w = bpy.context.active_object; w.name = "washer"; w.data.materials.append(card); child(w, file)
-    brass = aged_metal("brass", (0.74, 0.56, 0.28), (0.2, 0.13, 0.06), rough=(0.25, 0.5), tarnish=0.45)
-    rv = sphere("rivet", (FW - 0.014, 0.0, z_back(FW - 0.014) + 0.0011), 0.0022, brass, squash=(1, 1, 0.4)); child(rv, file)
-    red = dk.cloth("string", (0.32, 0.035, 0.03), rough=0.8, weave=4000)
-    wx, wz = FW - 0.014, z_back(FW - 0.014) + 0.0011
-    loop = [(wx + 0.0085 * math.cos(a), 0.0085 * math.sin(a), wz) for a in [i * math.pi / 6 for i in range(13)]]
-    tail = [(wx + 0.02, -0.006, wz - 0.0004), (FW + 0.012, -0.022, 0.0012), (FW + 0.04, -0.03, 0.0009), (FW + 0.062, -0.058, 0.0009), (FW + 0.058, -0.09, 0.0009), (FW + 0.075, -0.112, 0.0009)]
-    child(wire("string tie", loop + tail, 0.0007, red), file)
-    # ── the front: the minute sheet, a photograph out from under its head
-    minute = scanned("minute sheet", "Paper002", size=0.3, tint=(0.98, 0.94, 0.84), bright=0.95, sat=0.6, rough=(0.8, 0.96), bump=0.35, image=PRINT("minute-sheet"))
-    MW, MH = 0.204, 0.284
-    photo = child(sheet("photograph", 0.112, 0.0782, leaf("photo paper", (0.82, 0.8, 0.76), image=PRINT("photo"), foxing=0.02, rough=0.62), thick=0.0003), file)
-    photo.location = (-0.082, 0.147, z_front(-0.082) + 0.0002); photo.rotation_euler = (0, 0, math.radians(-6.5))
-    under = child(sheet("minute under", MW, MH, scanned("minute under", "Paper002", size=0.3, tint=(0.95, 0.92, 0.85), bright=1.0, sat=0.6), thick=0.00025), file)
-    under.location = (-FW / 2 + 0.0004, -0.0055, z_front(-FW / 2) + 0.0008); under.rotation_euler = (0, 0, math.radians(0.9))
-    ms = child(sheet("minute sheet", MW, MH, minute, nx=30, ny=40, lift=lambda u, v: 0.0016 * (1 - v) ** 3 * u, thick=0.00025), file)
-    ms.location = (-FW / 2 - 0.0012, -0.003, z_front(-FW / 2) + 0.0013); ms.rotation_euler = (0, 0, math.radians(-0.7))
-    steel = aged_metal("clip steel", (0.62, 0.62, 0.6), (0.22, 0.2, 0.18), rough=(0.3, 0.55), tarnish=0.35)
-    def paperclip(cx, cy, cz, turn=0.0):
-        pts = [(-0.004, -0.034), (-0.004, -0.004), (0, 0.002), (0.004, -0.004), (0.004, -0.028), (0.0008, -0.031), (-0.0018, -0.028), (-0.0018, -0.009)]
-        c, s = math.cos(turn), math.sin(turn)
-        return child(wire("paperclip", [(cx + x * c - y * s, cy + x * s + y * c, cz) for x, y in pts], 0.00062, steel), file)
-    paperclip(ms.location.x - 0.054, ms.location.y + MH / 2 + 0.006, z_front(ms.location.x - 0.054) + 0.0026, math.radians(-2))
-    # ── the back: the letters, the top one under a brass fastener and a clip
-    LW, LH = 0.206, 0.29
-    base = Vector((FW / 2 + 0.0028, -0.002, 0))
-    tints = [(0.88, 0.8, 0.64), (0.93, 0.87, 0.73), (0.86, 0.79, 0.64), (0.95, 0.9, 0.78)]
-    stack = []
-    for k, (dx, dy, rz) in enumerate([(0.0026, -0.0034, 1.2), (-0.0018, -0.0013, -0.8), (0.0009, 0.0011, 0.4), (0.0, 0.0, -0.15)]):
-        m = scanned(f"letter {k}", "Paper001", size=0.24, tint=tints[k], bright=0.84, sat=0.7, rough=(0.78, 0.95), bump=0.4)
-        o = child(sheet(f"letter {k}", LW, LH, m, nx=24, ny=32, lift=(lambda u, v: 0.0014 * (u ** 4) * (1 - v)) if k == 3 else None, thick=0.00022), file)
-        o.location = base + Vector((dx, dy, z_back(base.x + dx) + 0.0003 * k)); o.rotation_euler = (0, 0, math.radians(rz)); stack.append(o)
-    top = stack[-1]
-    fx, fy = top.location.x - LW / 2 + 0.013, top.location.y + LH / 2 - 0.015
-    child(sphere("paper fastener", (fx, fy, z_back(fx) + 0.0021), 0.0047, brass, squash=(1, 1, 0.32)), file)
-    paperclip(top.location.x + 0.046, top.location.y + LH / 2 + 0.006, z_back(top.location.x + 0.046) + 0.0024, math.radians(1.5))
-    # his pencil, across the foot of the file and off it
-    paint = plain("pencil paint", (0.022, 0.07, 0.04), rough=0.5, spec=0.35); woodp = plain("pencil wood", (0.6, 0.4, 0.22), rough=0.8)
-    lead = plain("graphite", (0.04, 0.04, 0.045), rough=0.35, metal=0.3); rubber = plain("rubber", (0.5, 0.26, 0.22), rough=0.9)
-    r, ang = 0.0036, math.radians(-14)
-    axis = Vector((math.cos(ang), math.sin(ang), 0)); foot = Vector((0.03, -0.19, r + 0.0008))
-    at = lambda s: foot + axis * s
-    p = rod("pencil", at(0.018), at(0.152), r, paint, verts=6); p.rotation_euler.rotate_axis("Z", math.radians(30))
-    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=r * 0.98, radius2=0.0009, depth=0.016, location=at(0.010))
-    cone = bpy.context.active_object; cone.rotation_euler = (-axis).to_track_quat("Z", "Y").to_euler(); cone.data.materials.append(woodp)
-    rod("ferrule", at(0.152), at(0.163), r * 1.03, brass, verts=32)
-    e = rod("rubber", at(0.163), at(0.170), r * 0.98, rubber, verts=32); bevel(e, 0.0012, 3)
-    # ── about it, his things
-    p2 = sheet("photograph 2", 0.112, 0.0782, leaf("photo paper 2", (0.82, 0.8, 0.76), image=PRINT("photo-study"), foxing=0.02, rough=0.62), thick=0.0003)
-    p2.location = (-0.322, -0.152, 0.0004); p2.rotation_euler = (0, 0, math.radians(14))
-    card2 = sheet("index card", 0.127, 0.076, leaf("card stock", (0.84, 0.81, 0.72), image=PRINT("index-card"), foxing=0.03), thick=0.0003)
-    card2.location = (0.318, 0.035, 0.0004); card2.rotation_euler = (0, 0, math.radians(-8))
-    # tea gone cold: the cup on its saucer
-    prop("tea_set_01", (0.326, 0.146, 0.0), rot=0.7, width=0.142, only="tea_set_01_saucer_circular_03")
-    cup = prop("tea_set_01", (0.326, 0.146, 0.006), rot=2.1, width=0.098, only="tea_set_01_cup_small_01")
-    tea = plain("cold tea", (0.055, 0.022, 0.007), rough=0.06, spec=0.5)
-    bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=0.031, depth=0.001, location=(0.326, 0.146, 0.04)); t = bpy.context.active_object; t.name = "tea"; t.data.materials.append(tea)
-    prop("vintage_pocket_watch", (0.296, -0.07, 0.0), rot=-0.5, width=0.052, tilt=(-math.pi / 2, 0.0))
-    prop("Camera_01", (-0.36, 0.158, 0.0), rot=2.6, width=0.15)
-    # his fountain pen, by the left edge of the file
-    black = plain("pen lacquer", (0.012, 0.012, 0.014), rough=0.3, spec=0.45)
-    gold = aged_metal("pen gold", (0.75, 0.56, 0.28), (0.18, 0.12, 0.05), rough=(0.22, 0.45), tarnish=0.4)
-    a, b = Vector((-0.345, -0.085, 0.0066)), Vector((-0.31, 0.05, 0.0066))
-    rod("pen barrel", a, b, 0.0066, black, verts=32); rod("pen cap band", a + (b - a) * 0.6, a + (b - a) * 0.63, 0.0069, gold, verts=32)
-    rod("pen clip", a + (b - a) * 0.72 + Vector((0, 0, 0.0062)), b - (b - a) * 0.03 + Vector((0, 0, 0.0062)), 0.0012, gold, verts=8)
-    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=0.0055, radius2=0.0012, depth=0.016, location=a - (b - a).normalized() * 0.008)
-    nib = bpy.context.active_object; nib.rotation_euler = (a - b).to_track_quat("Z", "Y").to_euler(); nib.data.materials.append(gold)
-    lights()
-    cycles(scene, SAMPLES, 10, 10, glare=False)
-    cam = dk.top_camera(scene, 0, 0, VIEW_W, VIEW_H, 2880)
-    finish(scene, SAMPLES, exposure=float(arg("--exposure", "-1.8")))
-    bpy.context.view_layer.update()
-    pages = {"index": placed(scene, cam, ms, MW, MH), "reader": placed(scene, cam, top, LW, LH)}
-    render(scene, os.path.join(OUT, "casefile.png"))
-    with open(os.path.join(OUT, "casefile.json"), "w") as f:
-        json.dump({"width": scene.render.resolution_x, "height": scene.render.resolution_y, "pages": pages}, f, indent=1)
+def paperclip(name, cx, cy, cz, steel, turn=0.0):
+    pts = [(-0.004, -0.034), (-0.004, -0.004), (0, 0.002), (0.004, -0.004), (0.004, -0.028), (0.0008, -0.031), (-0.0018, -0.028), (-0.0018, -0.009)]
+    c, s = math.cos(turn), math.sin(turn)
+    return wire(name, [(cx + x * c - y * s, cy + x * s + y * c, cz) for x, y in pts], 0.00062, steel)
 
-def pencil_at(foot, ang, brass, z=0.0008):
-    """his pencil, lying from \`foot\` (its point) at \`ang\` across the desk"""
-    paint = plain("pencil paint", (0.022, 0.07, 0.04), rough=0.5, spec=0.35); woodp = plain("pencil wood", (0.6, 0.4, 0.22), rough=0.8)
-    lead = plain("graphite", (0.04, 0.04, 0.045), rough=0.35, metal=0.3); rubber = plain("rubber", (0.5, 0.26, 0.22), rough=0.9)
-    r = 0.0036; axis = Vector((math.cos(ang), math.sin(ang), 0)); foot = Vector((foot[0], foot[1], r + z))
-    at = lambda s: foot + axis * s
-    p = rod("pencil", at(0.018), at(0.152), r, paint, verts=6); p.rotation_euler.rotate_axis("Z", math.radians(30))
-    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=r * 0.98, radius2=0.0009, depth=0.016, location=at(0.010))
-    c = bpy.context.active_object; c.rotation_euler = (-axis).to_track_quat("Z", "Y").to_euler(); c.data.materials.append(woodp)
-    bpy.ops.mesh.primitive_cone_add(vertices=24, radius1=0.0011, radius2=0.0002, depth=0.0036, location=at(0.0005))
-    t = bpy.context.active_object; t.rotation_euler = (-axis).to_track_quat("Z", "Y").to_euler(); t.data.materials.append(lead)
-    rod("ferrule", at(0.152), at(0.163), r * 1.03, brass, verts=32)
-    e = rod("rubber", at(0.163), at(0.170), r * 0.98, rubber, verts=32); bevel(e, 0.0012, 3)
+def metal_light(scene, names, energy=40.0):
+    """the metal's own light: a broad glow overhead that only the metal sees —
+    its flat faces would mirror black without it, and the leather would grey
+    over under it"""
+    metals = bpy.data.collections.new("metals")
+    for o in scene.objects:
+        if o.type in ("MESH", "CURVE") and any(m and m.name.split(".")[0] in names for m in o.data.materials):
+            metals.objects.link(o)
+    shine = lamp("shine", "AREA", (0.05, 0.08, 2.2), aim=(0, 0, 0), energy=energy, colour=(1.0, 0.9, 0.78), size=2.0)
+    shine.visible_camera = False; shine.light_linking.receiver_collection = metals
+    return shine
+
+def plate2d(name, outer, holes=(), thick=0.0007, round_=0.00025, mat=None):
+    """a flat piece of sheet metal: its outline (and any holes) in its own
+    plane, its edges rolled"""
+    cu = bpy.data.curves.new(name, "CURVE"); cu.dimensions = "2D"; cu.fill_mode = "BOTH"
+    cu.extrude = max(thick / 2 - round_, 0.00001); cu.bevel_depth = round_; cu.bevel_resolution = 3
+    for loop in (outer, *holes):
+        sp = cu.splines.new("POLY"); sp.points.add(len(loop) - 1); sp.use_cyclic_u = True
+        for p, (x, y) in zip(sp.points, loop): p.co = (x, y, 0, 1)
+    o = link(bpy.data.objects.new(name, cu)); cu.materials.append(mat)
+    return o
+
+def circle_pts(cx, cy, r, n=48, a0=0.0, a1=math.tau):
+    return [(cx + r * math.cos(a0 + (a1 - a0) * i / n), cy + r * math.sin(a0 + (a1 - a0) * i / n)) for i in range(n if a1 - a0 >= math.tau - 1e-6 else n + 1)]
+
+def book_light(scene):
+    """the light the notebook, the clipboard and the file are all taken in:
+    the desk's, the room's glow from straight above kept low (or the leather
+    greys over under it), the lamp a little less orange (so the cover keeps
+    its own colour)"""
+    lights(0.8)
+    bpy.data.lights["room"].energy *= float(arg("--room", "0.3"))
+    bpy.data.lights["lamp"].color = (1.0, 0.84, 0.66); bpy.data.lights["lamp"].energy *= float(arg("--lamp", "1.08"))
 
 # ── the notebook's own pieces: its leather, its rounded boards, his pencil ──
 # the covers it can be bound in: the scan, how it is coloured, what its rims
@@ -400,65 +330,162 @@ def fine_pencil(foot, ang, lacquer=(0.012, 0.05, 0.026)):
                            (0.17095, 0.00262), (0.17128, 0.00185), (0.17142, 0.001), (0.17146, 0.0)], rub); er.parent = root
     return root
 
-# ── the notebook: his pocket book in its leather cover, his pencil beside
-#    it — alone, its own shadow kept, laid over the game ──────────────────
+# ── the notebook: his spiral notebook open flat, two leaves — his notes on the
+#    left, his sketches on the right — in the same black leather as the file;
+#    over its head a little black plaque framed in brass for its tools. Alone,
+#    its own shadow kept, laid over the game ───────────────────────────────
 def build_notebook():
     scene = fresh(); catcher(2.0, 0.0)
-    PW, PH = 0.14, 0.16          # (wide and short: the saved pages are tags out from under it)
-    TOP = 0.02          # the cover folded back over the head of the book
-    book = link(bpy.data.objects.new("the book", None)); book.location = (-0.008, 0.004, 0); book.rotation_euler = (0, 0, math.radians(0.8))
+    PW, PH = 0.150, 0.205                 # each leaf (inspector_prints.mjs: spiral-notes, spiral-sketch)
+    IN = 0.0055                           # each leaf's inner edge, off the middle
+    PITCH, FIRST, HOLE_IN = 0.0084667, 0.006, 0.0055      # the punching (as printed)
+    CM, CT = 0.007, 0.0025                # the covers: how far past the leaves, how thick
+    book = link(bpy.data.objects.new("the book", None))
     look = COVERS[arg("--cover", "black")]
     leather_m = leather("cover leather", book, size=float(arg("--grain", "0.08")), **look)
-    # the cover: its back board under the pad, rounded at its foot; its top
-    # folded back over the head of the pad in one roll of leather
-    X0, X1 = -PW / 2 - 0.007, PW / 2 + 0.007
-    child(slab("cover back", X0, X1, -PH / 2 - 0.007, PH / 2 + TOP, 0.0, 0.0029, leather_m, corners=(0.0065, 0.0065, 0.0, 0.0), rim=0.0011), book)
-    fold = child(rod("cover fold", (X0 + 0.0002, PH / 2 + TOP, 0.00435), (X1 - 0.0002, PH / 2 + TOP, 0.00435), 0.00432, leather_m, verts=48), book)
-    bevel(fold, 0.0009, 4)
-    child(slab("cover flap", X0, X1, PH / 2 + 0.0035, PH / 2 + TOP, 0.0058, 0.0087, leather_m, corners=(0.004, 0.004, 0.0, 0.0), rim=0.0011), book)
-    # (plain leather: no stitching round its edge, no elastic down its side,
-    #  nothing that reads as a line ruled round the page)
-    # the pad: its leaves, each a hair askew, black cloth over the staples at its head
-    for k in range(7, 0, -1):
-        m = scanned(f"pad leaf {k}", "Paper001", size=0.2, tint=(0.89 - 0.01 * k, 0.78 - 0.01 * k, 0.6 - 0.012 * k), bright=0.84, sat=0.7)
-        o = child(sheet(f"pad leaf {k}", PW, PH, m, thick=0.00018), book)
-        o.location = (0.0003 * k, -0.0005 * k, 0.0032 + 0.00022 * (8 - k)); o.rotation_euler = (0, 0, math.radians(0.12 * (k % 3 - 1)))
-    def curl(u, v):
-        d = math.hypot((1 - u) * PW, v * PH)
-        return 0.0032 * max(0.0, 1 - d / 0.034) ** 2
-    page = scanned("open leaf", "Paper001", size=0.2, tint=(0.93, 0.8, 0.6), bright=0.8, sat=0.7, image=PRINT("notebook-page"), image_mix=0.9)
-    top = child(sheet("open leaf", PW, PH, page, nx=40, ny=72, lift=curl, thick=0.00018), book); top.location = (0, 0, 0.0052)
-    cloth = dk.cloth("book cloth", (0.0055, 0.0053, 0.0052), weave=780)
-    [setattr(n.inputs["Strength"], "default_value", 0.14) for n in cloth.node_tree.nodes if n.type == "BUMP"]
-    tape = child(box("binding", -PW / 2 - 0.0012, PW / 2 + 0.0012, PH / 2 - 0.012, PH / 2 + 0.003, 0.0035, 0.0068, cloth), book); bevel(tape, 0.0012, 3)
-    # the ribbon, out from between the leaves at the foot
-    # (a grosgrain: fine ribs across it)
-    ribbon = plain("ribbon", look["ribbon"], rough=0.55, spec=0.35)
-    rnt = ribbon.node_tree; rtc = rnt.nodes.new("ShaderNodeTexCoord")
-    rw_ = rnt.nodes.new("ShaderNodeTexWave"); rw_.wave_type = "BANDS"; rw_.bands_direction = "Y"; rw_.inputs["Scale"].default_value = 900
-    rnt.links.new(rtc.outputs["Object"], rw_.inputs["Vector"])
-    rbp_ = rnt.nodes.new("ShaderNodeBump"); rbp_.inputs["Strength"].default_value = 0.12; rbp_.inputs["Distance"].default_value = 0.00003
-    rnt.links.new(rw_.outputs["Fac"], rbp_.inputs["Height"]); rnt.links.new(rbp_.outputs["Normal"], rnt.nodes["Principled BSDF"].inputs["Normal"])
-    bm = bmesh.new(); rw = 0.0028
-    pts = [(-0.024 + rw, -PH / 2 + 0.004), (-0.024 - rw, -PH / 2 + 0.004), (-0.025 - rw, -PH / 2 - 0.02), (-0.025, -PH / 2 - 0.0155), (-0.025 + rw, -PH / 2 - 0.02)]
-    bm.faces.new([bm.verts.new((x, y, 0.0045)) for x, y in pts]); me = bpy.data.meshes.new("ribbon"); bm.to_mesh(me); bm.free()
-    rb = child(link(bpy.data.objects.new("ribbon", me)), book); me.materials.append(ribbon); rb.modifiers.new("t", "SOLIDIFY").thickness = 0.0002
-    # the writing: the leaf below its binding
-    area = child(link(bpy.data.objects.new("writing", None)), book); area.location = (0, -0.006, 0.0054)
-    fine_pencil((PW / 2 + 0.0035, -0.09), math.radians(88.6))
-    lights(0.8)
-    # (the book's own light: the room's glow from straight above kept low, or
-    #  the leather greys over under it; the lamp a little less orange, so the
-    #  cover keeps its own colour)
-    bpy.data.lights["room"].energy *= float(arg("--room", "0.3"))
-    bpy.data.lights["lamp"].color = (1.0, 0.84, 0.66); bpy.data.lights["lamp"].energy *= float(arg("--lamp", "1.08"))
+    # the covers, open: each under its leaf, rounded at its outer corners, and
+    # the strip of the back between them
+    XO = IN + PW + CM
+    child(slab("left cover", -XO, -0.002, -PH / 2 - CM, PH / 2 + CM, 0.0, CT, leather_m, corners=(0.006, 0.0, 0.0, 0.006), rim=0.0011), book)
+    child(slab("right cover", 0.002, XO, -PH / 2 - CM, PH / 2 + CM, 0.0, CT, leather_m, corners=(0.0, 0.006, 0.006, 0.0), rim=0.0011), book)
+    child(slab("back strip", -0.0035, 0.0035, -PH / 2 - CM + 0.0015, PH / 2 + CM - 0.0015, 0.0, 0.0016, leather_m, rim=0.0005), book)
+    # the leaves under each open one, each a hair out of true
+    LEAVES = 7
+    for side in (-1, 1):
+        for k in range(LEAVES, 0, -1):
+            m = scanned(f"leaf {side} {k}", "Paper001", size=0.2, tint=(0.9 - 0.01 * k, 0.8 - 0.01 * k, 0.62 - 0.012 * k), bright=0.84, sat=0.7)
+            o = child(sheet(f"leaf {side} {k}", PW, PH, m, thick=0.00018), book)
+            o.location = (side * (IN + PW / 2) + side * 0.00025 * k, -0.0004 * k, CT + 0.0002 * (LEAVES + 1 - k))
+            o.rotation_euler = (0, 0, math.radians(0.1 * (k % 3 - 1)))
+    # the two open, rising a little to the coil
+    ZP = CT + 0.0002 * (LEAVES + 1) + 0.0002
+    def rise(inner_u):
+        return lambda u, v: 0.0011 * max(0.0, 1 - abs(u - inner_u) / 0.06) ** 2
+    notes = scanned("notes leaf", "Paper001", size=0.2, tint=(0.93, 0.8, 0.6), bright=0.8, sat=0.7, image=PRINT("spiral-notes"), image_mix=0.95)
+    left = child(sheet("notes leaf", PW, PH, notes, nx=48, ny=64, lift=rise(1.0), thick=0.00018), book); left.location = (-(IN + PW / 2), 0, ZP)
+    sk = scanned("sketch leaf", "Paper001", size=0.2, tint=(0.93, 0.8, 0.6), bright=0.8, sat=0.7, image=PRINT("spiral-sketch"), image_mix=0.95)
+    right = child(sheet("sketch leaf", PW, PH, sk, nx=48, ny=64, lift=rise(0.0), thick=0.00018), book); right.location = (IN + PW / 2, 0, ZP)
+    # the coil: a turn of wire through each pair of holes, up over the middle
+    steel = aged_metal("coil steel", (0.5, 0.5, 0.5), (0.16, 0.15, 0.14), rough=(0.3, 0.48), scale=60.0, tarnish=0.3)
+    XH = IN + HOLE_IN                     # the holes' centres, off the middle
+    ZC = ZP - 0.0022                      # the coil's axis, a little under the leaves
+    R = math.hypot(XH, ZP - ZC)
+    lo = math.asin((ZP - 0.0016 - ZC) / R)          # (from just under the leaf to just under the other)
+    for k in range(24):
+        yk = PH / 2 - FIRST - k * PITCH
+        pts = []
+        for j in range(17):
+            t = lo + (math.pi - 2 * lo) * j / 16
+            pts.append((R * math.cos(t), yk - 0.0011 + 0.0022 * j / 16, ZC + R * math.sin(t)))
+        child(wire(f"coil {k}", list(reversed(pts)), 0.00068, steel), book)
+    # the plaque over its head: black leather in a thin brass frame, a rivet at
+    # each corner (the game sets its four tools on it)
+    BW_, BH_ = 0.124, 0.027
+    by = PH / 2 + CM + 0.004 + BH_ / 2
+    brass = aged_metal("book brass", (0.8, 0.57, 0.26), (0.3, 0.19, 0.08), rough=(0.3, 0.46), scale=70.0, tarnish=0.22)
+    [setattr(n.inputs["Strength"], "default_value", 0.03) for n in brass.node_tree.nodes if n.type == "BUMP"]
+    child(slab("plaque", -BW_ / 2, BW_ / 2, by - BH_ / 2, by + BH_ / 2, 0.0, 0.003, leather_m, corners=(0.004,) * 4, rim=0.0009), book)
+    def rrect(w, h, r, n=8):
+        pts = []
+        for cx, cy, a0 in ((w / 2 - r, h / 2 - r, 0), (-w / 2 + r, h / 2 - r, 90), (-w / 2 + r, -h / 2 + r, 180), (w / 2 - r, -h / 2 + r, 270)):
+            pts += [(cx + r * math.cos(math.radians(a0 + 90 * j / n)), cy + r * math.sin(math.radians(a0 + 90 * j / n))) for j in range(n + 1)]
+        return pts
+    frame = child(plate2d("plaque frame", rrect(BW_ - 0.0022, BH_ - 0.0022, 0.003), holes=[rrect(BW_ - 0.0056, BH_ - 0.0056, 0.0018)], thick=0.0006, round_=0.00024, mat=brass), book)
+    frame.location = (0, by, 0.0033)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            child(sphere("plaque rivet", (sx * (BW_ / 2 - 0.0019), by + sy * (BH_ / 2 - 0.0019), 0.0036), 0.0011, brass, squash=(1, 1, 0.5)), book)
+    # where the game lays its pages: the notes' and the sketches' leaves (clear
+    # of the holes), the plaque's face, and the edge the saved pages' tabs
+    # come out from
+    def mark(name, x, y, z):
+        e = child(link(bpy.data.objects.new(name, None)), book); e.location = (x, y, z); return e
+    AW, AH = PW - 0.0215, PH - 0.016
+    a_left = mark("notes area", -(IN + PW / 2) - 0.00275, 0.0, ZP + 0.0002)
+    a_right = mark("sketch area", (IN + PW / 2) + 0.00275, 0.0, ZP + 0.0002)
+    a_bar = mark("plaque face", 0.0, by, 0.0034)
+    TW = 0.024
+    a_tabs = mark("tab edge", XO + TW / 2, 0.0, 0.0)
+    book_light(scene)
+    metal_light(scene, ("coil steel", "book brass"), energy=float(arg("--shine", "40")))
     cycles(scene, SAMPLES, 10, 10, glare=False, transparent=True)
-    W, H = 0.172, 0.222
-    cam = dk.top_camera(scene, -0.0025, 0.008, W, H, int(arg("--book-px", "1600")))
+    W = 2 * (XO + TW + 0.004)
+    top, bottom = by + BH_ / 2 + 0.006, -PH / 2 - CM - 0.012
+    H = top - bottom
+    cam = dk.top_camera(scene, 0.0, (top + bottom) / 2, W, H, int(arg("--book-px", "2000")))
     finish(scene, SAMPLES, exposure=float(arg("--book-exposure", "-1.85")))
     bpy.context.view_layer.update()
-    pages = {"leaf": placed(scene, cam, area, PW, PH - 0.012)}
+    pages = {"left": placed(scene, cam, a_left, AW, AH), "right": placed(scene, cam, a_right, AW, AH),
+             "bar": placed(scene, cam, a_bar, BW_ - 0.0062, BH_ - 0.0062), "tabs": placed(scene, cam, a_tabs, TW, PH - 0.012)}
     name = arg("--name", "notebook")
+    render(scene, os.path.join(OUT, f"{name}.png"))
+    with open(os.path.join(OUT, f"{name}.json"), "w") as f:
+        json.dump({"width": scene.render.resolution_x, "height": scene.render.resolution_y, "pages": pages}, f, indent=1)
+
+# ── the case file: the Ashcombe file, open — its two boards in the same black
+#    leather as his notebook and his clipboard, alone, its own shadow kept,
+#    laid over the game ────────────────────────────────────────────────────
+def build_casefile():
+    scene = fresh(); catcher(2.0, 0.0)
+    BW, BH, BT, GAP = 0.236, 0.322, 0.0035, 0.0075     # each board; half the hinge between them
+    file = link(bpy.data.objects.new("the file", None)); file.rotation_euler = (0, 0, math.radians(-0.5))
+    look = COVERS[arg("--cover", "black")]
+    leather_m = leather("file leather", file, size=float(arg("--grain", "0.08")), **look)
+    LX, RX = -GAP - BW / 2, GAP + BW / 2               # the boards' middles
+    child(slab("left board", -GAP - BW, -GAP, -BH / 2, BH / 2, 0.0, BT, leather_m, corners=(0.008, 0.0, 0.0, 0.008), rim=0.0013), file)
+    child(slab("right board", GAP, GAP + BW, -BH / 2, BH / 2, 0.0, BT, leather_m, corners=(0.0, 0.008, 0.008, 0.0), rim=0.0013), file)
+    child(slab("hinge", -GAP - 0.001, GAP + 0.001, -BH / 2, BH / 2, 0.0, 0.0018, leather_m, rim=0.0005), file)
+    steel = aged_metal("clip steel", (0.62, 0.62, 0.6), (0.22, 0.2, 0.18), rough=(0.28, 0.5), tarnish=0.3)
+    brass = aged_metal("file brass", (0.8, 0.57, 0.26), (0.3, 0.19, 0.08), rough=(0.3, 0.46), scale=70.0, tarnish=0.22)
+    [setattr(n.inputs["Strength"], "default_value", 0.03) for n in brass.node_tree.nodes if n.type == "BUMP"]
+    # ── the left board: the minute sheet (the index), a police photograph of
+    #    the hall out from under its head, a clip on it
+    MW, MH = 0.204, 0.284
+    mx, my = LX - 0.0008, -0.009
+    under = child(sheet("minute under", MW, MH, scanned("minute under", "Paper002", size=0.3, tint=(0.95, 0.88, 0.74), bright=1.0, sat=0.6), thick=0.00025), file)
+    under.location = (mx + 0.0016, my - 0.0024, BT + 0.0002); under.rotation_euler = (0, 0, math.radians(0.9))
+    photo = child(sheet("photograph", 0.112, 0.0782, leaf("photo paper", (0.82, 0.8, 0.76), image=PRINT("photo"), foxing=0.02, rough=0.62), thick=0.0003), file)
+    photo.location = (mx + 0.04, my + MH / 2 + 0.011, BT + 0.0005); photo.rotation_euler = (0, 0, math.radians(-6.5))
+    minute = scanned("minute sheet", "Paper002", size=0.3, tint=(0.98, 0.9, 0.76), bright=0.95, sat=0.6, rough=(0.8, 0.96), bump=0.35, image=PRINT("minute-sheet"))
+    ms = child(sheet("minute sheet", MW, MH, minute, nx=30, ny=40, lift=lambda u, v: 0.0016 * (1 - v) ** 3 * u, thick=0.00025), file)
+    ms.location = (mx, my, BT + 0.0009); ms.rotation_euler = (0, 0, math.radians(-0.7))
+    child(paperclip("paperclip", mx - 0.054, my + MH / 2 + 0.006, BT + 0.0021, steel, math.radians(-2)), file)
+    # ── the right board: the letters, the top one under a brass fastener and
+    #    a clip; over them the file's number on a card in a brass frame
+    LW, LH = 0.206, 0.29
+    base = Vector((RX + 0.0008, -0.0095, 0))
+    tints = [(0.88, 0.76, 0.58), (0.93, 0.83, 0.66), (0.86, 0.75, 0.58), (0.95, 0.86, 0.7)]
+    stack = []
+    for k, (dx, dy, rz) in enumerate([(0.0026, -0.0034, 1.2), (-0.0018, -0.0013, -0.8), (0.0009, 0.0011, 0.4), (0.0, 0.0, -0.15)]):
+        m = scanned(f"letter {k}", "Paper001", size=0.24, tint=tints[k], bright=0.84, sat=0.7, rough=(0.78, 0.95), bump=0.4)
+        o = child(sheet(f"letter {k}", LW, LH, m, nx=24, ny=32, lift=(lambda u, v: 0.0014 * (u ** 4) * (1 - v)) if k == 3 else None, thick=0.00022), file)
+        o.location = base + Vector((dx, dy, BT + 0.0002 + 0.0003 * k)); o.rotation_euler = (0, 0, math.radians(rz)); stack.append(o)
+    top = stack[-1]
+    fx, fy = top.location.x - LW / 2 + 0.013, top.location.y + LH / 2 - 0.015
+    child(sphere("paper fastener", (fx, fy, BT + 0.0028), 0.0047, brass, squash=(1, 1, 0.32)), file)
+    child(paperclip("paperclip 2", top.location.x + 0.046, top.location.y + LH / 2 + 0.006, BT + 0.0024, steel, math.radians(1.5)), file)
+    # the frame: its window over the typed card, a rivet at each end
+    hx, hy = RX, BH / 2 - 0.0118
+    card = child(sheet("file label", 0.0686, 0.017, leaf("label card", (0.84, 0.79, 0.68), image=PRINT("file-label"), foxing=0.03), thick=0.00012), file)
+    card.location = (hx, hy, BT + 0.0001)
+    def rrect(w, h, r, n=8):
+        pts = []
+        for cx, cy, a0 in ((w / 2 - r, h / 2 - r, 0), (-w / 2 + r, h / 2 - r, 90), (-w / 2 + r, -h / 2 + r, 180), (w / 2 - r, -h / 2 + r, 270)):
+            pts += [(cx + r * math.cos(math.radians(a0 + 90 * j / n)), cy + r * math.sin(math.radians(a0 + 90 * j / n))) for j in range(n + 1)]
+        return pts
+    frame = child(plate2d("label frame", rrect(0.0775, 0.0215, 0.0032), holes=[rrect(0.0632, 0.0138, 0.0012)], thick=0.0007, round_=0.00028, mat=brass), file)
+    frame.location = (hx, hy, BT + 0.00055)
+    for sx in (-1, 1):
+        child(sphere("frame rivet", (hx + sx * 0.0352, hy, BT + 0.0009), 0.0016, brass, squash=(1, 1, 0.45)), file)
+    book_light(scene)
+    metal_light(scene, ("clip steel", "file brass"), energy=float(arg("--shine", "40")))
+    cycles(scene, SAMPLES, 10, 10, glare=False, transparent=True)
+    W, H = 0.52, 0.38
+    cam = dk.top_camera(scene, 0.0, 0.014, W, H, int(arg("--file-px", "2400")))
+    finish(scene, SAMPLES, exposure=float(arg("--exposure", "-1.85")))
+    bpy.context.view_layer.update()
+    pages = {"index": placed(scene, cam, ms, MW, MH), "reader": placed(scene, cam, top, LW, LH)}
+    name = arg("--name", "casefile")
     render(scene, os.path.join(OUT, f"{name}.png"))
     with open(os.path.join(OUT, f"{name}.json"), "w") as f:
         json.dump({"width": scene.render.resolution_x, "height": scene.render.resolution_y, "pages": pages}, f, indent=1)

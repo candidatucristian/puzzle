@@ -1,7 +1,6 @@
 import './ui/styles/index.css';
 import './ui/styles/casefile-materials.css';
 import './ui/styles/notebook-materials.css';
-import './ui/styles/settings-panel.css';
 import './ui/styles/inspector-desk-geometry.css';
 import './ui/styles/inspector-desk.css';
 import './ui/styles/letter-arrival.css';

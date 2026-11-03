@@ -1,0 +1,6 @@
+.decoder-delivery { position:fixed; top:0; left:0; width:176px; height:110px; z-index:570; pointer-events:none; transform-origin:50% 50%; will-change:transform,opacity; filter:drop-shadow(0 10px 12px #000b); }
+.dd-model,.dd-fallback { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
+.decoder-delivery [hidden] { display:none; }
+.decoder-delivery-caption { position:fixed; z-index:570; width:320px; translate:-50% 0; text-align:center; pointer-events:none; color:#ded4bd; text-shadow:0 2px 8px #000,0 0 16px #000; }
+.decoder-delivery-caption span { font:10px/1.4 "IBM Plex Sans",Arial,sans-serif; letter-spacing:.12em; }
+.decoder-delivery-caption p { margin:5px 0 0; font:400 22px/1.15 "Cormorant Garamond",Georgia,serif; color:#d9bc84; }

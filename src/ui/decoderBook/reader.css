@@ -1,0 +1,117 @@
+/* An object in the manor's darkness. The leather and papers are Cycles cutouts. */
+.decoder-modal { position:fixed; inset:0; z-index:115; display:grid; place-items:center; padding:26px 30px; background:#020305f7; color:#d3c9b5; font-family:"IBM Plex Sans",Arial,sans-serif; }
+.decoder-modal.hidden { display:none; }
+.decoder-library { width:min(1340px,100%); height:calc(100dvh - 52px); display:flex; flex-direction:column; min-height:0; background:none; }
+.decoder-header { display:flex; align-items:center; justify-content:space-between; padding:0 16px 20px 10px; gap:22px; }
+.decoder-header h2 { margin:0; color:#e0d5be; font:400 43px/1 "Cormorant Garamond",Georgia,serif; letter-spacing:-.025em; }
+.decoder-overline { margin:0 0 8px; color:#9f8a63; font:9px/1.5 "IBM Plex Sans",Arial,sans-serif; letter-spacing:.21em; text-transform:uppercase; }
+.decoder-modal button { border:1px solid #ad926240; border-radius:0; background:transparent; color:#b6a180; font:11px/1.5 "IBM Plex Sans",Arial,sans-serif; padding:9px 13px; cursor:var(--cursor-hand,pointer); }
+.decoder-modal button:hover { border-color:#bba27685; color:#e7d7b4; }
+.decoder-modal button:disabled { opacity:.35; cursor:default; }
+.decoder-modal :is(button,input):focus-visible,.decoder-reader:focus-visible { outline:1px solid #bfa271; outline-offset:4px; }
+.decoder-modal .decoder-close { border:0; font:300 33px/1 "Cormorant Garamond",Georgia,serif; padding:4px 10px; color:#9b917f; }
+.decoder-modal [hidden] { display:none; }
+.decoder-body { display:grid; grid-template-columns:230px minmax(0,1fr); flex:1; min-height:0; }
+.decoder-sidebar { min-height:0; overflow:auto; padding:5px 25px 20px 10px; border-right:1px solid #91856d24; scrollbar-width:thin; scrollbar-color:#6a5940 transparent; }
+.decoder-bound-volume { display:block; width:100%; max-height:152px; object-fit:contain; margin:0 auto 20px; filter:drop-shadow(0 10px 18px #0009); }
+.decoder-chapter-heading { margin-bottom:24px; }
+.decoder-chapter-heading .decoder-overline { font-size:8px; margin-bottom:4px; }
+.decoder-chapter-heading h3 { margin:0 0 6px; font:400 32px/1.06 "Cormorant Garamond",Georgia,serif; color:#d8c6a4; }
+.decoder-award { color:#928776; font-size:10px; line-height:1.6; margin:0; }
+.decoder-tabs { display:flex; flex-direction:column; gap:2px; margin:0 0 22px; }
+.decoder-tabs button { display:grid; grid-template-columns:24px 1fr; align-items:center; gap:8px; text-align:left; border:0; border-left:1px solid transparent; padding:13px 9px; color:#887f70; }
+.decoder-tabs button span { color:#786344; font:9px "IBM Plex Mono",monospace; }
+.decoder-tabs button[aria-pressed="true"] { color:#e1c89a; border-left-color:#b79b65; background:#bd9c5f08; }
+.decoder-tabs button[aria-pressed="true"] span { color:#c1a571; }
+.decoder-page-nav { display:flex; flex-direction:column; gap:3px; margin:0 0 24px; padding:0 0 0 9px; }
+.decoder-page-nav:empty { display:none; }
+.decoder-pages-heading { padding-left:9px; font-size:8px; letter-spacing:.12em; }
+.decoder-page-nav button { padding:7px 0; border:0; color:#9b8c74; text-align:left; font-size:10px; line-height:1.5; }
+.decoder-page-nav button span { color:#766247; margin-right:8px; font:8px "IBM Plex Mono",monospace; }
+.decoder-sidebar .decoder-replay { padding:8px 0; border:0; border-bottom:1px solid #8e754935; color:#817259; font-size:10px; }
+.decoder-reading { display:flex; flex-direction:column; min-width:0; min-height:0; padding-left:26px; }
+.decoder-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:0 6px 16px; }
+.decoder-toolbar .decoder-overline { margin:0; font-size:8px; }
+.decoder-downloads { display:flex; gap:10px; }
+.decoder-downloads button { font-size:10px; padding:7px 10px; }
+.decoder-reader { position:relative; flex:1; min-height:0; overflow:auto; padding:9px 15px 30px; background:none; scrollbar-width:thin; scrollbar-color:#6b573a transparent; overscroll-behavior:contain; }
+.decoder-error { color:#bd987c; font-size:11px; line-height:1.5; margin:0 8px 10px; }
+.decoder-error:empty { display:none; }
+.decoder-diploma-view { width:min(960px,100%); margin:auto; }
+.decoder-diploma-display { filter:drop-shadow(0 18px 28px #000c); }
+.decoder-modal .decoder-stock { filter:none; }
+.decoder-record { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin:26px 10px 0; padding-top:20px; border-top:1px solid #9d835329; }
+.decoder-record-details { color:#92836a; font-size:10px; line-height:1.6; }
+.decoder-record-details p { margin:0 0 6px; }
+.decoder-record-details .decoder-record-name { font:400 24px/1.2 "Cormorant Garamond",Georgia,serif; color:#cdb992; margin:0 0 8px; overflow-wrap:anywhere; }
+.decoder-record-details span { font:8px/1.7 "IBM Plex Mono",monospace; color:#7c6b51; letter-spacing:.08em; }
+.decoder-name-form { text-align:left; }
+.decoder-name-form label { display:block; margin-bottom:7px; color:#b6a78b; font-size:10px; }
+.decoder-name-fields { display:flex; gap:8px; }
+.decoder-name-fields input { min-width:0; flex:1; width:0; border:0; border-bottom:1px solid #9d835350; border-radius:0; background:#0c0b0980; padding:8px 9px; color:#d7c5a5; font:18px "Cormorant Garamond",Georgia,serif; }
+.decoder-name-fields input::placeholder { color:#746652; }
+.decoder-name-fields input[aria-invalid="true"] { border-color:#ad7959; }
+.decoder-name-help { margin:7px 0 0; color:#7f725d; font-size:10px; line-height:1.5; }
+.decoder-form-status { min-height:15px; margin:4px 0 0; color:#bca478; font-size:10px; line-height:1.5; }
+.decoder-colophon { margin:24px 0 0; text-align:center; color:#7f6d51; font:italic 15px "Cormorant Garamond",Georgia,serif; }
+.decoder-locked { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100%; max-width:550px; text-align:center; margin:auto; padding:20px 15px; box-sizing:border-box; }
+.decoder-locked-folio { display:block; width:min(410px,85%); margin:0 0 22px; filter:drop-shadow(0 18px 28px #000b); }
+.decoder-locked h3 { margin:0 0 17px; color:#d7c3a0; font:400 42px/1.05 "Cormorant Garamond",Georgia,serif; }
+.decoder-locked p { color:#a1937d; font-size:13px; line-height:1.7; }
+.decoder-locked .decoder-locked-replay { font-size:10px; color:#776b57; }
+.decoder-locked button { margin-top:12px; }
+/* The reading stock is a portrait Cycles render; the reusable print PDFs keep
+   their neutral print stock and vector lettering. */
+.decoder-modal .db-document { --db-ink:#291e12; --db-muted:#685138; --db-gold:#876538; --db-paper:transparent; }
+.decoder-modal .db-page { background-image:var(--decoder-notes-stock); background-position:center; background-size:100% 100%; box-shadow:none; filter:drop-shadow(0 14px 23px #000b); }
+.decoder-modal .db-document :is(.db-equation,.db-takeaway,.db-ratios,pre),.decoder-modal .db-additions b,.decoder-modal .db-count-table td:nth-child(2) { color:#4a3820; }
+.decoder-modal .db-document .db-spiral text { fill:#514027; }
+/* One unread mark, matching the case file's red wax cue. */
+#btn-decoder-book { position:relative; }
+.decoder-header-icon { display:block; width:25px; height:21px; object-fit:contain; filter:drop-shadow(0 1px 2px #000); }
+.decoder-book-button > .decoder-button-label { display:inline; font-size:11px; letter-spacing:.02em; }
+.decoder-count { position:absolute; left:15px; top:-3px; display:grid; place-items:center; width:16px; height:16px; border-radius:50%; background:#8d2820; border:1px solid #ba6c4f; box-shadow:0 0 0 2px #090a0c; color:#f5ddbc; font:600 10px/1 "IBM Plex Sans",Arial,sans-serif; }
+.decoder-count[hidden] { display:none; }
+.decoder-sr { position:absolute; width:1px; height:1px; clip:rect(0,0,0,0); overflow:hidden; }
+:is(body.cold-open-on,body.prologue-on) #btn-decoder-book { display:none; }
+@media(max-width:1100px) {
+  .decoder-modal { padding:20px; }
+  .decoder-library { height:calc(100dvh - 40px); }
+  .decoder-body { grid-template-columns:190px minmax(0,1fr); }
+  .decoder-sidebar { padding-right:18px; }
+  .decoder-reading { padding-left:18px; }
+  .decoder-bound-volume { max-height:125px; }
+  .decoder-record { grid-template-columns:1fr; gap:18px; }
+}
+@media(max-width:960px) { .decoder-book-button > .decoder-button-label { display:none; } }
+@media(max-width:680px) {
+  .decoder-modal { padding:14px 9px; }
+  .decoder-library { height:calc(100dvh - 28px); }
+  .decoder-header { padding:0 5px 17px; }
+  .decoder-header h2 { font-size:32px; }
+  .decoder-header .decoder-overline { font-size:7px; }
+  .decoder-body { grid-template-columns:112px minmax(0,1fr); }
+  .decoder-sidebar { padding:0 9px 10px 0; }
+  .decoder-bound-volume { max-height:74px; margin-bottom:14px; }
+  .decoder-chapter-heading h3 { font-size:23px; overflow-wrap:anywhere; }
+  .decoder-chapter-heading .decoder-overline { letter-spacing:.10em; }
+  .decoder-award { font-size:9px; }
+  .decoder-tabs button { display:block; font-size:10px; padding:12px 6px; }
+  .decoder-tabs button span { display:block; margin-bottom:3px; }
+  .decoder-reading { padding-left:9px; }
+  .decoder-reader { padding:3px 4px 20px; }
+  .decoder-downloads { flex-wrap:wrap; gap:4px; }
+  .decoder-downloads button { text-align:left; font-size:9px; padding:6px; }
+  .decoder-toolbar { padding:0 3px 12px; }
+  .decoder-record { margin:18px 1px 0; }
+  .decoder-name-fields { flex-wrap:wrap; }
+  .decoder-name-fields input { flex-basis:100%; }
+  .decoder-page-nav { padding-left:4px; }
+  .decoder-page-nav button { font-size:9px; }
+  .decoder-page-nav button span { display:block; margin-bottom:3px; }
+  .decoder-modal .db-page { padding:32px 22px; min-height:297mm; }
+  .decoder-modal .db-two-columns { grid-template-columns:1fr; }
+  .decoder-modal .db-section-header h2 { font-size:33px; }
+  .decoder-modal .db-document .db-fibonacci-title { font-size:59px; }
+}
+[data-reduced-motion="true"] .decoder-modal *,[data-reduced-motion="true"] .decoder-book-button { animation:none; transition:none; }

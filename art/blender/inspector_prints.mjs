@@ -3,6 +3,11 @@
 //   notebook-page   the pocket book's leaf: a faint 5 mm squared grid in
 //                   blue-grey, no margin rule (the page is written on
 //                   across its whole width) — 104 x 192 mm
+//   spiral-notes, spiral-sketch   the spiral notebook's two open leaves,
+//                   150 x 205 mm: the left plain (the game rules its lines,
+//                   so they run on with what is written), the right squared
+//                   5 mm in blue-grey; each punched for the coil down its
+//                   inner edge
 //   stamp           a rubber stamp's impression, CONFIDENTIAL (white on clear)
 //   minute-sheet    the file's minute sheet: its printed head and form number,
 //                   CONFIDENTIAL stamped low on it — 205 x 285 mm (the index is
@@ -40,6 +45,27 @@ const grain = (id, freq = 0.9, k = 2.2, mean = 0.92) => `<filter id="${id}" x="0
     <g filter="url(#g)">
       <g stroke="#7f95ad" stroke-opacity=".5" stroke-width="2.2">${lines.join("")}</g>
     </g></svg>`, "notebook-page");
+}
+
+// ── the spiral notebook's two leaves (12 px a millimetre): punched down the
+//    inner edge for the coil, 24 holes 4 mm across at a third of an inch,
+//    their centres 5.5 mm in; the right leaf squared ──────────────────────
+{
+  const mm = 12, W = 150 * mm, H = 205 * mm;
+  const PITCH = 8.4667, FIRST = 6.0, R = 2.0, IN = 5.5;      // (inspector_scene.py's coil keeps to these)
+  const holes = (x) => Array.from({ length: 24 }, (_, k) =>
+    `<circle cx="${x}" cy="${(FIRST + k * PITCH) * mm}" r="${R * mm}"/>`).join("");
+  const grid = [];
+  for (let x = 0; x <= W; x += 5 * mm) grid.push(`<path d="M${x} 0V${H}"/>`);
+  for (let y = 0; y <= H; y += 5 * mm) grid.push(`<path d="M0 ${y}H${W}"/>`);
+  for (const [name, inner, squared] of [["spiral-notes", W - IN * mm, false], ["spiral-sketch", IN * mm, true]]) {
+    await png(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
+      <defs>${grain("g", 0.7, 1.6)}<radialGradient id="h"><stop offset=".82" stop-color="#0b0a08"/><stop offset="1" stop-color="#24201b"/></radialGradient></defs>
+      <rect width="${W}" height="${H}" fill="#fff"/>
+      ${squared ? `<g filter="url(#g)"><g stroke="#7f95ad" stroke-opacity=".5" stroke-width="1.4">${grid.join("")}</g></g>` : ""}
+      <g fill="url(#h)">${holes(inner)}</g>
+    </svg>`, name);
+  }
 }
 
 // ── the rubber stamp: the ink's coverage, white on clear ───────────────────

@@ -17,6 +17,8 @@ import { mountStartManor } from './startManor.js';
 import { HOUSE_GO, HOUSE_BACK, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
 import { mountHouseMap } from './houseMap.js';
 import { mountNotebook } from './notebook.js';
+import { mountPlayersOnline } from './playersOnline.js';
+import { mountDecoderBook } from './decoderBook/index.js';
 import { mountManual } from './manual/manual.js';
 import { mountMagnifier } from './magnifier.js';
 import { mountAmbience } from './ambience.js';
@@ -33,7 +35,7 @@ import { playManorStory } from './manorStory.js';
 import { taskCard } from './tasks.js';
 import { applyI18nToDOM } from '../core/i18n.js';
 
-export function mountUI(game, { levels, audio, storage, preferences, hints, i18n = null }) {
+export function mountUI(game, { levels, audio, storage, preferences, hints, achievements, i18n = null }) {
   const scope = new Scope(), byId = id => document.getElementById(id);
   const start = byId('start-screen');
   const moon = byId('start-moon');
@@ -268,10 +270,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     if (!cinema.chapterBefore(key, () => levels.enterPlace(key))) walk(() => levels.enterPlace(key), 260, 0, true);
   }
   const map = mountHouseMap(scope, { levels, dialogs, travel, i18n });
-  const notebook = mountNotebook(scope, { levels, dialogs, storage, i18n });
+  const notebook = mountNotebook(scope, { game, audio, levels, dialogs, storage, i18n });
+  mountPlayersOnline(scope, { i18n });
   const cinema = mountCinema(scope, { storage, reducedMotion: () => Boolean(preferences?.reducedMotion), i18n });
   const paperSounds = mountPaperSounds({ game, audio });
+  scope.add(() => paperSounds.dispose());
   const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || cinema.busy, i18n });
+  mountDecoderBook(scope, { game, achievements, levels, storage, dialogs, i18n, preferences, sounds: paperSounds, isBusy: () => transitions.busy || walking || cinema.busy || caseFile.busy, visitLevel: index => navigate(index, { quick: true }) });
   // A new case opens with the supplied film, then dissolves directly onto
   // the Inspector's desk. Each run owns its listeners and media playback.
   let prologueOn = false;

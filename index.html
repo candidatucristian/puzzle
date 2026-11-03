@@ -145,6 +145,26 @@
         <path d="M14.9 6.8C15.6 7.6 16.4 8.3 17.2 9.1M16.9 4.8C17.6 5.6 18.4 6.3 19.2 7.1M15.9 5.8C16.6 6.6 17.4 7.3 18.2 8.1M14.9 6.8C15.6 6.1 16.2 5.5 16.9 4.8M17.2 9.1C17.8 8.4 18.5 7.8 19.2 7.1" />
         <path d="M16.9 4.8C17.6 4.1 18.4 3.3 19.1 2.6C19.9 2 20.8 2.2 21.3 2.9C21.8 3.6 21.8 4.4 21.4 4.9C20.7 5.6 19.9 6.4 19.2 7.1" />
       </symbol>
+      <!-- the notebook's tools on its plaque: a nib and a line written, a
+           rubber, a ruler -->
+      <symbol id="sk-write" viewBox="0 0 24 24">
+        <path d="M4.3 15.9C6.2 13.4 8.6 11 11.4 9.3C12.1 10 12.8 10.7 13.5 11.4C11.8 14.2 9.4 16.6 6.9 18.5C6 18.9 5 19.3 4 19.7C4.3 18.4 4.3 17.1 4.3 15.9" />
+        <path class="sk-faint" stroke-opacity=".6" d="M4.1 19.6C5.8 17.9 7.4 16.3 9 14.7" />
+        <path d="M9.6 14.1C9.2 13.7 9.4 13 9.9 12.8C10.4 12.6 11 13 11 13.5C11 14 10.4 14.4 9.9 14.3" />
+        <path d="M11.4 9.3C12.7 8 14 6.7 15.3 5.4M13.5 11.4C14.8 10.1 16.1 8.8 17.4 7.5M15.3 5.4C16 6.1 16.7 6.8 17.4 7.5" />
+        <path d="M15.3 5.4C16.2 4.5 17.1 3.6 18 2.7C18.7 2.1 19.7 2.2 20.3 2.8C20.9 3.4 21 4.3 20.4 5C19.4 5.8 18.4 6.7 17.4 7.5" />
+        <path d="M11.6 20.6C12.6 19.7 13.4 21.3 14.5 20.4C15.6 19.5 16.4 21.1 17.5 20.3C18.5 19.6 19.4 20.8 20.6 20.2" />
+      </symbol>
+      <symbol id="sk-eraser" viewBox="0 0 24 24">
+        <path d="M4.5 15.7C7.1 13.1 9.7 10.5 12.3 7.9C14.1 9.7 15.9 11.5 17.6 13.2C15 15.8 12.4 18.4 9.8 21C9.1 21.6 8.2 21.6 7.6 21C6.6 20 5.5 19 4.5 18C3.9 17.3 3.9 16.4 4.5 15.7" />
+        <path d="M12.3 7.9C13.4 6.8 14.5 5.7 15.6 4.6C16.2 4 17.2 4 17.8 4.6C18.8 5.6 19.8 6.6 20.8 7.6C21.4 8.2 21.4 9.2 20.8 9.8C19.7 10.9 18.7 12 17.6 13.2" />
+        <path class="sk-faint" stroke-opacity=".6" d="M8.4 11.9C10.1 13.7 11.9 15.4 13.7 17.2" />
+        <path d="M12.6 21C15.3 21 17.9 20.9 20.6 21" />
+      </symbol>
+      <symbol id="sk-ruler" viewBox="0 0 24 24">
+        <path d="M2.9 16.6C7.4 12.1 11.9 7.6 16.4 3.1C17.9 4.6 19.4 6.1 20.9 7.6C16.4 12.1 11.9 16.6 7.4 21.1C5.9 19.6 4.4 18.1 2.9 16.6" />
+        <path d="M5.6 13.9C6.1 14.4 6.6 14.9 7.1 15.4M7.6 11.9C7.9 12.2 8.2 12.5 8.5 12.8M9.6 9.9C10.1 10.4 10.6 10.9 11.1 11.4M11.6 7.9C11.9 8.2 12.2 8.5 12.5 8.8M13.6 5.9C14.1 6.4 14.6 6.9 15.1 7.4" />
+      </symbol>
       <symbol id="sk-file" viewBox="0 0 24 24">
         <path d="M6.1 3.3C9.1 3.1 12.2 3.2 15.2 3.1C16.5 4.4 17.8 5.7 19.1 7C19 11.6 19.1 16.2 19 20.8C14.7 20.9 10.4 20.8 6 20.9C6.1 15 6 9.2 6.1 3.3Z" />
         <path d="M15.2 3.2C15.1 4.5 15.2 5.8 15.2 7.1C16.5 7.1 17.8 7 19 7.1" />
@@ -178,6 +198,19 @@
     </div>
 
     <header id="compact-bar" class="app-header">
+      <!-- how many are playing: at the bar's left, quietly (playersOnline.js —
+           as yet only its look, shown while the game runs in development) -->
+      <div
+        id="players-online"
+        class="players-online"
+        hidden
+        data-tip="Players in the game right now"
+        data-i18n-tip="header.playersOnlineTip"
+      >
+        <span class="po-light" aria-hidden="true"></span>
+        <span class="po-label" data-i18n="header.playersOnline">Players online</span>
+        <span id="players-online-count" class="po-count"></span>
+      </div>
       <div class="header-actions">
         <div class="volume-widget">
           <button
@@ -380,14 +413,65 @@
             <use href="#icon-close" />
           </svg>
         </button>
-        <!-- the pages saved from it: paper tags out from under the book's
-             cover, and one to start a new page (inspector-desk.css) -->
+        <div class="options-heading">
+          <h2 data-i18n="notebook.title">Notebook</h2>
+        </div>
+        <!-- its tools, on the brass-framed plaque over its head -->
+        <div class="notebook-bar" role="toolbar" aria-label="Tools" data-i18n-aria="notebook.tools">
+          <button
+            id="notebook-write"
+            class="nb-tool"
+            type="button"
+            data-tip="Write on the left page"
+            data-i18n-tip="notebook.writeTip"
+          >
+            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-write" /><use class="ink-white" href="#sk-write" /><use class="ink-over" href="#sk-write" /></svg>
+            <span data-i18n="notebook.write">Write</span>
+          </button>
+          <button
+            class="nb-tool"
+            type="button"
+            data-notebook-tool="pencil"
+            aria-pressed="true"
+            data-tip="Draw on the page"
+            data-i18n-tip="notebook.pencilTip"
+          >
+            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-pencil" /><use class="ink-white" href="#sk-pencil" /><use class="ink-over" href="#sk-pencil" /></svg>
+            <span data-i18n="notebook.pencil">Sketch</span>
+          </button>
+          <button
+            class="nb-tool"
+            type="button"
+            data-notebook-tool="eraser"
+            aria-pressed="false"
+            data-tip="Rub out what is drawn"
+            data-i18n-tip="notebook.rubberTip"
+          >
+            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-eraser" /><use class="ink-white" href="#sk-eraser" /><use class="ink-over" href="#sk-eraser" /></svg>
+            <span data-i18n="notebook.rubber">Rub out</span>
+          </button>
+          <button
+            class="nb-tool"
+            type="button"
+            data-notebook-tool="ruler"
+            aria-pressed="false"
+            data-tip="Draw straight lines, as with a ruler"
+            data-i18n-tip="notebook.rulerTip"
+          >
+            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-ruler" /><use class="ink-white" href="#sk-ruler" /><use class="ink-over" href="#sk-ruler" /></svg>
+            <span data-i18n="notebook.ruler">Measure</span>
+          </button>
+        </div>
+        <!-- the pages saved: index tabs out from its right edge — first this
+             puzzle's own page, then the saved ones, then one for a new page
+             (inspector-desk.css) -->
         <aside class="notebook-shelf" aria-label="Saved" data-i18n-aria="notebook.saved">
-          <div class="shelf-head">
+          <div class="shelf-head" hidden>
             <span class="shelf-label" data-i18n="notebook.saved"
               >Saved</span
             ><span id="notebook-saved-count" class="shelf-count"></span>
           </div>
+          <ul id="notebook-notes"></ul>
           <button
             id="notebook-new-page"
             class="shelf-add"
@@ -398,194 +482,166 @@
           >
             + New page
           </button>
-          <ul id="notebook-notes"></ul>
         </aside>
-        <div class="notebook-content">
-          <div class="notebook-leaf">
-          <div class="options-heading">
-            <h2 data-i18n="notebook.title">Notebook</h2>
+        <!-- the left leaf: the notes -->
+        <section class="nb-leaf nb-notes" aria-labelledby="notebook-title">
+          <div class="page-bar">
+            <span id="notebook-title" class="page-name"></span>
+            <button
+              id="notebook-back"
+              class="page-back"
+              type="button"
+              hidden
+              data-tip="The page you keep for the puzzle you are in"
+              data-i18n="notebook.backToPuzzle"
+              data-i18n-tip="notebook.backToPuzzleTip"
+            >
+              &larr; Back to this puzzle&rsquo;s page
+            </button>
           </div>
-          <div class="notebook-body">
-            <section class="notebook-page" aria-labelledby="notebook-title">
-              <div class="page-bar">
-                <span id="notebook-title" class="page-name"></span>
-                <button
-                  id="notebook-back"
-                  class="page-back"
-                  type="button"
-                  hidden
-                  data-tip="The page you keep for the puzzle you are in"
-                  data-i18n="notebook.backToPuzzle"
-                  data-i18n-tip="notebook.backToPuzzleTip"
-                >
-                  &larr; Back to this puzzle&rsquo;s page
-                </button>
-              </div>
-              <label class="sr-only" for="notebook-text">Your notes</label>
-              <textarea
-                id="notebook-text"
-                rows="5"
-                placeholder="Write anything down…"
-                spellcheck="false"
-                data-i18n-placeholder="notebook.placeholder"
-              ></textarea>
-              <div class="notebook-sketch-wrap">
-                <canvas
-                  id="notebook-sketch"
-                  aria-label="A page to draw on"
-                ></canvas>
-              </div>
-              <!-- the pencil: how thick its line, and what colour -->
-              <div class="notebook-pens">
-                <div class="pen-group" role="group" aria-label="How thick" data-i18n-aria="notebook.sizes">
-                <button
-                  class="pen-size"
-                  type="button"
-                  data-notebook-size="0"
-                  aria-pressed="true"
-                  aria-label="A fine line"
-                  data-tip="A fine line"
-                  data-i18n-aria="notebook.sizeThin"
-                  data-i18n-tip="notebook.sizeThin"
-                ><span></span></button>
-                <button
-                  class="pen-size"
-                  type="button"
-                  data-notebook-size="1"
-                  aria-pressed="false"
-                  aria-label="A middling line"
-                  data-tip="A middling line"
-                  data-i18n-aria="notebook.sizeMedium"
-                  data-i18n-tip="notebook.sizeMedium"
-                ><span></span></button>
-                <button
-                  class="pen-size"
-                  type="button"
-                  data-notebook-size="2"
-                  aria-pressed="false"
-                  aria-label="A thick line"
-                  data-tip="A thick line"
-                  data-i18n-aria="notebook.sizeThick"
-                  data-i18n-tip="notebook.sizeThick"
-                ><span></span></button>
-                </div>
-                <div class="pen-group" role="group" aria-label="What colour" data-i18n-aria="notebook.colours">
-                <button
-                  class="pen-colour"
-                  type="button"
-                  data-notebook-colour="0"
-                  aria-pressed="true"
-                  aria-label="Graphite"
-                  data-tip="Graphite"
-                  data-i18n-aria="notebook.colourGraphite"
-                  data-i18n-tip="notebook.colourGraphite" style="--pen: #24211c"
-                ><span></span></button>
-                <button
-                  class="pen-colour"
-                  type="button"
-                  data-notebook-colour="1"
-                  aria-pressed="false"
-                  aria-label="Blue"
-                  data-tip="Blue"
-                  data-i18n-aria="notebook.colourBlue"
-                  data-i18n-tip="notebook.colourBlue" style="--pen: #1e4eaa"
-                ><span></span></button>
-                <button
-                  class="pen-colour"
-                  type="button"
-                  data-notebook-colour="2"
-                  aria-pressed="false"
-                  aria-label="Red"
-                  data-tip="Red"
-                  data-i18n-aria="notebook.colourRed"
-                  data-i18n-tip="notebook.colourRed" style="--pen: #b2261e"
-                ><span></span></button>
-                </div>
-              </div>
-              <div class="notebook-tools">
-                <button
-                  class="menu-btn"
-                  type="button"
-                  data-notebook-tool="pencil"
-                  aria-pressed="true"
-                  data-tip="Draw on the page"
-                  data-i18n="notebook.pencil"
-                  data-i18n-tip="notebook.pencilTip"
-                >
-                  Pencil
-                </button>
-                <button
-                  class="menu-btn"
-                  type="button"
-                  data-notebook-tool="eraser"
-                  aria-pressed="false"
-                  data-tip="Rub out what is drawn"
-                  data-i18n="notebook.rubber"
-                  data-i18n-tip="notebook.rubberTip"
-                >
-                  Rubber
-                </button>
-                <button
-                  id="notebook-clear"
-                  class="menu-btn"
-                  type="button"
-                  data-tip="Wipe the whole drawing"
-                  data-i18n="notebook.clear"
-                  data-i18n-tip="notebook.clearTip"
-                >
-                  Clear the drawing
-                </button>
-              </div>
-              <div class="notebook-save">
-                <label class="sr-only" for="notebook-note-title"
-                  >The note's name</label
-                >
-                <input
-                  id="notebook-note-title"
-                  type="text"
-                  maxlength="60"
-                  placeholder="A name for this note"
-                  spellcheck="false"
-                  autocomplete="off"
-                  data-i18n-placeholder="notebook.noteNamePlaceholder"
-                />
-                <button
-                  id="notebook-save"
-                  class="menu-btn notebook-save-btn"
-                  type="button"
-                  data-tip="Keep a copy of this page, with the saved ones (Enter)"
-                  data-i18n="notebook.save"
-                  data-i18n-tip="notebook.saveTip"
-                >
-                  Save
-                </button>
-                <button
-                  id="notebook-delete-note"
-                  class="menu-btn notebook-delete-btn"
-                  type="button"
-                  hidden
-                  data-tip="Click twice to be sure"
-                  data-i18n="notebook.deleteNote"
-                  data-i18n-tip="notebook.deleteTip"
-                >
-                  Delete this note
-                </button>
-              </div>
-              <p
-                id="notebook-status"
-                class="notebook-status"
-                role="status"
-                aria-live="polite"
-              ></p>
-            </section>
+          <label class="sr-only" for="notebook-text">Your notes</label>
+          <textarea
+            id="notebook-text"
+            placeholder="Write anything down…"
+            spellcheck="false"
+            data-i18n-placeholder="notebook.placeholder"
+          ></textarea>
+          <div class="notebook-save">
+            <label class="sr-only" for="notebook-note-title"
+              >The note's name</label
+            >
+            <input
+              id="notebook-note-title"
+              type="text"
+              maxlength="60"
+              placeholder="A name for this note"
+              spellcheck="false"
+              autocomplete="off"
+              data-i18n-placeholder="notebook.noteNamePlaceholder"
+            />
+            <button
+              id="notebook-save"
+              class="menu-btn notebook-save-btn"
+              type="button"
+              data-tip="Keep a copy of this page, with the saved ones (Enter)"
+              data-i18n="notebook.save"
+              data-i18n-tip="notebook.saveTip"
+            >
+              Save
+            </button>
+            <button
+              id="notebook-delete-note"
+              class="menu-btn notebook-delete-btn"
+              type="button"
+              hidden
+              data-tip="Click twice to be sure"
+              data-i18n="notebook.deleteNote"
+              data-i18n-tip="notebook.deleteTip"
+            >
+              Delete this note
+            </button>
           </div>
+          <p
+            id="notebook-status"
+            class="notebook-status"
+            role="status"
+            aria-live="polite"
+          ></p>
           <p class="tool-note" data-i18n="notebook.note">
             The page is kept for this puzzle by itself; Save keeps a copy of it
             with the saved ones. &nbsp;·&nbsp; N opens the notebook, Esc puts it
             away.
           </p>
+        </section>
+        <!-- the right leaf: the sketches -->
+        <section class="nb-leaf nb-sketch" aria-label="Sketches" data-i18n-aria="notebook.sketches">
+          <div class="page-bar">
+            <span class="page-name" data-i18n="notebook.sketches">Sketches</span>
           </div>
-        </div>
+          <div class="notebook-sketch-wrap">
+            <canvas
+              id="notebook-sketch"
+              aria-label="A page to draw on"
+            ></canvas>
+          </div>
+          <!-- the pencil: how thick its line, and what colour; and clearing it all -->
+          <div class="notebook-pens">
+            <div class="pen-group" role="group" aria-label="How thick" data-i18n-aria="notebook.sizes">
+            <button
+              class="pen-size"
+              type="button"
+              data-notebook-size="0"
+              aria-pressed="true"
+              aria-label="A fine line"
+              data-tip="A fine line"
+              data-i18n-aria="notebook.sizeThin"
+              data-i18n-tip="notebook.sizeThin"
+            ><span></span></button>
+            <button
+              class="pen-size"
+              type="button"
+              data-notebook-size="1"
+              aria-pressed="false"
+              aria-label="A middling line"
+              data-tip="A middling line"
+              data-i18n-aria="notebook.sizeMedium"
+              data-i18n-tip="notebook.sizeMedium"
+            ><span></span></button>
+            <button
+              class="pen-size"
+              type="button"
+              data-notebook-size="2"
+              aria-pressed="false"
+              aria-label="A thick line"
+              data-tip="A thick line"
+              data-i18n-aria="notebook.sizeThick"
+              data-i18n-tip="notebook.sizeThick"
+            ><span></span></button>
+            </div>
+            <div class="pen-group" role="group" aria-label="What colour" data-i18n-aria="notebook.colours">
+            <button
+              class="pen-colour"
+              type="button"
+              data-notebook-colour="0"
+              aria-pressed="true"
+              aria-label="Graphite"
+              data-tip="Graphite"
+              data-i18n-aria="notebook.colourGraphite"
+              data-i18n-tip="notebook.colourGraphite" style="--pen: #24211c"
+            ><span></span></button>
+            <button
+              class="pen-colour"
+              type="button"
+              data-notebook-colour="1"
+              aria-pressed="false"
+              aria-label="Blue"
+              data-tip="Blue"
+              data-i18n-aria="notebook.colourBlue"
+              data-i18n-tip="notebook.colourBlue" style="--pen: #1e4eaa"
+            ><span></span></button>
+            <button
+              class="pen-colour"
+              type="button"
+              data-notebook-colour="2"
+              aria-pressed="false"
+              aria-label="Red"
+              data-tip="Red"
+              data-i18n-aria="notebook.colourRed"
+              data-i18n-tip="notebook.colourRed" style="--pen: #b2261e"
+            ><span></span></button>
+            </div>
+            <button
+              id="notebook-clear"
+              class="menu-btn"
+              type="button"
+              data-tip="Wipe the whole drawing"
+              data-i18n="notebook.clear"
+              data-i18n-tip="notebook.clearTip"
+            >
+              Clear the drawing
+            </button>
+          </div>
+        </section>
       </div>
 
       <!-- Game Area -->
@@ -1009,39 +1065,21 @@
         class="modal-content settings-panel"
         aria-labelledby="settings-title"
       >
-        <button
-          id="btn-close-options"
-          class="icon-button st-close-btn"
-          type="button"
-          aria-label="Close settings"
-          data-tip="Close settings (Esc)"
-          data-i18n-aria="settings.close"
-          data-i18n-tip="settings.closeTip"
-        >
-          <svg class="ui-icon" aria-hidden="true">
-            <use href="#icon-close" />
-          </svg>
-        </button>
-        <div class="st-sheet">
         <header class="st-head">
-          <div class="st-head-identity">
-            <img
-              class="st-crest-img"
-              src="/assets/images/Interface/settings-crest-3d.webp"
-              alt=""
-              aria-hidden="true"
-            />
-            <div class="st-head-titles">
-              <p class="st-eyebrow" data-i18n="settings.eyebrow">
-                Ashcombe Manor · Inspector's Apparatus
-              </p>
-              <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
-              <p class="st-subtitle" data-i18n="settings.subtitle">
-                Field calibration for reading, optics, and acoustics
-              </p>
-            </div>
-          </div>
-
+          <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
+          <button
+            id="btn-close-options"
+            class="icon-button"
+            type="button"
+            aria-label="Close settings"
+            data-tip="Close settings (Esc)"
+            data-i18n-aria="settings.close"
+            data-i18n-tip="settings.closeTip"
+          >
+            <svg class="ui-icon" aria-hidden="true">
+              <use href="#icon-close" />
+            </svg>
+          </button>
         </header>
 
         <div class="st-tabs" role="tablist" aria-label="Settings">
@@ -1052,12 +1090,9 @@
             aria-controls="st-panel-options"
             aria-selected="true"
             tabindex="0"
+            data-i18n="settings.tabOptions"
           >
-            <svg class="st-tab-icon" viewBox="0 0 20 20" aria-hidden="true">
-              <circle cx="10" cy="10" r="6.8" />
-              <path d="M10 2v2.4M10 15.6V18M2 10h2.4M15.6 10H18M10 7l2.2 3-2.2 3-2.2-3z" />
-            </svg>
-            <span data-i18n="settings.tabOptions">Options</span>
+            Options
           </button>
           <button
             type="button"
@@ -1066,13 +1101,9 @@
             aria-controls="st-panel-video"
             aria-selected="false"
             tabindex="-1"
+            data-i18n="settings.tabVideo"
           >
-            <svg class="st-tab-icon" viewBox="0 0 20 20" aria-hidden="true">
-              <rect x="2.5" y="4.2" width="15" height="11.6" rx="1.8" />
-              <circle cx="10" cy="10" r="3.1" />
-              <path d="M5.5 4.2v11.6M14.5 4.2v11.6" />
-            </svg>
-            <span data-i18n="settings.tabVideo">Video</span>
+            Video
           </button>
           <button
             type="button"
@@ -1081,12 +1112,9 @@
             aria-controls="st-panel-sounds"
             aria-selected="false"
             tabindex="-1"
+            data-i18n="settings.tabSounds"
           >
-            <svg class="st-tab-icon" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M3.5 8.2h3.2l4.1-3.4v10.4l-4.1-3.4H3.5z" />
-              <path d="M13.6 7.4a3.6 3.6 0 0 1 0 5.2M15.8 5.3a6.5 6.5 0 0 1 0 9.4" />
-            </svg>
-            <span data-i18n="settings.tabSounds">Sounds</span>
+            Sounds
           </button>
         </div>
 
@@ -1096,160 +1124,117 @@
           id="st-panel-options"
           aria-labelledby="st-tab-options"
         >
-          <div class="st-card">
-            <div class="st-card-head">
-              <span class="st-card-num" aria-hidden="true">I</span>
-              <h3 data-i18n="settings.secReading">Reading &amp; language</h3>
-            </div>
-            <div class="st-row st-choice st-choice-block">
-              <div class="st-field-meta">
-                <span
-                  class="st-label"
-                  id="st-size-label"
-                  data-i18n="settings.textSize"
-                  >Text size</span
-                >
-                <small class="st-field-desc" data-i18n="settings.textSizeDesc">
-                  Scales dossier letters, notes, and interface labels.
-                </small>
-              </div>
-              <div
-                id="reading-size"
-                class="st-seg"
-                role="radiogroup"
-                aria-labelledby="st-size-label"
+          <div class="st-row st-choice">
+            <span
+              class="st-label"
+              id="st-size-label"
+              data-i18n="settings.textSize"
+              >Text size</span
+            >
+            <div
+              id="reading-size"
+              class="st-seg"
+              role="radiogroup"
+              aria-labelledby="st-size-label"
+            >
+              <button
+                type="button"
+                role="radio"
+                data-scale="1"
+                aria-checked="true"
+                data-i18n="settings.sizeStandard"
               >
-                <button
-                  type="button"
-                  role="radio"
-                  data-scale="1"
-                  aria-checked="true"
-                >
-                  <span class="st-seg-aa st-aa-sm" aria-hidden="true">Aa</span>
-                  <span class="st-seg-name" data-i18n="settings.sizeStandard"
-                    >Standard</span
-                  >
-                  <span class="st-seg-pct" aria-hidden="true">100%</span>
-                </button>
-                <button
-                  type="button"
-                  role="radio"
-                  data-scale="1.15"
-                  aria-checked="false"
-                >
-                  <span class="st-seg-aa st-aa-md" aria-hidden="true">Aa</span>
-                  <span class="st-seg-name" data-i18n="settings.sizeLarger"
-                    >Larger</span
-                  >
-                  <span class="st-seg-pct" aria-hidden="true">115%</span>
-                </button>
-                <button
-                  type="button"
-                  role="radio"
-                  data-scale="1.3"
-                  aria-checked="false"
-                >
-                  <span class="st-seg-aa st-aa-lg" aria-hidden="true">Aa</span>
-                  <span class="st-seg-name" data-i18n="settings.sizeLargest"
-                    >Largest</span
-                  >
-                  <span class="st-seg-pct" aria-hidden="true">130%</span>
-                </button>
-              </div>
+                Standard
+              </button>
+              <button
+                type="button"
+                role="radio"
+                data-scale="1.15"
+                aria-checked="false"
+                data-i18n="settings.sizeLarger"
+              >
+                Larger
+              </button>
+              <button
+                type="button"
+                role="radio"
+                data-scale="1.3"
+                aria-checked="false"
+                data-i18n="settings.sizeLargest"
+              >
+                Largest
+              </button>
             </div>
-
-            <div class="st-divider" aria-hidden="true"></div>
-
-            <div class="st-row st-choice st-choice-lang">
-              <div class="st-field-meta">
-                <label
-                  for="language-select"
-                  class="st-label"
-                  id="st-lang-label"
-                  data-i18n="settings.language"
-                  >Language</label
-                >
-                <small class="st-field-desc" data-i18n="settings.languageDesc">
-                  Changes the language of all case files and puzzles.
-                </small>
-              </div>
-              <div class="st-select-box" id="st-lang-box">
-                <span id="st-lang-flag" class="st-lang-flag" aria-hidden="true">
-                  <svg class="st-flag-svg" viewBox="0 0 60 30" width="18" height="11"><clipPath id="uk-clip"><path d="M0 0v30h60V0z"/></clipPath><g clip-path="url(#uk-clip)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>
-                </span>
-                <select
-                  id="language-select"
-                  class="st-select"
-                  aria-labelledby="st-lang-label"
-                >
-                  <option value="en" data-i18n="settings.langEn">English</option>
-                  <option value="ro" data-i18n="settings.langRo">Română</option>
-                  <option value="ru" data-i18n="settings.langRu">Русский</option>
-                </select>
-                <div id="st-lang-menu" class="st-lang-menu" role="listbox" aria-labelledby="st-lang-label" hidden>
-                  <button type="button" class="st-lang-item is-active" data-lang="en" role="option" aria-selected="true">
-                    <span class="st-lang-item-flag">
-                      <svg class="st-flag-svg" viewBox="0 0 60 30" width="18" height="11"><clipPath id="uk-clip-menu"><path d="M0 0v30h60V0z"/></clipPath><g clip-path="url(#uk-clip-menu)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>
-                    </span>
-                    <span class="st-lang-item-name" data-i18n="settings.langEn">English</span>
-                  </button>
-                  <button type="button" class="st-lang-item" data-lang="ro" role="option" aria-selected="false">
-                    <span class="st-lang-item-flag">
-                      <svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="1" height="2" fill="#002B7F"/><rect x="1" width="1" height="2" fill="#FCD116"/><rect x="2" width="1" height="2" fill="#CE1126"/></svg>
-                    </span>
-                    <span class="st-lang-item-name" data-i18n="settings.langRo">Română</span>
-                  </button>
-                  <button type="button" class="st-lang-item" data-lang="ru" role="option" aria-selected="false">
-                    <span class="st-lang-item-flag">
-                      <svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="3" height="0.667" fill="#ffffff"/><rect y="0.667" width="3" height="0.667" fill="#0039A6"/><rect y="1.333" width="3" height="0.667" fill="#D52B1E"/></svg>
-                    </span>
-                    <span class="st-lang-item-name" data-i18n="settings.langRu">Русский</span>
-                  </button>
-                </div>
+          </div>
+          <div class="st-row st-choice">
+            <label
+              for="language-select"
+              class="st-label"
+              id="st-lang-label"
+              data-i18n="settings.language"
+              >Language</label
+            >
+            <div class="st-select-box" id="st-lang-box">
+              <span id="st-lang-flag" class="st-lang-flag" aria-hidden="true">
+                <svg class="st-flag-svg" viewBox="0 0 60 30" width="18" height="11"><clipPath id="uk-clip"><path d="M0 0v30h60V0z"/></clipPath><g clip-path="url(#uk-clip)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>
+              </span>
+              <select
+                id="language-select"
+                class="st-select"
+                aria-labelledby="st-lang-label"
+              >
+                <option value="en" data-i18n="settings.langEn">English</option>
+                <option value="ro" data-i18n="settings.langRo">Română</option>
+                <option value="ru" data-i18n="settings.langRu">Русский</option>
+              </select>
+              <div id="st-lang-menu" class="st-lang-menu" role="listbox" aria-labelledby="st-lang-label" hidden>
+                <button type="button" class="st-lang-item is-active" data-lang="en" role="option" aria-selected="true">
+                  <span class="st-lang-item-flag">
+                    <svg class="st-flag-svg" viewBox="0 0 60 30" width="18" height="11"><clipPath id="uk-clip-menu"><path d="M0 0v30h60V0z"/></clipPath><g clip-path="url(#uk-clip-menu)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>
+                  </span>
+                  <span class="st-lang-item-name" data-i18n="settings.langEn">English</span>
+                </button>
+                <button type="button" class="st-lang-item" data-lang="ro" role="option" aria-selected="false">
+                  <span class="st-lang-item-flag">
+                    <svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="1" height="2" fill="#002B7F"/><rect x="1" width="1" height="2" fill="#FCD116"/><rect x="2" width="1" height="2" fill="#CE1126"/></svg>
+                  </span>
+                  <span class="st-lang-item-name" data-i18n="settings.langRo">Română</span>
+                </button>
+                <button type="button" class="st-lang-item" data-lang="ru" role="option" aria-selected="false">
+                  <span class="st-lang-item-flag">
+                    <svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="3" height="0.667" fill="#ffffff"/><rect y="0.667" width="3" height="0.667" fill="#0039A6"/><rect y="1.333" width="3" height="0.667" fill="#D52B1E"/></svg>
+                  </span>
+                  <span class="st-lang-item-name" data-i18n="settings.langRu">Русский</span>
+                </button>
               </div>
             </div>
           </div>
-
-          <div class="st-card st-card-manual">
-            <div class="st-card-head">
-              <span class="st-card-num" aria-hidden="true">II</span>
-              <h3 data-i18n="settings.secManual">
-                Help &amp; progress
-              </h3>
-            </div>
-            <div class="st-actions">
-              <button
-                id="btn-howto"
-                class="st-link"
-                type="button"
-                data-tip="How the game is played"
-                data-i18n-tip="settings.howtoTip"
+          <div class="st-actions">
+            <button
+              id="btn-howto"
+              class="st-link"
+              type="button"
+              data-tip="How the game is played"
+              data-i18n="settings.howto"
+              data-i18n-tip="settings.howtoTip"
+            >
+              How to play
+            </button>
+            <button
+              id="btn-new"
+              class="st-danger"
+              type="button"
+              data-tip="Forget everything and start the house again"
+              data-i18n-tip="settings.resetTip"
+            >
+              <span data-reset-label data-i18n="settings.reset"
+                >Reset game</span
               >
-                <svg class="st-action-icon" viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M3 4.5A2.5 2.5 0 0 1 5.5 2H10v14.5H5.5A2.5 2.5 0 0 0 3 19zM17 4.5A2.5 2.5 0 0 0 14.5 2H10v14.5h4.5A2.5 2.5 0 0 1 17 19z" />
-                </svg>
-                <span data-i18n="settings.howto">How to play</span>
-              </button>
-              <button
-                id="btn-new"
-                class="st-danger"
-                type="button"
-                data-tip="Forget everything and start the house again"
-                data-i18n-tip="settings.resetTip"
-              >
-                <svg class="st-action-icon" viewBox="0 0 20 20" aria-hidden="true">
-                  <circle cx="10" cy="10" r="7" />
-                  <path d="M10 6.5v4.2M10 13.4h.01" />
-                </svg>
-                <span data-reset-label data-i18n="settings.reset"
-                  >Reset game</span
-                >
-              </button>
-            </div>
-            <p class="st-note" data-i18n="settings.resetNote">
-              Reset clears all progress and starts the house again.
-            </p>
+            </button>
           </div>
+          <p class="st-note" data-i18n="settings.resetNote">
+            Reset clears all progress and starts the house again.
+          </p>
         </section>
 
         <section
@@ -1259,82 +1244,45 @@
           aria-labelledby="st-tab-video"
           hidden
         >
-          <div class="st-card">
-            <div class="st-card-head">
-              <span class="st-card-num" aria-hidden="true">I</span>
-              <h3 data-i18n="settings.secOptics">Picture</h3>
-            </div>
-            <div class="st-row st-fader-row st-grain-block">
-              <div class="st-fader-top">
-                <div class="st-field-meta">
-                  <label for="grain-slider" data-i18n="settings.grain"
-                    >Film grain</label
-                  >
-                  <small class="st-field-desc" data-i18n="settings.grainDesc">
-                    Adds a subtle film texture to the picture.
-                  </small>
-                </div>
-                <output
-                  id="grain-value"
-                  for="grain-slider"
-                  data-i18n="settings.grainOff"
-                  >Off</output
-                >
-              </div>
-              <div class="st-fader-track-wrap">
-                <input
-                  id="grain-slider"
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value="0"
-                />
-                <div class="st-scale-ticks" aria-hidden="true">
-                  <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
-                </div>
-              </div>
-            </div>
+          <div class="st-row">
+            <label for="grain-slider" data-i18n="settings.grain"
+              >Film grain</label
+            >
+            <input
+              id="grain-slider"
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value="0"
+            />
+            <output
+              id="grain-value"
+              for="grain-slider"
+              data-i18n="settings.grainOff"
+              >Off</output
+            >
           </div>
-
-          <div class="st-card">
-            <div class="st-card-head">
-              <span class="st-card-num" aria-hidden="true">II</span>
-              <h3 data-i18n="settings.secComfort">
-                Motion &amp; effects
-              </h3>
-            </div>
-            <label class="st-row st-switch" for="motion-setting">
-              <span class="st-label"
-                ><span class="st-switch-title" data-i18n="settings.reduceMotion"
-                  >Reduce motion</span
-                ><small id="motion-note" data-i18n="settings.motionStay"
-                  >Puzzle signals stay.</small
-                ></span
-              >
-              <input id="motion-setting" type="checkbox" role="switch" />
-              <span class="st-knob" aria-hidden="true"></span>
-            </label>
-            <div class="st-divider" aria-hidden="true"></div>
-            <label class="st-row st-switch" for="ambient-effects">
-              <span class="st-label"
-                ><span
-                  class="st-switch-title"
-                  data-i18n="settings.ambientEffects"
-                  >Ambient effects</span
-                ><small data-i18n="settings.ambientDesc"
-                  >Dust, smoke, flicker, drifting light.</small
-                ></span
-              >
-              <input
-                id="ambient-effects"
-                type="checkbox"
-                role="switch"
-                checked
-              />
-              <span class="st-knob" aria-hidden="true"></span>
-            </label>
-          </div>
+          <label class="st-row st-switch" for="motion-setting">
+            <span class="st-label"
+              ><span data-i18n="settings.reduceMotion">Reduce motion</span
+              ><small id="motion-note" data-i18n="settings.motionStay"
+                >Puzzle signals stay.</small
+              ></span
+            >
+            <input id="motion-setting" type="checkbox" role="switch" />
+            <span class="st-knob" aria-hidden="true"></span>
+          </label>
+          <label class="st-row st-switch" for="ambient-effects">
+            <span class="st-label"
+              ><span data-i18n="settings.ambientEffects">Ambient effects</span
+              ><small data-i18n="settings.ambientDesc"
+                >Dust, smoke, flicker, drifting light.</small
+              ></span
+            >
+            <input id="ambient-effects" type="checkbox" role="switch" checked />
+            <span class="st-knob" aria-hidden="true"></span>
+          </label>
         </section>
 
         <section
@@ -1344,123 +1292,88 @@
           aria-labelledby="st-tab-sounds"
           hidden
         >
-          <div class="st-card st-sound-card">
-            <div class="st-card-head st-sound-head">
-              <div class="st-card-head-left">
-                <span class="st-card-num" aria-hidden="true">I</span>
-                <h3 data-i18n="settings.secChannels">
-                  Volume
-                </h3>
-              </div>
-              <span class="st-console-spec" aria-hidden="true">5-CH · 600Ω</span>
-            </div>
-
-            <div class="st-row st-channel-row st-channel-master" data-ch="01">
-              <label for="master-slider" data-i18n="settings.master"
-                >Master</label
+          <div class="st-row">
+            <label for="master-slider" data-i18n="settings.master"
+              >Master</label
+            >
+            <input
+              type="range"
+              id="master-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="1"
+            />
+            <output id="master-slider-value" for="master-slider">100%</output>
+          </div>
+          <div class="st-row">
+            <label for="music-slider" data-i18n="settings.music">Music</label>
+            <input
+              type="range"
+              id="music-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.5"
+            />
+            <output id="music-value" for="music-slider">50%</output>
+          </div>
+          <div class="st-row">
+            <label for="ambience-slider" data-i18n="settings.ambience"
+              >Ambience</label
+            >
+            <input
+              type="range"
+              id="ambience-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.7"
+            />
+            <output id="ambience-value" for="ambience-slider">70%</output>
+          </div>
+          <div class="st-row">
+            <label for="sfx-slider" data-i18n="settings.sfx">Effects</label>
+            <input
+              type="range"
+              id="sfx-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.8"
+            />
+            <output id="sfx-value" for="sfx-slider">80%</output>
+          </div>
+          <div class="st-row">
+            <label for="ui-slider" data-i18n="settings.ui">Interface</label>
+            <input
+              type="range"
+              id="ui-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.6"
+            />
+            <output id="ui-value" for="ui-slider">60%</output>
+          </div>
+          <div class="st-row st-mute-row">
+            <span class="st-label" data-i18n="settings.everything"
+              >Everything</span
+            >
+            <button
+              id="btn-mute"
+              class="st-mute"
+              type="button"
+              aria-pressed="false"
+              data-tip="Silence every sound"
+              data-i18n-tip="settings.muteTip"
+            >
+              <span data-audio-label data-i18n="settings.muteAll"
+                >Mute all</span
               >
-              <div class="st-slider-slot">
-                <input
-                  type="range"
-                  id="master-slider"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="1"
-                />
-              </div>
-              <output id="master-slider-value" for="master-slider">100%</output>
-            </div>
-
-            <div class="st-divider st-master-divider" aria-hidden="true"></div>
-
-            <div class="st-row st-channel-row" data-ch="02">
-              <label for="music-slider" data-i18n="settings.music">Music</label>
-              <div class="st-slider-slot">
-                <input
-                  type="range"
-                  id="music-slider"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0.5"
-                />
-              </div>
-              <output id="music-value" for="music-slider">50%</output>
-            </div>
-            <div class="st-row st-channel-row" data-ch="03">
-              <label for="ambience-slider" data-i18n="settings.ambience"
-                >Ambience</label
-              >
-              <div class="st-slider-slot">
-                <input
-                  type="range"
-                  id="ambience-slider"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0.7"
-                />
-              </div>
-              <output id="ambience-value" for="ambience-slider">70%</output>
-            </div>
-            <div class="st-row st-channel-row" data-ch="04">
-              <label for="sfx-slider" data-i18n="settings.sfx">Effects</label>
-              <div class="st-slider-slot">
-                <input
-                  type="range"
-                  id="sfx-slider"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0.8"
-                />
-              </div>
-              <output id="sfx-value" for="sfx-slider">80%</output>
-            </div>
-            <div class="st-row st-channel-row" data-ch="05">
-              <label for="ui-slider" data-i18n="settings.ui">Interface</label>
-              <div class="st-slider-slot">
-                <input
-                  type="range"
-                  id="ui-slider"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0.6"
-                />
-              </div>
-              <output id="ui-value" for="ui-slider">60%</output>
-            </div>
-
-            <div class="st-row st-mute-row">
-              <span class="st-label" data-i18n="settings.everything"
-                >Everything</span
-              >
-              <button
-                id="btn-mute"
-                class="st-mute"
-                type="button"
-                aria-pressed="false"
-                data-tip="Silence every sound"
-                data-i18n-tip="settings.muteTip"
-              >
-                <span class="st-mute-led" aria-hidden="true"></span>
-                <span data-audio-label data-i18n="settings.muteAll"
-                  >Mute all</span
-                >
-              </button>
-            </div>
+            </button>
           </div>
         </section>
-
-        <footer class="st-cabinet-foot" aria-hidden="true">
-          <span class="st-foot-stamp" data-i18n="settings.footerStamp"
-            >Devon &amp; Cornwall Constabulary · Form 61-B</span
-          >
-          <span class="st-foot-serial">REF. AM-1961-XI</span>
-        </footer>
-        </div>
       </div>
     </div>
 

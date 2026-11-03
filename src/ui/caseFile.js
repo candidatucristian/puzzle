@@ -271,6 +271,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   // for the player to open; any other letter arrives as soon as nothing else is on
   function reveal(id) {
     if (!unlock(id)) return;
+    void sounds?.prepareSealBreak?.();
     if (WAITS.includes(id)) { renderWaiting(id); sounds?.ping(); return; }
     queue.push(id);
     flush();

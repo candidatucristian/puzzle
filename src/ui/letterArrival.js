@@ -39,7 +39,7 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
     const file=el('button','arrival-file',text('casefile.fileLetter','File it in the case file'));
     file.type='button';file.disabled=true;
     root.append(veil,stage,env,caption,hint,sheet,file);document.body.append(root);
-    let state='',native=null,plain=false,typist=null,recording=null,completeMotion=null;
+    let state='',native=null,plain=false,typist=null,recording=null,sealSound=null,completeMotion=null;
     const alive=()=>!life.closed;
     const stateTo=value=>{state=value;root.dataset.state=value;};
     const move=(node,frames,options)=>{
@@ -67,7 +67,7 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
     life.on(window,'resize',fit);
     const finish=how=>{
       if(!alive())return;
-      stateTo('gone');typist?.stop();recording?.stop();completeMotion?.();
+      stateTo('gone');typist?.stop();recording?.stop();sealSound?.stop();
       for(const a of moves)a.cancel();
       life.dispose();native?.dispose();native=null;root.remove();
       waiting?.classList.remove('is-in-flight');scope.cleanups.delete(parentCleanup);
@@ -82,7 +82,7 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       const complete=()=>{
         if(ended)return;ended=true;
         if(raf!==null)cancelAnimationFrame(raf);
-        if(alive()){native?.pose(to);root.dataset.progress=String(to/animation.duration);}
+        if(alive()){native?.pose(to);root.dataset.progress=String(to/animation.duration);onFrame?.(to,true);}
         if(completeMotion===complete)completeMotion=null;
         life.cleanups.delete(cancel);done();
       };
@@ -113,13 +113,17 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       if(!alive()||state!=='waiting')return;
       stateTo('opening');env.disabled=true;root.focus({preventScroll:true});
       void hide(hint,180);void hide(caption,500);
+      await sounds?.prepareSealBreak?.();
+      if(!alive())return;
       recording=sounds?.letterOpen?.()??null;
       const cues=Object.entries(animation.cues).sort((a,b)=>a[1]-b[1]);
-      await pose(animation.arrival,animation.duration,(animation.duration-animation.arrival)*1000,time=>{
+      await pose(animation.arrival,animation.duration,(animation.duration-animation.arrival)*1000,(time,jumped=false)=>{
+        if(jumped)recording?.stop();
         while(cues.length&&cues[0][1]<=time){
           const name=cues.shift()[0];
-          if(recording?.present)continue;
-          if(name==='crack')sounds?.crack?.();else if(name==='open')sounds?.open?.();
+          if(name==='crack'){sealSound=sounds?.sealBreak?.()??null;if(!sealSound)sounds?.crack?.();continue;}
+          if(jumped||recording?.present)continue;
+          if(name==='open')sounds?.open?.();
           else if(name==='slide')sounds?.page?.(true);else if(name.startsWith('unfold'))sounds?.unfold?.();
         }
       });
@@ -153,6 +157,7 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       }
     });
     stateTo('preparing');root.focus({preventScroll:true});
+    void sounds?.prepareSealBreak?.();
     void(async()=>{
       try{const m=await stageModule();native=await m.createLetterStage(canvas);}catch{native=null;}
       if(!alive()){native?.dispose();native=null;return;}

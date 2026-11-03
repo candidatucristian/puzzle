@@ -1,6 +1,5 @@
-// The sounds of paper, made rather than recorded: what a letter does on its
-// way into the case file. Each is noise shaped and filtered, or a few pure
-// tones — quiet, close, dry. At the effects' volume, under the master volume
+// Close, dry paper sounds, plus the supplied sigilbreak.mp3 recording for the
+// wax fracture. At the effects' volume, under the master volume
 // and mute; silent until the page has been played with (the audio context
 // runs only after a gesture).
 //
@@ -16,6 +15,31 @@
 //            carriage thrown back; returns { stop() }
 
 export function mountPaperSounds({ game, audio }) {
+  const sealURL = `${import.meta.env.BASE_URL}assets/sounds/sigilbreak.mp3`;
+  let sealPreparation = null, sealBuffer = null, sealOffset = 0;
+  const sealPlaybacks = new Set();
+  // Decode before opening. Removing only the leading silence/MP3 padding makes
+  // the recorded fracture start on the Blender rig's crack frame.
+  const prepareSealBreak = () => {
+    if (!game.sound?.context) return Promise.resolve(null);
+    sealPreparation ??= fetch(sealURL).then(response => {
+      if (!response.ok) throw new Error('Seal recording unavailable');
+      return response.arrayBuffer();
+    }).then(bytes => game.sound.context.decodeAudioData(bytes)).then(buffer => {
+      sealBuffer = buffer;
+      let peak = 0;
+      const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
+      for (const channel of channels) for (const sample of channel) peak = Math.max(peak, Math.abs(sample));
+      const threshold = Math.max(.001, peak * .012);
+      let first = 0;
+      outer: for (; first < buffer.length; first++) {
+        for (const channel of channels) if (Math.abs(channel[first]) >= threshold) break outer;
+      }
+      sealOffset = first < buffer.length ? Math.max(0, (first - 64) / buffer.sampleRate) : 0;
+      return buffer;
+    }).catch(() => { sealPreparation = null; return null; });
+    return sealPreparation;
+  };
   // This optional MP4 container is consumed by an Audio element only. The
   // letter's picture and motion always come from the Blender mesh rig.
   const recordingURL=`${import.meta.env.BASE_URL}assets/sounds/letter-open.mp4`;
@@ -65,6 +89,27 @@ export function mountPaperSounds({ game, audio }) {
     }
   }
   const swell = (k) => Math.sin(Math.PI * k) ** 1.5;
+  function crack() {
+    noise({ dur: .05, type: 'highpass', freq: 1800, gain: .5, env: k => (1 - k) ** 4 });
+    for (let i = 0; i < 5; i++) noise({ at: .03 + i * .03, dur: .03, type: 'bandpass', freq: 2600, q: 2, gain: .18, env: k => (1 - k) ** 2 });
+  }
+  function sealBreak() {
+    const c = ctx(); if (!c) return { stop() {} };
+    if (!sealBuffer) { crack(); return { stop() {} }; }
+    const source = c.ac.createBufferSource(), gain = c.ac.createGain();
+    source.buffer = sealBuffer; source.connect(gain).connect(c.out);
+    const volume = () => { const state = audio?.state; gain.gain.value = state?.muted ? 0 : (state?.sfxVol ?? .8); };
+    volume(); const unsubscribe = audio?.subscribe(volume);
+    let stopped = false;
+    const playback = { stop() {
+      if (stopped) return; stopped = true; unsubscribe?.();
+      try { source.stop(); } catch { /* Already ended. */ }
+      source.disconnect(); gain.disconnect(); sealPlaybacks.delete(playback);
+    } };
+    source.onended = () => playback.stop(); sealPlaybacks.add(playback);
+    source.start(c.ac.currentTime, sealOffset);
+    return playback;
+  }
   function letterOpen() {
     let media=null,source=null,gain=null,unsubscribe=null,stopped=false;
     const playback={
@@ -136,16 +181,14 @@ export function mountPaperSounds({ game, audio }) {
     };
   }
   return {
-    prepareLetterOpen,letterOpen,
+    prepareLetterOpen,letterOpen,prepareSealBreak,sealBreak,
+    dispose() { for (const playback of [...sealPlaybacks]) playback.stop(); },
     whoosh() { noise({ dur: 0.55, freq: 2600, to: 500, q: 0.8, gain: 0.32, env: swell }); },
     land() {
       noise({ dur: 0.12, type: "lowpass", freq: 420, gain: 0.55, env: (k) => (1 - k) ** 3 });
       noise({ at: 0.01, dur: 0.18, type: "highpass", freq: 3000, gain: 0.08, env: (k) => (1 - k) ** 2 });
     },
-    crack() {
-      noise({ dur: 0.05, type: "highpass", freq: 1800, gain: 0.5, env: (k) => (1 - k) ** 4 });
-      for (let i = 0; i < 5; i++) noise({ at: 0.03 + i * 0.03 + Math.random() * 0.02, dur: 0.03, type: "bandpass", freq: 2200 + Math.random() * 2400, q: 2, gain: 0.18, env: (k) => (1 - k) ** 2 });
-    },
+    crack,
     open() { noise({ dur: 0.45, type: "bandpass", freq: 3800, to: 1600, q: 0.7, gain: 0.14, env: (k) => swell(k) * (0.6 + 0.4 * Math.random()) }); },
     // a leaf of a book turned over (the manual's)
     page(quick = false) { noise({ dur: quick ? 0.22 : 0.5, type: "bandpass", freq: 2000, to: 1500, q: 0.7, gain: quick ? 0.12 : 0.2, env: (k) => Math.sin(Math.PI * k) ** 1.6 * (0.6 + 0.4 * Math.random()) }); },

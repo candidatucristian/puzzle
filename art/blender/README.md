@@ -1,5 +1,37 @@
 # Blender artwork
 
+## Room II — original library with updated materials
+
+`room_library_restored.py` uses the original `room_library.py` camera,
+architecture and furnishings, with the newer worn wood, leather, velvet
+and brass materials. The walls retain their full-height walnut panelling;
+the bookcases, central table, red curtains and two windows keep their
+original positions. `library_coffer_pass.py` renders thirteen coffer poses
+in the room's light. The publisher installs only Room II's assets and
+camera-projected interactions. See
+[library-restored-sources.md](library-restored-sources.md) for sources and rebuilding.
+
+`room_library_polished.py` (2026-11-01) is the room in the game, render v5
+and coffer v6. It builds `room_library_restored.py`'s room exactly, with
+the same camera, furniture and matte surfaces, so `room.json` comes out
+identical. It then lights it properly:
+- **The green lamp** is lit at 70 W with a small bulb, and its glass glows.
+  Light linking keeps its own brass stem out of the bulb's light, which
+  would otherwise burn white ten centimetres off.
+- **The bounce:** the lamp's light comes back warm off the ceiling through
+  a broad area light (60 W, invisible to the camera and to reflections). The
+  shelves and panelling read, and nothing is a hot spot.
+- **The moon** stays at the windows.
+- **The books** have their edges rounded a little, so each spine catches
+  the light.
+
+```powershell
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_library_polished.py -- --only preview --width 1600 --samples 128   # a quick look
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_library_polished.py -- --only plate,coffer                       # 3200 px, 512 samples
+node art/blender/room_library_v3_publish.mjs --source .artifacts/room-library-polished --version 5 --coffer-version 6
+```
+`--lamp`, `--bounce`, `--shade` and `--exposure` tune the light.
+
 ## Gold coffer and trefoil key
 
 `gold_coffer_model.py` supplies the detailed hollow coffer to every room.
@@ -681,30 +713,55 @@ running a test suite or changing game progress.
 ## The Inspector's Desk: case file, notebook, settings (2026-10-31)
 
 These replace the archive tools above, whose stylesheets are no longer loaded.
-Each is a photograph from straight above of Inspector Wren's old oak desk
-under its lamp. The scans and models are CC0: Poly Haven `wood_table_worn`,
-`brown_leather`, a tea set, a pocket watch, a camera and a clipboard;
-ambientCG `Paper001/002/004/006` and `Leather037`. The game types and writes on the paper.
+Each is a photograph from straight above, under Inspector Wren's lamp, and
+the game types and writes on the paper.
 
-- **casefile**: fills the screen. A ribbed manila folder with its red string
-  tie undone. On the left, the minute sheet (the index), with CONFIDENTIAL
-  stamped and a police photograph of the hall under it. On the right, the
-  letters under a brass fastener and a clip. Around it: tea, a pocket watch,
-  a pen, a pencil, a camera, a second photograph and an index card.
-- **notebook**: the pocket book alone, with no desk behind it, fading in over
-  the game (1600 px wide). It has a plain cover of pebbled leather (ambientCG
-  `Leather037` for its grain, coloured in the shader: `--cover black|green|oxblood`,
-  black by default). The cover has rounded corners, rolled rims rubbed paler,
-  and its head folded back in one roll. There is no stitching and no elastic.
-  The leaf is squared with no margin rule, and there is a grosgrain ribbon.
-  The pencil is modelled whole: six lacquered faces with rounded corners, the
-  maker's name in gold leaf, and a cone of cedar cut by the knife with the
-  paint scalloped where it meets each face. The lead glints, the brass ferrule
-  is ribbed twice, and the rubber is worn to a dome. The saved pages are
-  manila tags out from under the cover on the left (CSS, not rendered).
-  `--name` writes the picture under another name, for trying covers side by side.
-- **settings**: fills the screen. A form on a clipboard with three parts along
-  its head; the open one is ringed in pencil. Around it are other things.
+The case file and the notebook are each one of his things alone (since
+2026-11-01). Each one's shadow is kept on a transparent ground, so it lies
+over the game and fades in and out there. Both are bound in the same black
+leather (ambientCG `Leather037` for its grain; `--cover` changes its colour),
+on CC0 ambientCG `Paper001/002`. The clips, the pencil and the brass are
+modelled in the script. Their light is shared (`book_light`). Brass and steel
+also get an overhead glow linked to them alone (`metal_light`), so their flat
+faces don't mirror black and the leather isn't greyed by it.
+
+The settings are not drawn any more. Since 2026-11-01 they are the game's
+own plain dark sheet again, as on 2026-10-23: index.html's markup from then,
+styled by house-tools.css. On that day a black clipboard alone was tried,
+then the clipboard on the whole desk, and the user chose the plain sheet.
+The desk scene (`--only settings`: CC0 Poly Haven `wood_table_worn`, a tea
+set, a pocket watch, a camera and a clipboard) is kept in the script, and
+its picture is still published, though nothing in the game shows it.
+
+- **casefile**: the Ashcombe file alone and open, in the middle of the game
+  (2400 px wide). Two leather boards with a soft hinge between them. On the
+  left is the minute sheet (the index), with CONFIDENTIAL stamped on it, a
+  police photograph of the hall out from under its head, and a clip. On the
+  right are the letters under a brass fastener and a clip. Over them, the
+  file's number (61 / 1013) is typed on a card in a riveted brass frame.
+- **notebook** (since 2026-11-01, after a Gemini sketch the user liked): a
+  spiral notebook open flat, alone in the middle of the game (2000 px wide).
+  - **Covers:** two black leather boards (`--cover` as above) with the strip
+    of the back between them.
+  - **Leaves and coil:** under each open leaf lies a stack of leaves. A turn
+    of steel wire passes through each of the 24 holes punched down the inner
+    edges (`spiral-notes` and `spiral-sketch` in inspector_prints.mjs).
+  - **Left leaf:** plain. The game rules its lines in CSS, so they scroll
+    with the words.
+  - **Right leaf:** squared 5 mm.
+  - **Plaque:** a little black leather plaque in a brass frame, riveted at
+    its corners, lies over its head. The game lays its four tools on it: write,
+    sketch, rub out, and measure (a ruler for straight lines).
+  - **Saved pages:** index tabs out from its right edge (CSS). First comes
+    "+ new page", then this puzzle's own page, then the saved ones.
+  - **For the game:** the JSON gives four regions: `left`, `right`, `bar`
+    and `tabs`.
+  - **Old pieces:** the earlier pocket book's modelled pencil (`fine_pencil`)
+    stays in the script, unplaced.
+  - **Trying variants:** `--name` writes the picture under another name.
+- **settings** (not used in the game): fills the screen. A form on a
+  clipboard with three parts along its head; the open one is ringed in
+  pencil. Around it are other things.
 
 ```powershell
 node art/blender/inspector_prints.mjs           # what is printed, typed, stamped on them

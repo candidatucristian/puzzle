@@ -17,7 +17,7 @@ const OUT = path(`public/assets/images/InspectorDesk/v${VERSION}`);
 mkdirSync(OUT, { recursive: true });
 
 // name, its key in the CSS, the width it is published at
-const scenes = [["casefile", "file", 2880], ["notebook", "book", 1600], ["settings", "set", 2880]];
+const scenes = [["casefile", "file", 2400], ["notebook", "book", 2000], ["settings", "set", 2880]];
 const pct = (v) => `${(v * 100).toFixed(3)}%`;
 const lines = [];
 for (const [name, key, width] of scenes) {

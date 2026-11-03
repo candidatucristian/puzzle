@@ -1,6 +1,7 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { makeMoonTexture } from "../../shared/moon.js";
 import { loadFibonacciRender, fibonacciSkeleton, fibonacciLeafDefinitions } from "./blenderPlant.js";
+import { attachMovableSparkles } from '../../shared/movableSparkles.js';
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
   paintPlantArt,
@@ -348,6 +349,15 @@ export default class PlantPotScene extends BasePuzzleScene {
     if (!this.isSolved && this.currentStep < 5) {
       this.bucket.setInteractive({ cursor: "grab" });
       this.input.setDraggable(this.bucket);
+    }
+    if (L.blender) {
+      this._bucketCue = attachMovableSparkles(this, this.bucket, {
+        enabled: () => this._built && !this.isSolved && !this.isAnimating && this.currentStep < 5 && this.ambientEffects,
+        padding: -2,
+        strength: .72,
+        drifting: false,
+        anchorCount: 2,
+      });
     }
   }
 
@@ -767,6 +777,7 @@ export default class PlantPotScene extends BasePuzzleScene {
   // grown as it was — a pour caught halfway is simply finished
   _teardown() {
     this._built = false;
+    this._bucketCue?.(); this._bucketCue = null;
     if (this._pouring !== null && this._pouring !== undefined) {
       this.currentStep = this._pouring + 1;
       this._pouring = null;

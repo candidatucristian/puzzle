@@ -1,0 +1,88 @@
+/* A typographic document, shared by the in-game reader and the printed PDF. */
+.db-document { --db-ink:#29352d; --db-muted:#746d5b; --db-gold:#a18551; --db-paper:#f5f1e7; color:var(--db-ink); font-family:"Cormorant Garamond",Georgia,serif; font-size:18px; line-height:1.4; }
+.db-document *, .db-document *::before, .db-document *::after { box-sizing:border-box; }
+.db-page { position:relative; display:flex; flex-direction:column; width:210mm; max-width:100%; min-height:297mm; margin:0 auto 28px; padding:53px 62px 35px; background:var(--db-paper); box-shadow:0 12px 48px #0005; }
+.db-page::before { content:""; position:absolute; inset:17px; border:1px solid #a1855140; pointer-events:none; }
+.db-document p { margin:0 0 15px; }
+.db-document h2, .db-document h3 { font-family:inherit; color:var(--db-ink); font-weight:500; letter-spacing:-.02em; }
+.db-document h3 { font-size:23px; line-height:1.12; margin:0 0 9px; }
+.db-eyebrow, .db-small-label, .db-page-footer, .db-cover-subtitle, .db-skills, .db-count-table thead, .db-certificate-record span { font-family:"IBM Plex Sans",Arial,sans-serif; font-size:10px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; line-height:1.55; }
+.db-document .db-eyebrow { color:var(--db-muted); margin-bottom:13px; }
+.db-section-header { border-bottom:1px solid #a1855159; padding-bottom:20px; margin-bottom:22px; }
+.db-section-header h2 { font-size:47px; line-height:.99; margin:0; max-width:590px; }
+.db-document .db-intro { font-size:21px; line-height:1.35; margin-bottom:21px; }
+.db-page-footer { display:flex; justify-content:space-between; gap:12px; color:var(--db-muted); border-top:1px solid #a1855159; padding-top:12px; margin-top:auto; }
+.db-certificate { text-align:center; }
+.db-cover-heading { padding:8px 0 17px; border-bottom:1px solid #a1855159; }
+.db-document .db-book-name { font-size:50px; line-height:1; margin:0 0 12px; letter-spacing:-.035em; }
+.db-document .db-cover-subtitle { color:var(--db-muted); margin:0; }
+.db-cover-centre { padding-top:36px; }
+.db-edition { display:grid; place-items:center; width:59px; height:59px; margin:0 auto 21px; border:1px solid var(--db-gold); border-radius:50%; color:var(--db-gold); font-size:29px; }
+.db-document .db-award-name { font-size:25px; font-style:italic; color:#776342; margin-bottom:0; }
+.db-document .db-fibonacci-title { font-size:104px; font-weight:500; letter-spacing:-.055em; line-height:1; margin:2px 0 5px; }
+.db-document .db-cover-theme { font-size:24px; margin:0 0 18px; color:var(--db-muted); }
+.db-spiral { display:block; width:100%; overflow:visible; }
+.db-spiral rect { stroke:#9a855e; stroke-width:.65; vector-effect:non-scaling-stroke; fill:#ded6bf2b; }
+.db-spiral .db-square-1,.db-spiral .db-square-3,.db-spiral .db-square-5 { fill:#7a8b7712; }
+.db-spiral path { stroke:#8d6c35; stroke-width:1.7; vector-effect:non-scaling-stroke; fill:none; }
+.db-spiral text { fill:#606c56; font-family:"Cormorant Garamond",Georgia,serif; text-anchor:middle; }
+.db-spiral-cover { width:290px; max-width:80%; margin:0 auto 22px; }
+.db-document .db-certificate-statement { max-width:470px; margin:0 auto 19px; font-size:21px; line-height:1.35; }
+.db-skills { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:15px; color:var(--db-muted); }
+.db-skills i { font-style:normal; color:var(--db-gold); }
+.db-certificate-record { display:grid; grid-template-columns:1fr 1fr; gap:25px; border-top:1px solid #a1855159; margin-top:33px; padding-top:17px; }
+.db-certificate-record div { display:flex; flex-direction:column; gap:5px; }
+.db-certificate-record span { color:var(--db-muted); }
+.db-certificate-record strong { font-size:19px; font-weight:500; }
+.db-document .db-cover-note { color:var(--db-muted); font-style:italic; font-size:17px; max-width:440px; margin:24px auto; }
+.db-observed-sequence { display:grid; grid-template-columns:repeat(5,1fr); margin:4px 0 20px; padding:13px 0 16px; border-top:1px solid #a1855140; border-bottom:1px solid #a1855140; }
+.db-observed-sequence div { text-align:center; border-right:1px solid #a1855138; }
+.db-observed-sequence div:last-child { border:0; }
+.db-observed-sequence span { display:block; color:var(--db-muted); font:10px "IBM Plex Mono",monospace; }
+.db-observed-sequence strong { font-size:51px; font-weight:500; line-height:1.1; }
+.db-count-table { width:100%; border-collapse:collapse; font-size:18px; margin:0 0 23px; }
+.db-count-table th,.db-count-table td { text-align:center; padding:5px 9px; border-bottom:1px solid #a185512b; }
+.db-count-table tbody th { color:var(--db-muted); font-weight:400; }
+.db-count-table td:nth-child(2) { font-weight:600; color:#53664e; }
+.db-count-table thead th { font-weight:500; color:var(--db-muted); padding:0 6px 8px; }
+.db-solve-steps { list-style:none; display:grid; gap:13px; padding:0; margin:0 0 22px; }
+.db-solve-steps li { display:grid; grid-template-columns:30px 1fr; gap:10px; }
+.db-step-number { font:11px "IBM Plex Mono",monospace; color:var(--db-gold); padding-top:4px; }
+.db-solve-steps h3 { font-size:21px; margin-bottom:2px; }
+.db-solve-steps p { margin:0; font-size:17px; }
+.db-note { border-left:2px solid #a1855180; padding:5px 0 5px 16px; margin:0 0 19px; }
+.db-note h3 { font-size:22px; margin-bottom:5px; }
+.db-note p { font-size:17px; margin:0; }
+.db-document .db-takeaway { font-size:20px; font-style:italic; color:#5f6b55; }
+.db-equation { font-size:45px; line-height:1.15; text-align:center; padding:19px 0; margin-bottom:19px; color:#53664e; border-block:1px solid #a1855140; }
+.db-document .db-small-label { color:var(--db-muted); margin:22px 0 6px; }
+.db-document .db-number-line { font-size:23px; margin:0 0 18px; word-spacing:3px; }
+.db-additions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding-bottom:23px; margin-bottom:23px; border-bottom:1px solid #a1855140; font-size:21px; }
+.db-additions b { color:#53664e; font-weight:600; }
+.db-two-columns { display:grid; grid-template-columns:1fr 1fr; gap:27px; margin:0 0 21px; }
+.db-two-columns p { font-size:17px; margin-bottom:12px; }
+.db-document pre { white-space:pre-wrap; overflow-wrap:anywhere; border-block:1px solid #a1855140; padding:14px 0; margin:15px 0 10px; color:#53664e; font:12px/1.7 "IBM Plex Mono",monospace; }
+.db-document .db-caption, .db-document figcaption { color:var(--db-muted); font-size:14px; line-height:1.38; }
+.db-pattern { margin:0 0 13px; }
+.db-pattern .db-spiral { width:390px; max-width:100%; margin:0 auto 9px; height:205px; }
+.db-pattern figcaption { text-align:center; }
+.db-visual-page .db-two-columns { margin-top:19px; margin-bottom:13px; }
+.db-document .db-ratios { font:12px/1.6 "IBM Plex Mono",monospace; color:#53664e; }
+.db-practice { border-top:1px solid #a1855140; padding-top:14px; margin-bottom:14px; }
+.db-practice h3 { font-size:23px; }
+.db-practice p { font-size:16px; margin:0 0 8px; }
+.db-practice strong { font-weight:600; }
+.db-sources { margin:0 0 18px; }
+.db-sources h3 { font-size:18px; margin-bottom:5px; }
+.db-sources ol { margin:0; padding-left:16px; }
+.db-sources li { font:10px/1.7 "IBM Plex Sans",Arial,sans-serif; }
+.db-document a { color:#716039; text-decoration-thickness:1px; text-underline-offset:2px; }
+.db-reference { font:9px "IBM Plex Sans",Arial,sans-serif; vertical-align:super; white-space:nowrap; }
+.db-document :focus-visible { outline:2px solid #8d6c35; outline-offset:3px; }
+@page { size:A4; margin:0; }
+@media print {
+  html,body { margin:0; padding:0; background:white; }
+  .db-document { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .db-page { width:210mm; max-width:none; height:297mm; min-height:0; margin:0; box-shadow:none; break-after:page; }
+  .db-page:last-child { break-after:auto; }
+}

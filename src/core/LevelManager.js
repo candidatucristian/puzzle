@@ -8,6 +8,7 @@ export class LevelManager {
   #game = null;
   #currentIndex;
   #subscribers = new Set();
+  #solvedSubscribers = new Set();
   #place = null;
   #places;
 
@@ -256,6 +257,7 @@ export class LevelManager {
     else if (isLast) nextIndex = this.definitions.findIndex((_, index) =>
       this.canAccess(index) && !this.isCompleted(index));
     this.#notify();
+    for (const listener of this.#solvedSubscribers) listener(level.id);
     return { correct: true, isLast, nextIndex };
   }
 
@@ -268,6 +270,11 @@ export class LevelManager {
   subscribe(callback) {
     this.#subscribers.add(callback);
     return () => this.#subscribers.delete(callback);
+  }
+
+  onSolved(callback) {
+    this.#solvedSubscribers.add(callback);
+    return () => this.#solvedSubscribers.delete(callback);
   }
 
   #notify() {
