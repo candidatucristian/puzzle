@@ -26,6 +26,8 @@ class LetterStage {
     this.baseFov=this.camera.fov;
     this.envelope=this.scene.getObjectByName('envelope');
     this.letter=this.scene.getObjectByName('letter');
+    this.sealIntact=this.scene.getObjectByName('seal_intact')??this.scene.getObjectByName('seal intact');
+    this.sealFragments=['seal pocket','seal flap'].map(name=>this.scene.getObjectByName(name.replaceAll(' ','_'))??this.scene.getObjectByName(name)).filter(Boolean);
     const envelopeTrack=gltf.animations.flatMap(clip=>clip.tracks).find(track=>track.name===`${this.envelope.name}.position`);
     this.envelopeEnd=new THREE.Vector3();
     if(envelopeTrack)this.envelopeEnd.fromArray(envelopeTrack.values,envelopeTrack.values.length-3);
@@ -34,10 +36,11 @@ class LetterStage {
     this.frameBox=new THREE.Box3();this.framePoint=new THREE.Vector3();
     this.envelopeLayout=new THREE.Group();
     this.envelope.parent.add(this.envelopeLayout);this.envelopeLayout.add(this.envelope);
-    this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+    this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
     const r=this.renderer;
     r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
-    r.setClearColor(0x080604,1);r.outputColorSpace=THREE.SRGBColorSpace;
+    r.setClearColor(0x000000,0);r.outputColorSpace=THREE.SRGBColorSpace;
+    this.scene.background=null;
     r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=.98;
     r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFShadowMap;
     const pmrem=new THREE.PMREMGenerator(r),room=new RoomEnvironment();
@@ -53,10 +56,12 @@ class LetterStage {
     const moon=new THREE.DirectionalLight(0xa5c1ec,.55);moon.position.set(6.5,7,4);this.scene.add(moon);
     this.scene.traverse(o=>{
       if(!o.isMesh)return;
-      o.castShadow=!['desk','writing_bed'].includes(o.name);o.receiveShadow=true;
+      o.castShadow=true;o.receiveShadow=true;
       for(const m of [].concat(o.material)) {
-        m.side=THREE.DoubleSide;m.shadowSide=THREE.FrontSide;
-        const paper=m.name.startsWith('letter')||m.name.startsWith('envelope');
+        const wax=m.name.includes('sealing wax');
+        const paper=!wax&&(m.name.startsWith('letter')||m.name.startsWith('envelope'));
+        m.side=wax?THREE.FrontSide:THREE.DoubleSide;m.shadowSide=THREE.FrontSide;
+        if(wax){m.roughness=Math.max(.57,m.roughness);if('clearcoat' in m)m.clearcoat=0;}
         if(m.normalScale)m.normalScale.setScalar(paper ? .28 : .55);
         for(const key of ['map','normalMap','roughnessMap'])if(m[key])m[key].anisotropy=8;
       }
@@ -66,6 +71,7 @@ class LetterStage {
       const a=this.mixer.clipAction(clip);a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;return a;
     });
     this.time=0;this.width=1;this.height=1;
+    this.updateSeal();
   }
 
   fit(width,height) {
@@ -81,7 +87,8 @@ class LetterStage {
     this.time=Math.max(0,Math.min(animation.duration,time));
     for(const a of this.actions)a.reset().play();
     this.mixer.setTime(this.time);
-    // Keep the spent envelope on the desk beside the sheet. The exported
+    this.updateSeal();
+    // Keep the spent envelope beside the sheet. The exported
     // push-aside path ended outside the camera and left a clipped corner.
     const travel=this.envelopeEnd.lengthSq();
     if(travel){
@@ -105,6 +112,14 @@ class LetterStage {
     this.renderer.setViewport(0,0,this.width,this.height);
     this.renderer.render(this.scene,this.camera);
     this.canvas.dataset.frame=String(Math.round(this.time*animation.fps));
+  }
+
+  updateSeal() {
+    // Display a truly unbroken surface until the same cue that starts the
+    // seal-break audio. Fractured meshes never overlap the intact mesh.
+    const cracked=this.time>=animation.cues.crack;
+    if(this.sealIntact)this.sealIntact.visible=!cracked;
+    for(const fragment of this.sealFragments)fragment.visible=cracked;
   }
 
   // Frame the moving meshes, including the raised flap, rather than only

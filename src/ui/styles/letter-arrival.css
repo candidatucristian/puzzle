@@ -5,7 +5,8 @@
 .waiting-letter.is-in-flight { visibility: hidden; }
 .arrival { position: fixed; inset: 0; z-index: 575; isolation: isolate; overflow: hidden; outline: none; }
 .arrival[data-state="preparing"] > * { opacity: 0; }
-.arrival .arrival-veil { backdrop-filter: none; -webkit-backdrop-filter: none; transition: none; background: #050403; }
+.arrival .arrival-veil { backdrop-filter: none; -webkit-backdrop-filter: none; transition: none;
+  background: radial-gradient(ellipse 75% 72% at 50% 44%, rgba(6,7,10,.9) 0%, rgba(3,4,6,.96) 62%, rgba(0,0,0,.99) 100%); }
 .arrival > .arrival-model { position: absolute; inset: 0; display: block; width: 100%; height: 100%;
   max-width: none; max-height: none; margin: 0; padding: 0; border: 0; transform: none; translate: none;
   opacity: 0; z-index: 1; pointer-events: none; }
@@ -33,3 +34,11 @@
 .arrival .arrival-file { position: absolute; left: 50%; bottom: clamp(12px,2.4vh,26px); translate: -50% 0;
   z-index: 3; opacity: 0; }
 .arrival .arrival-file:focus-visible { outline: 1px solid #d8bd8e; outline-offset: 5px; }
+/* the case file's button taking a filed letter in (letterArrival.js): it
+   swells a touch, and a soft gold light blooms behind it and is gone */
+#btn-casefile.is-receiving { position: relative; animation: file-takes .9s ease-out; }
+#btn-casefile.is-receiving::after { content: ""; position: absolute; inset: -6px; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, #f0cf8666 0%, #f0cf8622 45%, #f0cf8600 70%); animation: file-glints .9s ease-out forwards; }
+@keyframes file-takes { 0% { transform: scale(1); } 28% { transform: scale(1.16); } 100% { transform: scale(1); } }
+@keyframes file-glints { 0% { opacity: 0; transform: scale(.6); } 25% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.35); } }
+[data-reduced-motion="true"] #btn-casefile.is-receiving, [data-reduced-motion="true"] #btn-casefile.is-receiving::after { animation: none; }

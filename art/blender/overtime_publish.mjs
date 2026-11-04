@@ -1,6 +1,7 @@
 // After Hours' office (overtime_office.py → .artifacts/overtime-office) into
 // the game: the plate, every colon dark; each colon lit, cut out of the
-// second render with a margin for its glow and packed into one small atlas;
+// second render with a margin for its glow — clear wherever the two renders
+// agree, so its edge never shows — and packed into one small atlas;
 // and where everything the game keeps alive fell in the picture
 // (src/levels/overtime/officeRender.json).
 //
@@ -41,10 +42,21 @@ for (const colon of office.colons) {
     edge += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]); n += 3;
   }
   console.log(`colon ${colon.clock}: ${w}×${h}, edge differs by ${(edge / n).toFixed(2)} / 255`);
-  pieces.push({ clock: colon.clock, input, frame: [x, 0, w, h], box: [left / K, top / K, w / K, h / K].map((q) => +q.toFixed(3)) });
+  // (only what lighting the colon changed is kept: the cut is clear wherever
+  //  the two renders agree, so no edge of it can ever show as a line over the
+  //  digits beside it — the alpha rises with the difference, softened a little)
+  const mask = Buffer.alloc(w * h);
+  for (let p = 0; p < w * h; p++) {
+    const i = p * ch;
+    const d = Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2]));
+    mask[p] = Math.max(0, Math.min(255, (d - 3) * 22));
+  }
+  const alpha = await sharp(mask, { raw: { width: w, height: h, channels: 1 } }).blur(0.8).raw().toBuffer();
+  const rgba = await sharp(a, { raw: { width: w, height: h, channels: ch } }).removeAlpha().joinChannel(alpha, { raw: { width: w, height: h, channels: 1 } }).png().toBuffer();
+  pieces.push({ clock: colon.clock, input: rgba, frame: [x, 0, w, h], box: [left / K, top / K, w / K, h / K].map((q) => +q.toFixed(3)) });
   x += w + 2; height = Math.max(height, h);
 }
-await sharp({ create: { width: x, height, channels: 3, background: "#000" } })
+await sharp({ create: { width: x, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
   .composite(pieces.map((p) => ({ input: p.input, left: p.frame[0], top: 0 })))
   .webp({ lossless: true }).toFile(`${target}/office-colons-v${v}.webp`);
 console.log(`office-colons-v${v}.webp`);

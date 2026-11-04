@@ -216,3 +216,69 @@ function flowering(x, y, length, ink, flower) {
   await write("cabin-chart", s);
 }
 console.log("room boards");
+
+// ── a flower, drawn and washed in: for the study's back wall, where the tall
+//    bookcase stood (2026-11-03). One rose, as an old botanical plate has it:
+//    its stem, leaves in fives, a bud, the open flower in watercolour, a fine
+//    brown ink round all of it, foxed, labelled in Latin ──────────────────────
+{
+  const W = 900, H = 1200, ink = "#4a2a1c";
+  const petal = (r, w) => `M0,0 C${r * w},${-r * 0.18} ${r * (w + 0.12)},${-r * 0.86} 0,${-r} C${-r * (w + 0.12)},${-r * 0.86} ${-r * w},${-r * 0.18} 0,0 Z`;
+  const leaflet = (x, y, l, a, shade) => {
+    const w = l * 0.36;
+    let s = `<g transform="translate(${x},${y}) rotate(${a})">`;
+    // (its edge a little toothed, as a rose's is)
+    const teeth = [];
+    for (let k = 0; k <= 10; k++) { const t = k / 10, yy = -l * t, ww = Math.sin(Math.PI * t) * w * (k % 2 ? 1.0 : 0.9); teeth.push([ww, yy]); }
+    s += `<path d="M0,0 ${teeth.map(([a_, b]) => `L${a_.toFixed(1)},${b.toFixed(1)}`).join(" ")} ${teeth.slice().reverse().map(([a_, b]) => `L${(-a_).toFixed(1)},${b.toFixed(1)}`).join(" ")} Z" fill="${shade}" stroke="${ink}" stroke-width="1.1" opacity=".95"/>`;
+    s += `<path d="M0,0 L0,${-l * 0.92}" stroke="${ink}" stroke-width=".9" opacity=".7"/>`;
+    for (let k = 1; k < 5; k++) { const yy = -l * k / 5.5; s += `<path d="M0,${yy} L${w * 0.7},${yy - l * 0.1} M0,${yy} L${-w * 0.7},${yy - l * 0.1}" stroke="${ink}" stroke-width=".55" opacity=".45"/>`; }
+    return s + `</g>`;
+  };
+  const leaf = (x, y, a, l) => {
+    // five leaflets on a little stalk: two pairs and one at the end
+    let s = `<g transform="translate(${x},${y}) rotate(${a})"><path d="M0,0 L0,${-l * 1.5}" stroke="${ink}" stroke-width="1.4"/>`;
+    s += leaflet(0, -l * 0.45, l * 0.62, -62, "url(#leafA)") + leaflet(0, -l * 0.45, l * 0.62, 62, "url(#leafB)");
+    s += leaflet(0, -l * 0.95, l * 0.7, -48, "url(#leafB)") + leaflet(0, -l * 0.95, l * 0.7, 48, "url(#leafA)");
+    s += leaflet(0, -l * 1.45, l * 0.8, 0, "url(#leafA)");
+    return s + `</g>`;
+  };
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
+<defs><radialGradient id="age" cx="50%" cy="50%" r="75%"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5a3c12" stop-opacity=".5"/></radialGradient>
+<radialGradient id="fox"><stop offset="0" stop-color="#7a5020" stop-opacity=".5"/><stop offset="1" stop-color="#7a5020" stop-opacity="0"/></radialGradient>
+<radialGradient id="petalOut" cx="50%" cy="85%" r="95%"><stop offset="0" stop-color="#8e2f3e"/><stop offset=".55" stop-color="#c25a6a"/><stop offset="1" stop-color="#e6a6a8"/></radialGradient>
+<radialGradient id="petalIn" cx="50%" cy="90%" r="90%"><stop offset="0" stop-color="#6e1e2c"/><stop offset=".6" stop-color="#a83e50"/><stop offset="1" stop-color="#d98890"/></radialGradient>
+<linearGradient id="leafA" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#3f5a2c"/><stop offset="1" stop-color="#7d9658"/></linearGradient>
+<linearGradient id="leafB" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#34502a"/><stop offset="1" stop-color="#6c8a4c"/></linearGradient>
+<filter id="wash" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5"/></filter>
+<filter id="tooth"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" seed="6"/><feColorMatrix type="matrix" values="0 0 0 0 .3  0 0 0 0 .22  0 0 0 0 .1  0 0 0 .22 0"/></filter></defs>
+<rect width="${W}" height="${H}" fill="#dccfae"/><rect width="${W}" height="${H}" filter="url(#tooth)"/>
+<rect x="44" y="44" width="${W - 88}" height="${H - 88}" fill="none" stroke="#5a4a30" stroke-width="2"/>
+<rect x="54" y="54" width="${W - 108}" height="${H - 108}" fill="none" stroke="#5a4a30" stroke-width=".8" opacity=".7"/>
+<g filter="url(#wash)">`;
+  // the stem, from the foot of the plate up to the flower, a side shoot to the bud
+  s += `<path d="M452,1010 C440,880 470,760 446,640 C432,560 452,470 450,410" stroke="#4d6234" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+  s += `<path d="M452,1010 C440,880 470,760 446,640 C432,560 452,470 450,410" stroke="${ink}" stroke-width="1.2" fill="none" opacity=".7"/>`;
+  s += `<path d="M447,660 C500,620 560,580 600,500" stroke="#4d6234" stroke-width="4.5" fill="none" stroke-linecap="round"/>`;
+  for (const [x, y] of [[455, 900], [446, 770], [452, 560], [520, 600]]) s += `<path d="M${x},${y} l-7,-12 l9,4 z" fill="#5a3a22"/>`;   // (its thorns)
+  s += leaf(452, 930, -58, 120) + leaf(447, 820, 52, 112) + leaf(444, 690, -46, 100) + leaf(560, 560, 40, 70);
+  // the bud on the side shoot: green sepals round a closed red tip
+  s += `<g transform="translate(602,498) rotate(28)"><path d="${petal(56, 0.42)}" fill="url(#petalIn)" stroke="${ink}" stroke-width="1.1"/>`;
+  for (const a of [-32, 32, 0]) s += `<path d="M0,6 C${a * 0.6},-10 ${a * 0.9},-30 ${a * 0.3},-44 C${a * 0.2},-26 ${a * 0.1},-10 0,6 Z" fill="#4f6a34" stroke="${ink}" stroke-width=".8"/>`;
+  s += `</g>`;
+  // the open flower: outer petals, then the cupped inner ones, the heart curled
+  s += `<g transform="translate(450,318)">`;
+  for (const [a, r, w] of [[-150, 150, 0.62], [-100, 162, 0.64], [-40, 158, 0.62], [20, 154, 0.6], [80, 160, 0.64], [140, 150, 0.6], [190, 140, 0.58]])
+    s += `<path transform="rotate(${a})" d="${petal(r, w)}" fill="url(#petalOut)" stroke="${ink}" stroke-width="1.2"/>`;
+  for (const [a, r, w] of [[-120, 108, 0.6], [-60, 112, 0.6], [0, 110, 0.62], [60, 112, 0.6], [120, 106, 0.58], [180, 100, 0.58]])
+    s += `<path transform="rotate(${a})" d="${petal(r, w)}" fill="url(#petalIn)" stroke="${ink}" stroke-width="1" opacity=".96"/>`;
+  s += `<ellipse cx="0" cy="-6" rx="52" ry="40" fill="#7a2232" stroke="${ink}" stroke-width="1"/>`;
+  // (its heart: small petals curled in a spiral, each a little darker inward)
+  for (let k = 0; k < 9; k++) { const r = 46 - k * 4.2, ang = k * 67; s += `<path transform="translate(0,-6) rotate(${ang})" d="${petal(r, 0.5)}" fill="${k % 2 ? "url(#petalIn)" : "url(#petalOut)"}" stroke="${ink}" stroke-width=".8" opacity=".95"/>`; }
+  s += `</g></g>`;
+  s += `<text x="${W / 2}" y="1088" font-family="Georgia, serif" font-style="italic" font-size="34" text-anchor="middle" fill="#3a2c18">Rosa gallica</text>`;
+  s += `<text x="${W / 2}" y="1126" font-family="Georgia, serif" font-size="18" letter-spacing="3" text-anchor="middle" fill="#5a4a30">PL. XII</text>`;
+  for (let i = 0; i < 34; i++) s += `<circle cx="${rnd() * W}" cy="${rnd() * H}" r="${3 + rnd() * 20}" fill="url(#fox)"/>`;
+  s += `<rect width="${W}" height="${H}" fill="url(#age)"/></svg>`;
+  await write("study-flower", s);
+}

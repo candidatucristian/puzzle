@@ -144,9 +144,9 @@
 /* the film's music, playing on under the desk, out of sight */
 .intro-video-music { position: fixed; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 .intro-video-music video { width: 1px; height: 1px; }
-body.intro-video-on #compact-bar { position: relative; z-index: 600; }
-body.intro-video-on :is(#btn-map, #btn-notebook, #btn-casefile) { display: none; }
-body.intro-video-on #header-floor { visibility: hidden; }
+body:is(.intro-video-on, .start-darkening) #compact-bar { position: relative; z-index: 600; }
+body:is(.intro-video-on, .start-darkening) :is(#btn-map, #btn-notebook, #btn-casefile) { display: none; }
+body:is(.intro-video-on, .start-darkening) #header-floor { visibility: hidden; }
 body.intro-video-on :is(#options-modal, #howto-modal) { z-index: 620; }
 /* the house's story, told over the manor the first time he stands before
    it (manorStory.js): the film's passages and shade; the house's name and

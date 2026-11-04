@@ -8,8 +8,10 @@ import LIBRARY from "./nativeLibrary.json";
 const PATH = `assets/images/Bookshelf/native-v${LIBRARY.version}`;
 const key = name => `bookshelf_cycles_v${LIBRARY.version}_${name}`;
 
-// The room, cat, gilt titles and numbered bookmarks are Blender geometry.
-// Each book's nine poses are room crops rendered with its real moving shadow.
+// Room II's own end bookcase, close (art/blender/library_bookcase_puzzle.py,
+// from the room's scene): its shelves, its books, the gilt titles and the
+// numbered bookmarks are Blender geometry. Each book's nine poses are crops of
+// the picture rendered with its real moving shadow.
 export default class NativeBookshelfScene extends BasePuzzleScene {
   constructor() { super({ key: "Bookshelf" }); }
 
@@ -129,16 +131,21 @@ export default class NativeBookshelfScene extends BasePuzzleScene {
   }
 
   _atmosphere(f) {
-    const cup = f.at(LIBRARY.cup), lamp = f.at(LIBRARY.lamp);
-    for (let i = 0; i < 3; i++) {
+    // (a cup of tea steams only where the picture has one: Room II's own
+    //  shelf, since v4, has none)
+    const cup = LIBRARY.cup ? f.at(LIBRARY.cup) : null, lamp = LIBRARY.lamp ? f.at(LIBRARY.lamp) : null;
+    for (let i = 0; cup && i < 3; i++) {
       const steam = this.add.image(cup.x + (i - 1) * 2 * f.s, cup.y, key("steam"))
         .setOrigin(.5, 1).setScale(.55 * f.s).setAlpha(0).setDepth(2);
       this.ambientObject(steam);
       this.ambientTween({ targets: steam, y: cup.y - 45 * f.s, alpha: { from: .65, to: 0 },
         duration: 2800, delay: i * 930, repeat: -1, ease: "Sine.easeOut" });
     }
-    for (let i = 0; i < 12; i++) {
-      const x = lamp.x - (30 + Math.random() * 360) * f.s, y = lamp.y - (Math.random() - .35) * 250 * f.s;
+    // dust turning in the light: beside the lamp where there is one, else
+    // over the shelf
+    for (let i = 0; lamp && i < 12; i++) {
+      const x = cup ? lamp.x - (30 + Math.random() * 360) * f.s : lamp.x + (Math.random() - .5) * 520 * f.s;
+      const y = cup ? lamp.y - (Math.random() - .35) * 250 * f.s : lamp.y + (Math.random() - .2) * 220 * f.s;
       const mote = this.add.image(x, y, key("dust")).setDisplaySize(3 * f.s, 3 * f.s)
         .setTint(0xffd59d).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(1);
       this.ambientObject(mote);

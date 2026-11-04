@@ -10,9 +10,10 @@
 //   unfold   the sheet opened out, fold by fold
 //   file     the letter slid into the dossier
 //   ping     something new in the case file
-//   typing   a typewriter as a found letter is opened out: its keys for the
-//            two seconds the words take to come up, then its bell and the
-//            carriage thrown back; returns { stop() }
+//   typing   a typewriter (kept, no longer used for the letters)
+//   writing  the supplied writingonpaper.mp3, a pen on paper, for as long as
+//            a found letter's words take to come up as it is opened out;
+//            returns { stop() }
 
 export function mountPaperSounds({ game, audio }) {
   const sealURL = `${import.meta.env.BASE_URL}assets/sounds/sigilbreak.mp3`;
@@ -138,6 +139,45 @@ export function mountPaperSounds({ game, audio }) {
   // and the thump of the carriage stepping on, a space now and then a little
   // heavier and longer; at the end of the line its bell, and the carriage
   // thrown back on its ratchet. All under one gain, so it can be cut short.
+  // the pen on paper: the start of the supplied recording, faded in and out
+  // over the two seconds the words take to come up. It is quiet as recorded,
+  // so it is lifted to sit with the other paper sounds.
+  const writingURL = `${import.meta.env.BASE_URL}assets/sounds/writingonpaper.mp3`;
+  let writingBuffer = null, writingPreparation = null;
+  const prepareWriting = () => {
+    if (!game.sound?.context) return Promise.resolve(null);
+    writingPreparation ??= fetch(writingURL).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error('writing unavailable'))))
+      .then(bytes => game.sound.context.decodeAudioData(bytes)).then(buffer => (writingBuffer = buffer))
+      .catch(() => { writingPreparation = null; return null; });
+    return writingPreparation;
+  };
+  const WRITING_S = 2.1, WRITING_LIFT = 3.2;
+  function writing() {
+    const c = ctx();
+    if (!c || !writingBuffer) { void prepareWriting(); return { stop() {} }; }
+    const { ac, out, vol } = c, t0 = ac.currentTime + 0.02;
+    const source = ac.createBufferSource(), gain = ac.createGain(), level = vol * WRITING_LIFT;
+    source.buffer = writingBuffer; source.connect(gain).connect(out);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(level, t0 + 0.08);
+    gain.gain.setValueAtTime(level, t0 + WRITING_S - 0.35);
+    gain.gain.linearRampToValueAtTime(0.0001, t0 + WRITING_S);
+    source.start(t0, 0.05, WRITING_S + 0.05);
+    source.onended = () => { source.disconnect(); gain.disconnect(); };
+    return {
+      // put down early: it dies away at once
+      stop() {
+        const t = ac.currentTime;
+        gain.gain.cancelScheduledValues(t);
+        gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), t);
+        gain.gain.linearRampToValueAtTime(0.0001, t + 0.15);
+        try { source.stop(t + 0.2); } catch { /* already stopped */ }
+      },
+    };
+  }
+  // decoded ahead, so the first letter opened already has it
+  void prepareWriting();
+
   const TYPING_S = 2;
   function typing() {
     const c = ctx();
@@ -181,7 +221,7 @@ export function mountPaperSounds({ game, audio }) {
     };
   }
   return {
-    prepareLetterOpen,letterOpen,prepareSealBreak,sealBreak,
+    prepareLetterOpen,letterOpen,prepareSealBreak,sealBreak,prepareWriting,writing,
     dispose() { for (const playback of [...sealPlaybacks]) playback.stop(); },
     whoosh() { noise({ dur: 0.55, freq: 2600, to: 500, q: 0.8, gain: 0.32, env: swell }); },
     land() {

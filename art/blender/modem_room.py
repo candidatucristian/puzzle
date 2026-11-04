@@ -72,7 +72,14 @@ tc=n.new('ShaderNodeTexCoord');noise=n.new('ShaderNodeTexNoise');noise.inputs['S
 bump=n.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.16;bump.inputs['Distance'].default_value=.000045;l(noise.outputs['Fac'],bump.inputs['Height']);l(bump.outputs['Normal'],bs.inputs['Normal'])
 rough=n.new('ShaderNodeMapRange');rough.inputs['To Min'].default_value=.31;rough.inputs['To Max'].default_value=.43;l(noise.outputs['Fac'],rough.inputs['Value']);l(rough.outputs[0],bs.inputs['Roughness'])
 FACE=plain('Router | inset satin face panel',(.016,.019,.018),rough=.31,coat=.22)
-LENS=plain('LED | smoked unlit optical lens',(.010,.026,.019),rough=.19,coat=.72)
+# Unlit, a lens still reads as a lens: smoked green glass that the lamp and
+# the room catch a little, never a black hole in the fascia.
+LENS=plain('LED | smoked green optical lens, unlit',(.040,.085,.058),rough=.30,coat=.22)
+# Lit, every lens is the same soft green — the five counters and the seven
+# bits alike (2026-11-04: the user asked for green lights, much less strong,
+# and the unlit ones easier to see). Low enough that the colour holds and the
+# core does not burn to white.
+LED_GREEN=(.035,1,.16);LED_STRENGTH=float(arg('--led-strength','1.1'));LED_LIGHT=float(arg('--led-light','.0016'))
 
 # The same intimate composition as the former room image, now in real space.
 slab('Room | plaster wall',-2,2,.70,.78,0,2.7,WALL,.0)
@@ -212,7 +219,7 @@ for i,xx in enumerate(xs):
     lens_mat=LENS.copy();lens_mat.name='LED %02d | independently driven optical lens'%i
     ob=slab('LED %02d | real translucent diffuser'%i,xx-.0037,xx+.0037,y0-.0031,y0-.0026,zz-.0022,zz+.0022,lens_mat,.0012)
     light=lamp('LED %02d | local reflected light'%i,'POINT',(xx,y0-.007,zz),energy=0,colour=(1,1,1),size=.002)
-    leds.append({'material':lens_mat,'light':light,'centre':(xx,y0-.0032,zz),'colour':'red' if i<5 else 'green'})
+    leds.append({'material':lens_mat,'light':light,'centre':(xx,y0-.0032,zz),'colour':'green'})
 text('Router | original maker clue','W. LEIBNIZ',(rx,y0-.002,z0+.012),.0095,INK,font=SANS)
 
 # Power and network leads have plugs and natural curves across the desk.
@@ -253,18 +260,18 @@ render('room')
 if PREVIEW:
     # A lit preview makes the optical scale and table reflections reviewable.
     for i in (0,5,8,11):
-        e=leds[i];colour=(1,.025,.006) if i<5 else (.025,1,.14)
-        b=e['material'].node_tree.nodes['Principled BSDF'];b.inputs['Emission Color'].default_value=(*colour,1);b.inputs['Emission Strength'].default_value=3.5
-        e['light'].data.color=colour;e['light'].data.energy=.003
+        e=leds[i];colour=LED_GREEN
+        b=e['material'].node_tree.nodes['Principled BSDF'];b.inputs['Emission Color'].default_value=(*colour,1);b.inputs['Emission Strength'].default_value=LED_STRENGTH
+        e['light'].data.color=colour;e['light'].data.energy=LED_LIGHT
     render('lit-preview')
 else:
     # Crop each light's optical/reflected contribution; all states use the
     # same seed, camera and sample budget as the base, avoiding noisy deltas.
     scene.render.use_border=True;scene.render.use_crop_to_border=True
     for i,e in enumerate(leds):
-        colour=(1,.025,.006) if i<5 else (.025,1,.14)
-        b=e['material'].node_tree.nodes['Principled BSDF'];b.inputs['Emission Color'].default_value=(*colour,1);b.inputs['Emission Strength'].default_value=3.5
-        e['light'].data.color=colour;e['light'].data.energy=.003
+        colour=LED_GREEN
+        b=e['material'].node_tree.nodes['Principled BSDF'];b.inputs['Emission Color'].default_value=(*colour,1);b.inputs['Emission Strength'].default_value=LED_STRENGTH
+        e['light'].data.color=colour;e['light'].data.energy=LED_LIGHT
         cx,cy=e['centre2d']=metadata['leds'][i]['centre'];hw=W*.013;above=H*.027;below=H*.12
         xa,xb=max(0,math.floor(cx-hw)),min(W,math.ceil(cx+hw));ya,yb=max(0,math.floor(cy-above)),min(H,math.ceil(cy+below))
         scene.render.border_min_x=(xa+.25)/W;scene.render.border_max_x=min(1,(xb+.25)/W)

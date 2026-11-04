@@ -14,6 +14,8 @@ import { mountMobile, isTouchDevice, enterFullscreen } from './mobile.js';
 import { createMoonCanvas } from '../shared/moon.js';
 import { mountStartFilm } from './startFilm.js';
 import { mountStartManor } from './startManor.js';
+import { mountStartMenu } from './startMenu.js';
+import { isDevMode } from '../shared/devMode.js';
 import { HOUSE_GO, HOUSE_BACK, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
 import { mountHouseMap } from './houseMap.js';
 import { mountNotebook } from './notebook.js';
@@ -109,6 +111,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
     document.body.classList.toggle('in-house', Boolean(levels.place) && !levels.answering);
   }));
   let started = false;
+  let updateTitle = () => {}; // the menu's Continue and the door, brought up to date (set below)
   let doorTasks = null; // tonight's tasks, before the house, until he goes in
   let entering = []; // the walk up to the front door, while it runs
   let sessionStart = null;
@@ -122,6 +125,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
     stopOpening();
     if (!start.classList.contains('hidden')) film.stop();
     start.classList.add('hidden'); storage.setItem('hasPlayedBefore', 'true'); storage.setItem('house:entered', 'true');
+    start.classList.remove('is-arriving');
     outside(false);
     // the walk up to the door, done: the picture put back for another time outside
     for (const step of entering) step.cancel();
@@ -166,8 +170,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
     start.classList.add('is-entering');
     // a phone's first tap is the one gesture that may take the whole screen
     if (touch && mobile.compact && event?.type === 'click') enterFullscreen();
-    // the way in — the door, or any key — leads to the hall; its doors lead
-    // to the rooms
+    // the way in — the menu's Continue, or the door — leads to the hall; its
+    // doors lead to the rooms
     completion.hide(); mobile?.close();
     toTheDoor(() => cinema.enterHouse(() => {
       showGame();
@@ -196,7 +200,7 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
     }
     film.style.transformOrigin = '0 0';
     const close = film.animate(frames, { duration: WALK_MS, easing: 'linear', fill: 'forwards' });
-    const gone = [byId('start-legend'), start.querySelector('.manor-story')].filter(Boolean)
+    const gone = [byId('start-legend'), byId('start-veil'), start.querySelector('.manor-story')].filter(Boolean)
       .map(el => el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out', fill: 'forwards' }));
     entering = [close, ...gone];
     footsteps.walk(WALK_MS + 900);
@@ -245,11 +249,13 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
   // from the drive. The hall waits behind it as it was left.
   function goOutside() {
     completion.hide(); mobile?.close();
-    film = raiseFilm();
-    start.classList.remove('hidden', 'is-entering');
+    // (already outside, after a reset there: the manor is up and stays)
+    if (start.classList.contains('hidden')) film = raiseFilm();
+    start.classList.remove('hidden', 'is-entering', 'is-arriving');
     outside(true);
     started = false;
     progressUI.render();
+    updateTitle();
   }
   const leave = () => {
     const back = levels.back;
@@ -262,7 +268,9 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
   scope.on(byId('btn-leave'), 'click', leave);
   game.events.on(HOUSE_BACK, leave);
   scope.add(() => game.events.off(HOUSE_BACK, leave));
-  scope.on(window, 'keydown', begin); scope.on(start, 'click', begin);
+  // The way in is the menu's Continue (below), or the front door itself, once
+  // a game has been begun; a click elsewhere on the picture does nothing.
+  scope.on(byId('start-door'), 'click', event => { if (canContinue()) begin(event); });
 
   // Straight to a place on the map: the walk, from wherever the player is.
   function travel(key) {
@@ -300,6 +308,10 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
         onDone: async (dismiss) => {
           caseFile.unlock('invitation');
           showDoorTasks();
+          // come to the manor from the desk: the game is under way, so no
+          // menu over it, only the door, until he has gone in
+          start.classList.add('is-arriving');
+          updateTitle();
           // before the manor for the first time, the house's own story — set
           // up behind the black, so that the house is never seen before it
           // (its name and its door wait under the story)
@@ -316,7 +328,8 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
     void preloadPrologueDesk();
     playIntroVideo(opening, { game, audio, reducedMotion: Boolean(preferences?.reducedMotion), onUnder: prologue, i18n });
   }
-  openCase();
+  // The game opens on the manor and its menu (startMenu.js); the case is
+  // opened — the film, then the desk — by New game.
   // In front of the house, until he first goes in: tonight's tasks carried on
   // from the desk, in the index on the right — those done struck through, and
   // the way in the one left to do (tasks.js, styled as the desk's panel).
@@ -325,6 +338,10 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
     if (storage.getItem('house:entered')) return true;
     try { return JSON.parse(storage.getItem('story:seen') || '[]').includes('chapter:1'); } catch { return false; }
   };
+  // a game to go back to: the letter read at the desk, or the house gone into
+  const hasBegun = () => caseFile.has('invitation') || hasEntered();
+  // (in dev mode the house can always be gone into)
+  const canContinue = () => hasBegun() || isDevMode();
   function showDoorTasks() {
     if (doorTasks || hasEntered()) return;
     const host = byId('index-outside');
@@ -438,21 +455,27 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
     else navigate(levels.currentIndex, { quick: true });
   });
 
+  // everything forgotten: the house as it was before the letter came
+  function resetProgress() {
+    stopOpening();
+    completion.hide();
+    dialogs.closeAll();
+    transitions.dispose();
+    hintUI.reset();
+    progressUI.reset();
+    levels.reset();
+    caseFile.reset();
+    cinema.reset();
+    storage.removeItem('house:entered');
+    // tonight's tasks, left from the game being forgotten
+    if (doorTasks) { doorTasks.node.parentElement?.remove(); doorTasks = null; }
+  }
+  // the settings' reset: back out to the manor and its menu, to begin again
   const reset = mountResetConfirmation(scope, byId('btn-new'), {
     isBlocked: () => transitions.busy,
     onConfirm() {
-      stopOpening();
-      completion.hide();
-      dialogs.closeAll();
-      transitions.dispose();
-      hintUI.reset();
-      progressUI.reset();
-      levels.reset();
-      caseFile.reset();
-      cinema.reset();
-      storage.removeItem('house:entered');
+      resetProgress();
       goOutside();
-      openCase();
     },
     i18n,
   });
@@ -462,6 +485,57 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, achi
   scope.on(byId('btn-close-howto'), 'click', () => dialogs.close());
   scope.on(byId('btn-options'), 'click', event => { reset.disarm(); dialogs.open('options-modal', event.currentTarget); });
   scope.on(byId('btn-close-options'), 'click', () => { reset.disarm(); dialogs.close(); });
+
+  // ── The menu before the manor ──
+  // New game: the manor goes to black and the case opens — the film, the
+  // desk, then the manor again with its story — over a game forgotten, if
+  // there was one. Continue: up to the door and in. Options: the settings.
+  let darkening = false;
+  function newGame() {
+    if (darkening || started || prologueOn || transitions.busy || walking || dialogs.isOpen) return;
+    darkening = true;
+    const begun = hasBegun();
+    const black = document.createElement('div');
+    black.className = 'start-black';
+    document.body.append(black);
+    document.body.classList.add('start-darkening');
+    const open = () => {
+      if (begun) resetProgress();
+      // the film's own black is laid over this one, and then it goes
+      openCase();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        black.remove();
+        document.body.classList.remove('start-darkening');
+        darkening = false;
+      }));
+    };
+    if (preferences?.reducedMotion || !black.animate) { open(); return; }
+    black.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 750, easing: 'cubic-bezier(.4, 0, .6, 1)', fill: 'forwards' })
+      .finished.then(open, open);
+  }
+  const menu = mountStartMenu(scope, {
+    game,
+    audio,
+    i18n,
+    canContinue,
+    hasProgress: hasBegun,
+    isBlocked: () => darkening || started || prologueOn || transitions.busy || walking || cinema.busy || start.classList.contains('hidden'),
+    onNewGame: newGame,
+    onContinue: event => begin(event),
+    onOptions: button => { reset.disarm(); dialogs.open('options-modal', button); },
+    // the house's sounds die away behind the black, and come back with it
+    onExit: () => { if (game.sound) game.sound.volume = 0; },
+    onReturn: () => audio.refreshMasterVolume(),
+    onDevMode: () => updateTitle(),
+  });
+  updateTitle = () => {
+    menu.refresh();
+    // the front door waits until a game has been begun
+    start.classList.toggle('is-fresh', !canContinue());
+  };
+  updateTitle();
+  // a first evening: the desk got ready while the menu is read
+  if (!canContinue()) void preloadPrologueDesk();
   mountAudioControls(audio, scope, i18n);
   // while the code box has the on-screen keyboard up, the room waits to be repainted
   observeViewport(game, scope, { defer: () => touch && document.activeElement === input });

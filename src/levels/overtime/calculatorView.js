@@ -69,9 +69,9 @@ export function createCalculatorView(scene, keypad) {
       }
     }
     for (let i = 0; i < CALCULATOR_DIGITS; i++) {
-      const { on, off } = glyph(text[i], 10 + i * 38, 0, 24, 54, 5, .08);
+      const { on, off } = glyph(text[i], 12 + i * 38, 6, 21, 42, 4, .08);
       fill(off, 'rgba(31,42,26,.07)');
-      fill(on, 'rgba(31,42,26,.94)');
+      fill(on, 'rgba(28,36,24,.86)');
     }
   }
   return {

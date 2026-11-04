@@ -8,7 +8,8 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 from hall_common import ROOT, scan
-from letter_common import aged_paper, piece, rounded, sealing_wax, wax_seal
+from letter_common import aged_paper, piece, rounded
+from letter_seal import seal_material, make_letter_seal
 
 OUT = os.path.abspath(arg("--output", os.path.join(ROOT, ".artifacts/letter-animation")))
 os.makedirs(OUT, exist_ok=True)
@@ -16,7 +17,7 @@ SAMPLES = int(arg("--samples", "24"))
 WIDTH = int(arg("--width", "1920"))
 HEIGHT = round(WIDTH * 9 / 16)
 FPS = 30
-MODEL = 'letter-animation-v2.glb'
+MODEL = 'letter-animation-v3.glb'
 FIRST, LAST = (int(v) for v in arg("--frames", "1-156").split("-"))
 D = math.radians
 
@@ -69,12 +70,12 @@ held(piece("side flap", rounded([(-X, -Y + 0.01), (-0.08, -0.03), (-X, Y - 0.01)
 held(piece("side flap", rounded([(X, -Y + 0.01), (X, Y - 0.01), (0.08, -0.03)], 0.05), ZS, T, ENV[1]), ENVELOPE)
 held(piece("bottom flap", rounded([(-X + 0.005, -Y + 0.005), (X - 0.005, -Y + 0.005), (0.2, 0.05), (-0.2, 0.05)], 0.08), ZS + T, T, ENV[2]), ENVELOPE)
 ZF = ZS + 2 * T                       # the flap, hinged along the top edge
-flap = held(piece("top flap", rounded([(-X + 0.004, Y - 0.004), (0.0, TIP), (X - 0.004, Y - 0.004)], 0.1), ZF, T, ENV[3], origin=(0, Y, ZF)), ENVELOPE)
+flap_outline = rounded([(-X + 0.004, Y - 0.004), (0.0, TIP), (X - 0.004, Y - 0.004)], 0.1)
+flap = held(piece("top flap", flap_outline, ZF, T, ENV[3], origin=(0, Y, ZF)), ENVELOPE)
 # the wax over the flap's point, to break across it as the flap lifts
-WAX = sealing_wax()
-below, above = wax_seal(WAX, 0.19, ZF + T, split=0.0)
-for half in (below, above): half.location = (0, TIP + 0.012, 0)
-held(below, ENVELOPE); bpy.context.view_layer.update(); held(above, flap)
+WAX = seal_material()
+intact, below, above = make_letter_seal(WAX, 0.19, ZF + T + .0015, (0, TIP + .012), flap_outline)
+held(intact, ENVELOPE); held(below, ENVELOPE); bpy.context.view_layer.update(); held(above, flap)
 
 # ── the letter, folded in three ────────────────────────────────────────────
 LW, LH = 2.15, 3.05
@@ -135,7 +136,7 @@ for f, h in ((1, START_H), (50, START_H - 0.2), (148, END_H), (LAST, END_H)):
     cd.dof.focus_distance = h - 0.01; cd.dof.keyframe_insert("focus_distance", frame=f)
 # Open the flap fully onto the rear paper plane, below the moving sheet.
 # A raised flap in the extraction lane occludes the returning letter.
-key(flap, 1, rotation_euler=(0, 0, 0)); key(flap, CRACK - 2, rotation_euler=(0, 0, 0))
+key(flap, 1, rotation_euler=(0, 0, 0)); key(flap, CRACK, rotation_euler=(0, 0, 0))
 key(flap, CRACK + 1, rotation_euler=(D(-7), 0, 0)); key(flap, OPEN0, rotation_euler=(D(-4), 0, 0))
 key(flap, OPEN1, rotation_euler=(D(-177), 0, 0)); key(flap, OPEN1 + 4, rotation_euler=(D(-179), 0, 0)); key(flap, OPEN1 + 9, rotation_euler=(D(-180), 0, 0))
 key(flap, 1, location=Vector((0,Y,ZF))); key(flap, OPEN0, location=Vector((0,Y,ZF)))
@@ -249,15 +250,19 @@ def bake_group(label,objects,size):
         links(tex.outputs['Color'],normal.inputs['Color']);links(normal.outputs['Normal'],b.inputs['Normal'])
         b.inputs['Roughness'].default_value=max(.28,roughness);b.inputs['Metallic'].default_value=metal
         if mat==WAX:
-            b.inputs['Coat Weight'].default_value=.16;b.inputs['Roughness'].default_value=.40
+            b.inputs['Coat Weight'].default_value=0;b.inputs['Roughness'].default_value=.57
 
 bake_group('stationery',[o for o in meshes if o in moving],2048)
-bake_group('desk',[o for o in meshes if o not in moving],2048)
+for ob, broken in ((intact,False),(below,True),(above,True)):
+    for frame, cracked in ((1,False),(CRACK,True),(LAST,True)):
+        ob.hide_render=broken!=cracked;ob.keyframe_insert('hide_render',frame=frame)
 scene.frame_set(1)
 if '--pack' in sys.argv:bpy.ops.file.pack_all()
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'letter-animation.blend'),compress=True)
 target=os.path.join(ROOT,'public/assets/images/CaseFile/letter',MODEL)
-bpy.ops.export_scene.gltf(filepath=target,export_format='GLB',export_cameras=True,export_lights=False,
+bpy.ops.object.select_all(action='DESELECT')
+for ob in {ARRIVAL,cam,*ARRIVAL.children_recursive}:ob.select_set(True)
+bpy.ops.export_scene.gltf(filepath=target,export_format='GLB',use_selection=True,use_renderable=False,export_cameras=True,export_lights=False,
     export_animations=True,export_animation_mode='ACTIVE_ACTIONS',export_nla_strips_merged_animation_name='LetterOpening',
     export_frame_range=True,export_force_sampling=True,export_apply=True,export_optimize_animation_size=True)
 print('LETTER_ANIMATION_EXPORTED',target,flush=True)

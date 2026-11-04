@@ -77,6 +77,50 @@ for obj in scene.objects:
         bv = obj.modifiers.new('worn edges', 'BEVEL'); bv.width = .0016; bv.segments = 2; bv.limit_method = 'ANGLE'
 
 layout = original['LAYOUT'].data
+
+# ── what the user asked away (2026-11-03) ─────────────────────────────────
+def gone(obj):
+    for o in [obj, *obj.children_recursive]: bpy.data.objects.remove(o, do_unlink=True)
+# the brass pot the palm's own pot stood in: a smaller pot showing in the big one
+pot = bpy.data.objects.get('brass pot')
+if pot: gone(pot)
+# the chair at the reading table's left, by the armchair (the armchair stays,
+# and so do the table's far chair and the clerk's at his desk)
+for root in [o for o in scene.objects if o.parent is None and o.name.split('.')[0] == 'dining_chair_02']:
+    where = rc.P(-92, 0, 500)
+    if abs(root.location.x - where.x) < .25 and abs(root.location.y - where.y) < .25:
+        print('CHAIR REMOVED at', tuple(round(v, 2) for v in root.location)); gone(root)
+# the botanical print by the LED clock, smaller about its own middle, clear of
+# the clock: frame and print alike
+print_card = bpy.data.objects.get('print')
+def world_centre(o):
+    return sum((o.matrix_world @ Vector(c) for c in o.bound_box), Vector()) / 8
+if print_card:
+    centre = world_centre(print_card)
+    framing = [print_card] + [o for o in scene.objects if o.type == 'MESH' and o.name.split('.')[0] == 'frame' and (world_centre(o) - centre).length < .7]
+    k = float(arg('--print', '.74'))
+    # (each one's own points moved in toward the print's middle, across the
+    #  wall and up it, not into it: nothing reparented, nothing else moved)
+    for o in framing:
+        mw, inv = o.matrix_world.copy(), o.matrix_world.inverted()
+        for v in o.data.vertices:
+            w = mw @ v.co
+            v.co = inv @ Vector((centre.x + (w.x - centre.x) * k, w.y, centre.z + (w.z - centre.z) * k))
+        o.data.update()
+    bpy.context.view_layer.update()
+    print('PRINT SCALED', k, [o.name for o in framing])
+# the rain on the glass: not over the curtains standing in front of it, nor
+# over the palm (layout written again below, with the curtains cut out too)
+bpy.context.view_layer.update()
+curtains = [o for o in scene.objects if o.type == 'MESH' and o.name.split('.')[0] == 'curtain']
+plant = bpy.data.objects.get('potted_plant_02')
+cuts = [rc.outline(rc.object_corners(o)) for o in curtains]
+if plant and plant.get('meshes'):
+    cuts.append(rc.outline([pt for o in meshes_of(plant) for pt in rc.object_corners(o)]))
+layout['rainCutouts'] = cuts
+print('RAIN CUTOUTS', len(cuts))
+with open(os.path.join(OUT, 'room.json'), 'w', encoding='utf-8') as f: json.dump(layout, f, indent=2)
+
 body, hinge, lid = original['chest_body'], original['chest_hinge'], original['lid_parts']
 if 'preview' in ONLY:
     render(scene, os.path.join(OUT, arg('--name', 'preview') + '.png'))

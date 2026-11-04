@@ -12,6 +12,7 @@ export const en = {
     skip: 'SKIP INTRO',
     skipShort: 'Skip',
     locked: 'Locked',
+    chestLocked: 'Locked',
     solved: 'Solved',
     notSolved: 'Not solved yet',
     exploring: 'Currently exploring',
@@ -53,6 +54,16 @@ export const en = {
     eyebrow: 'The Ashcombe residence',
     title: 'Ashcombe Manor',
     line: 'Home of Ivy, Silas and Orion Ashcombe.',
+  },
+  menu: {
+    label: 'Main menu',
+    newGame: 'New game',
+    newGameConfirm: 'Sure? Your progress will be lost',
+    continue: 'Continue',
+    options: 'Options',
+    exit: 'Exit',
+    exitNote: 'You can close this tab now.',
+    exitBack: 'Back to the manor',
   },
   sidebar: {
     notes: 'Notes',
@@ -622,11 +633,9 @@ export const en = {
   levelHints: {
     binarytree: [
       'THE ROOTS GROW UPWARDS.\nThe note beside the tree is not a doodle — each line on it is a journey.',
-      'Every journey starts in the same place and ends on a leaf. Mind which way each turn goes, and keep the journeys in the note\'s order.',
     ],
     plantpot: [
       'WATER THE PLANT.\nWatch what each pour brings out of it.',
-      'Count only what is new after each pour. The numbers you collect have a famous habit — and a famous name.',
     ],
     sequence: [
       'SIX NUMBERS, ONE VOICE.\nThe cards want an order, and the note in the corner shows how they speak.',
@@ -634,7 +643,6 @@ export const en = {
     ],
     cryptex: [
       'COUNT THE CANDLES.\nEvery letter in the envelope has moved by the same amount.',
-      'Count the candles. Every letter in the envelope has moved by the same amount.',
     ],
     chessboard: [
       'ONE PIECE PER ROW.\nThe edge of the board names each square; read the rows from the bottom up.',
@@ -697,7 +705,6 @@ export const en = {
       'Mind the numbers on the doors and the order they finish in. None of them is bigger than the alphabet.',
     ],
     overtime: [
-      'CALCULATOR DIGITS.\nTurn the display around to read the message.',
       'Take the times as plain numbers and let the machine do the work. Then look at its answer from another angle.',
     ],
     fireworks: [

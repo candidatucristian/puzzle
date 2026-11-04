@@ -9,9 +9,11 @@ import { loadRoomRender } from "../house/roomRender.js";
 // table beside its green book, the tall window on the garden in the rain, the
 // cipher wheel over the mantel. The gilt chest is on the desk.
 //
-// The room is a Blender render (study.js; house/roomRender.js), lit by
-// moonlight and all four candles. The desk lamp stays off at every stage
-// of puzzle progress. Candle flames, rain and dust remain alive over it.
+// The room is a Blender render (art/blender/room_study_v5.py; study.js;
+// house/roomRender.js), lit by the desk lamp under its white glass dome, its
+// light given back warm off the ceiling, and the moon; the mantel's candles
+// stand unlit, with no flame or halo laid over them. Rain and dust stay
+// alive over it. (Any flame Study.json still names would be drawn here.)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class StudyScene extends RoomScene {

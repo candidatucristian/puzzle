@@ -1,19 +1,13 @@
-// Two hints a room. The first (the level's hint text, in metadata.js) says
-// where to look; this second one says what to notice. Neither names the
+// Optional additional hints. The first (the level's hint text, in metadata.js)
+// says where to look; an additional hint says what to notice. Neither names the
 // method nor gives the answer: they help the player see it for themselves.
 export const HINT_DETAILS = {
-  binarytree: [
-    "Every journey starts in the same place and ends on a leaf. Mind which way each turn goes, and keep the journeys in the note's order.",
-  ],
-  plantpot: [
-    "Count only what is new after each pour. The numbers you collect have a famous habit — and a famous name.",
-  ],
+  binarytree: [],
+  plantpot: [],
   sequence: [
     "Smallest first. Then read each card the way the corner note reads its own example — aloud, as a count.",
   ],
-  cryptex: [
-    "Count the candles. Every letter in the envelope has moved by the same amount.",
-  ],
+  cryptex: [],
   chessboard: [
     "One piece on every row. The edge of the board names each square; read the rows from the bottom up.",
   ],
@@ -59,9 +53,7 @@ export const HINT_DETAILS = {
   rally: [
     "Mind the numbers on the doors and the order they finish in. None of them is bigger than the alphabet.",
   ],
-  overtime: [
-    "Take the times as plain numbers and let the machine do the work. Then look at its answer from another angle.",
-  ],
+  overtime: [],
   fireworks: [
     "Each balloon is one exact colour, and a computer writes a colour as three pairs. Only the first pair of each matters — read those pairs as letters.",
   ],

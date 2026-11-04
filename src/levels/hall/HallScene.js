@@ -11,6 +11,7 @@ import { doorMotion, DOOR_WALK_START_MS, DOOR_LATCH_MS, DOOR_SWING_MS } from "./
 import { LightSwitch, loadLightSwitch } from "./lightSwitch.js";
 import { loadHallRender } from "./hallRender.js";
 import { loadIronGate, createIronGate } from "./ironGate.js";
+import { lockedNote } from "../../shared/lockedNote.js";
 import { loadAtticMaterials } from "../top/atticMaterials.js";
 import { loadPassageRender } from "../top/passageRender.js";
 
@@ -142,17 +143,18 @@ export default class HallScene extends BasePuzzleScene {
         });
       }
       if (!room) return;
-      // a locked door only rattles in its frame
+      // a locked door says so when pointed at, as a locked coffer does, and
+      // only rattles in its frame
       if (room.locked) {
         const shape = new Phaser.Geom.Polygon(d.quad.flatMap((p) => [p.x, p.y]));
-        this.add.zone(0, 0, W, H).setOrigin(0, 0).setDepth(5)
-          .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
-          .setData("interactionLabel", "Locked — it wants its key")
+        const locked = this.add.zone(0, 0, W, H).setOrigin(0, 0).setDepth(5)
+          .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, cursor: "not-allowed" })
           .setData("side", d.side)
           .on("pointerdown", () => {
             this.services.audio.playSfx("doorhandle", 0.55, this);
             if (!this.reducedMotion) this.cameras.main.shake(140, 0.0016);
           });
+        lockedNote(this, locked);
         return;
       }
       const zone = this.add.zone(0, 0, W, H).setOrigin(0, 0).setDepth(5).setData("side", d.side);
@@ -281,7 +283,7 @@ export default class HallScene extends BasePuzzleScene {
     const pendulum = this.add.image(L.clock.x, L.clock.y, k.pendulum).setOrigin(0.5, 0).setDisplaySize(L.clock.bob * 2, L.clock.len + L.clock.bob).setAngle(-2.3).setDepth(-9);
     this.ambientTween({ targets: pendulum, angle: 2.3, duration: 1000, yoyo: true, repeat: -1, ease: "Sine.easeInOut", onYoyo: tick, onRepeat: tick });
     // ── the gate's bars, shadowed long down the runner by the moon behind them
-    if (!L.render && !levels.hasKey(GATES)) {
+    if (!L.render && (levels.stairsLocked || !levels.hasKey(GATES))) {
       const g = (this._bars = this.add.graphics().setDepth(-9.5));
       for (const [a, b] of L.bars) {
         for (let i = 0; i < 8; i++) {
@@ -331,6 +333,13 @@ export default class HallScene extends BasePuzzleScene {
       steps.on("pointerdown", () => this._go(g, { place: "Upper" }));
       this._sparkles.push(attachMovableSparkles(this, steps, { padding: 2, bounds: () => g }));
     };
+    // the demo ends at the foot of the stairs: the gate stays shut, and says
+    // it is locked when pointed at
+    if (levels.stairsLocked) {
+      lockedNote(this, this.add.zone(g.x, g.y, g.width, g.height).setOrigin(0, 0).setDepth(5)
+        .setInteractive({ cursor: "not-allowed" }));
+      return;
+    }
     if (levels.hasKey(GATES)) {
       if (rendered) { rendered.amount = 1; rendered.draw(); }
       for (const leaf of leaves) leaf.setScale(shut * OPEN, leaf.scaleY);

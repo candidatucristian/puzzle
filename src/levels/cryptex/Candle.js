@@ -75,6 +75,7 @@ export default class Candles {
     this.out[i] = true;
     this.scene.services.audio.playClick(this.scene);
     this.flames[i].blow(event);
+    this.flames[i].count(this.clicks);
     if (this.allOut) this._later(() => this.onExtinguished(), 900);
   }
 
@@ -289,12 +290,92 @@ class Flame {
     }
   }
 
+  // The count stays above the tallest, middle candle, whichever was clicked.
+  // Only opacity changes: 250 ms in and 250 ms out, with no flicker or drift.
+  count(n) {
+    const anchor = this.candles.flames.reduce((tallest, flame) =>
+      flame.art && (!tallest || flame.art.height > tallest.art.height) ? flame : tallest, null);
+    if (!anchor) return;
+    for (const flame of this.candles.flames) flame.clearCount();
+    const { wick, scale: k } = anchor.art;
+    const y0 = wick.y - k * 5;
+    // (two fifths smaller than it was: k * 30)
+    const size = Math.min(k * 18, y0 - 12);
+    if (size <= 0) return;
+    const key = fireDigit(this.scene.textures, n);
+    const img = this.scene.add.image(wick.x, y0, key).setBlendMode(Phaser.BlendModes.ADD)
+      .setOrigin(.5, 1).setDepth(10).setAlpha(0).setScale(size / FIRE_DIGIT.h);
+    anchor.number = img;
+    // about a second from first glimmer to gone: up quickly, then fading
+    // slowly away to nothing
+    const life = { t: 0 }, smooth = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+    this.scene.tweens.add({
+      targets: life, t: 1, duration: 1000, ease: "Linear",
+      onUpdate: (tween) => { if (img.active) img.setAlpha(.78 * smooth(0, .22, life.t) * (1 - smooth(.3, 1, life.t))); else tween.stop(); },
+      onComplete: () => {
+        if (anchor.number === img) anchor.number = null;
+        img.destroy();
+      },
+    });
+  }
+
+  clearCount() {
+    if (!this.number) return;
+    this.scene.tweens.killTweensOf(this.number);
+    this.number.destroy();
+    this.number = null;
+  }
+
   remove() {
+    this.clearCount();
     this.dom?.remove();
     this.dom = null;
     for (const obj of [this.flame, this.core, this.halo, this.ember, this.smoke, this.glow]) obj?.destroy();
     this.flame = this.core = this.halo = this.ember = this.smoke = this.glow = null;
   }
+}
+
+// ── a number written in light, as a spark drawn through the dark leaves it:
+//    one thin stroke by hand, a white-gold core in a soft orange glow,
+//    thickest along its middle and drawn out to nothing at its ends; drawn
+//    once for each number ──────────────────────────────────────────────────
+const FIRE_DIGIT = { w: 240, h: 360 };
+// each figure's strokes: cubic curves joined end to end, in a 240 × 360 box
+const STROKES = {
+  1: [[[78, 118], [92, 104], [108, 82], [124, 54]], [[124, 54], [116, 140], [110, 220], [104, 312]]],
+  2: [[[70, 112], [76, 62], [154, 50], [160, 112]], [[160, 112], [164, 160], [112, 214], [70, 300]], [[70, 300], [100, 292], [136, 290], [172, 296]]],
+  3: [[[70, 96], [96, 52], [168, 58], [156, 116]], [[156, 116], [150, 150], [118, 166], [102, 172]], [[102, 172], [160, 170], [180, 222], [164, 260]], [[164, 260], [146, 306], [88, 312], [64, 278]]],
+};
+function fireDigit(textures, n) {
+  const key = `cryptex_light_digit_v4_${n}`;
+  if (textures.exists(key)) return key;
+  const { w, h } = FIRE_DIGIT;
+  const t = textures.createCanvas(key, w, h), g = t.getContext();
+  // the stroke as points along it, a little unsteady, as a hand moves
+  const cubic = (p, u) => [0, 1].map((i) => (1 - u) ** 3 * p[0][i] + 3 * (1 - u) ** 2 * u * p[1][i] + 3 * (1 - u) * u * u * p[2][i] + u ** 3 * p[3][i]);
+  const pts = [];
+  const curves = STROKES[n] ?? STROKES[1];
+  curves.forEach((c, ci) => { for (let k = ci ? 1 : 0; k <= 40; k++) pts.push(cubic(c, k / 40)); });
+  const N = pts.length - 1;
+  pts.forEach((p, i) => { const q = i / N; p[0] += Math.sin(q * 23 + n) * 1.1; p[1] += Math.sin(q * 17 + 2 * n) * 0.8; });
+  // how thick it is along its length: drawn out to nothing at both ends
+  const thick = (q) => Math.pow(Math.sin(Math.PI * Math.min(1, Math.max(0, q * 1.04 - 0.02))), 0.7) * (0.85 + 0.15 * Math.sin(q * 9 + n));
+  const pass = (width, colour, blur) => {
+    g.save(); g.lineCap = "round"; g.lineJoin = "round"; g.globalCompositeOperation = "lighter";
+    if (blur) g.filter = `blur(${blur}px)`;
+    g.strokeStyle = colour;
+    for (let i = 0; i < N; i++) {
+      g.lineWidth = Math.max(0.3, width * thick(i / N));
+      g.beginPath(); g.moveTo(...pts[i]); g.lineTo(...pts[i + 1]); g.stroke();
+    }
+    g.restore();
+  };
+  pass(34, "rgba(255,70,12,0.06)", 14);     // the faint red heat about it
+  pass(16, "rgba(255,110,24,0.20)", 7);     // its orange glow
+  pass(7, "rgba(255,170,70,0.55)", 2.5);    // the flame of it
+  pass(2.6, "rgba(255,238,205,0.95)", 0);   // its white-gold core
+  t.refresh();
+  return key;
 }
 
 // ── the painted flame ───────────────────────────────────────────────────────

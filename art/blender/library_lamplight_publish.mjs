@@ -3,13 +3,16 @@ import sharp from 'sharp';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { BOOKS } from '../../src/levels/bookshelf/puzzle.js';
 
-const source = '.artifacts/library-lamplight';
-const target = 'public/assets/images/Bookshelf/native-v1';
+const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
+const source = option('--source', '.artifacts/library-lamplight-v3');
+const version = Number(option('--version', '3'));
+const target = `public/assets/images/Bookshelf/native-v${version}`;
 await mkdir(source, { recursive: true });
 await writeFile(`${source}/books.json`, JSON.stringify(BOOKS, null, 2));
 if (!process.argv.includes('--prepare')) {
   await mkdir(target, { recursive: true });
   const layout = JSON.parse(await readFile(`${source}/library.json`, 'utf8'));
+  layout.version = version;
   await sharp(`${source}/plate.png`).webp({ quality: 95, effort: 6 }).toFile(`${target}/library.webp`);
   const pieces = [];
   let x = 0, y = 0, rowHeight = 0;

@@ -1,4 +1,5 @@
-import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN, STILL_LOCKED, roman } from "../shared/house.js";
+import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN, STILL_LOCKED, DEMO, DEMO_PLACES, roman } from "../shared/house.js";
+import { isDevMode } from "../shared/devMode.js";
 
 /** Coordinates level selection and answers; scenes own their resources.
  * The player is either at a puzzle (a level) or standing somewhere in the
@@ -117,15 +118,29 @@ export class LevelManager {
     });
   }
 
-  // A place whose door needs a key that has not been found yet.
+  // A place whose door needs a key that has not been found yet — or, in the
+  // demo, any place beyond it; inside the demo the keys always matter.
   #locked(place) {
+    // dev mode (the title menu, dev server only): every door opens
+    if (isDevMode()) return false;
+    if (DEMO) return !DEMO_PLACES.includes(place.key) || (Boolean(place.needsKey) && !this.hasKey(place.key));
     return Boolean(place.needsKey) && (!ALL_DOORS_OPEN || STILL_LOCKED.includes(place.key)) && !this.hasKey(place.key);
   }
+
+  /** In the demo, a chest whose key opens a room beyond the demo: it stays
+   *  locked, and the room is done without it. */
+  chestSealed(placeKey) {
+    const place = this.#places.find((item) => item.key === placeKey);
+    return Boolean(DEMO && !isDevMode() && place?.chest && !DEMO_PLACES.includes(place.chest));
+  }
+
+  /** In the demo, the way upstairs is shut. */
+  get stairsLocked() { return DEMO && !isDevMode(); }
 
   // Everything a place holds is solved, and the key in its chest taken.
   #finished(place) {
     return place.holds.length > 0 && place.holds.every((id) => this.isCompleted(this.indexOf(id))) &&
-      (!place.chest || this.hasKey(place.chest));
+      (!place.chest || this.hasKey(place.chest) || this.chestSealed(place.key));
   }
 
   /** The keys found so far: the room each opens, and the number on that
@@ -157,7 +172,7 @@ export class LevelManager {
    *  been solved and until the key has been taken; null otherwise. */
   keyWaitingIn(placeKey) {
     const place = this.#places.find((item) => item.key === placeKey);
-    if (!place?.chest || this.hasKey(place.chest)) return null;
+    if (!place?.chest || this.hasKey(place.chest) || this.chestSealed(place.key)) return null;
     return place.holds.every((id) => this.isCompleted(this.indexOf(id))) ? place.chest : null;
   }
 

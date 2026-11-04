@@ -123,6 +123,14 @@ export const ALL_DOORS_OPEN = true;
  *  locked door as the player will. */
 export const STILL_LOCKED = [];
 
+/** The Steam demo: only the hall and the first two rooms can be gone into.
+ *  Inside it the keys matter, as in the full game: Room I is open, and Room
+ *  II opens with the key from Room I's chest. Every other door, the gate up
+ *  the stairs, and Room II's chest (it holds the key to Room III) stay
+ *  locked, and say so when pointed at. Set DEMO to false for the whole house. */
+export const DEMO = true;
+export const DEMO_PLACES = Object.freeze(["Hall", "Study", "Room2"]);
+
 /** A place asks to go somewhere: `{ place: key }` or `{ level: id }`. */
 export const HOUSE_GO = "house:go";
 /** Leave a puzzle or room by the same route as the Back control. */

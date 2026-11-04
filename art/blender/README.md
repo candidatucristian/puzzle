@@ -1,5 +1,49 @@
 # Blender artwork
 
+## 2026-11-04: the user's list
+
+- **Lamplight in the Library (Bookshelf v4).**
+  - The old stand-alone picture had a window where Room II's end wall has none.
+  - `library_bookcase_puzzle.py` builds Room II exactly as
+    `room_library_polished.py` does, nothing rendered. It then brings the eye
+    to the end bookcase, about 1.4 m off, at the shelf at eye height, where the
+    room already has five books standing out with paper slips
+    (`room_library.py`, `MARKED_ROW`).
+  - Those five get their titles in gilt down the spine and a numbered card in
+    their pages, facing the room, from `bookshelf/puzzle.js`. A narrow one is
+    widened to 3.4 cm so its title reads.
+  - A light linked to the clues only catches the gilt and the paper.
+  - `library_lamplight.py` (v3) is kept, no longer published.
+- **Room I (plate v10, coffer v9).** The key the chest gives up was lost
+  against the lit white dome of the desk lamp, so the lamp is out:
+  - the dome is unlit milk glass (`--shade 0 --through 0`);
+  - the bulb is off (`--lamp 0`);
+  - a soft area light above the desk throws a little light down
+    (`--down 22`), with the glass left out of it by light linking;
+  - the ceiling bounce goes up to 75 W and the fill to 12 W to keep the room at
+    about the brightness it had.
+
+  The game also shows the rising key a quarter larger.
+  `study_publish_v5.mjs --plate 10 --coffer 9`.
+- **The botany hall (`hall_ground.py`).** Each door's number in gilt, 27 cm,
+  on the wall between the architrave and the picture rail, lit by a low warm
+  light linked to the numbers only. Rendered with
+  `--only plate,doors,bare,front,ids`; the gate's existing passes were reused.
+  `hall_ground_publish.mjs`.
+- **The router (`modem_room.py`, native-v3).**
+  - All twelve lights are one soft green (`--led-strength 1.1`,
+    `--led-light .0016`), so their cores no longer burn white. The five counters
+    used to be red.
+  - Unlit, each lens is smoked green glass that shows.
+  - `NativeModemScene` lights any lens whose state is not `off`.
+  - `modem_room_publish.mjs .artifacts/modem-native-v3 3`.
+
+```powershell
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/library_bookcase_puzzle.py -- --only preview --width 1600 --samples 128
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/library_bookcase_puzzle.py -- --only plate,books --width 3200 --samples 384
+node art/blender/library_lamplight_publish.mjs --source .artifacts/library-bookcase-v4 --version 4
+```
+
 ## Room II — original library with updated materials
 
 `room_library_restored.py` uses the original `room_library.py` camera,
@@ -28,9 +72,57 @@ identical. It then lights it properly:
 ```powershell
 & 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_library_polished.py -- --only preview --width 1600 --samples 128   # a quick look
 & 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_library_polished.py -- --only plate,coffer                       # 3200 px, 512 samples
-node art/blender/room_library_v3_publish.mjs --source .artifacts/room-library-polished --version 5 --coffer-version 6
+node art/blender/room_library_v3_publish.mjs --source .artifacts/room-library-polished --version 6 --coffer-version 7
 ```
 `--lamp`, `--bounce`, `--shade` and `--exposure` tune the light.
+
+Since 2026-11-03 (render v6, coffer v7), at the user's request:
+- The brass pot under the palm is gone, so no smaller pot shows inside its
+  terracotta one.
+- The chair at the reading table's left, by the armchair, is gone. The table's
+  far chair and the clerk's chair stay.
+- The botanical print by the LED clock is 0.74 its size (`--print`), frame
+  and all, about its own middle, so it is clear of the clock.
+- The four curtains go into `rainCutouts` with the palm, so the rain shows
+  only on the glass and never over a curtain.
+
+## Room I — the study, version 5 (2026-11-03)
+
+`room_study_v5.py` (from `room_study_v4.py`) keeps the camera, the desk, the
+chest, the window and every puzzle where they were.
+- **What changed:**
+  - The tall bookcase on the back wall and its ladder are gone. In their
+    place is the panelled wall, with a rose (`study-flower.png` from
+    `room_boards.mjs`, a botanical plate drawn in code) in an oak frame,
+    with a mount and glass.
+  - The bookcase along the right-hand wall stays.
+  - The two candles on the desk are gone. The two on the mantel stand unlit,
+    and the game lays no flame or halo over them.
+- **The light**, as the router's room is lit:
+  - The desk lamp's bulb sits inside its white glass dome (`--lamp`
+    55 W), never seen.
+  - The dome glows a little (`--shade` 0.75).
+  - That light comes back warm off the ceiling (`--bounce` 55 W): a mean of
+    about 40, as the halls.
+  - The cool fill is low, and the moon and the sky are at the window.
+- **Surfaces:** matte as in the library (no coat, roughness at least 0.46
+  except glass and metal), and no haze.
+- **Publishing:**
+  - `study_publish_v5.mjs` writes `room1-lights-1-render-v9.webp` and
+    `Study.json`.
+  - With `--coffer <n>`, it adds Room I's coffer poses from
+    `gold_coffer_rooms.py --room Study`, which now builds `room_study_v5.py`.
+    They are rendered in this light and go into `Chest/native-v<n>` for
+    Room I alone.
+  - Don't use `gold_coffer_publish.mjs` for one room: it rewrites every
+    room's coffer.
+
+```powershell
+node art/blender/room_boards.mjs
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_study_v5.py -- --width 2560 --samples 512
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/gold_coffer_rooms.py -- --room Study
+node art/blender/study_publish_v5.mjs --coffer 8
+```
 
 ## Gold coffer and trefoil key
 
@@ -47,7 +139,10 @@ for geometry, the lighting correction and rendering commands.
 five leather-bound clue books. Cycles renders nine physical pull poses per
 book, including their moving shadows, numbered bookmarks and gilt titles.
 `library_lamplight_publish.mjs` prepares the shared puzzle data and publishes
-the room and animation atlas. See [library-lamplight-sources.md](library-lamplight-sources.md)
+the room and animation atlas. The v2 scene has larger folio titles and bookmark
+numbers, detailed leather bindings and page edges, and a rebuilt six-pane sash
+window from `library_lamplight_details.py`. The sharp upper-left light is removed.
+See [library-lamplight-sources.md](library-lamplight-sources.md)
 for materials, the editable packed scene and rendering commands.
 
 ## The Captain’s Cabin — a study in a bottle
@@ -548,6 +643,19 @@ node art/blender/overtime_publish.mjs
 
 `--still 1` (or `--still lit`) renders one trial picture (`still.png`);
 `--probe "x,y;x,y"` prints what the eye sees at points of the picture.
+
+Since 2026-11-03 (office v4):
+- **The clocks:** a soft warm light (`--clocks` 9 W) is linked only to the
+  clocks' cases, glass and screens, so they read as clocks and not as
+  figures hanging in the dark. Each one's own glow on its glass is a little
+  stronger.
+- **The mug:** a darker stoneware glaze, shaded where it stands on the desk,
+  with an unglazed foot ring, so it no longer floats.
+- **The colons:** each lit colon is cut with an alpha that follows only what
+  lighting it changed. The cut is clear wherever the two renders agree, so no
+  edge of it shows as a line over the travel clock's digits.
+- **The calculator:** its digits (drawn by the game, `Overtime.js
+  _drawLcd`) are fine liquid-crystal bars in grey-green, not heavy black.
 
 ## Rewind: the windowsill (Room XI)
 

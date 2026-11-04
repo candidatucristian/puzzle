@@ -56,7 +56,21 @@ BLACK = plain("black plastic", (0.015, 0.015, 0.017), rough=0.35, coat=0.2)
 CLOCK_CASE = plain("clock case", (0.5, 0.51, 0.53), rough=0.38, metal=0.9)
 CLOCK_BEZEL = plain("clock bezel", (0.72, 0.72, 0.74), rough=0.22, metal=1.0)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
-CERAMIC = plain("ceramic", (0.5, 0.45, 0.36), rough=0.32, coat=0.2)
+CERAMIC = plain("ceramic", (0.28, 0.26, 0.22), rough=0.3, coat=0.08)
+# (a stoneware glaze, darkening where the mug stands on the desk and toward
+#  its foot, as a real one does in the shadow it makes on what it stands on)
+def _sat_low(m):
+    nt = m.node_tree; N = nt.nodes; b = N["Principled BSDF"]
+    ao = N.new("ShaderNodeAmbientOcclusion"); ao.inputs["Distance"].default_value = 0.035; ao.inputs["Color"].default_value = (*b.inputs["Base Color"].default_value[:3], 1)
+    ramp = N.new("ShaderNodeMapRange"); ramp.inputs["To Min"].default_value = 0.35
+    nt.links.new(ao.outputs["AO"], ramp.inputs["Value"])
+    mix = N.new("ShaderNodeMix"); mix.data_type = "RGBA"; mix.blend_type = "MULTIPLY"; mix.inputs["Factor"].default_value = 1.0
+    mix.inputs[6].default_value = b.inputs["Base Color"].default_value
+    c = N.new("ShaderNodeCombineXYZ"); [nt.links.new(ramp.outputs["Result"], c.inputs[i]) for i in range(3)]
+    nt.links.new(c.outputs["Vector"], mix.inputs[7]); nt.links.new(mix.outputs[2], b.inputs["Base Color"])
+    return m
+_sat_low(CERAMIC)
+FOOT = plain("unglazed foot", (0.16, 0.13, 0.1), rough=0.85)
 COFFEE = plain("coffee", (0.03, 0.015, 0.008), rough=0.08, coat=0.6)
 CASE_LEATHER = scan("case leather", "brown_leather", size=0.3, tint=(0.6, 0.3, 0.2), bright=0.45, rough=(0.35, 0.6), bump=0.5)
 def ruled(w=512, h=768, lines=26):
@@ -153,7 +167,7 @@ spl = cu.splines.new("BEZIER"); spl.bezier_points.add(2)
 for bp_, v in zip(spl.bezier_points, (P(kx1 - 3, ky0 + 0.5, WALL_D - 1.2), P(kx1 - 1, ky0 - 24, WALL_D - 0.6), P(kx1 + 2, DESK_Y, WALL_D - 0.6))):
     bp_.co = v; bp_.handle_left_type = bp_.handle_right_type = "AUTO"
 link(bpy.data.objects.new("lead", cu)).data.materials.append(BLACK)
-glow_ = lamp("clock glow", "AREA", tuple(P(ck["x"], kyc, KF - 1.5)), aim=tuple(P(ck["x"], kyc - 12, KF - 40)), energy=float(arg("--clockglow", "0.25")), colour=(1.0, 0.06, 0.03), size=0.16, size_y=0.05)
+glow_ = lamp("clock glow", "AREA", tuple(P(ck["x"], kyc, KF - 1.5)), aim=tuple(P(ck["x"], kyc - 12, KF - 40)), energy=float(arg("--clockglow", "0.6")), colour=(1.0, 0.06, 0.03), size=0.16, size_y=0.05)
 glow_.visible_camera = False; glow_.visible_glossy = False
 
 # ── a botanical print of hers, behind glass, in a walnut frame ─────────────
@@ -191,7 +205,7 @@ face_card(1, front(rx - 11.2, rx + 0.2, sy + 2.9, sy + 7.2, rd - 6.2))
 for k in range(6): box_cm("grille", rx + 2.6, rx + 12, sy + 2.3 + k * 1.1, sy + 2.62 + k * 1.1, rd - 6.2, rd - 6.0, plain("grille", (0.25, 0.26, 0.28), rough=0.5, metal=0.6))
 KNOB = plain("knob", (0.3, 0.31, 0.33), rough=0.3, metal=0.7)
 for k in (-9, -6): lathe("knob", [(0, 0), (0.007, 0), (0.007, 0.008), (0, 0.009)], KNOB, at=tuple(P(rx + k, sy + 1.2, rd - 6.1)), steps=16).rotation_euler = (math.pi / 2, 0, 0)
-glow_ = lamp("clock glow", "POINT", tuple(P(rx - 5.5, sy + 5, rd - 9)), energy=0.06, colour=(0.3, 1.0, 0.5), size=0.03); glow_.visible_glossy = False
+glow_ = lamp("clock glow", "POINT", tuple(P(rx - 5.5, sy + 5, rd - 9)), energy=0.15, colour=(0.3, 1.0, 0.5), size=0.03); glow_.visible_glossy = False
 
 # ── on the desk: the green banker's lamp, the only light ───────────────────
 gx, gd = 22, 100
@@ -239,6 +253,7 @@ mgx, mgd = 38, 86
 lathe("mug", [(0, 0), (0.039, 0), (0.041, 0.004), (0.042, 0.094), (0.0405, 0.097), (0.038, 0.094), (0.037, 0.012), (0, 0.012)], CERAMIC, at=tuple(P(mgx, DESK_Y, mgd)), steps=48)
 cylinder("coffee", M(mgx), M(mgd), M(DESK_Y + 7.6), M(DESK_Y + 7.8), M(3.75), COFFEE, verts=48)
 tube("mug handle", [(0.0, 0.078), (0.028, 0.074), (0.032, 0.04), (0.0, 0.026)], 0.0058, CERAMIC, at=tuple(P(mgx + 3.9, DESK_Y, mgd)), rot=math.radians(-20))
+lathe("mug foot", [(0.0365, 0.0), (0.0392, 0.0), (0.0399, 0.0026), (0.0368, 0.0026)], FOOT, at=tuple(P(mgx, DESK_Y - 0.01, mgd)), steps=48)
 MUG_TOP = P(mgx, DESK_Y + 9.8, mgd)
 
 # a glass with a sprig of periwinkle in it
@@ -255,7 +270,7 @@ assembled("alarm clock", lambda: (
 ), at=(ax, DESK_Y, ad), turn=at_)
 AF = framed((ax, DESK_Y, ad), at_)
 face_card(2, [AF(-4.8, 3.5, -4.2), AF(4.8, 3.5, -4.2), AF(4.8, 7.4, -4.2), AF(-4.8, 7.4, -4.2)])
-glow_ = lamp("clock glow", "POINT", tuple(AF(0, 5.5, -7)), energy=0.08, colour=(1.0, 0.5, 0.1), size=0.03); glow_.visible_glossy = False
+glow_ = lamp("clock glow", "POINT", tuple(AF(0, 5.5, -7)), energy=0.2, colour=(1.0, 0.5, 0.1), size=0.03); glow_.visible_glossy = False
 
 # the travel clock, standing open in its leather case
 tx, td, tt = -20, 86, math.radians(13)
@@ -371,6 +386,17 @@ fill_l = lamp("fill", "AREA", tuple(P(0, 205, 10)), aim=tuple(P(0, 105, WALL_D))
 fill_l.visible_camera = False; fill_l.visible_glossy = False
 back_l = lamp("on the walls", "AREA", tuple(P(0, 230, -40)), aim=tuple(P(-30, 150, -170)), energy=float(arg("--behind", "14")), colour=(0.8, 0.85, 1.0), size=1.6)
 back_l.visible_camera = False; back_l.visible_glossy = False
+# (the clocks' own light: soft, from where the room's dim light comes, on
+#  their cases, glass and screens alone — so they read as clocks, not as
+#  figures hanging in the dark; the room keeps its dark)
+CLOCK_PARTS = ("wall clock", "clock bezel", "clock glass", "clock button", "lead", "radio", "radio cheek", "radio window", "grille", "knob",
+               "alarm", "snooze", "travel", "face ")
+_clocks = bpy.data.collections.new("the clocks")
+for o in scene.objects:
+    if o.type in ("MESH", "CURVE") and o.name.split(".")[0].startswith(CLOCK_PARTS): _clocks.objects.link(o)
+clock_l = lamp("on the clocks", "AREA", tuple(P(-10, 175, 25)), aim=tuple(P(0, 120, WALL_D)), energy=float(arg("--clocks", "9")), colour=(1.0, 0.86, 0.7), size=1.2)
+clock_l.visible_camera = False; clock_l.light_linking.receiver_collection = _clocks
+print("CLOCK PARTS LIT", sorted({o.name.split('.')[0] for o in _clocks.objects}))
 clear_glass()
 
 # ── where everything the game keeps alive fell in the picture ──────────────

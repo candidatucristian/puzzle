@@ -4,7 +4,7 @@
 // published game rather than show players a number that is not true. To make
 // it real, call show() with the count from a presence service.
 
-const SAMPLE = 128;
+const SAMPLE = 1;
 
 export function mountPlayersOnline(scope, { i18n = null } = {}) {
   const box = document.getElementById("players-online");
@@ -13,7 +13,13 @@ export function mountPlayersOnline(scope, { i18n = null } = {}) {
   let shown = null;
   const write = () => {
     if (shown === null) return;
-    count.textContent = shown.toLocaleString(i18n?.language === "ro" ? "ro-RO" : i18n?.language === "ru" ? "ru-RU" : "en-GB");
+    count.textContent = shown.toLocaleString(
+      i18n?.language === "ro"
+        ? "ro-RO"
+        : i18n?.language === "ru"
+          ? "ru-RU"
+          : "en-GB",
+    );
   };
   const show = (n) => {
     shown = Math.max(0, Math.round(n));

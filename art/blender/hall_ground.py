@@ -254,6 +254,7 @@ def build_walls():
 
 
 # ── 3. Six-Panel Walnut Doors ───────────────────────────────────────────────
+DOOR_NUMBERS = []   # the gilt numbers on the wall over the doors (lit by their own light)
 def build_doors():
     for side in (-1, 1):
         for i, zd in enumerate(DOORS):
@@ -304,6 +305,18 @@ def build_doors():
             for (a, b, c, d_) in ((y0 - 0.13, y0, 0, H_ + 0.13), (y1, y1 + 0.13, 0, H_ + 0.13), (y0 - 0.13, y1 + 0.13, H_, H_ + 0.13)):
                 slab(*sorted((X, X - side * 0.034)), a, b, c, d_, M["OAK_X"] if c == H_ else M["OAK"], 0.01)
                 slab(*sorted((X - side * 0.034, X - side * 0.048)), a + 0.028, b - 0.028, c + (0.028 if c == H_ else 0), d_ - 0.028, M["OAK"], 0.006)
+            # (2026-11-04) Its number again, large, in gilt on the wall above the
+            # architrave, between it and the picture rail: the doors told apart
+            # from down the hall
+            big = bpy.data.curves.new("door number", "FONT"); big.body = ROMAN[n]
+            try: big.font = bpy.data.fonts.load("C:/Windows/Fonts/georgiab.ttf")
+            except Exception: pass
+            big.size = float(arg("--number-size", "0.27")); big.align_x = "CENTER"; big.align_y = "CENTER"
+            big.extrude = 0.007; big.bevel_depth = 0.0018; big.bevel_resolution = 2
+            over = arch(link(bpy.data.objects.new("door number", big))); over.data.materials.append(M["GILT"])
+            over.rotation_euler = (math.pi / 2, 0, -side * math.pi / 2)
+            over.location = (X - side * 0.01, (y0 + y1) / 2, H_ + 0.13 + (RAIL - H_ - 0.13) / 2)
+            DOOR_NUMBERS.append(over)
             xa, xb = sorted((X, face))
             slab(xa, xb, y0 - 0.002, y0, 0, H_, M["OAK"], 0)
             slab(xa, xb, y1, y1 + 0.002, 0, H_, M["OAK"], 0)
@@ -744,6 +757,16 @@ def build_lighting():
     fill = lamp("fill", "AREA", (0, 0.6, 2.6), aim=(0, END, 1.0),
                 energy=float(arg("--fill", "50")), colour=(0.8, 0.85, 1.0), size=2.5)
     fill.visible_camera = False; fill.visible_glossy = False
+
+    # (2026-11-04) A low warm light from down the middle of the hall that
+    # reaches only the gilt numbers over the doors, so they read in the dark
+    numbers = bpy.data.collections.new("door numbers")
+    for o in DOOR_NUMBERS: numbers.objects.link(o)
+    for y_ in sorted({o.location.y for o in DOOR_NUMBERS}):
+        glint = lamp("on the door numbers", "POINT", (0, y_ - 0.35, RAIL - 0.05),
+                     energy=float(arg("--number-light", "8")), colour=(1.0, 0.78, 0.5), size=0.3)
+        glint.visible_camera = False
+        glint.light_linking.receiver_collection = numbers
 
 
 # ── Build Scene & Render Passes ─────────────────────────────────────────────

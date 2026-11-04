@@ -14,7 +14,7 @@ ROOM=arg('--room','Study'); WIDTH=int(arg('--width','6144')); SAMPLES=int(arg('-
 # and reads as a box standing open. Less of them there, and its shape comes
 # from the room's own lights — candles, window, lamps.
 FILL=float(arg('--fill-k',{'Study':'0.3','Room2':'0.1'}.get(arg('--room','Study'),'1')))
-BUILDERS={'Study':'room_study_v4.py','Room2':'room_library.py','Room3':'room_cabin.py','Room4':'room_counting.py','Room5':'room_drawing.py'}
+BUILDERS={'Study':'room_study_v5.py','Room2':'room_library.py','Room3':'room_cabin.py','Room4':'room_counting.py','Room5':'room_drawing.py'}
 OUT=os.path.join(rc.ROOT,'.artifacts/gold-coffer-v2',ROOM); os.makedirs(OUT,exist_ok=True)
 with open(os.path.join(OUT,'render.pid'),'w') as f: f.write(str(os.getpid()))
 with open(os.path.join(rc.ROOT,'src/levels/house/rooms',ROOM+'.json'),encoding='utf-8') as f: ORIGINAL=json.load(f)

@@ -73,7 +73,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "An original Blender/Cycles close-up of the square walnut-mounted brass cipher wheel from Room I: machined concentric rings, a turned thumb grip, patina, physical luminous Roman letters, three hollow dripped beeswax candles and a wax-sealed rag-paper envelope. Eight native photographs preserve each candle's individual illumination and shadows. Each candle goes out with one click; their number hints at shift 3. After the last, the two alphabets become readable and the inner disc turns. Clicking the envelope brings the opened letter up out of it over the darkened room: a Blender render of the tri-folded rag paper alone, its own soft shadow under it, with actual ink reading WKH DQVZHU / LV URWRU. A Caesar shift of three decodes THE ANSWER IS ROTOR. Sixteen original Blender flame frames animate over camera-projected wicks. The original answer and puzzle mechanics are retained.",
+    "description": "An original Blender/Cycles close-up of the square walnut-mounted brass cipher wheel from Room I: machined concentric rings, a turned thumb grip, patina, physical luminous Roman letters, three hollow dripped beeswax candles and a wax-sealed rag-paper envelope. Eight native photographs preserve each candle's individual illumination and shadows. Each candle goes out with one click, and as it does the count so far (1, 2, 3) rises high over the candles as a faint, flickering numeral of fire and burns away within three quarters of a second; their number hints at shift 3. After the last, the two alphabets become readable and the inner disc turns. Clicking the envelope brings the opened letter up out of it over the darkened room: a Blender render of the tri-folded rag paper alone, its own soft shadow under it, with actual ink reading WKH DQVZHU / LV URWRU. A Caesar shift of three decodes THE ANSWER IS ROTOR. Sixteen original Blender flame frames animate over camera-projected wicks. The original answer and puzzle mechanics are retained.",
     "references": [
       "cryptex/puzzle.js CRYPTEX_CIPHER / CRYPTEX_ALPHA — shared cipher and alphabet, read by the Blender builder",
       "Candles.blow() (Candle.js) — one click extinguishes each candle; the existing flame, ember and smoke lifecycle uses the native flame atlas",
@@ -172,7 +172,7 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "An old router on a desk in a lamplit room at night shows the word HTTPS as ASCII binary, one letter at a time across its seven right-hand LEDs — each letter's 7-bit ASCII code at once (the always-zero leading bit has no LED; a plain space stands between the counters and the letter), an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs lights solid red, confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
+    "description": "An old router on a desk in a lamplit room at night shows the word HTTPS as ASCII binary, one letter at a time across its seven right-hand LEDs — each letter's 7-bit ASCII code at once (the always-zero leading bit has no LED; a plain space stands between the counters and the letter), an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs on the left lights solid green (every light on the router is the same soft green; the gap sets the counters apart from the bits), confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
     "references": [
       "modem/puzzle.js: MODEM_WORD = \"HTTPS\", planTransmission() — ASCII binary LED schedule",
       "modem/NativeModemScene.js — original transmission drives twelve separately rendered optical/reflection layers",
@@ -393,7 +393,7 @@ const metadata = [
     "code": "SOIL",
     "altCode": null,
     "hint": {
-      "text": "OVERTIME.\nThe clocks on the wall, and the calculator on the desk.",
+      "text": "Take the times as plain numbers and let the machine do the work. Then look at its answer from another angle.",
       "sound": false,
       "tool": false
     },
@@ -452,7 +452,7 @@ const metadata = [
     "id": "bookshelf",
     "key": "Bookshelf",
     "name": "Lamplight in the Library",
-    "summary": "Lamplight falls on old books while a cat sleeps above the shelves.",
+    "summary": "Five books stand out on the shelf at the eye in Room II's end bookcase.",
     "code": "SIGHT",
     "altCode": null,
     "hint": {
@@ -460,13 +460,14 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A dark library late at night: a tall mahogany bookcase lit only by one table lamp, the rest of the room in shadow; a cup of tea steaming beside the lamp, the moon in the window, a Persian rug, a tabby cat asleep on top of the case. On the third shelf five books stand pulled a little out, each with a one-word title in gold on its spine and a paper bookmark in it with a number: SHADOW 1, MIRROR 2, MAGIC 3, HOUND 1, WATER 3, left to right. The bookmark is the index into the title (a book cipher): the 1st letter of SHADOW, the 2nd of MIRROR, the 3rd of MAGIC, the 1st of HOUND, the 3rd of WATER — S I G H T. A click on one of the five draws it a little further out, and back.",
+    "description": "Room II's own end bookcase, come up close (since 2026-11-04 the puzzle is rendered from the room's scene itself, art/blender/library_bookcase_puzzle.py: the same shelves, books and light as the room). On the shelf at the eye five books stand pulled a little out, each with a one-word title in gold on its spine and a paper bookmark in it with a number: SHADOW 1, MIRROR 2, MAGIC 3, HOUND 1, WATER 3, left to right. The bookmark is the index into the title (a book cipher): the 1st letter of SHADOW, the 2nd of MIRROR, the 3rd of MAGIC, the 1st of HOUND, the 3rd of WATER — S I G H T. A click on one of the five draws it a little further out, and back.",
     "references": [
       "BOOKS (bookshelf/puzzle.js) — the five titles and their bookmarks, left to right",
       "readBook() / readShelf() — the bookmark's number is the letter's place in the title, counting from 1",
-      "art/blender/library_lamplight.py — original Cycles room, sleeping tabby, gilt spine titles and numbered paper bookmarks; nine physical pull poses per book",
-      "art/blender/library_lamplight_publish.mjs — prepares the five clues from BOOKS, publishes the room and 45-pose atlas with projected interaction bounds",
-      "bookshelf/NativeBookshelfScene.js and nativeLibrary.json — the five books on the third shelf pull out and slide home with their rendered shadows; steam and dust stay alive"
+      "art/blender/library_bookcase_puzzle.py — since v4: Room II built as room_library_polished.py builds it, the eye come up to the end bookcase; the five books that already stand out there get gilt titles and numbered slips; nine physical pull poses per book",
+      "art/blender/library_lamplight.py — the earlier stand-alone library (v3, with a window the room does not have); kept, no longer published",
+      "art/blender/library_lamplight_publish.mjs — prepares the five clues from BOOKS, publishes the picture and 45-pose atlas with projected interaction bounds (--source .artifacts/library-bookcase-v4 --version 4)",
+      "bookshelf/NativeBookshelfScene.js and nativeLibrary.json — the five books on the shelf at the eye pull out and slide home with their rendered shadows; dust turns over the shelf"
     ]
   },
   {

@@ -43,7 +43,7 @@ export default class NativeModemScene extends BasePuzzleScene {
     this._leds = native.leds.map((led, i) => this.add.image(
       x + led.crop.x * s, y + led.crop.y * s, key(`led-${i}`),
     ).setOrigin(0).setScale(s).setBlendMode(Phaser.BlendModes.ADD).setDepth(1)
-      .setAlpha(this._ledStates[i] === led.colour ? 1 : 0));
+      .setAlpha(this._ledStates[i] !== 'off' ? 1 : 0));
     const centre = at(native.lamp.centre), radius = native.lamp.radius * s;
     this._motes = Array.from({ length: 12 }, () => {
       const m = {
@@ -83,7 +83,9 @@ export default class NativeModemScene extends BasePuzzleScene {
   _setLed(index, state) {
     if (!native.leds[index]) return;
     this._ledStates[index] = state;
-    this._leds?.[index]?.setAlpha(state === native.leds[index].colour ? 1 : 0);
+    // every lens is lit the one green (art/blender/modem_room.py): a counter
+    // and a bit both show their own rendered light whenever they are not off
+    this._leds?.[index]?.setAlpha(state !== 'off' ? 1 : 0);
   }
 
   _cancelAnimation() {

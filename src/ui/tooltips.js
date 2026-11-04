@@ -35,22 +35,29 @@ export function mountTooltips(scope) {
   function show(el) {
     const said = textOf(el).trim();
     if (!said || !el.isConnected || el.closest("[hidden], .hidden")) return;
+    place(said, el.getBoundingClientRect(), el.dataset.tipKey ?? "");
+  }
+  // the note, held under (or over) a box on the screen
+  function place(said, box, keyName = "") {
     const m = said.match(/^(.*?)\s*\(([^()]{1,5})\)$/);
     words.textContent = m ? m[1] : said;
-    key.textContent = m ? m[2] : el.dataset.tipKey ?? "";
+    key.textContent = m ? m[2] : keyName;
     key.hidden = !key.textContent;
     tip.hidden = false;
     tip.classList.remove("shown");
-    // under the control, or over it where there is no room below; never off the page
-    const box = el.getBoundingClientRect(), t = tip.getBoundingClientRect();
+    position(box);
+    void tip.offsetWidth;
+    tip.classList.add("shown");
+  }
+  // under the box, or over it where there is no room below; never off the page
+  function position(box) {
+    const t = tip.getBoundingClientRect();
     const below = box.bottom + t.height + 14 < window.innerHeight;
     const x = Math.min(window.innerWidth - t.width - 8, Math.max(8, box.left + box.width / 2 - t.width / 2));
     tip.style.left = `${x}px`;
     tip.style.top = `${below ? box.bottom + 9 : box.top - t.height - 9}px`;
     tip.dataset.side = below ? "below" : "above";
     tip.style.setProperty("--arrow", `${Math.min(t.width - 12, Math.max(12, box.left + box.width / 2 - x))}px`);
-    void tip.offsetWidth;
-    tip.classList.add("shown");
   }
   function hide() {
     clearTimeout(timer);
@@ -75,4 +82,21 @@ export function mountTooltips(scope) {
   scope.on(document, "keydown", (e) => { if (e.key === "Escape") hide(); });
   scope.on(window, "scroll", hide, true);
   scope.on(window, "blur", hide);
+  // the same note for something in the game's picture, which has no element
+  // of its own: `tooltip:at` with { text, rect } (a box on the screen) when the
+  // pointer comes to rest on it, `tooltip:off` when it leaves; `tooltip:move`
+  // with the same detail, its rect changed, carries the note along (a note
+  // held under the pointer itself)
+  scope.on(window, "tooltip:at", (e) => {
+    const { text, rect } = e.detail ?? {};
+    if (!text || !rect) return;
+    hide();
+    target = e.detail;
+    timer = setTimeout(() => { if (target === e.detail) place(String(text).trim(), e.detail.rect); }, DELAY);
+  });
+  scope.on(window, "tooltip:move", (e) => {
+    if (!e.detail || target !== e.detail || tip.hidden) return;
+    position(e.detail.rect);
+  });
+  scope.on(window, "tooltip:off", hide);
 }

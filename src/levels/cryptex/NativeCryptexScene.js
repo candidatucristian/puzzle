@@ -3,6 +3,7 @@ import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import Candles from "./Candle.js";
 import { CRYPTEX_ALPHA } from "./puzzle.js";
 import native from "./nativeCryptex.json";
+import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 
 const PATH = "assets/images/Cryptex/native-v1";
 const key = (name) => `cx_native_v1_${name}`;
@@ -31,6 +32,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this._wheelAngle = 0;
     this._lastTick = 0;
     this._lettersShown = false;
+    this._letterRead = false; // opened once this visit: it stops sparkling
     this._reveal = { value: 0 };
     this._overlayOpen = false;
     this._draggingWheel = false;
@@ -115,6 +117,14 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     }).setData("interactionLabel", "Open the sealed letter");
     zone.on("pointerdown", () => this._openLetter());
     this._envelope = { x: (x0 + Math.max(...xs)) / 2, y: (y0 + Math.max(...ys)) / 2, width: Math.max(...xs) - x0 };
+    // the sealed letter sparkles, as the things to open in the rooms do, until
+    // it has been opened (or the puzzle is solved)
+    const envelopeBox = { x: x0, y: y0, width: Math.max(...xs) - x0, height: Math.max(...ys) - y0 };
+    const levels = this.services.levels;
+    this._letterSparkles = attachMovableSparkles(this, zone, {
+      padding: 3, bounds: () => envelopeBox,
+      enabled: () => !this._letterRead && !this._overlayOpen && !levels.isCompleted(levels.currentIndex),
+    });
     this._buildLetter(W, H);
     if (this.candle.allOut) this._lettersShown = true;
     if (this._lettersShown) this._reveal.value = 1;
@@ -156,6 +166,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
   _openLetter() {
     if (this._overlayOpen) return;
     this._overlayOpen = true;
+    this._letterRead = true;
     this._draggingWheel = false;
     const { image, caption, backdrop } = this._letterParts;
     image.setPosition(this._letterPoses.away.x, this._letterPoses.away.y).setScale(this._letterPoses.away.scale)
@@ -228,6 +239,8 @@ export default class NativeCryptexScene extends BasePuzzleScene {
   }
 
   _teardown() {
+    this._letterSparkles?.();
+    this._letterSparkles = null;
     this.tweens.killAll();
     this.candle.removeDom();
     for (const obj of this.children.list.slice()) obj.destroy();

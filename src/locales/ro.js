@@ -12,6 +12,7 @@ export const ro = {
     skip: 'SARI PESTE INTRO',
     skipShort: 'Sari',
     locked: 'Blocat',
+    chestLocked: 'Încuiat',
     solved: 'Rezolvat',
     notSolved: 'Nerezolvat încă',
     exploring: 'În curs de explorare',
@@ -53,6 +54,16 @@ export const ro = {
     eyebrow: 'Reședința familiei Ashcombe',
     title: 'Conacul Ashcombe',
     line: 'Căminul lui Ivy, Silas și Orion Ashcombe.',
+  },
+  menu: {
+    label: 'Meniul principal',
+    newGame: 'Joc nou',
+    newGameConfirm: 'Sigur? Progresul se pierde',
+    continue: 'Continuă',
+    options: 'Opțiuni',
+    exit: 'Ieșire',
+    exitNote: 'Poți închide fila acum.',
+    exitBack: 'Înapoi la conac',
   },
   sidebar: {
     notes: 'Notițe',
@@ -622,11 +633,9 @@ export const ro = {
   levelHints: {
     binarytree: [
       'RĂDĂCINILE CRESC ÎN SUS.\nBiletul de lângă arbore nu este o mâzgălitură — fiecare rând reprezintă un traseu.',
-      'Fiecare călătorie începe în același punct și se încheie pe o frunză. Fii atent la fiecare viraj (Stânga/Dreapta) și păstrează ordinea biletului.',
     ],
     plantpot: [
       'UDĂ PLANTA.\nObservă ce aduce fiecare turnare de apă.',
-      'Numără doar ce este nou după fiecare udare. Numerele obținute au un tipar celebru — și un nume renumit.',
     ],
     sequence: [
       'ȘASE NUMERE, O SINGURĂ VOCE.\nCărțile cer o ordine, iar nota din colț arată cum vorbesc.',
@@ -634,7 +643,6 @@ export const ro = {
     ],
     cryptex: [
       'NUMĂRĂ LUMÂNĂRILE.\nFiecare literă din plic s-a deplasat cu aceeași valoare.',
-      'Numără lumânările aprinse. Fiecare literă din mesaj a fost transpusă în alfabet cu numărul corespunzător lumânărilor.',
     ],
     chessboard: [
       'CÂTE O PIESĂ PE FIECARE RÂND.\nMarginea tablei denumește fiecare căsuță; citește rândurile de jos în sus.',
@@ -697,7 +705,6 @@ export const ro = {
       'Urmărește numerele mașinilor în ordinea în care trec linia de sosire. Niciunul nu este mai mare decât alfabetul (A=1, B=2...).',
     ],
     overtime: [
-      'CIFRE DE CALCULATOR.\nÎntoarce afișajul pentru a citi mesajul.',
       'Efectuează calculele cu cifrele date, apoi privește rezultatul de pe ecran dintr-un alt unghi (răsturnat).',
     ],
     fireworks: [

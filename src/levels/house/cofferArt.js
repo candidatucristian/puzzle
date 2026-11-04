@@ -2,6 +2,7 @@ import COFFER from './nativeCoffer.json';
 import { WALK_MS } from '../../shared/house.js';
 import { chime } from '../../shared/paint.js';
 import { attachMovableSparkles } from '../../shared/movableSparkles.js';
+import { lockedNote } from '../../shared/lockedNote.js';
 
 const artVersion = room => COFFER.rooms[room]?.artVersion ?? COFFER.version;
 export const cofferAtlasKey = room => `coffer_${room}_v${artVersion(room)}`;
@@ -37,12 +38,15 @@ export function openCoffer(scene, image, fallback) {
 export function buildCoffer(scene, L, k) {
   const levels = scene.services.levels, c = L.chest;
   const waiting = levels.keyWaitingIn(scene.place);
-  const taken = !waiting && L.things.every(thing => levels.isCompleted(levels.indexOf(thing.level)));
+  // (in the demo, a chest holding the key to a room beyond it stays shut)
+  const sealed = Boolean(levels.chestSealed?.(scene.place));
+  const taken = !sealed && !waiting && L.things.every(thing => levels.isCompleted(levels.indexOf(thing.level)));
   scene._chest = addCoffer(scene, scene.place, c, taken) ?? scene.add.image(c.box.x, c.box.y, taken ? k.open : k.shut)
     .setOrigin(0).setDisplaySize(c.box.width, c.box.height).setDepth(-6);
   if (!taken && !waiting) {
     scene._lock = scene.add.zone(c.hit.x, c.hit.y, c.hit.width, c.hit.height).setOrigin(0)
       .setInteractive({ cursor: 'not-allowed' }).setData('interactionLabel', 'Locked').setDepth(5);
+    lockedNote(scene, scene._lock);
   }
   if (waiting) scene.time.delayedCall(WALK_MS + 150, () => scene._offerKey(waiting, k));
 }
@@ -55,7 +59,8 @@ export function offerCofferKey(scene, key, k) {
   const opening = openCoffer(scene, scene._chest, k.open);
   chime(scene, [[784, .04], [1175, .03], [1568, .02]], .8);
   scene.time.delayedCall(still ? 1 : opening * .72, () => {
-    const h = 56 * u, ratio = 96 / 220, duration = still ? 1 : 700;
+    // (a quarter larger than it was, 56: it is to be seen rising)
+    const h = 70 * u, ratio = 96 / 220, duration = still ? 1 : 700;
     const item = scene.add.image(m.x, m.y, k.key).setDepth(20).setAlpha(0)
       .setDisplaySize(h * ratio * .7, h * .7);
     scene.tweens.add({ targets: item, y: m.y - 80 * u, alpha: 1,

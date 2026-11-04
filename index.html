@@ -670,7 +670,11 @@
           <div id="start-door" aria-hidden="true">
             <canvas id="start-door-glint"></canvas>
           </div>
-          <!-- the house's name, low on the left, laid into the dark of the picture -->
+          <!-- low on the left: the house's name and under it the menu
+             (startMenu.js), on a dark just their size that the manor blurs
+             and fades into -->
+          <div id="start-column">
+          <div id="start-veil" aria-hidden="true"></div>
           <div id="start-legend">
             <p class="legend-eyebrow" data-i18n="start.eyebrow">
               The Ashcombe residence
@@ -680,6 +684,31 @@
             <p class="legend-line" data-i18n="start.line">
               Home of Ivy, Silas and Orion Ashcombe.
             </p>
+            <nav id="start-menu" aria-label="Main menu" data-i18n-aria="menu.label">
+              <button type="button" class="menu-item" data-menu="new">
+                <span class="menu-mark" aria-hidden="true"></span
+                ><span class="menu-word" data-i18n="menu.newGame">New game</span>
+              </button>
+              <button type="button" class="menu-item" data-menu="continue">
+                <span class="menu-mark" aria-hidden="true"></span
+                ><span class="menu-word" data-i18n="menu.continue">Continue</span>
+              </button>
+              <button type="button" class="menu-item" data-menu="options">
+                <span class="menu-mark" aria-hidden="true"></span
+                ><span class="menu-word" data-i18n="menu.options">Options</span>
+              </button>
+              <button type="button" class="menu-item" data-menu="exit">
+                <span class="menu-mark" aria-hidden="true"></span
+                ><span class="menu-word" data-i18n="menu.exit">Exit</span>
+              </button>
+              <!-- only from the dev server (startMenu.js): every door open -->
+              <button type="button" class="menu-item menu-dev" data-menu="dev" aria-pressed="false" hidden>
+                <span class="menu-mark" aria-hidden="true"></span
+                ><span class="menu-word">Dev mode</span
+                ><span class="menu-state" aria-hidden="true"></span>
+              </button>
+            </nav>
+          </div>
           </div>
           <canvas
             id="start-moon"

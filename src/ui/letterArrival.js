@@ -83,7 +83,8 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
     };
     const parentCleanup=scope.add(()=>finish('later'));
 
-    // Advancing the real Blender clip, including a reverse path when filed.
+    // Advancing the real Blender clip (forwards only: filed, the letter flies
+    // to the case file instead of folding back).
     const pose=(from,to,milliseconds,onFrame=null)=>new Promise(done=>{
       let raf=null,ended=false;
       const complete=()=>{
@@ -111,7 +112,7 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       const article=renderLetter(page,letter,{paper:plain,seal:false,materials:plain?null:undefined});
       sheet.style.opacity='1';caption.style.opacity='0';
       if(!still){
-        article.classList.add('is-writing');typist=sounds?.typing?.()??null;
+        article.classList.add('is-writing');typist=sounds?.writing?.()??null;
         life.later(()=>article.classList.remove('is-writing'),2100);
       }
       file.disabled=false;void show(file,300);page.focus({preventScroll:true});
@@ -136,13 +137,42 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       });
       if(alive())read();
     };
+    // Filed: not folded back into its envelope — the open letter, as it
+    // lies, flies small and faint into the case file's button while the dark
+    // lifts; the button takes it with a brief glint. (No button to fly to, or
+    // the motion reduced: it fades where it is.)
+    const flyToFile=()=>{
+      const goal=target?.isConnected?target.getBoundingClientRect():null;
+      if(still||!goal||!goal.width||!goal.height)return Promise.all([hide(canvas,380),hide(sheet,380),hide(veil,480)]);
+      const paper=sheet.getBoundingClientRect(),stage=root.getBoundingClientRect();
+      const from={x:paper.left+paper.width/2,y:paper.top+paper.height/2};
+      const dx=goal.left+goal.width/2-from.x,dy=goal.top+goal.height/2-from.y;
+      const k=Math.max(.035,Math.min(.2,goal.width*1.3/Math.max(1,paper.width)));
+      const turn=sheet.style.transform||'none',timing={duration:950,easing:'cubic-bezier(.5,0,.2,1)'};
+      // (the picture and the words on it moved as one: about the paper's middle)
+      canvas.style.transformOrigin=`${from.x-stage.left}px ${from.y-stage.top}px`;
+      const flight=(base)=>[
+        {transform:`${base}`.trim()||'none',opacity:1},
+        {transform:`translate(${dx*.3}px,${dy*.3}px) scale(${.62}) ${base}`,opacity:.92,offset:.42},
+        {transform:`translate(${dx}px,${dy}px) scale(${k}) ${base}`,opacity:0},
+      ];
+      return Promise.all([
+        move(canvas,flight(''),timing),
+        move(sheet,flight(turn==='none'?'':turn),timing),
+        move(veil,[{opacity:getComputedStyle(veil).opacity},{opacity:0}],{duration:700,delay:180,easing:'ease-out'}),
+      ]).then(()=>{
+        if(!target?.isConnected)return;
+        target.classList.remove('is-receiving');void target.offsetWidth;target.classList.add('is-receiving');
+        setTimeout(()=>target.classList.remove('is-receiving'),900);
+      });
+    };
     const fileIt=async()=>{
       if(!alive()||state!=='reading')return;
       stateTo('filing');file.disabled=true;typist?.stop();recording?.stop();root.focus({preventScroll:true});
-      void hide(file,180);await hide(sheet,200);if(!alive())return;
-      if(native)await pose(animation.duration,0,1900);
+      void hide(file,180);
+      await flyToFile();
       if(!alive())return;
-      sounds?.file?.();await Promise.all([hide(canvas,300),hide(veil,420)]);finish('read');
+      sounds?.file?.();finish('read');
     };
     const putAway=async()=>{
       if(!alive()||!['waiting','arriving'].includes(state))return;
@@ -164,7 +194,7 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
       }
     });
     stateTo('preparing');root.focus({preventScroll:true});
-    void sounds?.prepareSealBreak?.();
+    void sounds?.prepareSealBreak?.();void sounds?.prepareWriting?.();
     void(async()=>{
       try{const m=await stageModule();native=await m.createLetterStage(canvas);}catch{native=null;}
       if(!alive()){native?.dispose();native=null;return;}

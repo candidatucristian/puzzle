@@ -34,7 +34,7 @@ import OFFICE from "./officeRender.json";
 // state survives a resize and starts fresh on replay.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LCD_INK = 0x0b1009; // the calculator's dark digits
+const LCD_INK = 0x1c2418; // the calculator's digits: the grey-green of a real liquid crystal
 const PLATE = `ot_office_v${OFFICE.version}`;
 const COLONS = `ot_colons_v${OFFICE.version}`;
 const PUFF = "ot_puff";
@@ -226,10 +226,11 @@ export default class OvertimeScene extends BasePuzzleScene {
     const g = this._lcd;
     g.clear();
     const cell = (L.u1 - L.u0) / CALCULATOR_DIGITS;
-    const dh = L.v1 - L.v0;
-    // (large, heavy figures: read from the chair)
-    const dw = Math.min(cell * 0.8, dh * 0.58);
-    const t = dh * 0.16;
+    // (as a real liquid-crystal display's: fine bars, the figure a little
+    //  short of the glass's height, narrow, standing in its cell)
+    const dh = (L.v1 - L.v0) * 0.76, v0 = L.v0 + (L.v1 - L.v0) * 0.12;
+    const dw = Math.min(cell * 0.62, dh * 0.5);
+    const t = dh * 0.095;
     const text = this.calc.display.padStart(CALCULATOR_DIGITS, " ");
     const onGlass = (poly, du = 0, dv = 0) =>
       poly.map(([u, v]) => L.map(u + du, v + dv));
@@ -238,18 +239,18 @@ export default class OvertimeScene extends BasePuzzleScene {
       const { on, off } = glyph(
         text[i] === " " ? "" : text[i],
         x,
-        L.v0,
+        v0,
         dw,
         dh,
         t,
         0.08,
       );
-      g.fillStyle(LCD_INK, 0.07);
+      g.fillStyle(LCD_INK, 0.045);
       for (const p of off) g.fillPoints(onGlass(p), true);
       // lit segments cast a faint shadow on the glass behind them
-      g.fillStyle(LCD_INK, 0.16);
-      for (const p of on) g.fillPoints(onGlass(p, 0.06, -0.08), true);
-      g.fillStyle(LCD_INK, 1);
+      g.fillStyle(LCD_INK, 0.12);
+      for (const p of on) g.fillPoints(onGlass(p, 0.04, -0.05), true);
+      g.fillStyle(LCD_INK, 0.86);
       for (const p of on) g.fillPoints(onGlass(p), true);
     }
   }

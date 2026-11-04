@@ -13,8 +13,10 @@ uses only its native room plate and twelve rendered light contributions.
   cream interior, a tubular bulb and individual pull-chain beads.
 - Graphite router with a rounded enclosure, a separate fascia, real vent
   openings, rubber feet, screws, aerial hinges, tapered antennae and cables.
-- Exactly twelve recessed optical lenses: five red letter counters, a gap,
-  and seven green ASCII bit indicators. There is no spare lens in the gap.
+- Exactly twelve recessed optical lenses: five letter counters, a gap,
+  and seven ASCII bit indicators, all lit the same soft green (since
+  2026-11-04; the counters were red). Unlit, each is smoked green glass that
+  stays visible. There is no spare lens in the gap.
 - The original **W. LEIBNIZ** maker clue, set as actual Blender text.
 - A framed herbarium made from separate pressed-fern leaf meshes, a shut
   leather ledger and pen. These decorations do not add puzzle clues.

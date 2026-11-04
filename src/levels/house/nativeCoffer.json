@@ -90,7 +90,8 @@
           265,
           474
         ]
-      ]
+      ],
+      "artVersion": 9
     },
     "Room2": {
       "room": "Room2",
@@ -101,7 +102,7 @@
         187
       ],
       "poses": 13,
-      "artVersion": 6,
+      "artVersion": 7,
       "frames": [
         [
           0,
