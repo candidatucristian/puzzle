@@ -177,7 +177,7 @@ test('Romanian and Russian stay inside their pages at the largest text size and 
   }
 });
 
-test('an arriving letter opens on the desk and can still be filed with reduced motion', async ({page}) => {
+test('an arriving letter lies there to be read and can still be filed with reduced motion', async ({page}) => {
   await open(page, {letters: ['invitation']});
   await page.keyboard.press('Escape');
   await page.evaluate(async () => {
@@ -187,12 +187,10 @@ test('an arriving letter opens on the desk and can still be filed with reduced m
     window.casefileArrivalScope = new Scope();
     window.casefileArrival = playArrival(window.casefileArrivalScope, {letter: LETTERS[1], reducedMotion: true, target: document.querySelector('#btn-casefile')});
   });
-  await expect(page.locator('.arrival')).toHaveAttribute('data-state', 'waiting');
-  await page.locator('.env').click();
   await expect(page.locator('.arrival')).toHaveAttribute('data-state', 'reading');
-  // The live Blender model jumps to its final pose, with DOM words on its paper.
-  await expect(page.locator('.arrival .arrival-model')).toBeVisible();
-  await expect(page.locator('.arrival video')).toHaveCount(0);
+  // The rendered sheet lies there at once, with DOM words on it.
+  await expect(page.locator('.arrival .arrival-still')).toBeVisible();
+  await expect(page.locator('.arrival .env')).toHaveCount(0);
   await expect(page.locator('.arrival .letter-paper')).toHaveCount(0);
   await expect(page.locator('.arrival .letter-wax')).toHaveCount(0);
   await expect(page.locator('.arrival .letter-words')).not.toBeEmpty();

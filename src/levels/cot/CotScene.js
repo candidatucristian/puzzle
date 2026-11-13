@@ -5,7 +5,7 @@ import { KEYS, layoutCot, paintCot, releaseCot, loadCotArt } from "./nativeArt.j
 import { TOYS } from "./puzzle.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Level — "HIS COT"  ·  code: TORCH  ·  the boy's cot, in Room VI
+// Level — "HIS COT"  ·  code: TORCH  ·  the boy's cot, in Room II (it was Room VI's until 2026-11-05)
 //
 // An original Blender/Cycles nursery, with fifteen modeled belongings on
 // woven cotton. The five clues and sewn mobile are live three.js meshes,
@@ -24,11 +24,12 @@ import { TOYS } from "./puzzle.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TUNE_S=5.9, MOBILE_SPEED=.14;
-// the music box's own tune, recorded (assets/sounds/HisCot/musicbox.mp3): it
-// plays when the box is touched, and stops when it is set down after being
-// carried; louder than the other sounds, being a quiet recording; played from
-// its first note (the recording opens on two thirds of a second of silence)
-const MUSIC_BOX={key:"cot_musicbox",url:"assets/sounds/HisCot/musicbox.mp3",boost:1.7,start:.64};
+// the music box's own tune, La Cumparsita (assets/sounds/HisCot/
+// musicbox-cumparsita.mp3, made by art/sound/music_box.py): it plays when the
+// box is touched, and stops when it is set down after being carried; played
+// from the spring's click, a third of a second before the first note, and
+// turned down to where the old recording sat (it is mastered much louder)
+const MUSIC_BOX={key:"cot_musicbox_cumparsita",url:"assets/sounds/HisCot/musicbox-cumparsita.mp3",boost:.22,start:0};
 // how far a thing in the cot can be shifted from where it was put down —
 // across the cot, and back or forward — and how high it is held up off the
 // sheet while carried, or as the hand comes over it (in metres)
@@ -68,16 +69,17 @@ export default class CotScene extends BasePuzzleScene {
     this._keySpin={angle:0,speed:0,click:0};
     this.input.dragDistanceThreshold=8;
     // the five, in three dimensions: three.js comes with this level alone
-    import("./stage3d.js").then(({CotStage})=>{
-      if(!this.sys.isActive())return;
+    const generation=this._sceneGeneration;
+    return import("./stage3d.js").then(({CotStage})=>{
+      if(!this.sys?.isActive?.()||generation!==this._sceneGeneration)return;
       this._stage=new CotStage(TOYS.map(t=>t.id),{
         atlas:this.textures.get(KEYS.materials).getSourceImage(),
       });
       this._sceneCleanups.add(()=>{this._stage?.dispose();this._stage=null;});
       this._build(this.cameras.main.width,this.cameras.main.height);
       this.listenToResize(({width,height})=>{this._teardown();this._build(width,height);});
+      if(!this.skipFadeIn)this.cameras.main.fadeIn(600,0,0,0);
     });
-    if(!this.skipFadeIn)this.cameras.main.fadeIn(600,0,0,0);
   }
 
   _build(W,H) {

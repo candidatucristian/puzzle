@@ -1,4 +1,5 @@
 import { INTRO } from "../shared/story.js";
+import { revealTextSegments } from '../shared/textLayout.js';
 import { sketchLayer, drawHouse, drawThree, drawLock, drawFile, drawDesk, erase, fadeOut } from "./introSketches.js";
 
 // The game's cold open, before anything else, as a picture house would show
@@ -250,7 +251,7 @@ function stampOn(svg) {
 
 // words, each its own span, to come up one after another
 function splitWords(text, next) {
-  return text.split(/(\s+)/).map((part) => {
+  return revealTextSegments(text).map((part) => {
     if (/^\s+$/.test(part)) return document.createTextNode(part);
     const w = document.createElement("span");
     w.className = "co-w";

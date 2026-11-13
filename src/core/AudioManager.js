@@ -1,9 +1,9 @@
 export const AUDIO_ASSETS = Object.freeze({
   bgm: "assets/sounds/global/background.mp3",
-  click: "assets/sounds/global/click.mp3",
+  click: "assets/sounds/global/ui-click.mp3",
   ui_click: "assets/sounds/global/mouseclick.wav",
-  nextlevel: "assets/sounds/global/nextlevel.wav",
-  error: "assets/sounds/global/error.mp3",
+  nextlevel: "assets/sounds/global/solved.mp3",
+  error: "assets/sounds/global/wrong.mp3",
 });
 
 // the music sits well under everything else: at the slider's 50% it plays as

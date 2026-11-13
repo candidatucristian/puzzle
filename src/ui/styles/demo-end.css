@@ -1,0 +1,17 @@
+/* The end of the Steam demo (demoEnd.js): the game darkened a little, no blur,
+   and the passage on the shade at the left, as the film's and the manor's are
+   (intro-video.css gives the passage and its buttons their look). */
+.demo-end { position: fixed; inset: 0; z-index: 450; }
+.demo-end-veil { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity 1.2s ease; }
+.demo-end.is-in .demo-end-veil { opacity: .58; }
+.demo-end.is-in .intro-video-shade { opacity: 1; }
+.demo-end .intro-video-asides { max-width: min(640px, 80vw); }
+/* (the passage lets the pointer through, as the film's does: its buttons take it back) */
+.demo-end-way { display: flex; flex-wrap: wrap; gap: 14px; margin-top: clamp(20px, 3.4vh, 32px); pointer-events: auto; }
+.demo-end-way .intro-page-play { text-shadow: none; }
+.demo-end-way .intro-page-play.is-primary { border-color: #ece4d2; background: #ece4d2; color: #17130e; }
+.demo-end-way .intro-page-play.is-primary:hover, .demo-end-way .intro-page-play.is-primary:focus-visible { background: #fff; border-color: #fff; color: #000; }
+/* the Steam logo before its words, in their colour */
+.demo-end-way .intro-page-play.has-icon { display: inline-flex; align-items: center; gap: .65em; }
+.demo-end-steam { width: 1.25em; height: 1.25em; flex-shrink: 0; fill: currentColor; }
+[data-reduced-motion="true"] .demo-end-veil { transition: none; }

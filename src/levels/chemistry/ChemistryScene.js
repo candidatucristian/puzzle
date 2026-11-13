@@ -33,7 +33,7 @@ import BENCH from "./benchLevel.json";
 
 const PLATE = `chem_bench_plate_v${BENCH.version}`;
 const CLOTH = `chem_bench_cloth_v${BENCH.version}`;
-const ZOOM = `chem_bench_zoom_v${BENCH.version}`;
+const ZOOM = `chem_bench_zoom_v${BENCH.version}_4096`;
 const K = { glow: "chem_glow", blue: "chem_blue_flame", steam: "chem_steam", bubble: "chem_bubble", lens: "chem_lens" };
 const COLOURS = [[214, 230, 120], [140, 196, 250], [34, 32, 36], [120, 255, 110], [250, 214, 40]];
 const Z = 2.8; // how much the lens enlarges
@@ -48,8 +48,10 @@ export default class ChemistryScene extends BasePuzzleScene {
     this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
   }
 
+  get usesEscape() { return Boolean(this._held); }
+
   preload() {
-    const url = (what) => `assets/images/Chemistry/bench-${what}-v${BENCH.version}.webp`;
+    const url = (what) => `assets/images/Chemistry/bench-${what}-v${BENCH.version}${what === 'zoom' ? '-4096' : ''}.webp`;
     if (!this.textures.exists(PLATE)) this.load.image(PLATE, url("plate"));
     if (!this.textures.exists(CLOTH)) this.load.image(CLOTH, url("cloth"));
     if (!this.textures.exists(ZOOM)) this.load.image(ZOOM, url("zoom"));
@@ -67,9 +69,13 @@ export default class ChemistryScene extends BasePuzzleScene {
     };
     this.listenToResize(this._onResize);
     this.input.on("pointermove", (p) => this._follow(p));
-    this.input.keyboard?.on("keydown-ESC", () => this._putDown());
+    const releaseGlass = event => {
+      if (!this._held) return;
+      event.preventDefault(); event.stopPropagation(); this._putDown();
+    };
+    this.input.keyboard?.on("keydown-ESC", releaseGlass);
+    this._sceneCleanups.add(() => this.input.keyboard?.off("keydown-ESC", releaseGlass));
     // Esc puts the glass down here; it does not take the player out of the room
-    this.usesEscape = true;
     if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
@@ -199,7 +205,7 @@ export default class ChemistryScene extends BasePuzzleScene {
   // ── what lives on the bench ────────────────────────────────────────────────
 
   // a bubble rising through a bottle's liquid, over and over
-  _bubble(b, i, delay) {
+  _bubble(b, i, delay, once = false) {
     const f = this._f, q = b.liquid;
     const left = f.at([q.left, q.bottom]).x, right = f.at([q.right, q.bottom]).x;
     const bottom = f.at([q.left, q.bottom]).y, top = f.at([q.left, q.top]).y;
@@ -211,7 +217,8 @@ export default class ChemistryScene extends BasePuzzleScene {
     this.ambientObject(bub);
     this.ambientTween({
       targets: bub, y: top + size, x: x + (Math.random() - 0.5) * 0.6 * b.s * f.s,
-      alpha: { from: 0.7, to: 0.25 }, duration: 1800 + Math.random() * 1400, delay, repeat: -1, ease: "Sine.easeIn",
+      alpha: { from: 0.7, to: 0.25 }, duration: 1800 + Math.random() * 1400, delay,
+      repeat: once ? 0 : -1, ease: "Sine.easeIn", onComplete: once ? () => bub.destroy() : undefined,
     });
   }
 
@@ -219,15 +226,15 @@ export default class ChemistryScene extends BasePuzzleScene {
   _ring(i) {
     chime(this, [[1900 + i * 140, 0.05], [3100 + i * 90, 0.025]], 0.5);
     if (this.reducedMotion) return;
-    for (let k = 0; k < 4; k++) this._bubble(BENCH.bottles[i], i, k * 60);
+    for (let k = 0; k < 4; k++) this._bubble(BENCH.bottles[i], i, k * 60, true);
   }
 
-  update(time) {
+  update(time, delta) {
     if (!this._blue) return;
     const t = time / 1000;
     const on = this.ambientMotion && !this.reducedMotion ? 1 : 0;
     const flick = on * (Math.sin(t * 17) * 0.5 + Math.sin(t * 9.3) * 0.5);
-    this._boost = Math.max(0, this._boost - 0.012);
+    this._boost = Math.max(0, (this._boost ?? 0) - Math.min(delta, 100) * 0.00072);
     const bh = this._blueH * (1 + this._boost * 0.9 + flick * 0.05);
     this._blue.setDisplaySize(bh * 0.4, bh);
   }

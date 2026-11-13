@@ -7,7 +7,7 @@ test('the production build opens every level through the real UI from a subdirec
   expect(forbidden.status()).toBe(403);
   const missing = await request.get('/puzzle/assets/missing-file.mp3');
   expect(missing.status()).toBe(404);
-  const sample = await request.get('/puzzle/assets/sounds/global/click.mp3', { headers: { Range: 'bytes=0-15' } });
+  const sample = await request.get('/puzzle/assets/sounds/global/ui-click.mp3', { headers: { Range: 'bytes=0-15' } });
   expect(sample.status()).toBe(206);
   expect(sample.headers()['content-type']).toBe('audio/mpeg');
   expect((await sample.body()).length).toBe(16);
@@ -63,10 +63,10 @@ test('the production build opens every level through the real UI from a subdirec
     });
   }
   for (const asset of [
-    'images/PlantPot/leaf.webp', 'sounds/PlantPot/wateringplant.mp3',
-    'sounds/MobilePhone/keypad.mp3', 'sounds/Lightswitch/switchsound.mp3',
-    'images/TV/astronomy.webp', 'sounds/TV/staticsound.mp3',
-    'sounds/Modem/hardwaresound.mp3', 'sounds/Wires/music.mp3', 'sounds/Rally/wroom.mp3',
+    'images/PlantPot/leaf.webp', 'sounds/PlantPot/pouring-water.mp3',
+    'sounds/MobilePhone/key-tone.mp3', 'sounds/Lightswitch/switchsound.mp3',
+    'images/TV/astronomy.webp',
+    'sounds/Modem/droid-hum.mp3', 'sounds/Wires/music.mp3', 'sounds/Rally/car-pass.mp3',
   ]) {
     expect(localRequests.has(`/puzzle/assets/${asset}`), `The published level requested ${asset}`).toBe(true);
   }

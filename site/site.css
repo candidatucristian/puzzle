@@ -1,0 +1,104 @@
+/* ashcombemanor.com: the game's start screen, then the case and the rooms.
+   The same dark, the same type (IBM Plex Sans, light), the same warm-white
+   words with a soft dark under them, and no straight edge on any picture. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans-latin-variable.woff2") format("woff2");
+  font-weight: 100 700; font-style: normal; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans-latin-ext-variable.woff2") format("woff2");
+  font-weight: 100 700; font-style: normal; font-display: swap;
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  --bg: #0c0c0c;
+  --text: #f3eee3;
+  --soft: #c9c4b8;
+  --muted: #a9a59a;
+  --faint: #7c776d;
+  --ink: #ece7db;
+  --font: "IBM Plex Sans", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 300 16px/1.6 var(--font); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+.eyebrow { margin: 0 0 12px; font: 500 10.5px/1.4 var(--font); letter-spacing: .46em; text-transform: uppercase; color: var(--muted); }
+
+/* ── the manor ─────────────────────────────────────────────────────────── */
+.hero { position: relative; height: 100vh; height: 100svh; min-height: 480px; overflow: hidden; }
+.manor { position: absolute; inset: 0; opacity: 0; transition: opacity 1.6s ease; }
+.manor.is-ready { opacity: 1; }
+/* toned like the rooms, and fading out toward all four sides into the dark */
+.manor-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: grayscale(35%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 11%, #000 88%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 11%, #000 88%, transparent 100%);
+  mask-composite: intersect; }
+
+/* the name, low on the left, on a dark just its size that the manor fades into */
+.legend { position: absolute; z-index: 2; left: clamp(28px, 4.4vw, 72px); bottom: clamp(34px, 7vh, 72px); max-width: min(520px, 80%);
+  animation: rise 1.6s .5s cubic-bezier(.2, .7, .2, 1) both; }
+.legend > :not(.legend-veil) { position: relative; z-index: 1; }
+.legend-veil { position: absolute; z-index: 0; inset: -64px -120px -46px -84px; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(3,4,5,.9) 0%, rgba(3,4,5,.72) 50%, rgba(3,4,5,.3) 78%, rgba(3,4,5,0) 100%); filter: blur(14px); }
+h1 { margin: 0; font: 300 clamp(30px, 3.4vw, 52px)/1.05 var(--font); letter-spacing: .015em; color: var(--text); text-shadow: 0 2px 18px rgba(0,0,0,.6); }
+.rule { display: block; width: 64px; height: 1px; margin: 18px 0 14px; background: linear-gradient(90deg, #ece7db99, #ece7db00); }
+.line { margin: 0; max-width: 34ch; font: 300 italic 15px/1.55 var(--font); letter-spacing: .02em; color: var(--soft); text-shadow: 0 1px 10px rgba(0,0,0,.8); }
+.status { margin: 22px 0 0; font: 500 10.5px/1.4 var(--font); letter-spacing: .3em; text-transform: uppercase; color: #d4cec1; }
+
+/* the ways down the page, as the start menu's words: a thin line comes in
+   from the left and the word steps aside for it */
+.menu { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 18px; }
+.menu-item { position: relative; display: block; padding: 6px 0; color: #d4cec1; text-decoration: none;
+  font: 300 18px/1.25 var(--font); letter-spacing: .035em; text-shadow: 0 1px 14px rgba(0,0,0,.9); outline: none; }
+.menu-item .word { display: inline-block; transition: transform .45s cubic-bezier(.2, .7, .2, 1), color .3s ease; }
+.menu-item .mark { position: absolute; left: -30px; top: 50%; width: 20px; height: 1px; margin-top: 1px;
+  background: linear-gradient(90deg, rgba(236,231,219,0), rgba(236,231,219,.85)); transform: scaleX(0); transform-origin: 0 50%;
+  transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+.menu-item:is(:hover, :focus-visible) .word { color: #fbf7ee; transform: translateX(10px); }
+.menu-item:is(:hover, :focus-visible) .mark { transform: scaleX(1) translateX(10px); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ── the case ──────────────────────────────────────────────────────────── */
+.case { max-width: 640px; margin: 0 auto; padding: clamp(80px, 14vh, 150px) 24px clamp(60px, 10vh, 110px); }
+.story { margin: 0 0 1.1em; font: 300 clamp(18px, 1.6vw, 21px)/1.65 var(--font); color: #ddd8cc; }
+.story:last-child { margin-bottom: 0; color: var(--soft); font-style: italic; }
+
+/* ── the rooms ─────────────────────────────────────────────────────────── */
+.rooms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.6vw, 40px); max-width: 1500px; margin: 0 auto; padding: 0 clamp(20px, 3vw, 48px) clamp(80px, 12vh, 140px); }
+.room { margin: 0; }
+/* each picture with no straight edge, as the rooms in the game have none */
+.room img { display: block; width: 100%; height: auto; aspect-ratio: 1440 / 766; object-fit: cover; filter: grayscale(20%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 58%, transparent 100%); }
+.room figcaption { margin-top: 14px; padding-left: 4px; font: 300 15px/1.55 var(--font); color: var(--soft); }
+.room figcaption .eyebrow { display: block; margin-bottom: 8px; }
+
+/* ── the foot ──────────────────────────────────────────────────────────── */
+.foot { padding: 34px 24px 46px; text-align: center; border-top: 1px solid #ffffff10; color: var(--muted); font-size: 14px; }
+.foot p { margin: 0 0 8px; }
+.foot a { color: #d4cec1; text-decoration-color: #d4cec155; text-underline-offset: 3px; }
+.foot a:hover { color: #fbf7ee; }
+.foot .small { font-size: 12px; color: var(--faint); }
+.foot .small a { color: inherit; }
+
+/* ── narrow screens: the rooms one under another ───────────────────────── */
+@media (max-width: 900px) {
+  .rooms { grid-template-columns: 1fr; max-width: 680px; }
+}
+@media (max-width: 600px) {
+  .legend { left: 22px; right: 22px; max-width: none; }
+  .menu { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .legend { animation: none; }
+  .manor { transition: none; }
+}

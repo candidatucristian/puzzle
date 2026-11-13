@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { HOUSE_GO, HOUSE_SOLVED, WALK_MS, aimCameraAt, zoomInto, zoomOutFrom } from "../../shared/house.js";
+import { HOUSE_GO, HOUSE_SOLVED, HALL_READY, WALK_MS, aimCameraAt, zoomInto, zoomOutFrom } from "../../shared/house.js";
 import { buildMorseSteps } from "../lightswitch/puzzle.js";
 import { chime, noiseBurst } from "../../shared/paint.js";
 import { playKeyInsert, prepareKeyInsert } from "./keyInsert.js";
@@ -92,6 +92,12 @@ export default class HallScene extends BasePuzzleScene {
     // the puzzle played here has been answered: the hall is put right for it
     this._onSolved = () => { if (this.upper) { this._teardown(); this._build(this.cameras.main.width, this.cameras.main.height); } };
     this.game.events.on(HOUSE_SOLVED, this._onSolved);
+    if (!this.upper && !this.wing) {
+      const camera = this.cameras.main;
+      const ready = () => this.game.events.emit(HALL_READY, this);
+      camera.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, ready);
+      this._sceneCleanups.add(() => camera.off(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, ready));
+    }
     this.cameras.main.fadeIn(800, 0, 0, 0);
   }
 
@@ -504,7 +510,7 @@ export default class HallScene extends BasePuzzleScene {
     this._doorOpening = { number: d.number, room, elapsed: 0, walked: 0, entering: false, walking: false };
     this._mountDoor();
     zone?.setData("interactionLabel", "Go in");
-    this.game.events.emit("puzzle:interaction", { label: "Go in" });
+    this.game.events.emit("puzzle:interaction", { label: this.services.i18n?.getInteractionLabel('Go in') ?? 'Go in' });
     // the pointer is still on it: now only the way on in
     this.game.canvas.style.cursor = cursorFor("Go in", d.side);
   }

@@ -1,0 +1,2862 @@
+{
+ "generated": "2026-11-08T08:44:10.255Z",
+ "sounds": [
+  {
+   "file": "global/background.mp3",
+   "src": "assets/sounds/global/background.mp3",
+   "size": 3191520,
+   "seconds": 159.6,
+   "music": true,
+   "playedBy": [
+    "src/core/AudioManager.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "",
+   "contentId": ""
+  },
+  {
+   "file": "video/IntroVideo.mp4",
+   "src": "assets/video/IntroVideo-web.mp4",
+   "film": true,
+   "size": 53806572,
+   "seconds": 98.8,
+   "music": true,
+   "playedBy": [
+    "src/ui/introVideo.js"
+   ],
+   "places": [
+    "filmul de la început"
+   ],
+   "demo": true,
+   "page": "",
+   "contentId": ""
+  },
+  {
+   "file": "HisCot/musicbox-cumparsita.mp3",
+   "src": "assets/sounds/HisCot/musicbox-cumparsita.mp3",
+   "size": 830060,
+   "seconds": 34.6,
+   "music": true,
+   "playedBy": [
+    "src/levels/cot/CotScene.js"
+   ],
+   "places": [
+    "His Cot (Room II)"
+   ],
+   "demo": true,
+   "page": "Not downloaded: made in code by `art/sound/music_box.py` (2026-11-07). The tune is La Cumparsita (G. H. Matos Rodríguez, 1916; public domain), after John Chambers' ABC transcription; the arrangement and the sound are the project's own.",
+   "contentId": "No"
+  },
+  {
+   "file": "global/solved.mp3",
+   "src": "assets/sounds/global/solved.mp3",
+   "size": 49004,
+   "seconds": 2.4,
+   "music": true,
+   "playedBy": [
+    "src/core/AudioManager.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "Not downloaded: made in code by `art/sound/ui_sounds.py` (2026-11-07).",
+   "contentId": "No"
+  },
+  {
+   "file": "Wires/music.mp3",
+   "src": "assets/sounds/Wires/music.mp3",
+   "size": 994560,
+   "seconds": 49.7,
+   "music": true,
+   "playedBy": [
+    "src/levels/wires/WiresScene.js"
+   ],
+   "places": [
+    "Before Sunrise (Room IV)"
+   ],
+   "demo": false,
+   "page": "https://pixabay.com/sound-effects/musical-amazing-grace-on-harmonica-26135/ (\"Amazing grace on harmonica\", by JordanDurren on Freesound, uploaded by freesound_community; Pixabay Content License; the tune and words are public domain)",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "Modem/droid-hum.mp3",
+   "src": "assets/sounds/Modem/droid-hum.mp3",
+   "size": 257708,
+   "seconds": 16.1,
+   "music": false,
+   "playedBy": [
+    "src/levels/modem/NativeModemScene.js"
+   ],
+   "places": [
+    "The Room Beneath the Desk (Room II)"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/film-special-effects-droid-hum-72042/ (\"Droid Hum\", by TheSpiderWriter on Freesound, uploaded by freesound_community; Pixabay Content License). Made into a loop and levelled by `art/sound/edits.py`; the download is kept, unshipped, in .artifacts/sources/pixabay/.",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "pen-writing.mp3",
+   "src": "assets/sounds/pen-writing.mp3",
+   "size": 81164,
+   "seconds": 4,
+   "music": false,
+   "playedBy": [
+    "src/ui/paperSounds.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "Not downloaded: made in code by `art/sound/paper_sounds.py` (2026-11-07).",
+   "contentId": "No"
+  },
+  {
+   "file": "irongateopensound.mp3",
+   "src": "assets/sounds/irongateopensound.mp3",
+   "size": 75885,
+   "seconds": 3.8,
+   "music": false,
+   "playedBy": [
+    "src/levels/hall/HallScene.js"
+   ],
+   "places": [
+    "Holul"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/household-irongate2-85045/ (\"irongate2\", by viaaico2013 on Freesound, uploaded by freesound_community; Pixabay Content License; our file is its first 3.7 s of 10 s)",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "PlantPot/pouring-water.mp3",
+   "src": "assets/sounds/PlantPot/pouring-water.mp3",
+   "size": 48109,
+   "seconds": 2.4,
+   "music": false,
+   "playedBy": [
+    "src/levels/plantpot/PlantPotScene.js"
+   ],
+   "places": [
+    "The Moonlit Garden (Room I)"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/household-pouring-water-into-glass-116975/ (\"Pouring Water into Glass\", by Universfield; Pixabay Content License). Cut to the pour and levelled by `art/sound/edits.py`; the download is kept, unshipped, in .artifacts/sources/pixabay/.",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "global/steps-indoor.mp3",
+   "src": "assets/sounds/global/steps-indoor.mp3",
+   "size": 42284,
+   "seconds": 2.1,
+   "music": false,
+   "playedBy": [
+    "src/ui/footsteps.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/household-steps-indoor-1-6723/ (\"Steps indoor 1\", by Aurelon on Freesound, uploaded by freesound_community; Pixabay Content License). Cut to four steps and levelled by `art/sound/edits.py`; the download is kept, unshipped, in .artifacts/sources/pixabay/.",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "global/waterdrop.mp3",
+   "src": "assets/sounds/global/waterdrop.mp3",
+   "size": 19200,
+   "seconds": 1,
+   "music": false,
+   "playedBy": [
+    "src/levels/hall/HallScene.js",
+    "src/levels/tapcode/TapCodeScene.js"
+   ],
+   "places": [
+    "Holul",
+    "Marks in Stone (Room V)"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/household-two-drops-87977/ (\"Two drops\", by Millavsb on Freesound, uploaded by freesound_community; Pixabay Content License)",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "MobilePhone/buzz.mp3",
+   "src": "assets/sounds/MobilePhone/buzz.mp3",
+   "size": 16172,
+   "seconds": 1,
+   "music": false,
+   "playedBy": [
+    "src/levels/mobilephone/MobilePhoneScene.js"
+   ],
+   "places": [
+    "An Unexpected Call (Room III)"
+   ],
+   "demo": true,
+   "page": "Not downloaded: made in code by `art/sound/machine_sounds.py` (2026-11-07).",
+   "contentId": "No"
+  },
+  {
+   "file": "page-turn.mp3",
+   "src": "assets/sounds/page-turn.mp3",
+   "size": 15507,
+   "seconds": 0.9,
+   "music": false,
+   "playedBy": [
+    "src/ui/paperSounds.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/film-special-effects-page-turn-305789/ (\"Page Turn\", by Pixabay user 49053354; Pixabay Content License). Cut so the turn comes with the seal's crack, and levelled, by `art/sound/edits.py`; the download is kept, unshipped, in .artifacts/sources/pixabay/.",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "global/doorhandle.mp3",
+   "src": "assets/sounds/global/doorhandle.mp3",
+   "size": 25913,
+   "seconds": 0.8,
+   "music": false,
+   "playedBy": [
+    "src/levels/hall/HallScene.js"
+   ],
+   "places": [
+    "Holul"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/household-open-close-door-47504/ (\"Open_Close_Door\", by pixlrelm on Freesound, uploaded by freesound_community; Pixabay Content License)",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "global/wrong.mp3",
+   "src": "assets/sounds/global/wrong.mp3",
+   "size": 13484,
+   "seconds": 0.6,
+   "music": false,
+   "playedBy": [
+    "src/core/AudioManager.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "Not downloaded: made in code by `art/sound/ui_sounds.py` (2026-11-07).",
+   "contentId": "No"
+  },
+  {
+   "file": "global/mouseclick.wav",
+   "src": "assets/sounds/global/mouseclick.wav",
+   "size": 11702,
+   "seconds": 0.4,
+   "music": false,
+   "playedBy": [
+    "src/core/AudioManager.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/film-special-effects-mouse-click-290204/ (\"Mouse click UI sound effect\", by MatthewVakaliuk73627; Pixabay Content License)",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "global/ui-click.mp3",
+   "src": "assets/sounds/global/ui-click.mp3",
+   "size": 2968,
+   "seconds": 0.2,
+   "music": false,
+   "playedBy": [
+    "src/core/AudioManager.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "https://pixabay.com/sound-effects/film-special-effects-click-345983/ (\"Click UI button sound effect\", by u_u4pf5h7zip; Pixabay Content License). Cut to its click and levelled by `art/sound/edits.py`; the download is kept, unshipped, in .artifacts/sources/pixabay/.",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "menu-hover.mp3",
+   "src": "assets/sounds/menu-hover.mp3",
+   "size": 3500,
+   "seconds": 0.2,
+   "music": false,
+   "playedBy": [
+    "src/ui/startMenu.js"
+   ],
+   "places": [
+    "peste tot (interfață)"
+   ],
+   "demo": true,
+   "page": "Not downloaded: made in code by `art/sound/menu_hover.py` (2026-11-07).",
+   "contentId": "No"
+  },
+  {
+   "file": "MobilePhone/key-tone.mp3",
+   "src": "assets/sounds/MobilePhone/key-tone.mp3",
+   "size": 4268,
+   "seconds": 0.2,
+   "music": false,
+   "playedBy": [
+    "src/levels/mobilephone/MobilePhoneScene.js"
+   ],
+   "places": [
+    "An Unexpected Call (Room III)"
+   ],
+   "demo": true,
+   "page": "Not downloaded: made in code by `art/sound/phone_key.py` (2026-11-07).",
+   "contentId": "No"
+  },
+  {
+   "file": "Lightswitch/switchsound.mp3",
+   "src": "assets/sounds/Lightswitch/switchsound.mp3",
+   "size": 129024,
+   "seconds": 4,
+   "music": false,
+   "playedBy": [
+    "src/levels/hall/HallScene.js",
+    "src/levels/lightswitch/LightswitchScene.js"
+   ],
+   "places": [
+    "Holul de sus",
+    "A Flicker in the Dark (The Chemistry Hall)"
+   ],
+   "demo": false,
+   "page": "https://pixabay.com/sound-effects/film-special-effects-switch-150130/ (\"Switch click sound effect\", by SoundReality; Pixabay Content License)",
+   "contentId": "Not marked"
+  },
+  {
+   "file": "Rally/car-pass.mp3",
+   "src": "assets/sounds/Rally/car-pass.mp3",
+   "size": 39404,
+   "seconds": 1.9,
+   "music": false,
+   "playedBy": [
+    "src/levels/rally/RallyScene.js"
+   ],
+   "places": [
+    "The Night Circuit (Room V)"
+   ],
+   "demo": false,
+   "page": "Not downloaded: made in code by `art/sound/rally_pass.py` (2026-11-07).",
+   "contentId": "No"
+  },
+  {
+   "file": "Lightswitch/sparkle.mp3",
+   "src": "assets/sounds/Lightswitch/sparkle.mp3",
+   "size": 12000,
+   "seconds": 0.6,
+   "music": false,
+   "playedBy": [
+    "src/levels/hall/HallScene.js",
+    "src/levels/lightswitch/LightswitchScene.js"
+   ],
+   "places": [
+    "Holul de sus",
+    "A Flicker in the Dark (The Chemistry Hall)"
+   ],
+   "demo": false,
+   "page": "https://pixabay.com/sound-effects/film-special-effects-electricity-106510/ (\"Electricity zap sound effect\", Link-Boy on Freesound, uploaded by freesound_community; Pixabay Content License)",
+   "contentId": "Not marked"
+  }
+ ],
+ "pictures": [
+  {
+   "file": "images/Abacus/counting-frame-blocks-v1.webp",
+   "size": 111658,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Abacus/: art/blender/counting_frame_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Abacus/counting-frame-plate-v1.webp",
+   "size": 229744,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Abacus/: art/blender/counting_frame_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/ArchiveTools/native-v1/casefile-hinge.webp",
+   "size": 99988,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v1/casefile-icon.webp",
+   "size": 136784,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v1/casefile-left.webp",
+   "size": 84364,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v1/casefile-right.webp",
+   "size": 156356,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v1/casefile.webp",
+   "size": 327446,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v1/notebook-icon.webp",
+   "size": 157660,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v1/notebook.webp",
+   "size": 160400,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/casefile-hinge.webp",
+   "size": 51964,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/casefile-icon.webp",
+   "size": 73108,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/casefile-left.webp",
+   "size": 60700,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/casefile-right.webp",
+   "size": 124472,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/casefile.webp",
+   "size": 231854,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/notebook-icon.webp",
+   "size": 71780,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/notebook.webp",
+   "size": 124284,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/ArchiveTools/native-v2/settings.webp",
+   "size": 210976,
+   "source": "blender?",
+   "evidence": "un script Blender publică în ArchiveTools/: art/blender/archive_black_publish.mjs, art/blender/archive_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Attic/aged-plank-door-v2.webp",
+   "size": 686518,
+   "source": "ai",
+   "evidence": "src/levels/top/aged-doors.prompt.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Attic/details.webp",
+   "size": 205276,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Attic/realism.prompts.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Attic/narrow-passage-wood-v3.webp",
+   "size": 184048,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Attic/wood-walls-v3.prompts.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Attic/passage-door-12-native-v1.webp",
+   "size": 405476,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Attic/: art/blender/top_passage_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Attic/passage-door-13-native-v1.webp",
+   "size": 378728,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Attic/: art/blender/top_passage_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Attic/top-passage-native-v1.webp",
+   "size": 560534,
+   "source": "blender",
+   "evidence": "art/blender/top_passage_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/BinaryTree/old-tree-native-v2.webp",
+   "size": 440738,
+   "source": "blender?",
+   "evidence": "un script Blender publică în BinaryTree/: art/blender/old_tree_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Bookshelf/native-v5/books.webp",
+   "size": 718100,
+   "source": "blender",
+   "evidence": "art/blender/library_lamplight_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Bookshelf/native-v5/library.webp",
+   "size": 355230,
+   "source": "blender",
+   "evidence": "art/blender/library_lamplight_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Botany/hall-finishes-render-v1.webp",
+   "size": 221086,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-floor-render-v1.webp",
+   "size": 273186,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-gate-left-render-v1.webp",
+   "size": 17062,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-gate-motion-v2.webp",
+   "size": 1370868,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-gate-right-render-v1.webp",
+   "size": 17164,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-greenery-render-v1.webp",
+   "size": 266420,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-doors-render-v1.webp",
+   "size": 237104,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-front-render-v1.webp",
+   "size": 152462,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-passby-1-render-v1.webp",
+   "size": 13196,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-passby-2-render-v1.webp",
+   "size": 13982,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-passby-3-render-v1.webp",
+   "size": 4434,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-passby-4-render-v1.webp",
+   "size": 14922,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-passby-5-render-v1.webp",
+   "size": 14164,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-passby-6-render-v1.webp",
+   "size": 8162,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-ground-render-v1.webp",
+   "size": 284166,
+   "source": "blender",
+   "evidence": "art/blender/inspector_prints.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-pendulum-render-v1.webp",
+   "size": 578,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/hall-sconce-render-v1.webp",
+   "size": 36368,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/herbarium-frames-render-v1.webp",
+   "size": 112028,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Botany/walnut-door-render-v1.webp",
+   "size": 251240,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Botany/: art/blender/botany_hall_publish.mjs, art/blender/hall_ground_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/case-book-tab-here-v2.webp",
+   "size": 36126,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/case-book-tab-v2.webp",
+   "size": 38244,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/case-book-v2.webp",
+   "size": 710438,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/evidence-tag-3d.webp",
+   "size": 10974,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/ivy-icon.webp",
+   "size": 1820,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/ivy.webp",
+   "size": 36072,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/last-icon.webp",
+   "size": 1792,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/last.webp",
+   "size": 37736,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/orion-icon.webp",
+   "size": 1600,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/orion.webp",
+   "size": 38866,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/silas-icon.webp",
+   "size": 1862,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter/held/silas.webp",
+   "size": 42712,
+   "source": "blender",
+   "evidence": "art/blender/letter_held.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/letter-paper-v3.webp",
+   "size": 110892,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/map-board-3d.webp",
+   "size": 84470,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/notebook-folder-tab-3d.webp",
+   "size": 7448,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/notebook-folder-tab-open-3d.webp",
+   "size": 7654,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/notebook-sketch-paper-3d.webp",
+   "size": 1900,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/CaseFile/red-wax-seal-v2.webp",
+   "size": 17892,
+   "source": "blender?",
+   "evidence": "un script Blender publică în CaseFile/: art/blender/case_book_publish.mjs, art/blender/decoder_manor.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chemistry/bench-cloth-v2.webp",
+   "size": 11102,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Chemistry/bench-plate-v2.webp",
+   "size": 233526,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Chemistry/bench-zoom-v2.webp",
+   "size": 494374,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Chemistry/hall-chem-doors-render-v1.webp",
+   "size": 225658,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Chemistry/hall-chem-front-render-v1.webp",
+   "size": 83670,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Chemistry/hall-chem-lit-render-v1.webp",
+   "size": 359174,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Chemistry/hall-chem-render-v1.webp",
+   "size": 244192,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Chemistry/hall-chem-switch-render-v1.webp",
+   "size": 19720,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chemistry/: art/blender/bench_level_publish.mjs, art/blender/hall_chem_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Chessboard/chess-pieces-v1.webp",
+   "size": 126594,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chessboard/: art/blender/chess_game_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chessboard/chess-plate-v1.webp",
+   "size": 184366,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chessboard/: art/blender/chess_game_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v10/study-chest-open.webp",
+   "size": 15128,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v10/study-chest-shut.webp",
+   "size": 14746,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v10/study-key.webp",
+   "size": 33110,
+   "source": "blender",
+   "evidence": "art/blender/study_publish_v5.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v10/study-poses.webp",
+   "size": 182972,
+   "source": "blender",
+   "evidence": "art/blender/study_publish_v5.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v11/room2-chest-open.webp",
+   "size": 11938,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v11/room2-chest-shut.webp",
+   "size": 10550,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v11/room2-key.webp",
+   "size": 30600,
+   "source": "blender",
+   "evidence": "art/blender/room_library_v3_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v11/room2-poses.webp",
+   "size": 131336,
+   "source": "blender",
+   "evidence": "art/blender/room_library_v3_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/coffer-states.webp",
+   "size": 180186,
+   "source": "blender",
+   "evidence": "art/blender/gold_coffer_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/key.webp",
+   "size": 31604,
+   "source": "blender",
+   "evidence": "art/blender/gold_coffer_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/preview-closed.webp",
+   "size": 564320,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/preview-open.webp",
+   "size": 512820,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room4-chest-open.webp",
+   "size": 33316,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room4-chest-shut.webp",
+   "size": 33294,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room4-key.webp",
+   "size": 32350,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room4-poses.webp",
+   "size": 384484,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room5-chest-open.webp",
+   "size": 18366,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room5-chest-shut.webp",
+   "size": 15734,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room5-key.webp",
+   "size": 34248,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v2/room5-poses.webp",
+   "size": 204354,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v3/room3-chest-open.webp",
+   "size": 23898,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v3/room3-chest-shut.webp",
+   "size": 21954,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v3/room3-key.webp",
+   "size": 30880,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Chest/native-v3/room3-poses.webp",
+   "size": 280656,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Chest/: art/blender/gold_coffer_publish.mjs, art/blender/ground_floor_repair_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Compass/native-bottle-v1/map.webp",
+   "size": 169282,
+   "source": "blender",
+   "evidence": "art/blender/captains_bottle_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Compass/native-bottle-v1/needle.webp",
+   "size": 1227140,
+   "source": "blender",
+   "evidence": "art/blender/captains_bottle_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Compass/native-bottle-v1/room.webp",
+   "size": 377198,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Compass/: art/blender/captains_bottle_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cot/native-v5/front.webp",
+   "size": 61944,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cot/: art/blender/his_cot_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cot/native-v5/materials.webp",
+   "size": 581270,
+   "source": "blender",
+   "evidence": "art/blender/his_cot_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cot/native-v5/room.webp",
+   "size": 345812,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cot/: art/blender/his_cot_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Crossing/street-background.webp",
+   "size": 386072,
+   "source": "unknown",
+   "evidence": "",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-0.webp",
+   "size": 102794,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-1.webp",
+   "size": 131710,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-2.webp",
+   "size": 137678,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-3.webp",
+   "size": 154848,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-4.webp",
+   "size": 133450,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-5.webp",
+   "size": 152198,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-6.webp",
+   "size": 155386,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/candles-7.webp",
+   "size": 166006,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/flames.png",
+   "size": 40095,
+   "source": "blender",
+   "evidence": "art/blender/candlelight_brass_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/letter-open.webp",
+   "size": 93900,
+   "source": "blender",
+   "evidence": "art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/outer-lume.webp",
+   "size": 120394,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Cryptex/: art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Cryptex/native-v1/rotor.webp",
+   "size": 33768,
+   "source": "blender",
+   "evidence": "art/blender/candlelight_brass_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/favicon/manor-16.png",
+   "size": 451,
+   "source": "blender",
+   "evidence": "Desenat pentru joc (favicon/about.txt)",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/favicon/manor-180.png",
+   "size": 4832,
+   "source": "blender",
+   "evidence": "Desenat pentru joc (favicon/about.txt)",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/favicon/manor-192.png",
+   "size": 4908,
+   "source": "blender",
+   "evidence": "Desenat pentru joc (favicon/about.txt)",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/favicon/manor-32.png",
+   "size": 831,
+   "source": "blender",
+   "evidence": "Desenat pentru joc (favicon/about.txt)",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/favicon/manor-512.png",
+   "size": 31338,
+   "source": "blender",
+   "evidence": "Desenat pentru joc (favicon/about.txt)",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/favicon/manor-maskable-512.png",
+   "size": 12974,
+   "source": "blender",
+   "evidence": "Desenat pentru joc (favicon/about.txt)",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/favicon/manor.svg",
+   "size": 806,
+   "source": "blender",
+   "evidence": "Desenat pentru joc (favicon/about.txt)",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Flags/trophy-brazil-medal-render-v2.webp",
+   "size": 83312,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Flags/trophy-medal-faces-render-v2.webp",
+   "size": 482274,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Flags/trophy-ribbon-BR-render-v2.webp",
+   "size": 45628,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Flags/trophy-ribbon-DE-render-v2.webp",
+   "size": 61900,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Flags/trophy-ribbon-FI-render-v2.webp",
+   "size": 26618,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Flags/trophy-ribbon-IE-render-v2.webp",
+   "size": 44058,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Flags/trophy-ribbon-NG-render-v2.webp",
+   "size": 40934,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Flags/trophy-wall-render-v1.webp",
+   "size": 246256,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Flags/: art/blender/medals_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Herbarium/desk-v1.webp",
+   "size": 226654,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Herbarium/: art/blender/herbarium_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Herbarium/sheet-1-v1.webp",
+   "size": 70006,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Herbarium/: art/blender/herbarium_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Herbarium/sheet-2-v1.webp",
+   "size": 67610,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Herbarium/: art/blender/herbarium_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Herbarium/sheet-3-v1.webp",
+   "size": 49692,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Herbarium/: art/blender/herbarium_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Herbarium/sheet-4-v1.webp",
+   "size": 49050,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Herbarium/: art/blender/herbarium_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Herbarium/sheet-5-v1.webp",
+   "size": 57222,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Herbarium/: art/blender/herbarium_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/InspectorDesk/v2/casefile.webp",
+   "size": 319616,
+   "source": "blender?",
+   "evidence": "un script Blender publică în InspectorDesk/: art/blender/inspector_desk_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/InspectorDesk/v2/settings.webp",
+   "size": 411306,
+   "source": "blender?",
+   "evidence": "un script Blender publică în InspectorDesk/: art/blender/inspector_desk_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/InspectorDesk/v2/tab-cream.webp",
+   "size": 2630,
+   "source": "blender?",
+   "evidence": "un script Blender publică în InspectorDesk/: art/blender/inspector_desk_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/InspectorDesk/v2/tab-manila.webp",
+   "size": 18258,
+   "source": "blender?",
+   "evidence": "un script Blender publică în InspectorDesk/: art/blender/inspector_desk_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Interface/btn-casefile-3d.webp",
+   "size": 16490,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Interface/: art/blender/ui_tools_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Interface/btn-map-3d.webp",
+   "size": 11870,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Interface/: art/blender/ui_tools_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Interface/btn-notebook-3d.webp",
+   "size": 15974,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Interface/: art/blender/ui_tools_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Interface/settings-brass-knob-3d.webp",
+   "size": 10106,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Interface/: art/blender/ui_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Interface/settings-cabinet-board-3d.webp",
+   "size": 84502,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Interface/: art/blender/ui_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Interface/settings-crest-3d.webp",
+   "size": 21264,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Interface/: art/blender/ui_tools_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Interface/settings-tab-plate-3d.webp",
+   "size": 6052,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Interface/: art/blender/ui_tools_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Manor/ashcombe-exterior-render-v2.webp",
+   "size": 253582,
+   "source": "blender",
+   "evidence": "Randat în Blender (art/blender/manor.py; Manor/wind-sources.md)",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Manor/ashcombe-wind-background-v1.webp",
+   "size": 254064,
+   "source": "blender",
+   "evidence": "art/blender/manor_wind_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Manor/ashcombe-wind-trees-v1.webp",
+   "size": 270478,
+   "source": "blender",
+   "evidence": "art/blender/manor_wind_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Measures/flask-shadow-v2.webp",
+   "size": 18772,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Measures/: art/blender/measures_level_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Measures/flask-v2.webp",
+   "size": 32844,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Measures/: art/blender/measures_level_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Measures/sink-plate-v2.webp",
+   "size": 186246,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Measures/: art/blender/measures_level_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/MobilePhone/charging-cradle-photographic-v1.webp",
+   "size": 29198,
+   "source": "blender",
+   "evidence": "art/blender/unexpected_call.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/MobilePhone/frontal-desk-photographic-v2.webp",
+   "size": 147686,
+   "source": "blender",
+   "evidence": "art/blender/unexpected_call.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/MobilePhone/handset-photographic-v1.webp",
+   "size": 41082,
+   "source": "blender",
+   "evidence": "art/blender/unexpected_call.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/MobilePhone/walnut-desk-photographic-v1.webp",
+   "size": 127014,
+   "source": "blender",
+   "evidence": "art/blender/unexpected_call.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-0.png",
+   "size": 2580,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-1.png",
+   "size": 2622,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-10.png",
+   "size": 2830,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-11.png",
+   "size": 2627,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-2.png",
+   "size": 2596,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-3.png",
+   "size": 2607,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-4.png",
+   "size": 2554,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-5.png",
+   "size": 2759,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-6.png",
+   "size": 3055,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-7.png",
+   "size": 2838,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-8.png",
+   "size": 2636,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/led-9.png",
+   "size": 2570,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Modem/native-v6/room.webp",
+   "size": 284038,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Modem/: art/blender/modem_room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Molecules/notebook-desk-v1.webp",
+   "size": 310074,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Molecules/: art/blender/notebook_desk_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Overtime/office-colons-v7.webp",
+   "size": 11424,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Overtime/: art/blender/overtime_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Overtime/office-plate-v7.webp",
+   "size": 214302,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Overtime/: art/blender/overtime_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Phials/phials-pieces-v2.webp",
+   "size": 63812,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Phials/: art/blender/phials_level_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Phials/phials-plate-v2.webp",
+   "size": 171672,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Phials/: art/blender/phials_level_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Physics/arched-window.webp",
+   "size": 134268,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Physics/prompts.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Physics/armillary-native-v2.webp",
+   "size": 441696,
+   "source": "blender",
+   "evidence": "art/blender/physics_rotunda_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Physics/observatory-fixtures.webp",
+   "size": 138284,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Physics/prompts.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Physics/observatory-native-v2.webp",
+   "size": 604670,
+   "source": "blender",
+   "evidence": "art/blender/physics_rotunda_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Physics/observatory-telescope.webp",
+   "size": 149698,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Physics/prompts.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Physics/surface-atlas.webp",
+   "size": 477078,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Physics/prompts.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Pi/tree-pieces-v3.webp",
+   "size": 13808,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Pi/: art/blender/tree_level_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Pi/tree-plate-v3.webp",
+   "size": 301246,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Pi/: art/blender/tree_level_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/PlantPot/Blender/bucket-0-v4.webp",
+   "size": 15822,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/bucket-1-v4.webp",
+   "size": 16188,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/bucket-2-v4.webp",
+   "size": 16616,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/bucket-3-v4.webp",
+   "size": 16772,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/bucket-4-v4.webp",
+   "size": 16938,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/bucket-5-v4.webp",
+   "size": 16680,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/bucket-shadow-v4.webp",
+   "size": 11778,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/conservatory-v3.webp",
+   "size": 295504,
+   "source": "blender",
+   "evidence": "art/blender/fibonacci_conservatory.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/forest-v6.webp",
+   "size": 243546,
+   "source": "blender",
+   "evidence": "art/blender/fibonacci_forest.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/garden-v1.webp",
+   "size": 379324,
+   "source": "blender",
+   "evidence": "art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/garden-v4.webp",
+   "size": 181288,
+   "source": "blender",
+   "evidence": "art/blender/fibonacci_garden.py",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-00-v4.webp",
+   "size": 7006,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-01-v4.webp",
+   "size": 6480,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-02-v4.webp",
+   "size": 4758,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-03-v4.webp",
+   "size": 6334,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-04-v4.webp",
+   "size": 5640,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-05-v4.webp",
+   "size": 5438,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-06-v4.webp",
+   "size": 6162,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-07-v4.webp",
+   "size": 5004,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-08-v4.webp",
+   "size": 4268,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-09-v4.webp",
+   "size": 4028,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-10-v4.webp",
+   "size": 3666,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/leaf-11-v4.webp",
+   "size": 4564,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/stems-v4.webp",
+   "size": 19854,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/Blender/window-v1.webp",
+   "size": 106266,
+   "source": "blender",
+   "evidence": "art/blender/fibonacci_window.py",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/PlantPot/mature-trees.webp",
+   "size": 685504,
+   "source": "blender?",
+   "evidence": "un script Blender publică în PlantPot/: art/blender/fibonacci_forest_publish.mjs, art/blender/fibonacci_publish.mjs",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Prologue/inspector-desk-cycles-v1.webp",
+   "size": 203200,
+   "source": "blender",
+   "evidence": "art/blender/wren_desk.py, art/blender/wren-desk-sources.md",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "images/Rally/v1/board.webp",
+   "size": 71616,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/car-0.webp",
+   "size": 449518,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/car-1.webp",
+   "size": 461602,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/car-2.webp",
+   "size": 466094,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/car-3.webp",
+   "size": 428720,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/car-4.webp",
+   "size": 431418,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/car-5.webp",
+   "size": 451928,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/front-dark.webp",
+   "size": 14348,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/front-lit.webp",
+   "size": 21078,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/people.webp",
+   "size": 50808,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/stage-dark.webp",
+   "size": 80740,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/stage-lit.webp",
+   "size": 139546,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rally/v1/tv.webp",
+   "size": 52574,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rally/: art/blender/rally_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rewind/rewind-pieces-v2.webp",
+   "size": 76704,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rewind/: art/blender/rewind_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Rewind/rewind-plate-v2.webp",
+   "size": 246786,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Rewind/: art/blender/rewind_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room1/room1-lights-1-render-v12.webp",
+   "size": 397958,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Room1/room1-lights-1-render-v7.webp",
+   "size": 287610,
+   "source": "blender",
+   "evidence": "art/blender/gold_coffer_review.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Room1/room1-lights-1-render-v9.webp",
+   "size": 251142,
+   "source": "blender",
+   "evidence": "art/blender/study_publish_v5.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Room11/room11-lights-1-render-v4.webp",
+   "size": 328282,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room12/room12-lights-1-render-v1.webp",
+   "size": 220032,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room13/room13-lights-1-render-v2.webp",
+   "size": 178924,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room2/room2-lights-1-render-v11.webp",
+   "size": 555786,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Room3/room3-lights-1-render-v3.webp",
+   "size": 398080,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": true
+  },
+  {
+   "file": "images/Room4/room4-drawer-0-render-v3.webp",
+   "size": 2806,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-1-render-v3.webp",
+   "size": 2688,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-2-render-v3.webp",
+   "size": 2708,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-3-render-v3.webp",
+   "size": 2670,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-4-render-v3.webp",
+   "size": 2516,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-5-render-v3.webp",
+   "size": 2366,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-6-render-v3.webp",
+   "size": 2584,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-7-render-v3.webp",
+   "size": 2414,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-8-render-v3.webp",
+   "size": 2394,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-drawer-9-render-v3.webp",
+   "size": 2486,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room4/room4-lights-1-render-v3.webp",
+   "size": 197364,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room5/drawing-room-background.webp",
+   "size": 310770,
+   "source": "unknown",
+   "evidence": "",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room5/room5-lights-1-render-v5.webp",
+   "size": 197498,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room5/surface-atlas.webp",
+   "size": 517814,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Room5/surface-atlas.prompt.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/botanical-family-portrait-night-v5.webp",
+   "size": 327412,
+   "source": "ai",
+   "evidence": "docs/asset-provenance/ai-prompts/Room6/botanical-family-portrait-night-v5.prompts.md",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/depth.webp",
+   "size": 173850,
+   "source": "blender",
+   "evidence": "art/blender/room_vi_live.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/glass.webp",
+   "size": 3254,
+   "source": "blender",
+   "evidence": "art/blender/room_vi_live.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/br_fern-color.webp",
+   "size": 7490,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/br_fern-normal.webp",
+   "size": 9330,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/br_fern-orm.webp",
+   "size": 6424,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/br_flag-color.webp",
+   "size": 9574,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/br_flag-normal.webp",
+   "size": 8170,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/br_flag-orm.webp",
+   "size": 8722,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/de_leaf-color.webp",
+   "size": 6366,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/de_leaf-normal.webp",
+   "size": 8234,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/de_leaf-orm.webp",
+   "size": 6048,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/fi_sprig-color.webp",
+   "size": 7272,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/fi_sprig-normal.webp",
+   "size": 9478,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/fi_sprig-orm.webp",
+   "size": 6548,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/ie_shamrock-color.webp",
+   "size": 6078,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/ie_shamrock-normal.webp",
+   "size": 8046,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/ie_shamrock-orm.webp",
+   "size": 6026,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/ng_flower-color.webp",
+   "size": 6954,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/ng_flower-normal.webp",
+   "size": 8564,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/medals/ng_flower-orm.webp",
+   "size": 5988,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/mobile.glb",
+   "size": 198436,
+   "source": "blender",
+   "evidence": "art/blender/room_vi_live.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/plate-dim.webp",
+   "size": 279836,
+   "source": "blender",
+   "evidence": "art/blender/room_vi_live.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/plate.webp",
+   "size": 312248,
+   "source": "blender",
+   "evidence": "art/blender/room_vi_live.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/probe-cabinet.hdr",
+   "size": 399583,
+   "source": "blender",
+   "evidence": "art/blender/room_vi_live.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/live/probe-mobile.hdr",
+   "size": 421528,
+   "source": "blender",
+   "evidence": "art/blender/room_vi_live.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/room6-blender-realistic-v5.webp",
+   "size": 307430,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Room6/room6-render-v3.webp",
+   "size": 95616,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Room6/: art/blender/medal_maps.mjs, art/blender/room_vi.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room7/room7-lights-1-render-v4.webp",
+   "size": 171914,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room7/room7-notebook-0-render-v4.webp",
+   "size": 390,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room7/room7-notebook-1-render-v4.webp",
+   "size": 390,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room7/room7-notebook-2-render-v4.webp",
+   "size": 390,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room7/room7-notebook-3-render-v4.webp",
+   "size": 390,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room7/room7-notebook-4-render-v4.webp",
+   "size": 390,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room7/room7-notebook-5-render-v4.webp",
+   "size": 390,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room8/room8-lights-1-render-v3.webp",
+   "size": 509624,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Room9/room9-lights-1-render-v2.webp",
+   "size": 385852,
+   "source": "blender",
+   "evidence": "art/blender/room_<cameră>.py + room_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Sequence/index-card.webp",
+   "size": 39956,
+   "source": "blender",
+   "evidence": "art/blender/table_of_cards.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Sequence/ledger-strip.webp",
+   "size": 25528,
+   "source": "blender",
+   "evidence": "art/blender/table_of_cards.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Sequence/sticky-note-cutout.webp",
+   "size": 38100,
+   "source": "blender",
+   "evidence": "art/blender/table_of_cards.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Sequence/sticky-note.webp",
+   "size": 38100,
+   "source": "blender",
+   "evidence": "art/blender/table_of_cards.py",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Sequence/study-background.webp",
+   "size": 478672,
+   "source": "blender",
+   "evidence": "art/blender/table_of_cards.py",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Station/ticket-drawer-v2.webp",
+   "size": 430202,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Station/: art/blender/ticket_drawer_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/TapCode/cellar-native-v1.webp",
+   "size": 872764,
+   "source": "blender",
+   "evidence": "art/blender/basement_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Telescope/native-v1/approach.webp",
+   "size": 173842,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Telescope/: art/blender/open_window_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Telescope/native-v1/quiet.webp",
+   "size": 276066,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Telescope/: art/blender/open_window_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "images/Telescope/native-v1/window.webp",
+   "size": 276618,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Telescope/: art/blender/open_window_publish.mjs",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/TV/astronomy.webp",
+   "size": 107832,
+   "source": "pixabay",
+   "evidence": "registrul din 2026-09-30: Pixabay: user statement, individual item not matched",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/TV/coding.webp",
+   "size": 55232,
+   "source": "pixabay",
+   "evidence": "registrul din 2026-09-30: Pixabay: user statement, individual item not matched",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/TV/court.webp",
+   "size": 71588,
+   "source": "pixabay",
+   "evidence": "registrul din 2026-09-30: Pixabay: user statement, individual item not matched",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/TV/science.webp",
+   "size": 119258,
+   "source": "pixabay",
+   "evidence": "registrul din 2026-09-30: Pixabay: user statement, individual item not matched",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "images/Wires/dawn-frame-v1.webp",
+   "size": 176778,
+   "source": "blender?",
+   "evidence": "un script Blender publică în Wires/: art/blender/dawn_publish.mjs",
+   "named": false,
+   "demo": false
+  },
+  {
+   "file": "video/IntroVideo-web.mp4",
+   "size": 17928352,
+   "source": "unknown",
+   "evidence": "film: de confirmat cum a fost făcut",
+   "named": true,
+   "demo": true
+  },
+  {
+   "file": "video/IntroVideo.mp4",
+   "size": 53806572,
+   "source": "unknown",
+   "evidence": "film: de confirmat cum a fost făcut",
+   "named": true,
+   "demo": false
+  },
+  {
+   "file": "video/key-unlock.mp4",
+   "size": 1214221,
+   "source": "blender",
+   "evidence": "art/blender/key_unlock_film.py",
+   "named": true,
+   "demo": true
+  }
+ ],
+ "fonts": [
+  {
+   "name": "Etude Noire",
+   "licence": "CC BY 4.0 (creditat în Credits)",
+   "where": "assets/fonts/EtudeNoir",
+   "ok": true
+  },
+  {
+   "name": "IBM Plex Sans / Mono",
+   "licence": "SIL OFL 1.1, textul licenței alături",
+   "where": "assets/fonts/ui",
+   "ok": true
+  },
+  {
+   "name": "DM Serif Display",
+   "licence": "SIL OFL 1.1, textul licenței alături",
+   "where": "assets/fonts/ui",
+   "ok": true
+  },
+  {
+   "name": "Cormorant Garamond",
+   "licence": "SIL OFL 1.1, textul licenței alături",
+   "where": "assets/fonts/ui",
+   "ok": true
+  },
+  {
+   "name": "Architects Daughter",
+   "licence": "SIL OFL 1.1",
+   "where": "Google Fonts (CDN)",
+   "ok": false,
+   "note": "de copiat în joc (versiunea Steam rulează fără internet)"
+  },
+  {
+   "name": "Dancing Script",
+   "licence": "SIL OFL 1.1",
+   "where": "Google Fonts (CDN)",
+   "ok": false,
+   "note": "de copiat în joc"
+  },
+  {
+   "name": "Special Elite",
+   "licence": "Apache 2.0",
+   "where": "Google Fonts (CDN)",
+   "ok": false,
+   "note": "de copiat în joc"
+  }
+ ],
+ "libraries": [
+  {
+   "name": "phaser",
+   "version": "3.60.0",
+   "licence": "MIT",
+   "ok": true
+  },
+  {
+   "name": "shader-doodle",
+   "version": "1.0.0-alpha.22",
+   "licence": "MIT",
+   "ok": true
+  },
+  {
+   "name": "three",
+   "version": "0.170.0",
+   "licence": "MIT",
+   "ok": true
+  }
+ ],
+ "archive": {
+  "folder": ".artifacts/removed-assets",
+  "files": 340,
+  "size": 47076536
+ }
+}

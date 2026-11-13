@@ -47,7 +47,12 @@ export function createNurseryPortraitViewer(scene) {
   drawPortrait(canvas.getContext("2d"), photo, 0, 0, canvas.width, canvas.height);
   const button = document.createElement("button");
   button.type = "button"; button.className = "nursery-portrait-close"; button.textContent = "×";
-  const localize = () => button.setAttribute("aria-label", scene.services.i18n?.t("common.close") || "Close");
+  const localize = () => {
+    const name = scene.services.i18n?.t('gameplay.familyPortrait') ?? 'Ivy and Rose Ashcombe · 1959';
+    dialog.setAttribute('aria-label', name);
+    canvas.setAttribute('aria-label', name);
+    button.setAttribute("aria-label", scene.services.i18n?.t("common.close") || "Close");
+  };
   localize();
   const offLocale = scene.services.i18n?.subscribe(localize);
   dialog.append(canvas, button); document.body.append(dialog);

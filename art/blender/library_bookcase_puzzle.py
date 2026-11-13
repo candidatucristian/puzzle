@@ -20,21 +20,34 @@ from kit import *
 import room_common as rc
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = arg('--out', os.path.join(rc.ROOT, '.artifacts/library-bookcase-v4'))
+# (--room 6: since 2026-11-05 the puzzle is in Room VI, on the low bookcase
+#  that stands where the cot was — room_vi_bookcase.py's scene)
+ROOM = arg('--room', '2')
+OUT = arg('--out', os.path.join(rc.ROOT, '.artifacts/library-bookcase-v5' if ROOM == '6' else '.artifacts/library-bookcase-v4'))
 WIDTH = int(arg('--width', '3200')); SAMPLES = int(arg('--samples', '384'))
 ONLY = set(arg('--only', 'plate,books').split(','))
 os.makedirs(OUT, exist_ok=True)
 with open(os.path.join(OUT, 'books.json'), encoding='utf-8') as f:
     BOOKS = json.load(f)
 
-# ── Room II, built as the room's own picture is, nothing rendered ──────────
-mine = list(ARGS)
-ARGS[:] = ['--only', 'none', '--out', os.path.join(OUT, 'room'), '--width', str(WIDTH), '--samples', str(SAMPLES)]
-try:
-    polished = runpy.run_path(os.path.join(HERE, 'room_library_polished.py'), run_name='__main__')
-finally:
-    ARGS[:] = mine
-scene = polished['scene']
+if ROOM == '6':
+    # ── Room VI with its bookcase, as room_vi_bookcase.py saved it ────────
+    bpy.ops.wm.open_mainfile(filepath=os.path.join(rc.ROOT, '.artifacts/room-vi-books/room_vi_books.blend'))
+    scene = bpy.context.scene
+    scene.render.resolution_x = WIDTH; scene.render.resolution_y = round(WIDTH * rc.RH / rc.RW); scene.render.resolution_percentage = 100
+    scene.cycles.samples = SAMPLES
+    rc.SCENE = scene
+    CASE_NAME = 'nursery bookcase'
+else:
+    # ── Room II, built as the room's own picture is, nothing rendered ─────
+    mine = list(ARGS)
+    ARGS[:] = ['--only', 'none', '--cot', '0', '--out', os.path.join(OUT, 'room'), '--width', str(WIDTH), '--samples', str(SAMPLES)]
+    try:
+        polished = runpy.run_path(os.path.join(HERE, 'room_library_polished.py'), run_name='__main__')
+    finally:
+        ARGS[:] = mine
+    scene = polished['scene']
+    CASE_NAME = 'end bookcase'
 bpy.context.view_layer.update()
 
 def centre(o):
@@ -45,7 +58,7 @@ def size_along(o, axis):
     return max(p[axis] for p in pts) - min(p[axis] for p in pts)
 
 # ── the five books that stand out on the end bookcase, and their slips ─────
-case = bpy.data.objects['end bookcase']
+case = bpy.data.objects[CASE_NAME]
 slips = [o for o in case.children_recursive if o.name.split('.')[0] == 'slip']
 books = [o for o in case.children_recursive if o.name.split('.')[0] == 'book']
 marked = []
@@ -145,17 +158,21 @@ for i, (b, s) in enumerate(marked):
 caught = bpy.data.collections.new('the clues, caught')
 for sp in specials:
     for key in ('title', 'card', 'number'): caught.objects.link(sp[key])
-glint = lamp('on the titles', 'AREA', tuple(cam.location + Vector((.35, .1, .45))), aim=tuple(Vector((CX, FRONT, CZ))),
-             energy=float(arg('--glint', '6')), colour=(1.0, .82, .6), size=.5)
-glint.visible_camera = False
-glint.light_linking.receiver_collection = caught
+# (from both sides of the eye, so the gilt down a spine at either end of the
+#  shelf catches it as well as one in the middle)
+for side in ((1,) if ROOM == '2' else (1, -1)):
+    glint = lamp('on the titles', 'AREA', tuple(cam.location + Vector((side * .35, .1, .45))), aim=tuple(Vector((CX, FRONT, CZ))),
+                 energy=float(arg('--glint', '22' if ROOM == '6' else '6')), colour=(1.0, .82, .6), size=.5)
+    glint.visible_camera = False
+    glint.light_linking.receiver_collection = caught
 bpy.context.view_layer.update()
+if arg('--exposure', '0.7' if ROOM == '6' else ''): scene.view_settings.exposure = float(arg('--exposure', '0.7' if ROOM == '6' else '0'))
 
 # ── what the game is told: each book, where it is and what it shows ───────
 POSES = 9; PULL = float(arg('--pull', '0.12'))
 def proj(v):
     return list(rc.project(v))
-layout = {'version': 4, 'width': rc.RW, 'height': rc.RH, 'poses': POSES, 'books': [], 'lamp': None, 'cup': None}
+layout = {'version': 5 if ROOM == '6' else 4, 'width': rc.RW, 'height': rc.RH, 'poses': POSES, 'books': [], 'lamp': None, 'cup': None}
 every = []
 for i, sp in enumerate(specials):
     w, face, top = sp['w'], sp['face'], sp['top']

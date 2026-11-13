@@ -1,5 +1,12 @@
 **Verificare comercială — The Descipher**
 
+Notă, 6 noiembrie 2026 (pregătirea demo-ului de Steam):
+- **Fonturi:** fontul Children (licență comercială neconfirmată) a fost scos din joc și din fișierele livrate.
+- **Credite:** în Setări există acum o pagină „Credite”, cu atribuirea cerută de CC BY 4.0 pentru Etude Noire, fonturile OFL/Apache, Poly Haven/ambientCG (CC0), Pixabay și bibliotecile MIT.
+- **Licențe:** textele complete sunt livrate în `public/licenses/THIRD-PARTY-NOTICES.txt`, generat de `scripts/third-party-notices.mjs`.
+- **Sunete:** `docs/SOUND_SOURCES.md` listează fiecare fișier audio, cu locul unde e folosit. Rămâne de completat pagina Pixabay a fiecăruia și dacă e înregistrat în Content ID.
+- **De făcut la aplicația desktop:** fonturile încărcate acum de la Google (Architects Daughter, Dancing Script, Special Elite) trebuie incluse în joc, împreună cu licențele lor.
+
 Notă de întreținere, 4 octombrie 2026: raportul și inventarul CSV de mai jos rămân evidența verificării din 30 septembrie. Curățarea proiectului a eliminat ulterior resurse nefolosite, inclusiv familia KG Ten Thousand Reasons, Children Sans, specimenul PDF și unele imagini și sunete. Inventarul istoric nu descrie conținutul distribuției curente; documentele de licență și atribuire ale resurselor păstrate rămân în proiect.
 
 Verificat la 30 septembrie 2026, pe copia locală a proiectului, commit `9353856`. Scop: drepturile resurselor, informațiile pentru cumpărători și pregătirea facturării. Utilizatorul a declarat că resursele sunt descărcate gratuit de pe Pixabay; această declarație nu identifică separat fiecare fișier. Țara și forma juridică a vânzătorului, regimul TVA și piețele de vânzare nu au fost confirmate.

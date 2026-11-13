@@ -4,7 +4,10 @@ import { glint } from "./startFilm.js";
 import { taskCard } from "./tasks.js";
 import { mountWindowRain } from "./windowRain.js";
 
-const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-film-match-v2.webp`;
+const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-cycles-v1.webp`;
+// (the desk is rendered in Blender, art/blender/wren_desk.py, 1.5 times
+// this size; everything laid over it is measured in these, the old picture's
+// own pixels, which the render keeps)
 const DESK_WIDTH = 1672,
   DESK_HEIGHT = 941;
 // Out of the film, into the game: the desk fills the screen, the matte gone,
@@ -53,10 +56,12 @@ function playDesk(
     revealImmediately = false,
     deferInteraction = false,
     i18n = null,
+    onReplay = null,
   } = {},
 ) {
   const root = document.createElement("div");
   root.id = "prologue";
+  root.dataset.i18nAria = 'prologue.ariaDesk';
   root.setAttribute("role", "dialog");
   root.setAttribute(
     "aria-label",
@@ -89,17 +94,20 @@ function playDesk(
   const envelope = document.createElement("button");
   envelope.type = "button";
   envelope.className = "prologue-envelope";
+  envelope.dataset.i18nAria = 'prologue.openLetter';
   envelope.setAttribute("aria-label", i18n ? i18n.t("prologue.openLetter") : "Open the letter");
   envelope.title = i18n ? i18n.t("prologue.openLetter") : "Open the letter";
   const dossier = document.createElement("button");
   dossier.type = "button";
   dossier.className = "prologue-envelope prologue-dossier";
+  dossier.dataset.i18nAria = 'prologue.ariaOpenFile';
   dossier.setAttribute("aria-label", i18n ? i18n.t("prologue.ariaOpenFile") : "Open the Ashcombe file");
   // no "Open the file" over it until it is its turn
   dossier.disabled = true;
 
   const nameplate = document.createElement("div");
   nameplate.className = "prologue-desk-nameplate";
+  nameplate.dataset.i18nAria = 'prologue.nameplate';
   nameplate.setAttribute("role", "img");
   nameplate.setAttribute("aria-label", i18n ? i18n.t("prologue.nameplate") : "Inspector Arthur Wren");
   // The physical plaque and folder label are in the photograph, with the
@@ -135,37 +143,56 @@ function playDesk(
       ["file", i18n ? i18n.t("tasks.file") : "Open the case file", { later: true }],
       ["house", i18n ? i18n.t("tasks.house") : "Go to Ashcombe Manor", { later: true }],
     ],
-    { sounds },
+    { sounds, i18n, scope },
   );
   tasks.node.setAttribute("aria-live", "polite");
 
-  // with both done: the way on, drawn as the way back is, its arrow turned
+  // with both done: the way on — a plain card at the foot of the panel, where
+  // he is going in small capitals over the house's name, a long thin arrow
   const onward = document.createElement("button");
   onward.type = "button";
   onward.className = "prologue-onward";
   onward.hidden = true;
   const onwardWord = i18n ? i18n.t("prologue.ashcombeManor") : "Ashcombe Manor";
-  onward.innerHTML = `<span class="onward-word">${onwardWord}<svg class="onward-line" viewBox="0 0 64 5" preserveAspectRatio="none" aria-hidden="true">
-      ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M1.5 3.4C14 2.2 30 4 46 2.6C52 2.1 57 2.9 62.5 2.5" />`).join("")}
-    </svg></span><svg class="onward-icon" viewBox="0 0 44 22" aria-hidden="true"><g class="onward-arrow">
-      ${["ink-dark", "ink-white", "ink-over"].map((c) => `<path class="${c}" d="M3 18.5C5.5 8.2 16.5 3.6 26 4.6C32.4 5.3 36.8 8.6 39.6 13.2" /><path class="${c}" d="M40.6 6.4L39.7 13.4L33 12.1" />`).join("")}
-    </g></svg>`;
+  const onwardFor = i18n ? i18n.t("prologue.setOutFor") : "Set out for";
+  onward.innerHTML = `<span class="onward-text"><span class="onward-for" data-i18n="prologue.setOutFor">${onwardFor}</span><span class="onward-word" data-i18n="prologue.ashcombeManor">${onwardWord}</span></span><svg class="onward-icon" viewBox="0 0 34 12" aria-hidden="true"><path d="M1 6H32.5M27.5 1.5L32.5 6L27.5 10.5" /></svg>`;
+  // and, all along, the film again
+  const replay = document.createElement("button");
+  replay.type = "button";
+  replay.className = "prologue-replay";
+  const replayWord = i18n ? i18n.t("prologue.replayIntro") : "Replay intro";
+  replay.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.6A5 5 0 1 0 4.6 4.3" /><path d="M4.9 1.6L4.6 4.3L7.3 4.7" /></svg><span data-i18n="prologue.replayIntro">${replayWord}</span>`;
+  replay.hidden = !onReplay;
 
   const panel = document.createElement("aside");
   panel.className = "prologue-panel";
+  panel.dataset.i18nAria = 'prologue.tonight';
   panel.setAttribute("aria-label", i18n ? i18n.t("prologue.tonight") : "Tonight");
   const head = document.createElement("header");
   head.className = "prologue-panel-head";
   // headed as the game's own index heads a floor: its mark in a box, a rule, the name
   const studyName = i18n ? i18n.t("prologue.studyName") : "Inspector Wren's Study";
   const studyWhere = i18n ? i18n.t("prologue.studyWhere") : "Prologue · Exeter, 2001";
-  head.innerHTML = `<span class="pf-numeral">P</span><span class="pf-rule"></span><span class="pf-words"><span class="pf-name">${studyName}</span><span class="pf-where">${studyWhere}</span></span>`;
+  head.innerHTML = `<span class="pf-numeral">P</span><span class="pf-rule"></span><span class="pf-words"><span class="pf-name" data-i18n="prologue.studyName">${studyName}</span><span class="pf-where" data-i18n="prologue.studyWhere">${studyWhere}</span></span>`;
   const label = document.createElement("p");
   label.className = "prologue-panel-label";
+  label.dataset.i18n = 'prologue.tonight';
   label.textContent = i18n ? i18n.t("prologue.tonight") : "Tonight";
-  panel.append(head, label, tasks.node, onward);
+  const foot = document.createElement("div");
+  foot.className = "prologue-panel-foot";
+  foot.append(onward, replay);
+  panel.append(head, label, tasks.node, foot);
   root.append(camera, panel);
   const reading = readingStage(scope, root);
+  if (i18n) scope.add(i18n.subscribe(() => {
+    if (!root.isConnected) return;
+    if (root.dataset.step === 'file') dossier.dataset.tip = i18n.t('prologue.openFile');
+    if (reading.open) {
+      const letter = root.dataset.step === 'letter';
+      reading.refresh(letter ? i18n.getLetter('invitation') : i18n.getCaseReport(),
+        letter ? {} : { seal: false }, i18n.t(letter ? 'prologue.putDown' : 'prologue.closeFile'));
+    }
+  }));
   root.dataset.step = "letter";
   sparkle(envelope, "letter");
 
@@ -204,7 +231,7 @@ function playDesk(
       });
     // Follow the real objects even when the frame is cropped for a narrow
     // or unusually wide screen. The photograph and button share one camera.
-    place(dossier, 0, 534, 810, 270);
+    place(dossier, 0, 520, 830, 290);
     place(envelope, 726, 700, 422, 112);
     place(nameplate, 894, 552, 286, 132);
     rain.resize(width, height);
@@ -280,6 +307,12 @@ function playDesk(
   scope.on(envelope, "click", openLetter);
   scope.on(dossier, "click", openFile);
   scope.on(onward, "click", leave);
+  // the film again: it comes up over the desk, which then goes (controls.js)
+  scope.on(replay, "click", () => {
+    if (root.inert || reading.open || root.dataset.step === "gone" || !onReplay) return;
+    root.inert = true;
+    onReplay();
+  });
   scope.on(window, "keydown", (event) => {
     if (
       root.inert ||
@@ -320,14 +353,14 @@ const OUTLINES = {
     [719, 796],
   ],
   file: [
-    [0, 616],
-    [410, 531],
-    [806, 596],
-    [812, 612],
-    [558, 788],
-    [438, 766],
-    [242, 738],
-    [0, 700],
+    [0, 650],
+    [318, 535],
+    [398, 527],
+    [528, 533],
+    [815, 596],
+    [824, 611],
+    [574, 803],
+    [0, 741],
   ],
 };
 function outlines(frame) {
@@ -400,11 +433,14 @@ function readingStage(scope, root) {
     then = null;
     after();
   };
+  const refresh = (doc, options, label) => {
+    renderLetter(sheet, doc, options);
+    go.textContent = label;
+  };
   const show = (doc, options, label, after) => {
     open = true;
     then = after;
-    renderLetter(sheet, doc, options);
-    go.textContent = label;
+    refresh(doc, options, label);
     reading.hidden = false;
     sheet.scrollTop = 0;
     reading.scrollTop = 0;
@@ -435,6 +471,7 @@ function readingStage(scope, root) {
   });
   return {
     show,
+    refresh,
     hide,
     get open() {
       return open;

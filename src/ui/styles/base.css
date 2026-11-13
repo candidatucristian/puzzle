@@ -37,15 +37,6 @@
   font-display: swap;
 }
 
-/* Local handwriting fallback. */
-@font-face {
-  font-family: "Children";
-  src: url("/assets/fonts/children/Children.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -72,7 +63,7 @@
   --line-dark: #040507;
   --line-light: rgba(255, 255, 255, 0.06);
   /* type */
-  --font-display: "Etude Noire", "Children", "Architects Daughter", cursive;
+  --font-display: "Etude Noire", "Architects Daughter", cursive;
   --font-body: "Etude Noire", "Cormorant Garamond", Georgia, serif;
   /* recurring surfaces */
   --grad-panel: linear-gradient(180deg, #23262c, #1a1c21 55%, #131519);

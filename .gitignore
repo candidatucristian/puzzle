@@ -1,5 +1,9 @@
 node_modules/
 dist/
+dist-demo/
+dist-full/
+site-dist/
+site/public/
 test-results/
 playwright-report/
 .artifacts/

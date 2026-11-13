@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
-import { HOUSE_GO, zoomInto, zoomOutFrom, PLACES } from "../../shared/house.js";
+import { HOUSE_GO, ROOM_READY, zoomInto, zoomOutFrom, PLACES } from "../../shared/house.js";
 import { loadCofferArt, buildCoffer, offerCofferKey } from "./cofferArt.js";
 import { KEY_ART, KEY_ART_URL } from "../../shared/keyArt.js";
 import { GOLD_CHEST, GOLD_CHEST_URL } from './chestArt.js';
 import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
+import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 
 /** A room off the hall. Not a level, and with no code of its own: it is where
  *  some of them are found. Each thing that opens a puzzle glints until the
@@ -46,6 +47,7 @@ export default class RoomScene extends BasePuzzleScene {
 
   preload() {
     if (!PLACES.some(place => place.key === this.place && place.chest)) return;
+    optionalSceneAsset(this, GOLD_CHEST);
     if (!this.textures.exists(GOLD_CHEST)) this.load.image(GOLD_CHEST, GOLD_CHEST_URL);
     if (!this.textures.exists(KEY_ART)) this.load.image(KEY_ART, KEY_ART_URL);
     loadCofferArt(this, this.place);
@@ -65,6 +67,10 @@ export default class RoomScene extends BasePuzzleScene {
       this._build(width, height);
     };
     this.listenToResize(this._onResize);
+    const camera = this.cameras.main;
+    const ready = () => this.game.events.emit(ROOM_READY, this);
+    camera.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, ready);
+    this._sceneCleanups.add(() => camera.off(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, ready));
     this.cameras.main.fadeIn(500, 0, 0, 0);
   }
 

@@ -399,7 +399,7 @@ button:disabled {
   min-height: 48px;
 }
 
-#level-code {
+#level-code, .study-guide-code {
   flex: 1;
   width: 100%;
   min-width: 0;
@@ -414,13 +414,14 @@ button:disabled {
   text-transform: uppercase;
   box-shadow: none;
 }
-#level-code::placeholder {
+#level-code::placeholder, .study-guide-code::placeholder {
   text-transform: none;
   letter-spacing: 0;
   color: #999993;
 }
 #level-code:focus,
-#input-area #level-code:focus-visible {
+#input-area #level-code:focus-visible,
+.study-guide-code[data-typing="true"] {
   border-color: #373733;
   outline: none;
   background: #171717;
@@ -429,7 +430,7 @@ button:disabled {
 #level-code.success-flash {
   border-color: #adada4;
 }
-#btn-submit {
+#btn-submit, .study-guide-submit {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -447,7 +448,7 @@ button:disabled {
   background: #e3e3dd;
   border-color: #e3e3dd;
 }
-#btn-submit:active {
+#btn-submit:active, .study-guide-submit[data-pressed="true"] {
   background: #babbb3;
 }
 #btn-submit .ui-icon {
@@ -495,12 +496,18 @@ button:disabled {
   flex-direction: column;
   min-height: 0;
   padding: 24px 24px 28px 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 0;
   background: transparent;
   box-shadow: none;
   color: var(--ui-text);
   font-family: var(--ui-font);
+}
+/* Keys and open notes must not squeeze the puzzle names out of the index.
+   Scroll the panel as a whole when its contents exceed the screen height. */
+#sidebar > * {
+  flex-shrink: 0;
 }
 #sidebar .drawer-heading {
   margin-bottom: 12px;
@@ -549,7 +556,7 @@ button:disabled {
   display: grid;
   grid-auto-rows: min-content;
   gap: 3px;
-  overflow-y: auto;
+  overflow: visible;
   min-height: 0;
   padding: 3px 5px 14px 2px;
   scrollbar-gutter: stable;
@@ -769,7 +776,7 @@ button:disabled {
 #key-insert.is-on {
   opacity: 1;
 }
-:is(#levels-grid, #right-sidebar, .modal-content, #hint-list, .howto-body) {
+:is(#sidebar, #levels-grid, #right-sidebar, .modal-content, #hint-list, .howto-body) {
   scrollbar-width: thin;
   scrollbar-color: #33332f transparent;
 }

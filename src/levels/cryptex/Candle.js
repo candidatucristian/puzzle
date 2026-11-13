@@ -151,6 +151,8 @@ class Flame {
     el.style.height = `${(height + 4) * k}px`;
     el.innerHTML = '<button type="button" class="candle-action" aria-label="Put out the candle"></button>';
     const button = el.querySelector("button");
+    button.dataset.i18nAria = 'gameplay.candleOut';
+    button.setAttribute('aria-label', this.scene.services.i18n?.t('gameplay.candleOut') ?? 'Put out the candle');
     button.disabled = out;
     button.addEventListener("click", (event) => {
       event.stopPropagation();

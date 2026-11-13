@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Ashcombe Manor</title>
+    <title data-i18n="start.title">Ashcombe Manor</title>
     <!-- Keep the viewport stable; entry.js blocks phone and tablet browsers. -->
     <meta
       name="viewport"
@@ -15,7 +15,7 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="apple-mobile-web-app-title" content="Ashcombe Manor" />
+    <meta name="apple-mobile-web-app-title" content="Ashcombe Manor" data-i18n-content="start.title" />
 
     <link
       rel="icon"
@@ -137,34 +137,6 @@
         <path class="sk-dots" stroke-dasharray=".1 1.75" d="M5.1 16.3C6.7 14.7 8.2 15.6 9.8 14C11.3 12.6 12.2 11.5 13.9 11.3C15.4 11.1 16.3 10.7 17.4 9.5" />
         <path d="M17.6 6.8C18.2 7.4 18.8 8 19.4 8.6M19.4 6.8C18.8 7.4 18.2 8 17.6 8.6" />
       </symbol>
-      <symbol id="sk-pencil" viewBox="0 0 24 24">
-        <path d="M5 16.7C8.3 13.4 11.6 10.1 14.9 6.8M7.3 19C10.6 15.7 13.9 12.4 17.2 9.1" />
-        <path class="sk-faint" stroke-opacity=".5" d="M6.2 17.8C9.5 14.5 12.8 11.2 16 7.9" />
-        <path d="M5 16.7C5.4 17.3 5.8 17.6 6.2 17.8C6.6 18.3 6.9 18.7 7.3 19M5 16.7C4.5 18 4 19.2 3.6 20.4C4.8 19.9 6 19.5 7.3 19" />
-        <path d="M4.2 19C4.5 19.3 4.8 19.6 5.1 19.8" />
-        <path d="M14.9 6.8C15.6 7.6 16.4 8.3 17.2 9.1M16.9 4.8C17.6 5.6 18.4 6.3 19.2 7.1M15.9 5.8C16.6 6.6 17.4 7.3 18.2 8.1M14.9 6.8C15.6 6.1 16.2 5.5 16.9 4.8M17.2 9.1C17.8 8.4 18.5 7.8 19.2 7.1" />
-        <path d="M16.9 4.8C17.6 4.1 18.4 3.3 19.1 2.6C19.9 2 20.8 2.2 21.3 2.9C21.8 3.6 21.8 4.4 21.4 4.9C20.7 5.6 19.9 6.4 19.2 7.1" />
-      </symbol>
-      <!-- the notebook's tools on its plaque: a nib and a line written, a
-           rubber, a ruler -->
-      <symbol id="sk-write" viewBox="0 0 24 24">
-        <path d="M4.3 15.9C6.2 13.4 8.6 11 11.4 9.3C12.1 10 12.8 10.7 13.5 11.4C11.8 14.2 9.4 16.6 6.9 18.5C6 18.9 5 19.3 4 19.7C4.3 18.4 4.3 17.1 4.3 15.9" />
-        <path class="sk-faint" stroke-opacity=".6" d="M4.1 19.6C5.8 17.9 7.4 16.3 9 14.7" />
-        <path d="M9.6 14.1C9.2 13.7 9.4 13 9.9 12.8C10.4 12.6 11 13 11 13.5C11 14 10.4 14.4 9.9 14.3" />
-        <path d="M11.4 9.3C12.7 8 14 6.7 15.3 5.4M13.5 11.4C14.8 10.1 16.1 8.8 17.4 7.5M15.3 5.4C16 6.1 16.7 6.8 17.4 7.5" />
-        <path d="M15.3 5.4C16.2 4.5 17.1 3.6 18 2.7C18.7 2.1 19.7 2.2 20.3 2.8C20.9 3.4 21 4.3 20.4 5C19.4 5.8 18.4 6.7 17.4 7.5" />
-        <path d="M11.6 20.6C12.6 19.7 13.4 21.3 14.5 20.4C15.6 19.5 16.4 21.1 17.5 20.3C18.5 19.6 19.4 20.8 20.6 20.2" />
-      </symbol>
-      <symbol id="sk-eraser" viewBox="0 0 24 24">
-        <path d="M4.5 15.7C7.1 13.1 9.7 10.5 12.3 7.9C14.1 9.7 15.9 11.5 17.6 13.2C15 15.8 12.4 18.4 9.8 21C9.1 21.6 8.2 21.6 7.6 21C6.6 20 5.5 19 4.5 18C3.9 17.3 3.9 16.4 4.5 15.7" />
-        <path d="M12.3 7.9C13.4 6.8 14.5 5.7 15.6 4.6C16.2 4 17.2 4 17.8 4.6C18.8 5.6 19.8 6.6 20.8 7.6C21.4 8.2 21.4 9.2 20.8 9.8C19.7 10.9 18.7 12 17.6 13.2" />
-        <path class="sk-faint" stroke-opacity=".6" d="M8.4 11.9C10.1 13.7 11.9 15.4 13.7 17.2" />
-        <path d="M12.6 21C15.3 21 17.9 20.9 20.6 21" />
-      </symbol>
-      <symbol id="sk-ruler" viewBox="0 0 24 24">
-        <path d="M2.9 16.6C7.4 12.1 11.9 7.6 16.4 3.1C17.9 4.6 19.4 6.1 20.9 7.6C16.4 12.1 11.9 16.6 7.4 21.1C5.9 19.6 4.4 18.1 2.9 16.6" />
-        <path d="M5.6 13.9C6.1 14.4 6.6 14.9 7.1 15.4M7.6 11.9C7.9 12.2 8.2 12.5 8.5 12.8M9.6 9.9C10.1 10.4 10.6 10.9 11.1 11.4M11.6 7.9C11.9 8.2 12.2 8.5 12.5 8.8M13.6 5.9C14.1 6.4 14.6 6.9 15.1 7.4" />
-      </symbol>
       <symbol id="sk-file" viewBox="0 0 24 24">
         <path d="M6.1 3.3C9.1 3.1 12.2 3.2 15.2 3.1C16.5 4.4 17.8 5.7 19.1 7C19 11.6 19.1 16.2 19 20.8C14.7 20.9 10.4 20.8 6 20.9C6.1 15 6 9.2 6.1 3.3Z" />
         <path d="M15.2 3.2C15.1 4.5 15.2 5.8 15.2 7.1C16.5 7.1 17.8 7 19 7.1" />
@@ -191,9 +163,9 @@
         <svg class="loading-moon ui-icon" aria-hidden="true">
           <use href="#icon-moon" />
         </svg>
-        <h1>Ashcombe Manor</h1>
+        <h1 data-i18n="start.title">Ashcombe Manor</h1>
         <div class="loading-bar"><div id="loading-fill"></div></div>
-        <p id="loading-label">Loading <span id="loading-pct">0%</span></p>
+        <p id="loading-label"><span id="loading-status" data-i18n="loading.loading">Loading</span> <span id="loading-pct">0%</span></p>
       </div>
     </div>
 
@@ -225,6 +197,7 @@
             type="range"
             id="vol-slider-ui"
             aria-label="Overall volume"
+            data-i18n-aria="header.volume"
             min="0"
             max="1"
             step="0.01"
@@ -245,17 +218,6 @@
           data-i18n-title="header.mapTip"
         >
           <svg class="ui-icon sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-map" /><use class="ink-white" href="#sk-map" /><use class="ink-over" href="#sk-map" /></svg><span data-i18n="header.map">Map</span>
-        </button>
-        <button
-          id="btn-notebook"
-          class="header-button"
-          type="button"
-          aria-label="Notebook"
-          title="Notebook (N)"
-          data-i18n-aria="header.notebookTip"
-          data-i18n-title="header.notebookTip"
-        >
-          <svg class="ui-icon sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-pencil" /><use class="ink-white" href="#sk-pencil" /><use class="ink-over" href="#sk-pencil" /></svg><span data-i18n="header.notebook">Notebook</span>
         </button>
         <button
           id="btn-casefile"
@@ -315,7 +277,7 @@
 
     <div id="play-area">
       <!-- Level navigation -->
-      <aside id="sidebar" aria-label="Room index">
+      <aside id="sidebar" aria-label="Room index" data-i18n-aria="accessibility.roomIndex">
         <div class="drawer-heading">
           <div id="header-floor" role="status" aria-label="Where you are"></div>
         </div>
@@ -325,6 +287,7 @@
             id="room-progress"
             value="0"
             aria-label="Rooms solved"
+            data-i18n-aria="accessibility.solved"
           ></progress>
           <span id="save-status" role="status" aria-live="polite"></span>
         </div>
@@ -332,13 +295,14 @@
         <!-- the notes are open to begin with; their heading folds them away -->
         <details id="index-notes" class="index-notes" open>
           <summary data-i18n="sidebar.notes">Notes</summary>
-          <div id="index-story" aria-label="Story"></div>
+          <div id="index-story" aria-label="Story" data-i18n-aria="accessibility.story"></div>
         </details>
         <!-- the letters found and not yet opened: an envelope each, marked -->
         <div
           id="index-letters"
           class="index-letters"
           aria-label="Letters found"
+          data-i18n-aria="accessibility.letters"
           hidden
         ></div>
         <div id="index-done" hidden>
@@ -348,9 +312,9 @@
             Nothing is left to find in this room.
           </p>
         </div>
-        <div id="index-keys" aria-label="Keys" hidden></div>
+        <div id="index-keys" aria-label="Keys" data-i18n-aria="accessibility.keys" hidden></div>
         <!-- Outside the house, the index has no rooms to list: only the game itself -->
-        <div id="index-outside" aria-label="About the game">
+        <div id="index-outside" aria-label="About the game" data-i18n-aria="accessibility.about">
           <p class="outside-eyebrow" data-i18n="sidebar.outsideEyebrow">
             Outside Ashcombe House
           </p>
@@ -368,10 +332,6 @@
               <div>
                 <dt><kbd>M</kbd></dt>
                 <dd data-i18n="sidebar.keyMap">The map of the house</dd>
-              </div>
-              <div>
-                <dt><kbd>N</kbd></dt>
-                <dd data-i18n="sidebar.keyNotebook">Your notebook</dd>
               </div>
               <div>
                 <dt><kbd>C</kbd></dt>
@@ -394,256 +354,6 @@
         </div>
         <!-- The way back: sketched in white like the pointers, at the foot of the index -->
       </aside>
-
-      <!-- The notebook: a working page for each puzzle and each place, and up to
-         ten folders to keep notes in, drawn by notebook.js. It comes out of
-         the index: the side panel widens to the left, and the notebook is
-         written in its place. -->
-      <div id="notebook-modal" class="hidden notebook-drawer">
-        <button
-          id="btn-close-notebook"
-          class="document-close"
-          type="button"
-          aria-label="Close the notebook"
-          data-tip="Close the notebook (Esc)"
-          data-i18n-aria="notebook.close"
-          data-i18n-tip="notebook.closeTip"
-        >
-          <svg class="ui-icon" aria-hidden="true">
-            <use href="#icon-close" />
-          </svg>
-        </button>
-        <div class="options-heading">
-          <h2 data-i18n="notebook.title">Notebook</h2>
-        </div>
-        <!-- its tools, on the brass-framed plaque over its head -->
-        <div class="notebook-bar" role="toolbar" aria-label="Tools" data-i18n-aria="notebook.tools">
-          <button
-            id="notebook-write"
-            class="nb-tool"
-            type="button"
-            data-tip="Write on the left page"
-            data-i18n-tip="notebook.writeTip"
-          >
-            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-write" /><use class="ink-white" href="#sk-write" /><use class="ink-over" href="#sk-write" /></svg>
-            <span data-i18n="notebook.write">Write</span>
-          </button>
-          <button
-            class="nb-tool"
-            type="button"
-            data-notebook-tool="pencil"
-            aria-pressed="true"
-            data-tip="Draw on the page"
-            data-i18n-tip="notebook.pencilTip"
-          >
-            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-pencil" /><use class="ink-white" href="#sk-pencil" /><use class="ink-over" href="#sk-pencil" /></svg>
-            <span data-i18n="notebook.pencil">Sketch</span>
-          </button>
-          <button
-            class="nb-tool"
-            type="button"
-            data-notebook-tool="eraser"
-            aria-pressed="false"
-            data-tip="Rub out what is drawn"
-            data-i18n-tip="notebook.rubberTip"
-          >
-            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-eraser" /><use class="ink-white" href="#sk-eraser" /><use class="ink-over" href="#sk-eraser" /></svg>
-            <span data-i18n="notebook.rubber">Rub out</span>
-          </button>
-          <button
-            class="nb-tool"
-            type="button"
-            data-notebook-tool="ruler"
-            aria-pressed="false"
-            data-tip="Draw straight lines, as with a ruler"
-            data-i18n-tip="notebook.rulerTip"
-          >
-            <svg class="sketch-icon" aria-hidden="true"><use class="ink-dark" href="#sk-ruler" /><use class="ink-white" href="#sk-ruler" /><use class="ink-over" href="#sk-ruler" /></svg>
-            <span data-i18n="notebook.ruler">Measure</span>
-          </button>
-        </div>
-        <!-- the pages saved: index tabs out from its right edge — first this
-             puzzle's own page, then the saved ones, then one for a new page
-             (inspector-desk.css) -->
-        <aside class="notebook-shelf" aria-label="Saved" data-i18n-aria="notebook.saved">
-          <div class="shelf-head" hidden>
-            <span class="shelf-label" data-i18n="notebook.saved"
-              >Saved</span
-            ><span id="notebook-saved-count" class="shelf-count"></span>
-          </div>
-          <ul id="notebook-notes"></ul>
-          <button
-            id="notebook-new-page"
-            class="shelf-add"
-            type="button"
-            data-tip="A new, empty page"
-            data-i18n="notebook.newPage"
-            data-i18n-tip="notebook.newPageTip"
-          >
-            + New page
-          </button>
-        </aside>
-        <!-- the left leaf: the notes -->
-        <section class="nb-leaf nb-notes" aria-labelledby="notebook-title">
-          <div class="page-bar">
-            <span id="notebook-title" class="page-name"></span>
-            <button
-              id="notebook-back"
-              class="page-back"
-              type="button"
-              hidden
-              data-tip="The page you keep for the puzzle you are in"
-              data-i18n="notebook.backToPuzzle"
-              data-i18n-tip="notebook.backToPuzzleTip"
-            >
-              &larr; Back to this puzzle&rsquo;s page
-            </button>
-          </div>
-          <label class="sr-only" for="notebook-text">Your notes</label>
-          <textarea
-            id="notebook-text"
-            placeholder="Write anything down…"
-            spellcheck="false"
-            data-i18n-placeholder="notebook.placeholder"
-          ></textarea>
-          <div class="notebook-save">
-            <label class="sr-only" for="notebook-note-title"
-              >The note's name</label
-            >
-            <input
-              id="notebook-note-title"
-              type="text"
-              maxlength="60"
-              placeholder="A name for this note"
-              spellcheck="false"
-              autocomplete="off"
-              data-i18n-placeholder="notebook.noteNamePlaceholder"
-            />
-            <button
-              id="notebook-save"
-              class="menu-btn notebook-save-btn"
-              type="button"
-              data-tip="Keep a copy of this page, with the saved ones (Enter)"
-              data-i18n="notebook.save"
-              data-i18n-tip="notebook.saveTip"
-            >
-              Save
-            </button>
-            <button
-              id="notebook-delete-note"
-              class="menu-btn notebook-delete-btn"
-              type="button"
-              hidden
-              data-tip="Click twice to be sure"
-              data-i18n="notebook.deleteNote"
-              data-i18n-tip="notebook.deleteTip"
-            >
-              Delete this note
-            </button>
-          </div>
-          <p
-            id="notebook-status"
-            class="notebook-status"
-            role="status"
-            aria-live="polite"
-          ></p>
-          <p class="tool-note" data-i18n="notebook.note">
-            The page is kept for this puzzle by itself; Save keeps a copy of it
-            with the saved ones. &nbsp;·&nbsp; N opens the notebook, Esc puts it
-            away.
-          </p>
-        </section>
-        <!-- the right leaf: the sketches -->
-        <section class="nb-leaf nb-sketch" aria-label="Sketches" data-i18n-aria="notebook.sketches">
-          <div class="page-bar">
-            <span class="page-name" data-i18n="notebook.sketches">Sketches</span>
-          </div>
-          <div class="notebook-sketch-wrap">
-            <canvas
-              id="notebook-sketch"
-              aria-label="A page to draw on"
-            ></canvas>
-          </div>
-          <!-- the pencil: how thick its line, and what colour; and clearing it all -->
-          <div class="notebook-pens">
-            <div class="pen-group" role="group" aria-label="How thick" data-i18n-aria="notebook.sizes">
-            <button
-              class="pen-size"
-              type="button"
-              data-notebook-size="0"
-              aria-pressed="true"
-              aria-label="A fine line"
-              data-tip="A fine line"
-              data-i18n-aria="notebook.sizeThin"
-              data-i18n-tip="notebook.sizeThin"
-            ><span></span></button>
-            <button
-              class="pen-size"
-              type="button"
-              data-notebook-size="1"
-              aria-pressed="false"
-              aria-label="A middling line"
-              data-tip="A middling line"
-              data-i18n-aria="notebook.sizeMedium"
-              data-i18n-tip="notebook.sizeMedium"
-            ><span></span></button>
-            <button
-              class="pen-size"
-              type="button"
-              data-notebook-size="2"
-              aria-pressed="false"
-              aria-label="A thick line"
-              data-tip="A thick line"
-              data-i18n-aria="notebook.sizeThick"
-              data-i18n-tip="notebook.sizeThick"
-            ><span></span></button>
-            </div>
-            <div class="pen-group" role="group" aria-label="What colour" data-i18n-aria="notebook.colours">
-            <button
-              class="pen-colour"
-              type="button"
-              data-notebook-colour="0"
-              aria-pressed="true"
-              aria-label="Graphite"
-              data-tip="Graphite"
-              data-i18n-aria="notebook.colourGraphite"
-              data-i18n-tip="notebook.colourGraphite" style="--pen: #24211c"
-            ><span></span></button>
-            <button
-              class="pen-colour"
-              type="button"
-              data-notebook-colour="1"
-              aria-pressed="false"
-              aria-label="Blue"
-              data-tip="Blue"
-              data-i18n-aria="notebook.colourBlue"
-              data-i18n-tip="notebook.colourBlue" style="--pen: #1e4eaa"
-            ><span></span></button>
-            <button
-              class="pen-colour"
-              type="button"
-              data-notebook-colour="2"
-              aria-pressed="false"
-              aria-label="Red"
-              data-tip="Red"
-              data-i18n-aria="notebook.colourRed"
-              data-i18n-tip="notebook.colourRed" style="--pen: #b2261e"
-            ><span></span></button>
-            </div>
-            <button
-              id="notebook-clear"
-              class="menu-btn"
-              type="button"
-              data-tip="Wipe the whole drawing"
-              data-i18n="notebook.clear"
-              data-i18n-tip="notebook.clearTip"
-            >
-              Clear the drawing
-            </button>
-          </div>
-        </section>
-      </div>
-
       <!-- Game Area -->
       <div id="game-wrapper">
         <!-- The opening title card -->
@@ -679,7 +389,7 @@
             <p class="legend-eyebrow" data-i18n="start.eyebrow">
               The Ashcombe residence
             </p>
-            <h1 class="legend-title">Ashcombe Manor</h1>
+            <h1 class="legend-title" data-i18n="start.title">Ashcombe Manor</h1>
             <span class="legend-rule" aria-hidden="true"></span>
             <p class="legend-line" data-i18n="start.line">
               Home of Ivy, Silas and Orion Ashcombe.
@@ -704,7 +414,7 @@
               <!-- only from the dev server (startMenu.js): every door open -->
               <button type="button" class="menu-item menu-dev" data-menu="dev" aria-pressed="false" hidden>
                 <span class="menu-mark" aria-hidden="true"></span
-                ><span class="menu-word">Dev mode</span
+                ><span class="menu-word" data-i18n="menu.devMode">Dev mode</span
                 ><span class="menu-state" aria-hidden="true"></span>
               </button>
             </nav>
@@ -724,12 +434,12 @@
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
             </div>
-            <h1>Ashcombe Manor</h1>
+            <h1 data-i18n="start.title">Ashcombe Manor</h1>
             <div class="ornate-rule wide">
               <span></span><i>◆</i><span></span>
             </div>
           </div>
-          <p id="intro-skip">PRESS ANY KEY TO SKIP</p>
+          <p id="intro-skip" data-i18n="intro.pressSkip">PRESS ANY KEY TO SKIP</p>
         </div>
 
         <!-- Completion Screen -->
@@ -748,7 +458,7 @@
             <p class="completion-message" data-i18n="completion.message">
               Every chamber yielded its word. The room is quiet again.
             </p>
-            <div class="completion-stats" aria-label="Completion statistics">
+            <div class="completion-stats" aria-label="Completion statistics" data-i18n-aria="accessibility.statistics">
               <div>
                 <span id="completion-chambers">18 / 18</span
                 ><small data-i18n="completion.chambersCleared"
@@ -830,7 +540,7 @@
               </g>
             </svg>
             <span class="leave-word"
-              >Back<svg
+              ><span class="leave-label" data-i18n="common.back">Back</span><svg
                 class="leave-line"
                 viewBox="0 0 64 5"
                 preserveAspectRatio="none"
@@ -921,6 +631,7 @@
       <aside
         id="right-sidebar-wrapper"
         aria-label="Hints"
+        data-i18n-aria="hints.eyebrow"
         role="dialog"
         aria-modal="true"
       >
@@ -951,9 +662,7 @@
           <ol id="hint-list"></ol>
           <div class="hint-footer">
             <p id="hint-count" role="status" aria-live="polite"></p>
-            <button id="btn-next-hint" class="menu-btn" type="button">
-              Reveal hint 2
-            </button>
+            <button id="btn-next-hint" class="menu-btn" type="button"></button>
           </div>
         </div>
       </aside>
@@ -996,93 +705,32 @@
         </div>
       </div>
 
-      <!-- The archival dossier: aged paper on a leather cover, held by a
-           photographic steel binding. All text stays on the paper leaves. -->
-      <div id="casefile-modal" class="hidden casefile-modal" data-tab="letters">
-        <div class="dossier">
-          <div class="dossier-material" aria-hidden="true">
-            <span class="dossier-cover-hinge"></span>
-            <span class="dossier-cover is-front"></span>
-            <span class="dossier-cover is-back"></span>
+      <div id="casefile-modal" class="hidden casebook-modal">
+        <!-- The case file: his case book, rendered in Blender as it lies
+             open (art/blender/case_book.py), its leaves turned over the
+             picture of it (ui/caseBook.js): a spread for each room he can go
+             into and one for each letter filed (ui/caseBookPages.js) -->
+        <div class="casebook">
+          <h2 class="sr-only" data-i18n="casefile.title">The Ashcombe Case</h2>
+          <button
+            id="btn-close-casefile"
+            class="icon-button casebook-close"
+            type="button"
+            aria-label="Close the case file"
+            data-tip="Close the case file (Esc)"
+            data-i18n-aria="casefile.close"
+            data-i18n-tip="casefile.closeTip"
+          >
+            <svg class="ui-icon" aria-hidden="true">
+              <use href="#icon-close" />
+            </svg>
+          </button>
+          <div class="casebook-book">
+            <img class="casebook-photo" alt="" draggable="false" aria-hidden="true" />
+            <canvas class="casebook-canvas" aria-hidden="true"></canvas>
+            <nav class="casebook-marks" aria-label="Rooms" data-i18n-aria="casefile.rooms"></nav>
           </div>
-            <button
-              id="btn-close-casefile"
-              class="document-close dossier-close"
-              type="button"
-              aria-label="Close the case file"
-              data-tip="Close the case file (Esc)"
-              data-i18n-aria="casefile.close"
-              data-i18n-tip="casefile.closeTip"
-            >
-              <svg class="ui-icon" aria-hidden="true">
-                <use href="#icon-close" />
-              </svg>
-            </button>
-          <div class="dossier-pages">
-            <aside class="dossier-page is-left">
-              <header class="dossier-head">
-                <p class="dossier-ref" data-i18n="casefile.ref">
-                  Devon &amp; Cornwall Constabulary · File 61/1013
-                </p>
-                <h2 class="dossier-title" data-i18n="casefile.title">
-                  The Ashcombe Case
-                </h2>
-              </header>
-              <nav class="dossier-tabs" role="tablist" aria-label="Case file" data-i18n-aria="header.casefile">
-                <button id="casefile-tab-letters" type="button" role="tab"
-                  data-casefile-tab="letters" aria-selected="true"
-                  aria-controls="casefile-letter-index casefile-letters-panel"
-                  data-i18n="casefile.tabLetters">Letters</button>
-                <button id="casefile-tab-clues" type="button" role="tab"
-                  data-casefile-tab="clues" aria-selected="false" tabindex="-1"
-                  aria-controls="casefile-room-index casefile-evidence-panel"
-                  data-i18n="casefile.tabEvidence">Evidence</button>
-              </nav>
-              <div id="casefile-letter-index" class="dossier-index is-letters" role="tabpanel" aria-labelledby="casefile-tab-letters">
-                <p id="casefile-letter-count" class="page-head"></p>
-                <ol id="casefile-letter-list" class="dossier-slips"></ol>
-              </div>
-              <div id="casefile-room-index" class="dossier-index is-clues" role="tabpanel" aria-labelledby="casefile-tab-clues" hidden>
-                <p class="page-head" data-i18n="casefile.rooms">The rooms</p>
-                <ul id="casefile-room-list" class="dossier-rooms"></ul>
-              </div>
-              <footer class="dossier-index-foot">
-                <p class="dossier-stamp" data-i18n="casefile.confidential">Confidential</p>
-                <span class="dossier-file-number" aria-hidden="true">61 / 1013</span>
-              </footer>
-            </aside>
-            <span class="dossier-spine" aria-hidden="true">
-              <span class="dossier-mechanism">
-                <img class="dossier-binding is-back" src="/assets/images/CaseFile/dossier-steel-binding-v3.webp" alt="" draggable="false" />
-                <i class="dossier-punch is-upper on-left"></i>
-                <i class="dossier-punch is-upper on-right"></i>
-                <i class="dossier-punch is-lower on-left"></i>
-                <i class="dossier-punch is-lower on-right"></i>
-                <img class="dossier-binding is-front" src="/assets/images/CaseFile/dossier-steel-binding-v3.webp" alt="" draggable="false" />
-              </span>
-            </span>
-            <section class="dossier-page is-right">
-              <section id="casefile-letters-panel" class="dossier-correspondence" role="tabpanel" aria-labelledby="casefile-tab-letters">
-                <header class="dossier-document-head">
-                  <div class="dossier-document-identity">
-                    <h3 id="casefile-document-title" class="dossier-document-title"></h3>
-                    <p id="casefile-document-origin" class="dossier-document-origin"></p>
-                  </div>
-                  <span id="casefile-document-number" class="dossier-document-number" aria-hidden="true"></span>
-                </header>
-                <div class="dossier-reading" tabindex="0" role="region" aria-labelledby="casefile-document-title">
-                  <div id="casefile-reader" class="dossier-reader"></div>
-                </div>
-              </section>
-              <section id="casefile-evidence-panel" class="dossier-evidence" role="tabpanel" aria-labelledby="casefile-tab-clues" hidden>
-                <header class="dossier-document-head">
-                  <h3 id="casefile-evidence-title" class="dossier-document-title" data-i18n="casefile.tabEvidence">Evidence</h3>
-                  <p id="casefile-clue-count" class="page-head"></p>
-                </header>
-                <ul id="casefile-clue-list" class="evidence-tags" tabindex="0" aria-labelledby="casefile-evidence-title"></ul>
-              </section>
-            </section>
-          </div>
+          <div class="casebook-reader sr-only" aria-live="polite"></div>
         </div>
       </div>
     </div>
@@ -1111,7 +759,7 @@
           </button>
         </header>
 
-        <div class="st-tabs" role="tablist" aria-label="Settings">
+        <div class="st-tabs" role="tablist" aria-label="Settings" data-i18n-aria="settings.title">
           <button
             type="button"
             role="tab"
@@ -1215,6 +863,9 @@
                 <option value="en" data-i18n="settings.langEn">English</option>
                 <option value="ro" data-i18n="settings.langRo">Română</option>
                 <option value="ru" data-i18n="settings.langRu">Русский</option>
+                <option value="zh-Hans" data-i18n="settings.langZh">简体中文</option>
+                <option value="fr" data-i18n="settings.langFr">Français</option>
+                <option value="es" data-i18n="settings.langEs">Español</option>
               </select>
               <div id="st-lang-menu" class="st-lang-menu" role="listbox" aria-labelledby="st-lang-label" hidden>
                 <button type="button" class="st-lang-item is-active" data-lang="en" role="option" aria-selected="true">
@@ -1235,20 +886,38 @@
                   </span>
                   <span class="st-lang-item-name" data-i18n="settings.langRu">Русский</span>
                 </button>
+                <button type="button" class="st-lang-item" data-lang="zh-Hans" role="option" aria-selected="false">
+                  <span class="st-lang-item-flag" aria-hidden="true"><svg class="st-flag-svg" viewBox="0 0 30 20" width="18" height="11"><path d="M0 0h30v20H0z" fill="#de2910"/><g fill="#ffde00"><path d="m5 2 .7 2.1H8L6.2 5.4l.7 2.1L5 6.2 3.1 7.5l.7-2.1L2 4.1h2.3z"/><path d="m10 1 .3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1zM12 4l.3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1zM12 7l.3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1zM10 9l.3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1z"/></g></svg></span>
+                  <span class="st-lang-item-name" data-i18n="settings.langZh">简体中文</span>
+                </button>
+                <button type="button" class="st-lang-item" data-lang="fr" role="option" aria-selected="false">
+                  <span class="st-lang-item-flag" aria-hidden="true"><svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><path d="M0 0h1v2H0z" fill="#002654"/><path d="M1 0h1v2H1z" fill="#fff"/><path d="M2 0h1v2H2z" fill="#ed2939"/></svg></span>
+                  <span class="st-lang-item-name" data-i18n="settings.langFr">Français</span>
+                </button>
+                <button type="button" class="st-lang-item" data-lang="es" role="option" aria-selected="false">
+                  <span class="st-lang-item-flag" aria-hidden="true"><svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><path d="M0 0h3v2H0z" fill="#aa151b"/><path d="M0 .5h3v1H0z" fill="#f1bf00"/></svg></span>
+                  <span class="st-lang-item-name" data-i18n="settings.langEs">Español</span>
+                </button>
               </div>
             </div>
           </div>
-          <div class="st-actions">
+<!-- the credits, apart; then the reset -->
+          <div class="st-help">
             <button
-              id="btn-howto"
+              id="btn-credits"
               class="st-link"
               type="button"
-              data-tip="How the game is played"
-              data-i18n="settings.howto"
-              data-i18n-tip="settings.howtoTip"
+              data-tip="Who and what the game is made with"
+              data-i18n="settings.credits"
+              data-i18n-tip="settings.creditsTip"
             >
-              How to play
+              Credits
             </button>
+          </div>
+          <div class="st-reset-row">
+            <p class="st-note" data-i18n="settings.resetNote">
+              Reset clears all progress and starts the house again.
+            </p>
             <button
               id="btn-new"
               class="st-danger"
@@ -1261,9 +930,6 @@
               >
             </button>
           </div>
-          <p class="st-note" data-i18n="settings.resetNote">
-            Reset clears all progress and starts the house again.
-          </p>
         </section>
 
         <section
@@ -1407,50 +1073,39 @@
     </div>
 
     <!-- How to play: an open guide with a persistent close control. -->
-    <div id="howto-modal" class="hidden">
-        <!-- How to play: the inspector's manual, a book whose leaves turn,
-             drawn by ui/manual/manual.js -->
-        <div class="manual">
-          <h2 class="sr-only" data-i18n="manual.title">The Inspector's Manual</h2>
-          <button
-            id="btn-close-howto"
-            class="icon-button manual-close"
-            type="button"
-            aria-label="Close the manual"
-            data-tip="Close the manual (Esc)"
-            data-i18n-aria="manual.close"
-            data-i18n-tip="manual.closeTip"
-          >
-            <svg class="ui-icon" aria-hidden="true">
-              <use href="#icon-close" />
-            </svg>
+    <!-- Credits: the works by others the game is made with, and under what
+         licence (the full texts: licenses/THIRD-PARTY-NOTICES.txt) -->
+    <div id="credits-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="credits-title">
+      <div class="credits-sheet">
+        <header class="credits-head">
+          <h2 id="credits-title" data-i18n="credits.title">Credits</h2>
+          <button id="btn-close-credits" class="icon-button" type="button" aria-label="Close" data-i18n-aria="credits.close">
+            <svg class="ui-icon" aria-hidden="true"><use href="#icon-close" /></svg>
           </button>
-          <div class="manual-book">
-            <div class="manual-board" aria-hidden="true"></div>
-            <canvas class="manual-canvas" aria-hidden="true"></canvas>
-            <nav class="manual-marks" aria-label="Chapters"></nav>
-          </div>
-          <div class="manual-foot">
-            <button
-              class="icon-button manual-prev"
-              type="button"
-              aria-label="The page before"
-              data-i18n-aria="manual.previous"
-            >
-              <svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg>
-            </button>
-            <span class="manual-folio"></span>
-            <button
-              class="icon-button manual-next"
-              type="button"
-              aria-label="The next page"
-              data-i18n-aria="manual.next"
-            >
-              <svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
-          <div class="manual-reader sr-only" aria-live="polite"></div>
+        </header>
+        <div class="credits-body" tabindex="0">
+          <section>
+            <h3 data-i18n="credits.fonts">Fonts</h3>
+            <p translate="no"><strong>Etude Noire</strong> — Dimitri Antonov / Blue Curve Designstudio. <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
+            <p translate="no"><strong>DM Serif Display</strong> — Colophon Foundry · <strong>Cormorant Garamond</strong> — Christian Thalmann · <strong>IBM Plex</strong> — IBM Corp. · <strong>Architects Daughter</strong> — Kimberly Geswein · <strong>Dancing Script</strong> — Pablo Impallari — SIL Open Font License 1.1</p>
+            <p translate="no"><strong>Special Elite</strong> — Astigmatic — Apache License 2.0</p>
+            <p translate="no"><strong>Noto Sans SC</strong> · <strong>Noto Serif SC</strong> — Google / Adobe — SIL Open Font License 1.1</p>
+          </section>
+          <section>
+            <h3 data-i18n="credits.art">Rooms and objects</h3>
+            <p data-i18n="credits.artText">Modelled and rendered in Blender (Cycles). Surface scans and some models: Poly Haven and ambientCG (CC0).</p>
+          </section>
+          <section>
+            <h3 data-i18n="credits.sound">Sound</h3>
+            <p data-i18n="credits.soundText">Sound effects and music: Pixabay (Pixabay Content License).</p>
+          </section>
+          <section>
+            <h3 data-i18n="credits.software">Software</h3>
+            <p translate="no">Phaser — Photon Storm Ltd. · three.js — <span data-i18n="credits.threeAuthors">three.js authors</span> · shader-doodle — merl · EventEmitter3 — Arnout Kazemier — MIT License</p>
+          </section>
+          <p class="credits-note" data-i18n="credits.note">The full licence texts are in licenses/THIRD-PARTY-NOTICES.txt, shipped with the game.</p>
         </div>
+      </div>
     </div>
 
     <script type="module" src="/src/entry.js"></script>

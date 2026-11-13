@@ -16,6 +16,8 @@ const v = level.version;
 await sharp(`${source}/plate.png`).webp({ quality: 90 }).toFile(`${target}/bench-plate-v${v}.webp`);
 await sharp(`${source}/cloth.png`).webp({ quality: 92 }).toFile(`${target}/bench-cloth-v${v}.webp`);
 await sharp(`${source}/zoom.png`).webp({ quality: 90 }).toFile(`${target}/bench-zoom-v${v}.webp`);
+await sharp(`${source}/zoom.png`).resize({width:4096,height:4096,fit:'inside',withoutEnlargement:true})
+  .webp({quality:96}).toFile(`${target}/bench-zoom-v${v}-4096.webp`);
 delete level.loupe.crop; delete level.zoom.crop;
 writeFileSync(path("src/levels/chemistry/benchLevel.json"), JSON.stringify(level, null, 1) + "\n");
 console.log(`bench-plate/cloth/zoom-v${v}.webp`, "benchLevel.json");

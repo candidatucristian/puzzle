@@ -22,13 +22,14 @@ export function playManorStory(scope, { reducedMotion = false, i18n = null } = {
   const skip = document.createElement("button");
   skip.type = "button";
   skip.className = "intro-video-skip";
+  skip.dataset.i18n = 'common.skipShort';
   skip.textContent = i18n ? i18n.t("common.skipShort") : "Skip";
   root.append(shade, asides, skip);
   start.append(root);
   start.classList.add("is-telling");
   requestAnimationFrame(() => { root.classList.add("has-aside"); skip.classList.add("is-in"); });
 
-  const storyList = i18n?.getManorStory() || MANOR_STORY;
+  let storyList = i18n?.getManorStory() || MANOR_STORY;
   let index = 0, node = null, done = false, changing = false;
   // the start screen goes in on any click or key: these are only for the story
   const own = (event) => { event.stopPropagation(); event.preventDefault?.(); };
@@ -81,6 +82,16 @@ export function playManorStory(scope, { reducedMotion = false, i18n = null } = {
   // gone in by the door (the start screen hidden): told enough
   const watch = new MutationObserver(() => { if (start.classList.contains("hidden")) end(); });
   watch.observe(start, { attributes: true, attributeFilter: ["class"] });
+  if (i18n) scope.add(i18n.subscribe(() => {
+    storyList = i18n.getManorStory() || MANOR_STORY;
+    if (done || !node) return;
+    const next = node.querySelector('.manor-story-next');
+    next.firstChild.nodeValue = i18n.t('common.next') + ' ';
+    const translated = passage(storyList[index - 1]);
+    translated.append(next);
+    node.replaceWith(translated);
+    node = translated;
+  }));
   scope.add(end);
   show();
 }

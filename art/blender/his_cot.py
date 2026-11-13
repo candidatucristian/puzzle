@@ -415,6 +415,9 @@ for j in range(6):
 
 # A carved rocking horse: its silhouette is a closed solid, with turned
 # saddle, leather bridle, flax mane, and two curved wooden rockers.
+# (Its head, ears, eyes, bridle and mane are set facing back, toward the
+# saddle; room_nursery.py turns them round across the neck when it brings
+# this cot into the nursery, 2026-11-06.)
 x,y,z=at(.92,.85)
 sphere('Horse | carved beech body',(x,y,z+.075),1,CREAM,squash=(.042,.016,.025))
 for side in (-1,1):

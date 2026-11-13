@@ -2,9 +2,11 @@ import "./scene.css";
 import Phaser from "phaser";
 import "shader-doodle";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { applyI18nToDOM } from '../../core/i18n.js';
 import { layoutParlour, paintParlour, releaseParlourArt } from "./parlour.js";
 import { cabinetSVG, knobSVG, dialSVG } from "./cabinet.js";
 import { makeSparkleTexture, twinkle, flicker } from "../../shared/glints.js";
+import { staticBurst } from "../../shared/paint.js";
 
 // TV — CRT TV level built on a shader-doodle component (originally TV.html/css/js).
 // The screen is a glitchy CRT broadcast: a shader samples cycling channel images.
@@ -110,12 +112,10 @@ export default class TVScene extends BasePuzzleScene {
       data && data.skipFade !== undefined ? data.skipFade : true;
   }
 
-  preload() {
-    this.load.audio("static", "assets/sounds/TV/staticsound.mp3");
-  }
-
   // ── Broadcasts — each channel describes VOID without naming it ────────────────
   get _CHANNELS() {
+    const localized = this.services.i18n?.t('gameplay.tv.channels');
+    if (Array.isArray(localized)) return localized;
     return [
       {
         img: 0,
@@ -199,6 +199,7 @@ export default class TVScene extends BasePuzzleScene {
 
   create() {
     this.beginScene();
+    if (this.services.i18n) this._sceneCleanups.add(this.services.i18n.subscribe(() => this._renderChannel()));
 
     this.isSolved = false;
     this._channel = 0;
@@ -424,9 +425,9 @@ export default class TVScene extends BasePuzzleScene {
               <div class="bd"></div>
             </div>
           </div>
-          <button type="button" class="da-knob da-btn" data-dir="-1" aria-label="Previous channel" style="left:228px">${knobSVG("&#8249;")}</button>
+          <button type="button" class="da-knob da-btn" data-dir="-1" aria-label="Previous channel" data-i18n-aria="gameplay.tv.previous" style="left:228px">${knobSVG("&#8249;")}</button>
           <div class="da-dial" style="left:278px">${dialSVG()}</div>
-          <button type="button" class="da-knob da-btn" data-dir="1" aria-label="Next channel" style="left:328px">${knobSVG("&#8250;")}</button>
+          <button type="button" class="da-knob da-btn" data-dir="1" aria-label="Next channel" data-i18n-aria="gameplay.tv.next" style="left:328px">${knobSVG("&#8250;")}</button>
         </div>
       </div>
       <div class="da-subs" aria-live="polite">
@@ -435,6 +436,7 @@ export default class TVScene extends BasePuzzleScene {
       </div>
     `;
     document.getElementById("game-container").appendChild(overlay);
+    if (this.services.i18n) applyI18nToDOM(this.services.i18n, overlay);
     this.ownDom(overlay);
 
     this._dom = {
@@ -576,7 +578,7 @@ export default class TVScene extends BasePuzzleScene {
 
   // TV static "bzzzt" on every channel change (auto or manual)
   _playStatic() {
-    this.services.audio.playSfx("static", 0.6, this);
+    staticBurst(this, { dur: 0.9, gain: 0.13 });
     this._flashScreen();
   }
 

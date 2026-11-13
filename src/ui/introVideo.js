@@ -3,38 +3,52 @@ import { OPENING } from "../shared/story.js";
 import { preloadPrologueDesk, DESK_CAMERA } from "./prologue.js";
 import { passage } from "./passage.js";
 
-const VIDEO = `${import.meta.env.BASE_URL}assets/video/IntroVideo.mp4`;
-// The film's last shot is the camera drawing back from his desk, steadily
-// (about 3.7% a second); it passes the very picture the game opens on at
-// 73 s and goes on drawing back until it goes to black at 75.3 s. So the
-// game takes over a second before that picture, at 72 s, where the film's
-// frame is the desk picture drawn in 3.5% about a point (`match`, measured
-// frame by frame against it): the desk comes up over the film framed exactly
-// so, carries the same drawing-back on at the same speed, and slows to rest
-// on the game's own framing as the matte draws off — one movement, never
-// turning back on itself.
-const HANDOFF_AT = 72.0;
-const HANDOFF = { over: 360, move: 2600, match: { s: 1.035, cx: .274, cy: .55 } };
-// the filters the picture has in the film and in the game (.prologue-photo)
-const FILM_FILTER = "brightness(.58) contrast(1.08) saturate(.8)";
-const DESK_FILTER = "brightness(.64) contrast(1.12) saturate(.82)";
+// (the web demo's build plays a copy made for the web — a third of the size,
+// the same picture and colour, and able to start before it has all come:
+// scripts/web-video.py and mp4-faststart.mjs; the game itself the original)
+// the web builds (the demo, the full game) play the film re-encoded for the web
+const WEB_BUILD = (typeof __DEMO_BUILD__ !== "undefined" && __DEMO_BUILD__) || (typeof __FULL_BUILD__ !== "undefined" && __FULL_BUILD__);
+const VIDEO = `${import.meta.env.BASE_URL}assets/video/${WEB_BUILD ? "IntroVideo-web.mp4" : "IntroVideo.mp4"}`;
+// The film's last shot is the camera drawing back from his desk; it goes to
+// black on its own at 75.3 s. The game takes over before that, at 72.4 s,
+// with a fade through black. The film's desk and the game's (a Blender
+// render) are not the same picture, so a quick dissolve between them reads
+// as a flicker. Instead the film goes down to black, there is a short hold,
+// and the desk comes up out of the black while the camera keeps drawing back
+// a little and comes to rest on the game's framing.
+const HANDOFF_AT = 72.4;
+const HANDOFF = {
+  out: 1300,     // the film to black
+  hold: 280,     // black, the desk already laid in under it
+  in: 1700,      // the desk up out of the black
+  drift: 2900,   // the camera drawing back, from `from` to the game's framing
+  from: 1.045,
+};
+const easeOut = "cubic-bezier(.4, 0, .6, 1)";
+const easeIn = "cubic-bezier(.33, 0, .2, 1)";
 
 // Arthur Wren's story first, then the film when it is asked for;
 // one quiet passage at a time as it plays; then, on its last
 // shot, straight into the game. The desk is laid out and decoded first.
-export function playIntroVideo(parent, { game, audio, reducedMotion = false, onUnder = () => {}, i18n = null }) {
+// `replay`: asked for again from the desk — straight into the film, no pages
+// before it, coming up over the desk; `onCovered` once the desk is hidden.
+export function playIntroVideo(parent, { game, audio, reducedMotion = false, onUnder = () => {}, i18n = null, replay = false, onCovered = () => {} }) {
   const scope = new Scope();
   const root = document.createElement("div");
   const setPhase = (phase) => {
     root.dataset.phase = phase;
   };
   root.id = "intro-video";
+  // (asked for again, it comes in over the desk from nothing, not at once)
+  if (replay) root.style.opacity = "0";
+  root.dataset.i18nAria = 'intro.ariaFilm';
   setPhase("loading");
   root.setAttribute("role", "dialog");
   root.setAttribute("aria-label", i18n ? i18n.t("intro.ariaFilm") : "The opening film");
 
   const video = document.createElement("video");
   video.className = "intro-video-film";
+  video.dataset.i18nAria = 'intro.ariaAshcombe';
   video.preload = "auto";
   video.playsInline = true;
   video.disablePictureInPicture = true;
@@ -47,11 +61,13 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   play.id = "intro-video-play";
   play.type = "button";
   play.className = "intro-video-play";
+  play.dataset.i18n = 'intro.playFilm';
   play.textContent = i18n ? i18n.t("intro.playFilm") : "Play opening film";
   play.hidden = true;
   const skip = document.createElement("button");
   skip.type = "button";
   skip.className = "intro-video-skip";
+  skip.dataset.i18n = 'intro.skip';
   skip.textContent = i18n ? i18n.t("intro.skip") : "SKIP INTRO";
   // not until the film has been asked for: the page before it is read, not skipped
   skip.hidden = true;
@@ -136,7 +152,12 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
       },
     };
   };
+  // (once: what owns the film may tear it down again later, by then only to
+  // stop its music, never to touch the page another film may now be on)
+  let cleaned = false;
   const cleanup = (keep = false) => {
+    if (cleaned) return;
+    cleaned = true;
     scope.dispose();
     restoreAudio();
     if (!music) {
@@ -182,7 +203,7 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     titles.remove();
     showAside(null);
     const handOver = matchFrame && !reducedMotion;
-    const transitionMs = reducedMotion ? 250 : matchFrame ? 1800 : 650;
+    const transitionMs = reducedMotion ? 250 : 900;
     root.style.setProperty("--film-transition", `${transitionMs}ms`);
     // handed over on its settled shot, the film runs on under the desk and its
     // music with it; skipped, it stops where it is
@@ -201,7 +222,9 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
       return;
     }
     video.pause();
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    // skipped, too, it goes through black: the film down, then the desk up
+    if (!reducedMotion) await toBlack(450);
+    else await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     if (scope.closed) return;
     setPhase("transition");
     root.classList.add("is-dissolving");
@@ -210,38 +233,36 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     scope.later(completeTransition, transitionMs + 200);
   };
 
-  // into the game: the desk picture comes up over the film's settled shot,
-  // framed as the film frames it; then the matte draws off the top and the
-  // foot, and the camera moves in to the game's own framing (prologue.js
-  // DESK_CAMERA), the grade going from the film's to the game's
+  // into the game: the film goes down to black; the desk, already laid in
+  // under the black (so it is drawn and ready, never popping in), comes up
+  // out of it while the camera draws back a little to the game's own framing
+  // (prologue.js DESK_CAMERA). At the end it is exactly what the desk under
+  // the film shows, so taking the film away changes nothing on screen.
+  const settle = (animations) => {
+    scope.add(() => animations.forEach(a => a.cancel()));
+    return Promise.all(animations.map(a => a.finished.catch(() => {})));
+  };
+  const pause = ms => new Promise(resolve => scope.later(resolve, ms));
+  const toBlack = (duration) => settle([video, vignette, shade].map(el =>
+    el.animate([{ opacity: getComputedStyle(el).opacity }, { opacity: 0 }], { duration, easing: easeOut, fill: "forwards" })));
   const intoTheGame = async (camera) => {
-    root.insertBefore(camera, vignette);
-    const desk = camera.firstElementChild;
-    const width = root.clientWidth, height = root.clientHeight;
-    const iw = desk.naturalWidth || 16, ih = desk.naturalHeight || 9;
-    const vw = video.videoWidth || 1920, vh = video.videoHeight || 1080;
-    // the film covers the band between the mattes; the desk, the whole screen
-    const film = Math.max(width / vw, height * .8 / vh), full = Math.max(width / iw, height / ih);
-    const Lw = vw * film, Lh = vh * film, Dw = iw * full;
-    // the film's frame now: the desk picture drawn in `s` about (cx, cy)
-    const { over, move, match: { s, cx, cy } } = HANDOFF;
-    const k0 = s * Lw / Dw;
-    const start = `translate(${width / 2 * (1 - k0) + (cx - .5) * Lw * (1 - s)}px, ${height / 2 * (1 - k0) + (cy - .5) * Lh * (1 - s)}px) scale(${k0})`;
-    // the game's own framing (prologue.js DESK_CAMERA)
+    const { out, hold, in: up, drift, from } = HANDOFF;
     const { zoom, origin } = DESK_CAMERA;
-    const [ox, oy] = origin.split(" ").map((v, i) => parseFloat(v) / 100 * (i ? height : width));
-    const end = `translate(${ox * (1 - zoom)}px, ${oy * (1 - zoom)}px) scale(${zoom})`;
-    camera.style.transformOrigin = "0 0";
-    root.style.setProperty("--unmatte", `${move - over}ms`);
-    const steps = [
-      camera.animate([{ opacity: 0 }, { opacity: 1 }], { duration: over, easing: "linear", fill: "forwards" }),
-      // leaving at the film's own speed, and slowing to rest
-      camera.animate([{ transform: start }, { transform: end }], { duration: move, easing: "cubic-bezier(.2,.52,.4,1)", fill: "forwards" }),
-      desk.animate([{ filter: FILM_FILTER }, { filter: DESK_FILTER }], { duration: move, easing: "ease-in-out", fill: "forwards" }),
-    ];
-    scope.add(() => steps.forEach(step => step.cancel()));
-    scope.later(() => root.classList.add("is-unmatting"), over);
-    await Promise.all(steps.map(step => step.finished.catch(() => {})));
+    camera.style.opacity = "0";
+    camera.style.transformOrigin = origin;
+    camera.style.transform = `scale(${from})`;
+    root.insertBefore(camera, vignette);
+    await toBlack(out);
+    if (scope.closed) return;
+    // on the black the mattes go at once; nothing of them is seen
+    root.style.setProperty("--unmatte", "0ms");
+    root.classList.add("is-unmatting");
+    await pause(hold);
+    if (scope.closed) return;
+    await settle([
+      camera.animate([{ opacity: 0 }, { opacity: 1 }], { duration: up, easing: easeIn, fill: "forwards" }),
+      camera.animate([{ transform: `scale(${from})` }, { transform: `scale(${zoom})` }], { duration: drift, easing: "cubic-bezier(.2, .45, .3, 1)", fill: "forwards" }),
+    ]);
   };
 
   const make = (tag, className, text = "") => Object.assign(document.createElement(tag), { className, textContent: text });
@@ -254,7 +275,8 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
   // themselves one after the other — the case that has never let him go, and
   // tonight's letter — and Begin, into the film.
   let begin = null;
-  const openingData = i18n?.getOpening() || OPENING;
+  let openingData = i18n?.getOpening() || OPENING;
+  let refreshTitles = () => {};
   const runTitles = () => new Promise(resolve => {
     setPhase("titles");
     const { title, place, date, story } = openingData.page;
@@ -275,6 +297,16 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     const way = make("div", "intro-story-way");
     way.append(go, make("p", "intro-page-hint", i18n ? i18n.t("intro.bestWithSound") : "Best with sound"));
     page.append(...paragraphs, way);
+    refreshTitles = () => {
+      const copy = openingData.page;
+      opening.querySelector('.intro-card-title').textContent = copy.title;
+      opening.querySelector('.intro-card-place').textContent = copy.place;
+      opening.querySelector('.intro-card-date').textContent = copy.date;
+      paragraphs.forEach((paragraph, index) => { paragraph.textContent = copy.story[index] ?? ''; });
+      next.firstChild.nodeValue = i18n.t('common.next');
+      go.firstChild.nodeValue = i18n.t('common.begin');
+      way.querySelector('.intro-page-hint').textContent = i18n.t('intro.bestWithSound');
+    };
     const reveal = (node) => requestAnimationFrame(() => requestAnimationFrame(() => node.classList.add("is-in")));
     let onPage = false;
     const toPage = () => {
@@ -307,7 +339,7 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
 
   // ── the passages on the left of the picture; the shade under them stays
   // from the first to the last, not coming and going between them ──
-  const asidesList = openingData.asides;
+  let asidesList = openingData.asides;
   const FIRST = asidesList[0].at[0], LAST = asidesList.at(-1).at[1];
   let aside = null, asideNode = null;
   const showAside = time => {
@@ -325,6 +357,12 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     asideNode = passage(now);
     asides.append(asideNode);
   };
+  if (i18n) scope.add(i18n.subscribe(() => {
+    openingData = i18n.getOpening() || OPENING;
+    asidesList = openingData.asides;
+    refreshTitles();
+    if (asideNode) showAside(video.currentTime);
+  }));
 
   const watchFrame = () => {
     const inspect = (_now, frame) => {
@@ -401,7 +439,22 @@ export function playIntroVideo(parent, { game, audio, reducedMotion = false, onU
     };
     look();
   });
-  void loaded().then(() => (scope.closed ? null : runTitles())).then(() => {
+  // asked for again: up over the desk, out of nothing into black, then the film
+  const overTheDesk = () => new Promise(resolve => {
+    setPhase("titles");
+    titles.remove();
+    skip.hidden = false;
+    requestAnimationFrame(() => skip.classList.add("is-in"));
+    const coming = root.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMotion ? 1 : 900, easing: easeOut });
+    root.style.opacity = "";
+    scope.add(() => coming.cancel());
+    coming.finished.catch(() => {}).then(() => {
+      if (scope.closed) return;
+      onCovered();
+      resolve();
+    });
+  });
+  void loaded().then(() => (scope.closed ? null : replay ? overTheDesk() : runTitles())).then(() => {
     if (finishing || scope.closed) return;
     root.classList.remove("is-before");
     watchFrame();

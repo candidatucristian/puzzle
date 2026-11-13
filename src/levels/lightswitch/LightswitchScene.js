@@ -3,6 +3,7 @@ import { paintRoom, releaseRoom } from "./room.js";
 import './scene.css';
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
+import { applyI18nToDOM } from '../../core/i18n.js';
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 
 // Level 7 — "LIGHTSWITCH"
@@ -128,7 +129,7 @@ const overlay = document.createElement("div");
       </div>
       <div id="blk-switch-wrap"
            style="left:${Math.round(sw.cx)}px;top:${Math.round(sw.cy)}px;">
-        <div id="blk-switch" role="button" tabindex="0" aria-label="Press the light switch">
+        <div id="blk-switch" role="button" tabindex="0" aria-label="Press the light switch" data-i18n-aria="gameplay.lightSwitch">
           <div class="screw top"></div>
           <div class="rocker">
             <div class="half top"></div>
@@ -141,6 +142,7 @@ const overlay = document.createElement("div");
     `;
 
     document.getElementById("game-container").appendChild(overlay);
+    if (this.services.i18n) applyI18nToDOM(this.services.i18n, overlay);
 
     this._dom = {
       overlay,

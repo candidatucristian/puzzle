@@ -1,0 +1,25 @@
+/* Arthur's pencilled thought across the console (consoleNote.js): over the
+   bar's middle, in his hand, for a moment. Visible in the hall as well, where
+   the console's own controls are hidden. */
+#input-area .console-note {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 clamp(24px, 6vw, 96px);
+  visibility: visible;
+  pointer-events: none;
+  opacity: 0;
+  color: #c9c3b4;
+  font: 400 calc(17px * var(--reading-scale, 1)) / 1.4 "Architects Daughter", cursive;
+  text-align: center;
+  text-shadow: 0 1px 2px #000a;
+}
+#input-area .console-note-sign {
+  margin-left: .5em;
+  color: #c9c3b480;
+  white-space: nowrap;
+}

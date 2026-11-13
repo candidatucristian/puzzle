@@ -1,0 +1,25 @@
+/* ── Credits: a plain dark sheet over the settings, as they are (the works by
+   others the game is made with, and their licences) ── */
+#credits-modal {
+  position: fixed; inset: 0; z-index: 320;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: rgb(0 0 0 / 72%);
+  opacity: 1; transition: opacity 180ms ease;
+}
+#credits-modal.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
+#credits-modal .credits-sheet {
+  width: min(620px, 100%); max-height: min(720px, calc(100dvh - 48px)); display: flex; flex-direction: column;
+  border: 1px solid #3a3a36; border-radius: 10px; background: #121212; color: var(--ui-text, #d8d3c6);
+  box-shadow: 0 30px 80px #000c;
+}
+#credits-modal .credits-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px 14px; border-bottom: 1px solid #2c2c29; }
+#credits-modal .credits-head h2 { margin: 0; font: 500 calc(19px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: .02em; }
+#credits-modal .credits-head .icon-button { background: transparent; border-color: transparent; color: #a7a196; }
+#credits-modal .credits-head .icon-button:hover { color: #fff; }
+#credits-modal .credits-body { overflow-y: auto; padding: 8px 22px 22px; scrollbar-width: thin; }
+#credits-modal section { padding: 14px 0 4px; }
+#credits-modal h3 { margin: 0 0 6px; color: #8f897c; font: 500 calc(11px * var(--reading-scale, 1))/1.4 var(--ui-font); letter-spacing: .16em; text-transform: uppercase; }
+#credits-modal p { margin: 0 0 8px; font: 400 calc(13px * var(--reading-scale, 1))/1.55 var(--ui-font); color: #c9c4b8; }
+#credits-modal strong { font-weight: 500; color: #e6e1d4; }
+#credits-modal a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+#credits-modal .credits-note { margin-top: 14px; color: #8f897c; font-size: calc(12px * var(--reading-scale, 1)); }

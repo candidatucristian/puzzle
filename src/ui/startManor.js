@@ -64,8 +64,11 @@ export function mountStartManor(scope, preferences) {
     // throws it away while the window is hidden (it came back flickering, or
     // blank, after a minimise or an Alt-Tab).
     base.getContext('2d', { willReadFrequently: true });
+    base.classList.add('start-still');
     film.append(base, live);
   }
+  // (put up again: awake, whatever it was left as)
+  film.classList.remove('is-resting');
   let scene = null, stopped = false, frame = 0, details = null, paintedDetails = null, disposed = false;
   let wind = null;
   const dropWind = () => {
@@ -73,6 +76,11 @@ export function mountStartManor(scope, preferences) {
     if (scene) scene.storm3D = false;
     base.style.visibility = '';
   };
+  // The still house is the one copy given the CSS edge mask and grade while
+  // the wind is not over it; once the wind is (and the picture is awake), the
+  // still one is hidden under it.
+  const resting = () => film.classList.contains('is-resting');
+  const coverStill = () => { if (wind && !resting()) base.style.visibility = 'hidden'; };
   const mountWind = () => {
     if (wind || !scene?.photographic || !details?.wind || stopped || disposed || windStill()) return;
     const background = document.createElement('canvas');
@@ -86,7 +94,7 @@ export function mountStartManor(scope, preferences) {
     wind.draw(clock);
     // Exactly one copy receives the shared CSS edge mask and colour grade.
     // The still canvas remains available to light the rain and for fallback.
-    base.style.visibility = 'hidden';
+    coverStill();
   };
   // the rain falling in front of the house, over both: drawn with WebGL where
   // it can be, on a canvas of its own (otherwise the live canvas draws it)
@@ -157,8 +165,33 @@ export function mountStartManor(scope, preferences) {
     wind?.draw(clock, lean, gust);
     if (rain) { rain.setWind((gust - 0.6) * 0.07); rain.advance(dt); rain.draw(); }
   }
-  // hidden and shown again: the clock picks up again without a leap
-  scope.on(document, 'visibilitychange', () => { last = null; });
+  // Hidden and shown again: the clock picks up again without a leap.
+  // Away from the tab, the picture rests on the still house alone — the one
+  // kept by the processor, which the browser never drops. What moves over it
+  // (the wind in the trees, the lights, the rain) is drawn on the graphics
+  // card, and a tab left a while in the background can come back with that
+  // gone or stale for a moment: so it waits, faded out, and only once it has
+  // been drawn again does it come up over the still house (a wind the browser
+  // took away in the meantime is put back first).
+  let waking = 0, settling = 0;
+  scope.on(document, 'visibilitychange', () => {
+    last = null;
+    cancelAnimationFrame(waking); clearTimeout(settling);
+    if (document.hidden) {
+      film.classList.add('is-resting');
+      base.style.visibility = '';
+      return;
+    }
+    if (!resting() || stopped || disposed) return;
+    if (!wind) mountWind();
+    waking = requestAnimationFrame(() => {
+      waking = requestAnimationFrame(() => {
+        film.classList.remove('is-resting');
+        settling = setTimeout(coverStill, 500);
+      });
+    });
+  });
+  scope.add(() => { cancelAnimationFrame(waking); clearTimeout(settling); });
   // should the browser drop a canvas anyway, paint the house again at once
   const repaint = () => { scene = null; layout(); };
   for (const c of [base, live]) scope.on(c, 'contextrestored', repaint);

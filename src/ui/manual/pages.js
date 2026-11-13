@@ -6,6 +6,7 @@
 // frame); right-hand pages its words, set as a book's are.
 
 import { DIM, FAINT, GOLD, PAPER, keycap, line, write } from "./sketch.js";
+import { canvasFontFamily, wrapCanvasText } from '../../shared/textLayout.js';
 
 export const PAGE = { w: 1000, h: 1280 };
 /** where a chapter's picture is, on its page */
@@ -68,14 +69,7 @@ function folio(ctx, n) {
 
 // words broken into lines no wider than `width`, in the font set
 function lines(ctx, text, width) {
-  const out = [];
-  let line = "";
-  for (const word of text.split(/\s+/)) {
-    const tryLine = line ? `${line} ${word}` : word;
-    if (ctx.measureText(tryLine).width > width && line) { out.push(line); line = word; } else line = tryLine;
-  }
-  if (line) out.push(line);
-  return out;
+  return wrapCanvasText(ctx, text, width);
 }
 
 /** a chapter's left-hand page: everything but its moving picture */
@@ -93,8 +87,8 @@ export function picturePage(ctx, words, chapter, n) {
   ctx.restore();
   // its line in hand, under it: fitted to the page's width
   let size = 34;
-  ctx.font = `400 ${size}px "Architects Daughter"`;
-  while (ctx.measureText(chapter.caption).width > 820 && size > 22) { size -= 2; ctx.font = `400 ${size}px "Architects Daughter"`; }
+  ctx.font = `400 ${size}px ${canvasFontFamily('Architects Daughter')}`;
+  while (ctx.measureText(chapter.caption).width > 820 && size > 22) { size -= 2; ctx.font = `400 ${size}px ${canvasFontFamily('Architects Daughter')}`; }
   write(ctx, chapter.caption, PAGE.w / 2, 1112, { hand: true, size, color: DIM, align: "center" });
   folio(ctx, n);
 }
@@ -104,9 +98,9 @@ export function textPage(ctx, words, chapter, number, n) {
   paper(ctx, 1);
   head(ctx, `${words.chapter} ${roman(number)}`);
   write(ctx, roman(number), 110, 258, { size: 110, font: "DM Serif Display", color: GOLD });
-  ctx.font = `400 62px "DM Serif Display"`;
+  ctx.font = `400 62px ${canvasFontFamily('DM Serif Display')}`;
   let titleSize = 62;
-  while (ctx.measureText(chapter.title).width > 780 && titleSize > 40) { titleSize -= 4; ctx.font = `400 ${titleSize}px "DM Serif Display"`; }
+  while (ctx.measureText(chapter.title).width > 780 && titleSize > 40) { titleSize -= 4; ctx.font = `400 ${titleSize}px ${canvasFontFamily('DM Serif Display')}`; }
   write(ctx, chapter.title, 110, 356, { size: titleSize, font: "DM Serif Display" });
   line(ctx, 110, 392, 890, 392, { color: FAINT, width: 1.6, seed: number });
   // the paragraphs; one begun "[M] " has its key drawn in the margin
@@ -119,7 +113,7 @@ export function textPage(ctx, words, chapter, number, n) {
   let laid;
   for (; size >= 24; size -= 1) {
     const leading = size * 1.38, gap = size * 0.72;
-    ctx.font = `500 ${size}px "Cormorant Garamond"`;
+    ctx.font = `500 ${size}px ${canvasFontFamily('Cormorant Garamond')}`;
     let y = top;
     laid = parts.map((p) => {
       const x = p.key ? 210 : 110;

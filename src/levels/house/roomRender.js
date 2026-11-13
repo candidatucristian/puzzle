@@ -1,6 +1,7 @@
 import { makeCanvas } from "../../shared/paint.js";
 import { thingAt } from "./roomKit.js";
 import COFFER from './nativeCoffer.json';
+import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 
 // The rooms off the halls, rendered in Blender (art/blender/room_common.py,
 // room_<name>.py, room_publish.mjs): fixed lighting for every room — one
@@ -12,8 +13,8 @@ import COFFER from './nativeCoffer.json';
 // covering it, never stretched.
 // The coffer's states come from its own light-calibrated Cycles renders.
 const ROOMS = {
-  Study: { folder: "Room1", version: 10 },
-  Room2: { folder: "Room2", version: 6 },
+  Study: { folder: "Room1", version: 12 },
+  Room2: { folder: "Room2", version: 11 },
   Room3: { folder: "Room3", version: 3 },
   Room4: { folder: "Room4", version: 3, extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
   Room5: { folder: "Room5", version: 5 },
@@ -37,16 +38,22 @@ const picturesOf = (room) => {
   return ["lights-1", ...chest, ...(ROOMS[room].extra ?? [])];
 };
 
+/** The same asset identity for a small UI view of an existing room. */
+export function roomRenderAsset(room, name = 'lights-1') {
+  return ROOMS[room] ? { key: keyOf(room, name), url: urlOf(room, name) } : null;
+}
+
 export function loadRoomRender(scene, room) {
   for (const name of picturesOf(room)) {
     const key = keyOf(room, name);
+    if (name !== 'lights-1') optionalSceneAsset(scene, key);
     if (!scene.textures.exists(key)) scene.load.image(key, urlOf(room, name));
   }
 }
 
-/** Whether the room's renders have all come. */
+/** The background stays usable even if a secondary animation is unavailable. */
 export function hasRoomRender(scene, room) {
-  return Boolean(ROOMS[room]) && picturesOf(room).every((name) => scene.textures.exists(keyOf(room, name)));
+  return Boolean(ROOMS[room]) && scene.textures.exists(keyOf(room, 'lights-1'));
 }
 
 /** The room as its render has it (`spec`, the room's house/rooms/<Room>.json),
@@ -94,7 +101,18 @@ export function paintRoomRender(ctx, scene, room, L) {
 
 /** One of the room's own pictures (the chest's, a frame) on a canvas of its own. */
 export function roomRenderPicture(scene, room, name, width, height) {
-  const image = scene.textures.get(keyOf(room, name)).getSourceImage();
+  let available = name;
+  if (!scene.textures.exists(keyOf(room, available))) {
+    const numbered = /^(.*)-(\d+)$/.exec(name);
+    const candidates = picturesOf(room).filter(part => part !== 'lights-1'
+      && (numbered ? part.startsWith(numbered[1] + '-') : part.startsWith('chest-'))
+      && scene.textures.exists(keyOf(room, part)));
+    if (numbered) candidates.sort((a, b) => Math.abs(Number(a.split('-').at(-1)) - Number(numbered[2]))
+      - Math.abs(Number(b.split('-').at(-1)) - Number(numbered[2])));
+    available = candidates[0];
+  }
+  if (!available) return makeCanvas(width ?? 1, height ?? 1);
+  const image = scene.textures.get(keyOf(room, available)).getSourceImage();
   const c = makeCanvas(width ?? image.width, height ?? image.height);
   c.getContext("2d").drawImage(image, 0, 0, c.width, c.height);
   return c;

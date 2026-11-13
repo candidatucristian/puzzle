@@ -1,5 +1,253 @@
 # Blender artwork
 
+## Inspector Wren's desk (2026-11-12)
+
+The user asked for the desk the game opens on to be made in Blender: "cât mai aproape de acesta generat … ca să meargă bine cu tranziția din video în imaginea din joc".
+
+`wren_desk.py` rebuilds the generated `inspector-desk-film-match-v2` as a Cycles scene:
+- **Placement:** every object is put by where it lay in the old picture (a pixel and a height give the point this camera sees there). The film's dissolve, the clickable letter, file and plate, and the rain on the panes all keep their old coordinates.
+- **Camera:** low over the desk, looking a little down. A lens shift keeps the window's uprights upright. The study is a floor above the street.
+- **Light:** the brass swan-neck lamp is the key, its enamel dome glowing at the rim. Cold light comes through the window, and the street lamp and a lit window or two shine across the wet road.
+- **Detail:** rain drops lie on the glass, which is slightly frosted with wet.
+
+See `wren-desk-sources.md`. The old picture is archived in `.artifacts/removed-assets/2026-11-12/`.
+
+## The letters' paper and wax (2026-11-06)
+
+`letter_paper_seal.py` replaces the AI images `documentArt.js` used, for the Steam demo, which is to have none:
+- `letter-paper-v3` is a sheet of cream letter paper, 1002 × 1324. It uses the case book's paper (`case_book_paper.py`) lightly aged, its UVs running out from the middle so both edges brown.
+- `red-wax-seal-v2` is red sealing wax, 512 × 512 with alpha. Its blob is uneven, the stamp pushes up a rim, and the Ashcombes' key is raised in the hollow. It has no shadow, because the page gives it one.
+
+Render with `blender -b --factory-startup -P art/blender/letter_paper_seal.py`, then convert the two PNGs in `.artifacts/letter-paper-seal` to webp in `public/assets/images/CaseFile/`.
+The old AI dossier and letter images and their prompt notes were removed from `public/`, along with the unused `arrivalEnvelope.js` and `envelope-back`.
+
+## The case file: his case book (2026-11-06)
+
+The user asked for the case file to be a real book: "fa-o in Blender, reala … supra realista", with pages that turn.
+`case_book.py` builds Inspector Wren's case book lying open, seen straight down through a 70 mm lens, alone, with only its shadow on a shadow catcher (alpha):
+
+- **Boards:** worn brown leather (Poly Haven `fabric_leather_02`), corners knocked round.
+- **Spine:** headbands at the head and tail, and a burgundy ribbon out of the tail.
+- **Block of pages:**
+  - The left half is thicker than the right.
+  - Each top sheet rises out of a deep gutter (`lift()`), lies a little convex, and has its outer corners curled.
+  - A few loose sheets lie under each top sheet, their edges out of line.
+  - Under them, the side of the block is rounded down to the board, with a striated page-edge material.
+- **Paper:**
+  - The map's yellowed white, with the tooth of ambientCG `Paper001`. The scan is laid once over its clean part; its right edge is the scanner's, and it made tide marks.
+  - Broad blotching, a little foxing, tea-coloured edges and thumbed outer corners.
+- **Light:** warm and lower from the left, so the gutter and the curl read; soft fill.
+
+- **Paper, worn (later the same day):** the user found the first pages "de plastic" and asked for them much more worn. `case_book_paper.py` now has:
+  - uneven toning and the pulp's specks (`Paper002`);
+  - a tide mark with a darker rim;
+  - dense foxing;
+  - deep, uneven edge browning;
+  - thumbing at the outer corners and edge;
+  - the crumple of a dried sheet (`Paper003` normal);
+  - cockled sheets (two crossing waves);
+  - no sheen.
+
+  The tone is kept near the map's cream; the first try went kraft-brown. Book picture v2.
+- **Index tabs:** `case_book_tab.py` renders one old-card tab glued between the pages, alone with its shadow: `tab` in manila, `tab-here` in faded red for the open part.
+  - `caseBook.js` lays one per room, plus ✉ for the letters, with its root at the top sheet's outer edge. The part under the page is clipped away, and the number is typed on it.
+  - The arrows under the book are gone at the user's request; the keyboard arrows still turn.
+
+Each top sheet is 22 × 28.16 cm, which is the game's page of 1000 × 1280. `caseBook.json` gives the spine, the leaf rectangle and each sheet's outline as the lens sees it.
+`caseBook.js` cuts every page out of the picture, clips it to that outline, writes on it with multiply ink (`caseBookPages.js`), and turns it with `shared/pageFlip.js` over the picture.
+
+- **Render:** `blender -b --factory-startup -P art/blender/case_book.py -- [--preview]`. The preview is 50% size at 96 samples; the full render is 768 samples, about 1.5 min.
+- **Publish:** `case_book_tab.py`, then `case_book.py -- --version 2`, then `node art/blender/case_book_publish.mjs`. It writes `case-book-v2.webp`, `case-book-tab(-here)-v2.webp` and `src/ui/caseBookArt.json` (with `tab`).
+
+## Room II becomes the baby's nursery (2026-11-05)
+
+Standing before the library's end bookcase, the cot was too far away to see
+well, and the user asked for Room II to become a baby's room.
+`room_nursery.py` builds a new, smaller room, seen close:
+
+- **Walls and floor:** duck-egg plaster over walnut panelling, and oak boards.
+- **The cot:** the puzzle's own cot from `his-cot.blend`, with legs to the
+  floor, stands in the middle on a soft round rug. A felt mobile hangs from its
+  curved arm. Since 2026-11-06 the lowered front side has a bottom rail under
+  its spindles; without one they read as legs under the cot. The rail is below
+  the close-up's frame.
+- **Back wall:** a sash window with linen curtains, the moon over the garden
+  outside, and two nursery prints (`nursery-moon.png`, `nursery-balloon.png`
+  from `room_boards.mjs`).
+- **Around the cot:** the rocking horse (the cot's toy horse, made large) on
+  the left. `his_cot.py` carved the toy horse's head facing its saddle; the
+  nursery mirrors the head, ears, eyes, bridle and mane across the neck
+  (2026-11-06), so both horses face forward. On the right, the rocking chair, the chest of drawers (its night
+  light and the gilt key chest on top) and the toy chest.
+- **The router** (Room Beneath the Desk's, built by `silas_desk.py`) stands
+  on the toy chest since 2026-11-06, apart from the desk and its clocks (the
+  user asked). It sits at the back of the lid by its left edge, turned 50°
+  to face the room: the chest stands at the picture's right edge, and that
+  corner is the furthest into the picture. The picture books moved to the
+  front of the lid. Its leads run from its back to the wall and down between
+  the chest and the panelling.
+- **Silas's corner:** `silas_desk.py`, one set seen three ways. The room
+  shows it in the far left corner, and both close-ups are taken in it, so all
+  three pictures agree. It was After Hours' desk:
+  - the walnut desk, now 180 cm long on two pedestals of drawers;
+  - the green banker's lamp;
+  - the 22:03 LED clock, the botanical print, and the clock radio on its shelf
+    on the wall;
+  - the alarm and travel clocks, and the calculator built key by key from
+    `KEYPAD`;
+  - the mug and the periwinkle;
+  - the router from Room Beneath the Desk, made a fifth smaller. The set
+    builds it but leaves it at its origin; `room_nursery.py` places it and
+    runs its leads (`ROUTER_PLUGS`, `router_lead`). It stood on the desk
+    until 2026-11-06, by the lamp and then at the left end.
+
+  The nursery runs it through runpy in the desk's own frame (cm, the wall
+  125 cm from the chair), then stands it at `DESK_AT`. A low bookcase of
+  encyclopaedias stands before it.
+- **Light:** the night light and the green lamp, their light given back off
+  the ceiling, plus the moon and the sky at the window.
+
+Commands and outputs:
+
+- **Room II (render v11, coffer v11):**
+  `room_nursery.py -- --only plate,coffer`, then
+  `room_library_v3_publish.mjs --source .artifacts/room-nursery --version 11 --coffer-version 11`.
+  - v8 was the first nursery, with a simpler desk of its own; v9 had the router
+    at the desk's right end, the cot's front without its bottom rail, and the
+    horse looking back; v10 had the router at the desk's left end.
+  - Use `--only preview --width 1200 --samples 64` for a quick look.
+  - Arguments such as `--cot-x`, `--rocker-x` and `--horse-x` move things.
+- **His Cot close-up (Cot native-v5):** `his_cot_in_nursery.py` builds the
+  nursery, nothing rendered, and sets the puzzle's camera to the cot as
+  `his_cot.py` had it, so `nativeCot.json` stays true.
+  - The window and curtains are behind the cot.
+  - The room's felt mobile is hidden, because the close-up's sewn mobile is
+    live.
+  - Lights: the night light's warm light from the right, the moon from the
+    window behind.
+  - In `stage3d.js` the live clues are lit to match.
+  - Publish with `his_cot_publish.mjs --source .artifacts/his-cot-nursery --version 5`.
+- **After Hours (office v7):** `overtime_office.py` builds the nursery, nothing
+  rendered, and sets the eye in the chair as before (lens 20, 116 cm up, the
+  wall 125 cm off). It writes `officeRender.json` from the set's keys,
+  display, colons and mug, then renders the plate and the lit colons.
+  - Exposure 1.2. The faces and their glows are scaled by 2^(0.35 − exposure)
+    so the figures stay as bright as in the old office.
+  - Publish with `overtime_publish.mjs .artifacts/overtime-office 7`.
+- **Router close-up (Modem native-v6):** `modem_room.py` builds the nursery and
+  looks at the toy chest, low (lens 50), from 140 cm before the router's face
+  and a little to its left (`--ex --ey --eo`, in the router's own frame): the
+  rocking chair on the left, the right wall's panelling behind, the picture
+  books on the right. The night light is behind the router, so a warm area
+  light from up before it at the room's side stands for what the room gives
+  back; the dust motes keep to the air over its left end.
+  - v5 looked at the desk's left end.
+  - It renders the plate and each of the twelve lenses alone, in its crop.
+  - The lenses are scaled by 2^(0.15 − exposure) to keep the soft green the
+    user asked for on 2026-11-04.
+  - Publish with `modem_room_publish.mjs .artifacts/modem-native 6`.
+- **Superseded:** these entries below are kept as history:
+  - the v7 library (`room_library_polished.py --cot 1`, `his_cot_in_library.py`);
+  - the stand-alone office and router sets ("After Hours: the desk at night",
+    "The room with the router"), which those two scripts no longer build.
+
+## His Cot ↔ Lamplight in the Library (2026-11-05)
+
+The user wanted the cot's puzzle in Room II for the demo, standing where the
+library's puzzle was, and the library's puzzle in Room VI where the cot was.
+`src/shared/house.js` now has Room II holding cot, overtime and modem, and
+Room VI holding flags, herbarium and bookshelf. The hotel line of the room
+stories moved with the cot.
+
+- **Room II (render v7):** `room_library_polished.py --cot 1 --cot-x .5`, the
+  default, brings in the puzzle's own cot from
+  `.artifacts/his-cot-native/his-cot.blend`.
+  - It keeps the mahogany, mattress, sheet, pillow and every modelled
+    belonging, gives the cot legs down to the floor, and stands it before the
+    end bookcase.
+  - The nursery stays behind: the wall, window, curtain, frame and lamp.
+  - The five marked books there are pushed back and their slips hidden.
+  - The `bookshelf` thing and contour become `cot`.
+  - Publish with `room_library_v3_publish.mjs --source .artifacts/room-library-polished --version 7 --coffer-version 7`.
+- **His Cot close-up (Cot native-v2):** `his_cot_in_library.py` builds Room II
+  with the cot and sets the puzzle's camera to the cot exactly as `his_cot.py`
+  had it, so `nativeCot.json` is unchanged; the projections are checked.
+  - It renders `room.png` and the front-rail pass inside the room, with books
+    behind the cot.
+  - Lights: the green lamp's warm light from front-left, the moon from the
+    right-hand windows, exposure −0.3.
+  - In `stage3d.js` the live clues are lit to match.
+  - Publish with `his_cot_publish.mjs --source .artifacts/his-cot-library --version 2`.
+- **Room VI:** `room_vi_bookcase.py` opens `room_vi.blend` and takes out the
+  cot and the mobile.
+  - It builds a low mahogany bookcase (1.42 × 1.45 m) under the family
+    portrait, with five marked books with slips on its third shelf.
+  - The boy's toys that lay on the mattress go along its top.
+  - It saves `.artifacts/room-vi-books/room_vi_books.blend`.
+  - Then `room_vi_live.py --blend …room_vi_books.blend --only plate,dim,glass,probes`
+    and `room_vi_publish.mjs` update the live plates. The mobile is no longer
+    loaded (`liveRoom6.js`).
+  - The fallback photograph is `room6-blender-realistic-v5`.
+  - `Room6Scene` points its `bookshelf` thing at the bookcase's projected front.
+- **Lamplight in the Library close-up (Bookshelf v5):**
+  `library_bookcase_puzzle.py --room 6` opens that scene and puts gilt titles
+  and numbered cards on the marked books.
+  - The titles are lit from both sides of the eye (`--glint 22`), with
+    exposure +0.7.
+  - Publish with `library_lamplight_publish.mjs --source .artifacts/library-bookcase-v5 --version 5`.
+
+## Room I — version 6, after the user's picture (2026-11-05)
+
+`room_study_v6.py` (from v5) rebuilds the study after a reference picture the
+user gave. It keeps the camera, the cipher wheel on its plaque over the mantel
+("rotorul să-l păstrezi în același loc"), the window, the glass case and the
+chest exactly where they were, so `Study.json` points at the same things.
+
+What changed, after the picture:
+- **Shell:**
+  - Sage walls over the oak dado.
+  - Light oak boards.
+  - One large faded Persian rug under the desk. The navy scan is re-dyed sand,
+    taupe and rose through a colour ramp on its luminance.
+- **Fireplace:**
+  - Cream tiles (`long_white_tiles`) on the jambs and frieze.
+  - Two tall brass candlesticks.
+  - A pothos in a white pot at the mantel's left end, with procedural
+    heart-shaped leaves on vines trailing over the edge.
+- **Window:**
+  - Cream linen curtains: a slub-weave shader with a little translucency.
+  - On the sill, the clay pot with the seedling, a basil grown here, and
+    `potted_plant_04` / `_01`.
+- **Plates:** two new code-drawn plates from `room_boards.mjs`, `study-fern.png`
+  (left wall) and `study-leaf.png` (right of the window, where the rose was).
+  Both are in white mounts with dark walnut mouldings (`framed_plate`).
+- **Desk:**
+  - `vintage_microscope` at the left and an open printed book in the middle.
+  - A brass student lamp at the right, lit by a wide spot inside its
+    enamel-lined bell, with the bulb never seen. The lamp of v5 was put out.
+- **Bookcase:** `bookcase_v6` fills it with books, cream archive boxes with
+  labels and finger holes, and corked jars of seed.
+- **Armchair:** a knitted throw, dropped on it with Blender's cloth (90 frames,
+  collision on the chair), then converted to a mesh.
+- **Terrarium:** three single fern plants (`import_one` keeps one plant of a
+  multi-plant model) and moss round the seedling.
+- **Light:** it is still night, because the window gives on the Moonlit Garden.
+  The light comes from the lamp (`--lamp 55`), the warm ceiling bounce (75 W),
+  and the moon and sky at the window. Mean brightness is about 45.
+
+```powershell
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_study_v6.py -- --width 1920 --samples 128 --still 1   # a look
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/room_study_v6.py -- --width 2560 --samples 512
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/gold_coffer_rooms.py -- --room Study
+node art/blender/study_publish_v5.mjs --source .artifacts/room-study-v6 --plate 11 --coffer 10
+```
+
+Plate v12, 2026-11-05: the user saw the floor nearest us as a blur "from the table's feet down".
+- The rug now uses `persian-rug-sharp.jpg` (the scan doubled with Lanczos and sharpened, from `room_boards.mjs`), sampled cubic, with a fine wool-pile bump.
+- The plate is published with `--sharpen`, a light unsharp mask:
+  `study_publish_v5.mjs --source .artifacts/room-study-v6 --plate 12 --sharpen`. The coffer stays v10.
+- The picture's edge band (`#game-viewport`'s mask in `src/ui/styles/shell.css`) was tried narrower at the foot, then off in rooms, then with rooms filling down over the console. The user preferred it as it was, so it is unchanged everywhere.
+
 ## 2026-11-04: the user's list
 
 - **Lamplight in the Library (Bookshelf v4).**
@@ -715,28 +963,62 @@ film over the hall (`levels/hall/keyInsert.js`).
 
 Use `--width 960 --samples 64 --still 40` for a trial frame.
 
-## A letter found: opened on the desk
+## A letter found: held up before his eyes
 
-`letter_animation.py` authors a physical envelope, fractured key-stamped wax,
-three hinged paper panels and an animated camera over a walnut writing desk.
-The envelope enters the frame, lands, opens, and the letter slides out and
-unfolds. Blender bakes paper fibres, creases, ageing and CC0 desk surfaces
-into colour and normal atlases, then exports the actual meshes and one glTF
-animation. `letter_animation_publish.mjs` publishes its timing and landmarks.
+Since 2026-11-12 a found letter has no envelope and no hands, at the user's
+request. `letter_held.py` renders the sheet alone, held about 40 cm before
+Arthur's eyes, on a transparent film. In the game the sheet lies over the play
+area, and the game itself stays behind it, blurred and darkened by CSS, so
+nothing zooms. The hall of the floor where it was found lights the paper
+without being seen:
 
-`ui/letterStage3d.js` plays the Blender keyframes live; `ui/letterArrival.js`
-places accessible, localised DOM words on the actual paper and reverses the
-mesh animation when filed. There is no video element, movie encoder or letter
-video asset. The optional future `public/assets/sounds/letter-open.mp4` is
-consumed only through an Audio element, at the user's SFX volume.
-See [letter-animation-sources.md](letter-animation-sources.md).
+- **Ivy:** a page torn from her garden book, with soil and a pressed ivy leaf. Behind it: the Botany Hall.
+- **Silas:** a squared laboratory note-book page, torn along its perforations and ringed by a jar. Behind it: the Chemistry Hall.
+- **Orion:** the grey card back of his star chart, the chart showing through, with pin holes. Behind it: the observatory.
+- **The last letter:** the house's laid, deckle-edged note paper, folded in three, the key blind-pressed into it. Behind it: the Botany Hall.
+
+The paper is built on photographed paper scans (ambientCG Paper001/002/003,
+CC0). It is aged with mottling, foxing, stains and edges darkened where it was
+held, and kept dark enough that it never glows.
+
+What is printed on it comes from `letter_pages_prints.mjs`. The room behind is
+the game's own hall render on an emissive plate, blurred by the lens's depth of
+field. Each letter gets two renders:
+
+- a still at 512 samples;
+- a 1.7 s film at 160 samples with Cycles motion blur. The sheet is keyed every frame as it is lifted from below into view, turned and tipped back, settling.
+
+The film's last frame is the still.
+
+`letter_held_publish.mjs` writes:
+
+- `public/assets/images/CaseFile/letter/held/<id>.webp` and its `-icon.webp`;
+- `public/assets/video/letters/<id>-lifted.webm` (VP9 with alpha);
+- `src/ui/letterHeld.json`: where the sheet and its words lie on the picture.
+
+`ui/letterArrival.js` plays the film, swaps to the still, then lays the live,
+localised words on the sheet.
 
 ```powershell
-& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/letter_animation.py -- --samples 16 --pack
-node art/blender/letter_animation_publish.mjs
+node art/blender/letter_pages_prints.mjs
+& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/letter_held.py -- --out C:/Users/crist/Desktop/PUZZLE/.artifacts/letter-pages/held
+node art/blender/letter_held_publish.mjs
 ```
 
-The editable packed scene is `.artifacts/letter-animation/letter-animation.blend`.
+Use `--preview --still-only` (960 px) while trying things. `--out` must be an
+absolute path.
+
+Rejected on the same day, and archived in
+`.artifacts/removed-assets/2026-11-12/letter-pages-rejected/`:
+
+- the sheets seen from above, falling, rolling or unfolding (`letter_pages.py`);
+- Arthur's MakeHuman hands holding the sheet (`letter_hands.py`).
+
+The old envelope animation (`letter_animation.py`, `letter_common.py`,
+`letter_seal.py`, `letter_stationery_v3.py`, `letter_animation_publish.mjs`)
+is no longer used by the game. Its published model, its runtime
+(`letterStage3d.js`) and its clearance test are archived in
+`.artifacts/removed-assets/2026-11-12/letter-envelope/`.
 
 ## The Open Window
 

@@ -7,7 +7,7 @@ export { native };
 
 export function loadCotArt(scene) {
   for (const name of Object.keys(KEYS)) {
-    if (!scene.textures.exists(KEYS[name])) scene.load.image(KEYS[name], `assets/images/Cot/native-v1/${name}.webp`);
+    if (!scene.textures.exists(KEYS[name])) scene.load.image(KEYS[name], `assets/images/Cot/native-v5/${name}.webp`);
   }
 }
 

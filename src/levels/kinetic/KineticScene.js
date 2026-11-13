@@ -39,7 +39,7 @@ export default class KineticScene extends BasePuzzleScene {
     });
     // the words on the card inside the door
     const c = L.card;
-    this.add.text(c.x + c.w / 2, c.y + c.h * 0.58, 'One unbroken curve\ncounts as one.', {
+    this.localizedText(c.x + c.w / 2, c.y + c.h * 0.58, 'gameplay.kinetic.clue', {
       fontFamily: '"Special Elite", "Courier New", monospace',
       fontSize: Math.max(7, Math.round(c.w * 0.078)) + 'px',
       color: '#3a2a18', align: 'center', lineSpacing: 2,

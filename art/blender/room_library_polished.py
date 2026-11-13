@@ -109,6 +109,57 @@ if print_card:
         o.data.update()
     bpy.context.view_layer.update()
     print('PRINT SCALED', k, [o.name for o in framing])
+# ── 2026-11-05: His Cot moved here from Room VI ────────────────────────────
+# The user wanted the cot's puzzle in Room II for the demo, standing where the
+# library's puzzle was: before the end bookcase, the five marked books behind
+# it. It is the puzzle's own cot (his_cot.py's his-cot.blend: turned mahogany,
+# mattress, sheet, pillow and every modeled belonging), brought in whole with
+# its materials, given legs down to the floor (the close-up never shows them)
+# and stood a hand's breadth off the books. Its nursery — wall, window,
+# curtain, frame, bedside lamp — stays behind.
+COT = arg('--cot', '1') == '1'
+if COT:
+    from mathutils import Matrix
+    cot_blend = os.path.join(rc.ROOT, '.artifacts/his-cot-native/his-cot.blend')
+    left_behind = ('Wall |', 'Window |', 'Curtain |', 'Botanical |', 'Bedside |', 'Lamp |', 'Camera |', 'Nursery |')
+    with bpy.data.libraries.load(cot_blend, link=False) as (src, dst):
+        dst.objects = [n for n in src.objects if not n.startswith(left_behind)]
+    cot_root = bpy.data.objects.new('His Cot (from Room VI)', None); scene.collection.objects.link(cot_root)
+    cot_parts = []
+    for o in dst.objects:
+        if o is None or o.type in ('CAMERA', 'LIGHT'): continue
+        scene.collection.objects.link(o); cot_parts.append(o)
+        if o.parent is None: o.parent = cot_root
+    wood = bpy.data.materials.get('Cot | dark mahogany, open grain and rubbed shellac')
+    # its legs: each corner post carried down to the boards, turned as they are
+    for x in (-.648, .648):
+        for y in (-.405, .405):
+            foot = (.922 if y > 0 else .88) - .696
+            leg = lathe('Cot | turned leg to the floor', [(0, 0), (.024, 0), (.026, .02), (.02, .05), (.021, foot - .03), (.028, foot - .01), (.029, foot + .01), (0, foot + .01)], wood, at=(x, y, 0), steps=48)
+            leg.parent = cot_root; cot_parts.append(leg)
+    CX, CY = float(arg('--cot-x', '.74')), float(arg('--cot-y', '7.405'))
+    cot_root.location = (CX, CY, 0)
+    bpy.context.view_layer.update()
+    # the puzzle that was the bookshelves' is now the cot's
+    layout['things'] = [t for t in layout['things'] if t['level'] != 'bookshelf']
+    corners = [Vector((CX + x, CY + y, z)) for x in (-.68, .68) for y in (-.45, .44) for z in (0, .96)]
+    original['LAYOUT'].thing('cot', 'Look at the cot', corners)
+    contours = layout.get('interactionContours') or {}
+    contours.pop('bookshelf', None); contours['cot'] = [rc.outline(corners)]
+    layout['interactionContours'] = contours
+    # the five books that stood out for the library's puzzle (gone to Room VI)
+    # pushed back among the rest, their paper slips taken out
+    case = bpy.data.objects.get('end bookcase')
+    if case:
+        slips = [o for o in case.children_recursive if o.name.split('.')[0] == 'slip']
+        shelved = [o for o in case.children_recursive if o.name.split('.')[0] == 'book']
+        for s_ in slips:
+            c_ = world_centre(s_)
+            b_ = min(shelved, key=lambda o: abs(world_centre(o).x - c_.x) + abs(world_centre(o).z - c_.z) * .2)
+            b_.matrix_world = Matrix.Translation((0, .06, 0)) @ b_.matrix_world.copy()
+            s_.hide_render = True
+        print('BOOKS PUSHED BACK', len(slips), flush=True)
+    print('COT PLACED', (CX, CY), len(cot_parts), 'parts', flush=True)
 # the rain on the glass: not over the curtains standing in front of it, nor
 # over the palm (layout written again below, with the curtains cut out too)
 bpy.context.view_layer.update()

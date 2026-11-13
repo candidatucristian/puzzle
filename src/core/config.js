@@ -13,12 +13,21 @@ import Room8Scene from '../levels/room8/Room8Scene.js';
 import Room11Scene from '../levels/room11/Room11Scene.js';
 import { EMPTY_ROOMS } from '../levels/house/emptyRooms.js';
 
+// The web demo's build (vite build --mode demo) has only the hall and Rooms
+// I to III; the floors up the stairs, the rooms past them, and the puzzles in
+// them (levels/registry.js) are left out of it. Their doors, and the gate
+// across the stairs, stay locked in the demo all the same.
+const DEMO_BUILD = typeof __DEMO_BUILD__ !== "undefined" && __DEMO_BUILD__;
+const UPSTAIRS = DEMO_BUILD ? [] : [UpperHallScene, TopScene, TopWingScene];
+const LATER_ROOMS = DEMO_BUILD ? [] : [Room4Scene, Room5Scene, Room6Scene, Room7Scene, Room8Scene, Room11Scene, ...EMPTY_ROOMS];
+
 export function gameConfig(services, definitions) {
   return {
     type: Phaser.AUTO, backgroundColor: '#0a0a10', transparent: true, parent: 'game-container',
     dom: { createContainer: true },
+    loader: { maxParallelDownloads: 4, timeout: 120000 },
     scale: { mode: Phaser.Scale.NONE, parent: 'game-container', width: '100%', height: '100%' },
-    scene: [BootScene, HallScene, UpperHallScene, TopScene, TopWingScene, StudyScene, Room2Scene, Room3Scene, Room4Scene, Room5Scene, Room6Scene, Room7Scene, Room8Scene, Room11Scene, ...EMPTY_ROOMS, ...definitions.map(level => level.scene)],
+    scene: [BootScene, HallScene, ...UPSTAIRS, StudyScene, Room2Scene, Room3Scene, ...LATER_ROOMS, ...definitions.map(level => level.scene).filter(Boolean)],
     callbacks: { preBoot(game) { game.services = services; services.levels.attach(game); services.audio.attach(game); } },
   };
 }

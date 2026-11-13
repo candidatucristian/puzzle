@@ -10,11 +10,13 @@ export function createCalculatorView(scene, keypad) {
   const header = document.createElement('header');
   const title = document.createElement('h2');
   title.id = 'calculator-title';
-  title.textContent = 'Calculator';
+  title.dataset.i18n = 'gameplay.calculator';
+  title.textContent = scene.services.i18n?.t('gameplay.calculator') ?? 'Calculator';
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'calculator-back';
-  close.textContent = 'Back to room';
+  close.dataset.i18n = 'gameplay.backRoom';
+  close.textContent = scene.services.i18n?.t('gameplay.backRoom') ?? 'Back to room';
   close.autofocus = true;
   close.addEventListener('click', () => dialog.close());
   header.append(title, close);
@@ -23,7 +25,8 @@ export function createCalculatorView(scene, keypad) {
   body.className = 'calculator-detail-body';
   const output = document.createElement('output');
   output.className = 'calculator-display';
-  output.setAttribute('aria-label', 'Calculator display');
+  output.dataset.i18nAria = 'gameplay.calculatorDisplay';
+  output.setAttribute('aria-label', scene.services.i18n?.t('gameplay.calculatorDisplay') ?? 'Calculator display');
   const screen = document.createElement('canvas');
   screen.width = 640; screen.height = 160;
   screen.setAttribute('aria-hidden', 'true');

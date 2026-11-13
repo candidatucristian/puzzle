@@ -282,3 +282,119 @@ console.log("room boards");
   s += `<rect width="${W}" height="${H}" fill="url(#age)"/></svg>`;
   await write("study-flower", s);
 }
+
+// ── Room I, after the user's picture (2026-11-04): two botanical plates in
+//    white mounts — a single fern frond for the left wall, a leafy branch for
+//    the wall right of the window. Drawn as an engraver colours a plate: each
+//    leaflet its own shape, shaded from its midrib, veined, on a cream sheet.
+const PLATE_DEFS = `<defs>
+<radialGradient id="pAge" cx="50%" cy="50%" r="75%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#6a4a18" stop-opacity=".28"/></radialGradient>
+<radialGradient id="pFox"><stop offset="0" stop-color="#8a6028" stop-opacity=".32"/><stop offset="1" stop-color="#8a6028" stop-opacity="0"/></radialGradient>
+<linearGradient id="gLeafA" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2f4a22"/><stop offset=".5" stop-color="#557a36"/><stop offset="1" stop-color="#7f9d58"/></linearGradient>
+<linearGradient id="gLeafB" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#2c4520"/><stop offset=".5" stop-color="#4f7232"/><stop offset="1" stop-color="#7a9852"/></linearGradient>
+<filter id="pTooth"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" seed="11"/><feColorMatrix type="matrix" values="0 0 0 0 .32  0 0 0 0 .26  0 0 0 0 .16  0 0 0 .14 0"/></filter>
+</defs>`;
+const sheet = (W, H, tone = "#e8e0cc") => `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${PLATE_DEFS}<rect width="${W}" height="${H}" fill="${tone}"/><rect width="${W}" height="${H}" filter="url(#pTooth)"/>`;
+const finishPlate = (W, H, n) => {
+  let s = "";
+  for (let i = 0; i < n; i++) s += `<circle cx="${rnd() * W}" cy="${rnd() * H}" r="${3 + rnd() * 16}" fill="url(#pFox)"/>`;
+  return s + `<rect width="${W}" height="${H}" fill="url(#pAge)"/></svg>`;
+};
+// one leaflet, from its base at (x, y), `l` long, pointing at angle `a` (degrees), its two halves shaded apart
+function leaflet(x, y, l, a, w = 0.32) {
+  const half = (side, fill) => `<path d="M0,0 C${side * l * w},${-l * 0.2} ${side * l * w * 1.1},${-l * 0.62} 0,${-l} Z" fill="${fill}"/>`;
+  let s = `<g transform="translate(${x},${y}) rotate(${a})">` + half(-1, "url(#gLeafA)") + half(1, "url(#gLeafB)");
+  s += `<path d="M0,0 L0,${-l * 0.97}" stroke="#2a3c1c" stroke-width="${Math.max(0.8, l * 0.025)}" opacity=".8"/>`;
+  for (let k = 1; k < 7; k++) {
+    const t = k / 7, vy = -l * t, vl = l * w * 0.8 * Math.sin(Math.PI * t);
+    for (const side of [-1, 1]) s += `<path d="M0,${vy} Q${side * vl * 0.5},${vy - l * 0.04} ${side * vl},${vy - l * 0.1}" stroke="#d8e2b8" stroke-width="${Math.max(0.5, l * 0.008)}" fill="none" opacity=".45"/>`;
+  }
+  return s + `</g>`;
+}
+{
+  // the fern: one frond, its pinnae paired and divided, curving a little
+  const W = 900, H = 1200;
+  let s = sheet(W, H);
+  const pts = Array.from({ length: 60 }, (_, i) => { const t = i / 59; return [450 + Math.sin(t * 1.6) * 40 - t * 20, 1040 - t * 880]; });
+  s += `<path d="M${pts.map((p) => p.join(",")).join(" L")}" stroke="#3a4a24" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  for (let i = 4; i < 58; i += 3) {
+    const t = i / 59, [px, py] = pts[i], l = 175 * Math.sin(Math.PI * Math.min(1, 0.1 + t * 1.0)) * (1 - t * 0.4) + 12;
+    for (const side of [-1, 1]) {
+      // the pinnae stand out nearly level, drooping a little toward their tips
+      const a = side * (74 - t * 26), jitter = (rnd() - 0.5) * 6;
+      const rx = Math.sin(((a + jitter) * Math.PI) / 180), ry = -Math.cos(((a + jitter) * Math.PI) / 180);
+      const droop = l * 0.12;
+      s += `<path d="M${px},${py} Q${px + rx * l * 0.55},${py + ry * l * 0.55} ${px + rx * l},${py + ry * l + droop}" stroke="#3c5226" stroke-width="1.6" fill="none" opacity=".9"/>`;
+      // each pinna: little rounded lobes along its own rib, apart from one another
+      for (let k = 1; k < 8; k++) {
+        const u = k / 8, bx = px + rx * l * u, by = py + ry * l * u + droop * u * u, ll = l * 0.15 * (1 - u * 0.6) + 3;
+        s += leaflet(bx, by, ll, a - side * 62, 0.55) + leaflet(bx, by, ll * 0.85, a + side * 72, 0.55);
+      }
+    }
+  }
+  s += `<text x="${W / 2}" y="1112" font-family="Georgia, serif" font-style="italic" font-size="30" text-anchor="middle" fill="#3a2c18">Dryopteris filix-mas</text>`;
+  s += `<text x="${W / 2}" y="1150" font-family="Georgia, serif" font-size="17" letter-spacing="3" text-anchor="middle" fill="#5a4a30">PL. IV</text>`;
+  await write("study-fern", s + finishPlate(W, H, 26));
+}
+{
+  // the branch: a slender twig, its leaves alternate up it, one at its tip
+  const W = 900, H = 1200;
+  let s = sheet(W, H);
+  s += `<path d="M470,1050 C455,900 480,760 450,620 C430,520 455,400 445,250" stroke="#4a3a22" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+  const at = [[468, 960, -58, 190], [462, 860, 54, 200], [470, 770, -50, 196], [458, 680, 50, 190], [450, 590, -46, 180], [452, 500, 44, 168], [450, 410, -40, 150], [448, 330, 36, 128], [446, 255, 0, 120]];
+  for (const [x, y, a, l] of at) {
+    s += `<path d="M${x},${y} l${Math.sin((a * Math.PI) / 180) * 18},${-Math.cos((a * Math.PI) / 180) * 18}" stroke="#4a3a22" stroke-width="4"/>`;
+    s += leaflet(x + Math.sin((a * Math.PI) / 180) * 16, y - Math.cos((a * Math.PI) / 180) * 16, l, a, 0.36);
+  }
+  s += `<text x="${W / 2}" y="1112" font-family="Georgia, serif" font-style="italic" font-size="30" text-anchor="middle" fill="#3a2c18">Fagus sylvatica</text>`;
+  s += `<text x="${W / 2}" y="1150" font-family="Georgia, serif" font-size="17" letter-spacing="3" text-anchor="middle" fill="#5a4a30">PL. IX</text>`;
+  await write("study-leaf", s + finishPlate(W, H, 22));
+}
+
+// ── Room I's rug, close (2026-11-05): the CC0 Persian scan stretched over
+//    four metres went soft at the foot of the picture, under the desk — the
+//    user saw it as a blur. Doubled with a Lanczos filter and sharpened, so
+//    the floor nearest us is as crisp as the desk.
+await sharp("C:/Users/crist/Tools/render/assets/textures/persian_rug.jpg")
+  .resize({ width: 4800, kernel: "lanczos3" })
+  .sharpen({ sigma: 1.2, m1: 0.6, m2: 2.2 })
+  .jpeg({ quality: 94 }).toFile(`${out}persian-rug-sharp.jpg`);
+
+// ── Room II as the nursery (2026-11-05): two prints for the baby's walls, in
+//    soft printed colour on an aged cream sheet: a sleeping moon among stars,
+//    a striped balloon over hills.
+{
+  const W = 900, H = 1200;
+  let s = sheet(W, H, "#e6dcc6");
+  s += `<rect x="70" y="70" width="${W - 140}" height="${H - 220}" fill="#2a3a52"/>`;
+  for (let i = 0; i < 70; i++) {
+    const x = 90 + rnd() * (W - 180), y = 90 + rnd() * (H - 260), r = 1.2 + rnd() * 2.6;
+    s += `<circle cx="${x}" cy="${y}" r="${r}" fill="#e9d9a8" opacity="${0.45 + rnd() * 0.5}"/>`;
+  }
+  const star = (x, y, r) => `<polygon points="${Array.from({ length: 10 }, (_, j) => { const a = j * Math.PI / 5 - Math.PI / 2, rr = j % 2 ? r * 0.42 : r; return `${x + Math.cos(a) * rr},${y + Math.sin(a) * rr}`; }).join(" ")}" fill="#e7cf8c"/>`;
+  s += star(250, 260, 34) + star(660, 210, 26) + star(700, 640, 30) + star(210, 760, 22) + star(560, 830, 18);
+  // the crescent, softly lit
+  s += `<path d="M560,420 a190,190 0 1,0 0,340 a150,150 0 1,1 0,-340 Z" fill="#efdca2"/>`;
+  s += `<text x="${W / 2}" y="${H - 92}" font-family="Georgia, serif" font-style="italic" font-size="32" text-anchor="middle" fill="#3a2c18">Goodnight, little one</text>`;
+  await write("nursery-moon", s + finishPlate(W, H, 18));
+}
+{
+  const W = 900, H = 1200;
+  let s = sheet(W, H, "#e9e0cc");
+  s += `<rect x="70" y="70" width="${W - 140}" height="${H - 220}" fill="#cfe0dc"/>`;
+  s += `<path d="M70,900 C220,820 360,860 470,830 C600,790 720,840 830,800 L830,980 L70,980 Z" fill="#9db592"/>`;
+  s += `<path d="M70,950 C260,900 420,940 560,905 C680,875 760,900 830,880 L830,980 L70,980 Z" fill="#7f9c78"/>`;
+  for (const [x, y, r] of [[200, 220, 46], [650, 300, 36], [300, 470, 28]]) s += `<ellipse cx="${x}" cy="${y}" rx="${r * 1.7}" ry="${r * 0.7}" fill="#f4f1e8" opacity=".9"/>`;
+  // the balloon: gores in rose and cream, ropes, a wicker basket
+  const cx = 470, cy = 430, R = 190;
+  const colours = ["#d9918a", "#f1e6cf", "#d9918a", "#f1e6cf", "#d9918a", "#f1e6cf"];
+  for (let i = 0; i < 6; i++) {
+    const a0 = -R + (2 * R / 6) * i, a1 = a0 + 2 * R / 6;
+    s += `<path d="M${cx},${cy - R} C${cx + a0 * 1.25},${cy - R * 0.6} ${cx + a0 * 1.15},${cy + R * 0.45} ${cx + a0 * 0.25},${cy + R * 0.95} L${cx + a1 * 0.25},${cy + R * 0.95} C${cx + a1 * 1.15},${cy + R * 0.45} ${cx + a1 * 1.25},${cy - R * 0.6} ${cx},${cy - R} Z" fill="${colours[i]}"/>`;
+  }
+  for (const e of [-1, 1]) s += `<path d="M${cx + e * 45},${cy + R * 0.95} L${cx + e * 32},${cy + R * 1.32}" stroke="#6a5038" stroke-width="3"/>`;
+  s += `<rect x="${cx - 36}" y="${cy + R * 1.32}" width="72" height="54" rx="6" fill="#a87a4a"/>`;
+  for (let k = 0; k < 4; k++) s += `<path d="M${cx - 36},${cy + R * 1.32 + 12 + k * 12} h72" stroke="#8a5f34" stroke-width="2"/>`;
+  s += `<text x="${W / 2}" y="${H - 92}" font-family="Georgia, serif" font-style="italic" font-size="32" text-anchor="middle" fill="#3a2c18">Up and away</text>`;
+  await write("nursery-balloon", s + finishPlate(W, H, 16));
+}

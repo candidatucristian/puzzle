@@ -1,0 +1,102 @@
+{
+  "HisCot/musicbox-cumparsita.mp3": {
+    "note": "mi-se pare PERFECTA!\nFăcută din cod (art/sound/music_box.py), pusă în joc pe 7 noiembrie în locul celei de pe YouTube. La Cumparsita (1916) e liberă de drepturi; aranjamentul și sunetul sunt ale noastre.",
+    "updated": "2026-11-07T19:00:54.468Z",
+    "done": true
+  },
+  "Lightswitch/sparkle.mp3": {
+    "note": "https://pixabay.com/sound-effects/film-special-effects-electricity-106510/\n„Electricity zap sound effect”, de Link-Boy (Freesound), pus pe Pixabay de freesound_community. Licența Pixabay Content License; nu scrie nimic de Content ID.",
+    "done": true,
+    "updated": "2026-11-07T19:00:54.468Z"
+  },
+  "Lightswitch/switchsound.mp3": {
+    "note": "https://pixabay.com/sound-effects/film-special-effects-switch-150130/\n„Switch click sound effect”, de SoundReality (4 s, ca fișierul nostru). Licența Pixabay Content License; nu scrie nimic de Content ID.",
+    "done": true,
+    "updated": "2026-11-07T19:06:56.994Z"
+  },
+  "Rally/car-pass.mp3": {
+    "done": true,
+    "updated": "2026-11-07T19:28:47.441Z",
+    "note": "Făcută din cod (art/sound/rally_pass.py), pusă în joc pe 7 noiembrie în locul celei făcute cu AI (moeeza3, Pixabay)."
+  },
+  "global/mouseclick.wav": {
+    "note": "https://pixabay.com/sound-effects/film-special-effects-mouse-click-290204/\n„Mouse click UI sound effect”, de MatthewVakaliuk73627. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.",
+    "done": true,
+    "updated": "2026-11-07T19:31:33.429Z"
+  },
+  "global/waterdrop.mp3": {
+    "note": "https://pixabay.com/sound-effects/household-two-drops-87977/\n„Two drops”, de Millavsb (Freesound), pus pe Pixabay de freesound_community; 1 s, ca fișierul nostru. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.",
+    "done": true,
+    "updated": "2026-11-07T19:32:57.273Z"
+  },
+  "MobilePhone/key-tone.mp3": {
+    "note": "perfect!\nFăcut din cod (art/sound/phone_key.py), pus în joc pe 7 noiembrie.",
+    "updated": "2026-11-07T19:53:53.574Z",
+    "done": true
+  },
+  "menu-hover.mp3": {
+    "note": "perfect!\nFăcut din cod (art/sound/menu_hover.py), pus în joc pe 7 noiembrie.",
+    "updated": "2026-11-07T19:53:53.574Z",
+    "done": true
+  },
+  "global/wrong.mp3": {
+    "done": true,
+    "updated": "2026-11-07T19:53:53.574Z",
+    "note": "perfect!\nFăcut din cod (art/sound/ui_sounds.py), pus în joc pe 7 noiembrie."
+  },
+  "global/solved.mp3": {
+    "note": "Superb\nFăcut din cod (art/sound/ui_sounds.py), pus în joc pe 7 noiembrie.",
+    "updated": "2026-11-07T19:53:53.574Z",
+    "done": true
+  },
+  "pen-writing.mp3": {
+    "note": "e perfect!\nFăcut din cod (art/sound/paper_sounds.py), pus în joc pe 7 noiembrie.",
+    "updated": "2026-11-07T19:53:53.574Z",
+    "done": true
+  },
+  "MobilePhone/buzz.mp3": {
+    "note": "Super\nFăcut din cod (art/sound/machine_sounds.py), pus în joc pe 7 noiembrie.",
+    "updated": "2026-11-07T19:53:53.574Z",
+    "done": true
+  },
+  "global/doorhandle.mp3": {
+    "note": "Varianta făcută din cod n-a fost bună („Foarte prost. trebuie sa caut alt sunet sau sa caut originalul.”).\nOriginalul găsit: https://pixabay.com/sound-effects/household-open-close-door-47504/\n„Open_Close_Door”, de pixlrelm (Freesound), pus pe Pixabay de freesound_community; cam 1 s (fișierul nostru are 0,8 s). Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.",
+    "updated": "2026-11-07T20:02:48.972Z",
+    "done": true
+  },
+  "irongateopensound.mp3": {
+    "note": "Varianta făcută din cod n-a fost bună („nu e bine. caut originalul”).\nOriginalul găsit: https://pixabay.com/sound-effects/household-irongate2-85045/\n„irongate2”, de viaaico2013 (Freesound), pus pe Pixabay de freesound_community; fișierul nostru e primele 3,7 s din cele 10. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.",
+    "updated": "2026-11-07T20:26:09.562Z",
+    "done": true
+  },
+  "PlantPot/pouring-water.mp3": {
+    "note": "Varianta făcută din cod n-a fost bună („Nu e bine”).\nAles de tine: https://pixabay.com/sound-effects/household-pouring-water-into-glass-116975/\n„Pouring Water into Glass”, de Universfield. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.\nTăiat pe turnarea din joc (apa vine când pornește jetul, apoi picură) și pus mai tare decât cel vechi, care abia se auzea (art/sound/edits.py).",
+    "done": true,
+    "updated": "2026-11-07T20:13:23.009Z"
+  },
+  "Modem/droid-hum.mp3": {
+    "note": "Varianta făcută din cod n-a fost bună („nu se intelege nimic, trebuie sa fie sunete de calculator vechi, modem chestii”).\nAles de tine: https://pixabay.com/sound-effects/film-special-effects-droid-hum-72042/\n„Droid Hum”, de TheSpiderWriter (Freesound), pus pe Pixabay de freesound_community. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.\nFăcut buclă de 16 s din mijlocul lui (fără fade-urile de la capete) și pus la tăria celui vechi (art/sound/edits.py).",
+    "done": true,
+    "updated": "2026-11-07T20:23:03.612Z"
+  },
+  "global/steps-indoor.mp3": {
+    "note": "Varianta făcută din cod n-a fost bună („Nu e bine, caut originalul”).\nOriginalul găsit: https://pixabay.com/sound-effects/film-special-effects-walking-on-wood-363349/\n„Walking on wood”, de Soumages; 2 s. Licența Pixabay Content License; nu scrie nimic de Content ID.\nATENȚIE: Pixabay îl marchează „AI generated”. De înlocuit sau de declarat pe Steam. Se aude în demo.\nAles de tine în locul celui făcut cu AI: https://pixabay.com/sound-effects/household-steps-indoor-1-6723/\n„Steps indoor 1”, de Aurelon (Freesound), pus pe Pixabay de freesound_community. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.\nTăiat la patru pași (cea mai lungă plimbare prin casă e de 1,9 s) și pus la tăria celui vechi (art/sound/edits.py).",
+    "done": true,
+    "updated": "2026-11-07T21:17:45.724Z"
+  },
+  "Wires/music.mp3": {
+    "note": "Originalul găsit: https://pixabay.com/sound-effects/musical-amazing-grace-on-harmonica-26135/\n„Amazing grace on harmonica”, de JordanDurren (Freesound), pus pe Pixabay de freesound_community; 50 s, ca fișierul nostru. Nu e imnul american, e „Amazing Grace” (melodie și versuri libere de drepturi). Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.",
+    "done": true,
+    "updated": "2026-11-07T21:47:56.098Z"
+  },
+  "page-turn.mp3": {
+    "note": "Varianta făcută din cod n-a fost bună („nu e bine!”).\nAles de tine pentru sigiliu: https://pixabay.com/sound-effects/film-special-effects-page-turn-305789/\n„Page Turn”, de utilizatorul Pixabay 49053354. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.\nTăiat ca întoarcerea foii să vină odată cu crăpătura sigiliului din animație, și pus la tăria celui vechi (art/sound/edits.py).",
+    "done": true,
+    "updated": "2026-11-07T21:56:40.899Z"
+  },
+  "global/ui-click.mp3": {
+    "note": "Despre clicul de dinainte (făcut din cod): Aici vreua sa schimbam click-ul ca nu mi place. pun alt link :\nam downloadat in u_u4pf5h7zip-click-345983.mp3\nde pe : https://pixabay.com/sound-effects/film-special-effects-click-345983/\nPus în joc: https://pixabay.com/sound-effects/film-special-effects-click-345983/\n„Click UI button sound effect”, de u_u4pf5h7zip. Licența Pixabay Content License; nu scrie nimic de AI sau de Content ID.\nTăiat ca să sune imediat ce apeși și pus la tăria celui de dinainte (art/sound/edits.py).",
+    "done": true,
+    "updated": "2026-11-08T08:44:08.210Z"
+  }
+}

@@ -66,3 +66,9 @@
   mask-composite:intersect; }
 .start-reel[hidden] { display:none; }
 #start-progress[hidden] { display: none; }
+
+/* Away from the tab (startManor.js): only the still house shows, kept by the
+   processor; what moves over it waits faded out, and comes back up over it
+   softly once it has been drawn again */
+#start-film .start-painting:not(.start-still) { transition: opacity .45s ease; }
+#start-film.is-resting .start-painting:not(.start-still) { opacity: 0; transition: none; }

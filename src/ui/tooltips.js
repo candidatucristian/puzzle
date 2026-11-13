@@ -11,7 +11,7 @@ import { applyCursors } from "../shared/cursors.js";
 const DELAY = 380; // the pointer rests a moment before the note comes
 const SELECTOR = "[data-tip], [title], .icon-button[aria-label], .header-button[aria-label]";
 
-export function mountTooltips(scope) {
+export function mountTooltips(scope, i18n = null) {
   applyCursors();
   const tip = document.createElement("div");
   tip.id = "tooltip";
@@ -26,10 +26,12 @@ export function mountTooltips(scope) {
 
   // what a control says of itself
   function textOf(el) {
+    const copyKey = el.dataset.i18nTip || el.dataset.i18nTitle || el.dataset.i18nAria;
     if (el.hasAttribute("title")) {
       el.dataset.tip = el.getAttribute("title");
       el.removeAttribute("title");
     }
+    if (copyKey && i18n) return i18n.t(copyKey);
     return el.dataset.tip || el.getAttribute("aria-label") || "";
   }
   function show(el) {
@@ -82,6 +84,11 @@ export function mountTooltips(scope) {
   scope.on(document, "keydown", (e) => { if (e.key === "Escape") hide(); });
   scope.on(window, "scroll", hide, true);
   scope.on(window, "blur", hide);
+  if (i18n) scope.add(i18n.subscribe(() => {
+    const previous = target;
+    hide();
+    if (previous instanceof Element && previous.isConnected) aim(previous, true);
+  }));
   // the same note for something in the game's picture, which has no element
   // of its own: `tooltip:at` with { text, rect } (a box on the screen) when the
   // pointer comes to rest on it, `tooltip:off` when it leaves; `tooltip:move`

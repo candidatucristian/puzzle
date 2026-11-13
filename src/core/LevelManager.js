@@ -187,6 +187,8 @@ export class LevelManager {
     return this.#game?.scene.isActive(key) ? this.#game.scene.getScene(key) : null;
   }
 
+  get loading() { return Boolean(this.#game?.services?.sceneLoading?.busy); }
+
   canAccess(index) { return this.#progress.canAccess(index); }
 
   /** A puzzle come upon in the house is open from then on, whatever the
@@ -195,7 +197,11 @@ export class LevelManager {
 
   #leaveEverything() {
     for (const { key } of [...this.definitions, ...this.#places, { key: "Boot" }]) {
-      if (this.#game.scene.isActive(key)) this.#game.scene.stop(key);
+      const scene = this.#game.scene.keys?.[key];
+      // Phaser's isActive excludes scenes still preloading, paused and asleep.
+      // Those must also be stopped or an old slow request can open over the next room.
+      if (this.#game.scene.isActive(key) || scene?.load?.isLoading()
+        || scene?.sys?.isPaused?.() || scene?.sys?.isSleeping?.()) this.#game.scene.stop(key);
     }
   }
 
@@ -256,6 +262,7 @@ export class LevelManager {
   enterHall() { return this.enterPlace(this.#places[0].key); }
 
   submit(answer) {
+    if (this.loading) return { correct: false, isLast: false, nextIndex: null };
     if (this.#place && !this.answering) return { correct: false, isLast: false, nextIndex: null };
     const level = this.definitions[this.#currentIndex];
     const value = typeof answer === "string" ? answer.trim().toUpperCase() : "";
@@ -277,6 +284,8 @@ export class LevelManager {
   }
 
   reset() {
+    if (this.#game) this.#leaveEverything();
+    this.#place = null;
     this.#progress.reset();
     this.#currentIndex = this.#progress.currentIndex;
     this.#notify();

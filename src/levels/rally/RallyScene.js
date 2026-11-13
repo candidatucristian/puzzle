@@ -28,7 +28,7 @@ import {
 // Nothing on screen says "alphabet". The numbers are the only text in the
 // scene. The cars come in bunches, like a real stage — one alone, two close,
 // two in line, the last two tight — each with a whoosh as it crosses the line
-// (assets/sounds/Rally/wroom.mp3 — optional; the level stays silent and fully
+// (assets/sounds/Rally/car-pass.mp3, made by art/sound/rally_pass.py — optional; the level stays silent and fully
 // solvable without it). When the last car is through, the floodlights go out,
 // the marshal lowers his flag, and the top three of the stage come up on a
 // board with their cups. That is the end: the race runs once (the game's
@@ -71,7 +71,7 @@ export default class RallyScene extends BasePuzzleScene {
 
   preload() {
     // optional: the level is silent (and still solvable) until this file exists
-    this.load.audio("wroom", "assets/sounds/Rally/wroom.mp3");
+    this.load.audio("wroom", "assets/sounds/Rally/car-pass.mp3");
     loadRallyRender(this);
   }
 
@@ -535,7 +535,7 @@ export default class RallyScene extends BasePuzzleScene {
 
   // ms from the start of the recording to its loudest moment. That is when the
   // car passes you, so that is the moment that has to land on the line. Measured
-  // from the file itself, so a replacement wroom.mp3 stays in sync too.
+  // from the file itself, so a replacement car-pass.mp3 stays in sync too.
   _soundLead() {
     if (this._lead !== undefined) return this._lead;
     let lead = RALLY_SOUND_LEAD_MS;
@@ -710,7 +710,7 @@ export default class RallyScene extends BasePuzzleScene {
     }
   }
 
-  // the car crossing the line — assets/sounds/Rally/wroom.mp3; silent if absent
+  // the car crossing the line — assets/sounds/Rally/car-pass.mp3; silent if absent
   _whoosh() {
     this.services.audio.playSfx("wroom", 1, this);
   }

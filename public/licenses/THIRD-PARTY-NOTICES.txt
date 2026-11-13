@@ -1,0 +1,162 @@
+THIRD-PARTY NOTICES — Ashcombe Manor
+
+The game includes the following works by others. Each is used under the
+licence named with it; the texts that the licences require to be shipped
+are given below or beside the files they cover.
+
+==============================================================================
+FONTS
+==============================================================================
+
+Etude Noire (Light, Regular, Medium, Bold)
+  Dimitri Antonov / Blue Curve Designstudio — https://www.behance.net/ed67b3fc
+  Licence: Creative Commons Attribution 4.0 International (CC BY 4.0)
+  https://creativecommons.org/licenses/by/4.0/
+  Used unmodified. Its own notice: assets/fonts/EtudeNoir/readme (1).txt
+
+DM Serif Display — Colophon Foundry; based on Source Serif by Adobe
+Cormorant Garamond — Christian Thalmann, the Cormorant Project Authors
+IBM Plex Sans, IBM Plex Mono — IBM Corp.
+  Licence: SIL Open Font License 1.1 (OFL). Shipped unmodified, each with its
+  licence text in assets/fonts/ui/ (*-OFL.txt).
+
+Noto Sans SC, Noto Serif SC — Google and Adobe, the Noto project contributors
+  Licence: SIL Open Font License 1.1 (OFL). Shipped unmodified with their
+  full copyright and licence notices in assets/fonts/cjk/ (*-OFL.txt).
+  Sources: https://github.com/google/fonts/tree/main/ofl/notosanssc
+           https://github.com/google/fonts/tree/main/ofl/notoserifsc
+
+Architects Daughter — Kimberly Geswein (SIL Open Font License 1.1)
+Dancing Script — Pablo Impallari (SIL Open Font License 1.1)
+Special Elite — Astigmatic (Apache License 2.0)
+  Loaded from Google Fonts. (When they are shipped with the game, their
+  licence texts are shipped beside them.)
+
+Labrada — the favicon's lettering (SIL Open Font License 1.1)
+
+==============================================================================
+TEXTURES AND 3D MODELS
+==============================================================================
+
+The rooms and objects are modelled and rendered in Blender (Cycles) by the
+developer. Surface scans and some models come from:
+  Poly Haven — https://polyhaven.com — CC0 1.0 (public domain)
+  ambientCG — https://ambientcg.com — CC0 1.0 (public domain)
+No attribution is required; they are credited with thanks.
+
+==============================================================================
+SOUND
+==============================================================================
+
+Sound effects and music: Pixabay — https://pixabay.com
+  Pixabay Content License — https://pixabay.com/service/license-summary/
+  (the source page of each file is recorded in docs/SOUND_SOURCES.md)
+
+==============================================================================
+TRADEMARKS
+==============================================================================
+
+Steam and the Steam logo are trademarks and/or registered trademarks of Valve
+Corporation in the U.S. and/or other countries. The logo's outline on the end
+of the demo's store button is from Simple Icons — https://simpleicons.org —
+CC0 1.0.
+
+==============================================================================
+SOFTWARE
+==============================================================================
+
+Phaser 3.60.0
+------------------------------------------------------------------------------
+The MIT License (MIT)
+
+Copyright (c) 2020 Richard Davey, Photon Storm Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+three.js 0.170.0
+------------------------------------------------------------------------------
+The MIT License
+
+Copyright © 2010-2024 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+shader-doodle 1.0.0-alpha.22
+------------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2019, 2020 merl <merl@vvvvv.co>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+EventEmitter3 (bundled with Phaser) 5.0.4
+------------------------------------------------------------------------------
+The MIT License (MIT)
+
+Copyright (c) 2014 Arnout Kazemier
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+

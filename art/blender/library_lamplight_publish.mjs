@@ -21,14 +21,15 @@ if (!process.argv.includes('--prepare')) {
     for (let pose = 0; pose < layout.poses; pose++) {
       const input = `${source}/book-${book.index}-${pose}.png`;
       const { width, height } = await sharp(input).metadata();
-      if (x + width > 2048) { x = 0; y += rowHeight + 2; rowHeight = 0; }
+      if (x + width > 4096) { x = 0; y += rowHeight + 2; rowHeight = 0; }
       pieces.push({ input, left: x, top: y });
       book.frames.push([x, y, width, height]);
       x += width + 2;
       rowHeight = Math.max(rowHeight, height);
     }
   }
-  await sharp({ create: { width: 2048, height: y + rowHeight, channels: 4, background: '#090807' } })
+  if (y + rowHeight > 4096) throw new Error('Book atlas exceeds the supported 4096px texture height.');
+  await sharp({ create: { width: 4096, height: y + rowHeight, channels: 4, background: '#090807' } })
     .composite(pieces).webp({ quality: 97, effort: 6 }).toFile(`${target}/books.webp`);
   await writeFile('src/levels/bookshelf/nativeLibrary.json', `${JSON.stringify(layout, null, 2)}\n`);
   console.log(`Published Cycles library and ${pieces.length} physical book poses.`);

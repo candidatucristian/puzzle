@@ -30,11 +30,16 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
  *  steady     how far off what stays where it is when the eye moves (the
  *             back wall, its window): nearer things move across it, the way
  *             a room does when you lean in its doorway */
+let supported;
 export function liveRoomSupported() {
+  if (supported !== undefined) return supported;
   try {
-    return Boolean(document.createElement("canvas").getContext("webgl2"));
+    const gl = document.createElement("canvas").getContext("webgl2");
+    supported = Boolean(gl && gl.getParameter(gl.MAX_TEXTURE_SIZE) >= 4096);
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    return supported;
   } catch {
-    return false;
+    supported = false; return false;
   }
 }
 
@@ -45,7 +50,9 @@ export function createLiveRoom({ under, data, plate, dim = plate, depth, glass =
   canvas.style.cssText = "position:absolute;z-index:-1;pointer-events:none;";
   under.parentElement.insertBefore(canvas, under);
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" }); }
+  catch (error) { canvas.remove(); throw error; }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // (as Blender's AgX, its exposure; the plate itself is drawn as it is)
@@ -156,6 +163,7 @@ export function createLiveRoom({ under, data, plate, dim = plate, depth, glass =
 
   // ── the light of the room, as it was seen from somewhere in it ───────────
   const pmrem = new THREE.PMREMGenerator(renderer);
+  const probeTargets = new Set();
   const probe = (buffer) => {
     const hdr = new RGBELoader().setDataType(THREE.HalfFloatType).parse(buffer);
     const t = new THREE.DataTexture(hdr.data, hdr.width, hdr.height, THREE.RGBAFormat, hdr.type);
@@ -165,9 +173,10 @@ export function createLiveRoom({ under, data, plate, dim = plate, depth, glass =
     t.generateMipmaps = false;
     t.flipY = true;
     t.needsUpdate = true;
-    const env = pmrem.fromEquirectangular(t).texture;
+    const target = pmrem.fromEquirectangular(t);
+    probeTargets.add(target);
     t.dispose();
-    return env;
+    return target.texture;
   };
   const model = (buffer) => new Promise((resolve, reject) => new GLTFLoader().parse(buffer, "", resolve, reject));
 
@@ -302,6 +311,7 @@ export function createLiveRoom({ under, data, plate, dim = plate, depth, glass =
       }
     });
     for (const light of shadows) light.shadow.map?.dispose();
+    for (const target of probeTargets) target.dispose();
     pmrem.dispose();
     renderer.dispose();
     renderer.forceContextLoss?.();

@@ -3,15 +3,16 @@ import { layoutRoom2, paintRoom2, releaseRoom2Art } from "./room2.js";
 import { loadRoomRender } from "../house/roomRender.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The library: the second room off the hall (see house/RoomScene.js for what
-// every room does). Three puzzles are found in it: the books across the far
-// wall, the clocks on and over the clerk's desk, the router on the reading
-// table. The gilt chest is on the table too.
+// The nursery: the second room off the hall (see house/RoomScene.js for what
+// every room does). Three puzzles are found in it: the cot in the middle of
+// the room, the clocks on and over Silas's desk in its corner, the router at
+// the end of that desk. The gilt chest is on the toy chest by the right wall.
 //
-// The Cycles room (art/blender/room_library_polished.py) is lit by its green
-// lamp, that light given back warm off the ceiling, and its two windows. Its
-// photographed light stays steady; only two tiny router lenses change. What
-// opens a puzzle sparkles as in every room (house/RoomScene.js).
+// The Cycles room (art/blender/room_nursery.py) is lit by its night light and
+// the green lamp, their light given back warm off the ceiling, and the moon at
+// its window. Its photographed light stays steady; only two tiny router
+// lenses change. What opens a puzzle sparkles as in every room
+// (house/RoomScene.js).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class Room2Scene extends RoomScene {

@@ -3,11 +3,11 @@ import { paintKey } from "../../shared/keyArt.js";
 import { renderedLayout, paintRoomRender, roomRenderChest, hasRoomRender } from "../house/roomRender.js";
 import ROOM2 from "../house/rooms/Room2.json";
 
-/** The original library arrangement, with updated worn materials: full-height
- *  walnut panelling, bookcases on two walls, the long central reading table,
- *  red curtains and two sash windows. room_library_restored.py uses the
- *  original room_library.py camera and furniture, then updates their surfaces
- *  and lighting. Puzzle, coffer and rain coordinates use that same camera. */
+/** The baby's nursery (since 2026-11-05; it was the library): duck-egg plaster
+ *  over walnut panelling, the cot in the middle on a soft rug, a sash window
+ *  with linen curtains, and Silas's desk with its clocks and router kept in
+ *  the corner. art/blender/room_nursery.py renders it; puzzle, coffer and rain
+ *  coordinates use that same camera (house/rooms/Room2.json). */
 
 const K = { room: "r2_room", glow: "r2_glow", shut: "r2_chest_shut", open: "r2_chest_open", key: "r2_key" };
 

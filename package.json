@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview --host 127.0.0.1",
+    "preview:demo": "vite preview --mode demo --host 127.0.0.1",
+    "build:full": "vite build --mode full",
+    "preview:full": "vite preview --mode full --host 127.0.0.1",
+    "dev:site": "node scripts/site-assets.mjs && vite --config site/vite.config.js --host 127.0.0.1",
+    "build:site": "node scripts/site-assets.mjs && vite build --config site/vite.config.js",
     "lint": "eslint .",
     "test": "node --test --experimental-test-isolation=none tests/unit/*.test.js",
     "test:browser": "playwright test",

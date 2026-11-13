@@ -26,6 +26,12 @@ The first interaction allows the browser to start audio. Progress and volume set
 | `npm run test:production` | Check the existing production build served under `/puzzle/` on port 4173. |
 | `npm run build` | Generate the static production site in `dist/`. |
 | `npm run preview` | Serve the production build locally on port 4173. |
+| `npm run build:demo` | Generate the web demo (the hall and Rooms I–III only) in `dist-demo/`. |
+| `npm run preview:demo` | Serve the web demo locally on port 4173. |
+| `npm run build:full` | Generate the whole game for the web (every room, every door open, the web film) in `dist-full/`. |
+| `npm run preview:full` | Serve the full web build locally on port 4173. |
+| `node scripts/license-audit.mjs` | Audit where every shipped sound and picture comes from; writes `todo/audit.json` for the to-do page at `/todo/` on the dev server; the notes typed on that page are saved to `todo/notes.json`. |
+| `node scripts/unused-assets.mjs` | List files in `public/` the game no longer loads (`--move` sets them aside in `.artifacts/removed-assets/`). |
 | `npm run check` | Run lint, unit tests, build, browser tests, and production smoke tests in sequence. |
 
 For browser tests, install Playwright's Chromium when needed:
@@ -87,7 +93,7 @@ Progress schema 3 saves stable level IDs, completed and unlocked levels, and the
 
 ## Builds, assets, and visual review
 
-Run `npm run build` followed by `npm run preview` to inspect the production output. `dist/` is the directory to upload to a static host. The relative Vite base supports deployment below a site subdirectory. CI only validates changes; publishing remains a separate action.
+Run `npm run build` followed by `npm run preview` to inspect the production output. `dist/` is the directory to upload to a static host. The web demo is `npm run build:demo`, then `dist-demo/`: `scripts/demo-build.mjs` leaves out the later rooms' scenes, pictures and sounds, and every answer and hint of a puzzle the demo does not hold, and it plays `IntroVideo-web.mp4` (the film re-encoded for the web with `scripts/web-video.py` in Blender, then `node scripts/mp4-faststart.mjs`). The relative Vite base supports deployment below a site subdirectory. CI only validates changes; publishing remains a separate action.
 
 Phaser and shader-doodle are installed through npm at exact versions instead of runtime CDN script tags. Keep `package-lock.json` in version control. Preserve the existing resource filenames and any license or attribution files alongside fonts, images, and sounds; moving an asset does not change its usage terms.
 

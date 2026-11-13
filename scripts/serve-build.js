@@ -90,6 +90,10 @@ async function createBuildServer(directory = BUILD_DIRECTORY) {
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
-  const server = await createBuildServer();
-  server.listen(4173, '127.0.0.1', () => console.log('Production build: http://127.0.0.1:4173/puzzle/'));
+  const option = name => { const at = process.argv.indexOf(name); return at < 0 ? undefined : process.argv[at + 1]; };
+  const directory = option('--directory');
+  const port = Number(option('--port') ?? 4173);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new RangeError('Invalid static server port.');
+  const server = await createBuildServer(directory ? resolve(directory) : undefined);
+  server.listen(port, '127.0.0.1', () => console.log(`Production build: http://127.0.0.1:${port}/puzzle/`));
 }

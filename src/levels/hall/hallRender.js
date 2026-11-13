@@ -1,5 +1,6 @@
 import { makeCanvas } from "../../shared/paint.js";
-import PASS_BY from "./hallPassBy.json";
+import PASS_BY from "./hallPassBy.json" with { type: "json" };
+import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 
 // The halls rendered in Blender, through the same eye as layoutHall
 // (art/blender/hall_ground.py, hall_chem.py and their publish scripts). On
@@ -31,10 +32,17 @@ const RENDERS = {
 const PASS_BY_FILES = { ground: (n) => `assets/images/Botany/hall-ground-passby-${n}-render-v1.webp` };
 const passByKey = (floor, n) => `hall_${floor}_passby_${n}_render_v1`;
 
+/** Share the exact hall asset with small UI views, without duplicating its URL. */
+export function hallRenderAsset(floor, part) { return RENDERS[floor]?.[part] ?? null; }
+
 export function loadHallRender(scene, floor) {
-  for (const { key, url } of Object.values(RENDERS[floor])) if (!scene.textures.exists(key)) scene.load.image(key, url);
+  for (const [part, { key, url }] of Object.entries(RENDERS[floor])) {
+    if (part !== 'plate') optionalSceneAsset(scene, key);
+    if (!scene.textures.exists(key)) scene.load.image(key, url);
+  }
   for (const n of Object.keys(PASS_BY[floor] ?? {})) {
     const key = passByKey(floor, n);
+    optionalSceneAsset(scene, key);
     if (!scene.textures.exists(key)) scene.load.image(key, PASS_BY_FILES[floor](n));
   }
 }
@@ -44,8 +52,12 @@ export function loadHallRender(scene, floor) {
  *  stands before it ({ key, box }), for those that came. */
 export function hallRender(scene, floor) {
   const render = RENDERS[floor];
-  if (!render || !Object.values(render).every(({ key }) => scene.textures.exists(key))) return null;
-  const pictures = Object.fromEntries(Object.entries(render).map(([name, { key }]) => [name, scene.textures.get(key).getSourceImage()]));
+  if (!render || !scene.textures.exists(render.plate.key)) return null;
+  const pictures = Object.fromEntries(Object.entries(render)
+    .filter(([, { key }]) => scene.textures.exists(key))
+    .map(([name, { key }]) => [name, scene.textures.get(key).getSourceImage()]));
+  pictures.doors ??= pictures.plate;
+  pictures.front ??= makeCanvas(1, 1);
   pictures.passBy = Object.fromEntries(Object.entries(PASS_BY[floor] ?? {})
     .filter(([n]) => scene.textures.exists(passByKey(floor, n)))
     .map(([n, box]) => [n, { key: passByKey(floor, n), box }]));
@@ -65,7 +77,8 @@ function frame(L) {
 /** One of the full-frame pictures (plate, lit, doors, front), laid where it lies. */
 export function paintHallRender(ctx, L, picture) {
   const { x, width } = frame(L);
-  ctx.drawImage(L.render[picture], x, 0, width, L.H);
+  const image = L.render[picture] ?? L.render.plate;
+  ctx.drawImage(image, x, 0, width, L.H);
 }
 
 /** A box in the reference picture's pixels (as the renders' scripts give

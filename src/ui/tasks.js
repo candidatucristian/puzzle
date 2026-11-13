@@ -12,10 +12,19 @@ const BOX = "M4.2 4.6 C9 4.1 15 4.4 19.6 4.2 C19.9 9 19.7 15 19.8 19.7 C15 19.9 
 const TICK = "M7.4 12.6 L10.8 16 L18.6 6.6";
 const PASSES = ["ink-dark", "ink-white", "ink-over"];
 
-export function taskCard(tasks, { sounds = null, className = "" } = {}) {
+export function taskCard(tasks, { sounds = null, className = "", i18n = null, scope = null } = {}) {
   const node = document.createElement("ol");
   node.className = `prologue-tasks ${className}`.trim();
-  node.setAttribute("aria-label", "Tonight");
+  const render = () => {
+    node.setAttribute('aria-label', i18n ? i18n.t('tasks.tonight') : 'Tonight');
+    for (const [key, fallback] of tasks) {
+      const li = items.get(key);
+      const copyKey = key === 'door' ? 'enterDoor' : key;
+      const text = i18n?.t('tasks')?.[copyKey] ?? fallback;
+      li.querySelector('.task-text').textContent = text;
+      if (li.classList.contains('is-done')) li.setAttribute('aria-label', `${text} — ${i18n ? i18n.t('common.done') : 'done'}`);
+    }
+  };
   const items = new Map();
   for (const [key, text, { later = false } = {}] of tasks) {
     const li = document.createElement("li");
@@ -29,14 +38,17 @@ export function taskCard(tasks, { sounds = null, className = "" } = {}) {
     node.append(li);
     items.set(key, li);
   }
+  render();
+  if (i18n && scope) scope.add(i18n.subscribe(render));
   return {
     node,
+    refresh: render,
     /** done: the tick drawn into its box, and the ding */
     tick(key) {
       const li = items.get(key);
       if (!li || li.classList.contains("is-done")) return;
       li.classList.add("is-done");
-      li.setAttribute("aria-label", `${li.textContent} — done`);
+      li.setAttribute("aria-label", `${li.textContent} — ${i18n ? i18n.t('common.done') : 'done'}`);
       sounds?.ping?.();
     },
     /** a task kept back, brought in */

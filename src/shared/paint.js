@@ -146,6 +146,18 @@ export function noiseBurst(scene, { dur, type = "bandpass", freq, q = 1, gain, e
   }
 }
 
+/** A television's or a tannoy's static, made rather than recorded: a broad
+ *  hiss with the mains' buzz through it and the odd crackle, sudden at first
+ *  and dying away. */
+export function staticBurst(scene, { dur = 1, gain = 0.12 } = {}) {
+  noiseBurst(scene, {
+    dur, type: "bandpass", freq: 2400, q: 0.4, gain,
+    env: (k) => Math.min(1, k * dur * 120) * (1 - k) ** 0.8
+      * (0.72 + 0.28 * Math.sin(k * dur * 2 * Math.PI * 100))
+      * (Math.random() < 0.0015 ? 2.4 : 1),
+  });
+}
+
 /** A few pure tones that ring and fade: [frequency, gain] pairs. */
 export function chime(scene, tones, decay = 0.4) {
   const ac = scene.sound && scene.sound.context;

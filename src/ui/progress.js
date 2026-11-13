@@ -52,13 +52,11 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
     const activePlaceKey = levels.place?.key ?? levels.homeOf(levels.currentIndex)?.key;
     const placeData =
       i18n && activePlaceKey ? i18n.getPlace(activePlaceKey) : null;
-    const currentPlaceName = (levels.place ? placeData?.name : null) ?? near.name;
+    const currentPlaceName = placeData?.name ?? near.name;
     const currentFloorName = i18n
       ? (placeData?.floor ?? i18n.getFloorName(levels.floor))
       : (placeData?.floor ?? levels.floor);
-    const currentStory = placeData?.story?.length
-      ? placeData.story
-      : near.story;
+    const currentStory = placeData?.story ?? (i18n && !levels.place ? i18n.t('sidebar.puzzleStory') : near.story);
 
     const lockedText = i18n ? i18n.t("common.locked") : "Locked";
     const solvedText = i18n ? i18n.t("common.solved") : "Solved";
@@ -72,6 +70,7 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
       .map((_, index) => index)
       .filter((index) => near.indexes.includes(index));
     levels.definitions.forEach((level, index) => {
+      const levelName = i18n ? i18n.getLevelName(level) : level.name;
       const item = tiles[index],
         { tile, preview, check, number, name, status } = item;
       const place = order.indexOf(index) + 1;
@@ -85,7 +84,7 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
       // solved just now: the seal is pressed on
       if (solved && !item.sealed && shown) press(tile);
       item.sealed = solved;
-      name.textContent = allowed ? level.name : lockedText;
+      name.textContent = allowed ? levelName : lockedText;
       status.textContent = !allowed
         ? lockedText
         : solved
@@ -95,13 +94,13 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
             : notSolvedText;
       tile.setAttribute(
         "aria-label",
-        `Puzzle ${place || index + 1}: ${allowed ? level.name : lockedText}${solved ? ` — ${solvedText.toLowerCase()}` : ""}${current ? ` — ${currentText.toLowerCase()}` : ""}`,
+        `${i18n ? i18n.t('common.puzzle') : 'Puzzle'} ${place || index + 1}: ${allowed ? levelName : lockedText}${solved ? ` — ${solvedText.toLowerCase()}` : ""}${current ? ` — ${currentText.toLowerCase()}` : ""}`,
       );
       if (current) tile.setAttribute("aria-current", "step");
       else tile.removeAttribute("aria-current");
       tile.setAttribute("aria-disabled", String(!allowed));
       tile.title = allowed
-        ? `${level.name}${solved ? ` · ${solvedText}` : ""}`
+        ? `${levelName}${solved ? ` · ${solvedText}` : ""}`
         : i18n
           ? i18n.t("sidebar.roomLocked")
           : "Solve the previous room to unlock";
@@ -117,12 +116,14 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
     // rooms behind them, each ticked once everything in it is solved
     for (const old of grid.querySelectorAll(".room-row")) old.remove();
     levels.rooms.forEach((room, n) => {
+      const roomName = i18n?.getPlace(room.key)?.name
+        ?? (i18n && /^Room /.test(room.name) ? i18n.t('common.room', { number: room.name.slice(5) }) : room.name);
       const row = document.createElement("div");
       row.className = `level-btn room-row ${room.locked ? "locked" : "unlocked"}${room.solved ? " solved" : ""}`;
       row.setAttribute("role", "listitem");
       row.setAttribute(
         "aria-label",
-        `${room.name}${room.locked ? ` — ${lockedText.toLowerCase()}` : room.solved ? ` — ${solvedText.toLowerCase()}` : ""}`,
+        `${roomName}${room.locked ? ` — ${lockedText.toLowerCase()}` : room.solved ? ` — ${solvedText.toLowerCase()}` : ""}`,
       );
       const number = document.createElement("span");
       number.className = "level-number";
@@ -131,7 +132,7 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
       caption.className = "level-caption";
       const name = document.createElement("span");
       name.className = "level-name";
-      name.textContent = room.name;
+      name.textContent = roomName;
       const status = document.createElement("span");
       status.className = "level-status";
       status.textContent = room.locked
@@ -167,8 +168,9 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
     // under the story, the keys found so far, each with the door it is for
     const ring = document.getElementById("index-keys");
     const held = levels.keys;
-    if (ring.dataset.held !== held.map((item) => item.key).join()) {
-      ring.dataset.held = held.map((item) => item.key).join();
+    const heldSignature = `${i18n?.language ?? 'en'}:${held.map((item) => item.key).join()}`;
+    if (ring.dataset.held !== heldSignature) {
+      ring.dataset.held = heldSignature;
       ring.replaceChildren(
         ...held.map((item) => {
           const figure = document.createElement("figure");
@@ -188,7 +190,7 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
           picture.setAttribute("role", "img");
           picture.setAttribute(
             "aria-label",
-            `The key to door ${toRoman(item.door)}`,
+            i18n ? i18n.t('sidebar.keyImage', { door: toRoman(item.door) }) : `The key to door ${toRoman(item.door)}`,
           );
           figure.append(caption, picture);
           return figure;
@@ -247,7 +249,8 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
       near.indexes.length === 0;
     document.getElementById("room-progress").hidden = near.indexes.length === 0;
     document.getElementById("progress-count").textContent =
-      `${here} / ${near.indexes.length} ${solvedText.toLowerCase()}`;
+      i18n ? i18n.t("sidebar.progressCount", { solved: here, total: near.indexes.length })
+        : `${here} / ${near.indexes.length} ${solvedText.toLowerCase()}`;
     // where you are, at the head of the side panel, as a film's lower third:
     // the floor's numeral in a fine square, a hairline, the place's name over
     // its floor's; a light passing once over it as it comes
@@ -292,7 +295,7 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
       back = levels.back;
     // from the hall, back is outside
     leave.hidden = !back && !levels.place;
-    const leaveWord = leave.querySelector(".leave-word");
+    const leaveWord = leave.querySelector(".leave-label") ?? leave.querySelector(".leave-word");
     if (leaveWord) {
       const lineSvg = leaveWord.querySelector(".leave-line");
       leaveWord.textContent = i18n ? i18n.t("common.back") : "Back";
@@ -300,15 +303,16 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
     }
     // it says only "Back"; where it leads is in its tooltip
     if (!back) {
-      leave.setAttribute("aria-label", "Back outside");
-      leave.dataset.tip = "Back outside (Esc)";
+      const label = i18n ? i18n.t('sidebar.backOutside') : 'Back outside';
+      leave.setAttribute("aria-label", label);
+      leave.dataset.tip = `${label} (Esc)`;
     }
     if (back) {
       const backPlace = i18n ? i18n.getPlace(back.key) : null;
       const backName = backPlace?.name ?? back.name;
       leave.setAttribute(
         "aria-label",
-        `Back to ${backName.replace(/^The /, "the ")}`,
+        i18n ? i18n.t('sidebar.backTo', { place: backName }) : `Back to ${backName.replace(/^The /, "the ")}`,
       );
       leave.dataset.tip = `${leave.getAttribute("aria-label")} (Esc)`;
     }
@@ -316,11 +320,10 @@ export function mountProgress(scope, { game, levels, storage, i18n = null }) {
     meter.max = near.indexes.length;
     meter.value = here;
     const save = document.getElementById("save-status");
-    save.textContent = levels.saved
-      ? "Saved on this device"
-      : "Progress kept for this session only";
+    save.textContent = i18n ? i18n.t(levels.saved ? 'sidebar.saved' : 'sidebar.sessionOnly') : levels.saved
+      ? "Saved on this device" : "Progress kept for this session only";
     save.dataset.state = levels.saved ? "saved" : "temporary";
-    save.title = levels.saved
+    save.title = i18n ? i18n.t(levels.saved ? 'sidebar.savedTip' : 'sidebar.sessionTip') : levels.saved
       ? "Progress is saved in this browser. Clearing site data removes it."
       : "Browser storage is unavailable. Progress may be lost when this page closes.";
     shown = true;

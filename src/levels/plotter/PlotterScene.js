@@ -63,10 +63,10 @@ export default class PlotterScene extends BasePuzzleScene {
       fontFamily: MONO, fontSize: size + 'px', color: '#a7dca3',
       shadow: { color: '#54c478', blur: 5, fill: true },
     }).setResolution(2).setAlpha(alpha);
-    text(s.x + pad, s.y + s.h * 0.045, 'VECTOR TERMINAL  /  04 PATHS', Math.min(15, s.h * 0.055), 0.64);
+    this.localizeText(text(s.x + pad, s.y + s.h * 0.045, '', Math.min(15, s.h * 0.055), 0.64), 'gameplay.plotter.terminal');
     this._codeTexts = [];
     for (const [i, block] of L.blocks.entries()) {
-      text(block.x, block.y, `BLOCK ${i + 1}`, L.font * 0.77, 0.6);
+      this.localizeText(text(block.x, block.y, '', L.font * 0.77, 0.6), 'gameplay.plotter.block', { number: i + 1 });
       const code = text(block.x, block.y + L.font * 1.25, formatPath(PLOTTER_BLOCKS[i], L.perLine), L.font);
       code.setLineSpacing(L.font * 0.25);
       this._codeTexts.push(code);
@@ -77,8 +77,8 @@ export default class PlotterScene extends BasePuzzleScene {
     const hintSize = Math.max(10, Math.min(18, s.w / 40, s.h * 0.055));
     const guideSize = Math.max(9, Math.min(11, s.w / 50));
     const guideY = s.y + s.h - 8 * k - guideSize * 1.3;
-    this._clue = text(s.x + pad, guideY - hintSize * 1.35 - 5 * k, 'Become the machine. Trace the path.', hintSize, 0.93);
-    text(s.x + pad, guideY, 'X RIGHT   /   Y UP   /   RESET AT EACH BLOCK', guideSize, 0.57);
+    this._clue = this.localizeText(text(s.x + pad, guideY - hintSize * 1.35 - 5 * k, '', hintSize, 0.93), 'gameplay.plotter.clue');
+    this.localizeText(text(s.x + pad, guideY, '', guideSize, 0.57), 'gameplay.plotter.directions');
     this._scan = this.add.graphics().setDepth(-2);
     this._render();
   }

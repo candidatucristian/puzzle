@@ -1,7 +1,6 @@
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { makeMoonTexture } from "../../shared/moon.js";
 import { loadFibonacciRender, fibonacciSkeleton, fibonacciLeafDefinitions } from "./blenderPlant.js";
-import { attachMovableSparkles } from '../../shared/movableSparkles.js';
 import { paintGarden, releaseGardenArt, makeCanvas, LANTERN, POT_X, BUCKET_X } from "./garden.js";
 import {
   paintPlantArt,
@@ -72,6 +71,13 @@ const LEAF_IMAGE = { ox: 0.05, oy: 0.95, turn: -45, cmPerPx: 0.034 };
 const PLANT_BOX = { x0: -58, x1: 58, y0: -110, y1: 4 };
 const TIP = -80; // degrees the bucket tips to pour
 const DEG = Math.PI / 180;
+// the arrow from the pail over to the pot (asked for on 2026-11-07), shaped
+// like an archway: a half circle on two short straight legs, in cm about the
+// bench-top middle — one leg rising from over the pail's near side (`pail`),
+// the other coming straight down into the pot (`pot`), both ending `y` cm up
+// and `leg` cm long. It is there until the first pour.
+const ARROW = { pot: -21, pail: 23, y: -33, leg: 3 };
+const ARROW_KEY = "pp_arrow";
 
 export default class PlantPotScene extends BasePuzzleScene {
   constructor() {
@@ -85,7 +91,7 @@ export default class PlantPotScene extends BasePuzzleScene {
 
   preload() {
     loadFibonacciRender(this);
-    this.load.audio("wateringplant", "assets/sounds/PlantPot/wateringplant.mp3");
+    this.load.audio("wateringplant", "assets/sounds/PlantPot/pouring-water.mp3");
   }
 
   create() {
@@ -99,6 +105,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     this.isAnimating = false;
     this.currentStep = 0;
     this.canPour = true;
+    this._arrowPlayed = false; // the arrow over the bench draws itself once a visit
 
     this._build(this.cameras.main.width, this.cameras.main.height);
     this.listenToResize(({ width, height }) => {
@@ -109,6 +116,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     // drag the bucket to the pot; close enough and it pours
     this.input.on("dragstart", (pointer, obj) => {
       if (obj !== this.bucket || this.isSolved || this.isAnimating) return;
+      this._hideArrow();
       const p = this._local(pointer);
       this._dragOffset = { x: obj.x - p.x, y: obj.y - p.y };
       this.services.audio.playClick(this);
@@ -180,6 +188,7 @@ export default class PlantPotScene extends BasePuzzleScene {
 
     this._makeBench(L);
     this._makeLantern(L);
+    this._makeArrow(L);
     this.add.image(0, 0, K.veil).setOrigin(0, 0).setDisplaySize(W, H).setDepth(18);
     if(this.textures.exists(K.window))this._windowFrame=this.add.image(0,0,K.window).setOrigin(0,0).setDepth(30);
     this._built = true;
@@ -300,10 +309,19 @@ export default class PlantPotScene extends BasePuzzleScene {
       .image(BUCKET_X, -BUCKET.h / 2, art.buckets[level])
       .setOrigin(art.bucketOrigin.ox, art.bucketOrigin.oy)
       .setScale(art.spriteScale ?? k);
-    if (!L.blender && !this.isSolved && this.currentStep < 5) {
+    // its glints, just off its edges, and sparks rising off it now and then:
+    // it can be picked up. (The rendered pail stands as tall, its rim seen a
+    // little higher and its handle over it: one glint rides the handle.)
+    if (!this.isSolved && this.currentStep < 5) {
       this.bucketGlints = this.add.container(BUCKET_X, -BUCKET.h / 2);
       this._bucketSparklePool = [];
-      for (const [i, x, y] of [
+      this._sparkSize = L.blender ? 0.36 : 1;
+      for (const [i, x, y] of L.blender ? [
+        [0, -BUCKET.topR - 1.5, -12.5],
+        [1, BUCKET.topR + 2, -10],
+        [2, -BUCKET.footR - 2.5, BUCKET.h / 2 - 3.5],
+        [3, 5, -BUCKET.h / 2 - 16],
+      ] : [
         [0, -BUCKET.topR - 2, -7],
         [1, BUCKET.topR + 2, -1],
         [2, -BUCKET.footR - 3, BUCKET.h / 2 - 1],
@@ -350,15 +368,6 @@ export default class PlantPotScene extends BasePuzzleScene {
       this.bucket.setInteractive({ cursor: "grab" });
       this.input.setDraggable(this.bucket);
     }
-    if (L.blender) {
-      this._bucketCue = attachMovableSparkles(this, this.bucket, {
-        enabled: () => this._built && !this.isSolved && !this.isAnimating && this.currentStep < 5 && this.ambientEffects,
-        padding: -2,
-        strength: .72,
-        drifting: false,
-        anchorCount: 2,
-      });
-    }
   }
 
   // the lantern's flame: breathing, and now and then a gutter
@@ -370,6 +379,102 @@ export default class PlantPotScene extends BasePuzzleScene {
     const core = this.add.image(f.x, f.y, this._art.keys.glow).setBlendMode("ADD").setDepth(1.1);
     core.setDisplaySize((L.blender ? 3 : 12) * L.cm, (L.blender ? 5 : 16) * L.cm).setAlpha(L.blender ? 0.18 : 0.8);
     this._flame = { glow, core, size, gain: L.blender ? 0.14 : 0.5, coreGain: L.blender ? 0.18 : 0.75 };
+  }
+
+  // the arrow from the pail over to the pot, drawn the way the Back arrow is
+  // (a dashed archway and an open head, inked dark, gone over thinly in warm
+  // white and once more lightly), drawing itself once as the puzzle opens:
+  // dash after dash from the pail round to the pot in a second, then gone.
+  // Each dash is its own small picture, so the drawing is only fades.
+  _makeArrow(L) {
+    this._arrow = null;
+    if (this._arrowPlayed || this.isSolved || this.currentStep > 0) return;
+    this._arrowPlayed = true;
+    const S = 2;
+    // the archway: from the pail's leg (a) over to its head over the pot (d)
+    const a = L.at(ARROW.pail, ARROW.y), d = L.at(ARROW.pot, ARROW.y), leg = ARROW.leg * L.cm;
+    const R = (a.x - d.x) / 2, cx = (a.x + d.x) / 2, cy = a.y - leg;
+    const top = Math.PI * R, length = 2 * leg + top;
+    // the point s along it: up the pail's leg, over the top, down into the pot
+    const along = (s) => {
+      if (s <= leg) return { x: a.x, y: a.y - s };
+      if (s <= leg + top) { const t = -(s - leg) / R; return { x: cx + R * Math.cos(t), y: cy + R * Math.sin(t) }; }
+      return { x: d.x, y: cy + (s - leg - top) };
+    };
+    // the dashes evened out to fit, so that the arch starts and ends on one
+    const dash = 1.8 * L.cm, gap = 1.1 * L.cm;
+    const count = Math.max(2, Math.round((length + gap) / (dash + gap)));
+    const fit = length / (count * dash + (count - 1) * gap);
+    const lines = [];
+    for (let i = 0; i < count; i++) {
+      const s0 = i * (dash + gap) * fit, s1 = s0 + dash * fit, steps = Math.max(2, Math.ceil(s1 - s0));
+      lines.push([Array.from({ length: steps + 1 }, (_, k) => along(s0 + (s1 - s0) * (k / steps)))]);
+    }
+    // its head: two short strokes back up from the tip, either side of the leg
+    const arm = 2.8 * L.cm;
+    const barb = (deg) => ({ x: d.x + arm * Math.sin(deg * DEG), y: d.y - arm * Math.cos(deg * DEG) });
+    lines.push([[barb(40), d, barb(-46)]]);
+    // each piece inked as the Back arrow is: the dark under-edge, the warm
+    // white line, the light pass over it
+    const white = Math.max(1.2, Math.min(1.8, L.cm * 0.19)), pad = white * 2.1 + 2;
+    const inks = [["11, 11, 12", 0.8, 2.1, 0, 0], ["236, 231, 219", 0.92, 1, 0, 0], ["255, 255, 255", 0.45, 0.4, 0.5, -0.38]];
+    this._arrowKeys = this._arrowKeys ?? [];
+    const pieces = lines.map((strokes, index) => {
+      const all = strokes.flat();
+      const x0 = Math.min(...all.map((p) => p.x)) - pad, y0 = Math.min(...all.map((p) => p.y)) - pad;
+      const x1 = Math.max(...all.map((p) => p.x)) + pad, y1 = Math.max(...all.map((p) => p.y)) + pad;
+      const canvas = makeCanvas((x1 - x0) * S, (y1 - y0) * S);
+      const ctx = canvas.getContext("2d");
+      ctx.scale(S, S);
+      ctx.translate(-x0, -y0);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      for (const [rgb, alpha, w, dx, dy] of inks) {
+        ctx.lineWidth = white * w;
+        ctx.strokeStyle = `rgba(${rgb}, ${alpha})`;
+        ctx.beginPath();
+        for (const stroke of strokes) stroke.forEach((p, k) => ctx[k ? "lineTo" : "moveTo"](p.x + dx * white, p.y + dy * white));
+        ctx.stroke();
+      }
+      const key = `${ARROW_KEY}_${index}`;
+      if (this.textures.exists(key)) this.textures.remove(key);
+      this.textures.addCanvas(key, canvas);
+      this._arrowKeys.push(key);
+      return this.add.image(x0, y0, key).setOrigin(0, 0).setScale(1 / S).setAlpha(0);
+    });
+    this._arrow = this.add.container(0, 0, pieces).setDepth(19);
+    // a moment after the puzzle opens: drawn in a second, held, and gone
+    const WAIT = 900, DRAW = 1000, EACH = 140, HOLD = 250;
+    if (this.reducedMotion) {
+      pieces.forEach((piece) => piece.setAlpha(1));
+      this.time.delayedCall(WAIT + DRAW + HOLD, () => this._hideArrow());
+      return;
+    }
+    pieces.forEach((piece, i) => this.tweens.add({
+      targets: piece,
+      alpha: 1,
+      duration: EACH,
+      delay: WAIT + (i / (pieces.length - 1)) * (DRAW - EACH),
+      ease: "Sine.easeOut",
+    }));
+    this.time.delayedCall(WAIT + DRAW + HOLD, () => this._hideArrow(500));
+  }
+
+  // the arrow gone: faded out, its pictures let go (the pail taken up before
+  // it has finished takes it away at once)
+  _hideArrow(duration = 250) {
+    const arrow = this._arrow;
+    if (!arrow) return;
+    this._arrow = null;
+    for (const piece of arrow.list) this.tweens.killTweensOf(piece);
+    const done = () => { arrow.destroy(); this._releaseArrow(); };
+    if (this.reducedMotion) { done(); return; }
+    this.tweens.add({ targets: arrow, alpha: 0, duration, ease: "Sine.easeIn", onComplete: done });
+  }
+
+  _releaseArrow() {
+    for (const key of this._arrowKeys ?? []) if (this.textures.exists(key)) this.textures.remove(key);
+    this._arrowKeys = [];
   }
 
   // ── what moves ─────────────────────────────────────────────────────────────
@@ -530,7 +635,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     particle.y = -BUCKET.h * (0.15 + Math.random() * 0.65);
     particle.drift = (Math.random() - 0.5) * 5;
     particle.rise = 7 + Math.random() * 8;
-    particle.size = 6 + Math.random() * 4;
+    particle.size = (6 + Math.random() * 4) * (this._sparkSize ?? 1);
     particle.image
       .setPosition(particle.x, particle.y)
       .setDisplaySize(particle.size, particle.size)
@@ -550,6 +655,7 @@ export default class PlantPotScene extends BasePuzzleScene {
   triggerPour() {
     if (this.isSolved || this.isAnimating || this.currentStep >= 5) return;
     this.isAnimating = true;
+    this._hideArrow();
     this.bucketGlints?.setVisible(false);
     this._resetBucketSparkles();
     this._pouring = this.currentStep;
@@ -777,7 +883,6 @@ export default class PlantPotScene extends BasePuzzleScene {
   // grown as it was — a pour caught halfway is simply finished
   _teardown() {
     this._built = false;
-    this._bucketCue?.(); this._bucketCue = null;
     if (this._pouring !== null && this._pouring !== undefined) {
       this.currentStep = this._pouring + 1;
       this._pouring = null;
@@ -795,6 +900,7 @@ export default class PlantPotScene extends BasePuzzleScene {
     releaseGardenArt(this.textures);
     releasePlantArt(this.textures);
     if (this.textures.exists("pp_stems")) this.textures.remove("pp_stems");
+    this._releaseArrow();
   }
 
   shutdown() {

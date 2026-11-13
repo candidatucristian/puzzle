@@ -98,6 +98,7 @@ for (const n of ["board", "cup-gold", "cup-silver", "cup-bronze", "name-1", "nam
 }
 const boardAtlas = await pack("board", bItems, 2400);
 await webp(sharp(B("tv")), "tv");
+await webp(sharp(B("tv")).resize({width:4096,height:4096,fit:'inside',withoutEnlargement:true}), "tv-4096");
 
 writeFileSync(path("src/levels/rally/rallyRender.json"), JSON.stringify({
   version: VERSION, ref: stage.ref,

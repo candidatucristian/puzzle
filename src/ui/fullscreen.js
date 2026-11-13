@@ -4,6 +4,7 @@ export function mountFullscreenControl(scope, button, i18n = null) {
   const offered = Boolean(document.fullscreenEnabled || document.webkitFullscreenEnabled);
   const label = button.querySelector('[data-fullscreen-label]') || button;
   const toast = document.getElementById('ui-toast');
+  const t = (key, fallback) => i18n ? i18n.t(key) : fallback;
   let pending = false, toastTimer;
   function sync() {
     const active = Boolean(fullscreenElement());
@@ -15,7 +16,7 @@ export function mountFullscreenControl(scope, button, i18n = null) {
     button.setAttribute('aria-pressed', String(active));
     button.disabled = !offered || pending;
     button.title = !offered
-      ? (isIOS() ? 'Safari on iPhone has no full screen: add the game to the Home Screen instead' : 'Full screen is unavailable in this browser')
+      ? (isIOS() ? t('header.fullscreenIOS', 'Safari on iPhone has no full screen: add the game to the Home Screen instead') : t('header.fullscreenUnavailable', 'Full screen is unavailable in this browser'))
       : active ? (i18n ? `${i18n.t('header.exitFullscreen')} (Esc)` : 'Exit full screen (Esc)') : text;
   }
 
@@ -35,7 +36,7 @@ export function mountFullscreenControl(scope, button, i18n = null) {
     pending = false;
     sync();
     if (failed) {
-      const message = 'Full screen could not be changed. Try again.';
+      const message = t('header.fullscreenFailed', 'Full screen could not be changed. Try again.');
       button.title = message;
       if (toast) {
         scope.cancel(toastTimer);

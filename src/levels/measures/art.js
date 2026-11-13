@@ -1,7 +1,7 @@
 import { makeCanvas, addCanvasTexture, lcg, glowCanvas } from "../../shared/paint.js";
 import { fitRender } from "../../shared/renderFit.js";
 import { BOTTLES, FLASK_ML, MEASURES_WORD } from "./puzzle.js";
-import SINK from "./measuresLevel.json";
+import SINK from "./measuresLevel.json" with { type: "json" };
 
 /** Room VIII's sink counter, rendered (art/blender/room_weighing.py --view
  *  measures): the plate, the flask alone in clear glass, its shadow alone on
@@ -48,7 +48,7 @@ export function layoutSink(W, H) {
   // nothing carried is lifted past the foot of the window, where the rain is
   L.sill = f.y + SINK.sill * s;
   L.rain = {
-    panes: SINK.panes.map((pane) => pane.map(at)), cutouts: [],
+    panes: SINK.panes.map(pane => pane.map(point => { const p=at(point); return [p.x,p.y]; })), cutouts: [],
     drop: Math.max(0.5, (W / 1920) * 0.85), fog: 0.5, reach: 24, beyond: 0.5,
     // the moon, over the trees; the lamp by the sink, warm, on the right
     lights: [

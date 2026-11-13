@@ -1,4 +1,7 @@
 const FLAGS = {
+  fr: '<svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><path d="M0 0h1v2H0z" fill="#002654"/><path d="M1 0h1v2H1z" fill="#fff"/><path d="M2 0h1v2H2z" fill="#ed2939"/></svg>',
+  es: '<svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><path d="M0 0h3v2H0z" fill="#aa151b"/><path d="M0 .5h3v1H0z" fill="#f1bf00"/></svg>',
+  'zh-Hans': '<svg class="st-flag-svg" viewBox="0 0 30 20" width="18" height="11"><path d="M0 0h30v20H0z" fill="#de2910"/><g fill="#ffde00"><path d="m5 2 .7 2.1H8L6.2 5.4l.7 2.1L5 6.2 3.1 7.5l.7-2.1L2 4.1h2.3z"/><path d="m10 1 .3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1zM12 4l.3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1zM12 7l.3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1zM10 9l.3.9h1l-.8.6.3.9-.8-.6-.8.6.3-.9-.8-.6h1z"/></g></svg>',
   en: '<svg class="st-flag-svg" viewBox="0 0 60 30" width="18" height="11"><clipPath id="uk-clip"><path d="M0 0v30h60V0z"/></clipPath><g clip-path="url(#uk-clip)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>',
   ro: '<svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="1" height="2" fill="#002B7F"/><rect x="1" width="1" height="2" fill="#FCD116"/><rect x="2" width="1" height="2" fill="#CE1126"/></svg>',
   ru: '<svg class="st-flag-svg" viewBox="0 0 3 2" width="18" height="11"><rect width="3" height="0.667" fill="#ffffff"/><rect y="0.667" width="3" height="0.667" fill="#0039A6"/><rect y="1.333" width="3" height="0.667" fill="#D52B1E"/></svg>',
@@ -24,7 +27,7 @@ export function mountComfort(scope, preferences, i18n = null) {
     const state = preferences.state;
     root.style.setProperty('--grain-opacity', String(state.grain / 1000));
     root.style.setProperty('--reading-scale', String(state.textScale));
-    root.dataset.textScale = String(state.textScale);   // (for what must make room for larger words: the notebook)
+    root.dataset.textScale = String(state.textScale);
     root.dataset.reducedMotion = String(preferences.reducedMotion);
     root.dataset.ambientEffects = String(state.ambientEffects);
     root.dataset.ambientMotion = String(preferences.ambientMotion);
@@ -57,7 +60,7 @@ export function mountComfort(scope, preferences, i18n = null) {
     effects.checked = state.ambientEffects;
     // with motion reduced the ambience is still anyway: the switch says so
     effects.disabled = preferences.reducedMotion;
-    effects.closest('.st-switch')?.classList.toggle('is-off', preferences.reducedMotion);
+    effects.closest('.st-switch, .fs-tick')?.classList.toggle('is-off', preferences.reducedMotion);
   }
   scope.on(grain, 'input', () => preferences.set({ grain: Number(grain.value) }));
   for (const button of sizes) scope.on(button, 'click', () => preferences.set({ textScale: Number(button.dataset.scale) }));
@@ -74,9 +77,55 @@ export function mountComfort(scope, preferences, i18n = null) {
     scope.on(langSelect, 'change', () => i18n.setLanguage(langSelect.value));
     scope.add(i18n.subscribe(render));
 
-    if (langMenu) {
+    // the settings sheet lists the languages on the page (`data-inline`):
+    // the one in use circled, another chosen by a click; the arrows move
+    // along them
+    if (langMenu?.hasAttribute('data-inline')) {
+      for (const item of langItems) {
+        scope.on(item, 'click', () => {
+          if (!item.dataset.lang || item.dataset.lang === langSelect.value) return;
+          langSelect.value = item.dataset.lang;
+          langSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+      scope.on(langMenu, 'keydown', e => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) return;
+        e.preventDefault();
+        const at = langItems.indexOf(document.activeElement);
+        langItems[(at + step + langItems.length) % langItems.length]?.focus();
+      });
+    } else if (langMenu) {
+      // Keep all language choices inside the scrollable settings panel.
+      const positionMenu = () => {
+        if (langMenu.hidden || !langBox) return;
+        const box = langBox.getBoundingClientRect();
+        const panel = langBox.closest('.settings-panel')?.getBoundingClientRect();
+        const top = Math.max(8, panel?.top ?? 8);
+        const bottom = Math.min(window.innerHeight - 8, panel?.bottom ?? window.innerHeight - 8);
+        const below = Math.max(0, bottom - box.bottom - 8);
+        const above = Math.max(0, box.top - top - 8);
+        const upward = below < langMenu.scrollHeight && above > below;
+        langMenu.style.top = upward ? 'auto' : 'calc(100% + 4px)';
+        langMenu.style.bottom = upward ? 'calc(100% + 4px)' : 'auto';
+        langMenu.style.maxHeight = `${Math.max(40, upward ? above : below)}px`;
+        langMenu.style.overflowY = 'auto';
+      };
       const toggleMenu = open => {
         langMenu.hidden = open !== undefined ? !open : !langMenu.hidden;
+        langSelect.setAttribute('aria-expanded', String(!langMenu.hidden));
+        positionMenu();
+      };
+      scope.on(window, 'resize', positionMenu);
+      const panel = langBox?.closest('.settings-panel');
+      if (panel) scope.on(panel, 'scroll', positionMenu, { passive: true });
+      langSelect.setAttribute('aria-controls', langMenu.id);
+      toggleMenu(false);
+      const closeLanguage = e => {
+        if (e.key !== 'Escape' || langMenu.hidden) return false;
+        e.preventDefault(); e.stopPropagation();
+        toggleMenu(false); langSelect.focus();
+        return true;
       };
 
       scope.on(langSelect, 'mousedown', e => {
@@ -85,14 +134,24 @@ export function mountComfort(scope, preferences, i18n = null) {
       });
 
       scope.on(langSelect, 'keydown', e => {
+        if (closeLanguage(e)) return;
         if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
           toggleMenu(true);
           const activeItem = langItems.find(it => it.getAttribute('aria-selected') === 'true') || langItems[0];
           activeItem?.focus();
-        } else if (e.key === 'Escape') {
-          toggleMenu(false);
         }
+      });
+
+      scope.on(langMenu, 'keydown', e => {
+        if (closeLanguage(e)) return;
+        const step = { ArrowDown: 1, ArrowUp: -1 }[e.key];
+        if (!step && e.key !== 'Home' && e.key !== 'End') return;
+        e.preventDefault(); e.stopPropagation();
+        const at = langItems.indexOf(document.activeElement);
+        const next = e.key === 'Home' ? 0 : e.key === 'End' ? langItems.length - 1
+          : (at + step + langItems.length) % langItems.length;
+        langItems[next]?.focus();
       });
 
       for (const item of langItems) {

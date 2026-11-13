@@ -1,10 +1,15 @@
 import { Scope } from '../shared/Scope.js';
 
 const LINES = ['The room is quiet. Too quiet.', 'Each room opens with a single word.', 'Everything you need is already in front of you.'];
-export function createIntro(preferences) {
+export function createIntro(preferences, i18n = null) {
   const scope = new Scope(), screen = document.getElementById('intro-screen');
   const line = document.getElementById('intro-line'), title = document.getElementById('intro-title');
   let active = false, skip = false, started = 0;
+  let currentLine = -1;
+  const lines = () => i18n?.t('intro.legacyLines') ?? LINES;
+  if (i18n) scope.add(i18n.subscribe(() => {
+    if (active && currentLine >= 0) line.textContent = lines()[currentLine];
+  }));
   const sleepers = new Set();
   const requestSkip = () => { if (active && Date.now() - started > 400) { skip = true; for (const wake of [...sleepers]) wake(); } };
   scope.on(window, 'keydown', requestSkip); scope.on(screen, 'click', requestSkip);
@@ -25,9 +30,10 @@ export function createIntro(preferences) {
       active = true; skip = false; started = Date.now();
       line.textContent = ''; line.classList.remove('show'); title.classList.remove('show');
       screen.classList.remove('fade-out', 'hidden');
-      for (const text of LINES) {
+      for (let index = 0; index < lines().length; index++) {
         if (skip) break;
-        line.textContent = text; line.classList.add('show'); await sleep(2700);
+        currentLine = index;
+        line.textContent = lines()[index]; line.classList.add('show'); await sleep(2700);
         line.classList.remove('show'); if (skip) break; await sleep(1000);
       }
       line.classList.remove('show');

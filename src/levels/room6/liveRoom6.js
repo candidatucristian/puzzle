@@ -3,6 +3,7 @@ import { createLiveRoom, liveRoomSupported } from "../../shared/liveRoom.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
 import { RIBBON } from "../flags/trophies.js";
 import DATA from "./room6Live.json";
+import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Room VI, alive (shared/liveRoom.js; its plates, depth, probes and mobile
@@ -29,19 +30,22 @@ const map = (die, kind) => `room6_live_medal_${die}_${kind}`;
 
 export function loadRoom6Live(scene) {
   if (!liveRoomSupported()) return;
-  const image = (key, file) => { if (!scene.textures.exists(key)) scene.load.image(key, AT + file); };
+  const image = (key, file) => { optionalSceneAsset(scene, key); if (!scene.textures.exists(key)) scene.load.image(key, AT + file); };
   const binary = (key, file) => { if (!scene.cache.binary.exists(key)) scene.load.binary(key, AT + file); };
   image(KEY.plate, "plate.webp"); image(KEY.dim, "plate-dim.webp"); image(KEY.glass, "glass.webp");
   // (the depth is exact, byte for byte: lossless)
   image(KEY.depth, "depth.webp");
-  binary(KEY.cabinet, "probe-cabinet.hdr"); binary(KEY.mobile, "probe-mobile.hdr"); binary(KEY.model, "mobile.glb");
+  // (no mobile since 2026-11-05: the cot it turned over went to Room II, and a
+  //  bookcase stands in its place — room_vi_bookcase.py)
+  binary(KEY.cabinet, "probe-cabinet.hdr");
   for (const die of Object.values(DIE)) for (const kind of ["color", "orm", "normal"]) image(map(die, kind), `medals/${die}-${kind}.webp`);
 }
 
 export function room6LiveReady(scene) {
   return liveRoomSupported()
     && [KEY.plate, KEY.dim, KEY.glass, KEY.depth].every((k) => scene.textures.exists(k))
-    && [KEY.cabinet, KEY.mobile, KEY.model].every((k) => scene.cache.binary.exists(k));
+    && Object.values(DIE).every(die => ['color','orm','normal'].every(kind => scene.textures.exists(map(die,kind))))
+    && [KEY.cabinet].every((k) => scene.cache.binary.exists(k));
 }
 
 /** The picture the room is, for the rain on its window and for previews. */
@@ -59,18 +63,16 @@ export function mountRoom6Live(scene, { lit }) {
     // were it to, the back wall and its window would stay where they are)
     steady: 7.65,
   });
+  try {
   const cabinetLight = room.probe(scene.cache.binary.get(KEY.cabinet));
-  const nurseryLight = room.probe(scene.cache.binary.get(KEY.mobile));
 
   const medals = hangMedals(room, scene, cabinetLight, lit);
   dust(room);
-  let mobile = null, gone = false;
-  room.model(scene.cache.binary.get(KEY.model)).then((gltf) => {
-    if (gone) return;
-    mobile = turnMobile(room, gltf, nurseryLight);
-  }).catch(() => {});
+  const mobile = null;
+  let gone = false;
 
   return {
+    canvas: room.canvas,
     frame: (seconds, camera, hold) => room.frame(seconds, {
       zoom: camera.zoom, scrollX: camera.scrollX, scrollY: camera.scrollY, width: camera.width, height: camera.height,
     }, hold),
@@ -79,6 +81,7 @@ export function mountRoom6Live(scene, { lit }) {
     get mobile() { return mobile; },
     dispose: () => { gone = true; room.dispose(); },
   };
+  } catch (error) { room.dispose(); throw error; }
 }
 
 // ── the medals ───────────────────────────────────────────────────────────────

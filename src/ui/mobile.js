@@ -13,7 +13,7 @@ export function isTouchDevice() {
   return matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 }
 
-export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBars } = {}) {
+export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBars, i18n = null } = {}) {
   const root = document.documentElement;
   const compact = matchMedia(COMPACT);
   const scrim = document.getElementById('drawer-scrim');
@@ -28,15 +28,16 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   root.dataset.touch = String(touch);
   const standalone = isStandalone();
   const fullscreenButton = document.getElementById('compact-fullscreen');
-  if (isIOS() && !standalone) {
-    fullscreenButton.title = 'Add Ashcombe Manor to your Home Screen for full-screen play';
-    fullscreenButton.setAttribute('aria-label', 'How to play full screen on iPhone');
+  const t = (key, fallback) => i18n ? i18n.t(key) : fallback;
+  function words() {
+    fullscreenButton.setAttribute('aria-label', t('header.fullscreen', 'Full screen'));
+    if (isIOS() && !standalone) {
+      fullscreenButton.title = t('mobile.addHome', 'Add Ashcombe Manor to your Home Screen for full-screen play');
+      fullscreenButton.setAttribute('aria-label', t('mobile.fullscreenHelp', 'How to play full screen on iPhone'));
+    }
+    if (touch) document.getElementById('intro-skip').textContent = t('mobile.tapSkip', 'TAP TO SKIP');
   }
-
-  // the words on the start screen and the intro: a phone has no keys
-  if (touch) {
-    document.getElementById('intro-skip').textContent = 'TAP TO SKIP';
-  }
+  words();
 
   function say(text, ms = 2600) {
     if (!toast) return;
@@ -59,7 +60,7 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     const away = compact.matches && topAway;
     root.classList.toggle('ui-top-collapsed', away);
     handle.setAttribute('aria-expanded', String(!away));
-    handle.setAttribute('aria-label', `${away ? 'Show' : 'Hide'} the top bar`);
+    handle.setAttribute('aria-label', t(away ? 'header.showBar' : 'header.hideBar', `${away ? 'Show' : 'Hide'} the top bar`));
   }
   function close() {
     if (!open) return;
@@ -87,14 +88,14 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
   // the game controls available and explain how to launch the installed app.
   async function immersive() {
     if (isIOS() && !isStandalone()) {
-      say('Safari on iPhone cannot hide its browser bars. For full-screen play, tap Share → Add to Home Screen → Add, then open Ashcombe Manor from the new Home Screen icon.', 12000);
+      say(t('mobile.safariHelp', 'Safari on iPhone cannot hide its browser bars. For full-screen play, tap Share → Add to Home Screen → Add, then open Ashcombe Manor from the new Home Screen icon.'), 12000);
       return;
     }
     if (topAway) { restore(); return; }
     setTop(true);
     const went = await enterFullscreen();
-    if (went || standalone) say('Pull the handle at the top edge to bring the bar back');
-    else say('This browser offers no full screen. Pull the handle at the top edge to bring the bar back.', 4000);
+    if (went || standalone) say(t('mobile.restoreBar', 'Pull the handle at the top edge to bring the bar back'));
+    else say(t('mobile.noFullscreen', 'This browser offers no full screen. Pull the handle at the top edge to bring the bar back.'), 4000);
   }
   function restore() {
     setTop(false);
@@ -151,6 +152,7 @@ export function mountMobile(scope, { canOpenDrawer = () => true, onDrawer, onBar
     render();
   });
   scope.add(() => { for (const { panel } of Object.values(drawers)) panel.inert = false; });
+  if (i18n) scope.add(i18n.subscribe(() => { words(); render(); }));
   render();
   return {
     close, toggle, setTop, immersive, restore,

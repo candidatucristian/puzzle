@@ -1,6 +1,8 @@
 # Interface fonts
 
 These fonts are self-hosted so the game does not contact a font provider during play.
+The additional Simplified Chinese fonts and their provenance are documented in
+[`../cjk/README.md`](../cjk/README.md).
 Downloaded unchanged from Google Fonts on 2026-10-05. Exact asset and license URLs
 are recorded in `sources.json`.
 

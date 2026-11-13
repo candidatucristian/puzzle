@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The to-do page, on the dev server only (http://127.0.0.1:5173/todo/):
+         what is left before the Steam release, and the licence audit
+         (scripts/license-audit.mjs → audit.json). Never part of a build. -->
+    <title>De făcut · Ashcombe Manor</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/assets/images/favicon/manor.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./todo.css" />
+    <script type="module" src="./todo.js"></script>
+  </head>
+  <body>
+    <header class="head">
+      <p class="eyebrow">Ashcombe Manor</p>
+      <h1>De făcut</h1>
+      <span class="rule" aria-hidden="true"></span>
+      <p class="lede">Tot ce mai e până la Steam, și curățenia de licențe: de unde vine fiecare sunet și fiecare imagine din joc. Bifele se păstrează în browserul ăsta.</p>
+      <p class="stamp" id="stamp"></p>
+    </header>
+    <nav class="summary" id="summary" aria-label="Pe scurt"></nav>
+    <main id="sections"></main>
+    <footer class="foot">
+      <p>Datele vin din <code>node scripts/license-audit.mjs</code>: rulează-l din nou după schimbări, apoi reîncarcă pagina.</p>
+    </footer>
+  </body>
+</html>

@@ -13,12 +13,12 @@ export const REF = RENDER.ref;
 const BASE = `assets/images/Rally/v${RENDER.version}`;
 export const RK = {
   lit: "ry_r_lit", dark: "ry_r_dark", frontLit: "ry_r_front_lit", frontDark: "ry_r_front_dark",
-  people: "ry_r_people", board: "ry_r_board", tv: "ry_r_tv",
+  people: "ry_r_people", board: "ry_r_board", tv: "ry_r_tv_4096",
   car: (i) => `ry_r_car_${i}`,
 };
 const FILES = [
   [RK.lit, "stage-lit"], [RK.dark, "stage-dark"], [RK.frontLit, "front-lit"], [RK.frontDark, "front-dark"],
-  [RK.people, "people"], [RK.board, "board"], [RK.tv, "tv"],
+  [RK.people, "people"], [RK.board, "board"], [RK.tv, "tv-4096"],
   ...RENDER.cars.liveries.map((_, i) => [RK.car(i), `car-${i}`]),
 ];
 

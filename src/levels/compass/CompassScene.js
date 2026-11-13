@@ -12,10 +12,17 @@ const SPIN=1400,SPIN_END=3200,HOLD=1400,ARRIVE=700,KICK=380;
 export default class CompassScene extends BasePuzzleScene{
   constructor(){super({key:'Compass'});}
   init(data){this.skipFadeIn=data?.skipFade??true;}
+  get usesEscape(){return Boolean(this._mapOpen);}
   preload(){loadBottleCabin(this);}
 
   create(){
     this.beginScene();
+    const closeMap=event=>{
+      if(!this._mapOpen)return;
+      event.preventDefault();event.stopPropagation();this._letter?.close();
+    };
+    this.input.keyboard.on('keydown-ESC',closeMap);
+    this._sceneCleanups.add(()=>this.input.keyboard.off('keydown-ESC',closeMap));
     this.game.canvas.dataset.sceneColour='natural';
     this._sceneCleanups.add(()=>{delete this.game.canvas.dataset.sceneColour;});
     this._mapOpen=false;
@@ -57,7 +64,7 @@ export default class CompassScene extends BasePuzzleScene{
     const picture=this.add.image(W/2,H/2-7,K.map);
     const source=this.textures.get(K.map).getSourceImage();
     picture.setScale(Math.min(W*.95/source.width,H*.91/source.height));
-    const caption=this.add.text(W/2,H-12,'click anywhere to put it down',{
+    const caption=this.localizedText(W/2,H-12,'gameplay.putDown',{
       fontFamily:'Georgia, serif',fontStyle:'italic',fontSize:`${Math.max(11,Math.min(14,H/50))}px`,color:'#d2c1a1',
     }).setOrigin(.5,1);
     overlay.add([dark,picture,caption]);

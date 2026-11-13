@@ -5,8 +5,13 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(new URL("../../package.json", import.meta.url));
 const sharp = require("sharp");
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const out = `${root}/.artifacts/his-cot-native`;
-const dest = `${root}/public/assets/images/Cot/native-v1`;
+// (--source, --version: since 2026-11-05 the close-up is taken in Room II —
+//  first the library (his_cot_in_library.py → native-v2), now its nursery:
+//  his_cot_in_nursery.py → .artifacts/his-cot-nursery, published as native-v3)
+const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
+const out = `${root}/${option("--source", ".artifacts/his-cot-native")}`;
+const version = option("--version", "1");
+const dest = `${root}/public/assets/images/Cot/native-v${version}`;
 mkdirSync(out, { recursive: true });
 mkdirSync(dest, { recursive: true });
 
@@ -72,7 +77,7 @@ if (process.argv.includes("--prepare")) process.exit(0);
 for (const name of ["room", "front"]) {
   await sharp(`${out}/${name}.png`).webp({ quality: name === "room" ? 94 : 96, alphaQuality: 100 })
     .toFile(`${dest}/${name}.webp`);
-  console.log(`Published Cot/native-v1/${name}.webp`);
+  console.log(`Published Cot/native-v${version}/${name}.webp`);
 }
 const layout = JSON.parse(readFileSync(`${out}/nativeCot.json`, "utf8"));
 writeFileSync(`${root}/src/levels/cot/nativeCot.json`, JSON.stringify(layout, null, 1) + "\n");

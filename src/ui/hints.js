@@ -10,7 +10,7 @@ export function mountHints(scope, { levels, hints, i18n = null }) {
   function render() {
     const level = levels.definitions[levels.currentIndex];
     const revealed = hints.count(level.id);
-    document.getElementById('brief-level-name').textContent = level.name;
+    document.getElementById('brief-level-name').textContent = i18n ? i18n.getLevelName(level) : level.name;
     const existing = roomId === level.id ? list.children.length : 0;
     if (roomId !== level.id) list.replaceChildren();
     roomId = level.id;

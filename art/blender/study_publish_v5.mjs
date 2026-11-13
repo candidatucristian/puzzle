@@ -11,11 +11,14 @@ import sharp from 'sharp';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
-const source = '.artifacts/room-study-v5', target = 'public/assets/images/Room1';
+// (--source: the render's folder; .artifacts/room-study-v6 since 2026-11-05, the room after the user's picture)
+const source = option('--source', '.artifacts/room-study-v5'), target = 'public/assets/images/Room1';
 await mkdir(target, { recursive: true });
 // (--plate n: the plate's version; v10 since 2026-11-04, its desk lamp out)
 const plate = option('--plate', '9');
-await sharp(`${source}/lights-1.png`).webp({ quality: 92, effort: 6 }).toFile(`${target}/room1-lights-1-render-v${plate}.webp`);
+// (--sharpen: a light unsharp mask, so the floor nearest us reads as crisp as the desk)
+const crisp = process.argv.includes('--sharpen') ? (img) => img.sharpen({ sigma: 0.7, m1: 0.5, m2: 1.4 }) : (img) => img;
+await crisp(sharp(`${source}/lights-1.png`)).webp({ quality: 93, effort: 6 }).toFile(`${target}/room1-lights-1-render-v${plate}.webp`);
 console.log(`room1-lights-1-render-v${plate}.webp`);
 await copyFile(`${source}/Study.json`, 'src/levels/house/rooms/Study.json');
 console.log('Study.json');

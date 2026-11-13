@@ -5,6 +5,7 @@
 // right answer, green.
 
 import { CURSOR_SHAPES, CURSOR_ARROWS } from "../../shared/cursors.js";
+import { canvasFontFamily } from '../../shared/textLayout.js';
 
 export const INK = "#ebe5d6";
 export const DIM = "rgba(235,229,214,0.42)";
@@ -224,7 +225,7 @@ export function write(ctx, text, x, y, { size = 30, font = "IBM Plex Sans", weig
   ctx.fillStyle = color;
   ctx.textAlign = align;
   ctx.textBaseline = "alphabetic";
-  ctx.font = `${italic ? "italic " : ""}${weight} ${size}px "${hand ? "Architects Daughter" : font}"`;
+  ctx.font = `${italic ? "italic " : ""}${weight} ${size}px ${canvasFontFamily(hand ? 'Architects Daughter' : font)}`;
   if (spacing && "letterSpacing" in ctx) ctx.letterSpacing = `${spacing}px`;
   ctx.fillText(text, x, y);
   ctx.restore();
@@ -254,7 +255,7 @@ export function scribbleLine(ctx, x, y, w, { alpha = 1, seed = 1, width = 2, col
 export function cue(ctx, text, x, y, alpha = 1) {
   if (!text || alpha <= 0) return;
   ctx.save();
-  ctx.font = `400 26px "IBM Plex Sans"`;
+  ctx.font = `400 26px ${canvasFontFamily('IBM Plex Sans')}`;
   const w = ctx.measureText(text).width + 30;
   ctx.restore();
   fill(ctx, x, y - 42, w, 56, "#141414", 0.93 * alpha, 6);

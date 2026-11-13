@@ -1,8 +1,12 @@
 @import './ui-fonts.css';
 @import './base.css';
 @import './shell.css';
+@import './scene-loading.css';
 @import './noir-dialogs.css';
 @import './opening.css';
 @import './house-tools.css';
 @import './intro-video.css';
-@import './manual.css';
+@import './guide-card.css';
+@import './guide-study.css';
+@import './credits.css';
+@import './cjk.css';

@@ -40,7 +40,7 @@ export default class DeskView {
         const note = add(this.scene.add.container(right, H * 0.33)
           .setAngle(5).setScale(propScale).setDepth(-8));
         note.add(this.scene.add.image(0, 0, "mp_note_code"));
-        note.add(this.scene.add.text(0, -5, "don't answer\nif you don't\nknow who's\ncalling.", {
+        note.add(this.scene.localizedText(0, -5, 'gameplay.phone.note', {
           fontFamily: '"Special Elite", monospace', fontSize: "26px",
           lineSpacing: 9, color: "#493425",
         }).setOrigin(0.5));

@@ -2,19 +2,32 @@ import Phaser from "phaser";
 import { seededRandom, sketchSegment, drawPath, roundRectPoints } from "../shared/sketch.js";
 import { drawVignette } from "../shared/vignette.js";
 import { attachSceneFeedback } from '../shared/interaction.js';
+import { installSceneAssetLoading } from './sceneAssetLoading.js';
 
 /** Scene-local resources are released exactly once, including on replay. */
 export default class BasePuzzleScene extends Phaser.Scene {
+  constructor(config) {
+    super(config);
+    installSceneAssetLoading(this);
+  }
+
   get services() {
     return this.game.services;
   }
 
   beginScene() {
+    this._sceneGeneration = (this._sceneGeneration ?? 0) + 1;
     this._sceneCleanups = new Set();
     this._sceneTimeouts = new Set();
     this._sceneOpen = true;
     this._ambientTweens = new Set();
     this._ambientObjects = new Set();
+    this._localizedText = new Map();
+    if (this.services.i18n) {
+      this._sceneCleanups.add(this.services.i18n.subscribe(() => {
+        for (const [text, binding] of this._localizedText) this._refreshLocalizedText(text, binding);
+      }));
+    }
     this.events.once("shutdown", this._releaseScene, this);
     this.services.audio.enterScene(this);
     this._approach();
@@ -36,6 +49,27 @@ export default class BasePuzzleScene extends Phaser.Scene {
   get reducedMotion() { return this.services.preferences?.reducedMotion || false; }
   get ambientMotion() { return this.services.preferences?.ambientMotion ?? true; }
   get ambientEffects() { return this.services.preferences?.state.ambientEffects ?? true; }
+
+  localizedText(x, y, key, style, params = {}) {
+    return this.localizeText(this.add.text(x, y, '', style), key, params);
+  }
+
+  localizeText(text, key, params = {}) {
+    if (!this._localizedText.has(text)) {
+      text.once('destroy', () => this._localizedText.delete(text));
+    }
+    const binding = { key, params, family: this._localizedText.get(text)?.family ?? text.style.fontFamily };
+    this._localizedText.set(text, binding);
+    return this._refreshLocalizedText(text, binding);
+  }
+
+  _refreshLocalizedText(text, { key, params, family }) {
+    text.setFontFamily(this.services.i18n?.language === 'zh-Hans' ? `"Ashcombe CJK Sans", ${family}` : family);
+    text.setText(this.services.i18n?.t(key, params) ?? key);
+    // Phaser otherwise skips rasterizing unchanged text when a font finishes loading.
+    text.updateText();
+    return text;
+  }
 
   ambientTween(config) {
     for (const old of this._ambientTweens) if (old.isDestroyed()) this._ambientTweens.delete(old);

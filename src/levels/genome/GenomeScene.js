@@ -42,7 +42,7 @@ export default class GenomeScene extends BasePuzzleScene {
     const text = (x, y, value, size, color = '#a4cec8') => this.add.text(x, y, value, {
       fontFamily: MONO, fontSize: size + 'px', color,
     }).setResolution(2);
-    text(s.x + s.w * 0.035, s.y + s.h * 0.045, 'MOLECULAR ARCHIVE  /  DNA', Math.min(16, s.h * 0.065), '#a4bbb9');
+    this.localizeText(text(s.x + s.w * 0.035, s.y + s.h * 0.045, '', Math.min(16, s.h * 0.065), '#a4bbb9'), 'gameplay.genome.archive');
     const power = this.add.graphics();
     power.fillStyle(0x95d8bd, 0.75); power.fillCircle(s.x + s.w * 0.952, s.y + s.h * 0.066, Math.max(1.5, 2.5 * k));
     this._helix = this.add.graphics().setDepth(-5);
@@ -62,12 +62,12 @@ export default class GenomeScene extends BasePuzzleScene {
       [f.x, f.y + f.h, 1, -1], [f.x + f.w, f.y + f.h, -1, -1]]) {
       selected.lineBetween(x, y, x + dx * corner, y); selected.lineBetween(x, y, x, y + dy * corner);
     }
-    text(f.x, f.y - Math.max(12, s.h * 0.055), "CODING STRAND  5' -> 3'  /  STANDARD CODE", Math.min(12, s.w / 45, s.h * 0.058), '#8bb8b5');
+    this.localizeText(text(f.x, f.y - Math.max(12, s.h * 0.055), '', Math.min(12, s.w / 45, s.h * 0.058), '#8bb8b5'), 'gameplay.genome.strand');
     this._fragmentText = text(f.x + f.w / 2, f.y + f.h * 0.47, FRAGMENT_TEXT, L.font, '#e0f0df')
       .setOrigin(0.5).setDepth(1).setShadow(0, 0, '#89d2bc', 7, false, true);
     this._reader = this.add.graphics();
-    this._clue = text(s.x + s.w / 2, s.y + s.h * 0.92,
-      'The building blocks of life spell the answer.', Math.max(9, Math.min(18, s.w / 32, s.h * 0.065)), '#b4c7bf').setOrigin(0.5);
+    this._clue = this.localizeText(text(s.x + s.w / 2, s.y + s.h * 0.92,
+      '', Math.max(9, Math.min(18, s.w / 32, s.h * 0.065)), '#b4c7bf').setOrigin(0.5), 'gameplay.genome.clue');
     this._lastFeed = -1;
     this._render();
   }

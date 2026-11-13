@@ -14,7 +14,7 @@ export default class NativeModemScene extends BasePuzzleScene {
   init(data) { this.skipFadeIn = data?.skipFade ?? true; }
 
   preload() {
-    if (!this.cache.audio.exists('hardware')) this.load.audio('hardware', 'assets/sounds/Modem/hardwaresound.mp3');
+    if (!this.cache.audio.exists('hardware')) this.load.audio('hardware', 'assets/sounds/Modem/droid-hum.mp3');
     for (const name of names) if (!this.textures.exists(key(name))) {
       this.load.image(key(name), `assets/images/Modem/native-v${native.version}/${name}.${name === 'room' ? 'webp' : 'png'}`);
     }

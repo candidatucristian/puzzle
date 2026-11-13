@@ -1,3 +1,5 @@
+> **Superseded 2026-11-12.** The game no longer opens envelopes: found letters are rendered sheets (`letter_held.py`; see README.md, "A letter found"). Kept for its history.
+
 # A found letter: native Blender animation
 
 The runtime scene uses original geometry and keyframes authored by

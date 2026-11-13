@@ -64,14 +64,27 @@ export default class MeasuresScene extends BasePuzzleScene {
     this._burnEndsAt = null;
     this.input.dragDistanceThreshold = 8;
     // the bottles, in three dimensions: three.js comes with this level alone
-    import("./stage3d.js").then(({ MeasuresStage }) => {
-      if (!this.sys.isActive()) return;
-      this._stage = new MeasuresStage();
+    const generation = this._sceneGeneration;
+    return import("./stage3d.js").then(({ MeasuresStage }) => {
+      if (!this.sys?.isActive?.() || generation !== this._sceneGeneration) return;
+      try { this._stage = new MeasuresStage(); }
+      catch (error) { this._stage = null; console.warn('Measures uses its painted vessels:', error); }
       this._sceneCleanups.add(() => { this._stage?.dispose(); this._stage = null; });
+      if (this._stage) {
+        const stage = this._stage;
+        const lost = event => {
+          event.preventDefault();
+          if (!this._sceneOpen) return;
+          this._teardown(); stage.dispose(); this._stage = null;
+          this._build(this.cameras.main.width, this.cameras.main.height);
+        };
+        stage.canvas.addEventListener('webglcontextlost', lost, { once: true });
+        this._sceneCleanups.add(() => stage.canvas.removeEventListener('webglcontextlost', lost));
+      }
       this._build(this.cameras.main.width, this.cameras.main.height);
       this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
+      if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
     });
-    if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
   // ── construction ───────────────────────────────────────────────────────────
@@ -119,14 +132,16 @@ export default class MeasuresScene extends BasePuzzleScene {
     // the bottles drawn in three dimensions, over the render: their drawn
     // glass and water stood aside
     const stage = this._stage;
-    stage.fit(W, H, L, BOTTLES.map((ml) => `${ml} ml`), this.textures.get(KEYS.room).getSourceImage());
-    if (this.textures.exists(STAGE)) this.textures.remove(STAGE);
-    this._stageTexture = this.textures.addImage(STAGE, stage.canvas);
-    // (the render is drawn with them, behind them, to be seen through them)
-    this.add.image(0, 0, STAGE).setOrigin(0, 0).setDepth(4);
+    if (stage) {
+      stage.fit(W, H, L, BOTTLES.map((ml) => `${ml} ml`), this.textures.get(KEYS.room).getSourceImage());
+      if (this.textures.exists(STAGE)) this.textures.remove(STAGE);
+      this._stageTexture = this.textures.addImage(STAGE, stage.canvas);
+      // (the render is drawn with them, behind them, to be seen through them)
+      this.add.image(0, 0, STAGE).setOrigin(0, 0).setDisplaySize(W, H).setDepth(4);
+    }
     // the rain on the window, over that picture (a bottle is never lifted so high)
     if (L.rain) addRainGlass(this, { ...L.rain, rect: boxOf(L.rain.panes, 2), picture: this.textures.get(KEYS.room).getSourceImage(), depth: 4.5 });
-    for (const b of this._vessels) if (b.v.kind === "bottle") { b.glass.setVisible(false); b.water.setVisible(false); b.shadow.setVisible(false); }
+    for (const b of this._vessels) if (stage && b.v.kind === "bottle") { b.glass.setVisible(false); b.water.setVisible(false); b.shadow.setVisible(false); }
     this._drawn = null;
     this._paintLitmus();
     this._makeBurn();

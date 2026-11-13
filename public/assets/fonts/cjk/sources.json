@@ -1,0 +1,19 @@
+{
+  "downloaded": "2026-11-08",
+  "assets": [
+    {
+      "file": "NotoSansSC-Variable.ttf",
+      "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
+      "bytes": 17772300,
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+      "license": "NotoSansSC-OFL.txt"
+    },
+    {
+      "file": "NotoSerifSC-Variable.ttf",
+      "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf",
+      "bytes": 25125512,
+      "sha256": "050080d9255a86808f2945bffac582b31ef32bc36411ce29563b4961670c66f9",
+      "license": "NotoSerifSC-OFL.txt"
+    }
+  ]
+}

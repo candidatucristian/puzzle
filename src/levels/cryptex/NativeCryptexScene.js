@@ -16,6 +16,8 @@ export default class NativeCryptexScene extends BasePuzzleScene {
 
   init(data) { this.skipFadeIn = data?.skipFade ?? true; }
 
+  get usesEscape() { return Boolean(this._overlayOpen); }
+
   preload() {
     for (const name of [...Array.from({ length: 8 }, (_, i) => `candles-${i}`), "outer-lume", "rotor", "letter-open"]) {
       if (!this.textures.exists(key(name))) this.load.image(key(name), `${PATH}/${name}.webp`);
@@ -27,6 +29,12 @@ export default class NativeCryptexScene extends BasePuzzleScene {
 
   create() {
     this.beginScene();
+    const closeLetter = event => {
+      if (!this._overlayOpen) return;
+      event.preventDefault(); event.stopPropagation(); this._closeLetter();
+    };
+    this.input.keyboard.on('keydown-ESC', closeLetter);
+    this._sceneCleanups.add(() => this.input.keyboard.off('keydown-ESC', closeLetter));
     this.input.mouse.disableContextMenu();
     this.isSolved = false;
     this._wheelAngle = 0;
@@ -141,7 +149,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     const image = this.add.image(W / 2, H / 2 - 8, key("letter-open"));
     const source = this.textures.get(key("letter-open")).getSourceImage();
     const fit = Math.min(W * .9 / source.width, (H - 40) * .96 / source.height);
-    const caption = this.add.text(W / 2, H - 15, "click anywhere to put it down", {
+    const caption = this.localizedText(W / 2, H - 15, 'gameplay.putDown', {
       fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: "italic", fontSize: "13px", color: "#d0c7b6",
     }).setOrigin(.5, 1);
     this._letter.add([backdrop, image, caption]);

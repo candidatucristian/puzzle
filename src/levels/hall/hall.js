@@ -207,11 +207,11 @@ export function paintHall(scene, L) {
   }
   addCanvasTexture(t, K.glow, glowCanvas());
   if (L.gate) {
-    addCanvasTexture(t, K.gateL, L.render ? hallRenderPart(L, "gateL") : paintGateLeaf(L, -1));
-    addCanvasTexture(t, K.gateR, L.render ? hallRenderPart(L, "gateR") : paintGateLeaf(L, 1));
+    addCanvasTexture(t, K.gateL, L.render?.gateL ? hallRenderPart(L, "gateL") : paintGateLeaf(L, -1));
+    addCanvasTexture(t, K.gateR, L.render?.gateR ? hallRenderPart(L, "gateR") : paintGateLeaf(L, 1));
   }
   if (K.fog) addCanvasTexture(t, K.fog, paintFogBank());
-  if (K.pendulum) addCanvasTexture(t, K.pendulum, L.render ? hallRenderPart(L, "pendulum") : paintPendulum(L.clock));
+  if (K.pendulum) addCanvasTexture(t, K.pendulum, L.render?.pendulum ? hallRenderPart(L, "pendulum") : paintPendulum(L.clock));
   return { keys: K };
 }
 
@@ -383,7 +383,7 @@ export function paintDoorSwing(scene, L, d, lit) {
     return shape;
   };
   draw(0);
-  return { box, key, draw, resolution };
+  return { box, key, draw, resolution, canvas };
 }
 
 /** What stands in the hall before a door (a plant on its stand, a pot on the

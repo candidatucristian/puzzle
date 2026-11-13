@@ -16,7 +16,7 @@ export class CotStage {
   constructor(ids, { atlas, photograph = null }) {
     this.canvas = document.createElement("canvas");
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, premultipliedAlpha: true }));
-    r.setPixelRatio(Math.min(2,Math.max(1.25,window.devicePixelRatio||1)));
+    r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
     r.setClearColor(0x000000, 0);
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.toneMapping = THREE.ACESFilmicToneMapping;
@@ -26,14 +26,19 @@ export class CotStage {
     const scene = (this.scene = new THREE.Scene());
     // what the metal and the glaze reflect: a dim room
     const pmrem = new THREE.PMREMGenerator(r);
-    this.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    const room = new RoomEnvironment();
+    this.environmentTarget = pmrem.fromScene(room, 0.04);
+    this.env = this.environmentTarget.texture;
+    room.dispose();
     pmrem.dispose();
     scene.environment = this.env;
     scene.environmentIntensity = .34;
     scene.add(new THREE.HemisphereLight(0xb6c9df, 0x4f4030, .48));
-    // the night-light: warm, beyond the cot on the right, a little behind it
-    const lamp = (this.lamp = new THREE.DirectionalLight(0xffd3a0, 1.65));
-    lamp.position.set(.82, .88, -.12);
+    // the night light's light, warm, from the chest of drawers at the cot's
+    // right and in front of it (since 2026-11-05 the cot stands in Room II's
+    // nursery: his_cot_in_nursery.py lights its close-up so)
+    const lamp = (this.lamp = new THREE.DirectionalLight(0xffcc94, 1.65));
+    lamp.position.set(.85, 1.0, 1.05);
     lamp.castShadow = true;
     lamp.shadow.mapSize.set(2048, 2048);
     Object.assign(lamp.shadow.camera, { left: -0.8, right: 0.8, top: 0.8, bottom: -0.8, near: 0.1, far: 4 });
@@ -41,9 +46,9 @@ export class CotStage {
     lamp.shadow.bias = -0.0004;
     lamp.shadow.normalBias = .0006;
     scene.add(lamp, lamp.target);
-    // the moon, from the window on the left
-    const moon = new THREE.DirectionalLight(0xb7d1ff, .90);
-    moon.position.set(-1.02, .80, .12);
+    // the moon, from the nursery's window behind the cot
+    const moon = new THREE.DirectionalLight(0xb7d1ff, .62);
+    moon.position.set(.1, .9, -1.3);
     scene.add(moon);
     // a glint, carried down the gold man when he is touched
     this.glint = new THREE.PointLight(0xfff0c8, 0, 0.35, 2);
@@ -82,6 +87,8 @@ export class CotStage {
    *  where the picture has (a, b) on its mattress, in a W x H screen. */
   fit(W, H, L) {
     this.W = W; this.H = H;
+    const limit = this.renderer.capabilities.maxTextureSize;
+    this.renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1,limit/W,limit/H));
     this.renderer.setSize(W, H, false);
     const cam = this.camera;
     const spec = L.native;
@@ -143,8 +150,11 @@ export class CotStage {
   }
 
   dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
     const geometries = new Set(), materials = new Set(), textures = new Set();
     this.scene.traverse((o) => {
+      o.shadow?.map?.dispose();
       if (!o.isMesh && !o.isLine) return;
       geometries.add(o.geometry);
       for (const m of [].concat(o.material)) {
@@ -155,7 +165,7 @@ export class CotStage {
     for (const geometry of geometries) geometry.dispose();
     for (const texture of textures) texture.dispose();
     for (const material of materials) material.dispose();
-    this.env.dispose();
+    this.environmentTarget.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }

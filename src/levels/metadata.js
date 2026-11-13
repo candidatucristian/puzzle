@@ -164,7 +164,7 @@ const metadata = [
     "id": "modem",
     "key": "Modem",
     "name": "The Room Beneath the Desk",
-    "summary": "Small lights blink on a router beneath the desk lamp.",
+    "summary": "Small lights blink on a router on the toy chest.",
     "code": "HTTPS",
     "altCode": null,
     "hint": {
@@ -172,11 +172,11 @@ const metadata = [
       "sound": false,
       "tool": true
     },
-    "description": "An old router on a desk in a lamplit room at night shows the word HTTPS as ASCII binary, one letter at a time across its seven right-hand LEDs — each letter's 7-bit ASCII code at once (the always-zero leading bit has no LED; a plain space stands between the counters and the letter), an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs on the left lights solid green (every light on the router is the same soft green; the gap sets the counters apart from the bits), confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
+    "description": "An old router on the toy chest by the right wall of Room II's nursery, apart from Silas's desk since 2026-11-06 (its close-up is taken in the room: art/blender/silas_desk.py builds it, room_nursery.py places it, modem_room.py), shows the word HTTPS as ASCII binary, one letter at a time across its seven right-hand LEDs — each letter's 7-bit ASCII code at once (the always-zero leading bit has no LED; a plain space stands between the counters and the letter), an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs on the left lights solid green (every light on the router is the same soft green; the gap sets the counters apart from the bits), confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
     "references": [
       "modem/puzzle.js: MODEM_WORD = \"HTTPS\", planTransmission() — ASCII binary LED schedule",
       "modem/NativeModemScene.js — original transmission drives twelve separately rendered optical/reflection layers",
-      "art/blender/modem_room.py — original Blender room and router; exactly five counter lenses, a gap, seven bit lenses, and the W. LEIBNIZ maker clue",
+      "art/blender/silas_desk.py and modem_room.py — the original Blender router, on the toy chest in the nursery; exactly five counter lenses, a gap, seven bit lenses, and the W. LEIBNIZ maker clue",
       "modem/nativeModem.json — camera-projected LED crops and safe full-screen framing",
       "art/blender/modem-room-sources.md — photographed CC0 resource provenance and native render pipeline"
     ]
@@ -330,7 +330,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "In Room VI, the boy's dark mahogany cot opens into an original Blender/Cycles nursery: turned joinery, brass screws, woven moon-and-star cotton, shallow sheet wrinkles, sewn mattress piping, teal plaster, botanical curtains and a warm pleated bedside lamp. Fifteen belongings are modeled into the render with real shadows: a linen pillow, knitted bootees, mohair bear, rattle, knitted rabbit, folded blanket, pull-along duck, locomotive, rocking horse, alphabet blocks, stitched leather ball, stacking rings, spinning top, fire engine and linen elephant. The five clues and sewn mobile are live 3D meshes using the exact Blender camera and CC0 material scans. Resizing preserves the image's proportions; a separate transparent render of the lowered front rail occludes the toys correctly. Left to right: a walnut tango music box with turning porcelain dancers, a gold Oscar replica, a red Romeo and Juliet, a Chaplin figurine with modeled eyes and moustache that raises its bowler, and a cream hotel with an entrance canopy, HOTEL sign, reception bell and windows that light when it rings. Their radio-alphabet words give TORCH. Only these five objects answer clicks and drags. Positions and active interactions survive resizing; reduced motion keeps the toys usable with restrained effects.",
+    "description": "In Room II (since 2026-11-05; it was Room VI's), the boy's dark mahogany cot stands in the middle of the baby's nursery the room became (art/blender/room_nursery.py), and its close-up is rendered in that room itself (art/blender/his_cot_in_nursery.py, the puzzle's camera set to the cot as his_cot.py had it): turned joinery, brass screws, woven moon-and-star cotton, shallow sheet wrinkles, sewn mattress piping, the nursery's sash window and linen curtains behind it, the night light's warm light from the right and the moon from the window behind. Fifteen belongings are modeled into the render with real shadows: a linen pillow, knitted bootees, mohair bear, rattle, knitted rabbit, folded blanket, pull-along duck, locomotive, rocking horse, alphabet blocks, stitched leather ball, stacking rings, spinning top, fire engine and linen elephant. The five clues and sewn mobile are live 3D meshes using the exact Blender camera and CC0 material scans. Resizing preserves the image's proportions; a separate transparent render of the lowered front rail occludes the toys correctly. Left to right: a walnut tango music box with turning porcelain dancers, a gold Oscar replica, a red Romeo and Juliet, a Chaplin figurine with modeled eyes and moustache that raises its bowler, and a cream hotel with an entrance canopy, HOTEL sign, reception bell and windows that light when it rings. Their radio-alphabet words give TORCH. Only these five objects answer clicks and drags. Positions and active interactions survive resizing; reduced motion keeps the toys usable with restrained effects.",
     "references": [
       "TOYS (cot/puzzle.js) — the five left to right, the radio word each is and where each lies in the cot; cotWord() spells TORCH",
       "art/blender/his_cot.py and his_cot_publish.mjs — original modeled nursery and fifteen fixed belongings, Cycles room and transparent front rail; his-cot-sources.md records provenance",
@@ -380,7 +380,7 @@ const metadata = [
       "cars.js — one 3D rally car rendered in software at every angle the drive needs (FRAME_COUNT views; side-on, exactly, at the line); paintPanel() puts the number on the white door panel",
       "stage.js — the floodlit stage, its ground lit pixel by pixel by the real lamps; CAR_LANES keeps each car on its own line, the close pairs one near and one far",
       "_planRound() / _runRace() — work out launches and whooshes from RALLY_CROSS_MS, then lights out, then the podium (RALLY_PODIUM_MS later); the race runs once",
-      "_soundLead() — measures the loudest moment of wroom.mp3 so it lands on the line",
+      "_soundLead() — measures the loudest moment of car-pass.mp3 so it lands on the line",
       "podium.js: RY_WINNERS — the top three and their cups; drawPodium() paints the board",
       "vhs.js: addVhs() — the tape look over the picture and RACE_CAPTION, the broadcaster's caption"
     ]
@@ -397,7 +397,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "A desk in Room II at night, a Blender render lit by one green banker's lamp: four electronic clocks — a red LED clock on the walnut panelling (22:03), a clock radio on a shelf (14:11), an amber alarm clock (11:47) and a folding LCD travel clock (23:44) on the desk — and on the desk's leather an adding calculator (digits, 00, +, = and C). Read each clock as a plain number, the colon ignored, and add them: 2203 + 1411 + 1147 + 2344 = 7105. The calculator's seven-segment display, turned upside down, reads SOIL: read from the last digit to the first, 5 is S, 0 is O, 1 is I and 7 is L. The calculator does not turn over; the player reads the display upside down without any help from the game.",
+    "description": "Silas's desk in the corner of Room II's nursery at night (since 2026-11-05 the close-up is taken in the room itself: art/blender/silas_desk.py is the one desk the room and both its desk puzzles show), a Blender render lit by its green banker's lamp: four electronic clocks — a red LED clock on the wall over the walnut dado (22:03), a clock radio on a shelf (14:11), an amber alarm clock (11:47) and a folding LCD travel clock (23:44) on the desk — and on the desk's leather an adding calculator (digits, 00, +, = and C). Read each clock as a plain number, the colon ignored, and add them: 2203 + 1411 + 1147 + 2344 = 7105. The calculator's seven-segment display, turned upside down, reads SOIL: read from the last digit to the first, 5 is S, 0 is O, 1 is I and 7 is L. The calculator does not turn over; the player reads the display upside down without any help from the game.",
     "references": [
       "OVERTIME_CLOCKS = [\"22:03\", \"14:11\", \"11:47\", \"23:44\"] — the four clocks; the order does not matter, all are added",
       "clockNumber() / overtimeTotal() — 22:03 → 2203; 2203 + 1411 + 1147 + 2344 = 7105",
@@ -435,7 +435,7 @@ const metadata = [
     "code": "LOST",
     "altCode": null,
     "hint": {
-      "text": "THE NEEDLE WILL NOT SETTLE.\nOpen the map lying on the table.",
+      "text": "The map's numbers are directions, the same as on the compass card. Each line is a little journey — make it on paper.",
       "sound": false,
       "tool": false
     },
@@ -452,7 +452,7 @@ const metadata = [
     "id": "bookshelf",
     "key": "Bookshelf",
     "name": "Lamplight in the Library",
-    "summary": "Five books stand out on the shelf at the eye in Room II's end bookcase.",
+    "summary": "Five books stand out on the boy's low bookcase in Room VI, where his cot stood.",
     "code": "SIGHT",
     "altCode": null,
     "hint": {
@@ -460,7 +460,7 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "Room II's own end bookcase, come up close (since 2026-11-04 the puzzle is rendered from the room's scene itself, art/blender/library_bookcase_puzzle.py: the same shelves, books and light as the room). On the shelf at the eye five books stand pulled a little out, each with a one-word title in gold on its spine and a paper bookmark in it with a number: SHADOW 1, MIRROR 2, MAGIC 3, HOUND 1, WATER 3, left to right. The bookmark is the index into the title (a book cipher): the 1st letter of SHADOW, the 2nd of MIRROR, the 3rd of MAGIC, the 1st of HOUND, the 3rd of WATER — S I G H T. A click on one of the five draws it a little further out, and back.",
+    "description": "Room VI's low mahogany bookcase, under the family portrait where the boy's cot stood (since 2026-11-05: the cot went to Room II; art/blender/room_vi_bookcase.py builds it into the nursery and library_bookcase_puzzle.py --room 6 renders the close-up from that scene — the same shelves, books and light as the room). On the shelf at the eye five books stand pulled a little out, each with a one-word title in gold on its spine and a paper bookmark in it with a number: SHADOW 1, MIRROR 2, MAGIC 3, HOUND 1, WATER 3, left to right. The bookmark is the index into the title (a book cipher): the 1st letter of SHADOW, the 2nd of MIRROR, the 3rd of MAGIC, the 1st of HOUND, the 3rd of WATER — S I G H T. A click on one of the five draws it a little further out, and back.",
     "references": [
       "BOOKS (bookshelf/puzzle.js) — the five titles and their bookmarks, left to right",
       "readBook() / readShelf() — the bookmark's number is the letter's place in the title, counting from 1",

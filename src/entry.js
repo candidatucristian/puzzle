@@ -1,14 +1,19 @@
 import './ui/styles/index.css';
 import './ui/styles/casefile-materials.css';
-import './ui/styles/notebook-materials.css';
 import './ui/styles/inspector-desk-geometry.css';
 import './ui/styles/inspector-desk.css';
 import './ui/styles/letter-arrival.css';
 import './ui/styles/desktopOnly.css';
+import './ui/styles/settings-tabs.css';
 import './levels/cryptex/scene.css';
 import { createLoadingScreen } from './ui/loading.js';
 import { desktopOnly, showDesktopOnly } from './ui/platform.js';
+import { SafeStorage } from './core/SafeStorage.js';
+import { I18n, applyI18nToDOM } from './core/i18n.js';
 
+const i18n = new I18n(new SafeStorage());
+applyI18nToDOM(i18n);
+document.title = i18n.t('start.title');
 const handheld = desktopOnly();
 
 if (handheld) {
@@ -25,7 +30,7 @@ ready.then(app => { if (app && typeof window !== 'undefined') window.__descipher
 // (levels/room6/), once the game has loaded — even if its door is still
 // locked in this browser.
 const trial = new URLSearchParams(location.search);
-if (!handheld && (trial.has('sketch') || trial.has('render'))) {
+if (import.meta.env.DEV && !handheld && (trial.has('sketch') || trial.has('render'))) {
   ready.then(app => {
     if (!app) return;
     const go = () => {
@@ -40,9 +45,9 @@ if (!handheld && (trial.has('sketch') || trial.has('render'))) {
 }
 
 function startGame() {
-  const loading = createLoadingScreen();
+  const loading = createLoadingScreen(i18n);
   return import('./main.js').then(app => {
-    app.start(loading);
+    app.start(loading, i18n);
     return app;
   }).catch(error => { loading.fail(error); return null; });
 }

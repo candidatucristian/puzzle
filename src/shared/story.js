@@ -126,22 +126,22 @@ export const INTRO = Object.freeze({
 export const OPENING = Object.freeze({
   page: {
     title: "The Ashcombe Case",
-    place: "Exeter · Inspector Arthur Wren's residence",
-    date: "12 October 2001",
+    place: "Devon, England",
+    date: "October 1961",
     story: [
-      "For twenty-two years, Inspector Arthur Wren has kept one file within reach of his desk. It is the oldest unsolved case in the county, and the only one he has never been able to put down. Every October he takes it out and reads it again, as if this year the pages might say something different.",
-      "His father, Constable Thomas Wren, was the first policeman at Ashcombe House the morning the case began, and wrote its first report. He died this spring without ever speaking of it. Tonight, on the eve of the fortieth anniversary, Arthur came home to a letter waiting under his door. No stamp. No postmark. Only his name, in a hand he almost knows.",
+      "On the night of 13 October 1961, three siblings locked every door of their house in Devon and walked out into the dark. Nothing in the house was missing. No one was hurt. No one ever found out why.",
+      "A year later the case was closed. Only one policeman never let it go.",
     ],
   },
   asides: [
-    { at: [1.4, 8], over: "Exeter · 12 October 2001", lines: ["That night, at Inspector Wren's residence."] },
-    { at: [9.6, 17.8], over: "Inspector Arthur Wren · Devon & Cornwall Constabulary", lines: ["Twenty-two years on the force. More cases closed than anyone at the station.", "One left open."] },
-    { at: [19.4, 27.6], over: "October 1961", lines: ["He was only a small boy the autumn it began.", "His father came home one morning that October, and never said a word about where he had been."] },
-    { at: [29.2, 37.4], over: "Constable Thomas Wren", lines: ["He was the first man at the door of Ashcombe House.", "He wrote the report, closed his notebook, and kept it closed for forty years."] },
-    { at: [39, 45.8], over: "Case 61/1013", lines: ["Arthur has read the file more times than he can count.", "One line in it has never let him rest."] },
-    { at: [47, 53.4], over: "The dining room", lines: ["The table had been laid for four.", "Who was the fourth place for?"] },
-    { at: [54.6, 61.6], over: "This spring", lines: ["His father died with the answer, if he ever had it.", "Arthur was left with the file, and the question."] },
-    { at: [63, 70.2], over: "Tonight", lines: ["After forty years, someone has written to him.", "The letter is signed with two initials: I. A."] },
+    { at: [1.4, 8], over: "Exeter · 12 October 2001", lines: ["Every October, I go back to the same case."] },
+    { at: [9.6, 17.8], over: "Inspector Arthur Wren", lines: ["Father died in the spring. The house has been too quiet since."] },
+    { at: [19.4, 27.6], lines: ["Tonight, a letter under the door. No stamp. No postmark."] },
+    { at: [29.2, 37.4], lines: ["Only my name, in a hand I almost know."] },
+    { at: [39, 45.8], over: "Case 61/1013", lines: ["I know the file by heart. I open it anyway."] },
+    { at: [47, 53.4], over: "Ashcombe House · 1961", lines: ["Father was first at their door that morning. He never spoke of what he saw."] },
+    { at: [54.6, 61.6], lines: ["I have stood at their gate more often than I would admit. I have never gone in."] },
+    { at: [63, 70.2], over: "Forty years tomorrow", lines: ["Forty years of asking. Tonight, someone answered."] },
   ],
 });
 

@@ -2,6 +2,7 @@ import { grain, vignette, makeCanvas, addCanvasTexture } from "../../shared/pain
 import { MOLECULES } from "./puzzle.js";
 import { drawMoleculeSketch } from "./sketch.js";
 import DESK from "./notebookDesk.json";
+import { canvasFontFamily, wrapCanvasText } from '../../shared/textLayout.js';
 
 /** Silas's laboratory notebook, open on his desk under the lamp: an old
  *  green cloth binding, the block of pages thick at either side, the paper
@@ -19,7 +20,7 @@ export const BOOK = { desk: "mo_desk", light: "mo_light", flip: "mo_flip" };
 export const NOTEBOOK_DESK = `mo_notebook_desk_v${DESK.version}`;
 export const NOTEBOOK_DESK_URL = `assets/images/Molecules/notebook-desk-v${DESK.version}.webp`;
 const R = 2; // the pages are painted at twice their size, for crisp ink
-const HAND = '"Cormorant Garamond", Georgia, "Times New Roman", serif'; // his hand: an old book's italic
+const HAND = canvasFontFamily('Cormorant Garamond'); // his hand: an old book's italic
 
 // The notebook's own measure, in the picture of it the Blender render was laid
 // out to (art/blender/notebook_desk.py: 1536 x 1024 px, 40 px a centimetre):
@@ -64,10 +65,10 @@ export function layoutBook(W, H, near = 1) {
 
 // the desk is a texture; the pages and the spine's shading are canvases,
 // handed to the page turner, which draws them
-export function paintBook(textures, L, photo, desk) {
+export function paintBook(textures, L, photo, desk, i18n) {
   addCanvasTexture(textures, BOOK.desk, paintDesk(L, desk));
   addCanvasTexture(textures, BOOK.light, paintLight(L));
-  return { shade: paintShade(L), faces: MOLECULES.map((m, i) => paintPage(L, m, i, photo)) };
+  return { shade: paintShade(L), faces: MOLECULES.map((m, i) => paintPage(L, m, i, photo, i18n)) };
 }
 
 export function releaseBook(textures) {
@@ -135,7 +136,7 @@ function paintShade(L) {
 // leaf is turned: the whole reach of a leaf from the spine, out of the
 // photograph, cut to the top sheet's own shape — so a leaf lifted is one
 // sheet, and the edges of the pages under it stay where they are.
-function paintPage(L, m, index, photo) {
+function paintPage(L, m, index, photo, i18n) {
   const lw = Math.round(L.pw * R), lh = Math.round(L.ph * R);
   const c = makeCanvas(lw, lh);
   const g = c.getContext("2d");
@@ -149,12 +150,14 @@ function paintPage(L, m, index, photo) {
   const pw = N.box.w * k, ph = N.box.h * k;
   g.save();
   g.translate(((right ? N.box.right : N.box.left) - x0) * k, (N.box.top - N.top) * k);
-  drawPageHeading(g, pw, ph, index);
-  const caption=drawMoleculeSketch(g,m,pw*.5,ph*.37,pw*.24);
+  drawPageHeading(g, pw, ph, index, i18n?.t('moleculesNotebook.heading') ?? 'LABORATORY NOTES');
+  const original=drawMoleculeSketch(g,m,pw*.5,ph*.37,pw*.24);
+  const caption=i18n?.t('moleculesNotebook.'+m.shape) ?? original;
   g.fillStyle="rgba(53,43,31,.65)";g.textAlign="center";
   g.font=`italic 500 ${Math.round(ph*.027)}px ${HAND}`;
-  g.fillText(caption,pw*.5,ph*.55);
-  drawNotes(g,m.notes,pw,ph);
+  g.fillText(caption,pw*.5,ph*.55,pw*.8);
+  drawNotes(g,i18n?.t('moleculesNotebook.pages.'+index) ?? m.notes,pw,ph,
+    i18n?.t('moleculesNotebook.observations') ?? 'Observations');
   g.restore();
   // the page's number, at the outer foot, a little in from the sheet's edge
   g.font = `400 ${Math.round(ph * 0.036)}px Georgia, "Times New Roman", serif`;
@@ -173,33 +176,35 @@ function paintPage(L, m, index, photo) {
   return c;
 }
 
-function drawPageHeading(g, pw, ph, index) {
+function drawPageHeading(g, pw, ph, index, heading) {
   g.fillStyle="rgba(54,44,32,.68)";
-  g.font=`500 ${Math.round(ph*.024)}px Georgia, serif`;
+  g.font=`500 ${Math.round(ph*.024)}px ${canvasFontFamily('Georgia')}`;
   g.textAlign="left";g.textBaseline="alphabetic";
-  g.fillText("LABORATORY NOTES",pw*.15,ph*.13);
+  g.fillText(heading,pw*.15,ph*.13,pw*.6);
   g.textAlign="right";
   g.fillText(["I","II","III","IV"][index],pw*.85,ph*.13);
   g.strokeStyle="rgba(70,51,30,.25)";g.lineWidth=Math.max(1,ph*.001);
   g.beginPath();g.moveTo(pw*.15,ph*.16);g.lineTo(pw*.85,ph*.16);g.stroke();
 }
 
-function drawNotes(g, notes, pw, ph) {
+function drawNotes(g, notes, pw, ph, heading) {
   const x=pw*.15,maxWidth=pw*.7;
-  const fontSize=Math.max(20,ph*.028),lineHeight=fontSize*1.28;
+  let fontSize=Math.max(20,ph*.028), wrapped;
   g.textAlign="left";g.textBaseline="alphabetic";
   g.fillStyle="rgba(48,39,29,.83)";
   g.font=`italic 500 ${Math.round(ph*.035)}px ${HAND}`;
-  g.fillText("Observations",x,ph*.62);
-  g.font=`500 ${fontSize}px ${HAND}`;
+  g.fillText(heading,x,ph*.62,maxWidth);
+  // Longer translations and Chinese lines share the same physical page area.
+  while (true) {
+    g.font=`500 ${fontSize}px ${HAND}`;
+    wrapped=notes.map(text=>wrapCanvasText(g,text,maxWidth-fontSize*.9));
+    if(wrapped.reduce((height,lines)=>height+lines.length*fontSize*1.28+fontSize*.34,0)<=ph*.29
+      ||fontSize<=Math.max(14,ph*.019))break;
+    fontSize-=1;
+  }
+  const lineHeight=fontSize*1.28;
   let y=ph*.675;
-  for(const text of notes) {
-    const words=text.split(/\s+/),lines=[];let line="";
-    for(const word of words) {
-      const next=line?line+" "+word:word;
-      if(line&&g.measureText(next).width>maxWidth-fontSize*.9){lines.push(line);line=word;}else line=next;
-    }
-    if(line)lines.push(line);
+  for(const lines of wrapped) {
     g.fillStyle="rgba(48,39,29,.7)";g.fillText("–",x,y);
     g.fillStyle="rgba(48,39,29,.92)";
     for(const part of lines){g.fillText(part,x+fontSize*.9,y);y+=lineHeight;}

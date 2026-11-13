@@ -7,8 +7,10 @@ import { loadDocumentArt, paintDocumentSeal } from "./documentArt.js";
 /** Lays a letter out on its paper in `host`: its dateline, its words, its
  *  signature, on a sheet the size the words need — sealed in wax, unless it
  *  is a document that never was (`seal: false`). Filed letters can share the
- *  dossier's sheet with `paper: false`, without loading or painting another. */
-export function renderLetter(host, letter, { note = "", seal: sealed = true, paper: textured = true, materials } = {}) {
+ *  dossier's sheet with `paper: false`, without loading or painting another.
+ *  `margin: false` leaves Arthur's pencilled note off the sheet (a letter
+ *  opened from its envelope: his note comes up in the console instead). */
+export function renderLetter(host, letter, { note = "", seal: sealed = true, paper: textured = true, materials, margin = true } = {}) {
   host.replaceChildren();
   const page = document.createElement("article");
   page.className = "letter-page";
@@ -34,7 +36,7 @@ export function renderLetter(host, letter, { note = "", seal: sealed = true, pap
   add("p", "letter-signature", letter.signature);
   add("p", "letter-ps", letter.postscript);
   // and under it, in pencil, in his own hand: what Arthur makes of it
-  add("p", "letter-margin", letter.margin);
+  if (margin) add("p", "letter-margin", letter.margin);
   if (textured) page.append(paper);
   page.append(words);
   if (sealed) page.append(wax);

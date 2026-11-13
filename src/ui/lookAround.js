@@ -17,13 +17,24 @@ export function mountLookAround(scope, game) {
   const root = document.documentElement;
   const canvas = () => game.canvas;
   const target = { x: 0, y: 0 }, at = { x: 0, y: 0 };
-  let last = performance.now(), frame = 0;
+  let last = performance.now(), frame = 0, boundsAt = 0, painted = '';
+
+  function updateBounds() {
+    const scale = game.scale;
+    if (!scale?.canvasBounds) return;
+    scale.updateBounds();
+    const b = scale.canvasBounds;
+    if (b.width && b.height) scale.displayScale.set(scale.baseSize.width / b.width, scale.baseSize.height / b.height);
+  }
+  // Pointer actions need the current transform; idle frames do not need layout reads.
+  scope.on(window, 'pointerdown', updateBounds, true);
 
   const still = () => root.dataset.reducedMotion === "true" || root.dataset.ambientMotion === "false";
   const looking = () => document.body.classList.contains("in-house") && !still() && canvas()?.dataset.look !== "still";
 
   scope.on(window, "pointermove", (e) => {
     if (e.pointerType === "touch") return;
+    updateBounds();
     const box = document.getElementById("game-viewport")?.getBoundingClientRect();
     if (!box?.width) return;
     // where on the picture the pointer is, from -1 to 1 either way; the eye turns towards it
@@ -45,15 +56,14 @@ export function mountLookAround(scope, game) {
     const k = 1 - Math.exp((-dt * 3) / EASE);
     at.x += (goal.x - at.x) * k;
     at.y += (goal.y - at.y) * k;
+    if (Math.abs(goal.x - at.x) < 0.02) at.x = goal.x;
+    if (Math.abs(goal.y - at.y) < 0.02) at.y = goal.y;
     if (Math.abs(at.x) < 0.05 && Math.abs(at.y) < 0.05 && !on) { at.x = at.y = 0; }
-    c.style.translate = at.x || at.y ? `${at.x.toFixed(2)}px ${at.y.toFixed(2)}px` : "";
+    const translate = at.x || at.y ? `${at.x.toFixed(2)}px ${at.y.toFixed(2)}px` : "";
+    const moved = translate !== painted;
+    if (moved) { c.style.translate = translate; painted = translate; }
     // where the picture is now, for the pointer
-    const scale = game.scale;
-    if (scale?.canvasBounds) {
-      scale.updateBounds();
-      const b = scale.canvasBounds;
-      if (b.width && b.height) scale.displayScale.set(scale.baseSize.width / b.width, scale.baseSize.height / b.height);
-    }
+    if (moved || (on && now - boundsAt >= 120)) { updateBounds(); boundsAt = now; }
   }
   frame = requestAnimationFrame(tick);
   scope.add(() => { cancelAnimationFrame(frame); if (canvas()) canvas().style.translate = ""; });

@@ -1,44 +1,76 @@
-/* Native Blender meshes and hinge animation over the page, with accessible
-   live words on the actual 3D paper. There are no video layers. */
-.waiting-letter img.wl-envelope { width: 128px; height: auto; aspect-ratio: auto; object-fit: contain; }
-.waiting-letter:has(img.wl-envelope) .wl-alert { right: 8px; top: 8px; }
+/* A found letter (letterArrival.js): held up before his eyes over the play
+   area, the game behind it out of focus and darker; rendered in Blender; the
+   words live on the sheet. */
+.waiting-letter img.wl-page { display: block; width: auto; height: 84px; max-width: 132px; object-fit: contain; }
+.waiting-letter:has(img.wl-page) .wl-alert { right: -4px; top: -4px; }
+.waiting-letter img.wl-page { transform: rotate(-3deg); }
+.waiting-letter:nth-child(even) img.wl-page { transform: rotate(2.4deg); }
 .waiting-letter.is-in-flight { visibility: hidden; }
-.arrival { position: fixed; inset: 0; z-index: 575; isolation: isolate; overflow: hidden; outline: none; }
+/* the game, while a letter is read: all of it still there, out of focus */
+:is(#compact-bar, #play-area) { transition: filter .5s ease; }
+body.letter-open :is(#compact-bar, #play-area) { filter: blur(6px) brightness(.58) saturate(.85); }
+[data-reduced-motion="true"] :is(#compact-bar, #play-area) { transition: none; }
+.arrival { position: fixed; inset: 0; z-index: 575; isolation: isolate; outline: none; }
 .arrival[data-state="preparing"] > * { opacity: 0; }
-.arrival .arrival-veil { backdrop-filter: none; -webkit-backdrop-filter: none; transition: none;
-  background: radial-gradient(ellipse 75% 72% at 50% 44%, rgba(6,7,10,.9) 0%, rgba(3,4,6,.96) 62%, rgba(0,0,0,.99) 100%); }
-.arrival > .arrival-model { position: absolute; inset: 0; display: block; width: 100%; height: 100%;
-  max-width: none; max-height: none; margin: 0; padding: 0; border: 0; transform: none; translate: none;
-  opacity: 0; z-index: 1; pointer-events: none; }
-.arrival > .arrival-model[hidden] { display: none; }
-.arrival .env { position: absolute; z-index: 2; border: 0; padding: 0; background: none; outline: none;
-  cursor: var(--cursor-hand,pointer); filter: none; animation: none; border-radius: 6px; }
-.arrival .env:disabled { cursor: default; pointer-events: none; }
-.arrival .env[hidden] { display: none; }
-.arrival .env:focus-visible { box-shadow: 0 0 0 2px #e8c98a55, 0 0 32px #e8c98a35; }
-.arrival .arrival-caption { top: clamp(22px,6vh,64px); z-index: 3; transition: none; }
+/* over the play area (its box: letterArrival.js) */
+.arrival .arrival-view { position: absolute; overflow: hidden; }
+.arrival .arrival-scene { position: absolute; z-index: 1; opacity: 0; }
+.arrival .arrival-film, .arrival .arrival-still { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  max-width: none; object-fit: fill; pointer-events: none; user-select: none; }
+.arrival .arrival-film[hidden] { display: none; }
+/* (the sheet comes up from below the film's edge: that edge fades, so it is
+   never seen as a line, whatever the play area's shape) */
+.arrival .arrival-film { -webkit-mask-image: linear-gradient(to top, transparent 0, #000 9%); mask-image: linear-gradient(to top, transparent 0, #000 9%); }
+.arrival .arrival-still { opacity: 0; }
+.arrival .arrival-plain { position: absolute; display: none; background: #b9a079; box-shadow: 0 14px 40px #000b; }
+.arrival.is-plain .arrival-plain { display: block; }
+.arrival.is-plain .arrival-still, .arrival.is-plain .arrival-film { display: none; }
+.arrival .arrival-caption { position: absolute; left: 0; right: 0; top: clamp(10px,3%,30px); z-index: 3; transition: none; opacity: 0; transform: none; }
 .arrival .arrival-eyebrow { color: #d9c9a6; font-size: 11px; letter-spacing: .34em; text-shadow: 0 1px 6px #000; }
-.arrival .arrival-hint { position: absolute; left: 0; right: 0; bottom: clamp(26px,7vh,80px); z-index: 3;
-  margin: 0; text-align: center; opacity: 0; pointer-events: none; color: #e3d4b2; font-size: 12px;
-  letter-spacing: .3em; text-transform: uppercase; text-shadow: 0 1px 6px #000; }
-.arrival .letter-sheet { position: absolute; z-index: 2; box-sizing: border-box; opacity: 0; mix-blend-mode: multiply;
-  transform-origin: 50% 50%; pointer-events: none; }
+.arrival .arrival-title { text-shadow: 0 2px 12px #000, 0 0 2px #000; }
+/* the words, on the paper */
+.arrival .letter-sheet { position: absolute; z-index: 2; box-sizing: border-box; opacity: 0; mix-blend-mode: multiply; pointer-events: none; }
+.arrival.is-plain .letter-sheet { mix-blend-mode: normal; }
 .arrival[data-state="reading"] .letter-sheet { pointer-events: auto; }
 .arrival .letter-sheet .arrival-page { width: 100%; height: 100%; max-height: none; padding: 0; overflow-x: hidden;
-  overflow-y: auto; scrollbar-width: thin; scrollbar-color: #6b594733 transparent; overscroll-behavior: contain; outline: none; }
-.arrival .letter-sheet .letter-page { width: 100%; padding: 0 0 18px; background: none; box-shadow: none;
-  font-size: inherit; line-height: 1.7; color: #2a1d12; }
-.arrival .letter-sheet .letter-words p { margin-bottom: .95em; }
-.arrival.is-plain .letter-sheet { mix-blend-mode: normal; padding: 0; }
-.arrival.is-plain .letter-sheet .letter-page { padding: 7% 9% 6%; min-height: 100%; background: #d9caab; }
-.arrival .arrival-file { position: absolute; left: 50%; bottom: clamp(12px,2.4vh,26px); translate: -50% 0;
-  z-index: 3; opacity: 0; }
-.arrival .arrival-file:focus-visible { outline: 1px solid #d8bd8e; outline-offset: 5px; }
-/* the case file's button taking a filed letter in (letterArrival.js): it
-   swells a touch, and a soft gold light blooms behind it and is gone */
+  overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; outline: none; }
+.arrival .letter-sheet .letter-page { width: 100%; padding: 0 0 12px; background: none; box-shadow: none;
+  font-size: inherit; line-height: 1.62; color: #24180e; }
+.arrival .letter-sheet .letter-words p { margin-bottom: .85em; }
+.arrival .letter-sheet .letter-dateline { color: #4a3b29; }
+/* each hand on its own paper: the ink a little different on each */
+.arrival[data-page="silas"] .letter-sheet .letter-page { color: #1c232c; }
+.arrival[data-page="orion"] .letter-sheet .letter-page { color: #1b2130; }
+/* (Ivy's small page, its leaf in the corner: her words set a little closer) */
+.arrival[data-page="ivy"] .letter-sheet .letter-page { line-height: 1.46; }
+.arrival[data-page="ivy"] .letter-sheet .letter-words p { margin-bottom: .55em; }
+.arrival[data-page="ivy"] .letter-sheet .letter-signature { margin-top: .6em !important; }
+/* "File it in the case file": in the house's own manner (the prologue's
+   onward card) — a thin pale rule round it, matte, a folder drawn in a fine
+   line; on hover the rule brightens and the sheet in the folder sinks in */
+.arrival .arrival-file { position: absolute; left: 50%; bottom: clamp(10px,3%,26px); translate: -50% 0; z-index: 3; opacity: 0;
+  display: inline-flex; align-items: center; gap: 11px; padding: 10px 18px 10px 14px; box-sizing: border-box;
+  border: 1px solid #ece7db40; border-radius: 3px; background: #0d0c0bb8; box-shadow: none; color: #f0eadf;
+  font: 400 calc(11px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .24em; text-transform: uppercase; white-space: nowrap;
+  cursor: var(--cursor-hand, pointer); transition: border-color .25s ease, background-color .25s ease; }
+.arrival .arrival-file:hover, .arrival .arrival-file:focus-visible { border-color: #ece7db99; background: #1a1816cc; outline: none; }
+.arrival .arrival-file:focus-visible { box-shadow: 0 0 0 3px #0c0c0c, 0 0 0 4px #ece7db55; }
+.arrival .arrival-file:disabled { cursor: default; }
+.arrival .file-icon { width: 20px; height: 15px; flex-shrink: 0; overflow: visible; }
+.arrival .file-icon path { fill: none; stroke: #ece7db; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.arrival .file-icon path:nth-child(n+2) { transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
+.arrival .arrival-file:hover .file-icon path:nth-child(n+2), .arrival .arrival-file:focus-visible .file-icon path:nth-child(n+2) { transform: translateY(2.5px); }
+/* the case file's button taking a filed letter in: it swells a touch, and a
+   soft gold light blooms behind it and is gone */
 #btn-casefile.is-receiving { position: relative; animation: file-takes .9s ease-out; }
 #btn-casefile.is-receiving::after { content: ""; position: absolute; inset: -6px; z-index: -1; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle, #f0cf8666 0%, #f0cf8622 45%, #f0cf8600 70%); animation: file-glints .9s ease-out forwards; }
 @keyframes file-takes { 0% { transform: scale(1); } 28% { transform: scale(1.16); } 100% { transform: scale(1); } }
 @keyframes file-glints { 0% { opacity: 0; transform: scale(.6); } 25% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.35); } }
 [data-reduced-motion="true"] #btn-casefile.is-receiving, [data-reduced-motion="true"] #btn-casefile.is-receiving::after { animation: none; }
+/* dev mode only (caseFile.js): put the floors' letters back, or see the last one */
+.dev-letters { display: flex; gap: 14px; margin-top: 10px; }
+body.outside .dev-letters { display: none; }
+.dev-letters button { padding: 0; border: 0; background: none; cursor: var(--cursor-hand, pointer);
+  font: 400 10.5px var(--ui-font); letter-spacing: .14em; text-transform: uppercase; color: #9fc48a; opacity: .75; }
+.dev-letters button:hover, .dev-letters button:focus-visible { opacity: 1; outline: none; text-decoration: underline; text-underline-offset: 3px; }

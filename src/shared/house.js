@@ -23,10 +23,14 @@ export const PLACES = Object.freeze([
       "Ivy's room. Everything here pressed, labelled and kept.",
       "On the hook, an old gardening coat — and in its pocket, a child's mitten. The file never mentioned a child.",
     ] },
-  { key: "Room2", name: "Room II", back: "Hall", holds: ["bookshelf", "overtime", "modem"], needsKey: true, chest: "Room3",
+  // (2026-11-05: His Cot moved here from Room VI for the demo, and the room
+  //  became the baby's nursery, Silas's desk and clocks kept in its corner;
+  //  Lamplight in the Library went to Room VI)
+  { key: "Room2", name: "Room II", back: "Hall", holds: ["cot", "overtime", "modem"], needsKey: true, chest: "Room3",
     story: [
       "The house accounts, kept to the penny until the 13th of October 1961.",
       "The last entry, in Silas's hand: one basket. Why would a man write down a basket?",
+      "By the window, a cot made up for the night. Among the toys, a little wooden hotel, its reception bell beside the door.",
     ] },
   { key: "Room3", name: "Room III", back: "Hall", holds: ["compass", "chessboard", "mobilephone"], needsKey: true, chest: "Room4",
     story: [
@@ -100,11 +104,10 @@ export const PLACES = Object.freeze([
       "The room of their last evening: the table still laid for four, the fire let die, the television never switched off.",
       "The file says three people lived here.",
     ] },
-  { key: "Room6", name: "Room VI", back: "Hall", holds: ["flags", "herbarium", "cot"], needsKey: true,
+  { key: "Room6", name: "Room VI", back: "Hall", holds: ["flags", "herbarium", "bookshelf"], needsKey: true,
     story: [
       "A child's room, kept as if he might come back for it.",
       "His medals, still behind their glass. Somebody has kept it clean.",
-      "A little wooden hotel waits among his toys, its reception bell beside the door.",
     ] },
 ]);
 
@@ -123,16 +126,27 @@ export const ALL_DOORS_OPEN = true;
  *  locked door as the player will. */
 export const STILL_LOCKED = [];
 
-/** The Steam demo: only the hall and the first two rooms can be gone into.
- *  Inside it the keys matter, as in the full game: Room I is open, and Room
- *  II opens with the key from Room I's chest. Every other door, the gate up
- *  the stairs, and Room II's chest (it holds the key to Room III) stay
- *  locked, and say so when pointed at. Set DEMO to false for the whole house. */
-export const DEMO = true;
-export const DEMO_PLACES = Object.freeze(["Hall", "Study", "Room2"]);
+/** The Steam demo: only the hall and the first three rooms can be gone into
+ *  (Room III since 2026-11-06; the demo ended after Room II until then).
+ *  Inside it the keys matter, as in the full game: Room I is open, Room II
+ *  opens with the key from Room I's chest, Room III with the key from Room
+ *  II's. Every other door, the gate up the stairs, and Room III's chest (it
+ *  holds the key to Room IV) stay locked, and say so when pointed at. Set
+ *  DEMO to false for the whole house. The full web build (`npm run
+ *  build:full`, __FULL_BUILD__) is the whole house whatever this says. */
+const FULL_BUILD = typeof __FULL_BUILD__ !== "undefined" && __FULL_BUILD__;
+export const DEMO = !FULL_BUILD && true;
+export const DEMO_PLACES = Object.freeze(["Hall", "Study", "Room2", "Room3"]);
+/** The full game's Steam store page, which the end of the demo offers to
+ *  wishlist (demoEnd.js) — empty until the page exists, and then no button. */
+export const STEAM_STORE_URL = "";
 
 /** A place asks to go somewhere: `{ place: key }` or `{ level: id }`. */
 export const HOUSE_GO = "house:go";
+/** The ground hall has finished its arrival fade and can show its introduction. */
+export const HALL_READY = "house:hall-ready";
+/** A room has finished its arrival fade. The scene is included for UI guides. */
+export const ROOM_READY = "house:room-ready";
 /** Leave a puzzle or room by the same route as the Back control. */
 export const HOUSE_BACK = "house:back";
 

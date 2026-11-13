@@ -78,6 +78,8 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
   const holder = document.getElementById("house-map");
   const keysLine = document.getElementById("map-keys");
   if (!modal || !holder) return { open() {} };
+  const word = (key, fallback) => i18n ? i18n.t(`map.${key}`) : fallback;
+  const placeName = (key, fallback) => i18n?.getPlace(key)?.name ?? fallback;
 
   // a place: inked if stood in, pencilled if not; clickable to go there
   function placeNode(parent, state, label) {
@@ -134,7 +136,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
       }
       el("path", { d: `M${s.x + half / 2},${s.y + s.h - 6} V${s.y + 9} H${s.x + half * 1.5} V${s.y + s.h - 26}`, class: "climb" }, g);
       el("path", { d: `M${s.x + half * 1.5 - 4},${s.y + s.h - 32} l4,7 l4,-7`, class: "climb-head" }, g);
-      text(g, s.x + s.w / 2, s.y + 13, "note small", s.dir);
+      text(g, s.x + s.w / 2, s.y + 13, "note small", word(s.dir, s.dir));
       return;
     }
     el("path", { d: rect(s.x, s.y, s.w, s.h), class: "tread-edge" }, g);
@@ -142,7 +144,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
     el("path", { d: `M${s.x + s.w / 2},${s.y + s.h - 3} V${s.y + 8}`, class: "climb" }, g);
     if (s.dir === "down") el("path", { d: `M${s.x + s.w / 2 - 4},${s.y + s.h - 10} l4,7 l4,-7`, class: "climb-head" }, g);
     else el("path", { d: `M${s.x + s.w / 2 - 4},${s.y + 14} l4,-7 l4,7`, class: "climb-head" }, g);
-    text(g, s.x + s.w / 2, s.y + s.h + 12, "note small", s.dir);
+    text(g, s.x + s.w / 2, s.y + s.h + 12, "note small", word(s.dir, s.dir));
   }
   // a spiral stair, seen from above: the newel, the treads wound round it
   function spiral(layer, cx, cy, r, known) {
@@ -188,12 +190,12 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
   function room(f, layers, room, { stateful = true, small = false } = {}) {
     const state = stateful && room.key ? levels.placeState(room.key) : null;
     const known = Boolean(state?.visited);
-    const g = placeNode(layers.places, state, state?.name ?? `Room ${ROMAN[room.n - 1]}`);
+    const g = placeNode(layers.places, state, placeName(room.key, i18n ? i18n.t('common.room', { number: ROMAN[room.n - 1] }) : `Room ${ROMAN[room.n - 1]}`));
     el("path", { d: rect(room.x, room.y, room.w, room.h), class: known ? "floor known" : "floor" }, g);
     wall(layers.walls, rect(room.x, room.y, room.w, room.h), INNER, known);
     const cx = room.x + room.w / 2, cy = room.y + room.h / 2;
     tag(g, cx, cy - (state?.puzzles && known ? 6 : 0), room.n, small);
-    if (!room.key && room.h >= 90) text(g, cx, cy + 26, "note faint", "unexplored");
+    if (!room.key && room.h >= 90) text(g, cx, cy + 26, "note faint", word('unexplored', 'unexplored'));
     dots(g, state, cx, cy + 16);
     if (state?.finished) seal(g, room.x + room.w - 15, room.y + 15, room.n, small ? 16 : 22);
     if (state?.here) here(layers.marks, cx, room.y + 26);
@@ -216,7 +218,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
 
   function render() {
     holder.textContent = "";
-    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "map-sheet", role: "group", "aria-label": "Plan of the house" }, holder);
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "map-sheet", role: "group", "aria-label": word('plan', 'Plan of the house') }, holder);
     defs(svg);
     // the paper: its colour, its stains, its grain, its edges browned
     el("rect", { width: W, height: H, fill: PAPER }, svg);
@@ -248,11 +250,11 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
         const h = floor.hall, state = levels.placeState(h.key), known = Boolean(state?.visited);
         // the shell of the floor, outer walls thickest
         const shell = { x: 40, y: 130, w: 240, h: 340 };
-        const g = placeNode(layers.places, state, state?.name ?? "the hall");
+        const g = placeNode(layers.places, state, placeName(h.key, word('hall', 'the hall')));
         el("path", { d: rect(h.x, h.y, h.w, h.h), class: known ? "floor hall known" : "floor hall" }, g);
         // the hall's length: its name written down it, its dots, its runner
         el("path", { d: rect(h.x + 14, h.y + 76, h.w - 28, h.h - 104), class: "runner" }, g);
-        text(g, h.x + h.w / 2, h.y + h.h / 2 + 14, "name vertical", known ? state.name : "a hall", { transform: `rotate(-90 ${h.x + h.w / 2} ${h.y + h.h / 2 + 14})` });
+        text(g, h.x + h.w / 2, h.y + h.h / 2 + 14, "name vertical", known ? placeName(h.key, state.name) : word('hall', 'a hall'), { transform: `rotate(-90 ${h.x + h.w / 2} ${h.y + h.h / 2 + 14})` });
         dots(g, state, h.x + h.w / 2, h.y + h.h - 18);
         if (state?.here) here(layers.marks, h.x + h.w / 2, h.y + h.h - 40);
         for (const r of floor.rooms) room(f, layers, r);
@@ -273,7 +275,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
           door(layers, h.x + h.w / 2, shell.y + shell.h, "h", -1, true, 22);
           el("path", { d: `M${h.x + h.w / 2},${shell.y + shell.h + 32} V${shell.y + shell.h + 10}`, class: "climb" }, f);
           el("path", { d: `M${h.x + h.w / 2 - 4},${shell.y + shell.h + 16} l4,-7 l4,7`, class: "climb-head" }, f);
-          text(f, h.x + h.w / 2, shell.y + shell.h + 46, "note", "the way in");
+          text(f, h.x + h.w / 2, shell.y + shell.h + 46, "note", word('wayIn', 'the way in'));
         }
       }
 
@@ -281,20 +283,20 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
         const r = floor.round, state = levels.placeState(r.key), known = Boolean(state?.visited);
         // the passage first, so the round room's wall closes over its end
         const p = floor.passage, ps = levels.placeState(p.key), pk = Boolean(ps?.visited);
-        const pg = placeNode(layers.places, ps, ps?.name ?? "the passage");
+        const pg = placeNode(layers.places, ps, placeName(p.key, word('passage', 'the passage')));
         const passage = `${rect(p.x, p.y, p.w, p.h)} ${rect(p.stub.x - 2, p.stub.y, p.stub.w + 2, p.stub.h)}`;
         el("path", { d: passage, class: pk ? "floor passage known" : "floor passage" }, pg);
-        text(pg, p.x + p.w / 2, p.y + p.h / 2 - 10, "name vertical", pk ? ps.name : "a passage", { transform: `rotate(-90 ${p.x + p.w / 2} ${p.y + p.h / 2 - 10})` });
+        text(pg, p.x + p.w / 2, p.y + p.h / 2 - 10, "name vertical", pk ? placeName(p.key, ps.name) : word('passage', 'a passage'), { transform: `rotate(-90 ${p.x + p.w / 2} ${p.y + p.h / 2 - 10})` });
         if (ps?.here) here(layers.marks, p.x + p.w / 2, p.y + p.h - 14);
         wall(layers.walls, `M${p.x},${p.y + p.h} V${p.y} H${p.x + p.w} V${p.stub.y}`, OUTER, pk);
         wall(layers.walls, `M${p.x},${p.y + p.h} H${p.stub.x + p.stub.w}`, OUTER, pk);
         wall(layers.walls, `M${p.x + p.w},${p.stub.y} H${p.stub.x + p.stub.w}`, INNER, pk);
         for (const w of floor.wing) room(f, layers, w, { stateful: false, small: true });
         // the round room, its spiral stair in the middle
-        const g = placeNode(layers.places, state, state?.name ?? "the top floor");
+        const g = placeNode(layers.places, state, placeName(r.key, word('topFloor', 'the top floor')));
         el("circle", { cx: r.cx, cy: r.cy, r: r.r, class: known ? "floor round known" : "floor round" }, g);
         el("circle", { cx: r.cx, cy: r.cy, r: r.r - 12, class: "inlay" }, g);
-        text(g, r.cx, r.cy - 40, "name", known ? state.name : "a round room");
+        text(g, r.cx, r.cy - 40, "name", known ? placeName(r.key, state.name) : word('roundRoom', 'a round room'));
         dots(g, state, r.cx, r.cy + 46);
         spiral(layers.marks, r.cx, r.cy + 4, 24, known);
         if (state?.here) here(layers.marks, r.cx + 40, r.cy - 10);

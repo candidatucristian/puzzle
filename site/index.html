@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ashcombe Manor</title>
+    <meta name="description" content="On the night of 13 October 1961, three siblings locked every door of their house in Devon and walked out into the dark. No one ever found out why. A puzzle mystery, coming to Steam." />
+    <meta name="theme-color" content="#0c0c0c" />
+    <link rel="canonical" href="https://ashcombemanor.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ashcombemanor.com/" />
+    <meta property="og:title" content="Ashcombe Manor" />
+    <meta property="og:description" content="Forty years shut, and not one thing out of place. A puzzle mystery, coming to Steam." />
+    <meta property="og:image" content="https://ashcombemanor.com/images/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon/manor.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon/manor-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/favicon/manor-180.png" />
+    <link rel="preload" href="/fonts/ibm-plex-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./site.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <!-- the manor at night, as the game opens on it; the name low on the left -->
+    <header class="hero">
+      <div class="manor" aria-hidden="true">
+        <canvas class="manor-layer manor-still"></canvas>
+        <canvas class="manor-layer manor-live"></canvas>
+      </div>
+      <div class="legend">
+        <div class="legend-veil" aria-hidden="true"></div>
+        <p class="eyebrow">The Ashcombe Case</p>
+        <h1>Ashcombe Manor</h1>
+        <span class="rule" aria-hidden="true"></span>
+        <p class="line">Forty years shut, and not one thing out of place.</p>
+        <p class="status">A puzzle mystery &middot; Coming to Steam</p>
+        <nav class="menu" aria-label="On this page">
+          <a class="menu-item" href="#case"><span class="mark" aria-hidden="true"></span><span class="word">The case</span></a>
+          <a class="menu-item" href="#rooms"><span class="mark" aria-hidden="true"></span><span class="word">The rooms</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- the case, in the words the game opens with -->
+      <section id="case" class="case">
+        <p class="eyebrow">Devon, England &middot; October 1961</p>
+        <p class="story">On the night of 13 October 1961, three siblings locked every door of their house in Devon and walked out into the dark. Nothing in the house was missing. No one was hurt. No one ever found out why.</p>
+        <p class="story">A year later the case was closed. Only one policeman never let it go.</p>
+      </section>
+
+      <!-- the first three rooms, each with the first line the game gives it -->
+      <section id="rooms" class="rooms" aria-label="The rooms">
+        <figure class="room">
+          <img src="/images/room-1.webp" alt="Room I, Ivy's room: a desk under the window, botanical prints, a glass plant case and shelves of labelled boxes" width="1440" height="766" loading="lazy" decoding="async" />
+          <figcaption><span class="eyebrow">Room I</span>Ivy's room. Everything here pressed, labelled and kept.</figcaption>
+        </figure>
+        <figure class="room">
+          <img src="/images/room-2.webp" alt="Room II: the nursery, a cot made up by the window" width="1440" height="766" loading="lazy" decoding="async" />
+          <figcaption><span class="eyebrow">Room II</span>The house accounts, kept to the penny until the 13th of October 1961.</figcaption>
+        </figure>
+        <figure class="room">
+          <img src="/images/room-3.webp" alt="Room III: their grandfather's things from the sea" width="1440" height="766" loading="lazy" decoding="async" />
+          <figcaption><span class="eyebrow">Room III</span>Their grandfather's things, everything he brought home from the sea.</figcaption>
+        </figure>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>Coming to Steam &middot; <a href="mailto:contact@ashcombemanor.com">contact@ashcombemanor.com</a></p>
+      <p class="small">&copy; 2026 Ashcombe Manor. Every picture rendered in Blender. Typeface: IBM Plex Sans (<a href="/fonts/IBM-Plex-OFL.txt">SIL Open Font License</a>).</p>
+    </footer>
+  </body>
+</html>

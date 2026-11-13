@@ -22,8 +22,8 @@ export default class MobilePhoneScene extends BasePuzzleScene {
 
   preload() {
     loadPhonePhotography(this);
-    this.load.audio("phone_vib", "assets/sounds/MobilePhone/vibration.mp3");
-    this.load.audio("keypad", "assets/sounds/MobilePhone/keypad.mp3");
+    this.load.audio("phone_vib", "assets/sounds/MobilePhone/buzz.mp3");
+    this.load.audio("keypad", "assets/sounds/MobilePhone/key-tone.mp3");
   }
 
   create() {
@@ -76,8 +76,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
 
     this.drawScreen();
 
-    this.callerText = this.add
-      .text(0, -20, "CALLING YOU...", {
+    this.callerText = this.localizedText(0, -20, 'gameplay.phone.calling', {
         fontFamily: "'Courier New', monospace",
         fontSize: "14px",
         color: "#263b16",
@@ -365,7 +364,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     const soft = art.softKeys;
     for (let i = 0; i < 2; i++) {
       const key = createCap("soft-" + i, soft.x[i], soft.y, soft.width, soft.height);
-      key.c.add(this.add.text(0, 0, i === 0 ? "SELECT" : "BACK", {
+      key.c.add(this.localizedText(0, 0, i === 0 ? 'gameplay.phone.select' : 'gameplay.phone.back', {
         fontFamily: font, fontSize: "10.5px", fontStyle: "bold",
         color: i === 0 ? "#e0e1d6" : "#dfb9ad",
       }).setOrigin(0.5).setShadow(0, 1, "#141611", 1));
@@ -383,7 +382,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     this.navG.fillStyle(0xdedbce, 0.65)
       .fillTriangle(-58, -3, -62, 0, -58, 3)
       .fillTriangle(58, -3, 62, 0, 58, 3);
-    this.menuText = this.add.text(0, 0, "MENU", {
+    this.menuText = this.localizedText(0, 0, 'gameplay.phone.menu', {
       fontFamily: font, fontSize: "11px", fontStyle: "bold", color: "#e4e3d7",
     }).setOrigin(0.5).setShadow(0, 1, "#141611", 1);
     this.navContainer.add([this.navG, this.menuText]);
@@ -395,13 +394,15 @@ export default class MobilePhoneScene extends BasePuzzleScene {
       const grid = art.keys;
       const key = createCap("number-" + index, grid.x[index % 3],
         grid.y[Math.floor(index / 3)], grid.width, grid.height);
+      const subText = this.add.text(0, 10, subLabels[index], {
+        fontFamily: font, fontSize: "9.5px", fontStyle: "bold", color: "#c8c9bc",
+      }).setOrigin(0.5).setShadow(0, 1, "#141611", 1);
+      if (index === 9 || index === 11) this.localizeText(subText, index === 9 ? 'gameplay.phone.space' : 'gameplay.phone.delete');
       key.c.add([
         this.add.text(0, -7, label, {
           fontFamily: font, fontSize: "22px", color: "#edece1",
         }).setOrigin(0.5).setShadow(0, 1, "#141611", 1),
-        this.add.text(0, 10, subLabels[index], {
-          fontFamily: font, fontSize: "9.5px", fontStyle: "bold", color: "#c8c9bc",
-        }).setOrigin(0.5).setShadow(0, 1, "#141611", 1),
+        subText,
       ]);
       makeInteractive(key, () => this.handleKeyPress(label));
       this.keypadContainer.add(key.c);
@@ -501,7 +502,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     this.screenInput.setText("");
 
     // A backlit answer key appears on the existing physical rocker.
-    this.menuText.setText("ANSWER").setFontSize("14px").setColor("#e2f0d6");
+    this.localizeText(this.menuText, 'gameplay.phone.answer').setFontSize("14px").setColor("#e2f0d6");
     this.navG.clear();
     const btnW = 104;
     const btnH = 36;
@@ -561,7 +562,7 @@ export default class MobilePhoneScene extends BasePuzzleScene {
     }
     this.callerText.setAlpha(1);
     this.callerNumber.setAlpha(1);
-    this.callerText.setText("CALLER IDENTIFIED");
+    this.localizeText(this.callerText, 'gameplay.phone.identified');
     this.callerNumber.setText(CALLER_NAME);
     this.screenInput.setText("");
     this.drawSignalBars(5);

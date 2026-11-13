@@ -1,19 +1,22 @@
 import { LETTERS, letterById } from "../shared/story.js";
 import { PLACES } from "../shared/house.js";
-import { renderLetter } from "./letterPage.js";
-import { playArrival, letterArt, prepareLetterAnimation } from "./letterArrival.js";
-import { paintEnvelope } from "../shared/envelope.js";
+import { playArrival, letterPageIcon, prepareLetterPage } from "./letterArrival.js";
+import { isDevMode } from "../shared/devMode.js";
+import { mountCaseBook } from "./caseBook.js";
+import { roomPage, evidencePage, letterSpread } from "./caseBookPages.js";
+import "./styles/casebook.css";
 
 // The case file: everything Inspector Wren gathers in Ashcombe House, kept in
-// an old leather police dossier. On its left page the
-// index — the letters, in the order they were found, or the rooms
-// and how much of each has given up its word; on its right page what is
-// chosen — a letter, read on the house's own paper, or the evidence: the
-// word each puzzle gave up, typed on a tag with where it was found. Opened
-// with the Case file button or C.
+// a book whose leaves turn like the manual's (since 2026-11-06; caseBook.js).
+// A spread for each room he can go into, in the order of the doors: on the
+// left the room — its number, its name, what he noted there; on the right
+// the word each of its puzzles gave up, typed, with what it was won from.
+// Then a spread for each letter filed, in the order they were found. Opened
+// with the Case file button or C, at a letter not yet read, a room with new
+// evidence, or else the room he is in.
 //
-// The three pages the Ashcombes left, one on each floor, wait when found: an
-// envelope in the side panel, under the notes, marked "!" — opened when the
+// The three pages the Ashcombes left, one on each floor, wait when found: the
+// page itself, small, in the side panel, under the notes, marked "!" — opened when the
 // player chooses, it arrives as a letter should (letterArrival.js), and only
 // once read is it filed here. The last letter arrives by itself. One put off
 // for later, and evidence not yet looked at, put a red mark on the Case file
@@ -35,40 +38,21 @@ const FILE_PLACES = [...new Set(PLACES.flatMap(place => [
   ...(place.doors ?? []).map(key => PLACES.find(candidate => candidate.key === key)).filter(Boolean),
 ]))];
 
-// the house's envelope (shared/envelope.js — the ROTOR study's), back up, its
-// red wax on the flap: a letter waiting in the side panel
-function envelopeIcon() {
+// the letter itself, small, lying in the side panel: each its own paper
+// (letterArrival.js; Ivy's garden-book page, Silas's note-book page, the back
+// of Orion's star chart)
+function pageIcon(id) {
   const image = document.createElement("img");
-  image.className = "wl-envelope"; image.alt = "";
-  image.src = letterArt("envelope-sealed");
-  image.addEventListener("error", () => image.replaceWith(proceduralEnvelopeIcon()), {once: true});
+  image.className = "wl-page"; image.alt = ""; image.draggable = false;
+  image.src = letterPageIcon(id);
   return image;
-}
-function proceduralEnvelopeIcon() {
-  const W = 152, H = 104;
-  const c = document.createElement("canvas");
-  c.width = W; c.height = H;
-  c.className = "wl-envelope";
-  c.setAttribute("aria-hidden", "true");
-  const g = c.getContext("2d");
-  const w = 17, d = 11, q = (W * 0.82) / w;
-  const at = (a, b) => ({ x: W / 2 + a * q, y: H / 2 - b * q });
-  const seal = at(0, d * 0.14);
-  paintEnvelope(g, { w, d, at, k: q, seal: { x: seal.x, y: seal.y - 0.3 * q, rx: 1.9 * q, ry: 1.9 * q } }, {
-    left: "#cdbf9f", right: "#ece2c6", wax: "#9e2318", shadow: true, shine: true,
-  });
-  return c;
 }
 
 export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, reducedMotion = () => false, isBusy = () => false, i18n = null }) {
   const $ = (id) => document.getElementById(id);
   const modal = $("casefile-modal"), button = $("btn-casefile");
-  const letterList = $("casefile-letter-list"), roomList = $("casefile-room-list"), reader = $("casefile-reader");
-  const clues = $("casefile-clue-list"), count = $("casefile-clue-count");
-  const letterCount = $("casefile-letter-count"), documentTitle = $("casefile-document-title"), documentNumber = $("casefile-document-number");
-  const reading = modal?.querySelector(".dossier-reading");
-  const tabs = [...document.querySelectorAll("[data-casefile-tab]")];
-  if (!modal) return { open() {}, has: () => true, unlock() {}, reveal() {}, reset() {} };
+  if (!modal?.querySelector(".casebook-book")) return { open() {}, has: () => true, unlock() {}, reveal() {}, reset() {} };
+  const t = (key, params, fallback) => (i18n ? i18n.t(key, params ?? {}) : "") || fallback;
   const load = (key, fallback) => {
     try { const v = JSON.parse(storage.getItem(key) ?? "null"); return Array.isArray(v) ? v : fallback(); } catch { return fallback(); }
   };
@@ -78,8 +62,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   let kept = load(KEPT, () => []).filter((id) => letterById(id));
   let read = load(READ, () => [...kept]);
   let seen = load(SEEN, () => solvedIds());
-  let current = null, tab = "letters", lastPlace = null, lastSolved = solvedIds().length, arriving = false;
-  let selectedRoom = null;
+  let lastPlace = null, lastSolved = solvedIds().length, arriving = false;
   const queue = [];
 
   const has = (id) => kept.includes(id);
@@ -107,162 +90,86 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     if (on && pop) { button.classList.remove("is-popping"); void button.offsetWidth; button.classList.add("is-popping"); }
   }
 
-  // ── the letters: the index, and the one being read ──
-  function renderLetters() {
-    letterList.replaceChildren();
-    const found = LETTERS.filter(letter => filed(letter.id)).length;
-    letterCount.textContent = i18n ? i18n.t("casefile.letterCount", { found, all: LETTERS.length }) : `${found} of ${LETTERS.length} filed`;
-    LETTERS.forEach((baseLetter, n) => {
-      const letter = i18n?.getLetter(baseLetter.id) || baseLetter;
-      const item = document.createElement("li");
-      if (!filed(letter.id)) {
-        item.className = "dossier-slip is-missing";
-        const notFoundText = i18n ? i18n.t('casefile.notYetFound') : "Not yet found";
-        item.innerHTML = `<span class="slip-no" aria-hidden="true"></span><span class="slip-title"></span>`;
-        item.querySelector(".slip-no").textContent = String(n + 1).padStart(2, "0");
-        item.querySelector(".slip-title").textContent = notFoundText;
-        letterList.append(item);
-        return;
-      }
-      const slip = document.createElement("button");
-      slip.type = "button";
-      slip.dataset.letter = letter.id;
-      if (letter.id === current) slip.setAttribute("aria-current", "true");
-      slip.className = "dossier-slip" + (letter.id === current ? " is-current" : "") + (read.includes(letter.id) ? "" : " is-unread");
-      slip.innerHTML = `<span class="slip-no" aria-hidden="true"></span><span class="slip-title"></span>`;
-      slip.querySelector(".slip-no").textContent = String(n + 1).padStart(2, "0");
-      slip.querySelector(".slip-title").textContent = letter.title;
-      item.append(slip);
-      letterList.append(item);
-    });
-  }
-  function showLetter(id) {
-    const letter = i18n?.getLetter(id) || letterById(id);
-    current = letter ? id : null;
-    documentTitle.textContent = letter?.title ?? (i18n ? i18n.t("casefile.tabLetters") : "Letters");
-    $("casefile-document-origin").textContent = letter ? (i18n ? i18n.t("casefile.foundWhere", { where: letter.found }) : `Found ${letter.found}`) : "";
-    documentNumber.textContent = letter ? `${String(LETTERS.findIndex(entry => entry.id === id) + 1).padStart(2, "0")} / ${String(LETTERS.length).padStart(2, "0")}` : "";
-    if (!letter) {
-      reader.replaceChildren();
-      const empty = document.createElement("p"); empty.className = "dossier-empty";
-      empty.textContent = i18n ? i18n.t('casefile.noLetters') : "No letters yet.";
-      reader.append(empty);
-    } else {
-      renderLetter(reader, letter, { paper: false, seal: false });
-      markRead(id);
-      badge();
-    }
-    reading.scrollTop = 0;
-    renderLetters();
-  }
-  scope.on(letterList, "click", event => {
-    const slip = event.target.closest("button[data-letter]");
-    if (!slip) return;
-    showLetter(slip.dataset.letter);
-    letterList.querySelector('[aria-current="true"]')?.focus({ preventScroll: true });
-    sounds?.open();
-  });
-
-  // ── the evidence: the rooms on the left, the tags on the right ──
-  function renderEvidence() {
-    clues.replaceChildren();
-    roomList.replaceChildren();
-    let found = 0, all = 0;
-    const addRoom = (key, name, solved, total) => {
-      const row = document.createElement("li");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.dataset.room = key ?? "all";
-      button.className = "dossier-room" + (solved === total ? " is-done" : "");
-      if (key === selectedRoom) button.setAttribute("aria-current", "true");
-      button.innerHTML = `<span class="room-name"></span><span class="room-count"></span>`;
-      button.querySelector(".room-name").textContent = name;
-      button.querySelector(".room-count").textContent = `${solved} / ${total}`;
-      row.append(button);
-      roomList.append(row);
-      return button;
-    };
-    const allRooms = addRoom(null, i18n ? i18n.t("casefile.allRooms") : "All rooms", 0, 0);
+  // ── the book: what is in it now ──
+  const ROMAN_NAME = /\b([IVXLC]+)$/;
+  function spreadsNow() {
+    const list = [], title = t("casefile.title", null, "The Ashcombe Case");
+    const notFound = t("casefile.notFound", null, "NOT FOUND"), newWord = t("casefile.newEvidence", null, "New");
+    const notEntered = t("casefile.notEntered", null, "I have not been in here yet.");
+    let page = 1, number = 0;
     for (const place of FILE_PLACES) {
       const held = place.holds.map((id) => levels.indexOf(id)).filter((i) => i >= 0);
       if (!held.length) continue;
-      const solved = held.filter((i) => levels.isCompleted(i)).length;
-      const placeName = (i18n?.getPlace(place.key)?.name) ?? place.name;
-      addRoom(place.key, placeName, solved, held.length);
-      for (const index of held) {
-        all++;
+      // only the rooms he can go into, or has been in
+      const state = levels.placeState(place.key);
+      if (!state?.open && !state?.visited) continue;
+      const local = i18n?.getPlace(place.key);
+      const name = local?.name ?? place.name;
+      const numeral = ROMAN_NAME.exec(place.name)?.[1] ?? null;
+      const notes = state.visited ? (local?.story ?? place.story ?? []) : [];
+      const items = held.map((index) => {
+        number += 1;
         const level = levels.definitions[index], won = levels.isCompleted(index);
-        if (won) found++;
-        if (selectedRoom && selectedRoom !== place.key) continue;
-        const tag = document.createElement("li");
-        tag.dataset.evidence = level.id;
-        tag.className = "evidence-tag" + (won ? "" : " is-missing") + (won && !seen.includes(level.id) ? " is-new" : "");
-        tag.innerHTML = `<span class="tag-topline"><span class="tag-number"></span><span class="tag-status"></span></span><span class="tag-word"></span><span class="tag-where"></span>`;
-        tag.querySelector(".tag-number").textContent = String(all).padStart(2, "0");
-        tag.querySelector(".tag-status").textContent = won && !seen.includes(level.id) ? (i18n ? i18n.t("casefile.newEvidence") : "New") : "";
-        tag.querySelector(".tag-word").textContent = won ? level.code : (i18n ? i18n.t('casefile.notFound') : "NOT FOUND");
-        tag.querySelector(".tag-where").textContent = won ? `${level.name} · ${placeName}` : placeName;
-        clues.append(tag);
+        return { number, won, word: level.code, name: i18n ? i18n.getLevelName(level) : level.name, isNew: won && !seen.includes(level.id) };
+      });
+      const solved = items.filter((item) => item.won).length;
+      const count = t("casefile.evidenceCount", { found: solved, all: items.length }, `Evidence ${solved} of ${items.length}`);
+      const n = page; page += 2;
+      list.push({
+        kind: "room", place: place.key, ids: place.holds,
+        mark: numeral ?? (local?.floor ?? name).charAt(0).toUpperCase(), tip: name,
+        text: [name, ...(notes.length ? notes : [notEntered]), ...items.map((item) => (item.won ? `${item.word} — ${item.name}` : notFound)), count].join("\n"),
+        draw: (left, right) => {
+          roomPage(left, { head: title, numeral, name, notes, notEntered, n });
+          evidencePage(right, { head: t("casefile.tabEvidence", null, "Evidence"), items, count, newWord, notFound, n: n + 1 });
+        },
+      });
+    }
+    const lettersWord = t("casefile.tabLetters", null, "Letters"), sign = t("casefile.marginSign", null, "— A. W.");
+    LETTERS.filter((letter) => filed(letter.id)).forEach((base, k) => {
+      const letter = i18n?.getLetter(base.id) || base;
+      const index = LETTERS.findIndex((entry) => entry.id === base.id);
+      const number = `${String(index + 1).padStart(2, "0")} / ${String(LETTERS.length).padStart(2, "0")}`;
+      const origin = letter.found ? t("casefile.foundWhere", { where: letter.found }, `Found ${letter.found}`) : "";
+      const n = page; page += 2;
+      list.push({
+        kind: "letter", letter: base.id,
+        mark: k === 0 ? "\u2709" : null, tip: lettersWord,
+        text: [letter.title, origin, letter.dateline, letter.salutation, ...(letter.body ?? []), letter.signature, letter.postscript, letter.margin && `${letter.margin} ${sign}`].filter(Boolean).join("\n"),
+        draw: (left, right) => letterSpread(left, right, { head: lettersWord, number, title: letter.title, origin, letter, sign, n }),
+      });
+    });
+    return list;
+  }
+
+  // a spread come to lie open: a letter is read, a room's evidence looked at
+  function landed(spread) {
+    if (spread.kind === "letter") markRead(spread.letter);
+    else {
+      const won = solvedIds().filter((id) => spread.ids.includes(id) && !seen.includes(id));
+      if (won.length) { seen = [...seen, ...won]; save(SEEN, seen); }
+    }
+    badge();
+  }
+  const book = mountCaseBook(scope, { modal, sounds, onLand: landed });
+
+  function open(trigger, { letter = null } = {}) {
+    const list = spreadsNow();
+    const unread = kept.find((id) => filed(id) && !read.includes(id));
+    const want = letter ?? unread;
+    let at = want ? list.findIndex((spread) => spread.letter === want) : -1;
+    if (at < 0) {
+      // a room with evidence not looked at yet, or else the one he is in
+      const fresh = solvedIds().filter((id) => !seen.includes(id));
+      at = list.findIndex((spread) => spread.kind === "room" && spread.ids.some((id) => fresh.includes(id)));
+      if (at < 0) {
+        const here = levels.place?.key ?? levels.homeOf(levels.currentIndex)?.key;
+        at = list.findIndex((spread) => spread.place === here);
       }
     }
-    allRooms.querySelector(".room-count").textContent = `${found} / ${all}`;
-    allRooms.classList.toggle("is-done", found === all);
-    const place = PLACES.find(place => place.key === selectedRoom);
-    $("casefile-evidence-title").textContent = place ? (i18n?.getPlace(place.key)?.name ?? place.name) : (i18n ? i18n.t("casefile.tabEvidence") : "Evidence");
-    const held = place?.holds.map(id => levels.indexOf(id)).filter(index => index >= 0);
-    const summary = held ? { found: held.filter(index => levels.isCompleted(index)).length, all: held.length } : { found, all };
-    count.textContent = i18n ? i18n.t('casefile.evidenceCount', summary) : `Evidence ${summary.found} of ${summary.all}`;
-  }
-  scope.on(roomList, "click", event => {
-    const room = event.target.closest("button[data-room]");
-    if (!room) return;
-    selectedRoom = room.dataset.room === "all" ? null : room.dataset.room;
-    renderEvidence();
-    clues.scrollTop = 0;
-    roomList.querySelector('[aria-current="true"]')?.focus({ preventScroll: true });
-    sounds?.open();
-  });
-
-  function setTab(name) {
-    tab = name;
-    for (const t of tabs) {
-      const selected = t.dataset.casefileTab === name;
-      t.setAttribute("aria-selected", String(selected));
-      t.tabIndex = selected ? 0 : -1;
-      for (const id of t.getAttribute("aria-controls").split(" ")) $(id).hidden = !selected;
-    }
-    modal.dataset.tab = name;
-    for (const page of modal.querySelectorAll(".dossier-index")) page.scrollTop = 0;
-    if (name === "letters") showLetter(current);
-    if (name === "clues") {
-      renderEvidence();
-      clues.scrollTop = 0;
-      // looked at now: the next time they are not new
-      seen = [...new Set([...seen, ...solvedIds()])]; save(SEEN, seen);
-      badge();
-    }
-  }
-  for (const t of tabs) {
-    scope.on(t, "click", () => { if (tab !== t.dataset.casefileTab) sounds?.open(); setTab(t.dataset.casefileTab); });
-    scope.on(t, "keydown", event => {
-      const index = tabs.indexOf(t);
-      const next = event.key === "ArrowRight" ? tabs[(index + 1) % tabs.length] : event.key === "ArrowLeft" ? tabs[(index + tabs.length - 1) % tabs.length] : event.key === "Home" ? tabs[0] : event.key === "End" ? tabs.at(-1) : null;
-      if (!next) return;
-      event.preventDefault();
-      setTab(next.dataset.casefileTab);
-      next.focus();
-    });
-  }
-
-  function open(trigger, { letter = null, on = null } = {}) {
-    const unread = kept.find((id) => filed(id) && !read.includes(id));
-    const fresh = solvedIds().some((id) => !seen.includes(id));
-    if (fresh) selectedRoom = null;
-    const which = on ?? (letter || unread ? "letters" : fresh ? "clues" : tab);
-    showLetter(letter ?? unread ?? (current && filed(current) ? current : null) ?? kept.filter(filed).at(-1) ?? null);
-    setTab(which);
     sounds?.open();
     dialogs.open("casefile-modal", trigger);
+    void book.show(list, Math.max(0, at));
   }
   scope.on($("btn-close-casefile"), "click", () => dialogs.close());
 
@@ -271,13 +178,12 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   // for the player to open; any other letter arrives as soon as nothing else is on
   function reveal(id) {
     if (!unlock(id)) return;
-    void sounds?.prepareSealBreak?.();
     if (WAITS.includes(id)) { renderWaiting(id); sounds?.ping(); return; }
     queue.push(id);
     flush();
   }
 
-  // the envelopes waiting under the notes: each marked "!", nothing written,
+  // the pages waiting under the notes: each marked "!", nothing written,
   // opened by a click — and gone from here once read and filed
   const shelf = $("index-letters");
   function renderWaiting(fresh = null) {
@@ -289,28 +195,60 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
       env.type = "button";
       env.className = "waiting-letter" + (id === fresh ? " is-new" : "");
       env.dataset.waitingLetter = id;
-      env.setAttribute("aria-label", `A letter found: ${letter.title} — open it`);
+      env.setAttribute("aria-label", `${t('casefile.letterFound', null, 'A letter found')}: ${letter.title} — ${t('casefile.openLetter', null, 'Open the letter')}`);
       env.title = letter.title;
       const mark = document.createElement("span");
       mark.className = "wl-alert";
       mark.textContent = "!";
       mark.setAttribute("aria-hidden", "true");
-      env.append(envelopeIcon(), mark);
-      scope.on(env, "click", () => openWaiting(id, env.querySelector(".wl-envelope")));
+      env.append(pageIcon(id), mark);
+      env.addEventListener("click", () => openWaiting(id, env.querySelector(".wl-page")));
       return env;
     }));
     shelf.hidden = list.length === 0;
-    // Preload the Blender model while a found letter waits in the side panel.
-    if (list.length) { prepareLetterAnimation(); void sounds?.prepareLetterOpen?.(); }
+    // Have the waiting pages' pictures ready before they are opened.
+    for (const id of list) void prepareLetterPage(id);
+    renderDevLetters();
+  }
+
+  // Dev mode (dev server only): the floors' three pages put back in the side
+  // panel unread, to be opened again; and the last letter, to be seen at once
+  let devRow = null;
+  function renderDevLetters() {
+    if (!shelf) return;
+    if (!isDevMode()) { devRow?.remove(); devRow = null; return; }
+    if (!devRow) {
+      devRow = document.createElement("div");
+      devRow.className = "dev-letters";
+      const link = (label, action) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.textContent = label;
+        b.addEventListener("click", action);
+        return b;
+      };
+      devRow.append(
+        link("↺ Reset letters", () => {
+          for (const id of WAITS) if (!has(id)) kept.push(id);
+          read = read.filter((id) => !WAITS.includes(id));
+          save(KEPT, kept); save(READ, read); badge(); renderWaiting();
+        }),
+        link("▶ Last letter", () => {
+          if (arriving || dialogs.isOpen) return;
+          if (!queue.includes("last")) queue.push("last");
+          flush();
+        }),
+      );
+    }
+    shelf.after(devRow);
   }
   async function openWaiting(id, origin) {
     if (arriving || dialogs.isOpen || isBusy() || !waits(id)) return;
     arriving = true;
     const letter = i18n?.getLetter(id) || letterById(id);
-    const how = await playArrival(scope, { letter, sounds, target: button, origin, reducedMotion: reducedMotion(), i18n });
+    const how = await playArrival(scope, { letter, page: id, sounds, target: button, origin, reducedMotion: reducedMotion(), i18n });
     arriving = false;
     if (scope.closed) return;
-    if (how === "read") { markRead(id); current = id; badge(true); }
+    if (how === "read") { markRead(id); badge(true); }
     renderWaiting();
     if (how !== "read") shelf?.querySelector(`[data-waiting-letter="${id}"]`)?.focus({ preventScroll: true });
   }
@@ -320,11 +258,10 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
     const id = queue.shift();
     arriving = true;
     const letter = i18n?.getLetter(id) || letterById(id);
-    const how = await playArrival(scope, { letter, sounds, target: button, reducedMotion: reducedMotion(), i18n });
+    const how = await playArrival(scope, { letter, page: id, sounds, target: button, reducedMotion: reducedMotion(), i18n });
     arriving = false;
     if (scope.closed) return;
     if (how === "read") markRead(id);
-    current = id;
     badge(true);
     if (how !== "read") sounds?.ping();
     flush();
@@ -350,14 +287,14 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
   }));
   badge();
   renderWaiting();
-  if (i18n) scope.add(i18n.subscribe(() => { badge(); if (!modal.classList.contains("hidden")) setTab(tab); }));
+  if (i18n) scope.add(i18n.subscribe(() => { badge(); renderWaiting(); if (!modal.classList.contains("hidden")) book.redraw(spreadsNow()); }));
 
   return {
     open, has, reveal,
     get busy() { return arriving; },
     unlock: (id) => unlock(id, { asRead: true }),
     reset() {
-      kept = []; read = []; seen = []; current = null; selectedRoom = null; lastPlace = null; lastSolved = 0; queue.length = 0;
+      kept = []; read = []; seen = []; lastPlace = null; lastSolved = 0; queue.length = 0;
       save(KEPT, kept); save(READ, read); save(SEEN, seen); badge(); renderWaiting();
     },
   };

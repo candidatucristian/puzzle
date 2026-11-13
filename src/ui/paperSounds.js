@@ -1,5 +1,5 @@
-// Close, dry paper sounds, plus the supplied sigilbreak.mp3 recording for the
-// wax fracture. At the effects' volume, under the master volume
+// Close, dry paper sounds, plus page-turn.mp3 (a Pixabay recording fitted by
+// art/sound/edits.py) for the seal giving way and the flap turned back. At the effects' volume, under the master volume
 // and mute; silent until the page has been played with (the audio context
 // runs only after a gesture).
 //
@@ -11,12 +11,12 @@
 //   file     the letter slid into the dossier
 //   ping     something new in the case file
 //   typing   a typewriter (kept, no longer used for the letters)
-//   writing  the supplied writingonpaper.mp3, a pen on paper, for as long as
+//   writing  pen-writing.mp3 (made by art/sound/paper_sounds.py), a pen on paper, for as long as
 //            a found letter's words take to come up as it is opened out;
 //            returns { stop() }
 
-export function mountPaperSounds({ game, audio }) {
-  const sealURL = `${import.meta.env.BASE_URL}assets/sounds/sigilbreak.mp3`;
+export function mountPaperSounds({ game, audio, openingRecording = null }) {
+  const sealURL = `${import.meta.env.BASE_URL}assets/sounds/page-turn.mp3`;
   let sealPreparation = null, sealBuffer = null, sealOffset = 0;
   const sealPlaybacks = new Set();
   // Decode before opening. Removing only the leading silence/MP3 padding makes
@@ -41,11 +41,12 @@ export function mountPaperSounds({ game, audio }) {
     }).catch(() => { sealPreparation = null; return null; });
     return sealPreparation;
   };
-  // This optional MP4 container is consumed by an Audio element only. The
-  // letter's picture and motion always come from the Blender mesh rig.
-  const recordingURL=`${import.meta.env.BASE_URL}assets/sounds/letter-open.mp4`;
+  // A complete opening recording is optional and must be configured only
+  // when it is bundled. Otherwise use the paper and seal cues below.
+  const recordingURL=openingRecording?`${import.meta.env.BASE_URL}assets/sounds/${openingRecording}`:null;
   let recordingProbe=null;
   const prepareLetterOpen=()=>{
+    if(!recordingURL)return Promise.resolve(false);
     recordingProbe??=fetch(recordingURL,{method:'HEAD',cache:'no-store'}).then(r=>r.ok).catch(()=>false)
       .then(found=>{if(!found)recordingProbe=null;return found;});
     return recordingProbe;
@@ -139,10 +140,10 @@ export function mountPaperSounds({ game, audio }) {
   // and the thump of the carriage stepping on, a space now and then a little
   // heavier and longer; at the end of the line its bell, and the carriage
   // thrown back on its ratchet. All under one gain, so it can be cut short.
-  // the pen on paper: the start of the supplied recording, faded in and out
-  // over the two seconds the words take to come up. It is quiet as recorded,
-  // so it is lifted to sit with the other paper sounds.
-  const writingURL = `${import.meta.env.BASE_URL}assets/sounds/writingonpaper.mp3`;
+  // the pen on paper: the start of pen-writing.mp3, faded in and out over the
+  // two seconds the words take to come up. It is made as quiet as the
+  // recording it replaced, so it is lifted to sit with the other paper sounds.
+  const writingURL = `${import.meta.env.BASE_URL}assets/sounds/pen-writing.mp3`;
   let writingBuffer = null, writingPreparation = null;
   const prepareWriting = () => {
     if (!game.sound?.context) return Promise.resolve(null);

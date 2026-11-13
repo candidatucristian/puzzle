@@ -5,34 +5,32 @@ import { AudioManager } from './core/AudioManager.js';
 import { LevelManager } from './core/LevelManager.js';
 import { ComfortPreferences } from './core/ComfortPreferences.js';
 import { HintStore } from './core/HintStore.js';
-import { AchievementStore } from './core/AchievementStore.js';
 import { I18n } from './core/i18n.js';
 import { LEVEL_DEFINITIONS } from './levels/registry.js';
 import { LEGACY_LEVEL_IDS } from './levels/metadata.js';
 import { gameConfig } from './core/config.js';
 import { mountUI } from './ui/controls.js';
+import { createSceneLoading } from './ui/sceneLoading.js';
 
 export let game, ui, services;
-let stopAchievementAwards;
-export function start(loading) {
+export function start(loading, initialI18n = null) {
   if (game) return game;
   const storage = new SafeStorage();
-  const i18n = new I18n(storage);
+  const i18n = initialI18n ?? new I18n(storage);
   const progress = new ProgressStore(storage, LEVEL_DEFINITIONS, {legacyLevelIds:LEGACY_LEVEL_IDS});
   const audio = new AudioManager(storage);
   const levels = new LevelManager(LEVEL_DEFINITIONS, progress);
-  const achievements = new AchievementStore(storage);
-  stopAchievementAwards = levels.onSolved(id => achievements.award(id));
   const preferences = new ComfortPreferences(storage, matchMedia('(prefers-reduced-motion: reduce)').matches);
   const hints = new HintStore(storage, LEVEL_DEFINITIONS);
-  services = { storage, i18n, progress, audio, levels, loading, preferences, hints, achievements };
+  const sceneLoading = createSceneLoading({ i18n });
+  services = { storage, i18n, progress, audio, levels, loading, preferences, hints, sceneLoading };
   game = new Phaser.Game(gameConfig(services, LEVEL_DEFINITIONS));
   ui = mountUI(game, services);
   return game;
 }
 export function dispose() {
-  stopAchievementAwards?.(); stopAchievementAwards = null;
   ui?.dispose(); game?.destroy(true); services?.audio.destroy(); services?.loading.dispose();
+  services?.sceneLoading.dispose();
   game = null; ui = null; services = null;
 }
 if (import.meta.hot) import.meta.hot.dispose(dispose);

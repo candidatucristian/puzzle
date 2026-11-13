@@ -32,12 +32,13 @@ export default class EquationsScene extends BasePuzzleScene {
     this._digits = []; // what has been chalked into each box (0: nothing)
     // his hand needs its face loaded before the board is written
     const ready = document.fonts?.load ? document.fonts.load(`40px ${HAND}`).catch(() => {}) : Promise.resolve();
-    Promise.race([ready, new Promise((r) => setTimeout(r, 1500))]).then(() => {
-      if (!this.sys.isActive()) return;
+    const generation = this._sceneGeneration;
+    return Promise.race([ready, new Promise((r) => setTimeout(r, 1500))]).then(() => {
+      if (!this.sys?.isActive?.() || generation !== this._sceneGeneration) return;
       this._build(this.cameras.main.width, this.cameras.main.height);
       this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
+      if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
     });
-    if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
   _build(W, H) {

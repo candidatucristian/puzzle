@@ -1,9 +1,9 @@
 // Footsteps: walking from one place of the house to another — through a door,
 // up the stairs, down the passage, back the way one came — the steps are
-// heard (assets/sounds/global/steps.mp3), and die away as one arrives. At the
+// heard (assets/sounds/global/steps-indoor.mp3, fitted by art/sound/edits.py), and die away as one arrives. At the
 // effects' volume, under the master volume and mute.
 
-const FILE = "assets/sounds/global/steps.mp3";
+const FILE = "assets/sounds/global/steps-indoor.mp3";
 const GAIN = 0.7;
 const FADE = 0.65; // seconds the steps take to die away at the end
 

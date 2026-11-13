@@ -44,12 +44,13 @@ export default class HerbariumScene extends BasePuzzleScene {
     this._broughtNear = false;
     // her hand needs its face loaded before the pages are painted
     const ready = document.fonts?.load ? document.fonts.load('italic 500 40px "Cormorant Garamond"').catch(() => {}) : Promise.resolve();
-    Promise.race([ready, new Promise((r) => setTimeout(r, 1500))]).then(() => {
-      if (!this.sys.isActive()) return;
+    const generation = this._sceneGeneration;
+    return Promise.race([ready, new Promise((r) => setTimeout(r, 1500))]).then(() => {
+      if (!this.sys?.isActive?.() || generation !== this._sceneGeneration) return;
       this._build(this.cameras.main.width, this.cameras.main.height);
       this.listenToResize(({ width, height }) => { this._teardown(); this._build(width, height); });
+      if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
     });
-    if (!this.skipFadeIn) this.cameras.main.fadeIn(600, 0, 0, 0);
   }
 
   // whether a leaf is on its way over (read by the browser tests)

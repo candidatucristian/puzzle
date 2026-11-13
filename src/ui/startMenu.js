@@ -11,9 +11,9 @@
 import { devModeAllowed, isDevMode, setDevMode } from '../shared/devMode.js';
 
 const CONFIRM_MS = 4000;
-const HOVER_URL = `${import.meta.env.BASE_URL}assets/sounds/menuhover.mp3`;
+const HOVER_URL = `${import.meta.env.BASE_URL}assets/sounds/menu-hover.mp3`;
 
-// The supplied menuhover.mp3, as the pointer (or the keys) comes onto a word:
+// menu-hover.mp3 (made by art/sound/menu_hover.py), as the pointer (or the keys) comes onto a word:
 // decoded once, its leading silence left out so it sounds at once, at the
 // effects' volume under the master volume and mute. Silent until the page has
 // been clicked (the browser starts the sound only after a gesture).
@@ -21,7 +21,7 @@ function menuHoverSound(scope, { game, audio }) {
   let buffer = null, offset = 0, last = 0;
   const ac = game?.sound?.context;
   if (ac) {
-    fetch(HOVER_URL).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error('menuhover.mp3 missing'))))
+    fetch(HOVER_URL).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error('menu-hover.mp3 missing'))))
       .then(bytes => ac.decodeAudioData(bytes)).then((decoded) => {
         if (scope.closed) return;
         const ch = decoded.getChannelData(0);
@@ -118,7 +118,7 @@ export function mountStartMenu(scope, { game = null, audio = null, i18n = null, 
     const on = isDevMode();
     dev.classList.toggle('is-on', on);
     dev.setAttribute('aria-pressed', String(on));
-    dev.querySelector('.menu-state').textContent = on ? 'ON' : 'OFF';
+    dev.querySelector('.menu-state').textContent = t(on ? 'common.on' : 'common.off', on ? 'ON' : 'OFF');
   };
   if (dev && devModeAllowed()) {
     dev.hidden = false;
@@ -137,6 +137,7 @@ export function mountStartMenu(scope, { game = null, audio = null, i18n = null, 
   // Up and down move along the menu; Enter and Space are the buttons' own.
   scope.on(window, 'keydown', (event) => {
     if (!['ArrowDown', 'ArrowUp'].includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (night || isBlocked()) return;
     if (start.classList.contains('hidden') || start.classList.contains('is-telling') || start.classList.contains('is-arriving')) return;
     const inMenu = menu.contains(document.activeElement);
     if (!inMenu && document.activeElement !== document.body) return;
@@ -165,21 +166,34 @@ export function mountStartMenu(scope, { game = null, audio = null, i18n = null, 
     back.textContent = t('menu.exitBack', 'Back to the manor');
     night.append(note, back);
     document.body.append(night);
+    const screen = night;
     onExit?.();
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     requestAnimationFrame(() => night?.classList.add('is-on'));
-    scope.later(() => {
+    const closing = scope.later(() => {
+      if (night !== screen) return;
       try { window.close(); } catch { /* not this page's to close */ }
       night?.classList.add('is-told');
       back.focus({ preventScroll: true });
     }, 900);
-    back.addEventListener('click', () => {
-      const going = night;
+    const returnToMenu = () => {
+      if (night !== screen) return;
+      scope.cancel(closing);
       night = null;
-      going.classList.remove('is-on', 'is-told');
+      screen.classList.remove('is-on', 'is-told');
       onReturn?.();
-      scope.later(() => going.remove(), 900);
+      exit.focus({ preventScroll: true });
+      scope.later(() => screen.remove(), 900);
+    };
+    back.addEventListener('click', returnToMenu);
+    screen.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault(); event.stopPropagation(); returnToMenu();
+      } else if (['Tab', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
+        event.preventDefault(); event.stopPropagation(); back.focus({ preventScroll: true });
+      }
     });
+    back.focus({ preventScroll: true });
   }
   scope.add(() => { night?.remove(); night = null; });
 
@@ -190,6 +204,6 @@ export function mountStartMenu(scope, { game = null, audio = null, i18n = null, 
     resume.setAttribute('aria-disabled', String(!can));
   }
   refresh();
-  if (i18n) scope.add(i18n.subscribe(() => { disarm(); refresh(); }));
+  if (i18n) scope.add(i18n.subscribe(() => { disarm(); refresh(); if (dev && devModeAllowed()) showDev(); }));
   return { refresh, disarm };
 }

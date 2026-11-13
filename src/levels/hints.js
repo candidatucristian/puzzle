@@ -8,12 +8,8 @@ export const HINT_DETAILS = {
     "Smallest first. Then read each card the way the corner note reads its own example — aloud, as a count.",
   ],
   cryptex: [],
-  chessboard: [
-    "One piece on every row. The edge of the board names each square; read the rows from the bottom up.",
-  ],
-  mobilephone: [
-    "Notice how the digits repeat, and the letters printed on the keys. Old phones were typed by pressing again and again.",
-  ],
+  chessboard: [],
+  mobilephone: [],
   lightswitch: [
     "Not every flash lasts the same. Each press tells one part of the message; the next press tells the next.",
   ],
@@ -57,9 +53,7 @@ export const HINT_DETAILS = {
   fireworks: [
     "Each balloon is one exact colour, and a computer writes a colour as three pairs. Only the first pair of each matters — read those pairs as letters.",
   ],
-  compass: [
-    "The map's numbers are directions, the same as on the compass card. Each line is a little journey — make it on paper.",
-  ],
+  compass: [],
   bookshelf: [
     "Each has a title and a bookmark with a number. The number points somewhere inside its own title.",
   ],

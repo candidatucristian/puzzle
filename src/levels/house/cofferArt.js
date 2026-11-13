@@ -3,6 +3,7 @@ import { WALK_MS } from '../../shared/house.js';
 import { chime } from '../../shared/paint.js';
 import { attachMovableSparkles } from '../../shared/movableSparkles.js';
 import { lockedNote } from '../../shared/lockedNote.js';
+import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 
 const artVersion = room => COFFER.rooms[room]?.artVersion ?? COFFER.version;
 export const cofferAtlasKey = room => `coffer_${room}_v${artVersion(room)}`;
@@ -12,6 +13,7 @@ export function loadCofferArt(scene, room) {
   const spec = COFFER.rooms[room];
   if (!spec) return;
   for (const [key, name] of [[cofferAtlasKey(room), 'poses'], [cofferKeyArt(room), 'key']]) {
+    if (name === 'key') optionalSceneAsset(scene, key);
     if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Chest/native-v${artVersion(room)}/${room.toLowerCase()}-${name}.webp`);
   }
 }
@@ -47,6 +49,11 @@ export function buildCoffer(scene, L, k) {
     scene._lock = scene.add.zone(c.hit.x, c.hit.y, c.hit.width, c.hit.height).setOrigin(0)
       .setInteractive({ cursor: 'not-allowed' }).setData('interactionLabel', 'Locked').setDepth(5);
     lockedNote(scene, scene._lock);
+    // the demo's last chest, everything round it solved: a click on it brings
+    // the end of the demo back (ui/demoEnd.js)
+    if (sealed) scene._lock.on('pointerdown', () => {
+      if (L.things.every(thing => levels.isCompleted(levels.indexOf(thing.level)))) window.dispatchEvent(new Event('demo:end'));
+    });
   }
   if (waiting) scene.time.delayedCall(WALK_MS + 150, () => scene._offerKey(waiting, k));
 }

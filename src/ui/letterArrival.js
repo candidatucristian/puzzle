@@ -1,48 +1,88 @@
 import {Scope} from '../shared/Scope.js';
 import {renderLetter} from './letterPage.js';
-import animation from './letterAnimation.json';
+import {showConsoleNote} from './consoleNote.js';
+import held from './letterHeld.json';
 import './styles/letter-arrival.css';
 
-// Actual Blender meshes, hinge keyframes and camera movement, played live.
-// The readable words remain DOM text on the physical paper, in every language.
+// A found letter, held up before his eyes (since 2026-11-12): no envelope, no
+// hands, the sheet alone, old and dark — Ivy's page torn from her garden book,
+// Silas's from his laboratory note book, the back of Orion's star chart, the
+// house's note paper for the last. Rendered in Blender (art/blender/
+// letter_held.py) on nothing: a film of the sheet being lifted into view, and
+// the still it comes to rest in (the film's last frame). Behind it lies the
+// game itself — the hall, the sidebars, the console — just as it was, out of
+// focus and darker, so that nothing seems to zoom in or out as the letter
+// comes and goes; the sheet is held over the play area. Then the words come
+// up on it: live DOM text laid on the picture, in every language, where
+// letterHeld.json says the paper has room for them. With the motion reduced,
+// or a browser that cannot show a film with an alpha channel, the still
+// alone comes up.
 const BASE=import.meta.env.BASE_URL;
-export const letterArt=name=>`${BASE}assets/images/CaseFile/letter/${name}.webp`;
-let modulePromise=null;
-const stageModule=()=>modulePromise??=import('./letterStage3d.js');
-export function prepareLetterAnimation() {
-  void stageModule().then(m=>m.prepareLetterModel()).catch(()=>{});
+const pageOf=id=>held[id]?id:'last';
+const stillOf=id=>`${BASE}assets/images/CaseFile/letter/held/${pageOf(id)}.webp`;
+const filmOf=id=>`${BASE}assets/video/letters/${pageOf(id)}-lifted.webm`;
+/** The little picture of a letter waiting in the side panel. */
+export const letterPageIcon=id=>`${BASE}assets/images/CaseFile/letter/held/${pageOf(id)}-icon.webp`;
+// (VP9 with an alpha channel: Chromium-based browsers show it; elsewhere the still)
+const filmable=()=>/Chrom(e|ium)\/|Edg\//.test(navigator.userAgent)
+  && !!document.createElement('video').canPlayType('video/webm; codecs="vp9"');
+const stills=new Map(),films=new Map();
+const picture=src=>new Promise((resolve,reject)=>{
+  const image=new Image();image.decoding='async';
+  image.onload=()=>image.decode().catch(()=>{}).then(()=>resolve(image));
+  image.onerror=()=>reject(new Error(`${src} unavailable`));image.src=src;
+});
+function prepareFilm(key) {
+  if(!filmable())return Promise.resolve(null);
+  if(!films.has(key))films.set(key,fetch(filmOf(key)).then(r=>r.ok?r.blob():Promise.reject(new Error('no film')))
+    .then(blob=>URL.createObjectURL(blob)).catch(()=>{films.delete(key);return null;}));
+  return films.get(key);
+}
+/** Fetches and decodes a letter's still (null if it cannot be had), and fetches its film. */
+export function prepareLetterPage(id) {
+  const key=pageOf(id);
+  if(!stills.has(key))stills.set(key,picture(stillOf(key)).catch(()=>{stills.delete(key);return null;}));
+  void prepareFilm(key);
+  return stills.get(key);
 }
 const el=(tag,className,text)=>{
   const node=document.createElement(tag);node.className=className;
   if(text)node.textContent=text;return node;
 };
+const percent=v=>`${(v*100).toFixed(3)}%`;
+// a folder, drawn in a thin line, a sheet going into it
+const FOLDER='<svg class="file-icon" viewBox="0 0 24 18" aria-hidden="true"><path d="M1.5 5.5V16.2H22.5V5.5H11.2L9.4 3.2H1.5Z"/><path d="M6.5 8.2V1.2H17.5V8.2"/><path d="M9 3.8H15M9 5.8H13.5"/></svg>';
 
-/** Resolves only when filed ("read") or dismissed unopened ("later"). */
-export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotion=false,i18n=null}) {
+/** Resolves when filed ("read") or put away before it was read ("later"). */
+export function playArrival(scope,{letter,page=null,sounds,target,origin=null,reducedMotion=false,i18n=null}) {
   if(scope.closed)return Promise.resolve('later');
   const still=reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches;
   const text=(key,fallback)=>i18n?i18n.t(key):fallback;
+  const id=pageOf(page??letter.id),spec=held[id];
   return new Promise(resolve=>{
     const life=new Scope(),moves=new Set(),previousFocus=document.activeElement;
     const waiting=origin?.closest('.waiting-letter')??null;
-    const root=el('div','arrival');root.tabIndex=-1;
+    const root=el('div','arrival');root.tabIndex=-1;root.dataset.page=id;
     root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');
     root.setAttribute('aria-label',`${text('casefile.letterFound','A letter found')}: ${letter.title}`);
-    // Render directly into the dialog. The old centred CSS envelope stage
-    // must never position or crop the native scene.
-    const veil=el('div','arrival-veil'),canvas=el('canvas','arrival-model');
-    canvas.setAttribute('aria-hidden','true');
-    const env=el('button','env');env.type='button';env.disabled=true;
-    env.setAttribute('aria-label',text('casefile.openLetter','Open the letter'));
+    // over the play area: the film, the still over it, the words on the sheet
+    const view=el('div','arrival-view'),scene=el('div','arrival-scene');
+    const film=el('video','arrival-film');
+    film.muted=true;film.playsInline=true;film.preload='auto';film.disablePictureInPicture=true;film.setAttribute('aria-hidden','true');
+    const plate=el('img','arrival-still');plate.alt='';plate.draggable=false;plate.setAttribute('aria-hidden','true');
+    const [sx0,sy0,sx1,sy1]=spec.sheet,[tx0,ty0,tx1,ty1]=spec.text;
+    const plainPaper=el('div','arrival-plain');
+    Object.assign(plainPaper.style,{left:percent(sx0),top:percent(sy0),width:percent(sx1-sx0),height:percent(sy1-sy0)});
+    const sheet=el('div','letter-sheet'),body=el('div','arrival-page');
+    Object.assign(sheet.style,{left:percent(tx0),top:percent(ty0),width:percent(tx1-tx0),height:percent(ty1-ty0)});
+    body.tabIndex=0;body.setAttribute('aria-label',letter.title);sheet.append(body);
+    scene.append(film,plate,plainPaper,sheet);
     const caption=el('div','arrival-caption');
     caption.append(el('p','arrival-eyebrow',text('casefile.letterFound','A letter found')),el('p','arrival-title',letter.title));
-    const hint=el('p','arrival-hint',text('casefile.openLetter','Open the letter'));
-    const sheet=el('div','letter-sheet'),page=el('div','arrival-page');
-    page.tabIndex=0;page.setAttribute('aria-label',letter.title);sheet.append(page);
-    const file=el('button','arrival-file',text('casefile.fileLetter','File it in the case file'));
-    file.type='button';file.disabled=true;
-    root.append(veil,canvas,env,caption,hint,sheet,file);document.body.append(root);
-    let state='',native=null,plain=false,typist=null,recording=null,sealSound=null,completeMotion=null;
+    const file=el('button','arrival-file');file.type='button';file.disabled=true;
+    file.innerHTML=FOLDER;file.append(el('span','file-label',text('casefile.fileLetter','File it in the case file')));
+    view.append(scene,caption,file);root.append(view);document.body.append(root);
+    let state='',typist=null,settle=null;
     const alive=()=>!life.closed;
     const stateTo=value=>{state=value;root.dataset.state=value;};
     const move=(node,frames,options)=>{
@@ -52,161 +92,120 @@ export function playArrival(scope,{letter,sounds,target,origin=null,reducedMotio
     };
     const show=(node,ms=300)=>move(node,[{opacity:0},{opacity:1}],{duration:ms,easing:'ease-out'});
     const hide=(node,ms=300)=>move(node,[{opacity:getComputedStyle(node).opacity},{opacity:0}],{duration:ms,easing:'ease-in'});
+    // the game behind it out of focus and darker while it is read
+    const dim=on=>document.body.classList.toggle('letter-open',on);
 
+    // over the play area, where the hall is; the sheet as large as it allows
+    // with room for the title above and the button below
     const fit=()=>{
-      const bounds=root.getBoundingClientRect();
-      const width=Math.max(1,bounds.width),height=Math.max(1,bounds.height);
-      if(native){
-        native.fit(width,height);
-        const e=native.envelopeBounds(),p=native.paperBounds();
-        Object.assign(env.style,{left:`${e.x}px`,top:`${e.y}px`,width:`${e.w}px`,height:`${e.h}px`});
-        Object.assign(sheet.style,{left:`${p.x-p.w/2}px`,top:`${p.y-p.h/2}px`,width:`${p.w}px`,height:`${p.h}px`,
-          padding:`${p.w*.09}px ${p.w*.085}px ${p.w*.07}px`,transform:`rotate(${p.angle}deg)`,
-          fontSize:`${Math.max(13,Math.min(18,p.w/34))}px`});
-      }else{
-        const w=Math.min(560,width*.88),h=height*.78;
-        Object.assign(sheet.style,{left:`${(width-w)/2}px`,top:`${(height-h)/2-12}px`,width:`${w}px`,height:`${h}px`,
-          padding:'0',transform:'none',fontSize:`${Math.max(13,Math.min(18,w/34))}px`});
-      }
+      const area=document.getElementById('game-viewport')?.getBoundingClientRect();
+      const r=area&&area.width>200&&area.height>200?area:{left:0,top:0,width:innerWidth,height:innerHeight};
+      Object.assign(view.style,{left:`${r.left}px`,top:`${r.top}px`,width:`${r.width}px`,height:`${r.height}px`});
+      const [W,H]=spec.frame;
+      const scale=Math.min(r.height*.74/(H*(sy1-sy0)),r.width*.9/(W*(sx1-sx0)));
+      const w=W*scale,h=H*scale,cx=r.width/2,cy=r.height*.5;
+      Object.assign(scene.style,{width:`${w}px`,height:`${h}px`,
+        left:`${cx-(sx0+sx1)/2*w}px`,top:`${cy-(sy0+sy1)/2*h}px`});
+      sheet.style.fontSize=`${Math.max(12,Math.min(19,w*(tx1-tx0)/30))}px`;
     };
     life.on(window,'resize',fit);
     const resize=new ResizeObserver(()=>{if(alive())fit();});
     resize.observe(root);life.add(()=>resize.disconnect());
     const finish=how=>{
       if(!alive())return;
-      stateTo('gone');typist?.stop();recording?.stop();sealSound?.stop();
+      stateTo('gone');typist?.stop();film.pause();film.removeAttribute('src');dim(false);
       for(const a of moves)a.cancel();
-      life.dispose();native?.dispose();native=null;root.remove();
+      life.dispose();root.remove();
       waiting?.classList.remove('is-in-flight');scope.cleanups.delete(parentCleanup);
       const focus=how==='read'&&target?.isConnected?target:previousFocus?.isConnected?previousFocus:target;
       focus?.focus?.({preventScroll:true});resolve(how);
     };
     const parentCleanup=scope.add(()=>finish('later'));
 
-    // Advancing the real Blender clip (forwards only: filed, the letter flies
-    // to the case file instead of folding back).
-    const pose=(from,to,milliseconds,onFrame=null)=>new Promise(done=>{
-      let raf=null,ended=false;
-      const complete=()=>{
-        if(ended)return;ended=true;
-        if(raf!==null)cancelAnimationFrame(raf);
-        if(alive()){native?.pose(to);root.dataset.progress=String(to/animation.duration);onFrame?.(to,true);}
-        if(completeMotion===complete)completeMotion=null;
-        life.cleanups.delete(cancel);done();
-      };
-      const cancel=()=>{if(raf!==null)cancelAnimationFrame(raf);ended=true;done();};
-      life.add(cancel);completeMotion=complete;
-      if(still){complete();return;}
-      const start=performance.now();
-      const tick=now=>{
-        if(!alive()||ended)return;
-        const k=Math.min(1,(now-start)/milliseconds),time=from+(to-from)*k;
-        native.pose(time);root.dataset.progress=String(time/animation.duration);onFrame?.(time);
-        if(k===1)complete();else raf=requestAnimationFrame(tick);
-      };
-      raf=requestAnimationFrame(tick);
-    });
-
     const read=()=>{
-      stateTo('reading');env.hidden=true;fit();
-      const article=renderLetter(page,letter,{paper:plain,seal:false,materials:plain?null:undefined});
-      sheet.style.opacity='1';caption.style.opacity='0';
+      if(!alive())return;
+      stateTo('reading');settle=null;
+      // (Arthur's pencilled note is not on the sheet: it comes up in the
+      // console once the letter is filed)
+      const article=renderLetter(body,letter,{paper:false,seal:false,margin:false});
+      sheet.style.opacity='1';void hide(caption,600);
       if(!still){
         article.classList.add('is-writing');typist=sounds?.writing?.()??null;
         life.later(()=>article.classList.remove('is-writing'),2100);
       }
-      file.disabled=false;void show(file,300);page.focus({preventScroll:true});
+      file.disabled=false;void show(file,300);body.focus({preventScroll:true});
     };
-    const open=async()=>{
-      if(!alive()||state!=='waiting')return;
-      stateTo('opening');env.disabled=true;root.focus({preventScroll:true});
-      void hide(hint,180);void hide(caption,500);
-      await sounds?.prepareSealBreak?.();
-      if(!alive())return;
-      recording=sounds?.letterOpen?.()??null;
-      const cues=Object.entries(animation.cues).sort((a,b)=>a[1]-b[1]);
-      await pose(animation.arrival,animation.duration,(animation.duration-animation.arrival)*1000,(time,jumped=false)=>{
-        if(jumped)recording?.stop();
-        while(cues.length&&cues[0][1]<=time){
-          const name=cues.shift()[0];
-          if(name==='crack'){sealSound=sounds?.sealBreak?.()??null;if(!sealSound)sounds?.crack?.();continue;}
-          if(jumped||recording?.present)continue;
-          if(name==='open')sounds?.open?.();
-          else if(name==='slide')sounds?.page?.(true);else if(name.startsWith('unfold'))sounds?.unfold?.();
-        }
+    // The film: the sheet lifted up into view over the dimmed game; at its
+    // end the still (the same picture, cleaner) takes over.
+    const arriveFilm=async url=>{
+      film.src=url;
+      try{await film.play();}catch{film.removeAttribute('src');return false;}
+      if(!alive())return true;
+      stateTo('arriving');fit();dim(true);waiting?.classList.add('is-in-flight');
+      sounds?.page?.(true);
+      scene.style.opacity='1';void show(caption,600);
+      await new Promise(done=>{
+        settle=()=>{film.pause();done();};
+        film.addEventListener('ended',done,{once:true});film.addEventListener('error',done,{once:true});
+        life.add(done);
       });
-      if(alive())read();
+      if(!alive()||state!=='arriving')return true;
+      for(const a of moves)a.finish();
+      plate.style.opacity='1';
+      requestAnimationFrame(()=>{film.style.visibility='hidden';film.pause();});
+      read();
+      return true;
     };
-    // Filed: not folded back into its envelope — the open letter, as it
-    // lies, flies small and faint into the case file's button while the dark
-    // lifts; the button takes it with a brief glint. (No button to fly to, or
-    // the motion reduced: it fades where it is.)
-    const flyToFile=()=>{
-      const goal=target?.isConnected?target.getBoundingClientRect():null;
-      if(still||!goal||!goal.width||!goal.height)return Promise.all([hide(canvas,380),hide(sheet,380),hide(veil,480)]);
-      const paper=sheet.getBoundingClientRect(),stage=root.getBoundingClientRect();
-      const from={x:paper.left+paper.width/2,y:paper.top+paper.height/2};
-      const dx=goal.left+goal.width/2-from.x,dy=goal.top+goal.height/2-from.y;
-      const k=Math.max(.035,Math.min(.2,goal.width*1.3/Math.max(1,paper.width)));
-      const turn=sheet.style.transform||'none',timing={duration:950,easing:'cubic-bezier(.5,0,.2,1)'};
-      // (the picture and the words on it moved as one: about the paper's middle)
-      canvas.style.transformOrigin=`${from.x-stage.left}px ${from.y-stage.top}px`;
-      const flight=(base)=>[
-        {transform:`${base}`.trim()||'none',opacity:1},
-        {transform:`translate(${dx*.3}px,${dy*.3}px) scale(${.62}) ${base}`,opacity:.92,offset:.42},
-        {transform:`translate(${dx}px,${dy}px) scale(${k}) ${base}`,opacity:0},
-      ];
-      return Promise.all([
-        move(canvas,flight(''),timing),
-        move(sheet,flight(turn==='none'?'':turn),timing),
-        move(veil,[{opacity:getComputedStyle(veil).opacity},{opacity:0}],{duration:700,delay:180,easing:'ease-out'}),
-      ]).then(()=>{
-        if(!target?.isConnected)return;
-        target.classList.remove('is-receiving');void target.offsetWidth;target.classList.add('is-receiving');
-        setTimeout(()=>target.classList.remove('is-receiving'),900);
-      });
+    // Without the film: the still comes up from below by itself.
+    const arriveStill=async()=>{
+      stateTo('arriving');fit();dim(true);waiting?.classList.add('is-in-flight');film.hidden=true;
+      plate.style.opacity='1';
+      if(!still)sounds?.page?.(true);
+      const shown=Promise.all([
+        move(scene,[{opacity:0,transform:'translateY(9%)'},{opacity:1,transform:'none'}],{duration:700,easing:'cubic-bezier(.2,.7,.25,1)'}),
+        show(caption,600),
+      ]);
+      settle=()=>{for(const a of moves)a.finish();};
+      await shown;
+      if(alive()&&state==='arriving')read();
     };
+    // Filed: the sheet goes, the game comes back into focus, and the case
+    // file's button takes the letter with a brief glint.
     const fileIt=async()=>{
       if(!alive()||state!=='reading')return;
-      stateTo('filing');file.disabled=true;typist?.stop();recording?.stop();root.focus({preventScroll:true});
-      void hide(file,180);
-      await flyToFile();
+      stateTo('filing');file.disabled=true;typist?.stop();root.focus({preventScroll:true});
+      void hide(file,180);dim(false);
+      await move(view,[{opacity:1,transform:'none'},{opacity:0,transform:'translateY(3%)'}],{duration:520,easing:'ease-in'});
       if(!alive())return;
+      if(target?.isConnected){
+        target.classList.remove('is-receiving');void target.offsetWidth;target.classList.add('is-receiving');
+        setTimeout(()=>target.classList.remove('is-receiving'),900);
+      }
       sounds?.file?.();finish('read');
+      // what he makes of it, across the console for a moment
+      if(letter.margin)showConsoleNote(letter.margin,{signature:text('casefile.marginSign','— A. W.'),reducedMotion:still});
     };
-    const putAway=async()=>{
-      if(!alive()||!['waiting','arriving'].includes(state))return;
-      stateTo('filing');completeMotion?.();
-      await Promise.all([hide(canvas,300),hide(caption,200),hide(hint,160),hide(veil,350)]);finish('later');
-    };
-    life.on(env,'click',()=>void open());life.on(file,'click',()=>void fileIt());
+    life.on(file,'click',()=>void fileIt());
     life.on(root,'keydown',event=>{
       event.stopPropagation();
       if(event.key==='Escape'){
         event.preventDefault();
         if(state==='reading')void fileIt();
-        else if(state==='waiting'||state==='arriving')void putAway();
-        else if(state==='opening')completeMotion?.();
+        else if(state==='arriving')settle?.();
       }else if(event.key==='Tab'){
         event.preventDefault();
-        if(state==='reading')(document.activeElement===page?file:page).focus({preventScroll:true});
-        else if(state==='waiting')env.focus({preventScroll:true});
+        if(state==='reading')(document.activeElement===body?file:body).focus({preventScroll:true});
       }
     });
     stateTo('preparing');root.focus({preventScroll:true});
-    void sounds?.prepareSealBreak?.();void sounds?.prepareWriting?.();
+    void sounds?.prepareWriting?.();
     void(async()=>{
-      try{const m=await stageModule();native=await m.createLetterStage(canvas);}catch{native=null;}
-      if(!alive()){native?.dispose();native=null;return;}
-      if(!native){
-        plain=true;root.classList.add('is-plain');canvas.hidden=true;env.hidden=true;hint.hidden=true;
-        fit();await show(veil,200);if(alive())read();return;
-      }
-      stateTo('arriving');fit();waiting?.classList.add('is-in-flight');sounds?.whoosh?.();
-      await Promise.all([show(veil,350),show(canvas,400),show(caption,450),pose(0,animation.arrival,650)]);
-      if(!alive()||state!=='arriving')return;
-      sounds?.land?.();stateTo('waiting');fit();env.disabled=false;
-      if(origin)void open();else{void show(hint,250);env.focus({preventScroll:true});}
+      const [image,url]=await Promise.all([prepareLetterPage(id),still?null:prepareFilm(id)]);
+      if(!alive())return;
+      if(image)plate.src=image.src;
+      else root.classList.add('is-plain');
+      if(image&&url&&await arriveFilm(url))return;
+      if(alive())await arriveStill();
     })();
   });
 }

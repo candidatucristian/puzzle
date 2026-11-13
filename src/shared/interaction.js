@@ -4,7 +4,9 @@ import { PLACES } from './house.js';
  * objects. Existing hit areas and handlers remain owned by each scene. */
 export function attachSceneFeedback(scene) {
   let target = null;
-  const emit = detail => scene.game.events.emit('puzzle:interaction', detail);
+  const emit = detail => scene.game.events.emit('puzzle:interaction', {
+    ...detail, label: scene.services?.i18n?.getInteractionLabel(detail.label) ?? detail.label,
+  });
   function clear() { target = null; emit({ label: '' }); }
   function labelFor(object) {
     return object.getData?.('interactionLabel') || (object.input?.draggable ? 'Drag to move' : 'Click to interact');
@@ -45,7 +47,11 @@ export function attachSceneFeedback(scene) {
   scene.input.on('gameobjectdown', down);
   scene.input.on('dragstart', clear);
   scene.input.on('gameout', clear);
+  const unsubscribe = scene.services?.i18n?.subscribe(() => {
+    if (target) emit({ label: labelFor(target) });
+  });
   return () => {
+    unsubscribe?.();
     clear();
     scene.input.off('gameobjectover', over);
     scene.input.off('gameobjectout', out);

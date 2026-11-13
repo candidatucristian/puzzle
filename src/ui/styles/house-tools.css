@@ -1,4 +1,4 @@
-/* ── The house's tools: the map, the notebook, the magnifying glass ──────── */
+/* ── The house's tools: the map, the magnifying glass ──────── */
 
 /* their sheets: old paper on the dark, lettered in pencil */
 .tool-modal {
@@ -104,94 +104,6 @@
 .map-place.go:focus { outline: none; }
 #map-keys { margin: 0; font: 400 calc(14px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: #2a241c; }
 #map-keys[hidden] { display: none; }
-
-/* ── the notebook: it comes out of the index — the side panel widens to the
-   left over the picture, its own lines stand aside, and the notebook is
-   written in its place: the panel's own dark, a clear rule down its edge, the
-   page itself paper (notebook.js) ── */
-#notebook-modal { position: absolute; z-index: 60; top: 0; right: 0; bottom: 0; display: flex;
-  width: min(460px, 42vw); background: var(--ui-bg); border-left: 1px solid #55554f;
-  box-shadow: -1px 0 0 #000, -34px 0 60px #000b;
-  clip-path: inset(0 0 0 0); transition: clip-path .32s cubic-bezier(.22, .8, .24, 1); }
-#notebook-modal.hidden { clip-path: inset(0 0 0 calc(100% - var(--index-width))); visibility: hidden; pointer-events: none;
-  transition: clip-path .24s ease-in, visibility 0s linear .24s; }
-.notebook-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 22px 24px 18px 22px;
-  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #3a3a36 transparent;
-  color: var(--ui-text); font-family: var(--ui-font); }
-:root:has(#notebook-modal:not(.hidden)) #sidebar { opacity: 0; visibility: hidden; transition: opacity .15s ease, visibility 0s linear .15s; }
-#sidebar { transition: opacity .25s ease .1s; }
-.notebook-content .options-heading { flex-wrap: nowrap; padding-bottom: 12px; border-bottom: 1px solid #3a3a36; }
-.notebook-content h2 { margin: 0; color: var(--ui-text); font: 500 calc(19px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: .02em; }
-.notebook-content .tool-note { margin: 0; color: var(--ui-muted); font: 400 calc(11px * var(--reading-scale, 1))/1.55 var(--ui-font); }
-/* the page first, the saved pages under it */
-.notebook-body { display: flex; flex-direction: column; gap: 16px; }
-.notebook-page { order: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.notebook-shelf { order: 1; display: grid; gap: 8px; padding: 12px 12px 14px; border: 1px solid #3a3a36; border-radius: 4px; background: var(--ui-panel); }
-.shelf-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
-.shelf-label { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .16em; text-transform: uppercase; color: var(--ui-muted); }
-.shelf-count { font: 400 calc(10.5px * var(--reading-scale, 1)) var(--ui-mono, monospace); color: var(--ui-muted); }
-#notebook-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
-/* the saved pages: index cards, a red rule down their margin */
-#notebook-notes { max-height: 220px; overflow-y: auto; padding: 2px 4px 4px 2px; }
-.shelf-note { width: 100%; display: grid; gap: 2px; padding: 7px 10px 7px 14px; border: 0; border-radius: 2px; text-align: left;
-  background: repeating-linear-gradient(180deg, #0000 0 15px, #5a6e9a26 15px 16px) 0 6px, #f3ecd6;
-  box-shadow: inset 2px 0 0 #b8443a99; transition: transform .15s; }
-.shelf-note:hover { transform: translateX(2px); }
-.shelf-note.open { box-shadow: inset 2px 0 0 #b8443a, 0 0 0 2px #d8d3c6; }
-.shelf-note.just-kept { animation: note-filed .8s cubic-bezier(.3, 1.3, .5, 1); }
-@keyframes note-filed { 0% { transform: translate(60px, -10px) rotate(6deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
-.note-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(14px * var(--reading-scale, 1))/1.25 "Architects Daughter", cursive; color: #2a241c; }
-.note-meta { font: 400 calc(10px * var(--reading-scale, 1)) var(--ui-font); color: #6a5a40; letter-spacing: .03em; }
-.shelf-empty { padding: 4px; font: italic 400 calc(12px * var(--reading-scale, 1)) Georgia, serif; color: var(--ui-muted); }
-/* the page: lined paper to write on, and a sheet to draw on, each with a clear edge */
-.page-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; min-height: 22px; }
-.page-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 calc(16px * var(--reading-scale, 1)) "Architects Daughter", cursive; color: var(--ui-text); }
-.page-back { flex: none; padding: 3px 8px; border: 1px solid #3a3a36; border-radius: 3px; font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); background: transparent; }
-.page-back:hover { background: #ffffff0d; }
-.page-back[hidden] { display: none; }
-#notebook-text { width: 100%; box-sizing: border-box; resize: vertical; height: 168px; min-height: 112px; padding: 4px 12px; margin: 0;
-  font: 400 calc(16px * var(--reading-scale, 1))/28px "Architects Daughter", cursive; color: #2a241c;
-  background: repeating-linear-gradient(180deg, transparent 0 27px, #5a6e9a40 27px 28px) 0 4px, #ece4cc;
-  border: 1px solid #000; border-radius: 3px; box-shadow: 0 0 0 1px #6a6a64; outline: none; }
-#notebook-text:focus { box-shadow: 0 0 0 2px #d8d3c6; }
-.notebook-sketch-wrap { position: relative; border: 1px solid #000; border-radius: 3px; box-shadow: 0 0 0 1px #6a6a64; background: #fff; line-height: 0; }
-/* the pencil that sketches on an empty sheet, and is gone (notebookPencil.js) */
-.notebook-pencil { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; opacity: 0; }
-#notebook-sketch { border-radius: 2px; width: 100%; aspect-ratio: 640 / 300; touch-action: none; cursor: var(--cursor-pencil, crosshair); }
-#notebook-sketch[data-tool="eraser"] { cursor: var(--cursor-rubber, crosshair); }
-/* the pencil's widths and colours, under the sheet */
-.notebook-pens { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.pen-group { display: flex; align-items: center; gap: 6px; }
-.pen-size, .pen-colour { appearance: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border-radius: 50%;
-  border: 1px solid #3a3a36; background: transparent; cursor: var(--cursor-hand, pointer); transition: border-color .15s, background .15s; }
-.pen-size span { display: block; border-radius: 50%; background: #d8d3c6; }
-.pen-size[data-notebook-size="0"] span { width: 4px; height: 4px; }
-.pen-size[data-notebook-size="1"] span { width: 8px; height: 8px; }
-.pen-size[data-notebook-size="2"] span { width: 13px; height: 13px; }
-.pen-colour span { display: block; width: 20px; height: 20px; border-radius: 50%; background: var(--pen); box-shadow: 0 0 0 1px #8a8a84; }
-.pen-size:hover, .pen-colour:hover { border-color: #6a6a64; }
-.pen-size[aria-pressed="true"], .pen-colour[aria-pressed="true"] { border-color: #d8d3c6; background: #ffffff14; box-shadow: 0 0 0 1px #d8d3c6; }
-.pen-size:focus-visible, .pen-colour:focus-visible { outline: 2px solid #d8d3c6; outline-offset: 2px; }
-.notebook-tools { display: flex; gap: 6px; flex-wrap: wrap; }
-.notebook-tools .menu-btn { min-height: 34px; padding: 6px 12px; font-size: calc(12px * var(--reading-scale, 1)); }
-.notebook-tools .menu-btn[aria-pressed="true"] { background: var(--ui-text); border-color: var(--ui-text); color: #111; }
-/* putting it away: a name for it, and the button that files it */
-.notebook-save { display: flex; gap: 8px; align-items: stretch; padding-top: 12px; border-top: 1px solid #3a3a36; }
-#notebook-note-title { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid #3a3a36; border-radius: 4px; outline: none;
-  font: 400 calc(13px * var(--reading-scale, 1)) var(--ui-font); color: var(--ui-text); background: #141414; }
-#notebook-note-title:focus { border-color: #8a8a84; }
-#notebook-note-title::placeholder { color: #6e6e69; }
-.notebook-save .menu-btn { min-height: 36px; padding: 6px 12px; font-size: calc(12px * var(--reading-scale, 1)); white-space: nowrap; }
-.notebook-save .notebook-save-btn { color: #111; background: var(--ui-text); border-color: var(--ui-text); }
-.notebook-save .notebook-save-btn:hover { color: #000; background: #fff; }
-.notebook-save .notebook-delete-btn { color: #e0897e; border-color: #8e2a20; }
-.notebook-save .notebook-delete-btn[data-armed="true"] { color: #f2e6c8; background: #8e2a20; }
-.notebook-save [hidden] { display: none; }
-.notebook-status { margin: -4px 0 0; min-height: 18px; font: 400 calc(12.5px * var(--reading-scale, 1)) var(--ui-font); color: #9ec392; opacity: 0; transition: opacity .3s; }
-.notebook-status[data-kind="warn"] { color: #e0897e; }
-.notebook-status.shown { opacity: 1; }
-[data-reduced-motion="true"] .shelf-note.just-kept { animation: none; }
-[data-reduced-motion="true"] :is(#notebook-modal, #notebook-modal.hidden, #sidebar) { transition: none; }
 
 /* ── the magnifying glass: the chemistry bench's own, painted by magnifier.js ── */
 #magnifier {
@@ -473,7 +385,7 @@ body.in-house #game-container canvas { scale: 1.028; }
    (no line of its own: its one border is the pencil line drawn round it, below) */
 .prologue-dossier { border-radius: 6px; }
 .prologue-envelope:not(.prologue-dossier) { clip-path: polygon(16% 0, 98% 12%, 100% 100%, 0 87%); }
-.prologue-dossier { clip-path: polygon(0 36%, 65% 0, 100% 28%, 74% 100%, 0 80%); }
+.prologue-dossier { clip-path: polygon(0 44.8%, 38.3% 5.2%, 48% 2.4%, 63.6% 4.5%, 98.2% 26.2%, 99.3% 31.4%, 69.2% 97.6%, 0 76.2%); }
 #prologue[data-step="file"] .prologue-dossier { animation: dossier-call 2.8s ease-in-out infinite; }
 #prologue[data-step="file"] .prologue-dossier:hover, #prologue[data-step="file"] .prologue-dossier:focus-visible { animation: none; }
 @keyframes dossier-call { 50% { box-shadow: 0 0 36px #ebba6a1c; background: #eacb850a; } }
@@ -994,20 +906,33 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 :is(#prologue, #start-screen, #index-outside) .task-box .tick.ink-white { stroke: #f4e3b6; stroke-width: 1.6; }
 :is(#prologue, #start-screen, #index-outside) .prologue-tasks li.is-done .tick { stroke-dashoffset: 0; }
 
-#prologue .prologue-onward { position: absolute; z-index: 6; right: clamp(34px, 4vw, 60px); bottom: clamp(26px, 5vh, 52px);
-  display: inline-flex; align-items: center; gap: 10px; padding: 8px 6px 10px 10px; border: 0; border-radius: 4px; background: transparent; color: #ece7db;
-  cursor: var(--cursor-hand, pointer); filter: drop-shadow(0 1px 3px #000c); opacity: 0; translate: 8px 0; transition: opacity .8s ease, translate .8s ease, background .2s; }
+/* the panel's foot: the way to the house once both are done (a plain card:
+   where he is going in small capitals over the house's name, a long thin
+   arrow), and under it, all along, the film again */
+#prologue .prologue-panel-foot { margin-top: auto; display: grid; gap: 12px; }
+#prologue .prologue-onward { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  padding: 13px 14px 14px 16px; box-sizing: border-box; border: 1px solid #ece7db38; border-radius: 3px; background: #ece7db07; color: #f3eee3; text-align: left;
+  cursor: var(--cursor-hand, pointer); opacity: 0; translate: 0 8px;
+  transition: opacity .8s ease, translate .8s cubic-bezier(.2, .7, .2, 1), border-color .25s ease, background-color .25s ease; }
 #prologue .prologue-onward[hidden] { display: none; }
 #prologue .prologue-onward.is-in { opacity: 1; translate: 0 0; }
-#prologue .onward-word { position: relative; display: inline-block; padding-bottom: 5px; font: 300 calc(17px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .02em; }
-#prologue .onward-line { position: absolute; left: -3px; bottom: -2px; width: calc(100% + 8px); height: 5px; overflow: visible; }
-#prologue .onward-line path { vector-effect: non-scaling-stroke; }
-#prologue .onward-icon { width: 32px; height: 16px; flex-shrink: 0; overflow: visible; }
-#prologue .onward-arrow { transform-origin: 20% 70%; transition: transform .3s cubic-bezier(.3, 1.5, .5, 1); }
-#prologue .prologue-onward:hover, #prologue .prologue-onward:focus-visible { background: #0000002e; outline: none; }
-#prologue .prologue-onward:hover .ink-white, #prologue .prologue-onward:focus-visible .ink-white { stroke: #fff; }
-#prologue .prologue-onward:hover .onward-arrow, #prologue .prologue-onward:focus-visible .onward-arrow { transform: translateX(4px) rotate(5deg); }
-#prologue .prologue-onward:focus-visible { outline: 1px solid #ece7db55; outline-offset: 2px; }
+#prologue .onward-text { display: grid; gap: 7px; min-width: 0; }
+#prologue .onward-for { font: 400 calc(9.5px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .26em; text-transform: uppercase; color: #a19d93; }
+#prologue .onward-word { font: 300 calc(15px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: 0; color: #f3eee3; text-wrap: balance; }
+#prologue .onward-icon { width: 22px; height: 12px; flex-shrink: 0; overflow: visible; transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
+#prologue .onward-icon path { fill: none; stroke: #ece7db; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+#prologue .prologue-onward:hover, #prologue .prologue-onward:focus-visible { border-color: #ece7db8c; background-color: #ece7db10; outline: none; }
+#prologue .prologue-onward:hover .onward-icon, #prologue .prologue-onward:focus-visible .onward-icon { transform: translateX(4px); }
+#prologue .prologue-onward:focus-visible { box-shadow: 0 0 0 3px #0c0c0c, 0 0 0 4px #ece7db55; }
+#prologue .prologue-replay { justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 2px; border: 0; background: none;
+  color: #8f8b82; font: 400 calc(10.5px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .16em; text-transform: uppercase;
+  cursor: var(--cursor-hand, pointer); transition: color .25s ease; }
+#prologue .prologue-replay[hidden] { display: none; }
+#prologue .prologue-replay svg { width: 13px; height: 13px; overflow: visible; transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+#prologue .prologue-replay path { fill: none; stroke: currentColor; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+#prologue .prologue-replay:hover, #prologue .prologue-replay:focus-visible { color: #ece7db; outline: none; }
+#prologue .prologue-replay:hover svg, #prologue .prologue-replay:focus-visible svg { transform: rotate(-40deg); }
+#prologue .prologue-replay:focus-visible span { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 
 /* what is to be opened now, drawn round in the thin pencil on its own shape:
    drawn in once when its turn comes, then breathing softly; brighter under
@@ -1070,7 +995,6 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 :is(#prologue .prologue-panel, #index-outside) .prologue-tasks li:not(.is-done)::before { color: #d0d0c8; }
 :is(#prologue .prologue-panel, #index-outside) .prologue-tasks li.is-done { color: #7c7c77; }
 :is(#prologue .prologue-panel, #index-outside) .prologue-tasks li.is-done .task-text { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: #b9b9b499; }
-#prologue .prologue-panel .prologue-onward { position: absolute; right: clamp(22px, 2vw, 36px); bottom: clamp(26px, 5vh, 52px); }
 
 
 
@@ -1083,7 +1007,7 @@ body.outside .index-letters { display: none; }
 .waiting-letter { position: relative; padding: 0; border: 0; background: none; cursor: var(--cursor-hand, pointer);
   filter: drop-shadow(0 6px 10px #000a); }
 .waiting-letter:focus-visible { outline: 1px solid #ece7db55; outline-offset: 4px; }
-.waiting-letter .wl-envelope { display: block; width: 96px; height: 66px; }
+.waiting-letter .wl-page { display: block; }
 .waiting-letter .wl-alert { position: absolute; right: -7px; top: -7px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
   background: #f2c230; color: #1a1408; font: 800 14px/1 var(--ui-font); box-shadow: 0 0 0 2px #0d0d0d, 0 0 12px #f2c23099; animation: wl-alert 1.5s ease-in-out infinite; }
 @keyframes wl-alert { 50% { box-shadow: 0 0 0 2px #0d0d0d, 0 0 20px #f2c230dd; transform: scale(1.08); } }
@@ -1097,7 +1021,7 @@ body.outside .index-letters { display: none; }
    it, with only the sound, the settings and the full screen: no map, no
    case file yet, and no floor; the settings open over it too */
 :is(body.cold-open-on, body.prologue-on) #compact-bar { position: relative; z-index: 600; }
-:is(body.cold-open-on, body.prologue-on) :is(#btn-map, #btn-notebook, #btn-casefile) { display: none; }
+:is(body.cold-open-on, body.prologue-on) :is(#btn-map, #btn-casefile) { display: none; }
 :is(body.cold-open-on, body.prologue-on) #header-floor { visibility: hidden; }
 :is(body.cold-open-on, body.prologue-on) :is(#options-modal, #howto-modal) { z-index: 620; }
 

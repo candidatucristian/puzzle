@@ -10,7 +10,9 @@ import {
   TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL,
 } from "../flags/trophies.js";
 
-export const ROOM6_PHOTOGRAPH = "room6_blender_realistic_v4";
+// (v5, 2026-11-05: the cot taken out for Room II, a low bookcase in its place —
+//  room_vi_bookcase.py's scene rendered whole)
+export const ROOM6_PHOTOGRAPH = "room6_blender_realistic_v5";
 // Blender's camera preserves the original 1659 x 948 logical composition.
 // The rendered cot, herbarium and family print share their old click areas.
 const PHOTO = { width: 1659, height: 948 };
@@ -39,7 +41,7 @@ const FERN = [[596, 487], [601, 470], [606, 466], [614, 462], [620, 457], [626, 
 
 export function loadRoom6Photography(scene) {
   for (const [key, url] of [
-    [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-blender-realistic-v4.webp"],
+    [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-blender-realistic-v5.webp"],
     [NURSERY_PORTRAIT.key, NURSERY_PORTRAIT.url],
     [TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL],
     [TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL],

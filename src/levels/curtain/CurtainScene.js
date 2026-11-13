@@ -43,10 +43,10 @@ export default class CurtainScene extends BasePuzzleScene {
     });
     this._dragZone.on('dragend', () => { this._dragStart = null; });
     const font = Math.max(10, Math.min(16, W * 0.022, H * 0.024));
-    this._clue = this.add.text(W * 0.5, H * 0.963, 'Let the shadows guide your eyes.', {
+    this._clue = this.localizedText(W * 0.5, H * 0.963, 'gameplay.curtain.clue', {
       fontFamily: '"IBM Plex Sans", sans-serif', fontStyle: 'italic', fontSize: font + 'px', color: '#aebcca',
     }).setOrigin(0.5);
-    this.add.text(W * 0.07, H * 0.89, 'DRAW THE\nCURTAIN', {
+    this.localizedText(W * 0.07, H * 0.89, 'gameplay.curtain.draw', {
       fontFamily: '"IBM Plex Sans", sans-serif', fontSize: Math.max(8, font * 0.64) + 'px', color: '#637182', lineSpacing: 4,
     }).setAlpha(0.8);
     this._render();

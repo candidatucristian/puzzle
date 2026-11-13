@@ -3,7 +3,11 @@ import { soft, makeCanvas } from "../../shared/paint.js";
 import { EYE, WARM, block, fillPoly, footShadow, onWall, thingAt } from "../house/roomKit.js";
 import { FLAG_CODES } from "../flags/flagDesigns.js";
 import { METAL, RIBBON, MEDAL } from "../flags/trophies.js";
-import { cotQuad, paintCotInRoom } from "../cot/inRoom.js";
+// (since 2026-11-05 the cot is in Room II; where it stood, against the back
+//  wall under the family portrait, a low bookcase holds Lamplight in the
+//  Library — room_vi_bookcase.py: its front, in the photograph's 1659 × 948)
+const BOOKCASE = [[841.515, 459.269], [1060.251, 459.269], [1060.251, 694.926], [841.515, 694.926]];
+const bookcaseQuad = (L) => BOOKCASE.map(([x, y]) => ({ x: x * L.W / 1659, y: y * L.H / 948 }));
 import { nurseryPortraitBounds, createNurseryPortraitViewer } from "./nurseryPortraits.js";
 import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint, room6HerbariumQuad } from "./photographicRoom.js";
 import { sketching, paintRoom6Sketch } from "./sketchRoom.js";
@@ -17,7 +21,7 @@ import { loadRoom6Live, room6LiveReady, room6LivePlate, mountRoom6Live } from ".
 // their ribbons under a small brass light that stays on; and
 // in the right-hand corner a spiral stair, dark, winding up round its iron
 // post through the ceiling. Under the window her herbarium; and against the
-// back wall by the stair, the boy's cot, his toys still in it (cot/inRoom.js).
+// back wall by the stair, his low bookcase, his toys along its top.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default class Room6Scene extends PlainRoomScene {
@@ -103,8 +107,8 @@ export default class Room6Scene extends PlainRoomScene {
       return [{ x: w.cx - w.rx * 0.6, y: y + 14 }, { x: w.cx + w.rx * 0.6, y: y + 14 }, { x: w.cx + w.rx * 0.6, y: y - 14 }, { x: w.cx - w.rx * 0.6, y: y - 14 }];
     })();
     L.things.push(thingAt("herbarium", "Open her herbarium", herbarium));
-    // his cot, against the back wall by the stair
-    L.things.push(thingAt("cot", "Look in the cot", cotQuad(L)));
+    // his bookcase, against the back wall under the portrait
+    L.things.push(thingAt("bookshelf", "Look at his books", bookcaseQuad(L)));
     // where the room's light is, for the dark and for the scene
     const ml = Q(front - 4, g.y1 - 10, (mc.d0 + mc.d1) / 2);
     const mid = Q(front, (g.y0 + g.y1) / 2, (mc.d0 + mc.d1) / 2);
@@ -132,13 +136,33 @@ export default class Room6Scene extends PlainRoomScene {
   paintDetails(ctx, L) {
     paintSpiralStairs(ctx, L);
     paintMedalCabinet(ctx, L);
-    paintCotInRoom(ctx, L, this);
   }
 
   live(L, k, glow) {
     super.live(L, k);
     if (L.live) {
-      this._live ??= mountRoom6Live(this, { lit: L.on.flags });
+      if (!this._live) {
+        const fallback = () => {
+          const current = this._L;
+          if (!current || !this._sceneOpen) return;
+          this._live?.dispose(); this._live = null;
+          current.live = false;
+          const images = this.children.list.filter(item => item.texture?.key === k.room);
+          paintRoom6Photography(this, current, k);
+          for (const image of images) image.setTexture(k.room);
+          delete this.game.canvas.dataset.look;
+        };
+        try {
+          this._live = mountRoom6Live(this, { lit: L.on.flags });
+          const canvas = this._live.canvas;
+          const lost = event => { event.preventDefault(); fallback(); };
+          canvas.addEventListener('webglcontextlost', lost, { once: true });
+          this._sceneCleanups.add(() => canvas.removeEventListener('webglcontextlost', lost));
+        } catch (error) {
+          console.warn('Room VI uses its still render:', error);
+          fallback();
+        }
+      }
       this._rainAt = this._rain?.image ? { x: this._rain.image.x, y: this._rain.image.y } : null;
     }
     const portrait = nurseryPortraitBounds(L);

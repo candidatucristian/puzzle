@@ -112,13 +112,13 @@ test("forced preview navigation never grants progress or accepts a locked answer
 });
 
 test("the catalog preserves the current game's accepted answers and Info requirements", () => {
-  assert.equal(LEVEL_METADATA.length, 39);
+  assert.equal(LEVEL_METADATA.length, 41);
   assert.equal(new Set(LEVEL_METADATA.map(({ id }) => id)).size, LEVEL_METADATA.length);
   assert.deepEqual(LEVEL_METADATA.map(({ code }) => code), [
     "CABBAGE", "FIBO", "19334488111", "ROTOR", "HEADACHE", "GEORGE", "POWER", "VOID",
     "HTTPS", "ORION", "FACADE", "EXIT", "PI", "DEBRIEFING", "HEDGE", "TORCH", "ESCAPE", "SILVER", "SOIL", "NIGHT",
     "LOST", "SIGHT", "FOCUS", "BLIND", "PYLON", "1024", "DROP", "FACE", "PING", "CAGE", "SPACE", "MOTH", "WAKE", "CITY",
-    "SHIP", "GREEN", "SALT", "2324", "ACID",
+    "SHIP", "GREEN", "SALT", "2324", "ACID", "5936", "TIME",
   ]);
   assert.deepEqual(LEVEL_METADATA.filter(({ hint }) => hint.tool).map(({ key }) => key),
     ["Lightswitch", "Modem", "Telescope", "Wires", "Flags", "TapCode", "Fireworks", "Chemistry", "Metro", "Resistors", "Genome", "Molecules"]);

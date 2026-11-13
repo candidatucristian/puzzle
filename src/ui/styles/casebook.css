@@ -1,0 +1,43 @@
+/* ── The case file: his case book, rendered in Blender, open on the dark —
+   its leaves turned as the herbarium's are, an index tab out of its edge for
+   each room and one for the letters (ui/caseBook.js, ui/caseBookPages.js).
+   No blur over the game: only the dark, coming up and going with a fade. ── */
+#casefile-modal.casebook-modal {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: rgb(0 0 0 / 80%);
+  opacity: 1; transition: opacity 180ms ease;
+}
+#casefile-modal.casebook-modal.hidden { visibility: hidden; opacity: 0; pointer-events: none; transition: opacity 150ms ease, visibility 0s linear 150ms; }
+#casefile-modal .casebook { position: relative; display: flex; align-items: center; justify-content: center; }
+/* (nothing of the book shows until caseBook.js has laid it out; then it
+   comes up with the dark) */
+#casefile-modal .casebook-book { position: relative; opacity: 0; }
+#casefile-modal .casebook-book:not(.is-built) > * { visibility: hidden; }
+#casefile-modal .casebook-book.is-built { opacity: 1; transition: opacity 160ms ease; }
+/* the book itself: the Blender picture of it, and over it the canvas the
+   leaves are turned on, both laid where the book is (caseBook.js), the
+   picture's own shadow running out past it */
+#casefile-modal .casebook-photo, #casefile-modal .casebook-canvas { position: absolute; display: block; max-width: none; user-select: none; }
+#casefile-modal .casebook-photo { pointer-events: none; }
+#casefile-modal .casebook-canvas { touch-action: none; }
+/* the index tabs: old card glued between the pages, standing out past the
+   book's edge (case_book_tab.py), its number typed on it; the tab of the part
+   of the book that is open in red card. Each picture is laid with its root at
+   the page's edge, what would be under the page cut away; its shadow is its
+   own, past it. caseBook.js sets the sizes. */
+#casefile-modal .casebook-marks { position: absolute; z-index: 1; display: flex; flex-direction: column; gap: 3px; }
+#casefile-modal .casebook-mark { position: relative; appearance: none; width: var(--tab-w); height: var(--tab-h); padding: 0; border: 0; border-radius: 0 7px 7px 0;
+  background: none; box-shadow: none; cursor: var(--cursor-hand, pointer); transition: filter .18s ease; }
+#casefile-modal .casebook-tab { position: absolute; left: var(--tab-root); top: var(--tab-top); width: var(--tab-img-w); height: var(--tab-img-h);
+  max-width: none; pointer-events: none; user-select: none; clip-path: inset(0 0 0 calc(var(--tab-root) * -1)); }
+#casefile-modal .casebook-tab-word { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 3px;
+  color: #2a2118; font: 400 calc(var(--tab-h) * 0.38)/1 "Special Elite", "Courier New", monospace !important; letter-spacing: .04em;
+  mix-blend-mode: multiply; opacity: .88; }
+#casefile-modal .casebook-mark.is-here .casebook-tab-word { color: #f0e3c8; mix-blend-mode: normal; opacity: .92; text-shadow: 0 1px 0 #3a100880; }
+#casefile-modal .casebook-marks[data-fallback="true"] .casebook-tab { border-radius: 0 7px 7px 0; object-fit: cover; box-shadow: 3px 3px 7px #0005; }
+#casefile-modal .casebook-marks[data-fallback="true"] .casebook-mark.is-here .casebook-tab { filter: brightness(.45) sepia(.5); }
+#casefile-modal .casebook-mark:hover { filter: brightness(1.08); }
+#casefile-modal .casebook-mark:focus-visible { outline: 2px solid #ebe5d6; outline-offset: 2px; }
+#casefile-modal.casebook-modal #btn-close-casefile { position: fixed; z-index: 2; top: 16px; right: 18px; width: 46px; height: 46px; }
+:root[data-reduced-motion="true"] #casefile-modal .casebook-mark { transition: none; }

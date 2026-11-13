@@ -11,6 +11,8 @@ function star(g, x, y, radius, alpha) {
   g.lineBetween(x + radius * 0.62, y - radius * 0.62, x - radius * 0.62, y + radius * 0.62);
 }
 
+export { star as paintInteractionSparkle };
+
 /** A small, bounded sparkle cue for a draggable puzzle object. */
 export function attachMovableSparkles(scene, target, {
   bounds = () => target.getBounds(),

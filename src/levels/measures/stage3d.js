@@ -32,7 +32,10 @@ export class MeasuresStage {
     r.shadowMap.type = THREE.PCFSoftShadowMap;
     const scene = (this.scene = new THREE.Scene());
     const pmrem = new THREE.PMREMGenerator(r);
-    this.env = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+    const room = new RoomEnvironment();
+    this.environmentTarget = pmrem.fromScene(room, 0.03);
+    this.env = this.environmentTarget.texture;
+    room.dispose();
     pmrem.dispose();
     scene.environment = this.env;
     scene.environmentIntensity = 0.9;
@@ -69,6 +72,8 @@ export class MeasuresStage {
    *  its whole picture lying on the screen at `frame`; then the bottles, made
    *  to the drawn vessels' measure. */
   fit(W, H, L, labels, render) {
+    const limit = this.renderer.capabilities.maxTextureSize;
+    this.renderer.setPixelRatio(Math.min(1,limit/W,limit/H));
     this.W = W; this.H = H;
     this.renderer.setSize(W, H, false);
     const cam = this.camera, C = L.camera, frame = C.frame;
@@ -216,9 +221,13 @@ export class MeasuresStage {
   }
 
   dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
     for (const b of this.bottles) dispose(b.group);
     this.slate.geometry.dispose(); this.slate.material.dispose();
-    this.env.dispose();
+    dispose(this.backdrop);
+    this.lamp.shadow.map?.dispose();
+    this.environmentTarget.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }

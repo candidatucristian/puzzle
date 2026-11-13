@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
-import { noiseBurst, chime } from "../../shared/paint.js";
+import { noiseBurst, chime, staticBurst } from "../../shared/paint.js";
 import { layoutStation, paintStation, releaseStationArt } from "./map.js";
 import { METRO_STATIONS } from "./puzzle.js";
 
@@ -35,11 +35,6 @@ export default class MetroScene extends BasePuzzleScene {
 
   init(data) {
     this.skipFadeIn = data && typeof data.skipFade !== "undefined" ? data.skipFade : true;
-  }
-
-  preload() {
-    // the TV's static, which is what a station tannoy mostly says
-    this.load.audio("static", "assets/sounds/TV/staticsound.mp3");
   }
 
   static stations() {
@@ -287,7 +282,7 @@ export default class MetroScene extends BasePuzzleScene {
   _announce(gain = 0.5) {
     if (this._announcing) return;
     this._announcing = true;
-    this.services.audio.playSfx("static", gain, this);
+    staticBurst(this, { dur: 1.1, gain: gain * 0.22 });
     const lamp = this._lampImg;
     this.tweens.killTweensOf(lamp);
     this.tweens.add({
