@@ -132,9 +132,9 @@ dado_d(-150, D1, X0, 1); dado_d(-150, D1, X1, -1)
 
 # ── the window: a sash in the back wall, linen curtains, the garden beyond ─
 PANES = sash_window_back(back, WIN["x"], WIN["hw"], WIN["sill"], WIN["top"], D1, 26, FRAME, GLASS, DUCK_EGG, WALNUT_X, bars=(0.5,))
-CURTAINS = [curtain(RNG, wx0 - 44, wx0 - 4, D1 - 7, TOP - 20, CURTAIN, folds=4, deep=6),
-            curtain(RNG, wx1 + 4, wx1 + 44, D1 - 7, TOP - 20, CURTAIN, folds=4, deep=6)]
-curtain_pole(wx0 - 52, wx1 + 52, TOP - 16, D1 - 9, BRASS)
+CURTAINS = [curtain(RNG, wx0 - 31, wx0 - 2, D1 - 7.5, TOP - 20, CURTAIN, folds=4, deep=5.5),
+            curtain(RNG, wx1 + 2, wx1 + 31, D1 - 7.5, TOP - 20, CURTAIN, folds=4, deep=5.5)]
+curtain_pole(wx0 - 35, wx1 + 35, TOP - 16, D1 - 10, BRASS)
 MOON_AT = P(-700, 1100, 3600)
 garden(MOON_AT, [("island_tree_01", -320, 1500, 9.0, 0.3), ("island_tree_02", 300, 2100, 11.0, 1.4), ("tree_small_02", 80, 1150, 4.5, 2.2),
                   ("shrub_02", 170, 860, 1.4, 0.6), ("shrub_02", -120, 900, 1.6, 2.0)],

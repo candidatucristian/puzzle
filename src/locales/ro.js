@@ -36,35 +36,6 @@ export const ro = {
       "failed": "Încăperea nu s-a putut încărca. Progresul tău este salvat. Te rugăm să reîncerci.",
       "retry": "Reîncearcă"
   },
-  studyGuide: {
-      "eyebrow": "Camera I",
-      "title": "Prima ta enigmă",
-      "replay": "Prima enigmă",
-      "close": "Închide introducerea enigmelor",
-      "illustration": "Terariul din cameră sclipește; un cursor apasă pe el și apare enigma; un răspuns demonstrativ este scris în câmpul de răspuns și trimis.",
-      "one": "Ce sclipește ascunde o enigmă. Apasă pe terariul de pe măsuță ca să-l cercetezi.",
-      "two": "Scrie codul descifrat în câmpul de sub imagine, apoi apasă {submit} sau {enter}. Greșelile nu costă nimic.",
-      "done": "Am înțeles",
-      "footer": "O poți revedea din Setări.",
-      "example": "Exemplu de introducere",
-      "sample": "CODUL TĂU",
-      "oneLabel": "Cercetează",
-      "twoLabel": "Răspunde"
-  },
-  hallGuide: {
-      "eyebrow": "Holul",
-      "title": "Primii pași",
-      "replay": "Primii pași",
-      "close": "Închide introducerea",
-      "illustration": "Ușa I din hol: un cursor apasă pe ea și se deschide; al doilea click, și intri.",
-      "one": "Du cursorul pe ușa I și apasă o dată: se deschide.",
-      "oneReduced": "Cu mișcarea redusă activată, un singur click pe o ușă deblocată te duce direct în cameră.",
-      "two": "Apasă din nou pe ușa deschisă ca să intri. Celelalte uși au nevoie de cheile pe care le găsești pe drum.",
-      "done": "Am înțeles",
-      "footer": "O poți revedea din Setări.",
-      "oneLabel": "Deschide",
-      "twoLabel": "Intră"
-  },
   "levels": {
     "binarytree": "Arborele bătrân",
     "plantpot": "Grădina în lumina lunii",
@@ -73,7 +44,6 @@ export const ro = {
     "chessboard": "Partida neterminată",
     "mobilephone": "Un apel neașteptat",
     "lightswitch": "O pâlpâire în întuneric",
-    "tv": "Emisiunea fără spectatori",
     "modem": "Camera de sub birou",
     "telescope": "Fereastra deschisă",
     "wires": "Înainte de răsărit",
@@ -85,21 +55,9 @@ export const ro = {
     "tapcode": "Semne în piatră",
     "rally": "Circuitul de noapte",
     "overtime": "După program",
-    "fireworks": "Miezul nopții deasupra Parisului",
     "compass": "Cabina căpitanului",
     "bookshelf": "Biblioteca în lumina lămpii",
     "chemistry": "Masa farmacistului",
-    "billiards": "Cârciuma tăcută",
-    "metro": "Peronul după lăsarea nopții",
-    "resistors": "Bancul de lucru",
-    "ripples": "Lumina lunii pe apă",
-    "vertex": "Aranjamentul straniu",
-    "plotter": "Masa de desen",
-    "kinetic": "Dulapul cu jocuri",
-    "genome": "Eșantionul din sticlă",
-    "curtain": "Salonul",
-    "thesill": "Pervazul ferestrei",
-    "venetian": "O seară în Veneția",
     "molecules": "Caietul lui Silas",
     "phials": "Două eprubete",
     "balance": "Balanța farmacistului",
@@ -209,91 +167,6 @@ export const ro = {
     "safariHelp": "Safari pe iPhone nu poate ascunde barele browserului. Pentru ecran complet, apasă Partajare → Adaugă pe ecranul principal → Adaugă, apoi deschide Conacul Ashcombe de pe noua pictogramă."
   },
   "gameplay": {
-    "tv": {
-      "previous": "Canalul anterior",
-      "next": "Canalul următor",
-      "channels": [
-        {
-          "img": 0,
-          "station": "REȚEAUA COSMOS · CANAL 3",
-          "lines": [
-            "Astronomii au confirmat descoperirea:",
-            "un supervid de 300 de milioane",
-            "de ani-lumină. Nicio galaxie.",
-            "Nicio materie întunecată.",
-            "Niciun semnal nu se întoarce.",
-            "",
-            "Dr. Eisner a scris în raport:",
-            "«Nu este întuneric. Întunericul",
-            "presupune măcar absența luminii.",
-            "Aici lipsește însăși absența.",
-            "Nu avem un cuvânt pentru asta.»",
-            "",
-            "[ SEMNAL INSTABIL ]"
-          ]
-        },
-        {
-          "img": 1,
-          "station": "TRIBUNAL · CANAL 7",
-          "lines": [
-            "Judecătorul a decis: contractul",
-            "nu a existat niciodată legal.",
-            "Nu are greutate, obligații sau forță.",
-            "De parcă ar fi fost scris în fum.",
-            "",
-            "«Un acord fără o contraprestație",
-            "valabilă», a spus instanța,",
-            "«nu este doar încălcat.",
-            "Nu a existat niciodată.",
-            "Legea are un cuvânt precis",
-            "pentru această situație.»",
-            "",
-            "[ SFÂRȘITUL TRANSMISIEI ]"
-          ]
-        },
-        {
-          "img": 2,
-          "station": "REVIZIE DE COD · CANAL 11",
-          "lines": [
-            "Când o funcție execută o acțiune,",
-            "dar nu are nicio valoare de returnat",
-            "— nici zero, nici false, nici eroare —",
-            "ce tip declarăm?",
-            "",
-            "Zero este o valoare. False la fel.",
-            "Chiar și null are o semnificație.",
-            "",
-            "Există un cuvânt-cheie în C, C++,",
-            "Java, Swift și multe alte limbaje,",
-            "rezervat absenței complete",
-            "a unei valori returnate.",
-            "",
-            ">  tip: ________"
-          ]
-        },
-        {
-          "img": 3,
-          "station": "FUNDAȚIA ȘTIINȚEI · CANAL 15",
-          "lines": [
-            "Îndepărtează toată materia.",
-            "Îndepărtează toată energia.",
-            "Extrage fiecare foton.",
-            "Coboară temperatura la zero absolut.",
-            "Izolează complet.",
-            "",
-            "Ce mai rămâne?",
-            "",
-            "Fizicienii se așteptau la nimic.",
-            "Au găsit spumă cuantică, fluctuații",
-            "acolo unde trebuia să fie",
-            "o absență desăvârșită.",
-            "",
-            "Chiar și golul are o structură.",
-            "Folosim tot același cuvânt vechi."
-          ]
-        }
-      ]
-    },
     "lightSwitch": "Apasă întrerupătorul",
     "familyPortrait": "Ivy și Rose Ashcombe · 1959",
     "putDown": "apasă oriunde pentru a pune obiectul jos",
@@ -313,36 +186,8 @@ export const ro = {
       "note": "nu răspunde\ndacă nu știi\ncine te\nsună.",
       "calling": "TE SUNĂ..."
     },
-    "vertex": {
-      "degree": "Grad de conexiune",
-      "heading": "STUDIU GEOMETRIC"
-    },
-    "venetian": {
-      "clue": "Privește dincolo de zgomot.",
-      "tilt": "ÎNCLINĂ"
-    },
-    "curtain": {
-      "clue": "Lasă umbrele să-ți călăuzească privirea.",
-      "draw": "TRAGE\nPERDEAUA"
-    },
     "sill": {
       "clue": "Citește lumina, nu întunericul."
-    },
-    "kinetic": {
-      "clue": "O curbă neîntreruptă\nse numără ca una."
-    },
-    "genome": {
-      "archive": "ARHIVĂ MOLECULARĂ  /  ADN",
-      "strand": "CATENĂ CODIFICATOARE  5' -> 3'  /  COD STANDARD",
-      "clue": "Elementele de bază ale vieții alcătuiesc răspunsul."
-    },
-    "plotter": {
-      "directions": "X DREAPTA   /   Y SUS   /   REIA DE LA ORIGINE LA FIECARE BLOC",
-      "header": "STAREA PLOTTERULUI",
-      "terminal": "TERMINAL VECTORIAL  /  04 TRASEE",
-      "block": "BLOC {number}",
-      "clue": "Gândește ca mașina. Urmărește traseul.",
-      "guide": "PU = ridică penița   PD = coboară penița   X,Y = poziție"
     },
     "resistorClose": "Privește mai atent R{number}"
   },
@@ -499,6 +344,7 @@ export const ro = {
     closeTip: 'Închide indiciile (Esc)',
     listening: 'Necesită ascultare',
     reference: 'O referință ar putea ajuta',
+    decoder: 'Un dispozitiv de decodare te poate ajuta',
   },
   map: {
     "plan": "Planul conacului",
@@ -594,8 +440,6 @@ export const ro = {
     langZh: '简体中文',
     langFr: 'Français',
     langEs: 'Español',
-    howto: 'Cum se joacă',
-    howtoTip: 'Instrucțiuni despre cum se joacă',
     credits: 'Credite',
     creditsTip: 'Cu cine și cu ce e făcut jocul',
     reset: 'Resetează jocul',
@@ -623,32 +467,6 @@ export const ro = {
     software: 'Tehnologie',
     note: 'Textele complete ale licențelor sunt în licenses/THIRD-PARTY-NOTICES.txt, livrat împreună cu jocul.',
   },
-  howto: {
-    title: 'Cum se joacă',
-    backToSettings: 'Înapoi la setări',
-    findAnswerTitle: 'Găsește răspunsul',
-    findAnswerText: 'Fiecare cameră ascunde un răspuns. Privește, ascultă și interacționează cu elementele din scenă. Introdu răspunsul în câmpul de sub încăpere. Răspunsurile greșite nu sunt penalizate.',
-    controlsTitle: 'Comenzi și butoane',
-    submitLabel: 'Trimite',
-    submitDesc: 'Verifică răspunsul introdus sau apasă Enter.',
-    restartLabel: 'Reîncepe',
-    restartDesc: 'Săgeata circulară de lângă Trimite repornește camera curentă. Progresul tău este păstrat.',
-    hintLabel: 'Indiciu',
-    hintDesc: 'Folosește butonul Indiciu de sub încăpere pentru a afișa sugestii treptate.',
-    keysLabel: 'Taste rapide',
-    keysDesc: 'M harta conacului · C dosarul de caz · Z lupa, sau ține apăsat click dreapta · Esc înapoi pe unde ai venit.',
-    settingsLabel: 'Setări',
-    settingsDesc: 'Ajustează sunetul, limba, dimensiunea textului, mișcarea și efectele. Resetează jocul șterge progresul după o a doua confirmare.',
-    movingTitle: 'Deplasarea prin conac',
-    movingText: 'Rezolvă o cameră pentru a o debloca pe următoarea. Poți revedea camerele rezolvate din index sau folosind harta. Progresul este salvat automat în browser.',
-    clueLabelsTitle: 'Etichete pentru indicii',
-    listeningLabel: 'Necesită ascultare',
-    listeningDesc: 'Sunetul face parte din rezolvare. Verifică volumul în Setări și ascultă cu atenție.',
-    referenceLabel: 'O referință ar putea ajuta',
-    referenceDesc: 'S-ar putea să ai nevoie de un alfabet, un cifru sau o notație de referință pentru a descifra indiciul.',
-    desktopTitle: 'Dispozitive mobile',
-    desktopText: 'Conacul Ashcombe este conceput pentru calculatoare desktop și laptopuri. Deschide jocul pe un computer pentru a juca.',
-  },
   manual: {
     title: "Manualul inspectorului",
     manual: "Manualul inspectorului",
@@ -672,14 +490,14 @@ export const ro = {
         caption: "sclipește: folosește-l · rezolvat, nu mai sclipește",
         text: [
           "Ce sclipește se poate folosi: dă click pe el sau ține apăsat ca să-l ridici, să-l duci și să-i dai drumul unde îi e locul.",
-          "Când puzzle-ul lui e rezolvat, nu mai sclipește.",
+          "Când enigma lui e rezolvată, nu mai sclipește.",
         ],
       },
       {
         title: "Răspunsul",
         caption: "scrie-l, apoi Enter",
         text: [
-          "Fiecare puzzle ascunde un răspuns — un cuvânt sau un număr. Scrie-l în câmpul de sub imagine.",
+          "Fiecare enigmă ascunde un răspuns — un cuvânt sau un număr. Scrie-l în câmpul de sub imagine.",
           "[Enter] Enter, ca să-l încerci.",
           "Un răspuns greșit nu costă nimic: cerneala se scurge și încerci din nou.",
         ],
@@ -696,7 +514,7 @@ export const ro = {
         title: "Chei și uși",
         caption: "o cameră rezolvată își deschide cufărul",
         text: [
-          "Rezolvă toate puzzle-urile dintr-o cameră și cufărul ei mic, aurit, se deschide. Ia cheia care se ridică din el.",
+          "Rezolvă toate enigmele dintr-o cameră și cufărul ei mic, aurit, se deschide. Ia cheia care se ridică din el.",
           "Undeva în casă, o ușă încuiată o așteaptă.",
         ],
       },
@@ -770,19 +588,19 @@ export const ro = {
       place: 'Devon, Anglia',
       date: 'Octombrie 1961',
       story: [
-        'În noaptea de 13 octombrie 1961, trei frați au încuiat toate ușile casei lor din Devon și au plecat în întuneric. Nu lipsea nimic din casă. Nimeni n-a fost rănit. Nimeni n-a aflat vreodată de ce.',
-        'Un an mai târziu, cazul a fost închis. Un singur polițist n-a renunțat niciodată la el.',
+        'În noaptea de 13 octombrie 1961, trei membri ai familiei Ashcombe au dispărut din casa lor din Devon. Ușile erau încuiate. Nu existau urme de luptă.',
+        'Un an mai târziu, ancheta a fost închisă. Ce se întâmplase la conacul Ashcombe a rămas neelucidat.',
       ],
     },
     asides: [
-      { at: [1.4, 8], over: 'Exeter · 12 octombrie 2001', lines: ['În fiecare octombrie mă întorc la același caz.'] },
-      { at: [9.6, 17.8], over: 'Inspectorul Arthur Wren', lines: ['Tata a murit în primăvară. De atunci, casa e prea liniștită.'] },
-      { at: [19.4, 27.6], lines: ['În seara asta, sub ușă, o scrisoare. Fără timbru. Fără ștampilă.'] },
-      { at: [29.2, 37.4], lines: ['Doar numele meu, scris de o mână pe care aproape o recunosc.'] },
-      { at: [39, 45.8], over: 'Cazul 61/1013', lines: ['Știu dosarul pe de rost. Îl deschid oricum.'] },
-      { at: [47, 53.4], over: 'Conacul Ashcombe · 1961', lines: ['Tata a fost primul la ușa lor în dimineața aceea. N-a mai vorbit niciodată despre ce a văzut.'] },
-      { at: [54.6, 61.6], lines: ['Am stat la poarta lor de mai multe ori decât aș recunoaște. N-am intrat niciodată.'] },
-      { at: [63, 70.2], over: 'Mâine se fac patruzeci de ani', lines: ['Patruzeci de ani am pus întrebări. În seara asta, cineva mi-a răspuns.'] },
+      { at: [1.4, 8], over: 'Exeter · 12 octombrie 2001', lines: ['În fiecare octombrie scot din nou dosarul Ashcombe.'] },
+      { at: [9.6, 17.8], over: 'Inspectorul Arthur Wren', lines: ['Tatăl meu a murit în primăvară. Încă mă surprind gândindu-mă că mai pot să-l întreb ceva.'] },
+      { at: [19.4, 27.6], lines: ['În seara asta, cineva mi-a lăsat o scrisoare pe sub ușă. Nu avea timbru.'] },
+      { at: [29.2, 37.4], lines: ['Sigiliul este al familiei Ashcombe. Aceeași stemă ca în fotografii.'] },
+      { at: [39, 45.8], over: 'Cazul 61/1013', lines: ['Scot dosarul. Numele tatălui meu e pe raportul inițial.'] },
+      { at: [47, 53.4], over: 'Conacul Ashcombe · 1961', lines: ['El a fost primul polițist ajuns la conac. Nu-i plăcea să vorbească despre dimineața aceea.'] },
+      { at: [54.6, 61.6], lines: ['Am stat la poarta aceea de nenumărate ori, întrebându-mă ce nu voia să-mi spună.'] },
+      { at: [63, 70.2], over: 'Mâine se fac patruzeci de ani', lines: ['Mâine se împlinesc patruzeci de ani de la dispariția lor. De ce îmi scriu tocmai acum?'] },
     ],
   },
   manorStory: [
@@ -857,7 +675,7 @@ export const ro = {
         'Ivy îi spune joc. Nu este un joc. Este o încuietoare în care bate o inimă.',
       ],
       signature: '— S. A.',
-      margin: 'Agentul Wren. Tata îi cunoștea. Nu a spus niciodată nimic.',
+      margin: 'Agentul Wren. Tatăl meu îi cunoștea. Nu a spus niciodată nimic.',
     },
     orion: {
       id: 'orion',
@@ -875,7 +693,7 @@ export const ro = {
     },
     last: {
       id: 'last',
-      found: 'când a fost rezolvat ultimul puzzle din conac',
+      found: 'când a fost rezolvată ultima enigmă din conac',
       title: 'Ultima scrisoare',
       dateline: 'Conacul Ashcombe',
       salutation: 'Arthur,',
@@ -893,6 +711,7 @@ export const ro = {
     },
   },
   caseReport: {
+    sealPhotograph: {"caption":"Sigiliul familiei Ashcombe · Fotografie din dosar","alt":"O fotografie veche a sigiliului de ceară al familiei Ashcombe, cu aceeași stemă ca pe sigiliul scrisorii."},
     dateline: 'Poliția Devon & Cornwall · Cazul 61/1013',
     salutation: 'Dispariția lui Ivy, Silas și Orion Ashcombe',
     body: [
@@ -1042,23 +861,19 @@ export const ro = {
     ],
     lightswitch: [
       'IMPULSURI DE LUMINĂ.\nNu toate impulsurile au aceeași durată.',
-      'Fiecare apăsare transmite o literă prin codul Morse (puncte și linii); următoarea apăsare transmite următoarea literă.',
-    ],
-    tv: [
-      'PATRU LUMI DIFERITE, UN CUVÂNT COMUN.\nCaută cuvântul unic în jurul căruia gravitează fiecare emisiune.',
-      'Patru emisiuni diferite, un singur element lipsă. Identifică noțiunea comună care unește toate transmisiunile.',
+      'Nu fiecare sclipire durează la fel. Fiecare apăsare transmite o parte a mesajului; următoarea apăsare transmite partea următoare.',
     ],
     modem: [
       'SEMNALE BINARE.\nȘapte lumini poartă mesajul, cinci țin socoteala.',
-      'Șapte lumini transmit octetul binar (0 sau 1), iar celelalte țin numărătoarea. Aprins sau stins e tot ce are nevoie un computer.',
+      'Șapte lumini poartă mesajul, cinci țin socoteala. Aprins sau stins e tot ce-i trebuie unei mașini — citește câte un rând pe rând.',
     ],
     telescope: [
       'GRUPURI DE STELE.\nUn tipar care se simte la fel de mult cum se vede.',
-      'Unele stele stau în grupuri mici, ordonate, ca niște puncte în relief. Amintește-ți de sistemul Braille.',
+      'Unele stele stau în grupuri mici și ordonate, toate în același cadru, doar cu anumite poziții aprinse. Un astfel de tipar e făcut să fie simțit la fel de mult pe cât e văzut.',
     ],
     wires: [
       'PĂSĂRI PE FIRE.\nCinci linii și note pe ele, citite de la stânga la dreapta.',
-      'Cinci linii pe un portativ muzical. Linia pe care stă fiecare pasăre reprezintă o notă muzicală; citește-le în ordine.',
+      'Cinci linii și câteva note pe ele. Contează ce linie a ales fiecare pasăre; citește-le de la stânga la dreapta.',
     ],
     station: [
       'ANOMALII PE TABELA DE PLECARE.\nObservă ce este greșit în ortografia numelor de orașe.',
@@ -1067,10 +882,6 @@ export const ro = {
     pi: [
       'LUMINI PE CRENGI.\nNumără luminile etaj cu etaj, de la vârf spre bază.',
       'Numără luminile de la fiecare nivel, începând de sus. Secvența de cifre obținută îți va părea foarte familiară.',
-    ],
-    crossing: [
-      'BENZI ȘI SPAȚII.\nDungi precum cele găsite pe produsele din magazine.',
-      'Liniile și spațiile dintre ele au lățimi diferite. Obiectele din comerț poartă un cod de bare identic.',
     ],
     herbarium: [
       'RAME GEOMETRICE.\nNumără laturile poligoanelor din jurul fiecărui specimen.',
@@ -1086,7 +897,7 @@ export const ro = {
     ],
     tapcode: [
       'BĂTĂI ÎN PERECHE.\nO grilă scrijelită pe peretele pivniței.',
-      'Fiecare secvență are două numărători. Un cifru de tap code împarte alfabetul într-o grilă 5x5.',
+      'Fiecare rând are două numărători. Ceva de lângă perete este împărțit în același fel — iar cineva a scrijelit o literă acolo unde se termină.',
     ],
     rally: [
       'POZIȚII DE SOSIRE.\nNumerele de pe uși ordonate după clasament.',
@@ -1094,10 +905,6 @@ export const ro = {
     ],
     overtime: [
       'Efectuează calculele cu cifrele date, apoi privește rezultatul de pe ecran dintr-un alt unghi (răsturnat).',
-    ],
-    fireworks: [
-      'CULORI HEXADECIMALE.\nFiecare nuanță este un cod de culoare pe calculator.',
-      'Fiecare balon are o culoare definită în format hexazecimal (#RRGGBB). Prima pereche de caractere din cod corespunde unei litere.',
     ],
     compass: [
       'Numerele de pe hartă sunt direcții unghiulare. Fiecare linie trasează un segment pe hârtie, conturând litere.',
@@ -1120,7 +927,7 @@ export const ro = {
     ],
     abacus: [
       'UNDE AU STAT.\nPraful își amintește cum a fost lăsată rama.',
-      'Fiecare bloc a lăsat un loc curat acolo unde a stat ani de zile. Pune-le la loc — apoi privește ce lasă negrul alb între tije.',
+      'Fiecare piesă a lăsat o urmă curată acolo unde a stat ani de zile. Pune-le la loc — apoi privește ce forme albe conturează piesele negre între tije.',
     ],
     rewind: [
       'ÎMPOTRIVA CEASULUI.\nTot ce e pe pervaz merge pe dos.',
@@ -1128,7 +935,7 @@ export const ro = {
     ],
     phials: [
       'AMESTEC DE CULORI PRIMARE.\nGalbenul și albastrul formează împreună verdele.',
-      'Galbenul și albastrul sunt cele două componente ale unei culori. Eticheta indică la ce plantă făcea referire botanista.',
+      'Galbenul și albastrul sunt două jumătăți ale unei singure culori. Eticheta spune a cui culoare era: gândește-te la ce și-a petrecut toată viața cultivând.',
     ],
     molecules: [
       'SIMBOLURI CHIMICE.\nElementele cu simbol de o singură literă formează codul.',
@@ -1137,50 +944,6 @@ export const ro = {
     chemistry: [
       'NUMERE DIN TABELUL PERIODIC.\nTransformă numerele atomice în simboluri.',
       'Fiecare nivel corespunde unui număr. Tabelul periodic de pe perete oferă fiecărui număr atomic simbolul chimic aferent.',
-    ],
-    billiards: [
-      'BILELE LIPSĂ DIN BUZUNARE.\nBuzunarele indică ordinea literelor.',
-      'Descoperă care bile lipsesc de pe masă; culorile și dungile le deosebesc. Numerele lor corespund literelor alfabetului.',
-    ],
-    metro: [
-      'ALFABETUL FONETIC INTERNAȚIONAL.\nCitește literele inițiale ale numelor din aviație.',
-      'Pronunță denumirile stațiilor cu voce tare. Un pilot sau un radiotelegrafist recunoaște imediat codurile internaționale (Alfa, Bravo...).',
-    ],
-    resistors: [
-      'CODUL CULORILOR PENTRU REZISTOARE.\nPrima bandă colorată oferă cifra semnificativă.',
-      'Numără doar prima bandă colorată a fiecărui rezistor, pornind din capătul opus inelului auriu. Tabelul conferă fiecărei culori o cifră.',
-    ],
-    ripples: [
-      'UNDE CONCENTRICE ÎN INTERSECȚIE.\nCitește pietrele atinse simultan de trei cercuri de apă.',
-      'Unele pietre sunt atinse de toate cele trei unde în același moment. Citește doar acele pietre, de sus în jos.',
-    ],
-    vertex: [
-      'GRADELE NODURILOR DIN GRAF.\nNumără muchiile conectate la nodurile marcate.',
-      'Numără câte linii se întâlnesc cu adevărat în fiecare punct marcat. Numerele sunt mici și reprezintă rangul literelor în alfabet.',
-    ],
-    plotter: [
-      'COORDONATE CARTEZIENE.\nUnește punctele în ordine pentru a desena litere.',
-      'Alocă fiecărui bloc de numere o zonă proprie și unește punctele în ordine. Fiecare bloc trasează o literă.',
-    ],
-    kinetic: [
-      'LATURI ȘI CURBE POLIGONALE.\nNumărul de segmente se traduce în rang alfabetic.',
-      'Numără laturile drepte ale fiecărei piese; instrucțiunea indică valoarea unei curbe. Numărul total dă o literă.',
-    ],
-    genome: [
-      'CODONI GENETICI.\nCombinațiile de trei baze azotate codifică aminoacizi.',
-      'Fiecare triplet de baze corespunde unui aminoacid din codul vieții — iar fiecare aminoacid are o abreviere standard de o singură literă.',
-    ],
-    curtain: [
-      'MASCA PERFORATĂ.\nLumina se cerne prin orificiile din perdea.',
-      'Orificiile din draperie lasă lumina să treacă doar în anumite puncte. Deplasează perdeaua până când decupajele încadrează exact literele.',
-    ],
-    thesill: [
-      'UMBRE ȘI SPAȚIU NEGATIV.\nConcentrează-te pe lumina dintre umbre.',
-      'Ignoră umbrele întunecate. Formele luminoase dintre ele constituie mesajul ascuns.',
-    ],
-    venetian: [
-      'UNGHIUL JALUZELELOR VENEȚIENE.\nÎnclină lamelele pentru a vedea detaliul ascuns.',
-      'Șnurul înclină lamelele jaluzelei. La un anumit unghi, fundalul se întunecă și mesajul ascuns rămâne iluminat.',
     ],
   },
 };

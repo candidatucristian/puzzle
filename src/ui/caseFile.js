@@ -213,7 +213,9 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
 
   // Dev mode (dev server only): the floors' three pages put back in the side
   // panel unread, to be opened again; and the last letter, to be seen at once
+  // (and whatever else the game hands in: the two introductions, to be seen again)
   let devRow = null;
+  const devLinks = [];
   function renderDevLetters() {
     if (!shelf) return;
     if (!isDevMode()) { devRow?.remove(); devRow = null; return; }
@@ -237,6 +239,7 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
           if (!queue.includes("last")) queue.push("last");
           flush();
         }),
+        ...devLinks.map(([label, action]) => link(label, () => { if (!dialogs.isOpen) action(); })),
       );
     }
     shelf.after(devRow);
@@ -291,6 +294,8 @@ export function mountCaseFile(scope, { levels, dialogs, storage, sounds = null, 
 
   return {
     open, has, reveal,
+    /** Dev mode: one more link under the waiting letters. */
+    devLink(label, action) { devLinks.push([label, action]); devRow?.remove(); devRow = null; renderDevLetters(); },
     get busy() { return arriving; },
     unlock: (id) => unlock(id, { asRead: true }),
     reset() {

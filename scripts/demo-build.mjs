@@ -16,7 +16,8 @@
 import { readFileSync, readdirSync, rmSync, statSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PLACES, DEMO_PLACES } from "../src/shared/house.js";
+import { PLACES, DEMO_PLACES, DEMO_SEALED } from "../src/shared/house.js";
+import { compressBuild } from "./compress-assets.mjs";
 
 // (import.meta.url, which Vite keeps true when it bundles the config)
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -30,7 +31,9 @@ function metadataArray(code) {
   return { start, end, levels: JSON.parse(code.slice(start, end)) };
 }
 const LEVELS = metadataArray(source("src/levels/metadata.js")).levels;
-const IN_DEMO = new Set(PLACES.filter((place) => DEMO_PLACES.includes(place.key)).flatMap((place) => place.holds));
+// (the halls up the stairs can be walked into, but their puzzles are shut in
+// the demo: they are left out like the later rooms', answers and all)
+const IN_DEMO = new Set(PLACES.filter((place) => DEMO_PLACES.includes(place.key)).flatMap((place) => place.holds).filter((id) => !DEMO_SEALED.includes(id)));
 const LEFT_OUT = LEVELS.filter((level) => !IN_DEMO.has(level.id));
 
 // the asset folders that may go: the later puzzles', the later rooms', and
@@ -38,13 +41,15 @@ const LEFT_OUT = LEVELS.filter((level) => !IN_DEMO.has(level.id));
 const FOLDERS = [...new Set([
   ...LEFT_OUT.map((level) => level.key),
   ...PLACES.filter((place) => !DEMO_PLACES.includes(place.key) && /^Room\d+$/.test(place.key)).map((place) => place.key),
-  "Physics", "Attic", "Crossing", "Colors",
+  "Attic", "Crossing", "Colors",
 ])];
 // ...and those that go even though the demo's code names them: only the
 // floors up the stairs load them (HallScene.js: the upper hall its Chemistry
 // plates and the light switch's sounds, the top passage its Attic), and the
 // demo's build has no scenes for those floors (core/config.js)
-const UPSTAIRS_ONLY = ["images/Chemistry", "images/Attic", "sounds/Lightswitch"];
+// (the Chemistry hall's plates and the light switch's sounds ship since
+// 2026-11-13: the demo walks into that hall; the top passage's Attic does not)
+const UPSTAIRS_ONLY = ["images/Attic"];
 
 // the folders under src/levels/ the demo plays in: the hall's, its rooms', and
 // those of the puzzles in them (read off registry.js's imports). Every other
@@ -54,7 +59,7 @@ const UPSTAIRS_ONLY = ["images/Chemistry", "images/Attic", "sounds/Lightswitch"]
 const REGISTRY = source("src/levels/registry.js");
 const folderOf = Object.fromEntries([...REGISTRY.matchAll(/^import (\w+) from "\.\/(\w+)\//gm)].map(([, name, dir]) => [name, dir]));
 const sceneOf = Object.fromEntries([...REGISTRY.matchAll(/^\s+(\w+): (\w+Scene),\s*$/gm)].map(([, key, name]) => [key, name]));
-const PLAYED = new Set(["hall", "house", "study", "room2", "room3", ...LEVELS.filter((level) => IN_DEMO.has(level.id)).map((level) => {
+const PLAYED = new Set(["hall", "house", "study", "room2", "room3", "top", ...LEVELS.filter((level) => IN_DEMO.has(level.id)).map((level) => {
   const dir = folderOf[sceneOf[level.key]];
   if (!dir) throw new Error(`demo build: no folder found in registry.js for ${level.key}`);
   return dir;
@@ -103,7 +108,7 @@ export function demoBuild() {
       if (level && !PLAYED.has(level[1])) return { code, map: null, moduleSideEffects: false };
       return null;
     },
-    closeBundle() {
+    async closeBundle() {
       if (!outDir || !existsSync(join(outDir, "assets"))) return;
       // what the demo's own code says, to keep any folder it names
       const chunks = readdirSync(join(outDir, "assets")).filter((name) => /\.(js|css)$/.test(name));
@@ -124,6 +129,9 @@ export function demoBuild() {
       console.log(`\n[demo] ${IN_DEMO.size} puzzles in the demo, ${LEFT_OUT.length} left out with their answers and hints`);
       console.log(`[demo] later rooms' and puzzles' pictures and sounds left out: ${mb(gone)}; the demo is ${mb(size(outDir))}`);
       if (kept.length) console.log(`[demo] kept, because the demo's code names them: ${kept.join(", ")}`);
+      // and what is left, made smaller for the net (scripts/compress-assets.mjs)
+      await compressBuild(outDir, "demo");
+      console.log(`[demo] the demo, compressed: ${mb(size(outDir))}`);
     },
   };
 }

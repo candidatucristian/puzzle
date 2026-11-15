@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
+import { lockedNote } from "../../shared/lockedNote.js";
 import { HOUSE_GO, zoomInto, zoomOutFrom } from "../../shared/house.js";
 import { layoutRotunda, paintRotunda, releaseRotundaArt } from "./rotunda.js";
 import { loadPhysicsMaterials } from "./materials.js";
@@ -78,7 +79,14 @@ export default class TopScene extends BasePuzzleScene {
     const rooms = this.services.levels.rooms;
     L.doors.forEach((d, n) => {
       const room = rooms[n];
-      if (!room || room.locked) return;
+      if (!room) return;
+      // a locked door says so when pointed at, as the halls' below do
+      if (room.locked) {
+        const shape = new Phaser.Geom.Polygon(d.quad.flatMap((p) => [p.x, p.y]));
+        lockedNote(this, this.add.zone(0, 0, W, H).setOrigin(0, 0).setDepth(5)
+          .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, cursor: "not-allowed" }));
+        return;
+      }
       const calling = !room.completed;
       const zone = this.add.zone(0, 0, W, H).setOrigin(0, 0).setDepth(5);
       if (room.open) {
@@ -103,6 +111,9 @@ export default class TopScene extends BasePuzzleScene {
 
     // the telescope: it glints until its puzzle is solved, and can be gone back to after
     const levels = this.services.levels, thing = L.thing;
+    if (levels.puzzleSealed?.(thing.level)) {
+      lockedNote(this, this.add.zone(thing.box.x, thing.box.y, thing.box.width, thing.box.height).setOrigin(0, 0).setDepth(5).setInteractive({ cursor: "not-allowed" }));
+    } else {
     const zone = this.add
       .zone(thing.box.x, thing.box.y, thing.box.width, thing.box.height)
       .setOrigin(0, 0)
@@ -111,6 +122,7 @@ export default class TopScene extends BasePuzzleScene {
       .setDepth(5);
     zone.on("pointerdown", () => this._go(thing.box, { level: thing.level }));
     if (!levels.isCompleted(levels.indexOf(thing.level))) this._sparkles.push(attachMovableSparkles(this, zone, { padding: 3, bounds: () => thing.box }));
+    }
 
     // dust turning in the moonlight before the window
     const w = L.win;
@@ -143,6 +155,12 @@ export default class TopScene extends BasePuzzleScene {
   _passage(L) {
     const p = L.passage;
     const shape = new Phaser.Geom.Polygon(p.quad.flatMap((q) => [q.x, q.y]));
+    // (in the demo the passage is shut: it says so when pointed at)
+    if (this.services.levels.placeLocked?.("TopHall")) {
+      lockedNote(this, this.add.zone(0, 0, L.W, L.H).setOrigin(0, 0).setDepth(5)
+        .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, cursor: "not-allowed" }));
+      return;
+    }
     const zone = this.add.zone(0, 0, L.W, L.H).setOrigin(0, 0).setDepth(5)
       .setInteractive({ hitArea: shape, hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true })
       .setData("interactionLabel", "Go down the passage");

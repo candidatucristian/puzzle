@@ -1,6 +1,6 @@
 /* Settings (index.html #options-modal; comfort.js drives the tabs and the
    language list, audioControls.js the levels, controls.js the buttons).
-   The same charcoal sheet as the two introductions (guide-card.css): a
+   A charcoal sheet: a
    hairline frame with a faint doubled outline a hair askew. Three tabs, each
    panel stacked in one cell so the sheet keeps the height of the tallest and
    does not jump. Larger type than before, so it reads at a glance. Loaded
@@ -48,11 +48,11 @@
 
 /* the panels share one cell; a closed one keeps its room but is not seen */
 #options-modal .settings-panel .st-panel { grid-row: 3; grid-column: 1; min-height: 0; padding: 0; }
-#options-modal .settings-panel .st-panel[hidden] { display: block; visibility: hidden; }
+#options-modal .settings-panel .st-panel[hidden] { display: block; visibility: hidden; pointer-events: none; }
 
 /* a row: its name, its control, its value */
 #options-modal .settings-panel .st-row {
-  grid-template-columns: minmax(118px, 30%) minmax(0, 1fr) 56px; gap: 16px; min-height: 48px; }
+  grid-template-columns: minmax(118px, 30%) minmax(0, 1fr) minmax(56px, max-content); gap: 16px; min-height: 48px; }
 #options-modal .settings-panel .st-row > label, #options-modal .settings-panel .st-label {
   font: 400 calc(15px * var(--reading-scale, 1))/1.35 var(--ui-font); color: #ddd7c9; }
 #options-modal .settings-panel .st-row output {
@@ -102,9 +102,9 @@
 
 /* the reset, apart: what it does, and the button that asks twice */
 #options-modal #st-panel-options .st-reset-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 18px;
   margin-top: 22px; padding-top: 20px; border-top: 1px solid #ece7db14; }
-#options-modal #st-panel-options .st-note { margin: 0; max-width: 300px; font: 400 calc(13px * var(--reading-scale, 1))/1.5 var(--ui-font); color: #8f8b7e; }
+#options-modal #st-panel-options .st-note { flex: 1 1 200px; margin: 0; max-width: 320px; font: 400 calc(13px * var(--reading-scale, 1))/1.5 var(--ui-font); color: #8f8b7e; }
 #options-modal .settings-panel #btn-new.st-danger {
   flex: none; min-height: 42px; margin: 0; padding: 9px 18px; border: 1px solid #c983754d; border-radius: 3px; background: transparent;
   font: 500 calc(13px * var(--reading-scale, 1))/1.3 var(--ui-font); letter-spacing: .06em; text-transform: uppercase; color: #dba99d; }

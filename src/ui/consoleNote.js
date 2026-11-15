@@ -22,6 +22,11 @@ export function showConsoleNote(text, { signature = '— A. W.', reducedMotion =
     note.append(sign);
   }
   const controls = [...bar.children];
+  // (the bar itself must hold it, at the foot of the screen like a subtitle:
+  // left to its static place, the note spread over the whole play area and
+  // came up in the middle of the picture)
+  const placed = getComputedStyle(bar).position === 'static';
+  if (placed) bar.style.position = 'relative';
   bar.append(note);
   const total = IN + HOLD + OUT, held = (IN + HOLD) / total;
   const animation = note.animate(reducedMotion
@@ -37,6 +42,7 @@ export function showConsoleNote(text, { signature = '— A. W.', reducedMotion =
     current = null;
     animation.cancel(); for (const a of away) a.cancel();
     note.remove();
+    if (placed) bar.style.position = '';
   };
   current = end;
   animation.finished.then(end, end);

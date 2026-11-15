@@ -126,17 +126,22 @@ export const ALL_DOORS_OPEN = true;
  *  locked door as the player will. */
 export const STILL_LOCKED = [];
 
-/** The Steam demo: only the hall and the first three rooms can be gone into
- *  (Room III since 2026-11-06; the demo ended after Room II until then).
- *  Inside it the keys matter, as in the full game: Room I is open, Room II
- *  opens with the key from Room I's chest, Room III with the key from Room
- *  II's. Every other door, the gate up the stairs, and Room III's chest (it
- *  holds the key to Room IV) stay locked, and say so when pointed at. Set
- *  DEMO to false for the whole house. The full web build (`npm run
- *  build:full`, __FULL_BUILD__) is the whole house whatever this says. */
+/** The Steam demo: the hall and the first three rooms can be played (Room
+ *  III since 2026-11-06). Inside it the keys matter, as in the full game:
+ *  Room I is open, Room II opens with the key from Room I's chest, Room III
+ *  with the key from Room II's. Since 2026-11-13 the gate up the stairs
+ *  opens, and the Chemistry and Physics halls can be walked into — but
+ *  everything in them is shut: their doors, their halls' own puzzles (the
+ *  light switch, the telescope), and the passage on to the top floor's other
+ *  hall. Every other door, and Room III's chest (it holds the key to Room
+ *  IV), stay locked, and say so when pointed at. Set DEMO to false for the
+ *  whole house. The full web build (`npm run build:full`, __FULL_BUILD__)
+ *  is the whole house whatever this says. */
 const FULL_BUILD = typeof __FULL_BUILD__ !== "undefined" && __FULL_BUILD__;
 export const DEMO = !FULL_BUILD && true;
-export const DEMO_PLACES = Object.freeze(["Hall", "Study", "Room2", "Room3"]);
+export const DEMO_PLACES = Object.freeze(["Hall", "Study", "Room2", "Room3", "Upper", "Top"]);
+/** In the demo, the puzzles that stay shut in the halls it lets you into. */
+export const DEMO_SEALED = Object.freeze(["lightswitch", "telescope"]);
 /** The full game's Steam store page, which the end of the demo offers to
  *  wishlist (demoEnd.js) — empty until the page exists, and then no button. */
 export const STEAM_STORE_URL = "";

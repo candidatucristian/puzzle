@@ -36,9 +36,6 @@ export const SECTIONS = [
     title: "Cod de curățat",
     intro: "Ce a rămas în cod fără să mai fie folosit.",
     tasks: [
-      { id: "code-photographic", who: "eu", title: "Scot cele 8 module „photographic” pe care nu le mai apelează nicio scenă", detail: "binarytree/photographicTerrarium, cot/photography, cryptex/photographicMaterials, plantpot/photographicGarden și photographicPlant, compass/photographicCabin, bookshelf/photographicLibrary, telescope/photographicWindow. Imaginile lor (generate cu AI) sunt deja în arhivă; codul care le-ar fi desenat a rămas." },
-      { id: "code-unplaced", who: "tu", title: "Hotărăști ce faci cu cele 14 puzzle-uri care nu sunt în nicio cameră", detail: "tv, crossing, fireworks, billiards, metro, resistors, ripples, vertex, plotter, kinetic, genome, curtain, thesill, venetian: le păstrăm pentru camerele goale (IX, XII, XIII) sau le scoatem din joc?" },
-      { id: "code-prompts-src", who: "eu", title: "Mut notițele de prompt din src/ lângă celelalte, în docs/", detail: "src/levels/compass/solid-oak.prompt.md și src/levels/top/aged-doors.prompt.md." },
       { id: "code-tests", who: "eu", title: "Testul vechi al dosarului (tests/browser/casefile.spec.js)", detail: "Scris pentru dosarul de dinainte de carte; de rescris sau de scos." },
     ],
   },

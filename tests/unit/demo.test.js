@@ -58,7 +58,9 @@ test('old full-game keys cannot lift demo boundaries and room keys persist acros
   assert.equal(reloaded.enterPlace('Room2'), true);
   assert.equal(reloaded.keys.some(k => k.key === 'Room2'), false);
   assert.equal(reloaded.enterPlace('Room4'), false);
-  assert.equal(reloaded.enterPlace('Upper'), false);
+  // (the gate opens in the demo since 2026-11-13; what is up there stays shut)
+  assert.equal(reloaded.enterPlace('Upper'), true);
+  assert.equal(reloaded.enterPlace('Room7'), false);
 });
 
 test('reset stops the old scene and clears its place, keys, visited rooms and completion', () => {

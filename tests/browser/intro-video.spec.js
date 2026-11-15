@@ -176,7 +176,7 @@ test("the concise opening stays readable and leads through the film into the int
     .locator(".intro-video-desk img")
     .evaluate((img) => img.currentSrc);
   expect(deskSource).toContain(
-    "/assets/images/Prologue/inspector-desk-cycles-v1.webp",
+    "/assets/images/Prologue/inspector-desk-cycles-v4.webp",
   );
   await page.screenshot({
     path: ".artifacts/intro-copy-review/transition.png",

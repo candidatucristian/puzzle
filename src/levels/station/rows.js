@@ -1,3 +1,5 @@
+// (Not loaded by the game: art/blender/ticket_drawer.py and ticket_faces.mjs read this when it renders the puzzle, and
+// the unit tests check it. Kept on purpose, 2026-11-13.)
 /** The trains of the STATION puzzle: when each leaves, where for, from which
  *  platform, and what has become of it. Four are still BOARDING, and each of
  *  those four destinations has one letter that does not belong — `wrongIdx`

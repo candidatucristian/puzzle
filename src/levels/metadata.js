@@ -71,7 +71,8 @@ const metadata = [
     "hint": {
       "text": "AN OLD BRASS WHEEL.\nThe candle, the envelope and the wheel keep one secret between them.",
       "sound": false,
-      "tool": false
+      "tool": false,
+      "decoder": true
     },
     "description": "An original Blender/Cycles close-up of the square walnut-mounted brass cipher wheel from Room I: machined concentric rings, a turned thumb grip, patina, physical luminous Roman letters, three hollow dripped beeswax candles and a wax-sealed rag-paper envelope. Eight native photographs preserve each candle's individual illumination and shadows. Each candle goes out with one click, and as it does the count so far (1, 2, 3) rises high over the candles as a faint, flickering numeral of fire and burns away within three quarters of a second; their number hints at shift 3. After the last, the two alphabets become readable and the inner disc turns. Clicking the envelope brings the opened letter up out of it over the darkened room: a Blender render of the tri-folded rag paper alone, its own soft shadow under it, with actual ink reading WKH DQVZHU / LV URWRU. A Caesar shift of three decodes THE ANSWER IS ROTOR. Sixteen original Blender flame frames animate over camera-projected wicks. The original answer and puzzle mechanics are retained.",
     "references": [
@@ -111,7 +112,8 @@ const metadata = [
     "hint": {
       "text": "AN OLD FRIEND CALLS.\nThe number on the screen is someone's name in disguise.",
       "sound": false,
-      "tool": false
+      "tool": false,
+      "decoder": true
     },
     "description": "An incoming call shows caller ID (433)-666-777-433. Grouped into runs of identical digits — 4, 33, 666, 777, 4, 33 — this is an old T9 multi-tap number: press each digit that many times on the numeric keypad to select the Nth letter of that key's group (4=GHI, 3=DEF, 6=MNO, 7=PQRS). 4×1→G, 3×2→E, 6×3→O, 7×3→R, 4×1→G, 3×2→E spells GEORGE, typed out on the in-scene keypad.",
     "references": [
@@ -131,7 +133,8 @@ const metadata = [
     "hint": {
       "text": "A DARK ROOM. A SWITCH ON THE WALL.\nPress it, and keep your eyes on the bulb.",
       "sound": false,
-      "tool": true
+      "tool": true,
+      "decoder": true
     },
     "description": "Each press of the wall switch blinks the bulb (and the switch's LED) in Morse for one letter of POWER, then the wiring shorts out and resets. Transcribing each blink burst: P=.--. , O=--- , W=.-- , E=. , R=.-. spells POWER. During the brief full-room flash a portrait of Samuel Morse is visible — \"lit only by his own code\" — confirming the mechanic.",
     "references": [
@@ -139,25 +142,6 @@ const metadata = [
       "this.ANSWER = \"POWER\", _letterIdx — which letter blinks next",
       "_pressSwitch() → buildMorseSteps() → _morseStep() — dot 40ms / dash 500ms timing",
       "Samuel Morse portrait, visible only during the flash"
-    ]
-  },
-  {
-    "id": "tv",
-    "key": "TV",
-    "name": "The Empty Broadcast",
-    "summary": "An old television keeps broadcasting into an empty room.",
-    "code": "VOID",
-    "altCode": "NULL",
-    "hint": {
-      "text": "DEAD AIR.\nFour channels — watch every one of them to the end.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "Four channels each describe absence/nothingness without naming it: a cosmic supervoid on Cosmos Net, a legally unenforceable contract on Lawcourt, a function with no return value on Code Review (\"not zero, not false — and even null still carries meaning\", pointedly ruling NULL out), and a true-vacuum experiment on Science Foundation. The Code Review channel is most direct: it describes a keyword \"reserved for the complete absence of any return\", present in C, C++, Java, Swift — the keyword void. All four fields point at the same unstated word: VOID.",
-    "references": [
-      "_CHANNELS getter — all four broadcast texts",
-      "Channel 2 (\"CODE REVIEW\") explicitly contrasts void with null",
-      "top-of-file comment: \"All four channels describe VOID without ever naming it.\""
     ]
   },
   {
@@ -170,7 +154,8 @@ const metadata = [
     "hint": {
       "text": "SIGNAL INTERCEPTED.\nThe old router's lights never stop talking.",
       "sound": false,
-      "tool": true
+      "tool": true,
+      "decoder": true
     },
     "description": "An old router on the toy chest by the right wall of Room II's nursery, apart from Silas's desk since 2026-11-06 (its close-up is taken in the room: art/blender/silas_desk.py builds it, room_nursery.py places it, modem_room.py), shows the word HTTPS as ASCII binary, one letter at a time across its seven right-hand LEDs — each letter's 7-bit ASCII code at once (the always-zero leading bit has no LED; a plain space stands between the counters and the letter), an LED lit for each 1 bit and dark for each 0, the first bit on the left, held for a few seconds. After each full letter, one of five \"counter\" LEDs on the left lights solid green (every light on the router is the same soft green; the gap sets the counters apart from the bits), confirming a 5-letter word once all five are lit. The router's maker's name printed on its front, \"W. LEIBNIZ\", nods to Gottfried Leibniz, inventor of binary notation, hinting that the blinking should be read as binary.",
     "references": [
@@ -191,7 +176,8 @@ const metadata = [
     "hint": {
       "text": "A TELESCOPE AT THE WINDOW.\nLook through it. Not everything up there was arranged by nature.",
       "sound": false,
-      "tool": true
+      "tool": true,
+      "decoder": true
     },
     "description": "An original Blender observatory opens onto a clear night sky above a wooded valley. The oak window, brass telescope, stars and NASA-textured lunar sphere are rendered in Cycles. Entering from the house opens the full-screen sky; standalone play retains the telescope approach. Among the scattered stars, five groups sit on a perfect 2×3 grid — Braille cells (dot layout 1 4 / 2 5 / 3 6). Hovering one slowly lights a faint line through its dots. Reading them left to right: O=1,3,5 · R=1,2,3,5 · I=2,4 · O=1,3,5 · N=1,3,4,5, spelling O-R-I-O-N.",
     "references": [
@@ -258,26 +244,6 @@ const metadata = [
       "ALIGHT = [3,1,4,1,5,9,2,6,5] (art/blender/room_drawing.py) — lit-lamp count per tier, top to bottom, rendered so",
       "room_drawing.py --view tree (tree_level_passes.py) — the level's render; treeLevel.json lists the lamps alight, the moon, the parcel, the instruments",
       "_makeLamps() — each lamp alight twinkles over the render"
-    ]
-  },
-  {
-    "id": "crossing",
-    "retired": true,
-    "key": "Crossing",
-    "name": "The Painted Crossing",
-    "summary": "A painting of a quiet street at night, and its worn pedestrian crossing.",
-    "code": "GO",
-    "altCode": null,
-    "hint": {
-      "text": "MIND THE CROSSING.\nLook down at the stripes painted on the road.",
-      "sound": false,
-      "tool": true
-    },
-    "description": "The painted pedestrian crossing is a Code 39 barcode for GO. Read the wide and narrow stripe pattern from the near curb to the far curb to decode the two letters. In the house the street hangs as a painting: nothing in it moves.",
-    "references": [
-      "CR_WORD = \"GO\" — the encoded string",
-      "CR_CODE39 — letter → wide/narrow bar pattern lookup",
-      "_drawBarcodeCrossing() — renders only the bar elements as painted stripes"
     ]
   },
   {
@@ -350,7 +316,8 @@ const metadata = [
     "hint": {
       "text": "KNOCK TWICE.\nThe marks cut into the great stone.",
       "sound": false,
-      "tool": true
+      "tool": true,
+      "decoder": true
     },
     "description": "In the cellar, a smooth stone let into the brick carries 6 lines of tally marks, two clusters per line, following a 5×5 prisoner's tap code: the alphabet A–Y row by row, Z spilling past the end of the last row. Each letter of ESCAPE becomes a (row, column) pair rendered as that many carved marks: E=(1,5), S=(4,4), C=(1,3), A=(1,1), P=(4,1), E=(1,5). The empty bottle rack, five holes by five, is the grid; a Z scratched on the wall just past the end of its bottom row says the letters run through it in order.",
     "references": [
@@ -409,25 +376,6 @@ const metadata = [
     ]
   },
   {
-    "id": "fireworks",
-    "key": "Fireworks",
-    "name": "Midnight Over Paris",
-    "summary": "Five balloons are tied to a bench in a moonlit park in Paris.",
-    "code": "NIGHT",
-    "altCode": null,
-    "hint": {
-      "text": "MIDNIGHT IN PARIS.\nThe balloons tied to the bench, from the highest down.",
-      "sound": false,
-      "tool": true
-    },
-    "description": "Midnight in a little park in Paris: a full moon, the Tower faint and far off, a pond with the moon in it, an old lantern, fireflies over the lawn. By the gravel path stands a green bench, facing us and turned a little aside; someone has tried colours on it, leaving a brush stroke of each on its slats, and a card tied to its back says FRESH PAINT. Tied to the top of its back are five small matt balloons. Each is one flat colour with no shine or shading, and that colour is exact: from the highest balloon down, #4E2233, #492244, #472255, #482266, #542277. A colour picker reads the codes off the screen. In #RRGGBB the red is the first two digits — 4E 49 47 48 54 — and read as ASCII those spell N I G H T. The balloons sway on their strings; nothing is drawn over them, so their colours stay true.",
-    "references": [
-      "FW_CODES = [\"#4E2233\", \"#492244\", \"#472255\", \"#482266\", \"#542277\"] (colors/Fireworksscene.js) — the five balloons’ colours, from the highest to the lowest",
-      "colors/park.js layoutPark() — the balloons’ heights, the first the highest; paintBalloon() — each filled with exactly its code’s colour",
-      "colors/park.js paintBench() — the card tied to the bench: FRESH PAINT"
-    ]
-  },
-  {
     "id": "compass",
     "key": "Compass",
     "name": "The Captain’s Cabin",
@@ -439,12 +387,12 @@ const metadata = [
       "sound": false,
       "tool": false
     },
-    "description": "On an old oak desk, a thick-walled, faintly green glass bottle lies in carved walnut saddles, closed with a pitted cork and linen cord. Inside is a hand-built miniature captain's study: individually laid teak boards, walnut panelling and bent roof ribs, a fitted cupboard of leather and cloth books, a little writing desk with turned legs and brass drawer pulls, a chair, globe, coiled linen rope, wall clock and a warm hanging oil lantern. The large gimballed brass compass faces the eye, its original ivory card ruled to the degree, every 30 degrees numbered and the four winds lettered. Its changing needle is rendered in 72 Cycles poses through the same bottle glass, preserving the actual refraction and shadows. A red-wax-sealed envelope on the desk opens to an original chart printed on realistically lit, gently wrinkled cotton paper. Four lines of bearings preserve the puzzle: 180 180 90 / 270 180 180 90 90 0 0 270 / 270 270 180 90 90 180 270 270 / 90 90 270 180 180. North is 0, east 90, south 180, west 270; each bearing is one step and each line draws one letter, spelling L O S T. The needle follows the same bearings, with a spin between lines and a kick at repetitions; tapping the compass restarts the sequence. The photograph fills the game viewport, and the map remains open across resizing.",
+    "description": "On an old oak desk, a thick-walled, faintly green glass bottle lies in carved walnut saddles, closed with a pitted cork and linen cord. Inside is a hand-built miniature captain's study: individually laid teak boards, walnut panelling and bent roof ribs, a fitted cupboard of leather and cloth books, a little writing desk with turned legs and brass drawer pulls, a chair, globe, coiled linen rope, wall clock and a warm hanging oil lantern. The large gimballed brass compass faces the eye, its original ivory card ruled to the degree, every 30 degrees numbered and the four winds lettered. Its changing needle is rendered in 72 Cycles poses through the same bottle glass, preserving the actual refraction and shadows. A red-wax-sealed envelope on the desk opens to the captain's letter, the same sheet every puzzle letter is (the Rotor's): old rag paper folded in three and opened out, a Blender render with its own shadow, headed The Captain’s Bearings in the hand and the bearings typed. Four lines of bearings preserve the puzzle: 180 180 90 / 270 180 180 90 90 0 0 270 / 270 270 180 90 90 180 270 270 / 90 90 270 180 180. North is 0, east 90, south 180, west 270; each bearing is one step and each line draws one letter, spelling L O S T. The needle follows the same bearings, with a spin between lines and a kick at repetitions; tapping the compass restarts the sequence. The photograph fills the game viewport; the letter comes up out of the envelope and goes back into it, as the Rotor's does (shared/paperLetter.js).",
     "references": [
       "COMPASS_BEARINGS (compass/puzzle.js) — the four lines of the map, one letter each",
       "walk() / drawBearings() — one unit step per bearing (0 up, 90 right, 180 down, 270 left); drawBearings shows the letter as # marks",
-      "art/blender/captains_bottle.py — original Cycles bottle, miniature cabin, gimballed compass and matching needle poses; captains_bottle_publish.mjs generates original chart and dial artwork from COMPASS_BEARINGS",
-      "compass/bottleCabin.js and nativeBottle.json — full-viewport render, calibrated glass and map interaction areas, native needle atlas and separately rendered paper chart",
+      "art/blender/captains_bottle.py — original Cycles bottle, miniature cabin, gimballed compass and matching needle poses; captains_bottle_publish.mjs generates the dial artwork; art/blender/puzzle_letter.py --letter compass types the bearings from COMPASS_BEARINGS on the shared letter",
+      "compass/bottleCabin.js and nativeBottle.json — full-viewport render, calibrated glass and map interaction areas, native needle atlas and the letter (letter.webp)",
       "CompassScene program() / _dance() — the needle: a spin before each letter, then each bearing held; a kick marks a repeated bearing"
     ]
   },
@@ -489,226 +437,6 @@ const metadata = [
       "cellOf() / familyOf() — each element's place and family on the room's periodic table (lab_boards.mjs)",
       "art/blender/room_lab.py --view bench (bench_level_passes.py, bench_level_publish.mjs) — Room VII's own bench rendered close in Cycles: the plate, the cloth with the glass taken up, the bottles again at three times the size for the lens (benchLevel.json); lab_boards.mjs prints each bottle's scale from SCALES (chemistry/puzzle.js), and each liquid is filled to its number",
       "chemistry/ChemistryScene.js — the lens over the render, the burner's live flame, bubbles, steam, the uranium's glow"
-    ]
-  },
-  {
-    "id": "billiards",
-    "key": "Billiards",
-    "name": "The Quiet Pub",
-    "summary": "A pool table waits beneath the lights in a quiet pub.",
-    "code": "BLIND",
-    "altCode": null,
-    "hint": {
-      "text": "A SET HAS FIFTEEN BALLS.\nThe rack is short of a few — and some pockets are marked.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "An abandoned pub at night, in three dimensions: a pool table seen across its long side from above — legs, apron, polished rails, pockets going down into it — under a billiard lamp of three green shades on a brass bar, the only warm light in a dark room; rain and street lamps in the window at the back, its cold light lying on the boards; a cue leaning on the corner of the table. The balls stand racked for the break, but five places in the triangle are empty — 2, 4, 9, 12 and 14 are gone. They lie in the pockets, five of which are marked I to V on little brass plates; down in a pocket a ball shows only its colour and whether it is striped, which with the rack and the set’s colours (1–7 solid, 9–15 striped in the same colours, 8 black) tells its number: I blue solid 2, II purple stripe 12, III yellow stripe 9, IV green stripe 14, V purple solid 4. A chalk slate on the back wall says “What is missing defines the answer”. In the pockets’ order, 2 12 9 14 4 as letters of the alphabet (A1Z26): B L I N D. A click on a pocket rattles its ball; the cue ball can be nudged.",
-    "references": [
-      "RACK (billiards/puzzle.js) — the triangle, column by column from its apex; null where a ball is missing",
-      "POCKETS / POCKET_MARKS — the ball in each marked pocket, I to V: 2, 12, 9, 14, 4",
-      "missing() / ballColour() / isStripe() — which balls are gone, and how each looks",
-      "letter() / readPockets() — A1Z26: 2 12 9 14 4 → BLIND",
-      "billiards/pub.js paintBall() — a ball seen from above; sunk in a pocket it shows no number"
-    ]
-  },
-  {
-    "id": "metro",
-    "key": "Metro",
-    "name": "Platform After Dark",
-    "summary": "A line diagram is screwed to the wall of a deserted underground platform.",
-    "code": "PYLON",
-    "altCode": null,
-    "hint": {
-      "text": "THE LAST TRAIN HAS GONE.\nThe line diagram on the platform wall, in the direction the trains run.",
-      "sound": false,
-      "tool": true
-    },
-    "description": "A real underground platform late at night, seen down its length: the track in its trench running into the tunnel under a signal lamp that turns from red to green and back, a platform wall of glazed tile with the station’s name on it, posters, a bench, a tannoy horn, a row of fluorescent tubes overhead with one of them failing, the way out lit at the far end. On the platform wall, close by and running away with it in the station’s perspective, is the enamel line diagram: Line 6, eastbound, its five stops in order from the top — Papa Wharf (marked YOU ARE HERE), Yankee Dock, Lima Road, Oscar Square, November Street — and an arrow at the bottom for the way the trains run. Their first words are the NATO phonetic alphabet, none of them its famous letters — Papa P, Yankee Y, Lima L, Oscar O, November N — so in the line’s order they spell PYLON. A small light runs the line end to end, lighting each stop as it passes; a click on a stop rings it; a click on the horn brings an announcement that is nothing but static.",
-    "references": [
-      "METRO_STATIONS (metro/puzzle.js) — the five stations of the line, in the order the trains run",
-      "NATO / natoLetter() — the phonetic alphabet, A to Z (ALPHA and ALFA both read A); readLine() spells PYLON",
-      "metro/map.js paintDiagram() — the enamel plate with the stops’ names, drawn flat and laid on the wall by onWallPlate(); paintLitLine() — the line, its rings and its arrow",
-      "metro/map.js layoutStation() — the platform in one-point perspective; MetroScene — the running light, the signal, the failing tube"
-    ]
-  },
-  {
-    "id": "resistors",
-    "key": "Resistors",
-    "name": "The Workshop Bench",
-    "summary": "A magnifier lamp illuminates a circuit board on the workbench.",
-    "code": "1024",
-    "altCode": null,
-    "hint": {
-      "text": "FOUR PARTS, FOUR BANDS EACH.\nThe resistors in order, and the card on the bench.",
-      "sound": false,
-      "tool": true
-    },
-    "description": "A workshop bench at night, seen from straight above like a photograph under the magnifier lamp: walnut boards, a grey anti-static mat, a multimeter whose leads rest on the board (its reading flickering round 5 V), a soldering iron smoking in its stand, a reel of solder, tweezers. On the mat lies a green circuit board — copper traces under the mask, vias, silkscreen, a chip, capacitors, a beating red LED — with four big resistors soldered in a row, R1 to R4, four colour bands on each — R1 brown black red gold, R2 black brown black gold, R3 red red orange gold, R4 yellow violet red gold. Pinned to the bench is the resistor colour code: ten swatches, black to white, a digit under each (black 0, brown 1, red 2, orange 3, yellow 4, green 5, blue 6, violet 7, grey 8, white 9), gold and silver apart as tolerances. The first band of each resistor, R1 to R4, is brown, black, red, yellow: 1 0 2 4. The code is 1024. A click on a resistor holds a loupe over it, its bands big and clear.",
-    "references": [
-      "RESISTORS (resistors/puzzle.js) — the four resistors' bands, R1 to R4, read from the end away from the tolerance band",
-      "BAND_DIGITS / bandDigit() — the colour code, black 0 to white 9; readFirstBands() gives 1024",
-      "resistorOhms() / ohmsLabel() — the values the bands actually mean (1 kΩ, 1 Ω, 22 kΩ, 4.7 kΩ)",
-      "resistors/bench.js paintResistor() — a resistor and its bands; paintCard() — the colour code pinned to the bench",
-      "resistors/bench.js paintLoupe() — a resistor seen big through a loupe, which ResistorsScene holds up on a tap"
-    ]
-  },
-  {
-    "id": "ripples",
-    "key": "Ripples",
-    "name": "Moonlight on the Water",
-    "summary": "Rain disturbs a shallow puddle among the engraved paving stones.",
-    "code": "DROP",
-    "altCode": null,
-    "hint": {
-      "text": "THE RAIN RETURNS TO THREE PLACES.\nWatch the rings on the water and the stones they reach.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "A wet cobbled street seen from directly above at night, washed by a distorted red neon reflection. Three fixed drip points send out circular wavefronts. Their emission delays are calculated from the distances to four engraved stones, so all three fronts really coincide on D, R, O and P during successive rounds. Other stones carry decoy letters. A brief wet gleam makes a three-way agreement readable; it is computed from the same wave geometry for every engraving. Read the four converging stones from top to bottom: DROP. The sequence repeats, including with decorative rain disabled.",
-    "references": [
-      "ripples/puzzle.js RIPPLE_SOURCES / RIPPLE_STONES / RIPPLE_TARGETS — the three fixed sources and the engraved paving",
-      "dropTimes() / rippleFrame() — distance-based emission delays and expanding circular fronts",
-      "convergence() / readConvergences() — compare three arrival times at every stone; only four stones agree",
-      "ripples/street.js — wet stone, engraved letters and the reflected neon; RipplesScene animates refraction, drops and waves"
-    ]
-  },
-  {
-    "id": "vertex",
-    "key": "Vertex",
-    "name": "The Strange Arrangement",
-    "summary": "A delicate wireframe structure hangs against dark drafting paper.",
-    "code": "FACE",
-    "altCode": null,
-    "hint": {
-      "text": "DEGREE OF CONNECTION.\nThe four pulsing points, from left to right.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "An asymmetric crystal drawn only in white wireframe on blue-black drafting paper. Four actual graph vertices pulse subtly from left to right among dozens of crossing struts. Count the edges that end at each marked vertex: 6, 1, 3, 5. The second is a genuine blind branch with a single connection. Convert the degrees using A=1 through Z=26: F A C E. The inscription Degree of connection hints at graph degree. Unrelated edges stay clear of the marked points so Inspect can distinguish true connections from projected crossings.",
-    "references": [
-      "vertex/puzzle.js VERTEX_NODES / VERTEX_EDGES / VERTEX_MARKED — the actual displayed graph",
-      "degree() / readVertex() — count incident edges, then read 6, 1, 3, 5 as FACE",
-      "segmentDistance() — keeps unrelated struts clear of the marked vertices",
-      "VertexScene — technical white line drawing, sequential node pulses and the Degree of connection inscription"
-    ]
-  },
-  {
-    "id": "plotter",
-    "key": "Plotter",
-    "name": "The Drafting Desk",
-    "summary": "A green terminal glows beside a pen plotter waiting over a clean sheet.",
-    "code": "PING",
-    "altCode": null,
-    "hint": {
-      "text": "BECOME THE MACHINE.\nThe four blocks of coordinates are instructions for a pen.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "A drafting table in a dark room at night, seen from where one sits at it: a graphic display terminal in a dark steel case with its keyboard, and beside it under a drawing lamp a flatbed pen plotter, its arm idling over a clean sheet of squared paper; a mug on the table, a window behind with the moon over the roofs, one old plot of a curve pinned to the wall. The lamp and the tube are the only light. The terminal’s green tube displays four numbered blocks of Cartesian coordinates. Join consecutive points with straight lines, with X increasing right and Y increasing up; lift the pen and start a fresh drawing for each block. The blocks are deliberately ordered P, I, N, G: P has a vertical stem and an upper loop; I has two horizontal bars and a central stem; N has two verticals joined diagonally; G is an open square with an inward stroke. Read the four drawings in block order: PING. The display keeps all instructions visible; it never automatically draws the answer for the player.",
-    "references": [
-      "plotter/puzzle.js PLOTTER_BLOCKS — the four coordinate paths, in P-I-N-G order",
-      "formatPath() / pathSegments() — the printed instructions and their actual line segments",
-      "PlotterScene — monochrome CRT glass, four numbered blocks, coordinate orientation and tracing instruction"
-    ]
-  },
-  {
-    "id": "kinetic",
-    "key": "Kinetic",
-    "name": "The Games Cupboard",
-    "summary": "Four old board games stand face out on the middle shelf of a cupboard.",
-    "code": "CAGE",
-    "altCode": null,
-    "hint": {
-      "text": "A STUDY OF BOUNDARIES.\nThe pieces on the lids, from left to right.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "A tall oak cupboard stands with both doors open, lit by a lamp out of the picture. Games are stacked flat on its top and bottom shelves, only their plain spines showing, with a box of chessmen and a pack of cards. On the middle shelf four board-game boxes stand face out, side by side, each lid painted with one big wooden game piece: left to right a coral triangle, a yellow disc, a sea-green heptagon and a blue pentagon. A card pinned inside the right-hand door reads \"One unbroken curve counts as one.\" Count each piece's sides — the disc's single curved rim counts as one — and read them left to right: 3, 1, 7, 5, which map through A=1 to C A G E. A click on a box only rocks it on the shelf.",
-    "references": [
-      "kinetic/puzzle.js GAME_LIDS — triangle, circle, heptagon and pentagon with explicit rim counts, in shelf order",
-      "polygonVertices() — genuine polygon outlines for the pieces; cupboardLayout() — where the lids stand",
-      "readKinetic() — read 3, 1, 7, 5, left to right, as CAGE",
-      "KineticScene / cupboard.js — the open cupboard, the stacked games, the four lids and the card inside the door"
-    ]
-  },
-  {
-    "id": "genome",
-    "key": "Genome",
-    "name": "The Glass Specimen",
-    "summary": "A laboratory display flickers with fragments of a genetic sequence.",
-    "code": "SPACE",
-    "altCode": null,
-    "hint": {
-      "text": "THE BUILDING BLOCKS OF LIFE.\nThe highlighted pieces of DNA, from left to right.",
-      "sound": false,
-      "tool": true
-    },
-    "description": "A laboratory monitor streams DNA sequences around a clearly framed fragment: TCT - CCT - GCT - TGT - GAA. The display specifies the DNA coding strand read 5 prime to 3 prime and the standard genetic code (translation table 1). The codons encode serine, proline, alanine, cysteine and glutamic acid; their standard one-letter amino-acid symbols spell S P A C E. An RNA codon table also works after replacing T with U, without complementing or reversing the coding strand. Decorative sequence flow and a double helix surround the stable clue. Reference may help is enabled for the codon table.",
-    "references": [
-      "genome/puzzle.js GENOME_FRAGMENT / STANDARD_CODE — the five DNA codons and the complete 64-codon standard table",
-      "aminoAcid() / translateFragment() — standard one-letter translation, accepting DNA or corresponding RNA triplets",
-      "GenomeScene — highlighted coding strand, direction, streaming sequences and procedural double helix",
-      "NCBI standard genetic code: https://www.ncbi.nlm.nih.gov/datasets/docs/v2/data-processing/taxonomy-processing/genetic-codes/#1-the-standard-code-transl_table1"
-    ]
-  },
-  {
-    "id": "curtain",
-    "key": "Curtain",
-    "name": "The Drawing Room",
-    "summary": "Moonlight enters an abandoned room through a worn velvet curtain.",
-    "code": "MOTH",
-    "altCode": null,
-    "hint": {
-      "text": "LET THE SHADOWS GUIDE YOUR EYES.\nThe curtain, and the letters on the moonlit floor.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "A full moon shines through a tall Gothic window in an abandoned room. A square of moonlight falls on fifty fixed letters engraved in the floorboards. Drag the moth-eaten velvet curtain along its rail: its four irregular tears project moving pools of light, physically masking the same unchanged floor texture. At the correct position the cloth covers the rest of the square and only M, O, T and H remain lit, read from left to right. This is a translating Cardan grille; there is no rotation step or automatic answer reveal. Left/right arrows allow fine adjustment, Shift makes larger steps. Resize preserves the curtain position; replay opens it again.",
-    "references": [
-      "curtain/puzzle.js CURTAIN_LETTERS / CURTAIN_HOLES / tearOutline — fifty engravings and four matching physical tears",
-      "curtainLightAt() / curtainShift() — one projected aperture geometry for the whole floor",
-      "CurtainScene — draggable cloth and a GeometryMask over the single illuminated floor texture",
-      "curtain/room.js — Gothic window, velvet folds, engraved boards and projected moonlight"
-    ]
-  },
-  {
-    "id": "thesill",
-    "key": "TheSill",
-    "name": "The Window Ledge",
-    "summary": "Everyday objects rest in silhouette along an old moonlit window.",
-    "code": "WAKE",
-    "altCode": null,
-    "hint": {
-      "text": "READ THE LIGHT, NOT THE DARK.\nLook at the floor beneath the window.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "A low view of an old window: leaning books, a wine bottle, an unlit candlestick, a vase and a mantel clock stand in silhouette against diffuse moonlight. Their long overlapping shadows reach towards the viewer across the floorboards. Read the light left between those dark shapes: four polygonal gaps spell W A K E from left to right, with the triangular counter of A remaining shadow. The composition is a single static painting; no object needs moving and no word is overlaid or revealed on click. The puzzle is the figure/ground reversal itself, including with ambient effects disabled.",
-    "references": [
-      "thesill/puzzle.js SILL_APERTURES / aperturePoints — actual light outlines and the dark counter of A",
-      "thesill/sill.js paintSill — overlapping cast silhouettes with the apertures cut from the shadow field",
-      "TheSillScene — one static room texture, resizing and the negative-space clue"
-    ]
-  },
-  {
-    "id": "venetian",
-    "key": "Venetian",
-    "name": "An Evening in Venice",
-    "summary": "Beyond the lowered blinds, a thousand distant windows shine.",
-    "code": "CITY",
-    "altCode": null,
-    "hint": {
-      "text": "FOCUS THROUGH THE NOISE.\nThe blinds, and the city lights behind them.",
-      "sound": false,
-      "tool": false
-    },
-    "description": "A high-rise window overlooks thousands of cold and amber city lights through lowered Venetian blinds. Drag the cord up or down to tilt the horizontal slats. The city is one immutable image: narrow rows of lights forming CITY are interleaved with four rows of distracting lights per band. The cord changes only the openings of the opaque barrier. Near the correct angle, the slits pass the letter rows and cover the interference; at other angles the same word falls back into visual noise. Nothing swaps or fades in a separate answer image. Up/down arrows make fine adjustments, Shift makes larger steps. Resize retains the tilt; replay restores the noisy starting view.",
-    "references": [
-      "venetian/puzzle.js cityLights() / cityLetterAt() — deterministic interlaced city and actual letter strokes",
-      "blindSlits() / lightPassesBlind() — the moving barrier apertures, independent of the image",
-      "venetian/city.js paintVenetian — static skyline, thousands of lights and the window frame",
-      "VenetianScene — draggable cord, horizontal slats and a GeometryMask over the unchanged city texture"
     ]
   },
   {
@@ -857,7 +585,15 @@ const metadata = [
 ];
 
 // Preserve the pre-retirement numeric save order; current progress uses IDs.
-export const LEGACY_LEVEL_IDS = Object.freeze(metadata.map(level=>level.id));
+// (written out since 2026-11-13, when the puzzles no room held were deleted:
+// old numeric saves still count in this order)
+export const LEGACY_LEVEL_IDS = Object.freeze([
+  "binarytree", "plantpot", "sequence", "cryptex", "chessboard", "mobilephone", "lightswitch",
+  "tv", "modem", "telescope", "wires", "station", "pi", "crossing", "flags", "herbarium", "cot",
+  "tapcode", "rally", "overtime", "fireworks", "compass", "bookshelf", "chemistry", "billiards",
+  "metro", "resistors", "ripples", "vertex", "plotter", "kinetic", "genome", "curtain", "thesill",
+  "venetian", "molecules", "phials", "balance", "equations", "measures", "abacus", "rewind"
+]);
 export const LEVEL_METADATA = Object.freeze(metadata.filter(level=>!level.retired).map((level) => Object.freeze({
   ...level,
   hint: Object.freeze({ ...level.hint, steps: Object.freeze([level.hint.text, ...HINT_DETAILS[level.id]]) }),

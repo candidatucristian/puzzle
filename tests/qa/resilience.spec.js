@@ -8,7 +8,6 @@ test('map and case book open by keyboard, turn pages, resize and return focus wi
   await page.keyboard.press('Escape'); await expect(page.locator('#btn-map')).toBeFocused();
   await page.keyboard.press('c'); await expect(page.locator('#casefile-modal')).toBeVisible();
   const folio = page.locator('.casebook-folio');
-  await page.locator('.casebook-mark').first().click();
   const first = await folio.textContent();
   await page.keyboard.press('ArrowRight'); await expect(folio).not.toHaveText(first);
   await page.setViewportSize({ width: 1280, height: 720 });

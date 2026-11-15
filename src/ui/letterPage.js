@@ -1,5 +1,5 @@
 import { letterSheet, paintSeal } from "../shared/envelope.js";
-import { loadDocumentArt, paintDocumentSeal } from "./documentArt.js";
+import { loadDocumentArt, paintDocumentSeal, documentArt } from "./documentArt.js";
 
 // Live words on a physical sheet. The paper stays inside the article's box;
 // its soft shadow is visual only and must not create a second scroll axis.
@@ -33,6 +33,20 @@ export function renderLetter(host, letter, { note = "", seal: sealed = true, pap
   add("p", "letter-dateline", letter.dateline);
   add("p", "letter-salutation", letter.salutation);
   for (const para of letter.body) add("p", "letter-para", para);
+  // The opening identifies the envelope by its crest. Keep the matching
+  // archival photograph with the report so the player can see that clue.
+  if (letter.sealPhotograph) {
+    const figure = document.createElement('figure');
+    figure.className = 'letter-seal-photograph';
+    const photograph = document.createElement('img');
+    photograph.src = `${import.meta.env.BASE_URL}assets/images/CaseFile/ashcombe-seal-photograph.webp`;
+    photograph.width = 792; photograph.height = 520;
+    photograph.alt = letter.sealPhotograph.alt;
+    const caption = document.createElement('figcaption');
+    caption.textContent = letter.sealPhotograph.caption;
+    figure.append(photograph, caption);
+    words.append(figure);
+  }
   add("p", "letter-signature", letter.signature);
   add("p", "letter-ps", letter.postscript);
   // and under it, in pencil, in his own hand: what Arthur makes of it
@@ -65,7 +79,11 @@ export function renderLetter(host, letter, { note = "", seal: sealed = true, pap
     }
     page.dataset.material = art?.paper && (!sealed || art?.wax) ? "ready" : "fallback";
   };
-  requestAnimationFrame(() => paint(materials));
-  if (materials === undefined) loadDocumentArt().then(art => requestAnimationFrame(() => paint(art)));
+  // painted once: with the paper and wax given, or the loaded ones — and if
+  // they are still loading, once they have (the drawn sheet stands in only
+  // if they cannot be had), never the stand-in first and the paper after
+  const art = materials !== undefined ? materials : documentArt();
+  if (art !== null) requestAnimationFrame(() => paint(art));
+  else loadDocumentArt().then(loaded => requestAnimationFrame(() => paint(loaded)));
   return page;
 }

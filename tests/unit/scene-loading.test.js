@@ -89,8 +89,9 @@ test('image cache retires old room textures while preserving active room texture
     remove:key=>{removed.push(key);images.delete(key);}};
   const game={};
   const old={game,textures,sys:{settings:{key:'Study'}}},current={game,textures,sys:{settings:{key:'Room2'}}};
-  images.set('Study_render_lights-1_v12',{width:4096,height:4096});
-  images.set('Room2_render_lights-1_v11',{width:4096,height:4096});
+  // (each about 300 MB in the cache's reckoning: together over its 384 MB)
+  images.set('Study_render_lights-1_v12',{width:6144,height:6144});
+  images.set('Room2_render_lights-1_v11',{width:6144,height:6144});
   beginAssetGroup(old);registerSceneImage(old,'Study_render_lights-1_v12');retireAssetGroup(old);
   beginAssetGroup(current);registerSceneImage(current,'Room2_render_lights-1_v11');
   trimSceneImages(current);

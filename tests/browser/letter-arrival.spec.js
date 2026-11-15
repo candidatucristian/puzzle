@@ -14,6 +14,8 @@ async function boot(page, { reduced = false } = {}) {
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await evaluateApp(page, ({ ui, services }) => { ui.showGame(); services.levels.enterHall(); });
   await expect(page.locator('.waiting-letter')).toHaveCount(2);
+  // (a letter clicked while the hall is still coming in is not taken up)
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.loading)).toBe(false);
 }
 const read = page => page.evaluate(() => JSON.parse(localStorage.getItem('caseFile:read')));
 const missing = response => /CaseFile\/letter\//.test(response.url()) && response.status() >= 400;

@@ -155,10 +155,24 @@ COLON_0 = P(ck["x"], kyc, KF + 0.5)
 for bx in (kx1 - 7, kx1 - 4):
     box_cm("clock button", bx - 1.1, bx + 1.1, ky1 - 0.3, ky1 + 0.6, KF + 1.8, KF + 4, plain("clock button", (0.1, 0.1, 0.11), rough=0.4), 0.25)
 cu = bpy.data.curves.new("lead", "CURVE"); cu.dimensions = "3D"; cu.bevel_depth = M(0.22); cu.bevel_resolution = 3
-spl = cu.splines.new("BEZIER"); spl.bezier_points.add(3)
-for bp_, v in zip(spl.bezier_points, (P(kx1 - 3, ky0 + 0.5, WALL_D - 1.2), P(kx1 - 1, ky0 - 24, WALL_D - 0.6), P(kx1 + 1, 101, WALL_D - 5.2), P(kx1 + 2, DESK_Y, WALL_D - 4.4))):
+spl = cu.splines.new("BEZIER"); spl.bezier_points.add(4)
+_lead_pts = (
+    P(kx1 - 3.0, ky0 + 0.5, WALL_D - 1.4),
+    P(kx1 - 2.0, 117.0, WALL_D - 0.8),
+    P(kx1 - 0.8, 102.5, WALL_D - 1.2),
+    P(kx1 + 0.4, 98.0, WALL_D - 5.0),
+    P(kx1 + 1.8, DESK_Y, WALL_D - 4.8),
+)
+for bp_, v in zip(spl.bezier_points, _lead_pts):
     bp_.co = v; bp_.handle_left_type = bp_.handle_right_type = "AUTO"
 link(bpy.data.objects.new("lead", cu)).data.materials.append(BLACK)
+bpy.context.view_layer.update()
+for i_, bp_ in enumerate(spl.bezier_points):
+    max_y = M(WALL_D - 0.6) if i_ <= 2 else M(WALL_D - 4.8)
+    bp_.handle_left_type = bp_.handle_right_type = "FREE"
+    bp_.co.y = min(bp_.co.y, max_y)
+    bp_.handle_left.y = min(bp_.handle_left.y, max_y)
+    bp_.handle_right.y = min(bp_.handle_right.y, max_y if i_ != 2 else M(WALL_D - 2.0))
 CLOCK_GLOWS = [lamp("clock glow", "AREA", tuple(P(ck["x"], kyc, KF - 1.5)), aim=tuple(P(ck["x"], kyc - 12, KF - 40)), energy=0.6, colour=(1.0, 0.06, 0.03), size=0.16, size_y=0.05)]
 CLOCK_GLOWS[-1].visible_camera = False; CLOCK_GLOWS[-1].visible_glossy = False
 

@@ -8,13 +8,19 @@ import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 const artVersion = room => COFFER.rooms[room]?.artVersion ?? COFFER.version;
 export const cofferAtlasKey = room => `coffer_${room}_v${artVersion(room)}`;
 export const cofferKeyArt = room => `coffer_${room}_key_v${artVersion(room)}`;
+export const hasNativeCoffer = room => Boolean(COFFER.rooms[room]);
+
+/** The native chest's images, shared by scene loading and doorway prefetch. */
+export function cofferAssets(room) {
+  if (!hasNativeCoffer(room)) return [];
+  return [[cofferAtlasKey(room), 'poses'], [cofferKeyArt(room), 'key']]
+    .map(([key, name]) => ({ key, url: `assets/images/Chest/native-v${artVersion(room)}/${room.toLowerCase()}-${name}.webp` }));
+}
 
 export function loadCofferArt(scene, room) {
-  const spec = COFFER.rooms[room];
-  if (!spec) return;
-  for (const [key, name] of [[cofferAtlasKey(room), 'poses'], [cofferKeyArt(room), 'key']]) {
-    if (name === 'key') optionalSceneAsset(scene, key);
-    if (!scene.textures.exists(key)) scene.load.image(key, `assets/images/Chest/native-v${artVersion(room)}/${room.toLowerCase()}-${name}.webp`);
+  for (const { key, url } of cofferAssets(room)) {
+    if (key === cofferKeyArt(room)) optionalSceneAsset(scene, key);
+    if (!scene.textures.exists(key)) scene.load.image(key, url);
   }
 }
 

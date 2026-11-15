@@ -14,6 +14,7 @@ import { loadIronGate, createIronGate } from "./ironGate.js";
 import { lockedNote } from "../../shared/lockedNote.js";
 import { loadAtticMaterials } from "../top/atticMaterials.js";
 import { loadPassageRender } from "../top/passageRender.js";
+import { prefetchPlacePuzzles } from '../../core/puzzlePrefetch.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The hall: the ground floor of the manor, where the player stands on coming
@@ -421,6 +422,12 @@ export default class HallScene extends BasePuzzleScene {
     const h = this._lever.hit, t = thing.box;
     const x0 = Math.min(t.x, h.x), y0 = Math.min(t.y, h.y);
     const box = { x: x0, y: y0, width: Math.max(t.x + t.width, h.x + h.width) - x0, height: Math.max(t.y + t.height, h.y + h.height) - y0 };
+    // (shut in the demo: it says so when pointed at, and does nothing)
+    if (levels.puzzleSealed?.(thing.level)) {
+      lockedNote(this, this.add.zone(box.x, box.y, box.width, box.height).setOrigin(0, 0).setDepth(5).setInteractive({ cursor: "not-allowed" }));
+      this._solved = false;
+      return;
+    }
     const zone = this.add
       .zone(box.x, box.y, box.width, box.height)
       .setOrigin(0, 0)
@@ -484,6 +491,13 @@ export default class HallScene extends BasePuzzleScene {
     this.time.delayedCall(700, () => { this._busy = false; });
   }
 
+  _warmRoom(room) {
+    if (this.wing) return;
+    const destination = this.game.scene.keys[room.key];
+    // the room's own pictures first, then its puzzles' (core/puzzlePrefetch.js)
+    prefetchPlacePuzzles(this, room.key, destination?.entranceAssets ?? []);
+  }
+
   // A door is opened: the handle, and the leaf swings in on its hinges — the
   // room's light coming out round it and across the hall's boards — and it
   // stands open. Only another click goes through it (with motion reduced, the
@@ -492,6 +506,7 @@ export default class HallScene extends BasePuzzleScene {
   _open(d, room, zone = this._doorZones?.get(d.number)) {
     if (this._opening || !this.input.enabled) return;
     if (this._doorOpening?.number === d.number) return;
+    this._warmRoom(room);
     // a door still swinging shut from before is simply shut
     this._shutDone();
     if (this._doorArt) {
@@ -522,6 +537,7 @@ export default class HallScene extends BasePuzzleScene {
   // Then back to the hall, and the door opens as any other does.
   _unlock(d, room, zone) {
     if (this._opening || this._keyRun || !this.input.enabled) return;
+    this._warmRoom(room);
     this._unlockedDoors.add(d.number);
     this.input.enabled = false;
     this.game.events.emit("puzzle:interaction", { label: "" });

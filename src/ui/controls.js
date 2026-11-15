@@ -19,8 +19,6 @@ import { isDevMode } from '../shared/devMode.js';
 import { HOUSE_GO, HOUSE_BACK, HOUSE_SOLVED, WALK_MS } from '../shared/house.js';
 import { mountHouseMap } from './houseMap.js';
 import { mountPlayersOnline } from './playersOnline.js';
-import { mountHallGuide } from './hallGuide.js';
-import { mountStudyGuide } from './studyGuide.js';
 import { mountMagnifier } from './magnifier.js';
 import { mountAmbience } from './ambience.js';
 import { mountTooltips } from './tooltips.js';
@@ -29,6 +27,7 @@ import { mountFootsteps } from './footsteps.js';
 import { mountCaseFile } from './caseFile.js';
 import { mountDemoEnd } from './demoEnd.js';
 import { playPrologue, preloadPrologueDesk } from './prologue.js';
+import { playSolveStrike } from './solveStrike.js';
 import { mountCinema } from './cinema.js';
 import { mountPaperSounds } from './paperSounds.js';
 import { playIntroVideo } from './introVideo.js';
@@ -297,11 +296,6 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
   const caseFile = mountCaseFile(scope, { levels, dialogs, storage, sounds: paperSounds, reducedMotion: () => Boolean(preferences?.reducedMotion), isBusy: () => transitions.busy || walking || levels.loading || cinema.busy, i18n });
   // the end of the Steam demo, once its rooms are all solved
   const demoEnd = mountDemoEnd(scope, { levels, storage, i18n, isOpen: () => dialogs.isOpen, isBusy: () => transitions.busy || walking || levels.loading || cinema.busy || caseFile.busy, reducedMotion: () => Boolean(preferences?.reducedMotion) });
-  // the two short introductions (ui/guide.js): the first door, the first puzzle
-  const hallGuide = mountHallGuide(scope, { game, levels, dialogs, storage, preferences, i18n,
-    isBusy: () => transitions.busy || walking || levels.loading || cinema.busy || caseFile.busy });
-  const studyGuide = mountStudyGuide(scope, { game, levels, dialogs, storage, preferences, i18n,
-    isBusy: () => transitions.busy || walking || levels.loading || cinema.busy || caseFile.busy });
   // A new case opens with the supplied film, then dissolves directly onto
   // the Inspector's desk. Each run owns its listeners and media playback.
   let prologueOn = false;
@@ -437,7 +431,11 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
         ? (i18n ? i18n.t('feedback.accepted') : 'Answer accepted.')
         : (i18n ? i18n.t('feedback.acceptedNext') : 'Answer accepted. Opening the next room.');
       answerFeedback(acceptedMsg, 'success');
-      input.classList.add('success-flash', 'ink-sets'); scope.later(() => input.classList.remove('success-flash', 'ink-sets'), 1200);
+      // the answer struck home: sparks off the puzzle's things, a winding ribbon
+      // of them into the code box, the screen shaken once (solveStrike.js)
+      const glowMs = playSolveStrike(levels.activeScene, { reducedMotion: Boolean(preferences?.reducedMotion) });
+      // (the strike lights the box itself; without it, the ink sets as before)
+      if (!glowMs) { input.classList.add('success-flash', 'ink-sets'); scope.later(() => input.classList.remove('success-flash', 'ink-sets'), 1200); }
       if (result.nextIndex === null) {
         completion.show();
         audio.playSuccess();
@@ -446,10 +444,12 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
         // a moment for the answer to be seen accepted, then back out to the
         // room, which opens on the thing just solved and draws back from it
         if (onStage) game.events.emit(HOUSE_SOLVED, solvedId); // nowhere to go back to: the place itself takes note
-        else if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, 700, true);
+        else if (home) walk(() => levels.enterPlace(home.key, { level: solvedId }), 300, Math.max(700, glowMs - 200), true);
         else navigate(result.nextIndex, { caption: i18n ? i18n.t('veil.caption') : 'Answer accepted' });
       }
-      input.value = '';
+      // (the answer stays in the box until the strike has lit it)
+      if (glowMs) scope.later(() => { input.value = ''; }, Math.max(0, glowMs - 250));
+      else input.value = '';
     } else {
       answerFeedback(i18n ? i18n.t('feedback.incorrect') : 'Look again. That answer does not unlock this room.', 'error');
       audio.playErrorSound();
@@ -487,8 +487,6 @@ export function mountUI(game, { levels, audio, storage, preferences, hints, i18n
     transitions.dispose();
     hintUI.reset();
     progressUI.reset();
-    hallGuide.reset();
-    studyGuide.reset();
     levels.reset();
     caseFile.reset();
     demoEnd.reset();

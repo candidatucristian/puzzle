@@ -13,6 +13,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:5174',
     trace: process.env.CI ? 'retain-on-failure' : 'off', screenshot: 'only-on-failure',
+    // the whole house: the dev server runs the Steam demo's limits (DEMO in
+    // src/shared/house.js), and the suite tests every room; dev mode lifts them
+    // (src/shared/devMode.js), as it does for the one making the game
+    storageState: { cookies: [], origins: [{ origin: 'http://127.0.0.1:5174', localStorage: [{ name: 'devMode', value: '1' }] }] },
   },
   projects: [
     // the desktop layout: every test in the suite

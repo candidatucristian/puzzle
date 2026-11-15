@@ -1,3 +1,5 @@
+// (Not loaded by the game: art/blender/old_tree.py reads this when it renders the puzzle, and
+// the unit tests check it. Kept on purpose, 2026-11-13.)
 // Three forks reach eight leaves. Preserve their visual order: L=0, R=1.
 export const BINARY_PATHS = Object.freeze(["RLR", "LRL", "LLL", "LLL", "LRL", "LLR", "LRR"]);
 export const BINARY_LEAVES = Object.freeze(["B", "G", "A", "E", "D", "C", "H", "F"]);

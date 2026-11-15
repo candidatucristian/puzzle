@@ -1,4 +1,6 @@
 import { beginAssetGroup, registerSceneImage, retireAssetGroup, trimSceneImages } from './sceneAssetCache.js';
+import { cacheSceneImageDownload, focusSceneImages } from './sceneImageDownloads.js';
+import { holdsPuzzles, prefetchPlacePuzzles } from './puzzlePrefetch.js';
 
 // Physics scenes retain their existing lifecycle. This review covers the first two floors.
 const SCENES = new Set(['Boot','Hall','Upper','Study','Room2','Room3','Room4','Room5','Room6','Room7','Room8','Room9',
@@ -44,6 +46,7 @@ function session(scene) {
         return result;
       };
     }
+    cacheSceneImageDownload(scene,file,()=>!cancelled);
     // Image/audio decoding can finish after Loader.reset when a scene is left.
     for(const method of ['onProcessComplete','onProcessError']) {
       const original=file[method];
@@ -61,7 +64,7 @@ function session(scene) {
     if(count>=RETRIES)return;
     attempts.set(id,count+1);
     // src is the resolved original request, preserving subdirectory hosting.
-    const url=new URL(file.src||file.url,document.baseURI).href;
+    const url=new URL(file._sceneImageURL||file.src||file.url,document.baseURI).href;
     const prefix=loader.prefix||'';
     const key=prefix&&file.key.startsWith(prefix)?file.key.slice(prefix.length):file.key;
     const config={key,url,xhrSettings:{timeout:120000}};
@@ -75,9 +78,12 @@ function session(scene) {
   };
   loader.on('addfile',added); loader.on('progress',progress); loader.on('loaderror',failed);
   const cancel=()=>{
+    if(cancelled)return;
     cancelled=true;
+    scene.events.off('shutdown',cancel); scene.events.off('destroy',cancel);
     clean(); scene._assetsReady=false;
     for(const file of pendingFiles) {
+      file._releaseSceneImageURL?.();
       const xhr=file.xhrLoader;
       if(xhr) {
         xhr.onload=xhr.onerror=xhr.onprogress=xhr.ontimeout=xhr.onabort=null;
@@ -93,7 +99,9 @@ function session(scene) {
     if(scene.input?.keyboard)scene.input.keyboard.enabled=false;
   };
   scene.events.once('shutdown',cancel);
+  scene.events.once('destroy',cancel);
   return {
+    queued() { focusSceneImages(scene,pendingFiles); },
     finish() {
       clean();
       pendingFiles.clear();
@@ -112,6 +120,9 @@ function session(scene) {
       scene._assetsReady=true;
       trimSceneImages(scene);
       screen?.ready(scene);
+      // in a room: its puzzles go on downloading, quietly (core/puzzlePrefetch.js)
+      const key=scene.sys.settings.key;
+      if(holdsPuzzles(key))prefetchPlacePuzzles(scene,key);
     },
     creationError(error) {
       if(cancelled)return;
@@ -131,6 +142,7 @@ export function installSceneAssetLoading(scene) {
   scene.preload=function(...args) {
     loading=session(this);
     preload?.apply(this,args);
+    loading.queued();
   };
   scene.create=function(...args) {
     const request=loading;

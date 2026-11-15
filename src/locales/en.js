@@ -36,35 +36,6 @@ export const en = {
       "failed": "The room could not be loaded. Your progress is saved. Please try again.",
       "retry": "Try again"
   },
-  studyGuide: {
-      "eyebrow": "Room I",
-      "title": "Your first puzzle",
-      "replay": "Your first puzzle",
-      "close": "Close the puzzle introduction",
-      "illustration": "The room's glass case glints; a pointer clicks it and the puzzle comes up; an example answer is typed in the answer field and sent.",
-      "one": "Whatever glints hides a puzzle. Click the glass case on the small table to look into it.",
-      "two": "Type the code you have deciphered in the field under the picture, then {submit} or {enter}. Wrong answers cost nothing.",
-      "done": "Got it",
-      "footer": "You can see this again in Settings.",
-      "example": "Typing example",
-      "sample": "YOUR CODE",
-      "oneLabel": "Look",
-      "twoLabel": "Answer"
-  },
-  hallGuide: {
-      "eyebrow": "The hall",
-      "title": "First steps",
-      "replay": "First steps",
-      "close": "Close the introduction",
-      "illustration": "The hall's door I: a pointer clicks it and it swings open; a second click, and the eye goes in.",
-      "one": "Point at door I and click once: it swings open.",
-      "oneReduced": "With reduced motion on, one click on an unlocked door takes you straight into the room.",
-      "two": "Click the open door again to go in. The other doors need the keys you find along the way.",
-      "done": "Got it",
-      "footer": "You can see this again in Settings.",
-      "oneLabel": "Open",
-      "twoLabel": "Go in"
-  },
   "levels": {
     "binarytree": "The Old Tree",
     "plantpot": "The Moonlit Garden",
@@ -73,7 +44,6 @@ export const en = {
     "chessboard": "The Unfinished Game",
     "mobilephone": "An Unexpected Call",
     "lightswitch": "A Flicker in the Dark",
-    "tv": "The Empty Broadcast",
     "modem": "The Room Beneath the Desk",
     "telescope": "The Open Window",
     "wires": "Before Sunrise",
@@ -85,21 +55,9 @@ export const en = {
     "tapcode": "Marks in Stone",
     "rally": "The Night Circuit",
     "overtime": "After Hours",
-    "fireworks": "Midnight Over Paris",
     "compass": "The Captain’s Cabin",
     "bookshelf": "Lamplight in the Library",
     "chemistry": "The Apothecary’s Bench",
-    "billiards": "The Quiet Pub",
-    "metro": "Platform After Dark",
-    "resistors": "The Workshop Bench",
-    "ripples": "Moonlight on the Water",
-    "vertex": "The Strange Arrangement",
-    "plotter": "The Drafting Desk",
-    "kinetic": "The Games Cupboard",
-    "genome": "The Glass Specimen",
-    "curtain": "The Drawing Room",
-    "thesill": "The Window Ledge",
-    "venetian": "An Evening in Venice",
     "molecules": "Silas's Notebook",
     "phials": "Two Phials",
     "balance": "The Apothecary's Balance",
@@ -209,89 +167,6 @@ export const en = {
     "safariHelp": "Safari on iPhone cannot hide its browser bars. For full-screen play, tap Share → Add to Home Screen → Add, then open Ashcombe Manor from the new Home Screen icon."
   },
   "gameplay": {
-    "tv": {
-      "previous": "Previous channel",
-      "next": "Next channel",
-      "channels": [
-        {
-          "img": 0,
-          "station": "COSMOS NET · CH.3",
-          "lines": [
-            "Astronomers confirmed the discovery:",
-            "a supervoid spanning 300 million",
-            "light-years. No galaxies. No dark",
-            "matter. No signal returns.",
-            "",
-            "Dr. Eisner wrote in her report:",
-            "'It is not darkness. Darkness at",
-            "least implies the absence of light.",
-            "This is the absence of absence",
-            "itself. We have no word for it.'",
-            "",
-            "[ SIGNAL UNSTABLE ]"
-          ]
-        },
-        {
-          "img": 1,
-          "station": "LAWCOURT · CH.7",
-          "lines": [
-            "The judge ruled the contract had",
-            "never legally existed. It carries",
-            "no weight. No obligation. No force.",
-            "It was as if it were written in",
-            "smoke.",
-            "",
-            "'An agreement without valid",
-            "consideration,' said the court,",
-            "'is not merely broken. It never",
-            "was. The law has one precise word",
-            "for this condition.'",
-            "",
-            "[ END OF BROADCAST ]"
-          ]
-        },
-        {
-          "img": 2,
-          "station": "CODE REVIEW · CH.11",
-          "lines": [
-            "When a function performs work but",
-            "has no value to return — not zero,",
-            "not false, not an error — what",
-            "type do we declare?",
-            "",
-            "Zero is a value. False is a value.",
-            "Even null carries meaning.",
-            "",
-            "There is a keyword, present in C,",
-            "C++, Java, Swift, and dozens more,",
-            "reserved for the complete absence",
-            "of any return.",
-            "",
-            ">  type: ________"
-          ]
-        },
-        {
-          "img": 3,
-          "station": "SCIENCE FOUND. · CH.15",
-          "lines": [
-            "Remove all matter. Remove all",
-            "energy. Extract every photon.",
-            "Lower temperature to absolute",
-            "zero. Isolate completely.",
-            "",
-            "What remains?",
-            "",
-            "Physicists expected nothing.",
-            "What they found: quantum foam,",
-            "fluctuations in what should have",
-            "been perfect absence.",
-            "",
-            "Even emptiness has structure.",
-            "We still use the same old word."
-          ]
-        }
-      ]
-    },
     "lightSwitch": "Press the light switch",
     "familyPortrait": "Ivy and Rose Ashcombe · 1959",
     "putDown": "click anywhere to put it down",
@@ -311,36 +186,8 @@ export const en = {
       "note": "don't answer\nif you don't\nknow who's\ncalling.",
       "calling": "CALLING YOU..."
     },
-    "vertex": {
-      "degree": "Degree of connection",
-      "heading": "GEOMETRIC STUDY"
-    },
-    "venetian": {
-      "clue": "Focus through the noise.",
-      "tilt": "TILT"
-    },
-    "curtain": {
-      "clue": "Let the shadows guide your eyes.",
-      "draw": "DRAW THE\nCURTAIN"
-    },
     "sill": {
       "clue": "Read the light, not the dark."
-    },
-    "kinetic": {
-      "clue": "One unbroken curve\ncounts as one."
-    },
-    "genome": {
-      "archive": "MOLECULAR ARCHIVE  /  DNA",
-      "strand": "CODING STRAND  5' -> 3'  /  STANDARD CODE",
-      "clue": "The building blocks of life spell the answer."
-    },
-    "plotter": {
-      "directions": "X RIGHT   /   Y UP   /   RESET AT EACH BLOCK",
-      "header": "PLOTTER STATUS",
-      "terminal": "VECTOR TERMINAL  /  04 PATHS",
-      "block": "BLOCK {number}",
-      "clue": "Become the machine. Trace the path.",
-      "guide": "PU = pen up   PD = pen down   X,Y = position"
     },
     "resistorClose": "Look closer at R{number}"
   },
@@ -497,6 +344,7 @@ export const en = {
     closeTip: 'Close hints (Esc)',
     listening: 'Listening',
     reference: 'Reference may help',
+    decoder: 'A decoding device may help',
   },
   map: {
     "plan": "Plan of the house",
@@ -592,8 +440,6 @@ export const en = {
     langZh: '简体中文',
     langFr: 'Français',
     langEs: 'Español',
-    howto: 'How to play',
-    howtoTip: 'How the game is played',
     credits: 'Credits',
     creditsTip: 'Who and what the game is made with',
     reset: 'Reset game',
@@ -620,32 +466,6 @@ export const en = {
     soundText: 'Sound effects and music: Pixabay (Pixabay Content License).',
     software: 'Software',
     note: 'The full licence texts are in licenses/THIRD-PARTY-NOTICES.txt, shipped with the game.',
-  },
-  howto: {
-    title: 'How to play',
-    backToSettings: 'Back to settings',
-    findAnswerTitle: 'Find the answer',
-    findAnswerText: 'Each room hides an answer. Look, listen and interact with the scene. Enter what you find in the answer field below the room. Wrong answers carry no penalty.',
-    controlsTitle: 'The controls',
-    submitLabel: 'Submit',
-    submitDesc: 'Check your answer, or press Enter.',
-    restartLabel: 'Restart',
-    restartDesc: 'The circular arrow beside Submit starts the current room again. Your progress is kept.',
-    hintLabel: 'Hint',
-    hintDesc: 'Use Hint below the room to reveal one clue at a time.',
-    keysLabel: 'Keys',
-    keysDesc: 'M the map of the house · C the case file · Z the magnifying glass, or hold the right mouse button · Esc back the way you came.',
-    settingsLabel: 'Settings',
-    settingsDesc: 'Adjust sound, text size, language, motion and effects. Reset game clears all progress after a second click to confirm.',
-    movingTitle: 'Moving between rooms',
-    movingText: 'Solve a room to unlock the next. Revisit unlocked rooms from the list on the right or use the arrows above the scene. Progress is saved automatically in this browser.',
-    clueLabelsTitle: 'Clue labels',
-    listeningLabel: 'Listening',
-    listeningDesc: 'Sound is part of the puzzle. Check the volume in Settings and listen carefully.',
-    referenceLabel: 'Reference may help',
-    referenceDesc: 'You may need to look up an alphabet, cipher or notation to decode the clue.',
-    desktopTitle: 'Phone and tablet browsers',
-    desktopText: 'Ashcombe Manor is available on desktop and laptop browsers. Open it on a computer to play.',
   },
   manual: {
     title: "The Inspector's Manual",
@@ -768,19 +588,19 @@ export const en = {
       place: 'Devon, England',
       date: 'October 1961',
       story: [
-        'On the night of 13 October 1961, three siblings locked every door of their house in Devon and walked out into the dark. Nothing in the house was missing. No one was hurt. No one ever found out why.',
-        'A year later the case was closed. Only one policeman never let it go.',
+        'On the night of 13 October 1961, three members of the Ashcombe family disappeared from their home in Devon. The doors were locked. There was no sign of a struggle.',
+        'A year later, the investigation was closed. What happened at Ashcombe House remained unexplained.',
       ],
     },
     asides: [
-      { at: [1.4, 8], over: 'Exeter · 12 October 2001', lines: ['Every October, I go back to the same case.'] },
-      { at: [9.6, 17.8], over: 'Inspector Arthur Wren', lines: ['Father died in the spring. The house has been too quiet since.'] },
-      { at: [19.4, 27.6], lines: ['Tonight, a letter under the door. No stamp. No postmark.'] },
-      { at: [29.2, 37.4], lines: ['Only my name, in a hand I almost know.'] },
-      { at: [39, 45.8], over: 'Case 61/1013', lines: ['I know the file by heart. I open it anyway.'] },
-      { at: [47, 53.4], over: 'Ashcombe House · 1961', lines: ['Father was first at their door that morning. He never spoke of what he saw.'] },
-      { at: [54.6, 61.6], lines: ['I have stood at their gate more often than I would admit. I have never gone in.'] },
-      { at: [63, 70.2], over: 'Forty years tomorrow', lines: ['Forty years of asking. Tonight, someone answered.'] },
+      { at: [1.4, 8], over: 'Exeter · 12 October 2001', lines: ['Every October, I take out the Ashcombe file.'] },
+      { at: [9.6, 17.8], over: 'Inspector Arthur Wren', lines: ['Father died in the spring. I still catch myself thinking I can ask him one more thing.'] },
+      { at: [19.4, 27.6], lines: ['Tonight, someone left a letter under my door. There was no stamp.'] },
+      { at: [29.2, 37.4], lines: ['The seal is Ashcombe’s. The same crest as in the photographs.'] },
+      { at: [39, 45.8], over: 'Case 61/1013', lines: ['I take out the file. Father’s name is on the original report.'] },
+      { at: [47, 53.4], over: 'Ashcombe House · 1961', lines: ['He was the first constable at the house. He never liked talking about that morning.'] },
+      { at: [54.6, 61.6], lines: ['I’ve stood at those gates more times than I can count, wondering what he wouldn’t tell me.'] },
+      { at: [63, 70.2], over: 'Forty years tomorrow', lines: ['Tomorrow, forty years since they vanished. Why write to me now?'] },
     ],
   },
   manorStory: [
@@ -891,6 +711,7 @@ export const en = {
     },
   },
   caseReport: {
+    sealPhotograph: {"caption":"Ashcombe family seal · Photograph from the case file","alt":"An old photograph of the Ashcombe wax seal, bearing the same crest as the seal on the letter."},
     dateline: 'Devon & Cornwall Constabulary · Case 61/1013',
     salutation: 'The disappearance of Ivy, Silas and Orion Ashcombe',
     body: [
@@ -1042,10 +863,6 @@ export const en = {
       'PULSES OF LIGHT.\nNot every flash lasts the same length.',
       'Not every flash lasts the same. Each press tells one part of the message; the next press tells the next.',
     ],
-    tv: [
-      'FOUR BROADCASTS, ONE MISSING WORD.\nLook for the single theme connecting every programme.',
-      'Four different worlds, one missing thing. Look for the single word each programme circles around.',
-    ],
     modem: [
       'BINARY BLINKS.\nSeven lights carry the message, five keep count.',
       'Seven lights carry the message, five keep count. On or off is all a machine needs — read a row at a time.',
@@ -1065,10 +882,6 @@ export const en = {
     pi: [
       'LIGHTS ON THE BRANCHES.\nCount the lights level by level from the top.',
       'Floor by floor, from the top. Where the lights sit does not matter, only how many — the numbers will feel familiar.',
-    ],
-    crossing: [
-      'BARS AND GAPS.\nStripes like the ones found on everyday goods.',
-      'The stripes and the gaps between them are not all the same width. Things in shops wear stripes like these.',
     ],
     herbarium: [
       'GEOMETRIC FRAMES.\nCount the polygon sides around each specimen.',
@@ -1092,10 +905,6 @@ export const en = {
     ],
     overtime: [
       'Take the times as plain numbers and let the machine do the work. Then look at its answer from another angle.',
-    ],
-    fireworks: [
-      'HEXADECIMAL HUES.\nColours coded as computer values.',
-      'Each balloon is one exact colour, and a computer writes a colour as three pairs. Only the first pair of each matters — read those pairs as letters.',
     ],
     compass: [
       'The map\'s numbers are directions, the same as on the compass card. Each line is a little journey — make it on paper.',
@@ -1135,50 +944,6 @@ export const en = {
     chemistry: [
       'PERIODIC TABLE NUMBERS.\nConvert atomic numbers to symbols.',
       'Each level meets a number. The faded chart on the wall gives every such number a short name of its own.',
-    ],
-    billiards: [
-      'MISSING BALLS IN POCKETS.\nPocket sequence gives the letter ranks.',
-      'Work out which numbers are missing; their colours and stripes tell them apart. Read the pockets in their order — the numbers are small enough to be letters.',
-    ],
-    metro: [
-      'PHONETIC CALLSIGNS.\nRead the initial letters of aviation names.',
-      'Say the stops\' names out loud. A pilot or a radio operator would know the first word of each.',
-    ],
-    resistors: [
-      'ELECTRONIC COLOUR CODE.\nThe first band gives the significant digit.',
-      'Only the first band of each counts — start at the end away from the gold. The card gives every colour a value.',
-    ],
-    ripples: [
-      'INTERSECTING RIPPLE FRONTS.\nRead stones touched by three concentric waves simultaneously.',
-      'Some stones are touched by all three rings at the same moment. Read only those, from the top down.',
-    ],
-    vertex: [
-      'GRAPH DEGREE COUNTS.\nCount lines incident to marked nodes.',
-      'Count what truly meets each point, not what merely passes it by. The counts are small enough to be letters.',
-    ],
-    plotter: [
-      'BECOME THE MACHINE.\nThe four blocks of coordinates are instructions for a pen.',
-      'Give each block a sheet of its own and join its points in order. Each one draws something you can read.',
-    ],
-    kinetic: [
-      'A STUDY OF BOUNDARIES.\nThe pieces on the lids, from left to right.',
-      'Count the straight sides of each piece; the card says how a curve counts. The numbers are small enough to be letters.',
-    ],
-    genome: [
-      'THE BUILDING BLOCKS OF LIFE.\nThe highlighted pieces of DNA, from left to right.',
-      'Each group of three stands for something in life\'s own code — and those things have one-letter names.',
-    ],
-    curtain: [
-      'PERFORATED MASK.\nLight aligns through fabric holes onto letters.',
-      'The holes in the cloth let only a little light through. Somewhere along the rail they frame just enough to read.',
-    ],
-    thesill: [
-      'NEGATIVE SPACE SHADOWS.\nFocus on the light between shadows.',
-      'Forget the shadows. The pale shapes between them are the message.',
-    ],
-    venetian: [
-      'SLAT ANGLE POLARISATION.\nTilt the blinds to resolve the hidden clue.',
-      'The cord tilts the slats. At one angle the clutter goes dark and something larger stays lit.',
     ],
   },
 };

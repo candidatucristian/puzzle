@@ -115,16 +115,17 @@ def bookcase(rng, wall, side, d0, d1, top, wood, wood_x, spines, covers, pages, 
 # ── curtains ───────────────────────────────────────────────────────────────
 def curtain(rng, x0, x1, d, top, mat, bottom=1.0, folds=5, deep=5.5):
     """a curtain hung straight down across a back wall, in uneven folds,
-    gathered a little on the floor"""
+    gathered a little on the floor; all folds stay strictly in front of `d`"""
     me = bpy.data.meshes.new("curtain"); bm = bmesh.new(); nx, ny = folds * 8, 24
     phase = [rng.uniform(-0.6, 0.6) for _ in range(folds + 2)]
-    amp = [deep * rng.uniform(0.6, 1.4) for _ in range(folds + 2)]
+    amp = [deep * rng.uniform(0.75, 1.25) for _ in range(folds + 2)]
     def fold(i, j):
         t = i / nx * folds; k = int(t)
         a = amp[k] + (amp[k + 1] - amp[k]) * (t - k)
         low = 1 - j / ny
-        return math.sin(t * 2 * math.pi + phase[k] * low) * a * (0.65 + 0.5 * low)
-    grid = [[bm.verts.new((M(x0 + (x1 - x0) * i / nx), M(d + fold(i, j) - deep), M(bottom + (top - bottom) * j / ny - (6 * (1 - j / ny) ** 6 if j < 3 else 0)))) for i in range(nx + 1)] for j in range(ny + 1)]
+        s = 0.5 * (1 - math.sin(t * 2 * math.pi + phase[k] * low))
+        return -s * a * (0.75 + 0.35 * low) - 0.15 * deep
+    grid = [[bm.verts.new((M(x0 + (x1 - x0) * i / nx), M(d + fold(i, j)), M(bottom + (top - bottom) * j / ny - (6 * (1 - j / ny) ** 6 if j < 3 else 0)))) for i in range(nx + 1)] for j in range(ny + 1)]
     for j in range(ny):
         for i in range(nx): bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
     bm.to_mesh(me); bm.free()
@@ -221,7 +222,9 @@ def garden(moon_at, trees, lawn, sky_at, sky_size=45):
     x0, x1, d0, d1, y = lawn
     for (mid, x, d, h, rot) in trees:
         import_model(mid, height=h, at=tuple(P(x, y, d)), rot=rot)
-    box_cm("lawn", x0, x1, y - 5, y, d0, d1, scan("lawn", "leafy_grass", size=1.5, bright=0.035, sat=0.8, rough=(0.5, 0.8), coat=0.0), keep=False)
+    lawn_mat = scan("lawn", "leafy_grass", size=1.5, bright=0.015, sat=0.8, rough=(0.9, 1.0), coat=0.0)
+    lawn_mat.node_tree.nodes["Principled BSDF"].inputs["Specular IOR Level"].default_value = 0.0
+    box_cm("lawn", x0, x1, y - 5, y, d0, d1, lawn_mat, keep=False)
 
 # ── windows, lanterns, roofs ───────────────────────────────────────────────
 def sash_window_back(wall, x, hw, sill, top, D1, reveal, frame, glass, plaster, sill_mat, bars=(0.5,), wall_mat_cut=None):
@@ -230,12 +233,12 @@ def sash_window_back(wall, x, hw, sill, top, D1, reveal, frame, glass, plaster, 
     returns its panes (Blender points) for the rain"""
     x0, x1 = x - hw, x + hw
     # (old thin glass, reflecting the lit room only a little against the night)
-    glass = bpy.data.materials.get("window glass") or plain("window glass", (0.96, 0.97, 0.96), rough=0.0, transmission=1.0, ior=1.12)
+    glass = bpy.data.materials.get("window glass") or plain("window glass", (0.96, 0.97, 0.96), rough=0.0, transmission=1.0, ior=1.03)
     boolean_cut(wall, box("cut", M(x0), M(x1), M(D1 - 10), M(D1 + reveal + 30), M(sill), M(top), plaster))
     box_cm("reveal", x0 - 3, x0, sill, top, D1, D1 + reveal, plaster)
     box_cm("reveal", x1, x1 + 3, sill, top, D1, D1 + reveal, plaster)
     box_cm("reveal head", x0 - 3, x1 + 3, top, top + 3, D1, D1 + reveal, plaster)
-    box_cm("sill", x0 - 8, x1 + 8, sill - 4, sill, D1 - 8, D1 + reveal - 6, sill_mat, 0.8)
+    box_cm("sill", x0 - 6, x1 + 6, sill - 4, sill, D1 - 6, D1 + reveal - 6, sill_mat, 0.8)
     mid = (sill + top) / 2; panes = []
     for (y0, y1, dd) in ((sill + 1, mid + 2, D1 + reveal - 8), (mid - 2, top - 1, D1 + reveal - 13)):
         box_cm("sash", x0 + 1, x0 + 6, y0, y1, dd - 2.5, dd + 2.5, frame, 0.5); box_cm("sash", x1 - 6, x1 - 1, y0, y1, dd - 2.5, dd + 2.5, frame, 0.5)

@@ -1,0 +1,13 @@
+/* The button under a letter being read (fileButton.js): at the desk and in
+   the house alike. Its place is its page's affair; this is how it looks. */
+.file-button { display: inline-flex; align-items: center; gap: 11px; padding: 10px 18px 10px 14px; box-sizing: border-box;
+  border: 1px solid #ece7db40; border-radius: 3px; background: #0d0c0bb8; box-shadow: none; color: #f0eadf;
+  font: 400 calc(11px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .24em; text-transform: uppercase; white-space: nowrap;
+  cursor: var(--cursor-hand, pointer); transition: border-color .25s ease, background-color .25s ease; }
+.file-button:hover, .file-button:focus-visible { border-color: #ece7db99; background: #1a1816cc; outline: none; }
+.file-button:focus-visible { box-shadow: 0 0 0 3px #0c0c0c, 0 0 0 4px #ece7db55; }
+.file-button:disabled { cursor: default; }
+.file-button .file-icon { width: 20px; height: 15px; flex-shrink: 0; overflow: visible; }
+.file-button .file-icon path { fill: none; stroke: #ece7db; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.file-button .file-icon path:nth-child(n+2) { transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
+.file-button:hover .file-icon path:nth-child(n+2), .file-button:focus-visible .file-icon path:nth-child(n+2) { transform: translateY(2.5px); }

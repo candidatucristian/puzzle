@@ -2,7 +2,6 @@ import { paintHurricaneLantern } from "../../shared/hurricaneLantern.js";
 import { paintTurfBase, paintGrass } from "./turf.js";
 import { paintShrub, paintHedge, paintFern } from "./foliage.js";
 import { GARDEN_TREES, paintMatureTree } from "./matureTrees.js";
-import { gardenPhotographs, paintGardenPhotograph, paintPhotographicBench } from "./photographicGarden.js";
 import { hasFibonacciRender, alignFibonacciGarden, paintFibonacciGarden, paintFibonacciWindow } from "./blenderPlant.js";
 
 /** The Blender/Cycles botanical garden and its camera-derived bench layout.
@@ -67,15 +66,13 @@ export function paintGarden(scene, W, H) {
   const t = scene.textures;
   const blender = hasFibonacciRender(t);
   if (blender) alignFibonacciGarden(L);
-  const photos = blender ? {garden: null, bench: null} : gardenPhotographs(scene);
-  L.photographic = blender || Boolean(photos.garden);
-  L.benchPhoto = photos.bench;
+  L.photographic = blender;
   if (L.photographic) {
     const openSky = L.inSky;
     // Keep animated stars in the opening between the photographed canopies.
     L.inSky = (x, y) => x > W * 0.58 && x < W * 0.86 && openSky(x, y);
   }
-  addCanvas(t, K.sky, blender ? paintFibonacciGarden(L, t) : photos.garden ? paintGardenPhotograph(L, photos.garden) : paintSky(L));
+  addCanvas(t, K.sky, blender ? paintFibonacciGarden(L, t) : paintSky(L));
   const trees = t.exists(GARDEN_TREES.key) ? t.get(GARDEN_TREES.key).getSourceImage() : null;
   addCanvas(t, K.land, paintLand(L, trees));
   addCanvas(t, K.veil, paintVeil(L));
@@ -349,13 +346,6 @@ function paintGround(ctx, L, rnd, treeImage) {
 // its receding ends and separate front edge give the objects a firm surface.
 function paintBench(ctx, L) {
   const { H, cm, bench, at, flame } = L;
-  if (paintPhotographicBench(ctx, L, BENCH.depth)) {
-    const surface = at(POT_X, 0);
-    softEllipse(ctx, surface.x, surface.y, 8.5 * cm, 1.9 * cm, "0,0,0", 0.62);
-    softEllipse(ctx, surface.x + 10 * cm, surface.y - 1.2 * cm, 16 * cm, 3.4 * cm, "0,0,0", 0.26);
-    softEllipse(ctx, at(LANTERN.x, 0).x, surface.y - LANTERN.back * cm, 8 * cm, 3.4 * cm, "0,0,0", 0.5);
-    return;
-  }
   const X0 = at(bench.x0 - 3, 0).x;
   const X1 = at(bench.x1 + 2, 0).x;
   const back = at(0, -BENCH.depth / 2).y;

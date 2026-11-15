@@ -78,6 +78,23 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
   const holder = document.getElementById("house-map");
   const keysLine = document.getElementById("map-keys");
   if (!modal || !holder) return { open() {} };
+  let toFit = [];
+  const fitText = (node, maxWidth) => {
+    if (maxWidth > 0) toFit.push([node, maxWidth]);
+    return node;
+  };
+  const applyFit = () => {
+    for (const [node, maxWidth] of toFit) {
+      if (!node.isConnected) continue;
+      node.removeAttribute("textLength");
+      node.removeAttribute("lengthAdjust");
+      const len = node.getComputedTextLength?.() ?? 0;
+      if (len > maxWidth) {
+        node.setAttribute("textLength", String(maxWidth));
+        node.setAttribute("lengthAdjust", "spacingAndGlyphs");
+      }
+    }
+  };
   const word = (key, fallback) => i18n ? i18n.t(`map.${key}`) : fallback;
   const placeName = (key, fallback) => i18n?.getPlace(key)?.name ?? fallback;
 
@@ -195,7 +212,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
     wall(layers.walls, rect(room.x, room.y, room.w, room.h), INNER, known);
     const cx = room.x + room.w / 2, cy = room.y + room.h / 2;
     tag(g, cx, cy - (state?.puzzles && known ? 6 : 0), room.n, small);
-    if (!room.key && room.h >= 90) text(g, cx, cy + 26, "note faint", word('unexplored', 'unexplored'));
+    if (!room.key && room.h >= 90) fitText(text(g, cx, cy + 26, "note faint", word('unexplored', 'unexplored')), room.w - 14);
     dots(g, state, cx, cy + 16);
     if (state?.finished) seal(g, room.x + room.w - 15, room.y + 15, room.n, small ? 16 : 22);
     if (state?.here) here(layers.marks, cx, room.y + 26);
@@ -218,6 +235,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
 
   function render() {
     holder.textContent = "";
+    toFit = [];
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "map-sheet", role: "group", "aria-label": word('plan', 'Plan of the house') }, holder);
     defs(svg);
     // the paper: its colour, its stains, its grain, its edges browned
@@ -237,7 +255,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
       const f = el("g", { transform: `translate(${floor.x},0)` }, ink);
       // the floor's name, lettered over it
       const floorTitle = i18n ? i18n.getFloorName(floor.title) : floor.title;
-      text(f, 160, 66, "floor-title", floorTitle.toUpperCase());
+      fitText(text(f, 160, 66, "floor-title", floorTitle.toUpperCase()), 240);
       el("path", { d: "M92,78 H146 M174,78 H228", class: "floor-rule" }, f);
       el("path", { d: "M160,74 l4,4 l-4,4 l-4,-4 Z", class: "floor-diamond" }, f);
       text(f, 160, 96, "floor-roman", `— ${floor.roman} —`);
@@ -254,7 +272,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
         el("path", { d: rect(h.x, h.y, h.w, h.h), class: known ? "floor hall known" : "floor hall" }, g);
         // the hall's length: its name written down it, its dots, its runner
         el("path", { d: rect(h.x + 14, h.y + 76, h.w - 28, h.h - 104), class: "runner" }, g);
-        text(g, h.x + h.w / 2, h.y + h.h / 2 + 14, "name vertical", known ? placeName(h.key, state.name) : word('hall', 'a hall'), { transform: `rotate(-90 ${h.x + h.w / 2} ${h.y + h.h / 2 + 14})` });
+        fitText(text(g, h.x + h.w / 2, h.y + h.h / 2 + 14, "name vertical", known ? placeName(h.key, state.name) : word('hall', 'a hall'), { transform: `rotate(-90 ${h.x + h.w / 2} ${h.y + h.h / 2 + 14})` }), 176);
         dots(g, state, h.x + h.w / 2, h.y + h.h - 18);
         if (state?.here) here(layers.marks, h.x + h.w / 2, h.y + h.h - 40);
         for (const r of floor.rooms) room(f, layers, r);
@@ -286,7 +304,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
         const pg = placeNode(layers.places, ps, placeName(p.key, word('passage', 'the passage')));
         const passage = `${rect(p.x, p.y, p.w, p.h)} ${rect(p.stub.x - 2, p.stub.y, p.stub.w + 2, p.stub.h)}`;
         el("path", { d: passage, class: pk ? "floor passage known" : "floor passage" }, pg);
-        text(pg, p.x + p.w / 2, p.y + p.h / 2 - 10, "name vertical", pk ? placeName(p.key, ps.name) : word('passage', 'a passage'), { transform: `rotate(-90 ${p.x + p.w / 2} ${p.y + p.h / 2 - 10})` });
+        fitText(text(pg, p.x + p.w / 2, p.y + p.h / 2 - 10, "name vertical", pk ? placeName(p.key, ps.name) : word('passage', 'a passage'), { transform: `rotate(-90 ${p.x + p.w / 2} ${p.y + p.h / 2 - 10})` }), 136);
         if (ps?.here) here(layers.marks, p.x + p.w / 2, p.y + p.h - 14);
         wall(layers.walls, `M${p.x},${p.y + p.h} V${p.y} H${p.x + p.w} V${p.stub.y}`, OUTER, pk);
         wall(layers.walls, `M${p.x},${p.y + p.h} H${p.stub.x + p.stub.w}`, OUTER, pk);
@@ -296,7 +314,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
         const g = placeNode(layers.places, state, placeName(r.key, word('topFloor', 'the top floor')));
         el("circle", { cx: r.cx, cy: r.cy, r: r.r, class: known ? "floor round known" : "floor round" }, g);
         el("circle", { cx: r.cx, cy: r.cy, r: r.r - 12, class: "inlay" }, g);
-        text(g, r.cx, r.cy - 40, "name", known ? placeName(r.key, state.name) : word('roundRoom', 'a round room'));
+        fitText(text(g, r.cx, r.cy - 36, "name", known ? placeName(r.key, state.name) : word('roundRoom', 'a round room')), 104);
         dots(g, state, r.cx, r.cy + 46);
         spiral(layers.marks, r.cx, r.cy + 4, 24, known);
         if (state?.here) here(layers.marks, r.cx + 40, r.cy - 10);
@@ -311,7 +329,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
     // under the plan: the compass, the legend, the scale, the cartouche
     const foot = el("g", { class: "foot" }, svg);
     compass(foot, 62, 545);
-    legend(foot, 300, 524);
+    legend(foot, 155, 524);
     cartouche(foot, 760, 500);
     // the paper's grain over everything, and its edges browned by handling
     el("rect", { width: W, height: H, filter: "url(#map-grain)", opacity: ".45", "pointer-events": "none" }, svg);
@@ -326,6 +344,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
       keysLine.textContent = "";
     }
     keysLine.hidden = !keys.length;
+    applyFit();
   }
 
   function compass(g, x, y) {
@@ -345,7 +364,7 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
   }
   function legend(g, x, y) {
     const l = el("g", { class: "legend", transform: `translate(${x},${y})` }, g);
-    const row = (i, draw, words) => { const r = el("g", { transform: `translate(${(i % 2) * 170},${Math.floor(i / 2) * 26})` }, l); draw(r); text(r, 22, 5, "legend-text", words); };
+    const row = (i, draw, words) => { const r = el("g", { transform: `translate(${(i % 2) * 280},${Math.floor(i / 2) * 26})` }, l); draw(r); fitText(text(r, 22, 5, "legend-text", words), 246); };
     row(0, (r) => { el("circle", { cx: 4, cy: 0, r: 3.1, class: "dot solved" }, r); el("circle", { cx: 14, cy: 0, r: 3.1, class: "dot" }, r); }, i18n ? i18n.t('map.legendPuzzle') : "a puzzle, solved or not");
     row(1, (r) => seal(r, 9, 0, 3, 18), i18n ? i18n.t('map.legendDone') : "everything in it solved");
     row(2, (r) => here(r, 9, 8), i18n ? i18n.t('map.legendHere') : "where you stand");
@@ -360,15 +379,15 @@ export function mountHouseMap(scope, { levels, dialogs, travel, i18n = null }) {
     const c = el("g", { class: "cartouche", transform: `translate(${x},${y})` }, g);
     el("rect", { x: 0, y: 0, width: 210, height: 88, class: "rule thick" }, c);
     el("rect", { x: 4, y: 4, width: 202, height: 80, class: "rule" }, c);
-    text(c, 105, 28, "cartouche-title", i18n ? i18n.t('map.cartoucheTitle') : "THE HOUSE");
+    fitText(text(c, 105, 28, "cartouche-title", i18n ? i18n.t('map.cartoucheTitle') : "THE HOUSE"), 184);
     el("path", { d: "M40,36 H170", class: "rule faint" }, c);
-    text(c, 105, 51, "cartouche-sub", i18n ? i18n.t('map.cartoucheSub') : "three floors, as far as seen");
+    fitText(text(c, 105, 51, "cartouche-sub", i18n ? i18n.t('map.cartoucheSub') : "three floors, as far as seen"), 184);
     scaleBar(c, 45, 66);
   }
 
   if (i18n) scope.add(i18n.subscribe(() => { if (modal && !modal.classList.contains("hidden")) render(); }));
 
   return {
-    open(trigger) { render(); dialogs.open("map-modal", trigger); },
+    open(trigger) { render(); dialogs.open("map-modal", trigger); applyFit(); },
   };
 }

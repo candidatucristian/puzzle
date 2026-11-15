@@ -126,12 +126,16 @@ export default class PlantPotScene extends BasePuzzleScene {
       const p = this._local(pointer);
       const off = this._dragOffset || { x: 0, y: 0 };
       obj.x = Math.max(-75, Math.min(75, p.x + off.x));
-      obj.y = Math.max(-95, Math.min(-BUCKET.h / 2, p.y + off.y));
-      this._placeBucketShadow();
+      // carried towards the pot, it is lifted on its own, so it comes up over
+      // the rim to pour and is never dragged along the planks past the plant
+      // (higher is the hand's choice)
       const pour = this._pourPoint();
+      obj.y = Math.max(-95, Math.min(this._carryHeight(obj.x, pour), p.y + off.y));
+      this._placeBucketShadow();
       const d = Math.hypot(obj.x - pour.x, obj.y - pour.y);
-      if (d > 28) this.canPour = true;
-      if (d < 17 && this.canPour) {
+      const over = obj.x <= pour.x + 6 && obj.y <= pour.y + 17;
+      if (obj.x > pour.x + 20) this.canPour = true;
+      if ((d < 17 || over) && this.canPour) {
         this.canPour = false;
         this.triggerPour();
       }
@@ -585,6 +589,15 @@ export default class PlantPotScene extends BasePuzzleScene {
   _pourPoint() {
     const lip = this._lipOffset(TIP);
     return { x: POT_X + 1.5 - lip.x, y: -POT.h - 6 - lip.y };
+  }
+
+  // how high the bucket is lifted at `x` as it is carried: on the bench at
+  // its own place, rising (quickly at first, then easing) to the height it
+  // pours from by the time it is over the pot
+  _carryHeight(x, pour = this._pourPoint()) {
+    const rest = -BUCKET.h / 2;
+    const t = Math.max(0, Math.min(1, (BUCKET_X - x) / (BUCKET_X - pour.x)));
+    return rest + (pour.y - rest) * Math.sin(t * Math.PI / 2);
   }
 
   // the pouring lip (the rim's left end), from the bucket's middle, tipped

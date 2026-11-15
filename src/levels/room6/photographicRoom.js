@@ -39,13 +39,17 @@ const WINDOW_PANES = [
 const FERN = [[596, 487], [601, 470], [606, 466], [614, 462], [620, 457], [626, 455], [631, 462], [629, 470],
   [635, 473], [643, 473], [650, 475], [647, 481], [641, 487]];
 
-export function loadRoom6Photography(scene) {
-  for (const [key, url] of [
+export function room6PhotographyAssets() {
+  return [
     [ROOM6_PHOTOGRAPH, "assets/images/Room6/room6-blender-realistic-v5.webp"],
     [NURSERY_PORTRAIT.key, NURSERY_PORTRAIT.url],
     [TROPHY_MEDAL_FACES, TROPHY_MEDAL_FACES_URL],
     [TROPHY_BRAZIL_MEDAL, TROPHY_BRAZIL_MEDAL_URL],
-  ]) if (!scene.textures.exists(key)) scene.load.image(key, url);
+  ].map(([key, url]) => ({ key, url }));
+}
+
+export function loadRoom6Photography(scene) {
+  for (const { key, url } of room6PhotographyAssets()) if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 
 // Artwork, glass, medal faces and the click polygon use the same landmarks.

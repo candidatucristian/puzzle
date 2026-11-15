@@ -1,7 +1,10 @@
 // Only original scene-owned images are budgeted; live canvases keep scene ownership.
 const stores = new WeakMap();
 const OWNED = /^(?:(?:Study|Room[2-9])_render_|coffer_|hall_(?:ground|chem)|bookshelf_cycles_|chem_bench_|ry_r_|room6_(?:live_|blender_)|pp_blender_|cot_native_|cx_native_|md_native_|ot_(?:office|colons)_|compass_bottle_|mo_notebook_desk_|ms_(?:sink_plate|flask)_)/;
-const BUDGET = 192 * 1024 * 1024; // estimated CPU image + GPU texture storage
+// estimated CPU image + GPU texture storage. 384 MB since 2026-11-13: at 192
+// the Rotor's eight candle photographs alone overran it, and the hall and the
+// rooms were decoded again on every return (a second or so on a slower PC)
+const BUDGET = 384 * 1024 * 1024;
 
 function store(scene) {
   let value = stores.get(scene.game);
@@ -30,6 +33,8 @@ export function trimSceneImages(scene) {
   for(const group of retired) {
     if(used<=BUDGET)break;
     for(const key of group.keys) {
+      // A large room need not lose every image just because one image must go.
+      if(used<=BUDGET)break;
       if(protectedKeys.has(key)||!textures.exists(key))continue;
       const size=bytes(key); textures.remove(key); used-=size;
     }

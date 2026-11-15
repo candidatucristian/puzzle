@@ -4,6 +4,7 @@ import Candles from "./Candle.js";
 import { CRYPTEX_ALPHA } from "./puzzle.js";
 import native from "./nativeCryptex.json";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
+import { paperLetter } from "../../shared/paperLetter.js";
 
 const PATH = "assets/images/Cryptex/native-v1";
 const key = (name) => `cx_native_v1_${name}`;
@@ -31,7 +32,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this.beginScene();
     const closeLetter = event => {
       if (!this._overlayOpen) return;
-      event.preventDefault(); event.stopPropagation(); this._closeLetter();
+      event.preventDefault(); event.stopPropagation(); this._letter?.close();
     };
     this.input.keyboard.on('keydown-ESC', closeLetter);
     this._sceneCleanups.add(() => this.input.keyboard.off('keydown-ESC', closeLetter));
@@ -55,7 +56,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
       if (this._overlayOpen || !this._wheel) return;
       const { cx, cy, R } = this._wheel;
       if (Phaser.Math.Distance.Between(p.x, p.y, cx, cy) > R * .78) return;
-      if (!this._lettersShown) {
+      if (!this._lettersShown || this._sweeping) {
         this.services.audio.playClick(this);
         return;
       }
@@ -77,7 +78,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this.input.on("pointerup", release);
     this.input.on("pointerupoutside", release);
     this.input.on("wheel", (p, objects, dx, dy) => {
-      if (this._overlayOpen || !this._lettersShown || !this._wheel || !dy) return;
+      if (this._overlayOpen || !this._lettersShown || this._sweeping || !this._wheel || !dy) return;
       const { cx, cy, R } = this._wheel;
       if (Phaser.Math.Distance.Between(p.x, p.y, cx, cy) > R * 1.1) return;
       this._turnTo((Math.round(this._wheelAngle / STEP) + (dy > 0 ? 1 : -1)) * STEP);
@@ -102,6 +103,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this._plates = Array.from({ length: 8 }, (_, mask) => picture(`candles-${mask}`, -20 + mask * .01));
     this._outerLume = picture("outer-lume", -10).setAlpha(this._lettersShown ? 1 : 0);
     const centre = at(native.wheel.centre);
+    this._frame = { x, y, s, centre };
     this._wheel = { cx: centre.x, cy: centre.y, R: native.wheel.radius * s };
     const [left, top, width, height] = native.wheel.crop;
     this._disk = this.add.image(centre.x, centre.y, key("rotor"))
@@ -123,7 +125,7 @@ export default class NativeCryptexScene extends BasePuzzleScene {
       hitArea: new Phaser.Geom.Polygon(quad.map((p) => ({ x: p.x - x0, y: p.y - y0 }))),
       hitAreaCallback: Phaser.Geom.Polygon.Contains, cursor: "pointer",
     }).setData("interactionLabel", "Open the sealed letter");
-    zone.on("pointerdown", () => this._openLetter());
+    zone.on("pointerdown", () => this._letter.open());
     this._envelope = { x: (x0 + Math.max(...xs)) / 2, y: (y0 + Math.max(...ys)) / 2, width: Math.max(...xs) - x0 };
     // the sealed letter sparkles, as the things to open in the rooms do, until
     // it has been opened (or the puzzle is solved)
@@ -139,61 +141,21 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this._refreshLight();
   }
 
-  // The letter, opened: the render of it alone (art/blender/cipher_letter.py),
-  // its own soft shadow under it. It comes up out of the envelope on the
-  // ledge to be read, the room going dark behind it, and goes back the same
-  // way: only its place, size and opacity change.
+  // The letter, opened: the one every puzzle's letter is (shared/paperLetter.js,
+  // art/blender/puzzle_letter.py). It comes up out of the envelope on the ledge.
   _buildLetter(W, H) {
-    this._letter = this.add.container(0, 0).setDepth(60).setVisible(false);
-    const backdrop = this.add.rectangle(0, 0, W, H, 0x030304, 1).setOrigin(0).setInteractive();
-    const image = this.add.image(W / 2, H / 2 - 8, key("letter-open"));
-    const source = this.textures.get(key("letter-open")).getSourceImage();
-    const fit = Math.min(W * .9 / source.width, (H - 40) * .96 / source.height);
-    const caption = this.localizedText(W / 2, H - 15, 'gameplay.putDown', {
-      fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: "italic", fontSize: "13px", color: "#d0c7b6",
-    }).setOrigin(.5, 1);
-    this._letter.add([backdrop, image, caption]);
-    backdrop.on("pointerdown", () => this._closeLetter());
-    // (the sheet fills about 0.79 of its picture's width)
-    const env = this._envelope;
-    this._letterParts = { backdrop, image, caption };
-    this._letterPoses = {
-      read: { x: W / 2, y: (H - 40) / 2 + 6, scale: fit, angle: 0, alpha: 1 },
-      away: { x: env.x, y: env.y, scale: Math.max(.04, env.width * .62 / (source.width * .79)), angle: -5, alpha: 0 },
-    };
-  }
-
-  _letterTo(pose, backdrop, duration, ease, done) {
-    const { image, caption } = this._letterParts;
-    this.tweens.killTweensOf([image, caption, this._letterParts.backdrop]);
-    this.tweens.add({ targets: image, ...this._letterPoses[pose], duration, ease, onComplete: done });
-    this.tweens.add({ targets: this._letterParts.backdrop, alpha: backdrop, duration: duration * .85, ease: "Sine.easeInOut" });
-    this.tweens.add({ targets: caption, alpha: pose === "read" ? 1 : 0, duration: pose === "read" ? 260 : 120, delay: pose === "read" ? duration * .7 : 0 });
-  }
-
-  _openLetter() {
-    if (this._overlayOpen) return;
-    this._overlayOpen = true;
-    this._letterRead = true;
-    this._draggingWheel = false;
-    const { image, caption, backdrop } = this._letterParts;
-    image.setPosition(this._letterPoses.away.x, this._letterPoses.away.y).setScale(this._letterPoses.away.scale)
-      .setAngle(this._letterPoses.away.angle).setAlpha(0);
-    caption.setAlpha(0); backdrop.setAlpha(0);
-    this._letter.setVisible(true).setAlpha(1);
-    this._letterButtons(false);
-    this.services.audio.playClick(this);
-    this._letterTo("read", .84, this.reducedMotion ? 1 : 560, "Cubic.easeOut");
-  }
-
-  _closeLetter() {
-    if (!this._overlayOpen || this._letterClosing) return;
-    this._letterClosing = true;
-    this._letterTo("away", 0, this.reducedMotion ? 1 : 380, "Cubic.easeIn", () => {
-      this._letterClosing = false;
-      this._letter?.setVisible(false);
-      this._overlayOpen = false;
-      this._letterButtons(true);
+    this._letter = paperLetter(this, {
+      texture: key("letter-open"), width: W, height: H, from: this._envelope,
+      onOpen: () => {
+        this._overlayOpen = true;
+        this._letterRead = true;
+        this._draggingWheel = false;
+        this._letterButtons(false);
+      },
+      onClosed: () => {
+        this._overlayOpen = false;
+        this._letterButtons(true);
+      },
     });
   }
 
@@ -207,8 +169,74 @@ export default class NativeCryptexScene extends BasePuzzleScene {
   _revealLetters() {
     if (this._lettersShown) return;
     this._lettersShown = true;
-    this.tweens.add({ targets: this._reveal, value: 1, duration: 1300, ease: "Sine.easeInOut" });
+    if (this.reducedMotion) {
+      this.tweens.add({ targets: this._reveal, value: 1, duration: 1300, ease: "Sine.easeInOut" });
+      return;
+    }
+    this._sweepLetters();
   }
+
+  // The luminous letters light up one by one, clockwise from the A at the top:
+  // first the fixed ring, then the inner disc. Each letter is its own slice of
+  // the lit photographs (outer-lume, rotor), cut out by a mask over its place
+  // on the ring; the photographs differ from the dark ones only in the
+  // letters, so the slices' edges never show. When the last one is lit, the
+  // whole photographs take over and the slices go.
+  _sweepLetters() {
+    const { x, y, s, centre } = this._frame;
+    const rotorOrigin = { x: this._disk.originX * this._disk.width, y: this._disk.originY * this._disk.height };
+    const pieces = this._sweepPieces = [];
+    const STAGGER = 40, FADE = 480, INNER = 560;
+    const ring = (name, depth, inner, outer, start, place, toTexture) => {
+      for (let i = 0; i < CRYPTEX_ALPHA.length; i++) {
+        const a0 = Phaser.Math.DegToRad(-90 + (i - .5) * STEP), a1 = Phaser.Math.DegToRad(-90 + (i + .5) * STEP);
+        const points = [];
+        for (let k = 0; k <= 8; k++) {
+          const a = a0 + (a1 - a0) * k / 8;
+          points.push(new Phaser.Math.Vector2(centre.x + Math.cos(a) * outer * s, centre.y + Math.sin(a) * outer * s));
+        }
+        for (let k = 8; k >= 0; k--) {
+          const a = a0 + (a1 - a0) * k / 8;
+          points.push(new Phaser.Math.Vector2(centre.x + Math.cos(a) * inner * s, centre.y + Math.sin(a) * inner * s));
+        }
+        const shape = this.make.graphics({ add: false });
+        shape.fillStyle(0xffffff).fillPoints(points, true);
+        const image = place().setDepth(depth).setAlpha(0);
+        // draw only the slice's box of the photograph, not all of it
+        const xs = points.map((p) => toTexture(p).x), ys = points.map((p) => toTexture(p).y);
+        const left = Math.floor(Math.min(...xs)) - 2, top = Math.floor(Math.min(...ys)) - 2;
+        image.setCrop(left, top, Math.ceil(Math.max(...xs)) + 2 - left, Math.ceil(Math.max(...ys)) + 2 - top);
+        image.setMask(shape.createGeometryMask());
+        pieces.push({ image, shape });
+        this.tweens.add({ targets: image, alpha: 1, delay: start + i * STAGGER, duration: FADE, ease: "Sine.easeOut" });
+      }
+    };
+    const outerRadius = native.wheel.radius, discRadius = native.wheel.discRadius;
+    ring("outer-lume", -9.99, discRadius - 6, outerRadius + 4, 0,
+      () => this.add.image(x, y, key("outer-lume")).setOrigin(0).setScale(s),
+      (p) => ({ x: (p.x - x) / s, y: (p.y - y) / s }));
+    ring("rotor", 2.01, discRadius * .72, discRadius, INNER,
+      () => this.add.image(centre.x, centre.y, key("rotor")).setOrigin(this._disk.originX, this._disk.originY).setScale(s),
+      (p) => ({ x: rotorOrigin.x + (p.x - centre.x) / s, y: rotorOrigin.y + (p.y - centre.y) / s }));
+    this._sweepDone = this.time.delayedCall(INNER + (CRYPTEX_ALPHA.length - 1) * STAGGER + FADE + 30, () => this._endSweep());
+  }
+
+  _endSweep() {
+    this._sweepDone?.remove(false);
+    this._sweepDone = null;
+    for (const { image, shape } of this._sweepPieces || []) {
+      this.tweens.killTweensOf(image);
+      image.clearMask(true);
+      image.destroy();
+      shape.destroy();
+    }
+    this._sweepPieces = null;
+    this._reveal.value = 1;
+    this._refreshLight();
+  }
+
+  /** While the letters are still lighting, the disc does not turn yet. */
+  get _sweeping() { return Boolean(this._sweepPieces); }
 
   _setWheelAngle(angle) {
     this._wheelAngle = angle;
@@ -250,24 +278,31 @@ export default class NativeCryptexScene extends BasePuzzleScene {
     this._letterSparkles?.();
     this._letterSparkles = null;
     this.tweens.killAll();
+    // (rebuilt while the letters were still lighting: they come back all lit)
+    if (this._sweepPieces) {
+      this._sweepDone?.remove(false);
+      this._sweepDone = null;
+      for (const { shape } of this._sweepPieces) shape.destroy();
+      this._sweepPieces = null;
+      this._reveal.value = 1;
+    }
     this.candle.removeDom();
     for (const obj of this.children.list.slice()) obj.destroy();
     this._plates = null;
     this._wheel = null;
     this._disk = null;
     this._letter = null;
-    this._letterParts = null;
-    this._letterClosing = false;
     this._overlayOpen = false;
     this._draggingWheel = false;
   }
 
   shutdown() {
     this._plates = null;
+    for (const { shape } of this._sweepPieces || []) shape.destroy();
+    this._sweepPieces = null;
     this.candle?.destroy();
     this.tweens.killAll();
-    for (const name of [...Array.from({ length: 8 }, (_, i) => `candles-${i}`), "outer-lume", "rotor", "letter-open", "flames"]) {
-      if (this.textures.exists(key(name))) this.textures.remove(key(name));
-    }
+    // (its pictures stay loaded: core/sceneAssetCache.js lets them go only when
+    // the house holds too many, so coming back is quick)
   }
 }

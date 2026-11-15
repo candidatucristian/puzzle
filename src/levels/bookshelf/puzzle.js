@@ -1,3 +1,5 @@
+// (Not loaded by the game: art/blender/library_lamplight_publish.mjs reads this when it renders the puzzle, and
+// the unit tests check it. Kept on purpose, 2026-11-13.)
 /** BOOKSHELF: a book cipher. Five books stand pulled a little out of the
  *  shelf, each with a one-word title on its spine and a numbered bookmark in
  *  it. The bookmark is an index into the title: SHADOW with 1 gives S. Left to

@@ -179,9 +179,8 @@ body.magnifying #game-container canvas { cursor: none !important; }
   font: 400 calc(14px * var(--reading-scale, 1))/1.25 "Architects Daughter", cursive; color: #2a241c;
   background: radial-gradient(ellipse 80% 60% at 85% 100%, #6b4a2022, transparent 70%), linear-gradient(170deg, #ede5cd, #d6cbad);
   border-radius: 2px; box-shadow: 0 8px 20px #000b, 0 0 0 1px #2a241c40;
-  opacity: 0; rotate: -.7deg; translate: 0 -4px; transition: opacity .16s ease, translate .2s ease; }
+  opacity: 0; rotate: -.7deg; }   /* (shown at once: no fade, no drift) */
 #tooltip[hidden] { display: none; }
-#tooltip[data-side="above"] { translate: 0 4px; }
 #tooltip.shown { opacity: 1; translate: 0 0; }
 #tooltip::before { content: ''; position: absolute; left: var(--arrow, 50%); width: 9px; height: 9px; margin-left: -4.5px; rotate: 45deg; background: #e8dfc5; }
 #tooltip[data-side="below"]::before { top: -4.5px; box-shadow: -1px -1px 0 #2a241c30; }
@@ -271,6 +270,11 @@ body.in-house #game-container canvas { scale: 1.028; }
 #current-requirements { display: flex; flex-wrap: wrap; gap: 14px; }
 #current-requirements[hidden] { display: none; }
 #current-requirements .info-badge { border: 0; padding: 0; background: none; color: #aaa9a2; font-size: calc(11px * var(--reading-scale, 1)); }
+/* a puzzle written in a code: the brass cipher wheel (decoder_icon.py) and its line */
+#current-requirements .hint-decoder { flex: 1 0 100%; display: flex; align-items: center; gap: 14px; margin: 0;
+  color: #cfc9bb; font-size: calc(13px * var(--reading-scale, 1)); line-height: 1.45; }
+.hint-decoder-mark { flex: 0 0 auto; width: 78px; aspect-ratio: 192 / 150;
+  background: url('/assets/images/Interface/hint-decoder.webp') center / contain no-repeat; }
 #right-sidebar #hint-list { margin: 26px 0 20px; padding-right: 8px; }
 #right-sidebar #hint-list p { font-size: calc(15px * var(--reading-scale, 1)); line-height: 1.75; }
 .hint-footer { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 14px; border-top: 1px solid var(--ui-border, #2a2a27); }
@@ -310,6 +314,9 @@ body.in-house #game-container canvas { scale: 1.028; }
 .letter-paper { position: absolute; z-index: 0; pointer-events: none; }
 .letter-words { position: relative; z-index: 1; }
 .letter-words p { margin: 0 0 14px; }
+.letter-seal-photograph { width: min(240px, 100%); margin: 18px auto; }
+.letter-seal-photograph img { display: block; width: 100%; height: auto; }
+.letter-seal-photograph figcaption { margin-top: 5px; font-size: .78em; line-height: 1.45; text-align: center; color: #4a3b29; }
 /* a found letter, as it opens: the sheet is blank while it unfolds, and then
    the words come up on it as if typed there — top to bottom in two seconds
    whatever its length (a longer letter comes up faster), the ink darkening as
@@ -385,7 +392,7 @@ body.in-house #game-container canvas { scale: 1.028; }
    (no line of its own: its one border is the pencil line drawn round it, below) */
 .prologue-dossier { border-radius: 6px; }
 .prologue-envelope:not(.prologue-dossier) { clip-path: polygon(16% 0, 98% 12%, 100% 100%, 0 87%); }
-.prologue-dossier { clip-path: polygon(0 44.8%, 38.3% 5.2%, 48% 2.4%, 63.6% 4.5%, 98.2% 26.2%, 99.3% 31.4%, 69.2% 97.6%, 0 76.2%); }
+.prologue-dossier { clip-path: polygon(0 36%, 65% 0, 100% 28%, 74% 100%, 0 80%); }
 #prologue[data-step="file"] .prologue-dossier { animation: dossier-call 2.8s ease-in-out infinite; }
 #prologue[data-step="file"] .prologue-dossier:hover, #prologue[data-step="file"] .prologue-dossier:focus-visible { animation: none; }
 @keyframes dossier-call { 50% { box-shadow: 0 0 36px #ebba6a1c; background: #eacb850a; } }
@@ -403,17 +410,13 @@ body.in-house #game-container canvas { scale: 1.028; }
 .prologue-sheet { display: flex; justify-content: center; width: 100%; flex-shrink: 0; }
 .prologue-sheet .letter-page { animation: prologue-letter-in .95s cubic-bezier(.2,.75,.24,1) both; }
 @keyframes prologue-letter-in { from { opacity: 0; transform: translateY(25px) scale(.96) rotateX(5deg); } to { opacity: 1; transform: none; } }
-.prologue-go { border: 1px solid #c5aa736d; background: linear-gradient(180deg, #352719db, #1c1510e8); color: #e7d6b6; padding: 12px 28px;
-  box-shadow: 0 8px 30px #0007, inset 0 1px #e7d6b621; border-radius: 2px; cursor: var(--cursor-hand, pointer);
-  font: 400 14px 'Cormorant Garamond', Georgia, serif; letter-spacing: .08em; flex-shrink: 0; transition: border-color .3s, background .3s; }
-.prologue-go:hover, .prologue-go:focus-visible { background: linear-gradient(180deg, #493623ed, #2a1e13ed); border-color: #dec391; outline: none; }
+.prologue-go { flex-shrink: 0; }   /* (its look: fileButton.js, as in the house) */
 #prologue.is-leaving .prologue-reading { opacity: 0; transition-duration: .5s; }
 #prologue.is-still *, #prologue.is-still { animation: none !important; transition-duration: .01s !important; transition-delay: 0s !important; }
 @media (max-width: 650px) {
   .prologue-folder-label { font-size: 7px; }
   .prologue-prompt { bottom: 28px; font-size: 14px; }
   .prologue-reading { gap: 12px; padding: 16px 8px; }
-  .prologue-go { padding: 10px 20px; font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
   #prologue, #prologue *, .prologue-camera { animation: none !important; transition: none !important; }
@@ -495,9 +498,6 @@ body.in-house #game-container canvas { scale: 1.028; }
   opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 .arrival-reading.is-shown { opacity: 1; pointer-events: auto; }
 .arrival-page { width: min(560px, 92vw); max-height: calc(100dvh - 130px); overflow-y: auto; padding: 22px 18px; transform-origin: 50% 50%; scrollbar-width: thin; }
-.arrival-file { border: 1px solid #e2c27aaa; background: linear-gradient(180deg, #3a1a10, #24100a); color: #e2c27a; padding: 11px 24px; border-radius: 3px;
-  cursor: var(--cursor-hand, pointer); font: 400 clamp(14px, 1.2vw, 17px) "Architects Daughter", var(--ui-font); box-shadow: 0 6px 18px #000a; }
-.arrival-file:hover, .arrival-file:focus-visible { background: linear-gradient(180deg, #4a2214, #2e140c); outline: none; }
 [data-reduced-motion="true"] .arrival *, [data-reduced-motion="true"] .casefile-modal .dossier { animation: none !important; transition: none !important; }
 
 /* ── less on the screen: the header's tools by their icons alone (their names
@@ -609,7 +609,7 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 /* ══ Settings (index.html #options-modal, audioControls.js, comfort.js): one
    compact sheet. Sound channel by channel, each a thin track filled as far
    as its level; the picture's settings as a slider, three buttons and two
-   switches; and at the foot the guide and the reset. Written to stand on
+   switches; and at the foot the reset. Written to stand on
    its own over the older dialog rules. ══ */
 #options-modal .modal-content.settings-panel {
   width: min(430px, calc(100vw - 32px)); height: auto; max-height: calc(100dvh - 40px);
@@ -798,13 +798,11 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 #options-modal .settings-panel .st-switch:has(input:disabled) { cursor: default; }
 #options-modal .settings-panel .st-switch.is-off { opacity: .45; }
 
-/* the foot: the guide, and the reset that asks twice */
+/* the foot: the reset that asks twice */
 #options-modal .settings-panel .st-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid #ffffff10; }
-#options-modal .settings-panel #btn-howto, #options-modal .settings-panel #btn-new {
+#options-modal .settings-panel #btn-new {
   min-height: 0; margin: 0; padding: 7px 12px; border: 1px solid transparent; border-radius: 6px; background: transparent;
   font: 400 calc(12px * var(--reading-scale, 1)) var(--ui-font); color: #b9b6ad; cursor: var(--cursor-hand, pointer); }
-#options-modal .settings-panel #btn-howto { margin-left: -12px; }
-#options-modal .settings-panel #btn-howto:hover, #options-modal .settings-panel #btn-howto:focus-visible { background: #ffffff0b; color: #f0ede6; outline: none; }
 #options-modal .settings-panel #btn-new { margin-right: -2px; border-color: #ffffff14; color: #c9a59c; }
 #options-modal .settings-panel #btn-new:hover, #options-modal .settings-panel #btn-new:focus-visible { border-color: #c9837555; background: #c9837512; color: #f0c8bd; outline: none; }
 #options-modal .settings-panel #btn-new.armed { border-color: #c98375; background: #8f3a2c; color: #fff1ec; }
@@ -830,7 +828,6 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 #options-modal.is-muted .settings-panel .st-sound .st-mute-row { opacity: 1; }
 #options-modal .settings-panel .st-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #ffffff10; }
 #options-modal .settings-panel .st-note { margin: 8px 0 0; font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font); color: #7f7c74; }
-#options-modal .settings-panel #btn-howto { margin-left: 0; border-color: #ffffff14; }
 
 /* the cold open's drawings (introSketches.js): the game's thin white pencil
    on dark paper — each line in three passes, drawn from its start — on the
@@ -855,11 +852,23 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
 #cold-open .co-caption .co-w { transition-delay: calc(var(--d, 0ms) + var(--i) * 38ms); }
 #cold-open .co-caption.is-in .co-w { opacity: 1; filter: blur(0); transform: none; }
 #cold-open .co-caption.is-out { opacity: 0; filter: blur(6px); transition: opacity .9s ease, filter .9s ease; }
+/* the opening film, drawn (sketchFilm.js): the drawing up top, Arthur's line under it, centred */
+#cold-open.is-film { background: radial-gradient(ellipse 70% 70% at 50% 40%, #1a1917, #0b0a09 70%, #050404); }
+#cold-open.is-film .co-sketch { left: 50%; top: 5vh; width: min(88vw, 150vh); height: 62vh; translate: -50% 0; }
+#cold-open.is-film .co-caption { left: 50%; top: auto; bottom: 11vh; translate: -50% 0; width: min(820px, 84vw); text-align: center; text-wrap: balance; }
+#cold-open.is-film .co-cap-over { margin: 0 0 14px; margin-right: -.55em; font: 500 11.5px var(--ui-font); letter-spacing: .55em; text-transform: uppercase; color: #a8946f;
+  opacity: 0; transition: opacity 1.2s ease; }
+#cold-open.is-film .co-caption.is-in .co-cap-over { opacity: 1; }
+#cold-open.is-film .co-cap-line { margin: 0; }
+#cold-open .co-rain line { stroke: #dfe6f0; stroke-opacity: .3; stroke-width: 1; stroke-linecap: round; }
 
 /* the loading screen: the house drawn as the game loads, its name under it */
 #loading-screen .co-sketch { display: block; width: min(620px, 80vw); height: auto; aspect-ratio: 1000 / 540; margin: 0 auto 10px; overflow: visible; }
 #loading-screen .loading-bar { display: none; }
-#loading-screen .loading-card h1 { margin: 0 0 6px; font: 300 calc(15px * var(--reading-scale, 1)) var(--ui-font); letter-spacing: .5em; margin-right: -.5em; text-transform: uppercase; color: #cfc8b8; }
+#loading-screen .loading-card { width: min(460px, 88vw); }
+#loading-screen .loading-card h1 { margin: 0 0 6px; padding-left: 0; font: 300 calc(15px * var(--reading-scale, 1))/1.35 var(--ui-font); letter-spacing: .5em; margin-right: -.5em; text-transform: uppercase; color: #cfc8b8; }
+#loading-screen #loading-label { flex-wrap: wrap; justify-content: center; align-items: baseline; text-align: center; max-width: min(420px, 84vw); gap: 6px 12px; }
+#loading-screen #loading-pct[hidden] { display: none; }
 
 /* the chapter card's emblem: drawn over its words, in the pencil */
 .cinema-card .cinema-emblem { display: block; width: clamp(150px, 15vw, 210px); height: auto; aspect-ratio: 1; margin: 0 auto 26px; overflow: visible; }
@@ -975,9 +984,9 @@ body, body *, body svg text { font-family: var(--ui-font) !important; }
   border: 1px solid #ece7db59; font: 300 calc(17px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .06em; color: #ece7db; }
 #prologue .pf-rule { width: 1px; align-self: stretch; margin: 2px 0; background: linear-gradient(#ece7db00, #ece7db73, #ece7db00); }
 #prologue .pf-words { display: grid; gap: 5px; min-width: 0; text-align: left; }
-#prologue .pf-name { font: 400 calc(11.5px * var(--reading-scale, 1))/1.3 var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: #f3eee3; text-shadow: 0 0 14px #ffffff1f; }
-#prologue .pf-where { font: 300 italic calc(10.5px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: .1em; color: #a9a59a; }
-#prologue .prologue-panel-label { margin: 34px 0 8px 2px; font: 400 calc(11px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: var(--ui-muted, #92928e); }
+#prologue .pf-name { font: 400 calc(11.5px * var(--reading-scale, 1))/1.3 var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: #f3eee3; text-shadow: 0 0 14px #ffffff1f; overflow-wrap: break-word; }
+#prologue .pf-where { font: 300 italic calc(10.5px * var(--reading-scale, 1))/1.2 var(--ui-font); letter-spacing: .1em; color: #a9a59a; overflow-wrap: break-word; }
+#prologue .prologue-panel-label { margin: 34px 0 8px 2px; font: 400 calc(11px * var(--reading-scale, 1))/1.25 var(--ui-font); letter-spacing: .2em; text-transform: uppercase; color: var(--ui-muted, #92928e); overflow-wrap: break-word; }
 /* the tasks, as the index's lines: a small number, the words, and on the right
    the pencil tick once done; the one to do now marked as the current room is */
 :is(#prologue .prologue-panel, #index-outside) .prologue-tasks { position: static; display: grid; gap: 3px; min-width: 0; margin: 0; padding: 0 5px 0 2px;
@@ -1023,7 +1032,7 @@ body.outside .index-letters { display: none; }
 :is(body.cold-open-on, body.prologue-on) #compact-bar { position: relative; z-index: 600; }
 :is(body.cold-open-on, body.prologue-on) :is(#btn-map, #btn-casefile) { display: none; }
 :is(body.cold-open-on, body.prologue-on) #header-floor { visibility: hidden; }
-:is(body.cold-open-on, body.prologue-on) :is(#options-modal, #howto-modal) { z-index: 620; }
+:is(body.cold-open-on, body.prologue-on) #options-modal { z-index: 620; }
 
 /* the index's rows: names too long for the column end in "…" — the pointer
    resting on a row shows the whole in its tooltip (progress.js sets it); the
@@ -1154,3 +1163,23 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, body *::-webkit-scrollbar { di
 [data-reduced-motion="true"] #game-container.approaching > * { animation: none; }
 @media (prefers-reduced-motion: reduce) { #game-container.approaching > * { animation: none; } }
 [data-ambient-motion="false"] #game-container.approaching > * { animation: none; }
+
+/* ── a correct answer, struck into the code box (solveStrike.js): the light
+   over the page it is drawn on, and the box flaring gold round the answer as
+   the ribbon of sparks hits it — opacity and transform only ── */
+.solve-strike { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 900; pointer-events: none; }
+#input-area .input-wrapper { position: relative; }
+#input-area .input-wrapper::after { content: ""; position: absolute; inset: -6px; border-radius: 6px; pointer-events: none; opacity: 0;
+  box-shadow: 0 0 0 1px #f3d79a, 0 0 18px 4px #f0c06a99, 0 0 46px 10px #e8a84555, inset 0 0 22px #ffd98a55; }
+#input-area .input-wrapper.is-struck::after { animation: code-struck 1.25s cubic-bezier(.2, .7, .3, 1) both; }
+#input-area .input-wrapper.is-struck #level-code { animation: code-struck-text 1.25s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes code-struck { 0% { opacity: 0; transform: scale(1.04); } 8% { opacity: 1; transform: scale(1); } 55% { opacity: .75; } 100% { opacity: 0; } }
+@keyframes code-struck-text { 0% { transform: scale(1); } 7% { transform: scale(1.035); color: #fff3d6; } 30% { transform: scale(1); color: #f2d08a; } 100% { color: inherit; } }
+[data-reduced-motion="true"] #input-area .input-wrapper.is-struck #level-code { animation: none; }
+/* the screen gone dark while the sparks gather (the code box kept in light) */
+.solve-dim { position: fixed; inset: 0; z-index: 899; pointer-events: none; opacity: 0; }
+
+/* the case file struck by the solve (solveStrike.js): it jumps (is-receiving) and flares gold */
+#btn-casefile::after { content: ""; position: absolute; inset: -8px; border-radius: 10px; pointer-events: none; opacity: 0;
+  box-shadow: 0 0 0 1px #f3d79a, 0 0 22px 6px #f0c06aaa, 0 0 60px 16px #e8a84566, inset 0 0 18px #ffd98a66; }
+#btn-casefile.is-struck::after { animation: code-struck 1.5s cubic-bezier(.2, .7, .3, 1) both; }

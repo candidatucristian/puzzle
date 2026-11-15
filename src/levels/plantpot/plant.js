@@ -1,5 +1,4 @@
 import { makeCanvas, addCanvas, softEllipse, lcg } from "./garden.js";
-import { plantPhotographs } from "./photographicPlant.js";
 import { fibonacciParts } from "./blenderPlant.js";
 
 /** Live objects from the Blender garden, positioned in centimetres.
@@ -32,8 +31,7 @@ export const WATER_LEVELS = 6; // full … empty
 export function paintPlantArt(textures, cm) {
   const px = cm * RES;
   const rendered = fibonacciParts(textures);
-  const photographs = rendered ? null : plantPhotographs(textures);
-  const pot = rendered ? paintRenderedPot(px) : paintPot(px, photographs?.pot);
+  const pot = rendered ? paintRenderedPot(px) : paintPot(px);
   addCanvas(textures, K.potBack, pot.back);
   addCanvas(textures, K.potFront, pot.front);
   addCanvas(textures, K.wet, pot.wet);
@@ -47,10 +45,6 @@ export function paintPlantArt(textures, cm) {
   }
   addCanvas(textures, K.shadow, paintBucketShadow(px));
   addCanvas(textures, K.drop, paintDrop());
-  const leaves = photographs?.leaves.map((leaf,i) => {
-    const key=K.leaf+i;addCanvas(textures,key,leaf.image);
-    return {key,ox:leaf.ox,oy:leaf.oy,height:leaf.image.height};
-  });
   return {
     pot: { back: K.potBack, front: K.potFront, wet: K.wet, ox: pot.ox, oy: pot.oy, wetAt: pot.wetAt },
     buckets: rendered?.buckets ?? buckets,
@@ -62,10 +56,9 @@ export function paintPlantArt(textures, cm) {
     shadowScale: rendered?.shadow?.scale,
     shadowY: rendered?.shadow ? 0 : -.3,
     drop: K.drop,
-    leaves: rendered?.leaves ?? leaves,
+    leaves: rendered?.leaves,
     leafRenders: rendered?.leaves,
     stemRender: rendered?.stems,
-    bark: photographs?.stem,
   };
 }
 
@@ -94,7 +87,7 @@ export function releasePlantArt(textures) {
 // warm and bright there and goes to shadow round the right, with a thread
 // of moonlight on the far edge. Throwing rings, salt bloom, a little moss
 // low down, a chip out of the rim, as old pots have.
-function paintPot(px, photograph) {
+function paintPot(px) {
   const P = POT;
   const pad = 2;
   const x0 = -P.rimR - pad;
@@ -324,14 +317,6 @@ function paintPot(px, photograph) {
   g.beginPath();
   g.ellipse(0, yTop, R - 0.1, (R - 0.1) * TILT, 0, Math.PI * 1.55, Math.PI * 2);
   g.stroke();
-
-  if (photograph) {
-    // Keep the pot's physical width and natural aspect. Its compost lies at
-    // the same soil anchor as the live stem, behind the photographed lip.
-    g.clearRect(x0,y0,x1-x0,y1-y0);
-    const height=22*photograph.height/photograph.width;
-    g.drawImage(photograph,-11,-height,22,height);
-  }
 
   // ── the front of the pot goes over the stems: everything this side of the
   // rim's inner edge, taken from what has just been painted

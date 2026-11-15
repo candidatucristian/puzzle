@@ -4,6 +4,9 @@
 // with the Ashcombes' key.
 let pending;
 let materials = null;
+/** The paper and wax, if they have loaded (null until then). */
+export function documentArt() { return materials; }
+
 export function loadDocumentArt() {
   if (!pending) pending = Promise.all(['letter-paper-v3', 'red-wax-seal-v2'].map(async name => {
     const image = new Image();

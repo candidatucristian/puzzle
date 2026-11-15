@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { evaluateApp } from './app.js';
-import { LEVEL_METADATA } from '../../src/levels/metadata.js';
+import { LEVEL_METADATA, LEGACY_LEVEL_IDS } from '../../src/levels/metadata.js';
 
 async function open(page) {
   await page.addInitScript(lastIndex => {
@@ -9,7 +9,7 @@ async function open(page) {
     localStorage.setItem('puzzleProgressSchema', '2');
     localStorage.setItem('puzzleUnlockedLevel', String(lastIndex));
     localStorage.setItem('hasPlayedBefore', 'true');
-  }, LEVEL_METADATA.length - 1);
+  }, LEGACY_LEVEL_IDS.length - 1);
   await page.goto('/');
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await evaluateApp(page, ({ ui }) => ui.showGame());
@@ -17,19 +17,20 @@ async function open(page) {
 
 test('settings own the arrow keys and nested help restores the same settings session', async ({ page }) => {
   await open(page);
-  await evaluateApp(page, ({ ui, services }) => ui.navigate(services.levels.definitions.findIndex(level => level.key === 'TV'), { quick: true }));
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('TV');
+  await evaluateApp(page, ({ ui, services }) => ui.navigate(services.levels.definitions.findIndex(level => level.key === 'Modem'), { quick: true }));
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key)).toBe('Modem');
   await expect.poll(() => evaluateApp(page, ({ ui }) => ui.busy)).toBe(false);
-  const channel = await evaluateApp(page, ({ services }) => {
-    const scene = services.levels.activeScene;
-    scene._autoTimer.remove(false);
-    return scene._channel;
+  // every arrow key the game itself hears
+  const heard = () => evaluateApp(page, () => window.__arrowsHeard);
+  await evaluateApp(page, ({ services }) => {
+    window.__arrowsHeard = 0;
+    services.levels.activeScene.input.keyboard.on('keydown', event => { if (event.key.startsWith('Arrow')) window.__arrowsHeard++; });
   });
 
   await page.locator('#vol-slider-ui').focus();
   await page.keyboard.press('ArrowLeft');
   await expect(page.locator('#vol-slider-ui')).toHaveValue('0.99');
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._channel)).toBe(channel);
+  expect(await heard()).toBe(0);
 
   await page.locator('#btn-options').click();
   await page.locator('#st-tab-sounds').click();
@@ -37,13 +38,10 @@ test('settings own the arrow keys and nested help restores the same settings ses
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#music-slider')).toHaveValue('0.51');
   await expect(page.locator('#music-slider')).toHaveAttribute('aria-valuetext', '51%');
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._channel)).toBe(channel);
+  expect(await heard()).toBe(0);
 
   await page.locator('#st-tab-options').click();
-  await page.locator('#btn-howto').click();
   expect(await evaluateApp(page, ({ game }) => game.input.keyboard.enabled)).toBe(false);
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#btn-howto')).toBeFocused();
   await page.locator('#st-tab-sounds').click();
   await expect(page.locator('#music-slider')).toHaveValue('0.51');
   expect(await evaluateApp(page, ({ game }) => game.input.keyboard.enabled)).toBe(false);
@@ -51,7 +49,7 @@ test('settings own the arrow keys and nested help restores the same settings ses
   expect(await evaluateApp(page, ({ game }) => game.input.keyboard.enabled)).toBe(true);
   await page.evaluate(() => document.activeElement.blur());
   await page.keyboard.press('ArrowRight');
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene._channel)).toBe((channel + 1) % 4);
+  await expect.poll(heard).toBe(1);
 });
 
 test('leaving reset confirmation cancels it without deleting progress', async ({ page }) => {
@@ -61,8 +59,9 @@ test('leaving reset confirmation cancels it without deleting progress', async ({
   await page.locator('#st-tab-options').click();
   await page.locator('#btn-new').click();
   await expect(page.locator('#btn-new')).toHaveClass(/armed/);
-  await page.locator('#btn-howto').click();
   await page.keyboard.press('Escape');
+  await page.locator('#btn-options').click();
+  await page.locator('#st-tab-options').click();
   await expect(page.locator('#btn-new')).not.toHaveClass(/armed/);
   await page.locator('#btn-new').click();
   await expect(page.locator('#btn-new')).toHaveClass(/armed/);
@@ -90,28 +89,24 @@ test('answer feedback is readable and clears as soon as the player edits or chan
   await expect(page.locator('#level-code')).toHaveAttribute('aria-invalid', 'false');
 });
 
-test('a correct answer uses the original accepted-code transition to the next room', async ({ page }) => {
+// every puzzle has its room since 2026-11-13: a correct answer is accepted and
+// the player is taken back out to the room it was found in
+test('a correct answer is accepted and goes back out to the room it was found in', async ({ page }) => {
   await open(page);
-  const vertexIndex = await evaluateApp(page, ({ services }) => services.levels.definitions.findIndex(l => l.key === 'Vertex'));
-  await evaluateApp(page, ({ ui }, idx) => ui.navigate(idx, { quick: true }), vertexIndex);
+  const fromIndex = await evaluateApp(page, ({ services }) => services.levels.definitions.findIndex(l => l.key === 'Compass'));
+  await evaluateApp(page, ({ ui }, idx) => ui.navigate(idx, { quick: true }), fromIndex);
   await evaluateApp(page, ({ services }) => {
     services.preferences.setSystemMotion(false);
     services.preferences.set({ motion: 'system' });
     services.audio.playSuccess = () => { window.successSoundAt = performance.now(); };
   });
-  expect(await evaluateApp(page, ({ services }) => services.preferences.reducedMotion)).toBe(false);
-  await page.locator('#level-code').fill('FACE');
-  await page.evaluate(() => { window.answerSubmittedAt = performance.now(); });
+  await page.locator('#level-code').fill('LOST');
   await page.locator('#btn-submit').click();
 
-  await expect(page.locator('#answer-feedback')).toContainText('Opening the next room');
-  await expect(page.locator('#level-veil')).toHaveClass(/cover/);
-  await expect(page.locator('#veil-caption')).toHaveText('Answer accepted');
-  await expect(page.locator('#veil-numeral')).toHaveText('XXX');
+  await expect(page.locator('#answer-feedback')).toContainText('Answer accepted');
   expect(await page.evaluate(() => window.successSoundAt)).toBeDefined();
-  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.currentIndex), { timeout: 2500 }).toBe(vertexIndex + 1);
-  await expect(page.locator('#level-veil')).toHaveClass(/titled/);
-  await expect(page.locator('.veil-content')).toBeVisible();
+  expect(await evaluateApp(page, ({ services }) => services.levels.isCompleted(services.levels.indexOf('compass')))).toBe(true);
+  await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene?.scene.key), { timeout: 6000 }).toBe('Room3');
 });
 
 test('interface text cannot be selected and clicking the answer field adds no focus frame', async ({ page }) => {

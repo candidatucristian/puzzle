@@ -1,5 +1,5 @@
 /* Moonlit documents. The scene keeps its own visual language beneath these overlays. */
-:is(#options-modal, #howto-modal, #info-modal) {
+:is(#options-modal, #info-modal) {
   position: fixed;
   inset: 0;
   z-index: 300;
@@ -14,7 +14,7 @@
   transition: opacity 180ms ease;
 }
 
-:is(#options-modal, #howto-modal, #info-modal).hidden {
+:is(#options-modal, #info-modal).hidden {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
@@ -70,8 +70,7 @@
   line-height: 1.65;
 }
 
-.options-heading,
-.howto-heading {
+.options-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -386,44 +385,7 @@
   #hint-count, #info-modal #btn-next-hint { font-size: calc(10px * var(--reading-scale, 1)); }
 }
 
-/* Help is a plain reading surface, with no imitation buttons or badges. */
-#howto-modal .howto-body {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
-  gap: 30px;
-  min-height: 0;
-  padding: 0 12px 8px 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #3a3a36 transparent;
-}
 
-.howto-section { flex-shrink: 0; }
-.howto-section h3 {
-  margin: 0 0 12px;
-  color: #999992;
-  font: 400 calc(11px * var(--reading-scale, 1))/1.5 var(--ui-font);
-  letter-spacing: 0;
-}
-
-.howto-section p,
-.howto-row dd {
-  margin: 0;
-  color: #c4c4bd;
-  font: 400 calc(14px * var(--reading-scale, 1))/1.75 var(--ui-font);
-}
-
-.howto-controls { display: grid; gap: 16px; margin: 0; }
-.howto-row {
-  display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  align-items: baseline;
-  gap: 20px;
-}
-.howto-row dt { color: #ddddd6; font-size: calc(13px * var(--reading-scale, 1)); }
-:root:not([data-touch="true"]) .howto-touch { display: none; }
 
 /* A closed case is a quiet title card, not a scaled or bouncing celebration. */
 #completion-screen {
@@ -537,27 +499,24 @@
 #intro-skip { position: absolute; bottom: 30px; margin: 0; color: var(--ui-muted); font: 400 11px/1.5 var(--ui-mono); letter-spacing: .08em; text-align: center; }
 
 @media (max-width: 640px) {
-  :is(#options-modal, #howto-modal, #info-modal) { padding: 16px; }
+  :is(#options-modal, #info-modal) { padding: 16px; }
   .modal-content { max-height: calc(100dvh - 32px); padding: 24px; gap: 18px; }
   .modal-content h2 { font-size: calc(34px * var(--reading-scale, 1)); }
-  .howto-row { grid-template-columns: 112px minmax(0, 1fr); gap: 16px; }
   .completion-card { padding: 28px; }
 }
 
 @media (max-width: 420px) {
   .modal-content { padding: 20px 18px; }
   .comfort-row select { max-width: 160px; }
-  .howto-row { grid-template-columns: 1fr; gap: 10px; }
   .modal-actions { gap: 8px; }
   .modal-actions .menu-btn { padding: 10px; }
 }
 
 @media (max-height: 560px) {
-  :is(#options-modal, #howto-modal, #info-modal) { padding: 12px; }
+  :is(#options-modal, #info-modal) { padding: 12px; }
   .modal-content { max-height: calc(100dvh - 24px); padding: 18px 24px; gap: 14px; }
   .modal-content h2 { font-size: calc(30px * var(--reading-scale, 1)); }
   .modal-actions .menu-btn { min-height: 40px; padding: 9px 14px; }
-  #howto-modal .howto-body { gap: 24px; }
   .completion-card { padding: 22px 32px; gap: 16px; }
   .completion-card h1 { font-size: 52px; }
   .completion-card > .ornate-rule { display: none; }
@@ -572,10 +531,10 @@
   .completion-message { font-size: calc(14px * var(--reading-scale, 1)); }
 }
 
-:root[data-reduced-motion="true"] :is(#options-modal, #howto-modal, #info-modal, #completion-screen, #intro-screen, #intro-line, #intro-title, #level-veil, .veil-content) { transition: none; }
+:root[data-reduced-motion="true"] :is(#options-modal, #info-modal, #completion-screen, #intro-screen, #intro-line, #intro-title, #level-veil, .veil-content) { transition: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  :is(#options-modal, #howto-modal, #info-modal, #completion-screen, #intro-screen, #intro-line, #intro-title, #level-veil, .veil-content) { transition: none; }
+  :is(#options-modal, #info-modal, #completion-screen, #intro-screen, #intro-line, #intro-title, #level-veil, .veil-content) { transition: none; }
 }
 
 /* Interface dialogs use the same neutral ink and paper as the controls. */
@@ -584,12 +543,12 @@
 :is(.completion-card,.modal-content) .ornate-rule, .veil-content .ornate-rule, #intro-title .ornate-rule { display:none; }
 
 /* Settings and help share the open, borderless surface of the hints. */
-:is(#options-modal, #howto-modal) {
+#options-modal {
   background: rgb(0 0 0 / 66%);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-:is(#options-modal, #howto-modal) .modal-content {
+#options-modal .modal-content {
   width: min(620px, 100%);
   height: min(680px, calc(100dvh - 64px));
   max-height: calc(100dvh - 64px);
@@ -601,13 +560,13 @@
   background: #141414;
   box-shadow: 0 24px 90px rgb(0 0 0 / 38%);
 }
-:is(.options-heading, .howto-heading) { flex-wrap: nowrap; margin-bottom: 24px; }
-:is(#options-modal, #howto-modal) h2 {
+.options-heading { flex-wrap: nowrap; margin-bottom: 24px; }
+#options-modal h2 {
   font: 400 calc(26px * var(--reading-scale, 1))/1.2 var(--ui-font);
   letter-spacing: -.035em;
   color: #deded9;
 }
-:is(#btn-close-options, #btn-close-howto) {
+#btn-close-options {
   align-self: center;
   width: 40px;
   min-height: 40px;
@@ -617,7 +576,7 @@
   background: transparent;
   color: #a4a49e;
 }
-:is(#btn-close-options, #btn-close-howto):hover { background: #222; color: #efefe8; }
+#btn-close-options:hover { background: #222; color: #efefe8; }
 #options-modal .options-body {
   flex: 1 1 0;
   min-height: 0;
@@ -687,7 +646,7 @@
 #options-modal .comfort-checkbox input { width: 17px; height: 17px; margin-right: 2px; }
 #options-modal .comfort-caption { margin-top: -10px; }
 #options-modal .danger-zone { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 20px; }
-#options-modal :is(#btn-new, #btn-howto, #btn-mute) {
+#options-modal :is(#btn-new, #btn-mute) {
   flex: 0 0 auto;
   min-height: 42px;
   padding: 10px 12px;
@@ -697,23 +656,23 @@
   color: #c4c4bd;
   font-size: calc(12px * var(--reading-scale, 1));
 }
-#options-modal :is(#btn-new, #btn-howto, #btn-mute):hover { background: #242423; color: #deded6; }
+#options-modal :is(#btn-new, #btn-mute):hover { background: #242423; color: #deded6; }
 #options-modal #btn-new.armed { background: #2b2b27; color: #f0f0e8; }
 #options-modal #btn-new { margin-right: -12px; }
 #options-modal .modal-actions { flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 16px; padding: 0; margin: 0 -12px; border: 0; }
 @media (max-width: 640px) {
-  :is(#options-modal, #howto-modal) .modal-content { padding: 24px; }
+  #options-modal .modal-content { padding: 24px; }
 }
 @media (max-height: 560px) {
-  :is(#options-modal, #howto-modal) .modal-content { height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); padding: 16px 24px 12px; }
-  :is(.options-heading, .howto-heading) { margin-bottom: 14px; }
-  :is(#options-modal, #howto-modal) h2 { font-size: calc(21px * var(--reading-scale, 1)); }
-  :is(#btn-close-options, #btn-close-howto) { min-height: 36px; width: 36px; padding: 8px; margin-right: -8px; }
+  #options-modal .modal-content { height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); padding: 16px 24px 12px; }
+  .options-heading { margin-bottom: 14px; }
+  #options-modal h2 { font-size: calc(21px * var(--reading-scale, 1)); }
+  #btn-close-options { min-height: 36px; width: 36px; padding: 8px; margin-right: -8px; }
   #options-modal .options-body { margin-bottom: 10px; gap: 24px; }
-  #options-modal :is(#btn-new, #btn-howto, #btn-mute) { min-height: 38px; padding-block: 8px; }
+  #options-modal :is(#btn-new, #btn-mute) { min-height: 38px; padding-block: 8px; }
 }
 @media (max-width: 480px) {
-  :is(#options-modal, #howto-modal) .modal-content { padding-inline: 20px; }
+  #options-modal .modal-content { padding-inline: 20px; }
   #options-modal :is(.slider-group, .grain-row) { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
   #options-modal :is(.slider-group, .grain-row) output { grid-column: 2; }
   #options-modal :is(.slider-group, .grain-row) input { grid-column: 1 / -1; grid-row: 2; }

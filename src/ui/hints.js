@@ -34,14 +34,33 @@ export function mountHints(scope, { levels, hints, i18n = null }) {
     const requirements = document.getElementById('current-requirements');
     const legacyRequires = document.getElementById('info-requires');
     requirements.replaceChildren();
-    requirements.hidden = !level.hint.sound && !level.hint.tool;
+    requirements.hidden = !level.hint.sound && !level.hint.tool && !level.hint.decoder;
     if (legacyRequires) {
       legacyRequires.replaceChildren();
       legacyRequires.hidden = requirements.hidden;
     }
+    // a puzzle written in a code (Morse, binary, Braille…): the brass cipher
+    // wheel, saying a decoding device may help (it says what the reference
+    // badge would, so that one is left off)
+    if (level.hint.decoder) {
+      const card = document.createElement('p');
+      card.className = 'hint-decoder';
+      const mark = document.createElement('span');
+      mark.className = 'hint-decoder-mark'; mark.setAttribute('aria-hidden', 'true');
+      const words = document.createElement('span');
+      words.textContent = i18n ? i18n.t('hints.decoder') : 'A decoding device may help';
+      card.append(mark, words);
+      requirements.append(card);
+      // (and its words in the screen readers' list, as the other badges are)
+      if (legacyRequires) {
+        const badge = document.createElement('span');
+        badge.className = 'info-badge'; badge.textContent = words.textContent;
+        legacyRequires.append(badge);
+      }
+    }
     const soundText = i18n ? i18n.t('hints.listening') : 'Listening';
     const toolText = i18n ? i18n.t('hints.reference') : 'Reference may help';
-    for (const [needed, text] of [[level.hint.sound, soundText], [level.hint.tool, toolText]]) {
+    for (const [needed, text] of [[level.hint.sound, soundText], [level.hint.tool && !level.hint.decoder, toolText]]) {
       if (!needed) continue;
       const badge = document.createElement('span');
       badge.className = 'info-badge'; badge.textContent = text;

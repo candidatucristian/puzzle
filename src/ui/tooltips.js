@@ -8,7 +8,8 @@ import { applyCursors } from "../shared/cursors.js";
 // only an icon tells its name. "Map of the house (M)" shows its M as a key.
 // The page's sketched pointers are set here too.
 
-const DELAY = 380; // the pointer rests a moment before the note comes
+// (no wait: the note comes the moment the pointer is on the thing — the
+// user, 2026-11-13, "vreau instant sa apara tooltip-uri")
 const SELECTOR = "[data-tip], [title], .icon-button[aria-label], .header-button[aria-label]";
 
 export function mountTooltips(scope, i18n = null) {
@@ -22,7 +23,7 @@ export function mountTooltips(scope, i18n = null) {
   tip.append(words, key);
   document.body.append(tip);
   scope.add(() => tip.remove());
-  let target = null, timer = null;
+  let target = null;
 
   // what a control says of itself
   function textOf(el) {
@@ -62,24 +63,23 @@ export function mountTooltips(scope, i18n = null) {
     tip.style.setProperty("--arrow", `${Math.min(t.width - 12, Math.max(12, box.left + box.width / 2 - x))}px`);
   }
   function hide() {
-    clearTimeout(timer);
     target = null;
     tip.classList.remove("shown");
     tip.hidden = true;
   }
-  function aim(el, now = false) {
+  function aim(el) {
     if (el === target) return;
     hide();
     if (!el) return;
     target = el;
     // the title goes at once, so the browser does not show its own
     textOf(el);
-    timer = setTimeout(() => show(el), now ? 0 : DELAY);
+    show(el);
   }
   const find = (node) => node?.closest?.(SELECTOR) ?? null;
   scope.on(document, "pointerover", (e) => { if (e.pointerType !== "touch") aim(find(e.target)); });
   scope.on(document, "pointerdown", hide);
-  scope.on(document, "focusin", (e) => { if (e.target.matches?.(":focus-visible")) aim(find(e.target), true); });
+  scope.on(document, "focusin", (e) => { if (e.target.matches?.(":focus-visible")) aim(find(e.target)); });
   scope.on(document, "focusout", hide);
   scope.on(document, "keydown", (e) => { if (e.key === "Escape") hide(); });
   scope.on(window, "scroll", hide, true);
@@ -87,7 +87,7 @@ export function mountTooltips(scope, i18n = null) {
   if (i18n) scope.add(i18n.subscribe(() => {
     const previous = target;
     hide();
-    if (previous instanceof Element && previous.isConnected) aim(previous, true);
+    if (previous instanceof Element && previous.isConnected) aim(previous);
   }));
   // the same note for something in the game's picture, which has no element
   // of its own: `tooltip:at` with { text, rect } (a box on the screen) when the
@@ -99,7 +99,7 @@ export function mountTooltips(scope, i18n = null) {
     if (!text || !rect) return;
     hide();
     target = e.detail;
-    timer = setTimeout(() => { if (target === e.detail) place(String(text).trim(), e.detail.rect); }, DELAY);
+    place(String(text).trim(), e.detail.rect);
   });
   scope.on(window, "tooltip:move", (e) => {
     if (!e.detail || target !== e.detail || tip.hidden) return;

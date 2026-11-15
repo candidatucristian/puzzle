@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { evaluateApp, openHints } from './app.js';
-import { LEVEL_METADATA } from '../../src/levels/metadata.js';
+import { LEVEL_METADATA, LEGACY_LEVEL_IDS } from '../../src/levels/metadata.js';
 
 async function open(page, { unlocked = false, start = true } = {}) {
   await page.addInitScript(unlockedLevel => {
@@ -209,13 +209,12 @@ test('level 2 gives the draggable bucket a subtle sparkle cue', async ({ page })
 });
 
 for (const [key, expected] of [
-  ['Sequence', 6], ['Curtain', 1], ['Venetian', 1],
-  ['Bookshelf', 5], ['Chemistry', 1], ['Billiards', 6],
+  ['Sequence', 6], ['Bookshelf', 5], ['Chemistry', 1],
   ['Cryptex', 4], ['MobilePhone', 1], ['Lightswitch', 1],
   ['Overtime', 1], ['Compass', 1], ['Pi', 1],
 ]) {
   test(`${key} puzzle items receive sparkle cues`, async ({ page }) => {
-    await open(page, { unlocked: LEVEL_METADATA.length - 1 });
+    await open(page, { unlocked: LEGACY_LEVEL_IDS.length - 1 });
     await evaluateApp(page, ({ services }) => services.preferences.set({ motion: 'system' }));
     await navigate(page, key);
     await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene.children.list
@@ -224,9 +223,9 @@ for (const [key, expected] of [
   });
 }
 
-for (const key of ['Chessboard', 'TV', 'Modem', 'Wires', 'Station', 'Telescope', 'Flags', 'TapCode', 'Rally', 'Fireworks']) {
+for (const key of ['Chessboard', 'Modem', 'Wires', 'Station', 'Telescope', 'Flags', 'TapCode', 'Rally']) {
   test(`${key} has no sparkle cues`, async ({ page }) => {
-    await open(page, { unlocked: LEVEL_METADATA.length - 1 });
+    await open(page, { unlocked: LEGACY_LEVEL_IDS.length - 1 });
     await navigate(page, key);
     await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene.children.list
       .filter(object => object.getData?.('movableSparkles')).length)).toBe(0);
@@ -234,7 +233,7 @@ for (const key of ['Chessboard', 'TV', 'Modem', 'Wires', 'Station', 'Telescope',
 }
 
 test('inspection zoom controls are removed and the puzzle remains interactive', async ({ page }) => {
-  await open(page, { unlocked: LEVEL_METADATA.length - 1 }); await navigate(page, 'Cryptex');
+  await open(page, { unlocked: LEGACY_LEVEL_IDS.length - 1 }); await navigate(page, 'Cryptex');
   const candle = page.locator('.candle-action').first();
   await expect(candle).toBeVisible();
   await candle.hover();
@@ -243,12 +242,6 @@ test('inspection zoom controls are removed and the puzzle remains interactive', 
   expect(await evaluateApp(page, ({ services }) => services.levels.activeScene.candle.clicks)).toBe(1);
   await page.locator('#btn-options').click();
   await page.keyboard.press('Escape');
-  await navigate(page, 'TV');
-  // the set tunes itself every four seconds; the readings below must not straddle a tick
-  await evaluateApp(page, ({ services }) => services.levels.activeScene._autoTimer.remove(false));
-  const channel = await evaluateApp(page, ({ services }) => services.levels.activeScene._channel);
-  await page.locator('.da-btn[data-dir="1"]').focus(); await page.keyboard.press('Enter');
-  expect(await evaluateApp(page, ({ services }) => services.levels.activeScene._channel)).toBe((channel + 1) % 4);
 });
 
 test('comfort controls apply immediately, persist, and follow device preferences', async ({ page }) => {
@@ -267,10 +260,6 @@ test('comfort controls apply immediately, persist, and follow device preferences
   await page.setViewportSize({ width: 1366, height: 768 });
   await expect(page.locator('#btn-close-options')).toBeInViewport();
   await page.locator('#st-tab-options').click();
-  await page.locator('#btn-howto').click();
-  await expect(page.locator('#options-modal')).toBeHidden();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#btn-howto')).toBeFocused();
   await screenshot(page, 'comfort');
   await page.locator('#btn-close-options').click();
   await page.waitForTimeout(500); // the responsive scene rebuild uses a 350 ms debounce
@@ -297,7 +286,7 @@ test('comfort controls apply immediately, persist, and follow device preferences
 });
 
 test('reduced effects retain Morse, router signals and race progression', async ({ page }) => {
-  await open(page, { unlocked: LEVEL_METADATA.length - 1 }); await navigate(page, 'Lightswitch');
+  await open(page, { unlocked: LEGACY_LEVEL_IDS.length - 1 }); await navigate(page, 'Lightswitch');
   await evaluateApp(page, ({ services }) => { services.levels.activeScene.time.timeScale = 10; });
   await page.locator('#blk-switch').focus(); await page.keyboard.press('Enter');
   await expect.poll(() => evaluateApp(page, ({ services }) => services.levels.activeScene._letterIdx)).toBe(1);
@@ -323,7 +312,7 @@ test('unavailable storage reports session-only progress while still allowing pla
 });
 
 test('decorative loops pause and resume with comfort settings in every affected room', async ({ page }) => {
-  await open(page, { unlocked: LEVEL_METADATA.length - 1 });
+  await open(page, { unlocked: LEGACY_LEVEL_IDS.length - 1 });
   for (const key of ['PlantPot', 'Pi', 'MobilePhone', 'Rally']) {
     await navigate(page, key);
     await evaluateApp(page, ({ services }, key) => {

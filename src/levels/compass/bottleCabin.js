@@ -1,11 +1,11 @@
 import native from './nativeBottle.json';
 import {glowCanvas,addCanvasTexture} from '../../shared/paint.js';
 
-export const BOTTLE_KEYS={room:'compass_bottle_room_v1',needle:'compass_bottle_needle_v1',map:'compass_bottle_map_v1',glow:'compass_bottle_glow'};
+export const BOTTLE_KEYS={room:'compass_bottle_room_v1',needle:'compass_bottle_needle_v1',letter:'compass_bottle_letter_v2',glow:'compass_bottle_glow'};
 const base='assets/images/Compass/native-bottle-v1/';
 
 export function loadBottleCabin(scene){
-  for(const name of ['room','map'])if(!scene.textures.exists(BOTTLE_KEYS[name]))scene.load.image(BOTTLE_KEYS[name],`${base}${name}.webp`);
+  for(const name of ['room','letter'])if(!scene.textures.exists(BOTTLE_KEYS[name]))scene.load.image(BOTTLE_KEYS[name],`${base}${name}.webp`);
   if(!scene.textures.exists(BOTTLE_KEYS.needle))scene.load.spritesheet(BOTTLE_KEYS.needle,`${base}needle.webp`,{
     frameWidth:native.needle.tile,frameHeight:native.needle.tile,endFrame:native.needle.count-1,
   });

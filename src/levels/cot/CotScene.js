@@ -55,6 +55,10 @@ const ease=k=>k<.5?2*k*k:1-(-2*k+2)**2/2;
 export default class CotScene extends BasePuzzleScene {
   constructor() { super({key:"Cot"}); }
   init(data) { this.skipFadeIn=data?.skipFade??true; }
+  // fetched ahead while the player stands in the room (core/puzzlePrefetch.js):
+  // three.js, which comes with this level alone, so it is not waited on here
+  // and its shaders compiled, without blocking (stage3d.js prewarmCotStage)
+  static prefetch() { return import("./stage3d.js").then(({ prewarmCotStage }) => prewarmCotStage(TOYS.map(t => t.id))); }
   preload() {
     loadCotArt(this);
     if(!this.cache.audio.exists(MUSIC_BOX.key))this.load.audio(MUSIC_BOX.key,MUSIC_BOX.url);

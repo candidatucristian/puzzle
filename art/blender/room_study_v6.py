@@ -59,7 +59,7 @@ CHAIR_LEATHER = scan("armchair leather", "brown_leather", size=0.6, tint=(0.5, 0
 BRASS = aged_metal("brass", (0.55, 0.39, 0.17), (0.08, 0.055, 0.025), rough=(0.22, 0.5), scale=30, tarnish=0.5)
 IRON = plain("iron", (0.02, 0.02, 0.02), rough=0.45, metal=0.8)
 GLASS = plain("glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.5)
-WINDOW_GLASS = plain("window glass", (0.9, 0.93, 0.95), rough=0.03, transmission=1.0, ior=1.12)
+WINDOW_GLASS = plain("window glass", (0.9, 0.93, 0.95), rough=0.03, transmission=1.0, ior=1.03)
 WAX = bpy.data.materials.new("wax"); WAX.use_nodes = True
 _w = WAX.node_tree.nodes["Principled BSDF"]; _w.inputs["Base Color"].default_value = (0.86, 0.79, 0.64, 1); _w.inputs["Subsurface Weight"].default_value = 0.6; _w.inputs["Subsurface Radius"].default_value = (0.02, 0.012, 0.006); _w.inputs["Roughness"].default_value = 0.42
 WICK = plain("wick", (0.01, 0.01, 0.01), rough=0.9)
@@ -94,7 +94,11 @@ def linen(name, colour):
     Lk(b.outputs["BSDF"], mx.inputs[1]); Lk(tr.outputs["BSDF"], mx.inputs[2]); Lk(mx.outputs["Shader"], N["Material Output"].inputs["Surface"])
     return m
 CURTAIN = linen("cream linen curtains", (0.34, 0.31, 0.24))
-TILES = scan("cream fireplace tiles", "long_white_tiles", size=0.7, tint=(0.8, 0.72, 0.58), bright=0.64, sat=0.5, rough=(0.36, 0.55), bump=0.3, coat=0.0)
+# the fireplace's surround: oiled oak, matte, the panelling's own colour (it was
+# cream tiles and white stone until 2026-11-14 — "like a swimming pool")
+SURROUND = scan("fireplace surround | oiled oak", "dark_wood", size=0.8, tint=(0.56, 0.4, 0.27), bright=0.44, sat=0.7, rough=(0.48, 0.68), bump=0.32, coat=0.0, upright=True)
+SURROUND_X = scan("fireplace surround | oiled oak across", "dark_wood", size=0.8, tint=(0.56, 0.4, 0.27), bright=0.42, sat=0.7, rough=(0.48, 0.68), bump=0.32, coat=0.0)
+HEARTH = scan("hearth | dark slate", "slate_driveway", size=0.9, tint=(0.34, 0.29, 0.24), bright=0.36, sat=0.45, rough=(0.72, 0.9), bump=0.4, coat=0.0)
 THROW = scan("oatmeal knitted wool", "quatrefoil_jacquard_fabric", size=0.14, tint=(0.62, 0.55, 0.42), bright=0.42, sat=0.25, rough=(0.92, 1.0), bump=0.9)
 THROW.node_tree.nodes["Principled BSDF"].inputs["Sheen Weight"].default_value = 0.12
 THROW.node_tree.nodes["Principled BSDF"].inputs["Sheen Tint"].default_value = (0.62, 0.55, 0.42, 1)
@@ -188,7 +192,7 @@ dado_d(-150, D1, X1, -1)
 REVEAL = 30
 box_cm("reveal", wx0 - 3, wx0, WIN["sill"], SPRING, D1, D1 + REVEAL, FRAME)
 box_cm("reveal", wx1, wx1 + 3, WIN["sill"], SPRING, D1, D1 + REVEAL, FRAME)
-box_cm("sill", wx0 - 12, wx1 + 12, WIN["sill"] - 4, WIN["sill"], D1 - 16, D1 + REVEAL - 6, FRAME_X, 1.0)
+box_cm("sill", wx0 - 6, wx1 + 6, WIN["sill"] - 4, WIN["sill"], D1 - 6, D1 + REVEAL - 6, FRAME_X, 1.0)
 for x0, x1 in ((wx0 - 10, wx0 - 1), (wx1 + 1, wx1 + 10)):
     box_cm("architrave", x0, x1, WIN["sill"] - 4, SPRING, D1 - 4.5, D1, FRAME, 0.6)
 verts, faces = [], []
@@ -233,9 +237,9 @@ vs = [bm.verts.new(tuple(P(WIN["x"], SPRING, GD)))] + [bm.verts.new(tuple(P(WIN[
 for i in range(1, n + 1): bm.faces.new((vs[0], vs[i], vs[i + 1]))
 bm.to_mesh(gl); bm.free()
 arch(link(bpy.data.objects.new("fan glass", gl))).data.materials.append(WINDOW_GLASS)
-curtain(RNG, wx0 - 62, wx0 - 6, D1 - 7, TOP - 22, CURTAIN)
-curtain(RNG, wx1 + 6, wx1 + 62, D1 - 7, TOP - 22, CURTAIN)
-curtain_pole(wx0 - 70, wx1 + 70, TOP - 18, D1 - 9, BRASS)
+curtain(RNG, wx0 - 40, wx0 - 2, D1 - 7.5, TOP - 22, CURTAIN, folds=4, deep=5.5)
+curtain(RNG, wx1 + 2, wx1 + 40, D1 - 7.5, TOP - 22, CURTAIN, folds=4, deep=5.5)
+curtain_pole(wx0 - 39, wx1 + 39, TOP - 18, D1 - 10.5, BRASS)
 # the garden beyond, at night, in the rain
 MOON_AT = P(-900, 900, 3600)
 garden(MOON_AT, [("island_tree_01", -260, 1500, 9.0, 0.3), ("island_tree_02", 240, 2100, 11.0, 1.4), ("tree_small_02", 60, 1150, 4.5, 2.2),
@@ -281,7 +285,7 @@ basil(WIN["x"] - 12, top_, random.Random(31))
 import_model("potted_plant_04", height=M(17), at=tuple(P(WIN["x"] + 12, WIN["sill"], pot_d)), rot=2.1)
 import_model("potted_plant_01", height=M(24), at=tuple(P(WIN["x"] + 34, WIN["sill"], pot_d)), rot=4.0)
 
-# ── the fireplace on the back wall: white stone, the fire laid and cold ────
+# ── the fireplace on the back wall: oiled oak, the fire laid and cold ──────
 fx, fw = FIRE["x"], FIRE["w"]
 breast = box_cm("chimney breast", BREAST0, BREAST1, 0, TOP, BF, D1 + 1, SAGE)
 ox0, ox1, oy1 = fx - 34, fx + 34, 78            # the fire's opening
@@ -293,16 +297,16 @@ box_cm("fire throat", ox0, ox1, oy1 - 3, oy1, BF, D1 - 8, SOOT)
 box_cm("fire floor", ox0, ox1, 0, 1.5, BF, D1 - 8, SOOT)
 # the surround: jambs, frieze, the mantel shelf, the hearth before it
 for x0, x1 in ((fx - fw / 2, ox0 - 2), (ox1 + 2, fx + fw / 2)):
-    box_cm("jamb", x0, x1, 0, 112, BF - 6, BF, TILES, 0.3)
-    box_cm("plinth block", x0 - 1.5, x1 + 1.5, 0, 14, BF - 7.5, BF, STONE, 0.6)
-    box_cm("corbel", x0 + 2, x1 - 2, 104, 120, BF - 8, BF, STONE, 0.8)
-box_cm("frieze", fx - fw / 2, fx + fw / 2, oy1 + 2, 120, BF - 5, BF, TILES, 0.3)
+    box_cm("jamb", x0, x1, 0, 112, BF - 6, BF, SURROUND, 0.3)
+    box_cm("plinth block", x0 - 1.5, x1 + 1.5, 0, 14, BF - 7.5, BF, SURROUND, 0.6)
+    box_cm("corbel", x0 + 2, x1 - 2, 104, 120, BF - 8, BF, SURROUND_X, 0.8)
+box_cm("frieze", fx - fw / 2, fx + fw / 2, oy1 + 2, 120, BF - 5, BF, SURROUND_X, 0.3)
 for x0, x1 in ((ox0 - 2, ox0), (ox1, ox1 + 2)):
     box_cm("register", x0, x1, 0, oy1 + 2, BF - 2, BF, CAST, 0.3)
 box_cm("register", ox0 - 2, ox1 + 2, oy1, oy1 + 2, BF - 2, BF, CAST, 0.3)
 MANTEL_Y = 125
-box_cm("mantel", fx - fw / 2 - 8, fx + fw / 2 + 8, 120, MANTEL_Y, BF - 18, BF, STONE, 1.2)
-box_cm("hearth", fx - fw / 2 - 6, fx + fw / 2 + 6, 0, 2.5, BF - 48, BF, STONE, 0.8)
+box_cm("mantel", fx - fw / 2 - 8, fx + fw / 2 + 8, 120, MANTEL_Y, BF - 18, BF, SURROUND_X, 1.2)
+box_cm("hearth", fx - fw / 2 - 6, fx + fw / 2 + 6, 0, 2.5, BF - 48, BF, HEARTH, 0.8)
 rod("fender", P(fx - fw / 2 + 4, 8, BF - 42), P(fx + fw / 2 - 4, 8, BF - 42), M(0.9), BRASS, verts=16)
 for x in (fx - fw / 2 + 4, fx + fw / 2 - 4):
     rod("fender", P(x, 8, BF - 42), P(x, 8, BF - 2), M(0.9), BRASS, verts=16)

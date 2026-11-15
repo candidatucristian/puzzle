@@ -37,35 +37,6 @@ export const es = {
       "failed": "No se ha podido cargar la habitación. Tu progreso está guardado. Inténtalo de nuevo.",
       "retry": "Reintentar"
   },
-  studyGuide: {
-      "eyebrow": "Sala I",
-      "title": "Tu primer enigma",
-      "replay": "Tu primer enigma",
-      "close": "Cerrar la introducción a los enigmas",
-      "illustration": "La vitrina de la sala brilla; un cursor hace clic y aparece el enigma; una respuesta de ejemplo se escribe en el campo y se envía.",
-      "one": "Lo que brilla esconde un enigma. Haz clic en la vitrina de la mesita para examinarla.",
-      "two": "Escribe el código descifrado en el campo bajo la imagen y pulsa {submit} o {enter}. Equivocarse no cuesta nada.",
-      "done": "Entendido",
-      "footer": "Puedes volver a verlo en Ajustes.",
-      "example": "Ejemplo de escritura",
-      "sample": "TU CÓDIGO",
-      "oneLabel": "Examinar",
-      "twoLabel": "Responder"
-  },
-  hallGuide: {
-      "eyebrow": "El vestíbulo",
-      "title": "Primeros pasos",
-      "replay": "Primeros pasos",
-      "close": "Cerrar la introducción",
-      "illustration": "La puerta I del vestíbulo: un cursor hace clic y se abre; un segundo clic, y entras.",
-      "one": "Lleva el cursor a la puerta I y haz clic una vez: se abre.",
-      "oneReduced": "Con el movimiento reducido, un solo clic en una puerta abierta te lleva directo a la sala.",
-      "two": "Haz clic de nuevo en la puerta abierta para entrar. Las demás puertas necesitan las llaves que encuentres por el camino.",
-      "done": "Entendido",
-      "footer": "Puedes volver a verlo en Ajustes.",
-      "oneLabel": "Abrir",
-      "twoLabel": "Entrar"
-  },
   "levels": {
     "binarytree": "El árbol viejo",
     "plantpot": "El jardín a la luz de la luna",
@@ -74,7 +45,6 @@ export const es = {
     "chessboard": "La partida inacabada",
     "mobilephone": "Una llamada inesperada",
     "lightswitch": "Un destello en la oscuridad",
-    "tv": "La emisión vacía",
     "modem": "La habitación bajo el escritorio",
     "telescope": "La ventana abierta",
     "wires": "Antes del amanecer",
@@ -86,21 +56,9 @@ export const es = {
     "tapcode": "Marcas en la piedra",
     "rally": "El circuito nocturno",
     "overtime": "Fuera de horario",
-    "fireworks": "Medianoche sobre París",
     "compass": "El camarote del capitán",
     "bookshelf": "La biblioteca a la luz de una lámpara",
     "chemistry": "La mesa del boticario",
-    "billiards": "El pub silencioso",
-    "metro": "El andén al anochecer",
-    "resistors": "El banco del taller",
-    "ripples": "La luz de la luna sobre el agua",
-    "vertex": "Una disposición extraña",
-    "plotter": "La mesa de dibujo",
-    "kinetic": "El armario de los juegos",
-    "genome": "El espécimen de cristal",
-    "curtain": "El salón",
-    "thesill": "El alféizar",
-    "venetian": "Una noche en Venecia",
     "molecules": "El cuaderno de Silas",
     "phials": "Dos frascos",
     "balance": "La balanza del boticario",
@@ -210,90 +168,6 @@ export const es = {
     "safariHelp": "Safari en iPhone no permite ocultar sus barras. Pulsa Compartir → Añadir a pantalla de inicio → Añadir y abre Mansión Ashcombe desde el nuevo icono."
   },
   "gameplay": {
-    "tv": {
-      "previous": "Canal anterior",
-      "next": "Canal siguiente",
-      "channels": [
-        {
-          "img": 0,
-          "station": "RED COSMOS · CANAL 3",
-          "lines": [
-            "Los astrónomos lo confirmaron:",
-            "un supervacío de 300 millones",
-            "de años luz. Sin galaxias.",
-            "Sin materia oscura.",
-            "Ninguna señal regresa.",
-            "",
-            "La doctora Eisner escribió:",
-            "«No es oscuridad. La oscuridad",
-            "implica al menos ausencia de luz.",
-            "Aquí falta la propia ausencia.",
-            "No tenemos una palabra para ello».",
-            "",
-            "[ SEÑAL INESTABLE ]"
-          ]
-        },
-        {
-          "img": 1,
-          "station": "EL TRIBUNAL · CANAL 7",
-          "lines": [
-            "El juez dictaminó que el contrato",
-            "nunca había existido legalmente.",
-            "Sin peso, sin obligación,",
-            "sin fuerza. Como si se hubiera",
-            "escrito sobre humo.",
-            "",
-            "«Un acuerdo sin contraprestación",
-            "válida —afirmó el tribunal—",
-            "no está meramente incumplido.",
-            "Nunca existió. La ley tiene",
-            "una palabra precisa para eso».",
-            "",
-            "[ FIN DE LA EMISIÓN ]"
-          ]
-        },
-        {
-          "img": 2,
-          "station": "REVISIÓN DE CÓDIGO · CANAL 11",
-          "lines": [
-            "Una función realiza su trabajo,",
-            "pero no devuelve ningún valor:",
-            "ni cero, ni false, ni un error.",
-            "¿Qué tipo declaramos?",
-            "",
-            "Cero es un valor. False también.",
-            "Incluso null tiene significado.",
-            "",
-            "Hay una palabra clave en C, C++,",
-            "Java, Swift y muchos otros,",
-            "reservada a la ausencia total",
-            "de un valor de retorno.",
-            "",
-            "> tipo: ________"
-          ]
-        },
-        {
-          "img": 3,
-          "station": "FUNDACIÓN CIENTÍFICA · CANAL 15",
-          "lines": [
-            "Retira toda la materia y",
-            "toda la energía. Extrae cada",
-            "fotón. Baja la temperatura",
-            "al cero absoluto. Aísla el conjunto.",
-            "",
-            "¿Qué queda?",
-            "",
-            "Los físicos esperaban que nada.",
-            "Hallaron espuma cuántica:",
-            "fluctuaciones donde debía",
-            "haber una ausencia perfecta.",
-            "",
-            "Incluso el vacío tiene estructura.",
-            "Seguimos usando la misma palabra."
-          ]
-        }
-      ]
-    },
     "lightSwitch": "Pulsar el interruptor",
     "familyPortrait": "Ivy y Rose Ashcombe · 1959",
     "putDown": "pulsa en cualquier lugar para dejarlo",
@@ -313,36 +187,8 @@ export const es = {
       "note": "no contestes\nsi no sabes\nquién está\nllamando.",
       "calling": "TE ESTÁN LLAMANDO…"
     },
-    "vertex": {
-      "degree": "Grado de conexión",
-      "heading": "ESTUDIO GEOMÉTRICO"
-    },
-    "venetian": {
-      "clue": "Distingue lo que se oculta entre el ruido.",
-      "tilt": "INCLINAR"
-    },
-    "curtain": {
-      "clue": "Deja que las sombras guíen tu mirada.",
-      "draw": "CORRER LA\nCORTINA"
-    },
     "sill": {
       "clue": "Lee la luz, no la oscuridad."
-    },
-    "kinetic": {
-      "clue": "Una curva continua\ncuenta como una."
-    },
-    "genome": {
-      "archive": "ARCHIVO MOLECULAR / ADN",
-      "strand": "CADENA CODIFICANTE 5' → 3' / CÓDIGO ESTÁNDAR",
-      "clue": "Los componentes de la vida forman la respuesta."
-    },
-    "plotter": {
-      "directions": "X DERECHA / Y ARRIBA / VOLVER AL ORIGEN EN CADA BLOQUE",
-      "header": "ESTADO DEL TRAZADOR",
-      "terminal": "TERMINAL VECTORIAL / 04 TRAZADOS",
-      "block": "BLOQUE {number}",
-      "clue": "Conviértete en la máquina. Sigue el trazado.",
-      "guide": "PU = levantar lápiz  PD = bajar lápiz  X,Y = posición"
     },
     "resistorClose": "Examinar R{number} de cerca"
   },
@@ -498,7 +344,8 @@ export const es = {
     "close": "Cerrar las pistas",
     "closeTip": "Cerrar las pistas (Esc)",
     "listening": "Hay que escuchar",
-    "reference": "Consultar una referencia puede ayudar"
+    "reference": "Consultar una referencia puede ayudar",
+    "decoder": "Un dispositivo descifrador puede ayudar"
   },
   "map": {
     "plan": "Plano de la mansión",
@@ -594,8 +441,6 @@ export const es = {
     "langZh": "简体中文",
     "langFr": "Français",
     "langEs": "Español",
-    "howto": "Cómo jugar",
-    "howtoTip": "Consultar cómo se juega",
     "credits": "Créditos",
     "creditsTip": "Las personas y los recursos que han hecho posible el juego",
     "reset": "Restablecer el juego",
@@ -622,32 +467,6 @@ export const es = {
     "soundText": "Efectos de sonido y música: Pixabay (Pixabay Content License).",
     "software": "Software",
     "note": "Los textos completos de las licencias se incluyen con el juego en licenses/THIRD-PARTY-NOTICES.txt."
-  },
-  "howto": {
-    "title": "Cómo jugar",
-    "backToSettings": "Volver a los ajustes",
-    "findAnswerTitle": "Encontrar la respuesta",
-    "findAnswerText": "Cada habitación esconde una respuesta. Observa, escucha e interactúa con los objetos. Introduce lo que encuentres en el campo bajo la imagen, usando las letras y los números del acertijo. Las respuestas incorrectas no se penalizan.",
-    "controlsTitle": "Los controles",
-    "submitLabel": "Enviar",
-    "submitDesc": "Comprueba la respuesta escrita o pulsa Intro.",
-    "restartLabel": "Reiniciar",
-    "restartDesc": "La flecha circular junto a Enviar reinicia el acertijo actual. Tu progreso se conserva.",
-    "hintLabel": "Pista",
-    "hintDesc": "El botón Pista, bajo la imagen, revela las pistas de una en una.",
-    "keysLabel": "Atajos",
-    "keysDesc": "M: mapa de la mansión · C: expediente · Z o botón derecho mantenido: lupa · Esc: volver por donde has venido.",
-    "settingsLabel": "Ajustes",
-    "settingsDesc": "Ajusta el sonido, el idioma, el tamaño del texto, el movimiento y los efectos. Restablecer el juego borra el progreso tras una segunda confirmación.",
-    "movingTitle": "Moverse por la mansión",
-    "movingText": "Resuelve una habitación para abrir la siguiente. El mapa te permite volver a los lugares desbloqueados. El progreso se guarda automáticamente en este navegador.",
-    "clueLabelsTitle": "Etiquetas de las pistas",
-    "listeningLabel": "Hay que escuchar",
-    "listeningDesc": "El sonido forma parte del acertijo. Revisa el volumen en los ajustes y escucha con atención.",
-    "referenceLabel": "Consultar una referencia puede ayudar",
-    "referenceDesc": "Puede que necesites consultar un alfabeto, un cifrado o una notación para descifrar la pista.",
-    "desktopTitle": "Navegadores de móvil y tableta",
-    "desktopText": "Mansión Ashcombe está diseñada para ordenadores de sobremesa y portátiles. Abre el juego en un ordenador."
   },
   "manual": {
     "title": "El manual del inspector",
@@ -774,8 +593,8 @@ export const es = {
       "place": "Devon, Inglaterra",
       "date": "Octubre de 1961",
       "story": [
-        "La noche del 13 de octubre de 1961, tres hermanos cerraron con llave todas las puertas de su casa en Devon y se adentraron en la oscuridad. No faltaba nada. Nadie había resultado herido. Nunca se supo por qué.",
-        "Un año después se cerró el caso. Solo un policía se negó a olvidarlo."
+        "La noche del 13 de octubre de 1961, tres miembros de la familia Ashcombe desaparecieron de su casa en Devon. Las puertas estaban cerradas con llave. No había señales de lucha.",
+        "Un año después, la investigación se dio por cerrada. Lo ocurrido en la mansión Ashcombe quedó sin explicación."
       ]
     },
     "asides": [
@@ -786,7 +605,7 @@ export const es = {
         ],
         "over": "Exeter · 12 de octubre de 2001",
         "lines": [
-          "Cada octubre vuelvo al mismo caso."
+          "Cada octubre vuelvo a sacar el expediente Ashcombe."
         ]
       },
       {
@@ -796,7 +615,7 @@ export const es = {
         ],
         "over": "Inspector Arthur Wren",
         "lines": [
-          "Mi padre murió en primavera. Desde entonces, la casa está demasiado silenciosa."
+          "Mi padre murió en primavera. Aún me sorprendo pensando que puedo hacerle una pregunta más."
         ]
       },
       {
@@ -805,7 +624,7 @@ export const es = {
           27.6
         ],
         "lines": [
-          "Esta noche, una carta bajo la puerta. Sin sello. Sin matasellos."
+          "Esta noche, alguien dejó una carta bajo mi puerta. El sobre no llevaba sello postal."
         ]
       },
       {
@@ -814,7 +633,7 @@ export const es = {
           37.4
         ],
         "lines": [
-          "Solo mi nombre, escrito con una letra que casi reconozco."
+          "El sello de los Ashcombe. El mismo escudo que aparece en las fotografías."
         ]
       },
       {
@@ -824,7 +643,7 @@ export const es = {
         ],
         "over": "Caso 61/1013",
         "lines": [
-          "Me sé el expediente de memoria. Aun así, lo abro."
+          "Saco el expediente. El nombre de mi padre figura en el informe original."
         ]
       },
       {
@@ -834,7 +653,7 @@ export const es = {
         ],
         "over": "La casa de los Ashcombe · 1961",
         "lines": [
-          "Mi padre fue el primero en llegar aquella mañana. Nunca habló de lo que vio."
+          "Fue el primer agente en llegar a la casa. No le gustaba hablar de aquella mañana."
         ]
       },
       {
@@ -843,7 +662,7 @@ export const es = {
           61.6
         ],
         "lines": [
-          "He estado ante su verja más veces de las que quiero admitir. Nunca he entrado."
+          "He estado ante esa verja innumerables veces, preguntándome qué era lo que no quería contarme."
         ]
       },
       {
@@ -853,7 +672,7 @@ export const es = {
         ],
         "over": "Mañana se cumplen cuarenta años",
         "lines": [
-          "Cuarenta años preguntando. Esta noche, alguien ha respondido."
+          "Mañana se cumplen cuarenta años de su desaparición. ¿Por qué me escriben ahora?"
         ]
       }
     ]
@@ -1025,6 +844,7 @@ export const es = {
     }
   },
   "caseReport": {
+    sealPhotograph: {"caption":"Sello de la familia Ashcombe · Fotografía del expediente","alt":"Una fotografía antigua del sello de cera de los Ashcombe, con el mismo escudo que el sello de la carta."},
     "dateline": "Policía de Devon y Cornualles · Caso 61/1013",
     "salutation": "Desaparición de Ivy, Silas y Orion Ashcombe",
     "body": [
@@ -1179,10 +999,6 @@ export const es = {
       "PULSOS DE LUZ.\nNo todos los destellos duran lo mismo.",
       "No todos los destellos duran lo mismo. Cada pulsación cuenta una parte del mensaje; la siguiente cuenta la próxima."
     ],
-    "tv": [
-      "CUATRO EMISIONES, UNA SOLA PALABRA AUSENTE.\nBusca el tema que une todos los programas.",
-      "Cuatro mundos diferentes y una misma ausencia. Busca la palabra alrededor de la que gira cada programa."
-    ],
     "modem": [
       "PARPADEOS BINARIOS.\nSiete luces llevan el mensaje y cinco llevan la cuenta.",
       "Siete luces llevan el mensaje y cinco llevan la cuenta. Encendido o apagado es todo lo que necesita una máquina: lee una fila cada vez."
@@ -1202,10 +1018,6 @@ export const es = {
     "pi": [
       "LUCES EN LAS RAMAS.\nCuenta las luces nivel por nivel desde arriba.",
       "Nivel por nivel, desde arriba. No importa dónde estén las luces, solo cuántas hay. Los números te resultarán familiares."
-    ],
-    "crossing": [
-      "BARRAS Y ESPACIOS.\nRayas como las de los productos cotidianos.",
-      "Las barras y los espacios no tienen todos la misma anchura. Los productos de las tiendas llevan rayas como estas."
     ],
     "herbarium": [
       "MARCOS GEOMÉTRICOS.\nCuenta los lados de los polígonos que rodean cada ejemplar.",
@@ -1229,10 +1041,6 @@ export const es = {
     ],
     "overtime": [
       "Toma las horas como números y deja que la máquina haga el trabajo. Después mira el resultado desde otro ángulo."
-    ],
-    "fireworks": [
-      "TONOS HEXADECIMALES.\nLos colores también se escriben como valores informáticos.",
-      "Cada globo tiene un color exacto, que el ordenador escribe en tres pares. Solo importa el primer par de cada uno: léelos como letras."
     ],
     "compass": [
       "Los números del mapa son direcciones, igual que en la brújula. Cada línea es un pequeño recorrido: trázalo en papel."
@@ -1273,49 +1081,5 @@ export const es = {
       "NÚMEROS DE LA TABLA PERIÓDICA.\nConvierte los números atómicos en símbolos.",
       "Cada nivel coincide con un número. La tabla descolorida de la pared da a cada uno un nombre corto."
     ],
-    "billiards": [
-      "BOLAS QUE FALTAN EN LAS TRONERAS.\nEl orden de las troneras da las posiciones de las letras.",
-      "Averigua qué números faltan; los colores y las rayas permiten distinguirlos. Lee las troneras en orden: los números pueden convertirse en letras."
-    ],
-    "metro": [
-      "INDICATIVOS FONÉTICOS.\nLee las iniciales de los nombres usados en aviación.",
-      "Di en voz alta los nombres de las paradas. Un piloto o un operador de radio reconocería la primera palabra de cada una."
-    ],
-    "resistors": [
-      "CÓDIGO DE COLORES ELECTRÓNICO.\nLa primera banda da la cifra significativa.",
-      "Solo cuenta la primera banda de cada resistencia: empieza por el extremo alejado del dorado. La tarjeta asigna un valor a cada color."
-    ],
-    "ripples": [
-      "ONDAS QUE SE CRUZAN.\nLee las piedras que tocan tres ondas al mismo tiempo.",
-      "Algunas piedras reciben los tres anillos en el mismo instante. Lee solo esas, de arriba abajo."
-    ],
-    "vertex": [
-      "GRADOS DE LOS VÉRTICES.\nCuenta las líneas que llegan a los puntos marcados.",
-      "Cuenta lo que se une de verdad a cada punto, no lo que solo pasa junto a él. Los números pueden representar letras."
-    ],
-    "plotter": [
-      "CONVIÉRTETE EN LA MÁQUINA.\nLos cuatro bloques de coordenadas son instrucciones para un lápiz.",
-      "Usa una hoja para cada bloque y une sus puntos en orden. Cada uno dibuja algo que puedes leer."
-    ],
-    "kinetic": [
-      "UN ESTUDIO DE LOS CONTORNOS.\nLas formas de las tapas, de izquierda a derecha.",
-      "Cuenta los lados rectos de cada forma; la tarjeta explica cómo contar una curva. Los números pueden representar letras."
-    ],
-    "genome": [
-      "LOS COMPONENTES DE LA VIDA.\nLos fragmentos de ADN resaltados, de izquierda a derecha.",
-      "Cada grupo de tres representa algo en el código de la vida, y esos componentes tienen códigos de una sola letra."
-    ],
-    "curtain": [
-      "UNA MÁSCARA PERFORADA.\nLa luz pasa por los agujeros de la tela y se alinea con las letras.",
-      "Los agujeros dejan pasar poca luz. En algún punto del riel enmarcan justo lo necesario para leer."
-    ],
-    "thesill": [
-      "ESPACIOS NEGATIVOS ENTRE SOMBRAS.\nFíjate en la luz que queda entre ellas.",
-      "Olvida las sombras. Las formas claras entre ellas son el mensaje."
-    ],
-    "venetian": [
-      "EL ÁNGULO DE LAS LAMAS.\nInclina la persiana para revelar la pista oculta.",
-      "El cordón inclina las lamas. En cierto ángulo, lo confuso se oscurece y una forma mayor sigue iluminada."
-    ]
   }
 };

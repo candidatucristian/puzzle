@@ -121,6 +121,7 @@ export default class NativeModemScene extends BasePuzzleScene {
     this._cancelAnimation();
     this._hwSound?.stop(); this._hwSound?.destroy(); this._hwSound = null;
     this._leds = null; this._motes = [];
-    for (const name of names) if (this.textures.exists(key(name))) this.textures.remove(key(name));
+    // (its pictures stay loaded: core/sceneAssetCache.js lets them go only when
+    // the house holds too many, so coming back is quick)
   }
 }

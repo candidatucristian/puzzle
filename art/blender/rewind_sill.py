@@ -70,6 +70,7 @@ lamp("the moon", "SUN", tuple(P(-500, 2600, 2900)), aim=tuple(P(20, 0, 380)), en
 sky_l = lamp("sky through the window", "AREA", tuple(P(WIN["x"], 180, D1 + 14)), aim=tuple(P(WIN["x"], 60, 380)), energy=float(arg("--sky", "14")), colour=(0.5, 0.62, 0.95), size=1.4, size_y=1.9)
 sky_l.visible_camera = False; sky_l.visible_transmission = False; sky_l.visible_glossy = False
 desk_l = lamp("the lamp", "POINT", tuple(P(-61, 117, 321)), energy=float(arg("--lamp", "16")), colour=(1.0, 0.8, 0.52), size=0.012)
+desk_l.visible_camera = False; desk_l.visible_glossy = False
 key_l = lamp("lamp light on the sill", "AREA", tuple(P(-40, 125, 470)), aim=tuple(P(30, 92, 604)), energy=float(arg("--key", "9")), colour=(1.0, 0.8, 0.55), size=0.9)
 key_l.visible_camera = False; key_l.visible_glossy = False
 fill_l = lamp("fill at the eye", "AREA", tuple(P(eye[0] + 20, eye[1] + 30, eye[2] - 20)), aim=tuple(P(30, 90, 604)), energy=float(arg("--fill", "4")), colour=(0.8, 0.85, 1.0), size=1.2)

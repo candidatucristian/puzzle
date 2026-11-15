@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { evaluateApp, openHints } from './app.js';
-import { LEVEL_METADATA } from '../../src/levels/metadata.js';
+import { LEVEL_METADATA, LEGACY_LEVEL_IDS } from '../../src/levels/metadata.js';
 
 async function launch(page) {
   await page.addInitScript(lastIndex => {
@@ -10,7 +10,7 @@ async function launch(page) {
       localStorage.setItem('puzzleUnlockedLevel', String(lastIndex));
     }
     localStorage.setItem('hasPlayedBefore', 'true');
-  }, LEVEL_METADATA.length - 1);
+  }, LEGACY_LEVEL_IDS.length - 1);
   await page.goto('/');
   await expect(page.locator('#loading-screen')).toHaveCount(0, { timeout: 30000 });
   await evaluateApp(page, ({ ui }) => ui.showGame());
@@ -148,7 +148,7 @@ test('final answer, replay and navigation own exactly one completion callback', 
 });
 
 test('an inserted unsolved room prevents premature completion and completes the game when solved', async ({ page }) => {
-  const missing = LEVEL_METADATA.find(level => level.key === 'Kinetic');
+  const missing = LEVEL_METADATA.find(level => level.key === 'Pi');
   const last = LEVEL_METADATA.at(-1);
   await page.addInitScript(({ ids, missing, last }) => {
     localStorage.setItem('puzzleProgress', JSON.stringify({
@@ -174,8 +174,10 @@ test('Hints follow the catalog and dialogs support keyboard focus and Escape', a
   await expect(page.locator('#info-requires')).toContainText('Reference may help');
   await page.keyboard.press('Escape');
   await expect(page.locator('#btn-hint')).toBeFocused();
+  // (a puzzle written in a code: the decoding device, since 2026-11-13)
   await navigate(page, 'Cryptex'); await openHints(page);
-  await expect(page.locator('#info-requires')).toBeHidden();
+  await expect(page.locator('#info-requires')).toContainText('A decoding device may help');
+  await expect(page.locator('#info-requires')).not.toContainText('Reference may help');
   await expect(page.locator('#hint-list')).toBeInViewport();
   await expect(page.locator('#right-sidebar [data-close-drawer]')).toBeInViewport();
 });
@@ -184,10 +186,10 @@ test('candle stays extinguished through resize and resets on replay', async ({ p
   await launch(page); await navigate(page, 'Cryptex');
   const candles = page.locator('.candle-action');
   const candle = candles.first();
-  await sceneState(page, 'scene._openOverlay()');
+  await sceneState(page, 'scene._letter.open()');
   await candle.click();
   expect(await sceneState(page, 'scene.candle.clicks')).toBe(0);
-  await sceneState(page, 'scene._closeOverlay()');
+  await sceneState(page, 'scene._letter.close()');
   await expect.poll(() => sceneState(page, 'scene._overlayOpen')).toBe(false);
   // the button comes back 820 ms after each breath on the game's clock; under
   // a loaded machine the frames that carry that clock can arrive slowly
@@ -275,10 +277,9 @@ test('Options controls and Execute use mouseclick, including keyboard activation
     services.audio.playSfx = (key, ...args) => { services.audio.testClicks.push(key); return original(key, ...args); };
   });
   await page.locator('#btn-options').click();
-  await page.locator('#btn-howto').click(); await page.locator('#btn-close-howto').click();
   await page.locator('#btn-close-options').click();
   await page.locator('#btn-submit').focus(); await page.keyboard.press('Enter');
-  expect(await sceneState(page, 'services.audio.testClicks')).toEqual(['ui_click', 'ui_click', 'click', 'ui_click', 'ui_click']);
+  expect(await sceneState(page, 'services.audio.testClicks')).toEqual(['ui_click', 'ui_click', 'ui_click']);
 });
 
 test('confirmed reset cancels pending navigation and preserves sound preferences', async ({ page }) => {
@@ -334,19 +335,6 @@ for (const deniedStorage of [false, true]) {
     expect(errors).toEqual([]);
   });
 }
-
-test('TV channels and the resized DOM remain interactive', async ({ page }) => {
-  const errors = []; page.on('pageerror', error => errors.push(error.message));
-  await launch(page); await navigate(page, 'TV');
-  const caption = page.locator('.tv__caption .st');
-  await expect(caption).toContainText('COSMOS NET');
-  await page.locator('.da-btn[data-dir="1"]').click();
-  await expect(caption).toContainText('LAWCOURT');
-  await page.keyboard.press('ArrowLeft'); await expect(caption).toContainText('COSMOS NET');
-  await page.setViewportSize({ width: 1360, height: 900 }); await page.waitForTimeout(500);
-  await page.locator('.da-btn[data-dir="1"]').click(); await expect(caption).toContainText('LAWCOURT');
-  expect(errors).toEqual([]);
-});
 
 test('the moon still draws on mouse hover and clears when the pointer leaves', async ({ page }) => {
   await launch(page); await navigate(page, 'Pi');

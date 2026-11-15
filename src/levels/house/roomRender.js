@@ -1,6 +1,7 @@
 import { makeCanvas } from "../../shared/paint.js";
 import { thingAt } from "./roomKit.js";
 import COFFER from './nativeCoffer.json';
+import { cofferAtlasKey, hasNativeCoffer } from './cofferArt.js';
 import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 
 // The rooms off the halls, rendered in Blender (art/blender/room_common.py,
@@ -13,7 +14,7 @@ import { optionalSceneAsset } from '../../core/sceneAssetLoading.js';
 // covering it, never stretched.
 // The coffer's states come from its own light-calibrated Cycles renders.
 const ROOMS = {
-  Study: { folder: "Room1", version: 12 },
+  Study: { folder: "Room1", version: 13 },
   Room2: { folder: "Room2", version: 11 },
   Room3: { folder: "Room3", version: 3 },
   Room4: { folder: "Room4", version: 3, extra: Array.from({ length: 10 }, (_, i) => `drawer-${i}`) },
@@ -34,7 +35,9 @@ const urlOf = (room, name) => {
   return `assets/images/${folder}/${folder.toLowerCase()}-${name}-render-v${ROOMS[room].version ?? 1}.webp`;
 };
 const picturesOf = (room) => {
-  const chest = ROOMS[room].chest === false ? [] : ["chest-shut", "chest-open"];
+  // Native atlases already contain both end poses; separate copies cost two
+  // requests and another pair of decoded textures on every cold room visit.
+  const chest = ROOMS[room].chest === false || hasNativeCoffer(room) ? [] : ["chest-shut", "chest-open"];
   return ["lights-1", ...chest, ...(ROOMS[room].extra ?? [])];
 };
 
@@ -43,11 +46,15 @@ export function roomRenderAsset(room, name = 'lights-1') {
   return ROOMS[room] ? { key: keyOf(room, name), url: urlOf(room, name) } : null;
 }
 
+/** Exactly the room pictures requested by preload, without duplicate poses. */
+export function roomRenderAssets(room) {
+  return ROOMS[room] ? picturesOf(room).map(name => roomRenderAsset(room, name)) : [];
+}
+
 export function loadRoomRender(scene, room) {
-  for (const name of picturesOf(room)) {
-    const key = keyOf(room, name);
-    if (name !== 'lights-1') optionalSceneAsset(scene, key);
-    if (!scene.textures.exists(key)) scene.load.image(key, urlOf(room, name));
+  for (const { key, url } of roomRenderAssets(room)) {
+    if (key !== keyOf(room, 'lights-1')) optionalSceneAsset(scene, key);
+    if (!scene.textures.exists(key)) scene.load.image(key, url);
   }
 }
 
@@ -120,5 +127,13 @@ export function roomRenderPicture(scene, room, name, width, height) {
 
 /** The chest, shut or open, on a canvas of its own: the room shows it in its box. */
 export function roomRenderChest(scene, room, open) {
+  const spec = COFFER.rooms[room], key = cofferAtlasKey(room);
+  if (spec && scene.textures.exists(key)) {
+    const [x, y, width, height] = spec.frames[open ? spec.frames.length - 1 : 0];
+    const image = scene.textures.get(key).getSourceImage();
+    const canvas = makeCanvas(width, height);
+    canvas.getContext('2d').drawImage(image, x, y, width, height, 0, 0, width, height);
+    return canvas;
+  }
   return roomRenderPicture(scene, room, open ? "chest-open" : "chest-shut");
 }

@@ -13,12 +13,14 @@ import Room8Scene from '../levels/room8/Room8Scene.js';
 import Room11Scene from '../levels/room11/Room11Scene.js';
 import { EMPTY_ROOMS } from '../levels/house/emptyRooms.js';
 
-// The web demo's build (vite build --mode demo) has only the hall and Rooms
-// I to III; the floors up the stairs, the rooms past them, and the puzzles in
-// them (levels/registry.js) are left out of it. Their doors, and the gate
-// across the stairs, stay locked in the demo all the same.
+// The web demo's build (vite build --mode demo) plays only the hall and Rooms
+// I to III; the rooms past them and the puzzles in them (levels/registry.js)
+// are left out of it, and their doors stay locked. Since 2026-11-13 its gate
+// opens and the Chemistry and Physics halls can be walked into, all shut.
 const DEMO_BUILD = typeof __DEMO_BUILD__ !== "undefined" && __DEMO_BUILD__;
-const UPSTAIRS = DEMO_BUILD ? [] : [UpperHallScene, TopScene, TopWingScene];
+// (since 2026-11-13 the demo goes up to the Chemistry and Physics halls, all
+// shut inside: their scenes ship; the top floor's passage beyond stays out)
+const UPSTAIRS = DEMO_BUILD ? [UpperHallScene, TopScene] : [UpperHallScene, TopScene, TopWingScene];
 const LATER_ROOMS = DEMO_BUILD ? [] : [Room4Scene, Room5Scene, Room6Scene, Room7Scene, Room8Scene, Room11Scene, ...EMPTY_ROOMS];
 
 export function gameConfig(services, definitions) {

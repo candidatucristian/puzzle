@@ -80,7 +80,8 @@ const DEAD = [
   ["src/levels/cryptex/photographicMaterials.js", "loadCryptexPhotography"], ["src/levels/plantpot/photographicGarden.js", "loadPhotographicGarden"],
   ["src/levels/plantpot/photographicPlant.js", "loadPlantPhotography"], ["src/levels/compass/photographicCabin.js", "loadCabinPhotography"],
   ["src/levels/bookshelf/photographicLibrary.js", "loadLibraryPhotography"], ["src/levels/telescope/photographicWindow.js", "loadWindowPhotography"],
-].filter(([, fn]) => !GAME.some(([, text]) => new RegExp(`(?<!function )\\b${fn}\\(`).test(text))).map(([file]) => file);
+].filter(([file]) => existsSync(join(ROOT, file))) // (some deleted 2026-11-13)
+  .filter(([, fn]) => !GAME.some(([, text]) => new RegExp(`(?<!function )\\b${fn}\\(`).test(text))).map(([file]) => file);
 const onlyDead = (path) => {
   const base = path.split("/").pop();
   const by = GAME.filter(([, text]) => text.includes(path.replace(/^public\//, "")) || text.includes(base)).map(([f]) => f);

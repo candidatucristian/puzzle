@@ -1,3 +1,5 @@
+// (Not loaded by the game: art/blender/dawn_country.py reads this when it renders the puzzle, and
+// the unit tests check it. Kept on purpose, 2026-11-13.)
 // The original clue: five wires, bottom to top, and six perched birds.
 export const WIRE_NOTES = Object.freeze(["D", "F", "A", "C", "E"]);
 export const WIRE_BIRDS = Object.freeze([

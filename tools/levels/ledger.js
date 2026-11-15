@@ -1,6 +1,6 @@
 import { LEVEL_METADATA } from '../../src/levels/metadata.js';
 const LEVELS = LEVEL_METADATA.map(level => ({
-  ...level, alt: level.altCode, sound: level.hint.sound, tool: level.hint.tool,
+  ...level, alt: level.altCode, sound: level.hint.sound, tool: level.hint.tool, decoder: level.hint.decoder,
   hint: level.hint.text, mech: level.description, keys: level.references,
 }));
       // ── Render quick table ──
@@ -29,6 +29,7 @@ const LEVELS = LEVEL_METADATA.map(level => ({
         let badges = "";
         if (lvl.sound) badges += '<span class="mini-badge">🔊 sound</span>';
         if (lvl.tool) badges += '<span class="mini-badge">🔧 tool</span>';
+        if (lvl.decoder) badges += '<span class="mini-badge">🔐 decoder</span>';
 
         let keysHtml = lvl.keys.map((k) => "<li>" + escapeHtml(k) + "</li>").join("");
 

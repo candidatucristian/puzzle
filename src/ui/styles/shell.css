@@ -399,7 +399,7 @@ button:disabled {
   min-height: 48px;
 }
 
-#level-code, .study-guide-code {
+#level-code {
   flex: 1;
   width: 100%;
   min-width: 0;
@@ -414,14 +414,13 @@ button:disabled {
   text-transform: uppercase;
   box-shadow: none;
 }
-#level-code::placeholder, .study-guide-code::placeholder {
+#level-code::placeholder {
   text-transform: none;
   letter-spacing: 0;
   color: #999993;
 }
 #level-code:focus,
-#input-area #level-code:focus-visible,
-.study-guide-code[data-typing="true"] {
+#input-area #level-code:focus-visible {
   border-color: #373733;
   outline: none;
   background: #171717;
@@ -430,7 +429,7 @@ button:disabled {
 #level-code.success-flash {
   border-color: #adada4;
 }
-#btn-submit, .study-guide-submit {
+#btn-submit {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -448,7 +447,7 @@ button:disabled {
   background: #e3e3dd;
   border-color: #e3e3dd;
 }
-#btn-submit:active, .study-guide-submit[data-pressed="true"] {
+#btn-submit:active {
   background: #babbb3;
 }
 #btn-submit .ui-icon {
@@ -485,6 +484,19 @@ button:disabled {
   gap: 7px;
   min-height: 40px;
   padding: 8px 8px 8px 0;
+}
+/* the bulb is lit: warm yellow glass, a bright filament, a soft glow round it */
+#btn-hint .ui-icon {
+  width: 17px;
+  height: 17px;
+  color: #f2c45a;
+  --bulb-glass: #ffcf5c5c;
+  --bulb-filament: #fff1bf;
+  filter: drop-shadow(0 0 2px #ffc94acc) drop-shadow(0 0 7px #ffb22e66);
+}
+#btn-hint:hover .ui-icon {
+  color: #ffd46a;
+  --bulb-glass: #ffd66c80;
 }
 
 /* An index rather than a stack of cards; one small rule marks the current room. */
@@ -776,7 +788,7 @@ button:disabled {
 #key-insert.is-on {
   opacity: 1;
 }
-:is(#sidebar, #levels-grid, #right-sidebar, .modal-content, #hint-list, .howto-body) {
+:is(#sidebar, #levels-grid, #right-sidebar, .modal-content, #hint-list) {
   scrollbar-width: thin;
   scrollbar-color: #33332f transparent;
 }

@@ -2,7 +2,8 @@ import Phaser from "phaser";
 import BasePuzzleScene from "../../core/BasePuzzleScene.js";
 import { attachMovableSparkles } from "../../shared/movableSparkles.js";
 import { HOUSE_GO, ROOM_READY, zoomInto, zoomOutFrom, PLACES } from "../../shared/house.js";
-import { loadCofferArt, buildCoffer, offerCofferKey } from "./cofferArt.js";
+import { loadCofferArt, buildCoffer, offerCofferKey, hasNativeCoffer, cofferAssets } from "./cofferArt.js";
+import { roomRenderAssets } from './roomRender.js';
 import { KEY_ART, KEY_ART_URL } from "../../shared/keyArt.js";
 import { GOLD_CHEST, GOLD_CHEST_URL } from './chestArt.js';
 import { addRainGlass, boxOf } from "../../shared/phaserRain.js";
@@ -45,10 +46,20 @@ export default class RoomScene extends BasePuzzleScene {
     this.place = place;
   }
 
+  // The doorway can download these bytes while its opening animation plays.
+  // Rendering and GPU allocation still belong to the destination scene.
+  get entranceAssets() {
+    const assets = roomRenderAssets(this.place);
+    if (hasNativeCoffer(this.place)) assets.push(...cofferAssets(this.place), { key: KEY_ART, url: KEY_ART_URL });
+    return assets;
+  }
+
   preload() {
     if (!PLACES.some(place => place.key === this.place && place.chest)) return;
-    optionalSceneAsset(this, GOLD_CHEST);
-    if (!this.textures.exists(GOLD_CHEST)) this.load.image(GOLD_CHEST, GOLD_CHEST_URL);
+    if (!hasNativeCoffer(this.place)) {
+      optionalSceneAsset(this, GOLD_CHEST);
+      if (!this.textures.exists(GOLD_CHEST)) this.load.image(GOLD_CHEST, GOLD_CHEST_URL);
+    }
     if (!this.textures.exists(KEY_ART)) this.load.image(KEY_ART, KEY_ART_URL);
     loadCofferArt(this, this.place);
   }

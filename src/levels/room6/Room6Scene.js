@@ -9,7 +9,7 @@ import { METAL, RIBBON, MEDAL } from "../flags/trophies.js";
 const BOOKCASE = [[841.515, 459.269], [1060.251, 459.269], [1060.251, 694.926], [841.515, 694.926]];
 const bookcaseQuad = (L) => BOOKCASE.map(([x, y]) => ({ x: x * L.W / 1659, y: y * L.H / 948 }));
 import { nurseryPortraitBounds, createNurseryPortraitViewer } from "./nurseryPortraits.js";
-import { ROOM6_PHOTOGRAPH, loadRoom6Photography, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint, room6HerbariumQuad } from "./photographicRoom.js";
+import { ROOM6_PHOTOGRAPH, loadRoom6Photography, room6PhotographyAssets, alignRoom6Photography, paintRoom6Photography, room6CabinetPoint, room6HerbariumQuad } from "./photographicRoom.js";
 import { sketching, paintRoom6Sketch } from "./sketchRoom.js";
 import { loadRoom6Live, room6LiveReady, room6LivePlate, mountRoom6Live } from "./liveRoom6.js";
 
@@ -38,6 +38,8 @@ export default class Room6Scene extends PlainRoomScene {
       rug: ["#1c1a12", "#6a6040", "#2a2616"],
     });
   }
+
+  get entranceAssets() { return room6PhotographyAssets(); }
 
   preload() {
     super.preload();

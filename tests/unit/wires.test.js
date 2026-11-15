@@ -29,7 +29,7 @@ test("retiring GO preserves identities in old numeric progress",()=>{
     const progress=new ProgressStore(storage,LEVEL_METADATA,{legacyLevelIds:LEGACY_LEVEL_IDS});
     assert.equal(progress.state.lastPlayedLevelId,expected);
     assert.deepEqual(progress.state.completedLevelIds,
-      LEGACY_LEVEL_IDS.slice(0,original).filter(id=>id!=="crossing"));
+      LEGACY_LEVEL_IDS.slice(0,original).filter(id=>LEVEL_METADATA.some(l=>l.id===id)));
     assert.equal(progress.state.completedLevelIds.includes(expected),false);
     assert.equal(progress.canAccess(LEVEL_METADATA.findIndex(l=>l.id===expected)),true);
   }

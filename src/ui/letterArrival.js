@@ -1,6 +1,7 @@
 import {Scope} from '../shared/Scope.js';
 import {renderLetter} from './letterPage.js';
 import {showConsoleNote} from './consoleNote.js';
+import {fileButton} from './fileButton.js';
 import held from './letterHeld.json';
 import './styles/letter-arrival.css';
 
@@ -50,8 +51,6 @@ const el=(tag,className,text)=>{
   if(text)node.textContent=text;return node;
 };
 const percent=v=>`${(v*100).toFixed(3)}%`;
-// a folder, drawn in a thin line, a sheet going into it
-const FOLDER='<svg class="file-icon" viewBox="0 0 24 18" aria-hidden="true"><path d="M1.5 5.5V16.2H22.5V5.5H11.2L9.4 3.2H1.5Z"/><path d="M6.5 8.2V1.2H17.5V8.2"/><path d="M9 3.8H15M9 5.8H13.5"/></svg>';
 
 /** Resolves when filed ("read") or put away before it was read ("later"). */
 export function playArrival(scope,{letter,page=null,sounds,target,origin=null,reducedMotion=false,i18n=null}) {
@@ -80,7 +79,7 @@ export function playArrival(scope,{letter,page=null,sounds,target,origin=null,re
     const caption=el('div','arrival-caption');
     caption.append(el('p','arrival-eyebrow',text('casefile.letterFound','A letter found')),el('p','arrival-title',letter.title));
     const file=el('button','arrival-file');file.type='button';file.disabled=true;
-    file.innerHTML=FOLDER;file.append(el('span','file-label',text('casefile.fileLetter','File it in the case file')));
+    fileButton(file,text('casefile.fileLetter','File it in the case file'));
     view.append(scene,caption,file);root.append(view);document.body.append(root);
     let state='',typist=null,settle=null;
     const alive=()=>!life.closed;

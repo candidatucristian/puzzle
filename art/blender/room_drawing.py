@@ -235,7 +235,7 @@ REVEAL = 26
 box_cm("reveal", wx0 - 3, wx0, WIN["sill"], WIN["top"], D1, D1 + REVEAL, PLASTER)
 box_cm("reveal", wx1, wx1 + 3, WIN["sill"], WIN["top"], D1, D1 + REVEAL, PLASTER)
 box_cm("reveal head", wx0 - 3, wx1 + 3, WIN["top"], WIN["top"] + 3, D1, D1 + REVEAL, PLASTER)
-box_cm("sill", wx0 - 10, wx1 + 10, WIN["sill"] - 4, WIN["sill"], D1 - 10, D1 + REVEAL - 6, WALNUT_X, 1.0)
+box_cm("sill", wx0 - 6, wx1 + 6, WIN["sill"] - 4, WIN["sill"], D1 - 6, D1 + REVEAL - 6, WALNUT_X, 1.0)
 mid = (WIN["sill"] + WIN["top"]) / 2
 SASHES = []
 for (y0, y1, dd) in ((WIN["sill"] + 1, mid + 2, D1 + REVEAL - 8), (mid - 2, WIN["top"] - 1, D1 + REVEAL - 13)):
@@ -247,8 +247,8 @@ for (y0, y1, dd) in ((WIN["sill"] + 1, mid + 2, D1 + REVEAL - 8), (mid - 2, WIN[
     box_cm("glazing bar", wx0 + 6, wx1 - 6, (y0 + y1) / 2 - 1.1, (y0 + y1) / 2 + 1.1, dd - 1.5, dd + 1.5, FRAME, 0.3)
     box_cm("glass", wx0 + 5, wx1 - 5, y0 + 5, y1 - 5, dd - 0.3, dd + 0.3, GLASS)
     SASHES.append([P(x, y, dd) for x, y in ((wx0 + 5, y0 + 5), (wx1 - 5, y0 + 5), (wx1 - 5, y1 - 5), (wx0 + 5, y1 - 5))])
-curtain(RNG, wx0 - 66, wx0 - 2, D1 - 8, 300, VELVET, folds=4, deep=9)
-curtain(RNG, wx1 + 2, wx1 + 66, D1 - 8, 300, VELVET, folds=4, deep=9)
+curtain(RNG, wx0 - 66, wx0 - 2, D1 - 7.5, 300, VELVET, folds=4, deep=6.0)
+curtain(RNG, wx1 + 2, wx1 + 66, D1 - 7.5, 300, VELVET, folds=4, deep=6.0)
 box_cm("pelmet", wx0 - 76, wx1 + 76, 298, 314, D1 - 16, D1, GILT, 1.5)
 MOON_AT = P(-1070, 430, 3400)
 if VIEW == "tree":

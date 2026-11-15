@@ -5,6 +5,7 @@
 // original is left out of the output.
 import { existsSync, rmSync, statSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { compressBuild } from "./compress-assets.mjs";
 
 const size = (path) => statSync(path).isDirectory() ? readdirSync(path).reduce((n, name) => n + size(join(path, name)), 0) : statSync(path).size;
 const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
@@ -15,9 +16,11 @@ export function fullBuild() {
     name: "full-build",
     apply: "build",
     configResolved(config) { outDir = resolve(config.root, config.build.outDir); },
-    closeBundle() {
+    async closeBundle() {
       const film = join(outDir, "assets", "video", "IntroVideo.mp4");
       if (existsSync(film)) rmSync(film);
+      // its sounds and pictures made smaller for the net (compress-assets.mjs)
+      if (existsSync(outDir)) await compressBuild(outDir, "full");
       if (existsSync(outDir)) console.log(`[full] the whole game, every door open: ${mb(size(outDir))}`);
     },
   };

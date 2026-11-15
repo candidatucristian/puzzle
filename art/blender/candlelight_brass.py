@@ -1,7 +1,7 @@
 """Candlelight and Brass: original Blender/Cycles apparatus and photographs.
 
 Eight real candle-light combinations, a luminous brass rotor and sixteen
-native flame frames (the opened letter: cipher_letter.py). No generated bitmap assets.
+native flame frames (the opened letter: puzzle_letter.py). No generated bitmap assets.
 blender -b -P art/blender/candlelight_brass.py -- --width 2560 --samples 256 --pack
 node art/blender/candlelight_brass_publish.mjs
 """
@@ -208,7 +208,7 @@ for ob in visible:
 scene.render.film_transparent=True;scene.render.image_settings.color_mode='RGBA'
 render('rotor')
 
-# (The opened letter is rendered on its own by cipher_letter.py.)
+# (The opened letter is rendered on its own by puzzle_letter.py.)
 
 # Sixteen original flame meshes in one atlas, matching Candle.js's frame
 # and wick coordinates exactly. No synthetic photo or Javascript painting.

@@ -1,5 +1,12 @@
 # Blender artwork
 
+## Ashcombe seal photograph (2026-11-14)
+
+`ashcombe_seal_photograph.py` renders a matte, aged photographic print for the
+prologue's case report. The printed image reuses the seal detail from the existing
+opening film, supporting the revised narration with a matching visual clue.
+See [source and reproduction notes](ashcombe-seal-photograph-sources.md).
+
 ## Inspector Wren's desk (2026-11-12)
 
 The user asked for the desk the game opens on to be made in Blender: "cât mai aproape de acesta generat … ca să meargă bine cu tranziția din video în imaginea din joc".
@@ -9,6 +16,7 @@ The user asked for the desk the game opens on to be made in Blender: "cât mai a
 - **Camera:** low over the desk, looking a little down. A lens shift keeps the window's uprights upright. The study is a floor above the street.
 - **Light:** the brass swan-neck lamp is the key, its enamel dome glowing at the rim. Cold light comes through the window, and the street lamp and a lit window or two shine across the wet road.
 - **Detail:** rain drops lie on the glass, which is slightly frosted with wet.
+- **Published (2026-11-14):** `public/assets/images/Prologue/inspector-desk-cycles-v4.webp` (1672×941, sharp webp q88 of `.artifacts/wren-desk/wren-desk.png`), from the user's Blender scene with its materials and light matched to the old picture (oxblood file leather, dark dome, warm brass, green desk leather, a darker street). A new name per publish, so no browser keeps the old one.
 
 See `wren-desk-sources.md`. The old picture is archived in `.artifacts/removed-assets/2026-11-12/`.
 
@@ -49,15 +57,13 @@ The user asked for the case file to be a real book: "fa-o in Blender, reala … 
   - no sheen.
 
   The tone is kept near the map's cream; the first try went kraft-brown. Book picture v2.
-- **Index tabs:** `case_book_tab.py` renders one old-card tab glued between the pages, alone with its shadow: `tab` in manila, `tab-here` in faded red for the open part.
-  - `caseBook.js` lays one per room, plus ✉ for the letters, with its root at the top sheet's outer edge. The part under the page is clipped away, and the number is typed on it.
-  - The arrows under the book are gone at the user's request; the keyboard arrows still turn.
+- **Index tabs:** removed on 2026-11-14 at the user's request (`case_book_tab.py` deleted). The arrows under the book are gone too; the keyboard arrows and the pages still turn.
 
 Each top sheet is 22 × 28.16 cm, which is the game's page of 1000 × 1280. `caseBook.json` gives the spine, the leaf rectangle and each sheet's outline as the lens sees it.
 `caseBook.js` cuts every page out of the picture, clips it to that outline, writes on it with multiply ink (`caseBookPages.js`), and turns it with `shared/pageFlip.js` over the picture.
 
 - **Render:** `blender -b --factory-startup -P art/blender/case_book.py -- [--preview]`. The preview is 50% size at 96 samples; the full render is 768 samples, about 1.5 min.
-- **Publish:** `case_book_tab.py`, then `case_book.py -- --version 2`, then `node art/blender/case_book_publish.mjs`. It writes `case-book-v2.webp`, `case-book-tab(-here)-v2.webp` and `src/ui/caseBookArt.json` (with `tab`).
+- **Publish:** `case_book.py -- --version 2`, then `node art/blender/case_book_publish.mjs`. It writes `case-book-v2.webp` and `src/ui/caseBookArt.json` (with `tab`).
 
 ## Room II becomes the baby's nursery (2026-11-05)
 
@@ -247,6 +253,11 @@ Plate v12, 2026-11-05: the user saw the floor nearest us as a blur "from the tab
 - The plate is published with `--sharpen`, a light unsharp mask:
   `study_publish_v5.mjs --source .artifacts/room-study-v6 --plate 12 --sharpen`. The coffer stays v10.
 - The picture's edge band (`#game-viewport`'s mask in `src/ui/styles/shell.css`) was tried narrower at the foot, then off in rooms, then with rooms filling down over the console. The user preferred it as it was, so it is unchanged everywhere.
+
+Plate v13, 2026-11-14: the fireplace in oiled oak. The user found the cream tiles and white stone "like a swimming pool" and asked for wood or brown.
+- Jambs, plinths, corbels, frieze and mantel shelf are `SURROUND` / `SURROUND_X`: `dark_wood`, matte, no coat, the panelling's colour.
+- The hearth is `HEARTH`, `slate_driveway` toned dark brown. The fire's brick, iron and grate are unchanged.
+- Published as `study_publish_v5.mjs --source .artifacts/room-study-v6 --plate 13 --sharpen`. The coffer stays v10, since the chest on the desk is unchanged.
 
 ## 2026-11-04: the user's list
 
@@ -486,29 +497,6 @@ the PNG. The game projects live medal clues through the same camera; rain,
 portrait inspection and puzzle interaction remain live. `?render` opens
 Room VI directly for review; its Blender background is also the default
 when entering normally. The separate `?sketch` trial remains available.
-
-## Dossier cover prototype
-
-The user has requested Blender renders instead of AI image generation for all
-new realistic assets. This source uses only meshes, curves, procedural shader
-nodes, area lights and an orthographic camera. It loads no photo textures.
-
-`dossier_cover.py` builds a real 32 cm rigid cover with a 4.3 mm leather-wrapped
-board, softened edges, fine leather grain and a narrow pressed perimeter seam.
-The render has transparent surroundings so it can sit behind the existing
-interactive dossier pages and metal binding.
-
-Run with the installed Blender executable:
-
-```powershell
-& 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' --background --factory-startup --python art/blender/dossier_cover.py -- --output .artifacts/blender-dossier/cover.png --blend .artifacts/blender-dossier/cover.blend
-```
-
-The default is Cycles CPU, 1400 px, 96 samples, with a fixed sampling seed.
-Use `--resolution 700 --samples 32` for a quick preview. The script saves the
-editable `.blend` before rendering. After inspecting the render, package the
-PNG to WebP and update the dossier cover CSS. Do not label this script as a
-finished render until it has actually been run in Blender and inspected.
 
 ## Room VI, alive
 
@@ -1014,10 +1002,9 @@ Rejected on the same day, and archived in
 - the sheets seen from above, falling, rolling or unfolding (`letter_pages.py`);
 - Arthur's MakeHuman hands holding the sheet (`letter_hands.py`).
 
-The old envelope animation (`letter_animation.py`, `letter_common.py`,
-`letter_seal.py`, `letter_stationery_v3.py`, `letter_animation_publish.mjs`)
-is no longer used by the game. Its published model, its runtime
-(`letterStage3d.js`) and its clearance test are archived in
+The old envelope animation's scripts were deleted on 2026-11-13 (copies in
+`Desktop/PUZZLE-arhiva-curatenie-2026-11-13/`); its published model, runtime
+(`letterStage3d.js`) and clearance test are archived in
 `.artifacts/removed-assets/2026-11-12/letter-envelope/`.
 
 ## The Open Window
@@ -1059,10 +1046,8 @@ in `src/levels/modem/nativeModem.json`.
 
 ## 2026-10-31: the letter, the medals, Before Sunrise's people, The Night Circuit
 
-- **Candlelight and Brass, the letter opened** — `cipher_letter.py` renders
-  the tri-folded rag-paper letter alone (its own shadow in its alpha); the
-  game brings it up out of the envelope over the darkened room.
-  `candlelight_brass_publish.mjs --letter` publishes only it.
+- **Candlelight and Brass, the letter opened** — rendered by `puzzle_letter.py`
+  since 2026-11-13 (it was `cipher_letter.py`): see *Every puzzle letter* below.
 - **Before Sunrise** — `dawn_folk.py` holds the barn swallows (metaball
   bodies, folded wings, forked tails), the man singing to his guitar in his
   rocking chair and the porch flag (Blender cloth, `us_flag.mjs` draws its
@@ -1086,19 +1071,6 @@ node art/blender/rally_export.mjs
 & 'C:/Users/crist/Tools/blender-4.5.15-windows-x64/blender.exe' -b --factory-startup -P art/blender/rally_board.py -- --samples 96
 node art/blender/rally_publish.mjs
 ```
-
-## Notebook (N) and Case file (C): native archive tools
-
-`archive_tools.py` builds the two menu objects as complete Cycles scenes:
-sewn leather, separate paper leaves, punched holes, a nickel mechanism and
-woven binding. `archive_tools_publish.mjs` publishes the plates, registered
-dossier slices and the two closed-object icons. Editable packed scenes and
-photographic portraits are in `.artifacts/archive-tools-v1`.
-
-See [archive-tools-sources.md](archive-tools-sources.md) for materials,
-render commands and registration. `archive_tools_review.mjs` captures the
-actual menu markup and styles through the local preview browser without
-running a test suite or changing game progress.
 
 ## The Inspector's Desk: case file, notebook, settings (2026-10-31)
 
@@ -1164,3 +1136,51 @@ lies in it (`<name>.json`: centre, size, turn). The publish script turns that
 into `inspector-desk-geometry.css`, so the pages follow the paper when it is
 rendered again. `--samples 32 --scale 0.4` gives a quick preview. The scans
 and models live in the render asset library (`C:/Users/crist/Tools/render/assets`).
+
+## The decoder mark in the hints (2026-11-13)
+
+`decoder_icon.py` renders an old brass cipher wheel lying on the table, seen
+at a slant: a reeded base plate with the outer alphabet, an inner disc turned
+three letters round (a Caesar shift), and a knurled thumb boss with a domed
+rivet. The engraving is `room_boards.mjs`'s cipher face
+(`.artifacts/rooms/cipher.png`), cut into the brass with the dark of old
+polish in the cuts. A warm lamp from the upper left and a gradient softbox
+over it give the polish something to mirror; it stays satin, never a mirror.
+`decoder_icon_publish.mjs` trims it to
+`public/assets/images/Interface/hint-decoder.webp` (192 px wide). The hint
+drawer (`src/ui/hints.js`) shows it, with "A decoding device may help", on
+every puzzle whose `hint.decoder` is set in `src/levels/metadata.js`.
+
+    blender -b -P art/blender/decoder_icon.py -- [--samples 256] [--size 640]
+    node art/blender/decoder_icon_publish.mjs
+
+## Every puzzle letter: one sheet (2026-11-13)
+
+Every letter opened in a puzzle is the Rotor's letter, identical: the
+user asked for one component, never another. `puzzle_letter.py --letter <id>`
+renders the same tri-folded rag-paper sheet, its folds, light, camera and
+shadow unchanged; only the words differ (`LETTERS` in the script: a line in
+the hand at the head, the typed lines in the middle, initials at the foot
+if any). Small type uses Courier New Bold so it carries the same weight of
+ink as the Rotor's large type. `puzzle_letter_publish.mjs` puts each beside
+its puzzle's pictures, and `src/shared/paperLetter.js` shows every one of
+them the same way (up out of its envelope over the darkened room).
+
+    blender -b --factory-startup -P art/blender/puzzle_letter.py -- --letter cryptex
+    blender -b --factory-startup -P art/blender/puzzle_letter.py -- --letter compass
+    node art/blender/puzzle_letter_publish.mjs
+
+Letters so far: `cryptex` (Room I's Rotor) and `compass` (The Captain's
+Cabin; its old flat chart is in `art/archive/compass-chart/`).
+
+## Deep cleaning (2026-11-13)
+
+Deleted, as nothing in the game uses what they make any more (copies of
+everything in `Desktop/PUZZLE-arhiva-curatenie-2026-11-13/`): the archive-tool
+and dossier-cover scripts (`archive_tools*`, `archive_black*`, `dossier_cover.py`,
+`ui_tools_blender.py`, `ui_tools_publish.mjs`, `settings_ui_blender.py`), the
+Decoder's Book (`decoder_manor*.py`, `decoder_reward.py`), the old hall guide
+(`hall_guide*.py/.mjs`, now the notebook), the old envelope (`letter_animation*`,
+`letter_common.py`, `letter_seal.py`, `letter_stationery_v3.py`),
+`room_library_v3.py`, `fibonacci_conservatory.py` and `gold_coffer_review.mjs`.
+`room_library_v3_publish.mjs` stays: Room II's nursery is published with it.

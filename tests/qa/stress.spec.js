@@ -61,7 +61,7 @@ test('resizing the case book during a page turn refits it once the leaf lands', 
   await boot(page, { motion: 'system', keys: ['Room2'], visited: ['Hall', 'Study', 'Room2'], completed: ['binarytree', 'plantpot', 'cryptex'] });
   await stand(page, 'Room2'); await page.locator('#btn-casefile').click();
   await expect(page.locator('.casebook-canvas')).toBeVisible();
-  await page.locator('.casebook-mark').first().click();
+  await page.keyboard.press('ArrowRight');
   await page.waitForTimeout(1000);
   await page.keyboard.press('ArrowRight');
   await page.setViewportSize({ width: 1280, height: 720 });

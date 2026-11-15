@@ -1,5 +1,7 @@
 # Review: Botanică și Chimie — 12 noiembrie 2026
 
+Continuare: [optimizarea încărcării din 13–14 noiembrie](loading-optimization-2026-11-14.md), inclusiv noul buget de cache și observațiile la revenirea în camere. Mai jos rămâne situația de la data acestui raport.
+
 Corecțiile de mai jos sunt implementate. Inspecția surselor și a imaginilor din aplicația pornită este făcută; validarea automată, simularea conexiunilor slabe și verificarea build-ului livrat sunt încă în așteptarea acordului explicit cerut conform `AGENTS.md`. Acest document nu certifică absența tuturor bug-urilor și nici pregătirea finală pentru Steam.
 
 ## Domeniu

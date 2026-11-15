@@ -1,4 +1,4 @@
-import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN, STILL_LOCKED, DEMO, DEMO_PLACES, roman } from "../shared/house.js";
+import { PLACES, PUZZLE_STORY, ALL_DOORS_OPEN, STILL_LOCKED, DEMO, DEMO_PLACES, DEMO_SEALED, roman } from "../shared/house.js";
 import { isDevMode } from "../shared/devMode.js";
 
 /** Coordinates level selection and answers; scenes own their resources.
@@ -64,7 +64,8 @@ export class LevelManager {
    *  puzzle is not solved yet: there is something to answer here. */
   get answering() {
     const index = this.indexOf(this.#place?.plays);
-    return index >= 0 && !this.isCompleted(index);
+    // (a puzzle shut in the demo has nothing to answer: no console for it)
+    return index >= 0 && !this.isCompleted(index) && !this.puzzleSealed(this.#place.plays);
   }
 
   /** The place a level is found in, if it has been put in the house yet. */
@@ -134,8 +135,18 @@ export class LevelManager {
     return Boolean(DEMO && !isDevMode() && place?.chest && !DEMO_PLACES.includes(place.chest));
   }
 
-  /** In the demo, the way upstairs is shut. */
-  get stairsLocked() { return DEMO && !isDevMode(); }
+  /** The way upstairs: open, the demo's too since 2026-11-13 (everything
+   *  up there is shut in it instead: see `puzzleSealed`, `placeLocked`). */
+  get stairsLocked() { return false; }
+
+  /** In the demo, a puzzle in a hall it lets you into, shut all the same. */
+  puzzleSealed(levelId) { return Boolean(DEMO && !isDevMode() && DEMO_SEALED.includes(levelId)); }
+
+  /** Whether a place (by its key) cannot be gone into now. */
+  placeLocked(key) {
+    const place = this.#places.find((item) => item.key === key);
+    return Boolean(place && (place.unbuilt || this.#locked(place)));
+  }
 
   // Everything a place holds is solved, and the key in its chest taken.
   #finished(place) {
@@ -189,7 +200,7 @@ export class LevelManager {
 
   get loading() { return Boolean(this.#game?.services?.sceneLoading?.busy); }
 
-  canAccess(index) { return this.#progress.canAccess(index); }
+  canAccess(index) { return !this.puzzleSealed(this.definitions[index]?.id) && this.#progress.canAccess(index); }
 
   /** A puzzle come upon in the house is open from then on, whatever the
    *  order the others were solved in. */

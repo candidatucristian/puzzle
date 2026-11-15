@@ -36,10 +36,10 @@ test('each room has one or two distinct, progressively available hints', () => {
 
 test('damaged optional hint and preference saves do not prevent loading', () => {
   const storage = new SafeStorage(memory());
-  storage.setItem(HINTS_KEY, JSON.stringify({ sequence: 900, tv: -1, flags: '2', removed: 1 }));
+  storage.setItem(HINTS_KEY, JSON.stringify({ sequence: 900, modem: -1, flags: '2', removed: 1 }));
   const hints = new HintStore(storage, LEVEL_METADATA);
   assert.equal(hints.count('sequence'), 2);
-  assert.equal(hints.count('tv'), 0);
+  assert.equal(hints.count('modem'), 0);
   assert.equal(hints.count('flags'), 0);
   assert.equal(hints.reveal('removed'), 0);
   storage.setItem(COMFORT_KEY, '{broken');
@@ -94,15 +94,15 @@ test('storage failures are reported per key without losing the current session',
 test('room previews accept only small embedded images for known rooms and reset cleanly', () => {
   const storage = new SafeStorage(memory());
   const png = 'data:image/png;base64,aGVsbG8=';
-  storage.setItem(PREVIEWS_KEY, JSON.stringify({ tv: png, removed: png, cryptex: 'https://example.com/image.png' }));
+  storage.setItem(PREVIEWS_KEY, JSON.stringify({ modem: png, removed: png, cryptex: 'https://example.com/image.png' }));
   const previews = new RoomPreviewStore(storage, LEVEL_METADATA);
-  assert.equal(previews.get('tv'), png);
+  assert.equal(previews.get('modem'), png);
   assert.equal(previews.get('removed'), undefined);
   assert.equal(previews.get('cryptex'), undefined);
-  assert.equal(previews.set('tv', 'data:image/svg+xml;base64,aGVsbG8='), false);
-  assert.equal(previews.set('tv', `data:image/png;base64,${'a'.repeat(32000)}`), false);
+  assert.equal(previews.set('modem', 'data:image/svg+xml;base64,aGVsbG8='), false);
+  assert.equal(previews.set('modem', `data:image/png;base64,${'a'.repeat(32000)}`), false);
   previews.reset();
-  assert.equal(new RoomPreviewStore(storage, LEVEL_METADATA).get('tv'), undefined);
+  assert.equal(new RoomPreviewStore(storage, LEVEL_METADATA).get('modem'), undefined);
 });
 
 test('the level veil numbers every level in Roman numerals, well past twenty-one', async () => {

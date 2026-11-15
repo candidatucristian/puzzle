@@ -45,21 +45,8 @@ body.letter-open :is(#compact-bar, #play-area) { filter: blur(6px) brightness(.5
 .arrival[data-page="ivy"] .letter-sheet .letter-page { line-height: 1.46; }
 .arrival[data-page="ivy"] .letter-sheet .letter-words p { margin-bottom: .55em; }
 .arrival[data-page="ivy"] .letter-sheet .letter-signature { margin-top: .6em !important; }
-/* "File it in the case file": in the house's own manner (the prologue's
-   onward card) — a thin pale rule round it, matte, a folder drawn in a fine
-   line; on hover the rule brightens and the sheet in the folder sinks in */
-.arrival .arrival-file { position: absolute; left: 50%; bottom: clamp(10px,3%,26px); translate: -50% 0; z-index: 3; opacity: 0;
-  display: inline-flex; align-items: center; gap: 11px; padding: 10px 18px 10px 14px; box-sizing: border-box;
-  border: 1px solid #ece7db40; border-radius: 3px; background: #0d0c0bb8; box-shadow: none; color: #f0eadf;
-  font: 400 calc(11px * var(--reading-scale, 1))/1 var(--ui-font); letter-spacing: .24em; text-transform: uppercase; white-space: nowrap;
-  cursor: var(--cursor-hand, pointer); transition: border-color .25s ease, background-color .25s ease; }
-.arrival .arrival-file:hover, .arrival .arrival-file:focus-visible { border-color: #ece7db99; background: #1a1816cc; outline: none; }
-.arrival .arrival-file:focus-visible { box-shadow: 0 0 0 3px #0c0c0c, 0 0 0 4px #ece7db55; }
-.arrival .arrival-file:disabled { cursor: default; }
-.arrival .file-icon { width: 20px; height: 15px; flex-shrink: 0; overflow: visible; }
-.arrival .file-icon path { fill: none; stroke: #ece7db; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.arrival .file-icon path:nth-child(n+2) { transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
-.arrival .arrival-file:hover .file-icon path:nth-child(n+2), .arrival .arrival-file:focus-visible .file-icon path:nth-child(n+2) { transform: translateY(2.5px); }
+/* "File it in the case file": its look is fileButton.js (the same at the desk); here, its place */
+.arrival .arrival-file { position: absolute; left: 50%; bottom: clamp(10px,3%,26px); translate: -50% 0; z-index: 3; opacity: 0; }
 /* the case file's button taking a filed letter in: it swells a touch, and a
    soft gold light blooms behind it and is gone */
 #btn-casefile.is-receiving { position: relative; animation: file-takes .9s ease-out; }
@@ -69,7 +56,7 @@ body.letter-open :is(#compact-bar, #play-area) { filter: blur(6px) brightness(.5
 @keyframes file-glints { 0% { opacity: 0; transform: scale(.6); } 25% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.35); } }
 [data-reduced-motion="true"] #btn-casefile.is-receiving, [data-reduced-motion="true"] #btn-casefile.is-receiving::after { animation: none; }
 /* dev mode only (caseFile.js): put the floors' letters back, or see the last one */
-.dev-letters { display: flex; gap: 14px; margin-top: 10px; }
+.dev-letters { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; }
 body.outside .dev-letters { display: none; }
 .dev-letters button { padding: 0; border: 0; background: none; cursor: var(--cursor-hand, pointer);
   font: 400 10.5px var(--ui-font); letter-spacing: .14em; text-transform: uppercase; color: #9fc48a; opacity: .75; }

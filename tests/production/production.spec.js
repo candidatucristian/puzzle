@@ -65,7 +65,6 @@ test('the production build opens every level through the real UI from a subdirec
   for (const asset of [
     'images/PlantPot/leaf.webp', 'sounds/PlantPot/pouring-water.mp3',
     'sounds/MobilePhone/key-tone.mp3', 'sounds/Lightswitch/switchsound.mp3',
-    'images/TV/astronomy.webp',
     'sounds/Modem/droid-hum.mp3', 'sounds/Wires/music.mp3', 'sounds/Rally/car-pass.mp3',
   ]) {
     expect(localRequests.has(`/puzzle/assets/${asset}`), `The published level requested ${asset}`).toBe(true);

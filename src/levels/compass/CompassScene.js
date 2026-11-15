@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import BasePuzzleScene from '../../core/BasePuzzleScene.js';
 import {attachMovableSparkles} from '../../shared/movableSparkles.js';
+import {paperLetter} from '../../shared/paperLetter.js';
 import {COMPASS_BEARINGS} from './puzzle.js';
 import {BOTTLE_KEYS as K,loadBottleCabin,layoutBottleCabin,bottleGlow} from './bottleCabin.js';
 
@@ -58,34 +59,16 @@ export default class CompassScene extends BasePuzzleScene{
     this._showNeedle();
   }
 
+  // The captain's letter: the one every puzzle's letter is (shared/paperLetter.js,
+  // art/blender/puzzle_letter.py), the bearings typed on it. It comes up out of
+  // the sealed envelope on the little desk.
   _buildMap(W,H){
-    const overlay=this.add.container(0,0).setDepth(60).setVisible(this._mapOpen);
-    const dark=this.add.rectangle(0,0,W,H,0x040505,.87).setOrigin(0).setInteractive();
-    const picture=this.add.image(W/2,H/2-7,K.map);
-    const source=this.textures.get(K.map).getSourceImage();
-    picture.setScale(Math.min(W*.95/source.width,H*.91/source.height));
-    const caption=this.localizedText(W/2,H-12,'gameplay.putDown',{
-      fontFamily:'Georgia, serif',fontStyle:'italic',fontSize:`${Math.max(11,Math.min(14,H/50))}px`,color:'#d2c1a1',
-    }).setOrigin(.5,1);
-    overlay.add([dark,picture,caption]);
-    const scene=this;
-    this._letter={container:overlay,get isOpen(){return scene._mapOpen;},
-      open(){
-        if(scene._mapOpen)return;
-        scene._mapOpen=true;for(const z of scene._zones)z.disableInteractive();
-        scene.services.audio.playClick(scene);overlay.setVisible(true).setAlpha(0);
-        scene.tweens.add({targets:overlay,alpha:1,duration:scene.reducedMotion?0:220});
-      },
-      close(){
-        if(!scene._mapOpen)return;
-        scene._mapOpen=false;
-        scene.tweens.add({targets:overlay,alpha:0,duration:scene.reducedMotion?0:180,onComplete:()=>{
-          overlay.setVisible(false);for(const z of scene._zones)z.setInteractive();
-        }});
-      },
-    };
-    dark.on('pointerdown',()=>this._letter.close());
-    if(this._mapOpen)for(const z of this._zones)z.disableInteractive();
+    const m=this._L.map;
+    this._letter=paperLetter(this,{
+      texture:K.letter,width:W,height:H,from:{x:m.x,y:m.y,width:m.w},
+      onOpen:()=>{this._mapOpen=true;for(const z of this._zones)z.disableInteractive();},
+      onClosed:()=>{this._mapOpen=false;for(const z of this._zones)z.setInteractive();},
+    });
   }
 
   update(time,delta){
@@ -168,7 +151,7 @@ export default class CompassScene extends BasePuzzleScene{
     this._sparkle?.();this._sparkle=null;
     this.tweens.killAll();
     for(const o of this.children.list.slice())o.destroy();
-    this._L=null;this._letter=null;this._zones=[];
+    this._L=null;this._letter=null;this._zones=[];this._mapOpen=false;
   }
 
   shutdown(){

@@ -27,11 +27,18 @@ export function createLoadingScreen(i18n = null) {
     }
     if (status) status.textContent = t(message);
     else label.childNodes[0].nodeValue = t(message) + '\u00a0';
+    if (percent) percent.hidden = message !== 'loading' && message !== 'ready';
     scope.later(paint, 80);
   };
   paint();
   const retry = document.createElement('button'); retry.type = 'button'; retry.textContent = t('retry');
   retry.className = 'menu-btn'; retry.hidden = true; screen.querySelector('.loading-card').append(retry);
+  if (i18n?.subscribe) {
+    scope.add(i18n.subscribe(() => {
+      retry.textContent = t('retry');
+      if (status) status.textContent = t(message);
+    }));
+  }
   scope.on(retry, 'click', () => location.reload());
   const api = {
     progress(value) { if (!failed && !done) { target = 68 + value * 28; message = 'loading'; } },

@@ -30,7 +30,9 @@ if(process.argv.includes('--prepare'))process.exit(0);
 
 const layout=JSON.parse(readFileSync(`${source}/nativeBottle.json`,'utf8'));
 await sharp(`${source}/room.png`).webp({quality:95}).toFile(`${target}/room.webp`);
-await sharp(`${source}/map.png`).webp({quality:96}).toFile(`${target}/map.webp`);
+// (the opened map is the puzzles' one letter since 2026-11-13: puzzle_letter.py
+// --letter compass, published as letter.webp by puzzle_letter_publish.mjs;
+// the flat chart it replaced is kept in art/archive/compass-chart/)
 const {tile,columns,count,crop}=layout.needle;
 const pieces=[];
 for(let i=0;i<count;i++){

@@ -126,7 +126,8 @@ for (y0, y1, dd) in ((WIN["sill"] + 1, mid + 2, D1 + REVEAL - 8), (mid - 2, WIN[
     for fx in (1 / 3, 2 / 3):
         x = wx0 + (wx1 - wx0) * fx
         box_cm("glazing bar", x - 1.1, x + 1.1, y0 + 6, y1 - 6, dd - 1.5, dd + 1.5, FRAME, 0.3)
-    box_cm("glass", wx0 + 5, wx1 - 5, y0 + 5, y1 - 5, dd - 0.3, dd + 0.3, GLASS)
+    WIN_GLASS = bpy.data.materials.get("window glass") or plain("window glass", (0.95, 0.97, 0.96), rough=0.02, transmission=1.0, ior=1.03)
+    box_cm("glass", wx0 + 5, wx1 - 5, y0 + 5, y1 - 5, dd - 0.3, dd + 0.3, WIN_GLASS)
     SASHES.append([P(x, y, dd) for x, y in ((wx0 + 5, y0 + 5), (wx1 - 5, y0 + 5), (wx1 - 5, y1 - 5), (wx0 + 5, y1 - 5))])
 MOON_AT = P(900, 950, 3400)
 garden(MOON_AT, [("island_tree_01", -500, 1800, 10.0, 0.3), ("island_tree_02", 1300, 2600, 12.0, 1.4), ("tree_small_02", 420, 1250, 5.0, 2.2)],

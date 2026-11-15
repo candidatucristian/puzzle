@@ -54,11 +54,6 @@ test('settings: native sliders and nested help retain values and restore puzzle 
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#music-slider')).toHaveValue(String(.51 + round * .01));
     await page.locator('#st-tab-options').click();
-    await page.locator('#btn-howto').click();
-    await expect(page.locator('#howto-modal')).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#options-modal')).toBeVisible();
-    await expect(page.locator('#btn-howto')).toBeFocused();
     await page.keyboard.press('Escape');
     expect(await evaluateApp(page, ({ game, services }) => game.input.keyboard.enabled && services.levels.activeScene.input.enabled)).toBe(true);
   }

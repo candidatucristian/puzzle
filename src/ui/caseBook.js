@@ -2,10 +2,8 @@
 // rendered in Blender as it lies open (art/blender/case_book.py), alone over
 // the game, its leaves turned as the herbarium's and the manual's are
 // (shared/pageFlip.js) — by a click on a page, by taking its corner and
-// drawing it over, by the keyboard's arrows, or by its index tabs — tabs of
-// old card glued to its pages, rendered as the book is (case_book_tab.py),
-// one for each room and one for the letters — which open it there with one
-// leaf turned.
+// drawing it over, or by the keyboard's arrows. (Its index tabs were taken
+// out on 2026-11-14, at the user's request.)
 //
 // Each page is cut out of the picture of the book — the top sheet's own
 // paper, its tooth and its foxing, the gutter's shade where it curves down —
@@ -20,10 +18,6 @@ import { PAGE } from "./caseBookPages.js";
 import ART from "./caseBookArt.json";
 
 const PHOTO = `${import.meta.env.BASE_URL}assets/images/CaseFile/case-book-v${ART.version}.webp`;
-const hasTabArt = ['px', 'reach', 'tabHeight', 'width', 'height', 'root'].every(key => Number.isFinite(ART.tab?.[key])) && ART.tab.px > 0;
-const TAB = (here) => hasTabArt
-  ? `${import.meta.env.BASE_URL}assets/images/CaseFile/case-book-${here ? "tab-here" : "tab"}-v${ART.version}.webp`
-  : `${import.meta.env.BASE_URL}assets/images/InspectorDesk/v2/tab-manila.webp`;
 const FONTS = [
   '400 40px "DM Serif Display"', '500 40px "Cormorant Garamond"', 'italic 500 40px "Cormorant Garamond"',
   '400 30px "Architects Daughter"', '400 30px "Special Elite"', '500 30px "IBM Plex Sans"', '500 30px "IBM Plex Mono"',
@@ -51,7 +45,7 @@ function loadPhoto() {
 /** `spreads`: [{ mark, tip, text, draw(left, right) }] */
 export function mountCaseBook(scope, { modal, sounds = null, onLand = () => {} }) {
   const book = modal.querySelector(".casebook-book");
-  const photo = book.querySelector(".casebook-photo"), canvas = book.querySelector(".casebook-canvas"), marks = book.querySelector(".casebook-marks");
+  const photo = book.querySelector(".casebook-photo"), canvas = book.querySelector(".casebook-canvas");
   const reader = modal.querySelector(".casebook-reader");
   const reduced = () => document.documentElement.dataset.reducedMotion === "true";
   const shown = () => !modal.classList.contains("hidden");
@@ -107,7 +101,7 @@ export function mountCaseBook(scope, { modal, sounds = null, onLand = () => {} }
     resizePending = false;
     jump = null;
     // as large as the window allows, the book itself in the middle of it:
-    // room either side for the tabs, and under it for the ribbon out of its
+    // room either side, and under it for the ribbon out of its
     // tail (as much over it, so that it is the book that is centred)
     const tail = ART.height - BOOK.y - BOOK.h;
     const k = Math.min((window.innerWidth - 2 * 96) / BOOK.w, (window.innerHeight - 40) / (BOOK.h + 2 * tail), 0.9);
@@ -120,18 +114,6 @@ export function mountCaseBook(scope, { modal, sounds = null, onLand = () => {} }
     Object.assign(book.style, { width: `${BOOK.w * k}px`, height: `${BOOK.h * k}px` });
     Object.assign(photo.style, { left: `${-BOOK.x * k}px`, top: `${-BOOK.y * k}px`, width: `${ART.width * k}px`, height: `${ART.height * k}px` });
     Object.assign(canvas.style, { left: `${(F.x - BOOK.x) * k}px`, top: `${(F.y - BOOK.y) * k}px`, width: `${W}px`, height: `${H}px` });
-    // the tabs: out from the top sheet's outer edge, down from its head; each
-    // the size the book's centimetres are here (the tab's picture has its own)
-    const fallbackWidth = Math.max(48, Math.min(68, BOOK.w * k * 0.065));
-    const t = hasTabArt ? ART.tab : { px: ART.px, reach: fallbackWidth / k, tabHeight: fallbackWidth * .52 / k,
-      width: fallbackWidth / k, height: fallbackWidth * .52 / k, root: 0 };
-    const tk = (ART.px / t.px) * k * (hasTabArt ? 1.02 : 1);
-    marks.dataset.fallback = String(!hasTabArt);
-    Object.assign(marks.style, { left: `${(LEAF.spine + LEAF.w - BOOK.x) * k}px`, top: `${(LEAF.top - BOOK.y) * k + 18}px` });
-    const tabVars = { "--tab-w": `${t.reach * tk}px`, "--tab-h": `${t.tabHeight * tk}px`,
-      "--tab-img-w": `${t.width * tk}px`, "--tab-img-h": `${t.height * tk}px`,
-      "--tab-root": `${-t.root * tk}px`, "--tab-top": `${-(t.height - t.tabHeight) / 2 * tk}px` };
-    for (const [name, value] of Object.entries(tabVars)) marks.style.setProperty(name, value);
     // (the pages are written only as they are needed — the one open, and
     //  those either side of it — and let go again when far off)
     faces = new Array(spreads.length * 2).fill(null);
@@ -151,23 +133,6 @@ export function mountCaseBook(scope, { modal, sounds = null, onLand = () => {} }
       spread: Math.max(0, Math.min(spreads.length - 1, at)),
       instant: reduced, onTurn: landed, onRustle: () => sounds?.page?.(),
     });
-    // the index tabs: one for each room, and one where the letters begin
-    marks.replaceChildren(...spreads.flatMap((spread, i) => {
-      if (!spread.mark) return [];
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "casebook-mark";
-      const card = document.createElement("img");
-      card.className = "casebook-tab"; card.alt = ""; card.draggable = false; card.src = TAB(false);
-      const word = document.createElement("span");
-      word.className = "casebook-tab-word"; word.textContent = spread.mark;
-      b.append(card, word);
-      b.dataset.tip = spread.tip;
-      b.setAttribute("aria-label", spread.tip);
-      b.dataset.to = String(i);
-      b.addEventListener("click", () => goTo(i));
-      return [b];
-    }));
     landed(flip.spread);
     book.classList.add("is-built");
   }
@@ -200,15 +165,6 @@ export function mountCaseBook(scope, { modal, sounds = null, onLand = () => {} }
     }
     const spread = spreads[at];
     near(at);
-    // the ribbon of the part of the book it is in: its room, or the letters
-    let here = -1;
-    for (const b of marks.children) if (Number(b.dataset.to) <= at) here = Number(b.dataset.to);
-    for (const b of marks.children) {
-      const on = Number(b.dataset.to) === here;
-      b.classList.toggle("is-here", on);
-      const card = b.querySelector(".casebook-tab");
-      if (card && card.dataset.here !== String(on)) { card.dataset.here = String(on); card.src = TAB(on); }
-    }
     reader.textContent = spread?.text ?? "";
     if (spread) onLand(spread);
   }

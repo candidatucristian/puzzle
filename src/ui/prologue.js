@@ -1,10 +1,12 @@
 import { CASE_REPORT, letterById } from "../shared/story.js";
 import { renderLetter } from "./letterPage.js";
+import { loadDocumentArt } from "./documentArt.js";
 import { glint } from "./startFilm.js";
 import { taskCard } from "./tasks.js";
 import { mountWindowRain } from "./windowRain.js";
+import { fileButton } from "./fileButton.js";
 
-const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-cycles-v1.webp`;
+const DESK_IMAGE = `${import.meta.env.BASE_URL}assets/images/Prologue/inspector-desk-cycles-v4.webp`;
 // (the desk is rendered in Blender, art/blender/wren_desk.py, 1.5 times
 // this size; everything laid over it is measured in these, the old picture's
 // own pixels, which the render keeps)
@@ -19,6 +21,8 @@ let deskImage;
 
 // Decode the desk while the opening film plays, before the fade reveals it.
 export function preloadPrologueDesk() {
+  // (and the letters' paper, so a sheet opened on it is painted once, as it is)
+  void loadDocumentArt();
   if (!deskImage) {
     const image = new Image();
     image.decoding = "async";
@@ -231,7 +235,7 @@ function playDesk(
       });
     // Follow the real objects even when the frame is cropped for a narrow
     // or unusually wide screen. The photograph and button share one camera.
-    place(dossier, 0, 520, 830, 290);
+    place(dossier, 0, 534, 810, 270);
     place(envelope, 726, 700, 422, 112);
     place(nameplate, 894, 552, 286, 132);
     rain.resize(width, height);
@@ -353,14 +357,13 @@ const OUTLINES = {
     [719, 796],
   ],
   file: [
-    [0, 650],
-    [318, 535],
-    [398, 527],
-    [528, 533],
-    [815, 596],
-    [824, 611],
-    [574, 803],
-    [0, 741],
+    [0, 612],
+    [330, 538],
+    [812, 598],
+    [816, 614],
+    [564, 820],
+    [280, 782],
+    [0, 744],
   ],
 };
 function outlines(frame) {
@@ -421,6 +424,8 @@ function readingStage(scope, root) {
   const go = document.createElement("button");
   go.type = "button";
   go.className = "prologue-go";
+  // (the same button as under a letter found in the house)
+  const setLabel = fileButton(go);
   reading.append(sheet, go);
   root.append(reading);
 
@@ -435,7 +440,7 @@ function readingStage(scope, root) {
   };
   const refresh = (doc, options, label) => {
     renderLetter(sheet, doc, options);
-    go.textContent = label;
+    setLabel(label);
   };
   const show = (doc, options, label, after) => {
     open = true;

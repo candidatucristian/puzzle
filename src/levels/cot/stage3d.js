@@ -9,28 +9,68 @@ import native from "./nativeCot.json";
  * physical camera. Warm bedside light and cool window light cast shadows
  * onto the sheet; world coordinates preserve perspective during dragging. */
 
+// One renderer for every visit to the cot (2026-11-14). Its shader programs
+// stay compiled: a stage built ahead (prewarmCotStage, while the player stands
+// in Room II) compiles them without blocking and keeps them in use, so the
+// cot opens without the two seconds the compiling took on every entry.
+let shared = null;
+function sharedRenderer() {
+  if (shared) return shared;
+  const canvas = document.createElement("canvas");
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true });
+  r.setClearColor(0x000000, 0);
+  r.outputColorSpace = THREE.SRGBColorSpace;
+  r.toneMapping = THREE.ACESFilmicToneMapping;
+  r.toneMappingExposure = .74;
+  r.shadowMap.enabled = true;
+  r.shadowMap.type = THREE.PCFShadowMap;
+  return (shared = { canvas, renderer: r });
+}
+let warm = null;
+
+/** Compiles the cot's shaders ahead, in the background (core/puzzlePrefetch.js). */
+export function prewarmCotStage(ids) {
+  warm ??= (async () => {
+    const atlas = document.createElement("canvas");
+    atlas.width = atlas.height = 12;
+    const stage = new CotStage(ids, { atlas });
+    await stage.renderer.compileAsync(stage.scene, stage.camera);
+    // and drawn once, small, unseen: what only a drawing compiles (the
+    // shadows' own programs) is ready too
+    const size = new THREE.Vector2();
+    stage.renderer.getSize(size);
+    stage.renderer.setSize(64, 64, false);
+    stage.render();
+    if (size.x && size.y) stage.renderer.setSize(size.x, size.y, false);
+    // the warm-up stage is never shown: what it holds on to is its materials,
+    // and through them the compiled programs
+    return stage;
+  })().catch(() => { warm = null; });
+  return warm;
+}
+
 const WIDTH = 1.2; // the mattress, across, in metres
 const FOV = 38; // the camera's height of view, in degrees
 
 export class CotStage {
   constructor(ids, { atlas, photograph = null }) {
-    this.canvas = document.createElement("canvas");
-    const r = (this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, premultipliedAlpha: true }));
+    const { canvas, renderer: r } = sharedRenderer();
+    this.canvas = canvas;
+    this.renderer = r;
     r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
-    r.setClearColor(0x000000, 0);
-    r.outputColorSpace = THREE.SRGBColorSpace;
-    r.toneMapping = THREE.ACESFilmicToneMapping;
-    r.toneMappingExposure = .74;
-    r.shadowMap.enabled = true;
-    r.shadowMap.type = THREE.PCFShadowMap;
     const scene = (this.scene = new THREE.Scene());
     // what the metal and the glaze reflect: a dim room
-    const pmrem = new THREE.PMREMGenerator(r);
-    const room = new RoomEnvironment();
-    this.environmentTarget = pmrem.fromScene(room, 0.04);
+    // (made once, and kept with the renderer for every visit)
+    const held = sharedRenderer();
+    if (!held.environment) {
+      const pmrem = new THREE.PMREMGenerator(r);
+      const room = new RoomEnvironment();
+      held.environment = pmrem.fromScene(room, 0.04);
+      room.dispose();
+      pmrem.dispose();
+    }
+    this.environmentTarget = held.environment;
     this.env = this.environmentTarget.texture;
-    room.dispose();
-    pmrem.dispose();
     scene.environment = this.env;
     scene.environmentIntensity = .34;
     scene.add(new THREE.HemisphereLight(0xb6c9df, 0x4f4030, .48));
@@ -163,11 +203,10 @@ export class CotStage {
       }
     });
     for (const geometry of geometries) geometry.dispose();
-    for (const texture of textures) texture.dispose();
+    for (const texture of textures) if (texture !== this.env) texture.dispose();
     for (const material of materials) material.dispose();
-    this.environmentTarget.dispose();
-    this.renderer.dispose();
-    this.renderer.forceContextLoss();
+    // (the renderer stays, with its compiled programs, for the next visit)
+    this.renderer.renderLists.dispose();
   }
 }
 

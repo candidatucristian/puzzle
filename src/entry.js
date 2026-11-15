@@ -44,6 +44,20 @@ if (import.meta.env.DEV && !handheld && (trial.has('sketch') || trial.has('rende
   });
 }
 
+// A trial of the drawn opening film (?film), on its own, once the game has
+// loaded: sketchFilm.js, the scenes drawn so far.
+if (import.meta.env.DEV && !handheld && trial.has('film')) {
+  ready.then(app => {
+    if (!app) return;
+    const go = () => {
+      if (document.getElementById('loading-screen') || !app.ui || !app.services) { setTimeout(go, 300); return; }
+      import('./ui/sketchFilm.js').then(({ playSketchFilm }) =>
+        playSketchFilm(document.body, { game: app.game, audio: app.services.audio, i18n, gate: true }));
+    };
+    go();
+  });
+}
+
 function startGame() {
   const loading = createLoadingScreen(i18n);
   return import('./main.js').then(app => {

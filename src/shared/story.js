@@ -115,13 +115,14 @@ export const INTRO = Object.freeze({
   where: ["Exeter · October 2001", "At Inspector Wren's residence", "Tonight, after forty years, a letter came from Ashcombe House."],
 });
 
-/** The opening (ui/introVideo.js) is his story, and only his: a man who has
- *  carried one file for half his life, his father who would not speak of it,
- *  and tonight's letter. Who the Ashcombes were waits until he stands before
+/** The opening (ui/introVideo.js) follows Arthur's questions about his
+ *  father's report into tonight's letter. Its crest matches the photograph
+ *  kept with the case report; its contents wait for the player to open it.
+ *  Who the Ashcombes were waits until he stands before
  *  their house (`MANOR_STORY`, ui/manorStory.js), where it means most.
  *
  *  `page`: the case's name, with where and when, then two short paragraphs.
- *  `asides`: passages over the film, of him, not of the pictures — `over`
+ *  `asides`: passages timed to the film — `over`
  *  the small line above, `lines` the words, `at` [from, to] in its seconds. */
 export const OPENING = Object.freeze({
   page: {
@@ -129,19 +130,19 @@ export const OPENING = Object.freeze({
     place: "Devon, England",
     date: "October 1961",
     story: [
-      "On the night of 13 October 1961, three siblings locked every door of their house in Devon and walked out into the dark. Nothing in the house was missing. No one was hurt. No one ever found out why.",
-      "A year later the case was closed. Only one policeman never let it go.",
+      "On the night of 13 October 1961, three members of the Ashcombe family disappeared from their home in Devon. The doors were locked. There was no sign of a struggle.",
+      "A year later, the investigation was closed. What happened at Ashcombe House remained unexplained.",
     ],
   },
   asides: [
-    { at: [1.4, 8], over: "Exeter · 12 October 2001", lines: ["Every October, I go back to the same case."] },
-    { at: [9.6, 17.8], over: "Inspector Arthur Wren", lines: ["Father died in the spring. The house has been too quiet since."] },
-    { at: [19.4, 27.6], lines: ["Tonight, a letter under the door. No stamp. No postmark."] },
-    { at: [29.2, 37.4], lines: ["Only my name, in a hand I almost know."] },
-    { at: [39, 45.8], over: "Case 61/1013", lines: ["I know the file by heart. I open it anyway."] },
-    { at: [47, 53.4], over: "Ashcombe House · 1961", lines: ["Father was first at their door that morning. He never spoke of what he saw."] },
-    { at: [54.6, 61.6], lines: ["I have stood at their gate more often than I would admit. I have never gone in."] },
-    { at: [63, 70.2], over: "Forty years tomorrow", lines: ["Forty years of asking. Tonight, someone answered."] },
+    { at: [1.4, 8], over: "Exeter · 12 October 2001", lines: ["Every October, I take out the Ashcombe file."] },
+    { at: [9.6, 17.8], over: "Inspector Arthur Wren", lines: ["Father died in the spring. I still catch myself thinking I can ask him one more thing."] },
+    { at: [19.4, 27.6], lines: ["Tonight, someone left a letter under my door. There was no stamp."] },
+    { at: [29.2, 37.4], lines: ["The seal is Ashcombe’s. The same crest as in the photographs."] },
+    { at: [39, 45.8], over: "Case 61/1013", lines: ["I take out the file. Father’s name is on the original report."] },
+    { at: [47, 53.4], over: "Ashcombe House · 1961", lines: ["He was the first constable at the house. He never liked talking about that morning."] },
+    { at: [54.6, 61.6], lines: ["I’ve stood at those gates more times than I can count, wondering what he wouldn’t tell me."] },
+    { at: [63, 70.2], over: "Forty years tomorrow", lines: ["Tomorrow, forty years since they vanished. Why write to me now?"] },
   ],
 });
 
@@ -162,6 +163,7 @@ export const MANOR_STORY = Object.freeze([
  *  has sent him to it: the report the case was closed on, and the one line
  *  he has added to it since. */
 export const CASE_REPORT = Object.freeze({
+  sealPhotograph: {"caption":"Ashcombe family seal · Photograph from the case file","alt":"An old photograph of the Ashcombe wax seal, bearing the same crest as the seal on the letter."},
   dateline: "Devon & Cornwall Constabulary · Case 61/1013",
   salutation: "The disappearance of Ivy, Silas and Orion Ashcombe",
   body: [
